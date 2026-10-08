@@ -9,6 +9,7 @@ import os
 import subprocess
 import sys
 import tempfile
+import time
 from pathlib import Path
 
 # The preview must never read or overwrite the real user settings.
@@ -122,16 +123,31 @@ def watch_ui(main_window: window.WorkloadWindow) -> QFileSystemWatcher:
     return watcher
 
 
+def wait_until_idle(application: QApplication, main_window) -> None:
+    """Let the fake workers finish and deliver their results to the window."""
+    deadline = time.monotonic() + 10
+    while time.monotonic() < deadline:
+        application.processEvents()
+        workers = [main_window._worker, *main_window._action_workers]
+        if not any(worker is not None and worker.isRunning() for worker in workers):
+            break
+        time.sleep(0.05)
+    for _ in range(5):
+        application.processEvents()
+
+
 def main() -> int:
     application = QApplication(sys.argv[:1])
     apply_light_theme(application)
     main_window = window.WorkloadWindow()
-    main_window.resize(1200, 720)
+    main_window.resize(1280, 800)
     main_window.show()
     if len(sys.argv) > 1:
-        while main_window._worker is not None and main_window._worker.isRunning():
-            main_window._worker.wait()
-        application.processEvents()
+        page = sys.argv[2] if len(sys.argv) > 2 else "overview"
+        wait_until_idle(application, main_window)
+        if page == "workloads":
+            main_window.nav_workloads.click()
+            wait_until_idle(application, main_window)
         main_window.grab().save(sys.argv[1])
         return 0
     watch_ui(main_window)

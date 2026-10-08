@@ -12,6 +12,11 @@ Desktop viewer for Kubernetes workloads, including Amazon EKS clusters available
 through the local Kubernetes configuration. The packaged application includes
 its own `kubectl` executable.
 
+![KubeScope cluster overview](docs/screenshots/overview.png)
+
+*The cluster overview, shown with sample data. Regenerate it with
+`make screenshot`.*
+
 ## Requirements
 
 - Python 3.12 or newer to run from source

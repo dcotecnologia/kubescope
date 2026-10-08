@@ -2,7 +2,7 @@
 
 UV ?= uv
 
-.PHONY: help setup run preview designer ui i18n appimage deb windows windows-remote lint format test kubectl qt-libs build clean
+.PHONY: help setup run preview screenshot designer ui i18n appimage deb windows windows-remote lint format test kubectl qt-libs build clean
 
 help: ## List the available commands
 	@awk 'BEGIN { FS = ":.*##" } /^[a-zA-Z_-]+:.*##/ { printf "  %-12s %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
@@ -29,6 +29,10 @@ UI_PY := $(UI_FILES:$(UI_DIR)/%.ui=$(UI_DIR)/ui_%.py)
 
 $(UI_DIR)/ui_%.py: $(UI_DIR)/%.ui
 	$(UV) run pyside6-uic $< -o $@
+
+screenshot: $(UI_PY) $(QM_FILES) ## Regenerate docs/screenshots/overview.png from the fake data
+	mkdir -p docs/screenshots
+	QT_QPA_PLATFORM=offscreen $(UV) run python tools/preview.py docs/screenshots/overview.png overview
 
 designer: qt-libs ## Open the .ui files in Qt Designer
 	$(RUN_ENV) $(UV) run pyside6-designer -style fusion $(UI_FILES)
