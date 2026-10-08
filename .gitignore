@@ -6,3 +6,5 @@ dist/
 *.egg-info/
 vendor/kubectl/
 vendor/linux/
+*.pyproject.user
+vendor/appimagetool/

@@ -11,6 +11,9 @@ its own `kubectl` executable.
 - AWS CLI and valid AWS credentials for EKS contexts whose kubeconfig uses the
   AWS `exec` credential plugin
 - Read access to namespaces, deployments, statefulsets, and daemonsets
+- Optional, for the cluster overview page: read access to nodes and pods across
+  namespaces, and `metrics-server` for real CPU/memory usage. Sections the role
+  cannot read are reported on the page instead of failing it
 
 ## Run from source
 
@@ -45,10 +48,50 @@ pyinstaller --noconfirm KubeScope.spec
 
 The distributable application is created under `dist/KubeScope/`.
 
+## Settings and language
+
+The **Settings** page (sidebar) stores preferences as JSON in
+`~/.config/kubescope/settings.json` (`%APPDATA%\\kubescope` on Windows,
+`~/Library/Application Support/kubescope` on macOS; override with
+`KUBESCOPE_CONFIG_DIR`). It lets you pick the language (automatic, English or
+Portuguese), remember the last context, and give each kubeconfig context a
+friendlier display name. The real context name is still used for every request.
+
+Source strings are English; translations live in
+`src/kubescope/translations/*.ts` (editable in Qt Linguist). After adding or
+changing texts run `make i18n` to extract new strings and compile the `.qm` files.
+
+## Packaging
+
+```bash
+make build      # PyInstaller bundle in dist/KubeScope
+make deb        # dist/kubescope_<version>_amd64.deb (Debian/Ubuntu)
+make appimage   # dist/KubeScope-<version>-x86_64.AppImage (any Linux with glibc)
+```
+
+Windows packages cannot be cross-built. The **Release** workflow
+(`.github/workflows/release.yml`) builds everything on GitHub runners: the Linux
+`.deb` and AppImage on Ubuntu 22.04 (lower glibc requirement) and the Windows
+installer plus a portable zip on Windows. Run it from the Actions tab, or push a
+`v*` tag to also publish a GitHub release.
+
+## Editing the UI
+
+The screens are Qt Designer files in `src/kubescope/ui/`:
+
+```bash
+make designer   # open the .ui files in Qt Designer
+make ui         # regenerate ui_*.py after saving (commit both)
+make preview    # open the app with fake data, no cluster needed
+```
+
+Widget `objectName`s are used by the style sheet and by `window.py`, so keep
+them when renaming or moving widgets.
+
 ## Author
 
 Danilo Carolino <danilogcarolino@gmail.com>
 
-## License
+---
 
-[MIT](LICENSE)
+Developed by **DCO Tecnologia** · Released under the [MIT License](LICENSE).
