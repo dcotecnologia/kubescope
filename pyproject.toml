@@ -1,0 +1,33 @@
+[project]
+name = "kubescope"
+version = "0.1.0"
+description = "Desktop viewer for Kubernetes and Amazon EKS workloads"
+readme = "README.md"
+license = "MIT"
+authors = [{ name = "Danilo Carolino", email = "danilogcarolino@gmail.com" }]
+requires-python = ">=3.12"
+dependencies = [
+    "pyside6>=6.11.2",
+]
+
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[project.optional-dependencies]
+dev = [
+    "pre-commit>=4.6.2",
+    "pytest>=9.1.1",
+]
+build = [
+    "pyinstaller>=6.22.3",
+]
+
+[project.scripts]
+kubescope = "kubectl_gui.app:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
