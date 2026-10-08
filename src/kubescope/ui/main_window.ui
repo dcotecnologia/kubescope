@@ -1,0 +1,1421 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>980</width>
+    <height>640</height>
+   </rect>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>980</width>
+    <height>640</height>
+   </size>
+  </property>
+  <property name="windowTitle">
+   <string>KubeScope</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">QMainWindow, QWidget#page { background: #f7f7fa; color: #20232a; }
+QWidget#topBar { background: #06234a; }
+QLabel#topBrand {
+    color: #ffffff; font-size: 13px; font-weight: 700;
+    padding: 0 12px; background: #123764; min-height: 46px;
+}
+QLabel#topCaption { color: #b8c7dc; font-size: 9px; font-weight: 700; }
+QLabel#topAccess { color: #d2deec; font-size: 9px; font-weight: 700; }
+QComboBox#contextCombo {
+    background: #0d315d; color: #ffffff; border: 1px solid #2d5077;
+    border-radius: 4px; min-height: 30px; padding: 0 9px; font-size: 11px;
+}
+QWidget#sidebar { background: #ffffff; border-right: 1px solid #e1e3e9; }
+QLabel#sidebarBrand { color: #16375f; font-size: 19px; font-weight: 700; }
+QLabel#sidebarSubtitle { color: #4f5966; font-size: 11px; }
+QLabel#navSection, QLabel#filterLabel {
+    color: #535d69; font-size: 9px; font-weight: 700;
+}
+QFrame#sidebarRule { color: #e6e7ed; }
+QLabel#sidebarNote { color: #4d5866; font-size: 10px; line-height: 1.4; }
+QWidget#pageHeader { background: #ffffff; border-bottom: 1px solid #e4e5eb; }
+QLabel#pageTitle { color: #17191e; font-size: 22px; font-weight: 700; }
+QLabel[variant="muted"] { color: #4f5966; font-size: 11px; }
+QLabel#profileBadge {
+    color: #4d35a8; background: #eee9f7; border-radius: 5px;
+    font-size: 12px; font-weight: 700;
+}
+QComboBox[variant="filter"], QLineEdit#searchInput, QPushButton[variant="primary"] {
+    background: #ffffff; border: 1px solid #d9dce4; border-radius: 5px;
+    min-height: 36px; padding: 0 10px; font-size: 11px;
+}
+QComboBox[variant="filter"], QLineEdit#searchInput {
+    color: #20232a; selection-background-color: #d9d3f2;
+    selection-color: #20232a;
+}
+QComboBox[variant="filter"] { padding-right: 28px; }
+QComboBox[variant="filter"]:hover { border-color: #b9b3dc; }
+QComboBox[variant="filter"]:focus, QComboBox[variant="filter"]:on,
+QLineEdit#searchInput:focus { border: 1px solid #6252b5; }
+QComboBox[variant="filter"]::drop-down {
+    subcontrol-origin: padding; subcontrol-position: center right;
+    width: 26px; border: 0; background: transparent;
+}
+QComboBox[variant="filter"]::down-arrow {
+    image: url(CHEVRON); width: 10px; height: 6px; margin-right: 8px;
+}
+QComboBox[variant="filter"] QAbstractItemView {
+    background: #ffffff; color: #20232a; border: 1px solid #d9dce4;
+    selection-background-color: #eee9f7; selection-color: #3220a0;
+    outline: 0; padding: 2px;
+}
+QComboBox[variant="filter"]:disabled {
+    color: #6b7380; background: #f3f4f7; border-color: #e4e5eb;
+}
+QComboBox#contextCombo:disabled { color: #ffffff; }
+QComboBox#contextCombo { padding-right: 28px; }
+QComboBox#contextCombo::drop-down {
+    subcontrol-origin: padding; subcontrol-position: center right;
+    width: 26px; border: 0; background: transparent;
+}
+QComboBox#contextCombo::down-arrow {
+    image: url(CHEVRON_LIGHT); width: 10px; height: 6px; margin-right: 8px;
+}
+QComboBox#contextCombo QAbstractItemView {
+    background: #0d315d; color: #ffffff; border: 1px solid #2d5077;
+    selection-background-color: #1f4f87; selection-color: #ffffff;
+    outline: 0; padding: 2px;
+}
+QPushButton[variant="primary"] {
+    background: #3020a5; color: #ffffff; border: 0;
+    font-weight: 700; padding: 0 16px;
+}
+QPushButton[variant="primary"]:hover { background: #4030b8; }
+QPushButton[variant="primary"]:disabled { background: #6c5fc4; color: #ffffff; }
+QPushButton[variant="secondary"] {
+    background: #ffffff; color: #3220a0; border: 1px solid #d9dce4;
+    border-radius: 5px; min-height: 32px; padding: 0 10px;
+    font-size: 11px; font-weight: 600;
+}
+QPushButton[variant="secondary"]:hover:enabled {
+    background: #f3f1f9; border-color: #a9a0d6;
+}
+QPushButton[variant="secondary"]:disabled { color: #7b8089; }
+QLabel#summaryLabel { color: #4f5966; font-size: 11px; font-weight: 600; }
+QTableWidget[variant="data"] {
+    background: #ffffff; color: #242a33;
+    border: 1px solid #dfe2e9; border-radius: 5px;
+    gridline-color: #e8e9ee; selection-background-color: #f0edfa;
+    selection-color: #28213f;
+}
+QHeaderView { background: #fbfbfc; }
+QHeaderView::up-arrow { image: url(SORT_UP); width: 9px; height: 6px; }
+QHeaderView::down-arrow { image: url(SORT_DOWN); width: 9px; height: 6px; }
+QHeaderView::section {
+    background: #fbfbfc; color: #3c4149; border: 0;
+    border-bottom: 1px solid #dfe2e9; padding: 10px 8px;
+    font-size: 9px; font-weight: 700;
+}
+QTableWidget[variant="data"]::item {
+    padding: 6px 8px; border-bottom: 1px solid #e8e9ee;
+}
+QPushButton[nav="true"] {
+    text-align: left; color: #4f5966; background: transparent;
+    border: 0; border-right: 3px solid transparent; border-radius: 0;
+    padding: 0 12px; font-size: 12px; font-weight: 600;
+}
+QPushButton[nav="true"]:hover { background: #f6f6fa; }
+QPushButton[nav="true"]:checked {
+    color: #3220a0; background: #f3f1f9; border-right: 3px solid #3220a0;
+    font-weight: 700;
+}
+QFrame[card="true"] {
+    background: #ffffff; border: 1px solid #dfe2e9; border-radius: 8px;
+}
+QFrame[card="true"] QLabel { background: transparent; border: 0; }
+QLabel[variant="cardTitle"] { color: #535d69; font-size: 9px; font-weight: 700; }
+QLabel[variant="cardValue"] { color: #17191e; font-size: 20px; font-weight: 700; }
+QLabel[variant="cardCaption"] { color: #4f5966; font-size: 10px; }
+QProgressBar {
+    background: #eceef3; border: 0; border-radius: 3px;
+    min-height: 6px; max-height: 6px;
+}
+QProgressBar::chunk { background: #6252b5; border-radius: 3px; }
+QProgressBar[level="warn"]::chunk { background: #d58a2b; }
+QProgressBar[level="high"]::chunk { background: #c9484f; }
+QCheckBox { color: #20232a; spacing: 8px; font-size: 11px; }
+QLabel { color: #20232a; }
+QTabWidget::pane { border: 0; border-top: 1px solid #dfe2e9; top: -1px; }
+QTabBar::tab {
+    background: transparent; color: #4f5966; padding: 9px 14px;
+    border: 0; border-bottom: 2px solid transparent; font-size: 11px;
+    font-weight: 600; max-width: 260px;
+}
+QTabBar::tab:hover { color: #3220a0; }
+QTabBar::tab:selected { color: #3220a0; border-bottom: 2px solid #3220a0; }
+QTabBar::close-button {
+    image: url(CLOSE_ICON); subcontrol-position: right; margin-left: 6px;
+    width: 10px; height: 10px; padding: 3px; border-radius: 4px;
+}
+QTabBar::close-button:hover { image: url(CLOSE_ICON_HOVER); background: #eee9f7; }
+QPlainTextEdit {
+    background: #ffffff; color: #242a33; border: 1px solid #dfe2e9;
+    border-radius: 5px; padding: 8px; selection-background-color: #d9d3f2;
+    selection-color: #20232a;
+}
+QFrame#appFooter { background: #ffffff; border-top: 1px solid #e4e5eb; }
+QLabel#footerLicense { color: #6b7380; font-size: 10px; }
+</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QVBoxLayout" name="rootLayout" stretch="0,1,0">
+    <property name="spacing">
+     <number>0</number>
+    </property>
+    <property name="leftMargin">
+     <number>0</number>
+    </property>
+    <property name="topMargin">
+     <number>0</number>
+    </property>
+    <property name="rightMargin">
+     <number>0</number>
+    </property>
+    <property name="bottomMargin">
+     <number>0</number>
+    </property>
+    <item>
+     <widget class="QFrame" name="topBar">
+      <property name="minimumSize">
+       <size>
+        <width>0</width>
+        <height>46</height>
+       </size>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>16777215</width>
+        <height>46</height>
+       </size>
+      </property>
+      <layout class="QHBoxLayout" name="topLayout">
+       <property name="spacing">
+        <number>12</number>
+       </property>
+       <property name="leftMargin">
+        <number>18</number>
+       </property>
+       <property name="topMargin">
+        <number>0</number>
+       </property>
+       <property name="rightMargin">
+        <number>22</number>
+       </property>
+       <property name="bottomMargin">
+        <number>0</number>
+       </property>
+       <item>
+        <spacer name="topSpacer">
+         <property name="orientation">
+          <enum>Qt::Orientation::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>40</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item>
+        <widget class="QLabel" name="topCaption">
+         <property name="text">
+          <string>CONTEXT</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QComboBox" name="contextCombo">
+         <property name="minimumSize">
+          <size>
+           <width>220</width>
+           <height>32</height>
+          </size>
+         </property>
+         <property name="toolTip">
+          <string>Kubernetes context from your kubeconfig</string>
+         </property>
+         <item>
+          <property name="text">
+           <string notr="true">prod-eks</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string notr="true">staging-eks</string>
+          </property>
+         </item>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="topAccess">
+         <property name="text">
+          <string>READ ONLY</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
+    <item>
+     <layout class="QHBoxLayout" name="shell" stretch="0,1">
+      <property name="spacing">
+       <number>0</number>
+      </property>
+      <property name="leftMargin">
+       <number>0</number>
+      </property>
+      <property name="topMargin">
+       <number>0</number>
+      </property>
+      <property name="rightMargin">
+       <number>0</number>
+      </property>
+      <property name="bottomMargin">
+       <number>0</number>
+      </property>
+      <item>
+       <widget class="QFrame" name="sidebar">
+        <property name="minimumSize">
+         <size>
+          <width>252</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>252</width>
+          <height>16777215</height>
+         </size>
+        </property>
+        <layout class="QVBoxLayout" name="sidebarLayout">
+         <property name="spacing">
+          <number>8</number>
+         </property>
+         <property name="leftMargin">
+          <number>24</number>
+         </property>
+         <property name="topMargin">
+          <number>22</number>
+         </property>
+         <property name="rightMargin">
+          <number>18</number>
+         </property>
+         <property name="bottomMargin">
+          <number>18</number>
+         </property>
+         <item>
+          <widget class="QLabel" name="sidebarBrand">
+           <property name="text">
+            <string>KubeScope</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="sidebarSubtitle">
+           <property name="text">
+            <string>Kubernetes console</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <spacer name="sidebarGap">
+           <property name="orientation">
+            <enum>Qt::Orientation::Vertical</enum>
+           </property>
+           <property name="sizeType">
+            <enum>QSizePolicy::Policy::Fixed</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>20</width>
+             <height>28</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item>
+          <widget class="QLabel" name="navSection">
+           <property name="text">
+            <string>MONITORING</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="navOverview">
+           <property name="text">
+            <string>Overview</string>
+           </property>
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>42</height>
+            </size>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>16</width>
+             <height>16</height>
+            </size>
+           </property>
+           <property name="checkable">
+            <bool>true</bool>
+           </property>
+           <property name="checked">
+            <bool>true</bool>
+           </property>
+           <property name="autoExclusive">
+            <bool>true</bool>
+           </property>
+           <property name="nav" stdset="0">
+            <string notr="true">true</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="navWorkloads">
+           <property name="text">
+            <string>Workloads</string>
+           </property>
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>42</height>
+            </size>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>16</width>
+             <height>16</height>
+            </size>
+           </property>
+           <property name="checkable">
+            <bool>true</bool>
+           </property>
+           <property name="checked">
+            <bool>false</bool>
+           </property>
+           <property name="autoExclusive">
+            <bool>true</bool>
+           </property>
+           <property name="nav" stdset="0">
+            <string notr="true">true</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="navViewer">
+           <property name="text">
+            <string>Details &amp;&amp; Logs</string>
+           </property>
+           <property name="visible">
+            <bool>false</bool>
+           </property>
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>42</height>
+            </size>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>16</width>
+             <height>16</height>
+            </size>
+           </property>
+           <property name="checkable">
+            <bool>true</bool>
+           </property>
+           <property name="autoExclusive">
+            <bool>true</bool>
+           </property>
+           <property name="nav" stdset="0">
+            <string notr="true">true</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <spacer name="sidebarSpacer">
+           <property name="orientation">
+            <enum>Qt::Orientation::Vertical</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>20</width>
+             <height>40</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item>
+          <widget class="QPushButton" name="settingsButton">
+           <property name="text">
+            <string>Settings</string>
+           </property>
+           <property name="checkable">
+            <bool>true</bool>
+           </property>
+           <property name="autoExclusive">
+            <bool>true</bool>
+           </property>
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>42</height>
+            </size>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>16</width>
+             <height>16</height>
+            </size>
+           </property>
+           <property name="nav" stdset="0">
+            <string notr="true">true</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QFrame" name="sidebarRule">
+           <property name="frameShape">
+            <enum>QFrame::Shape::HLine</enum>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="sidebarNote">
+           <property name="text">
+            <string>SECURE ACCESS
+Resources in read-only mode</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item>
+       <widget class="QFrame" name="page">
+        <layout class="QVBoxLayout" name="pageLayout" stretch="0,1">
+         <property name="spacing">
+          <number>0</number>
+         </property>
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
+          <number>0</number>
+         </property>
+         <item>
+          <widget class="QFrame" name="pageHeader">
+           <layout class="QHBoxLayout" name="pageHeaderLayout">
+            <property name="leftMargin">
+             <number>32</number>
+            </property>
+            <property name="topMargin">
+             <number>12</number>
+            </property>
+            <property name="rightMargin">
+             <number>32</number>
+            </property>
+            <property name="bottomMargin">
+             <number>12</number>
+            </property>
+            <item>
+             <layout class="QVBoxLayout" name="titleBlock">
+              <property name="spacing">
+               <number>3</number>
+              </property>
+              <item>
+               <widget class="QLabel" name="pageTitle">
+                <property name="text">
+                 <string>Overview</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLabel" name="pageSubtitle">
+                <property name="text">
+                 <string>Cluster resources and capacity</string>
+                </property>
+                <property name="variant" stdset="0">
+                 <string notr="true">muted</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <spacer name="pageHeaderSpacer">
+              <property name="orientation">
+               <enum>Qt::Orientation::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+            <item>
+             <widget class="QLabel" name="profileBadge">
+              <property name="minimumSize">
+               <size>
+                <width>36</width>
+                <height>36</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>36</width>
+                <height>36</height>
+               </size>
+              </property>
+              <property name="text">
+               <string notr="true">RO</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignmentFlag::AlignCenter</set>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item>
+          <widget class="QStackedWidget" name="pages">
+           <widget class="QWidget" name="overviewHost" />
+           <widget class="QFrame" name="workArea">
+            <layout class="QVBoxLayout" name="workLayout">
+             <property name="spacing">
+              <number>14</number>
+             </property>
+             <property name="leftMargin">
+              <number>32</number>
+             </property>
+             <property name="topMargin">
+              <number>24</number>
+             </property>
+             <property name="rightMargin">
+              <number>32</number>
+             </property>
+             <property name="bottomMargin">
+              <number>22</number>
+             </property>
+             <item>
+              <layout class="QHBoxLayout" name="filtersLayout">
+               <property name="spacing">
+                <number>12</number>
+               </property>
+               <item>
+                <widget class="QLabel" name="filterLabel">
+                 <property name="text">
+                  <string>NAMESPACE</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QComboBox" name="namespaceCombo">
+                 <property name="minimumSize">
+                  <size>
+                   <width>170</width>
+                   <height>38</height>
+                  </size>
+                 </property>
+                 <item>
+                  <property name="text">
+                   <string notr="true">All namespaces</string>
+                  </property>
+                 </item>
+                 <item>
+                  <property name="text">
+                   <string notr="true">default</string>
+                  </property>
+                 </item>
+                 <item>
+                  <property name="text">
+                   <string notr="true">monitoring</string>
+                  </property>
+                 </item>
+                 <item>
+                  <property name="text">
+                   <string notr="true">kube-system</string>
+                  </property>
+                 </item>
+                 <property name="variant" stdset="0">
+                  <string notr="true">filter</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QLineEdit" name="searchInput">
+                 <property name="minimumSize">
+                  <size>
+                   <width>240</width>
+                   <height>38</height>
+                  </size>
+                 </property>
+                 <property name="maximumSize">
+                  <size>
+                   <width>300</width>
+                   <height>16777215</height>
+                  </size>
+                 </property>
+                 <property name="placeholderText">
+                  <string>Search by name or namespace...</string>
+                 </property>
+                 <property name="clearButtonEnabled">
+                  <bool>true</bool>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <spacer name="filtersSpacer">
+                 <property name="orientation">
+                  <enum>Qt::Orientation::Horizontal</enum>
+                 </property>
+                 <property name="sizeHint" stdset="0">
+                  <size>
+                   <width>40</width>
+                   <height>20</height>
+                  </size>
+                 </property>
+                </spacer>
+               </item>
+               <item>
+                <widget class="QPushButton" name="refreshButton">
+                 <property name="text">
+                  <string>Refresh</string>
+                 </property>
+                 <property name="variant" stdset="0">
+                  <string notr="true">primary</string>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </item>
+             <item>
+              <layout class="QHBoxLayout" name="summaryRow">
+               <item>
+                <widget class="QLabel" name="summaryLabel">
+                 <property name="text">
+                  <string notr="true">5 of 5 workloads</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <spacer name="summarySpacer">
+                 <property name="orientation">
+                  <enum>Qt::Orientation::Horizontal</enum>
+                 </property>
+                 <property name="sizeHint" stdset="0">
+                  <size>
+                   <width>40</width>
+                   <height>20</height>
+                  </size>
+                 </property>
+                </spacer>
+               </item>
+               <item>
+                <widget class="QPushButton" name="podsButton">
+                 <property name="enabled">
+                  <bool>false</bool>
+                 </property>
+                 <property name="toolTip">
+                  <string>View Pods of the selected workload</string>
+                 </property>
+                 <property name="text">
+                  <string>Pods</string>
+                 </property>
+                 <property name="variant" stdset="0">
+                  <string notr="true">secondary</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QPushButton" name="detailsButton">
+                 <property name="enabled">
+                  <bool>false</bool>
+                 </property>
+                 <property name="toolTip">
+                  <string>View JSON details of the selected workload</string>
+                 </property>
+                 <property name="text">
+                  <string>Details</string>
+                 </property>
+                 <property name="variant" stdset="0">
+                  <string notr="true">secondary</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QPushButton" name="logsButton">
+                 <property name="enabled">
+                  <bool>false</bool>
+                 </property>
+                 <property name="toolTip">
+                  <string>View logs of a Pod of the selected workload</string>
+                 </property>
+                 <property name="text">
+                  <string>Logs</string>
+                 </property>
+                 <property name="variant" stdset="0">
+                  <string notr="true">secondary</string>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </item>
+             <item>
+              <widget class="QTableWidget" name="workloadTable">
+               <property name="editTriggers">
+                <set>QAbstractItemView::EditTrigger::NoEditTriggers</set>
+               </property>
+               <property name="alternatingRowColors">
+                <bool>false</bool>
+               </property>
+               <property name="selectionMode">
+                <enum>QAbstractItemView::SelectionMode::SingleSelection</enum>
+               </property>
+               <property name="selectionBehavior">
+                <enum>QAbstractItemView::SelectionBehavior::SelectRows</enum>
+               </property>
+               <attribute name="horizontalHeaderStretchLastSection">
+                <bool>false</bool>
+               </attribute>
+               <attribute name="verticalHeaderVisible">
+                <bool>false</bool>
+               </attribute>
+               <attribute name="verticalHeaderDefaultSectionSize">
+                <number>58</number>
+               </attribute>
+               <row />
+               <row />
+               <row />
+               <row />
+               <row />
+               <column>
+                <property name="text">
+                 <string>NAMESPACE</string>
+                </property>
+               </column>
+               <column>
+                <property name="text">
+                 <string>KIND</string>
+                </property>
+               </column>
+               <column>
+                <property name="text">
+                 <string>NAME</string>
+                </property>
+               </column>
+               <column>
+                <property name="text">
+                 <string>READY</string>
+                </property>
+               </column>
+               <column>
+                <property name="text">
+                 <string>STATUS</string>
+                </property>
+               </column>
+               <column>
+                <property name="text">
+                 <string>AGE</string>
+                </property>
+               </column>
+               <item row="0" column="0">
+                <property name="text">
+                 <string notr="true">default</string>
+                </property>
+                <property name="foreground">
+                 <brush brushstyle="SolidPattern">
+                  <color alpha="255">
+                   <red>36</red>
+                   <green>42</green>
+                   <blue>51</blue>
+                  </color>
+                 </brush>
+                </property>
+               </item>
+               <item row="0" column="1">
+                <property name="text">
+                 <string notr="true">Deployment</string>
+                </property>
+                <property name="foreground">
+                 <brush brushstyle="SolidPattern">
+                  <color alpha="255">
+                   <red>36</red>
+                   <green>42</green>
+                   <blue>51</blue>
+                  </color>
+                 </brush>
+                </property>
+               </item>
+               <item row="0" column="2">
+                <property name="text">
+                 <string notr="true">api</string>
+                </property>
+                <property name="foreground">
+                 <brush brushstyle="SolidPattern">
+                  <color alpha="255">
+                   <red>36</red>
+                   <green>42</green>
+                   <blue>51</blue>
+                  </color>
+                 </brush>
+                </property>
+               </item>
+               <item row="0" column="3">
+                <property name="text">
+                 <string notr="true">3/3</string>
+                </property>
+                <property name="foreground">
+                 <brush brushstyle="SolidPattern">
+                  <color alpha="255">
+                   <red>36</red>
+                   <green>42</green>
+                   <blue>51</blue>
+                  </color>
+                 </brush>
+                </property>
+               </item>
+               <item row="0" column="4">
+                <property name="text">
+                 <string notr="true">Healthy</string>
+                </property>
+                <property name="background">
+                 <brush brushstyle="SolidPattern">
+                  <color alpha="255">
+                   <red>229</red>
+                   <green>244</green>
+                   <blue>235</blue>
+                  </color>
+                 </brush>
+                </property>
+                <property name="foreground">
+                 <brush brushstyle="SolidPattern">
+                  <color alpha="255">
+                   <red>23</red>
+                   <green>107</green>
+                   <blue>88</blue>
+                  </color>
+                 </brush>
+                </property>
+               </item>
+               <item row="0" column="5">
+                <property name="text">
+                 <string notr="true">12d</string>
+                </property>
+                <property name="foreground">
+                 <brush brushstyle="SolidPattern">
+                  <color alpha="255">
+                   <red>36</red>
+                   <green>42</green>
+                   <blue>51</blue>
+                  </color>
+                 </brush>
+                </property>
+               </item>
+               <item row="1" column="0">
+                <property name="text">
+                 <string notr="true">default</string>
+                </property>
+                <property name="foreground">
+                 <brush brushstyle="SolidPattern">
+                  <color alpha="255">
+                   <red>36</red>
+                   <green>42</green>
+                   <blue>51</blue>
+                  </color>
+                 </brush>
+                </property>
+               </item>
+               <item row="1" column="1">
+                <property name="text">
+                 <string notr="true">Deployment</string>
+                </property>
+                <property name="foreground">
+                 <brush brushstyle="SolidPattern">
+                  <color alpha="255">
+                   <red>36</red>
+                   <green>42</green>
+                   <blue>51</blue>
+                  </color>
+                 </brush>
+                </property>
+               </item>
+               <item row="1" column="2">
+                <property name="text">
+                 <string notr="true">worker</string>
+                </property>
+                <property name="foreground">
+                 <brush brushstyle="SolidPattern">
+                  <color alpha="255">
+                   <red>36</red>
+                   <green>42</green>
+                   <blue>51</blue>
+                  </color>
+                 </brush>
+                </property>
+               </item>
+               <item row="1" column="3">
+                <property name="text">
+                 <string notr="true">1/2</string>
+                </property>
+                <property name="foreground">
+                 <brush brushstyle="SolidPattern">
+                  <color alpha="255">
+                   <red>36</red>
+                   <green>42</green>
+                   <blue>51</blue>
+                  </color>
+                 </brush>
+                </property>
+               </item>
+               <item row="1" column="4">
+                <property name="text">
+                 <string notr="true">Degraded</string>
+                </property>
+                <property name="background">
+                 <brush brushstyle="SolidPattern">
+                  <color alpha="255">
+                   <red>255</red>
+                   <green>242</green>
+                   <blue>222</blue>
+                  </color>
+                 </brush>
+                </property>
+                <property name="foreground">
+                 <brush brushstyle="SolidPattern">
+                  <color alpha="255">
+                   <red>152</red>
+                   <green>84</green>
+                   <blue>21</blue>
+                  </color>
+                 </brush>
+                </property>
+               </item>
+               <item row="1" column="5">
+                <property name="text">
+                 <string notr="true">12d</string>
+                </property>
+                <property name="foreground">
+                 <brush brushstyle="SolidPattern">
+                  <color alpha="255">
+                   <red>36</red>
+                   <green>42</green>
+                   <blue>51</blue>
+                  </color>
+                 </brush>
+                </property>
+               </item>
+               <item row="2" column="0">
+                <property name="text">
+                 <string notr="true">default</string>
+                </property>
+                <property name="foreground">
+                 <brush brushstyle="SolidPattern">
+                  <color alpha="255">
+                   <red>36</red>
+                   <green>42</green>
+                   <blue>51</blue>
+                  </color>
+                 </brush>
+                </property>
+               </item>
+               <item row="2" column="1">
+                <property name="text">
+                 <string notr="true">StatefulSet</string>
+                </property>
+                <property name="foreground">
+                 <brush brushstyle="SolidPattern">
+                  <color alpha="255">
+                   <red>36</red>
+                   <green>42</green>
+                   <blue>51</blue>
+                  </color>
+                 </brush>
+                </property>
+               </item>
+               <item row="2" column="2">
+                <property name="text">
+                 <string notr="true">postgres</string>
+                </property>
+                <property name="foreground">
+                 <brush brushstyle="SolidPattern">
+                  <color alpha="255">
+                   <red>36</red>
+                   <green>42</green>
+                   <blue>51</blue>
+                  </color>
+                 </brush>
+                </property>
+               </item>
+               <item row="2" column="3">
+                <property name="text">
+                 <string notr="true">0/1</string>
+                </property>
+                <property name="foreground">
+                 <brush brushstyle="SolidPattern">
+                  <color alpha="255">
+                   <red>36</red>
+                   <green>42</green>
+                   <blue>51</blue>
+                  </color>
+                 </brush>
+                </property>
+               </item>
+               <item row="2" column="4">
+                <property name="text">
+                 <string notr="true">Unavailable</string>
+                </property>
+                <property name="background">
+                 <brush brushstyle="SolidPattern">
+                  <color alpha="255">
+                   <red>252</red>
+                   <green>233</green>
+                   <blue>234</blue>
+                  </color>
+                 </brush>
+                </property>
+                <property name="foreground">
+                 <brush brushstyle="SolidPattern">
+                  <color alpha="255">
+                   <red>163</red>
+                   <green>61</green>
+                   <blue>69</blue>
+                  </color>
+                 </brush>
+                </property>
+               </item>
+               <item row="2" column="5">
+                <property name="text">
+                 <string notr="true">40d</string>
+                </property>
+                <property name="foreground">
+                 <brush brushstyle="SolidPattern">
+                  <color alpha="255">
+                   <red>36</red>
+                   <green>42</green>
+                   <blue>51</blue>
+                  </color>
+                 </brush>
+                </property>
+               </item>
+               <item row="3" column="0">
+                <property name="text">
+                 <string notr="true">monitoring</string>
+                </property>
+                <property name="foreground">
+                 <brush brushstyle="SolidPattern">
+                  <color alpha="255">
+                   <red>36</red>
+                   <green>42</green>
+                   <blue>51</blue>
+                  </color>
+                 </brush>
+                </property>
+               </item>
+               <item row="3" column="1">
+                <property name="text">
+                 <string notr="true">DaemonSet</string>
+                </property>
+                <property name="foreground">
+                 <brush brushstyle="SolidPattern">
+                  <color alpha="255">
+                   <red>36</red>
+                   <green>42</green>
+                   <blue>51</blue>
+                  </color>
+                 </brush>
+                </property>
+               </item>
+               <item row="3" column="2">
+                <property name="text">
+                 <string notr="true">node-exporter</string>
+                </property>
+                <property name="foreground">
+                 <brush brushstyle="SolidPattern">
+                  <color alpha="255">
+                   <red>36</red>
+                   <green>42</green>
+                   <blue>51</blue>
+                  </color>
+                 </brush>
+                </property>
+               </item>
+               <item row="3" column="3">
+                <property name="text">
+                 <string notr="true">4/4</string>
+                </property>
+                <property name="foreground">
+                 <brush brushstyle="SolidPattern">
+                  <color alpha="255">
+                   <red>36</red>
+                   <green>42</green>
+                   <blue>51</blue>
+                  </color>
+                 </brush>
+                </property>
+               </item>
+               <item row="3" column="4">
+                <property name="text">
+                 <string notr="true">Healthy</string>
+                </property>
+                <property name="background">
+                 <brush brushstyle="SolidPattern">
+                  <color alpha="255">
+                   <red>229</red>
+                   <green>244</green>
+                   <blue>235</blue>
+                  </color>
+                 </brush>
+                </property>
+                <property name="foreground">
+                 <brush brushstyle="SolidPattern">
+                  <color alpha="255">
+                   <red>23</red>
+                   <green>107</green>
+                   <blue>88</blue>
+                  </color>
+                 </brush>
+                </property>
+               </item>
+               <item row="3" column="5">
+                <property name="text">
+                 <string notr="true">90d</string>
+                </property>
+                <property name="foreground">
+                 <brush brushstyle="SolidPattern">
+                  <color alpha="255">
+                   <red>36</red>
+                   <green>42</green>
+                   <blue>51</blue>
+                  </color>
+                 </brush>
+                </property>
+               </item>
+               <item row="4" column="0">
+                <property name="text">
+                 <string notr="true">monitoring</string>
+                </property>
+                <property name="foreground">
+                 <brush brushstyle="SolidPattern">
+                  <color alpha="255">
+                   <red>36</red>
+                   <green>42</green>
+                   <blue>51</blue>
+                  </color>
+                 </brush>
+                </property>
+               </item>
+               <item row="4" column="1">
+                <property name="text">
+                 <string notr="true">Deployment</string>
+                </property>
+                <property name="foreground">
+                 <brush brushstyle="SolidPattern">
+                  <color alpha="255">
+                   <red>36</red>
+                   <green>42</green>
+                   <blue>51</blue>
+                  </color>
+                 </brush>
+                </property>
+               </item>
+               <item row="4" column="2">
+                <property name="text">
+                 <string notr="true">grafana</string>
+                </property>
+                <property name="foreground">
+                 <brush brushstyle="SolidPattern">
+                  <color alpha="255">
+                   <red>36</red>
+                   <green>42</green>
+                   <blue>51</blue>
+                  </color>
+                 </brush>
+                </property>
+               </item>
+               <item row="4" column="3">
+                <property name="text">
+                 <string notr="true">0/0</string>
+                </property>
+                <property name="foreground">
+                 <brush brushstyle="SolidPattern">
+                  <color alpha="255">
+                   <red>36</red>
+                   <green>42</green>
+                   <blue>51</blue>
+                  </color>
+                 </brush>
+                </property>
+               </item>
+               <item row="4" column="4">
+                <property name="text">
+                 <string notr="true">Scaled to zero</string>
+                </property>
+                <property name="background">
+                 <brush brushstyle="SolidPattern">
+                  <color alpha="255">
+                   <red>239</red>
+                   <green>241</green>
+                   <blue>243</blue>
+                  </color>
+                 </brush>
+                </property>
+                <property name="foreground">
+                 <brush brushstyle="SolidPattern">
+                  <color alpha="255">
+                   <red>80</red>
+                   <green>89</green>
+                   <blue>99</blue>
+                  </color>
+                 </brush>
+                </property>
+               </item>
+               <item row="4" column="5">
+                <property name="text">
+                 <string notr="true">90d</string>
+                </property>
+                <property name="foreground">
+                 <brush brushstyle="SolidPattern">
+                  <color alpha="255">
+                   <red>36</red>
+                   <green>42</green>
+                   <blue>51</blue>
+                  </color>
+                 </brush>
+                </property>
+               </item>
+               <property name="variant" stdset="0">
+                <string notr="true">data</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <layout class="QHBoxLayout" name="footerRow">
+               <item>
+                <widget class="QLabel" name="statusLabel">
+                 <property name="text">
+                  <string>Select a context to load workloads</string>
+                 </property>
+                 <property name="variant" stdset="0">
+                  <string notr="true">muted</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <spacer name="footerSpacer">
+                 <property name="orientation">
+                  <enum>Qt::Orientation::Horizontal</enum>
+                 </property>
+                 <property name="sizeHint" stdset="0">
+                  <size>
+                   <width>40</width>
+                   <height>20</height>
+                  </size>
+                 </property>
+                </spacer>
+               </item>
+               <item>
+                <widget class="QLabel" name="footerNote">
+                 <property name="text">
+                  <string>Data fetched via kubectl</string>
+                 </property>
+                 <property name="variant" stdset="0">
+                  <string notr="true">muted</string>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </item>
+            </layout>
+           </widget>
+           <widget class="QWidget" name="settingsHost" />
+           <widget class="QWidget" name="viewerHost" />
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+     </layout>
+    </item>
+    <item>
+     <widget class="QFrame" name="appFooter">
+      <property name="minimumSize">
+       <size>
+        <width>0</width>
+        <height>30</height>
+       </size>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>16777215</width>
+        <height>30</height>
+       </size>
+      </property>
+      <layout class="QHBoxLayout" name="appFooterLayout">
+       <property name="leftMargin">
+        <number>18</number>
+       </property>
+       <property name="topMargin">
+        <number>0</number>
+       </property>
+       <property name="rightMargin">
+        <number>22</number>
+       </property>
+       <property name="bottomMargin">
+        <number>0</number>
+       </property>
+       <item>
+        <widget class="QLabel" name="footerLicense">
+         <property name="text">
+          <string>© 2026 DCO Tecnologia · MIT License</string>
+         </property>
+         <property name="toolTip">
+          <string>KubeScope is open source software released under the MIT License</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <spacer name="appFooterSpacer">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>40</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+ </widget>
+ <resources />
+ <connections />
+</ui>

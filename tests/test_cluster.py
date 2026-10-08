@@ -1,6 +1,6 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
-from kubectl_gui import cluster
+from kubescope import cluster
 
 
 def test_parse_deployment_workload() -> None:
@@ -15,7 +15,7 @@ def test_parse_deployment_workload() -> None:
             "spec": {"replicas": 3},
             "status": {"readyReplicas": 2},
         },
-        datetime(2025, 1, 1, 0, 2, tzinfo=timezone.utc),
+        datetime(2025, 1, 1, 0, 2, tzinfo=UTC),
     )
 
     assert workload is not None
@@ -173,3 +173,114 @@ def test_get_pod_logs_selects_container_and_caps_lines(monkeypatch) -> None:
             "dev",
         )
     ]
+
+
+def _node(name: str, ready: str = "True", role: str | None = None) -> dict:
+    labels = {f"node-role.kubernetes.io/{role}": ""} if role else {}
+    return {
+        "metadata": {
+            "name": name,
+            "labels": labels,
+            "creationTimestamp": "2025-01-01T00:00:00Z",
+        },
+        "status": {
+            "conditions": [{"type": "Ready", "status": ready}],
+            "allocatable": {"cpu": "3920m", "memory": "7Gi", "pods": "58"},
+            "nodeInfo": {"kubeletVersion": "v1.30.0"},
+        },
+    }
+
+
+def _pod(node: str, phase: str, cpu: str = "500m", memory: str = "1Gi") -> dict:
+    return {
+        "spec": {
+            "nodeName": node,
+            "containers": [{"resources": {"requests": {"cpu": cpu, "memory": memory}}}],
+        },
+        "status": {"phase": phase},
+    }
+
+
+def test_build_overview_aggregates_nodes_pods_and_usage() -> None:
+    results = {
+        "nodes": {"items": [_node("b", role="worker"), _node("a", "False")]},
+        "pods": {
+            "items": [
+                _pod("a", "Running"),
+                _pod("a", "Running", "250m", "512Mi"),
+                _pod("b", "Pending"),
+                _pod("b", "Succeeded"),
+                _pod("b", "Failed"),
+            ]
+        },
+        "namespaces": {"items": [{}, {}, {}]},
+        "workloads": {
+            "items": [
+                {"kind": "Deployment"},
+                {"kind": "Deployment"},
+                {"kind": "DaemonSet"},
+            ]
+        },
+        "metrics": {
+            "items": [
+                {
+                    "metadata": {"name": "a"},
+                    "usage": {"cpu": "1000000000n", "memory": "2Gi"},
+                }
+            ]
+        },
+    }
+
+    overview = cluster._build_overview(
+        results, {"x": "ignored"}, datetime(2025, 1, 2, tzinfo=UTC)
+    )
+
+    assert [node.name for node in overview.nodes] == ["a", "b"]
+    assert (overview.nodes_ready, overview.pods_capacity) == (1, 116)
+    assert overview.nodes[0].roles == "—" and overview.nodes[1].roles == "worker"
+    assert overview.nodes[0].age == "1d"
+    assert overview.nodes[0].pods_running == 2
+    assert overview.nodes[0].cpu_requests == 0.75
+    assert overview.nodes[1].pods_running == 1  # Succeeded/Failed pods are skipped
+    assert (overview.pods_total, overview.pods_running) == (5, 2)
+    assert (overview.pods_pending, overview.pods_failed) == (1, 1)
+    assert (overview.namespaces, overview.deployments, overview.daemonsets) == (3, 2, 1)
+    assert overview.statefulsets == 0
+    assert overview.metrics_available is True
+    assert overview.cpu_usage == 1.0
+    assert overview.memory_usage == 2 * 2**30
+
+
+def test_get_cluster_overview_reports_unreadable_sections(monkeypatch) -> None:
+    def fake_get_json(*arguments: str, context: str) -> dict:
+        if arguments[1] == "nodes":
+            raise cluster.KubectlError("forbidden")
+        return {"items": []}
+
+    def no_metrics(*_args: object, **_kwargs: object) -> str:
+        raise cluster.KubectlError("no metrics")
+
+    monkeypatch.setattr(cluster, "_get_json", fake_get_json)
+    monkeypatch.setattr(cluster, "_run_kubectl", no_metrics)
+
+    overview = cluster.get_cluster_overview("ctx")
+
+    assert overview.warnings == ("Nodes: forbidden",)
+    assert overview.metrics_available is False
+    assert overview.nodes == ()
+    assert overview.pods_total == 0
+
+
+def test_get_cluster_overview_fails_when_nothing_is_readable(monkeypatch) -> None:
+    def fail(*_args: object, **_kwargs: object) -> dict:
+        raise cluster.KubectlError("unreachable")
+
+    monkeypatch.setattr(cluster, "_get_json", fail)
+    monkeypatch.setattr(cluster, "_run_kubectl", fail)
+
+    try:
+        cluster.get_cluster_overview("ctx")
+    except cluster.KubectlError as error:
+        assert "unreachable" in str(error)
+    else:
+        raise AssertionError("expected KubectlError")

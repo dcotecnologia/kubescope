@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>LogTab</class>
+ <widget class="QWidget" name="LogTab">
+  <layout class="QVBoxLayout" name="logLayout">
+   <property name="spacing">
+    <number>8</number>
+   </property>
+   <property name="leftMargin">
+    <number>0</number>
+   </property>
+   <property name="topMargin">
+    <number>10</number>
+   </property>
+   <property name="rightMargin">
+    <number>0</number>
+   </property>
+   <property name="bottomMargin">
+    <number>0</number>
+   </property>
+   <item>
+    <layout class="QHBoxLayout" name="logToolbar">
+     <property name="spacing">
+      <number>12</number>
+     </property>
+     <item>
+      <widget class="QCheckBox" name="autoCheck">
+       <property name="text">
+        <string>Auto-refresh</string>
+       </property>
+       <property name="toolTip">
+        <string>Fetch new log lines every few seconds and follow the end of the log</string>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="refreshButton">
+       <property name="text">
+        <string>Refresh now</string>
+       </property>
+       <property name="variant" stdset="0">
+        <string notr="true">secondary</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <spacer name="logToolbarSpacer">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item>
+      <widget class="QLabel" name="logStatus">
+       <property name="text">
+        <string notr="true" />
+       </property>
+       <property name="variant" stdset="0">
+        <string notr="true">muted</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <widget class="QPlainTextEdit" name="logText">
+     <property name="readOnly">
+      <bool>true</bool>
+     </property>
+     <property name="lineWrapMode">
+      <enum>QPlainTextEdit::NoWrap</enum>
+     </property>
+     <property name="plainText">
+      <string notr="true">2026-10-08T05:00:01Z INFO server started
+2026-10-08T05:00:02Z WARN slow query took 1.8s</string>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources />
+ <connections />
+</ui>

@@ -1,13 +1,21 @@
 import json
 import os
-import platform
 import subprocess
 import sys
-from datetime import datetime, timezone
+from concurrent.futures import ThreadPoolExecutor
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from kubectl_gui.models import PodInfo, Workload, format_age
+from kubescope.models import (
+    ClusterOverview,
+    NodeInfo,
+    PodInfo,
+    Workload,
+    format_age,
+    parse_cpu,
+    parse_memory,
+)
 
 
 class KubectlError(RuntimeError):
@@ -17,7 +25,7 @@ class KubectlError(RuntimeError):
 def kubectl_executable() -> Path:
     executable_name = "kubectl.exe" if os.name == "nt" else "kubectl"
     if getattr(sys, "frozen", False):
-        bundle_directory = Path(getattr(sys, "_MEIPASS"))
+        bundle_directory = Path(sys._MEIPASS)
         return bundle_directory / "kubectl" / executable_name
     project_directory = Path(__file__).resolve().parents[2]
     return project_directory / "vendor" / "kubectl" / executable_name
@@ -113,7 +121,7 @@ def get_workloads(
     arguments = ["get", "deployments,statefulsets,daemonsets"]
     arguments.extend(("-n", namespace) if namespace else ("-A",))
     workloads_document = _get_json(*arguments, context=context)
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     workloads = [
         workload
         for item in workloads_document.get("items", [])
@@ -211,7 +219,7 @@ def get_workload_pods(context: str, workload: Workload) -> list[PodInfo]:
         selector,
         context=context,
     )
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     pods = [
         pod
         for item in document.get("items", [])
@@ -239,3 +247,153 @@ def get_pod_logs(
         "--timestamps",
         context=context,
     )
+
+
+_OVERVIEW_SECTIONS = {
+    "nodes": "Nodes",
+    "pods": "Pods",
+    "namespaces": "Namespaces",
+    "workloads": "Workloads",
+}
+
+
+def _item_age(item: dict[str, Any], now: datetime) -> str:
+    created = (item.get("metadata") or {}).get("creationTimestamp")
+    if not created:
+        return "unknown"
+    started = datetime.fromisoformat(created.replace("Z", "+00:00"))
+    return format_age((now - started).total_seconds())
+
+
+def _node_roles(labels: dict[str, str]) -> str:
+    prefix = "node-role.kubernetes.io/"
+    roles = sorted(key[len(prefix) :] for key in labels if key.startswith(prefix))
+    return ", ".join(roles) or "—"
+
+
+def _pod_requests(pod: dict[str, Any]) -> tuple[float, float]:
+    cpu = memory = 0.0
+    for container in (pod.get("spec") or {}).get("containers") or []:
+        requests = (container.get("resources") or {}).get("requests") or {}
+        cpu += parse_cpu(requests.get("cpu"))
+        memory += parse_memory(requests.get("memory"))
+    return cpu, memory
+
+
+def _build_overview(
+    results: dict[str, Any], errors: dict[str, str], now: datetime
+) -> ClusterOverview:
+    usage: dict[str, tuple[float, float]] = {}
+    for item in (results.get("metrics") or {}).get("items", []):
+        node_usage = item.get("usage") or {}
+        usage[(item.get("metadata") or {}).get("name", "")] = (
+            parse_cpu(node_usage.get("cpu")),
+            parse_memory(node_usage.get("memory")),
+        )
+
+    running_on: dict[str, int] = {}
+    requests_on: dict[str, tuple[float, float]] = {}
+    phases = {"Running": 0, "Pending": 0, "Failed": 0}
+    pod_items = (results.get("pods") or {}).get("items", [])
+    for pod in pod_items:
+        phase = (pod.get("status") or {}).get("phase")
+        if phase in phases:
+            phases[phase] += 1
+        if phase in {"Succeeded", "Failed"}:
+            continue
+        node_name = (pod.get("spec") or {}).get("nodeName")
+        if not node_name:
+            continue
+        running_on[node_name] = running_on.get(node_name, 0) + 1
+        cpu, memory = _pod_requests(pod)
+        old_cpu, old_memory = requests_on.get(node_name, (0.0, 0.0))
+        requests_on[node_name] = (old_cpu + cpu, old_memory + memory)
+
+    nodes = []
+    for item in (results.get("nodes") or {}).get("items", []):
+        metadata = item.get("metadata") or {}
+        status = item.get("status") or {}
+        name = metadata.get("name") or ""
+        allocatable = status.get("allocatable") or {}
+        ready = any(
+            condition.get("type") == "Ready" and condition.get("status") == "True"
+            for condition in status.get("conditions") or []
+        )
+        node_cpu, node_memory = usage.get(name, (None, None))
+        requested_cpu, requested_memory = requests_on.get(name, (0.0, 0.0))
+        nodes.append(
+            NodeInfo(
+                name=name,
+                ready=ready,
+                roles=_node_roles(metadata.get("labels") or {}),
+                version=(status.get("nodeInfo") or {}).get("kubeletVersion", ""),
+                age=_item_age(item, now),
+                cpu_allocatable=parse_cpu(allocatable.get("cpu")),
+                memory_allocatable=parse_memory(allocatable.get("memory")),
+                pods_allocatable=int(allocatable.get("pods") or 0),
+                pods_running=running_on.get(name, 0),
+                cpu_requests=requested_cpu,
+                memory_requests=requested_memory,
+                cpu_usage=node_cpu,
+                memory_usage=node_memory,
+            )
+        )
+    nodes.sort(key=lambda node: node.name)
+
+    kinds = {"Deployment": 0, "StatefulSet": 0, "DaemonSet": 0}
+    for item in (results.get("workloads") or {}).get("items", []):
+        if item.get("kind") in kinds:
+            kinds[item["kind"]] += 1
+    have_workloads = "workloads" in results
+    have_pods = "pods" in results
+    return ClusterOverview(
+        nodes=tuple(nodes),
+        namespaces=(
+            len((results["namespaces"]).get("items", []))
+            if "namespaces" in results
+            else None
+        ),
+        deployments=kinds["Deployment"] if have_workloads else None,
+        statefulsets=kinds["StatefulSet"] if have_workloads else None,
+        daemonsets=kinds["DaemonSet"] if have_workloads else None,
+        pods_total=len(pod_items) if have_pods else None,
+        pods_running=phases["Running"] if have_pods else None,
+        pods_pending=phases["Pending"] if have_pods else None,
+        pods_failed=phases["Failed"] if have_pods else None,
+        metrics_available="metrics" in results,
+        warnings=tuple(
+            f"{label}: {errors[key]}"
+            for key, label in _OVERVIEW_SECTIONS.items()
+            if key in errors
+        ),
+    )
+
+
+def get_cluster_overview(context: str) -> ClusterOverview:
+    """Collect cluster-wide totals; sections the user cannot read become warnings."""
+    tasks = {
+        "nodes": lambda: _get_json("get", "nodes", context=context),
+        "pods": lambda: _get_json("get", "pods", "-A", context=context),
+        "namespaces": lambda: _get_json("get", "namespaces", context=context),
+        "workloads": lambda: _get_json(
+            "get", "deployments,statefulsets,daemonsets", "-A", context=context
+        ),
+        "metrics": lambda: json.loads(
+            _run_kubectl(
+                "get", "--raw", "/apis/metrics.k8s.io/v1beta1/nodes", context=context
+            )
+        ),
+    }
+    results: dict[str, Any] = {}
+    errors: dict[str, str] = {}
+    with ThreadPoolExecutor(max_workers=len(tasks)) as pool:
+        futures = {name: pool.submit(task) for name, task in tasks.items()}
+        for name, future in futures.items():
+            try:
+                results[name] = future.result()
+            except (KubectlError, ValueError) as error:
+                errors[name] = str(error)
+    if not any(key in results for key in _OVERVIEW_SECTIONS):
+        raise KubectlError(next(iter(errors.values()), "No data returned"))
+    errors.pop("metrics", None)
+    return _build_overview(results, errors, datetime.now(UTC))

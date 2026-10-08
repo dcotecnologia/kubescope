@@ -1,0 +1,638 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>OverviewPage</class>
+ <widget class="QWidget" name="OverviewPage">
+  <layout class="QVBoxLayout" name="overviewLayout" stretch="0,0,0,0,1,0">
+   <property name="spacing">
+    <number>14</number>
+   </property>
+   <property name="leftMargin">
+    <number>32</number>
+   </property>
+   <property name="topMargin">
+    <number>24</number>
+   </property>
+   <property name="rightMargin">
+    <number>32</number>
+   </property>
+   <property name="bottomMargin">
+    <number>22</number>
+   </property>
+   <item>
+    <layout class="QHBoxLayout" name="headerRow">
+     <property name="spacing">
+      <number>12</number>
+     </property>
+     <item>
+      <widget class="QLabel" name="overviewHeading">
+       <property name="text">
+        <string>Cluster resources</string>
+       </property>
+       <property name="variant" stdset="0">
+        <string notr="true">cardTitle</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <spacer name="headerSpacer">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item>
+      <widget class="QPushButton" name="overviewRefreshButton">
+       <property name="text">
+        <string>Refresh</string>
+       </property>
+       <property name="variant" stdset="0">
+        <string notr="true">primary</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="mainCards">
+     <property name="spacing">
+      <number>14</number>
+     </property>
+     <item>
+      <widget class="QFrame" name="nodesCard">
+       <property name="card" stdset="0">
+        <string notr="true">true</string>
+       </property>
+       <layout class="QVBoxLayout" name="nodesCardLayout">
+        <property name="spacing">
+         <number>4</number>
+        </property>
+        <property name="leftMargin">
+         <number>16</number>
+        </property>
+        <property name="topMargin">
+         <number>14</number>
+        </property>
+        <property name="rightMargin">
+         <number>16</number>
+        </property>
+        <property name="bottomMargin">
+         <number>14</number>
+        </property>
+        <item>
+         <widget class="QLabel" name="nodesTitle">
+          <property name="text">
+           <string>NODES</string>
+          </property>
+          <property name="variant" stdset="0">
+           <string notr="true">cardTitle</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="nodesValue">
+          <property name="text">
+           <string notr="true">3 / 3</string>
+          </property>
+          <property name="variant" stdset="0">
+           <string notr="true">cardValue</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="nodesCaption">
+          <property name="text">
+           <string>nodes ready</string>
+          </property>
+          <property name="variant" stdset="0">
+           <string notr="true">cardCaption</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </item>
+     <item>
+      <widget class="QFrame" name="podsCard">
+       <property name="card" stdset="0">
+        <string notr="true">true</string>
+       </property>
+       <layout class="QVBoxLayout" name="podsCardLayout">
+        <property name="spacing">
+         <number>4</number>
+        </property>
+        <property name="leftMargin">
+         <number>16</number>
+        </property>
+        <property name="topMargin">
+         <number>14</number>
+        </property>
+        <property name="rightMargin">
+         <number>16</number>
+        </property>
+        <property name="bottomMargin">
+         <number>14</number>
+        </property>
+        <item>
+         <widget class="QLabel" name="podsTitle">
+          <property name="text">
+           <string>PODS</string>
+          </property>
+          <property name="variant" stdset="0">
+           <string notr="true">cardTitle</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="podsValue">
+          <property name="text">
+           <string notr="true">42 / 174</string>
+          </property>
+          <property name="variant" stdset="0">
+           <string notr="true">cardValue</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="podsCaption">
+          <property name="text">
+           <string>running / capacity</string>
+          </property>
+          <property name="variant" stdset="0">
+           <string notr="true">cardCaption</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QProgressBar" name="podsBar">
+          <property name="maximum">
+           <number>100</number>
+          </property>
+          <property name="value">
+           <number>24</number>
+          </property>
+          <property name="textVisible">
+           <bool>false</bool>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </item>
+     <item>
+      <widget class="QFrame" name="cpuCard">
+       <property name="card" stdset="0">
+        <string notr="true">true</string>
+       </property>
+       <layout class="QVBoxLayout" name="cpuCardLayout">
+        <property name="spacing">
+         <number>4</number>
+        </property>
+        <property name="leftMargin">
+         <number>16</number>
+        </property>
+        <property name="topMargin">
+         <number>14</number>
+        </property>
+        <property name="rightMargin">
+         <number>16</number>
+        </property>
+        <property name="bottomMargin">
+         <number>14</number>
+        </property>
+        <item>
+         <widget class="QLabel" name="cpuTitle">
+          <property name="text">
+           <string>CPU</string>
+          </property>
+          <property name="variant" stdset="0">
+           <string notr="true">cardTitle</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="cpuValue">
+          <property name="text">
+           <string notr="true">2.4 / 11.8</string>
+          </property>
+          <property name="variant" stdset="0">
+           <string notr="true">cardValue</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="cpuCaption">
+          <property name="text">
+           <string>cores requested / allocatable</string>
+          </property>
+          <property name="variant" stdset="0">
+           <string notr="true">cardCaption</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QProgressBar" name="cpuBar">
+          <property name="maximum">
+           <number>100</number>
+          </property>
+          <property name="value">
+           <number>20</number>
+          </property>
+          <property name="textVisible">
+           <bool>false</bool>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </item>
+     <item>
+      <widget class="QFrame" name="memCard">
+       <property name="card" stdset="0">
+        <string notr="true">true</string>
+       </property>
+       <layout class="QVBoxLayout" name="memCardLayout">
+        <property name="spacing">
+         <number>4</number>
+        </property>
+        <property name="leftMargin">
+         <number>16</number>
+        </property>
+        <property name="topMargin">
+         <number>14</number>
+        </property>
+        <property name="rightMargin">
+         <number>16</number>
+        </property>
+        <property name="bottomMargin">
+         <number>14</number>
+        </property>
+        <item>
+         <widget class="QLabel" name="memTitle">
+          <property name="text">
+           <string>MEMORY</string>
+          </property>
+          <property name="variant" stdset="0">
+           <string notr="true">cardTitle</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="memValue">
+          <property name="text">
+           <string notr="true">5.1 GiB / 21.0 GiB</string>
+          </property>
+          <property name="variant" stdset="0">
+           <string notr="true">cardValue</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="memCaption">
+          <property name="text">
+           <string>requested / allocatable</string>
+          </property>
+          <property name="variant" stdset="0">
+           <string notr="true">cardCaption</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QProgressBar" name="memBar">
+          <property name="maximum">
+           <number>100</number>
+          </property>
+          <property name="value">
+           <number>24</number>
+          </property>
+          <property name="textVisible">
+           <bool>false</bool>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="countCards">
+     <property name="spacing">
+      <number>14</number>
+     </property>
+     <item>
+      <widget class="QFrame" name="namespacesCard">
+       <property name="card" stdset="0">
+        <string notr="true">true</string>
+       </property>
+       <layout class="QVBoxLayout" name="namespacesCardLayout">
+        <property name="spacing">
+         <number>4</number>
+        </property>
+        <property name="leftMargin">
+         <number>16</number>
+        </property>
+        <property name="topMargin">
+         <number>14</number>
+        </property>
+        <property name="rightMargin">
+         <number>16</number>
+        </property>
+        <property name="bottomMargin">
+         <number>14</number>
+        </property>
+        <item>
+         <widget class="QLabel" name="namespacesTitle">
+          <property name="text">
+           <string>NAMESPACES</string>
+          </property>
+          <property name="variant" stdset="0">
+           <string notr="true">cardTitle</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="namespacesValue">
+          <property name="text">
+           <string notr="true">6</string>
+          </property>
+          <property name="variant" stdset="0">
+           <string notr="true">cardValue</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="namespacesCaption">
+          <property name="text">
+           <string>in the cluster</string>
+          </property>
+          <property name="variant" stdset="0">
+           <string notr="true">cardCaption</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </item>
+     <item>
+      <widget class="QFrame" name="deploymentsCard">
+       <property name="card" stdset="0">
+        <string notr="true">true</string>
+       </property>
+       <layout class="QVBoxLayout" name="deploymentsCardLayout">
+        <property name="spacing">
+         <number>4</number>
+        </property>
+        <property name="leftMargin">
+         <number>16</number>
+        </property>
+        <property name="topMargin">
+         <number>14</number>
+        </property>
+        <property name="rightMargin">
+         <number>16</number>
+        </property>
+        <property name="bottomMargin">
+         <number>14</number>
+        </property>
+        <item>
+         <widget class="QLabel" name="deploymentsTitle">
+          <property name="text">
+           <string>DEPLOYMENTS</string>
+          </property>
+          <property name="variant" stdset="0">
+           <string notr="true">cardTitle</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="deploymentsValue">
+          <property name="text">
+           <string notr="true">18</string>
+          </property>
+          <property name="variant" stdset="0">
+           <string notr="true">cardValue</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="deploymentsCaption">
+          <property name="text">
+           <string>workloads</string>
+          </property>
+          <property name="variant" stdset="0">
+           <string notr="true">cardCaption</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </item>
+     <item>
+      <widget class="QFrame" name="statefulsetsCard">
+       <property name="card" stdset="0">
+        <string notr="true">true</string>
+       </property>
+       <layout class="QVBoxLayout" name="statefulsetsCardLayout">
+        <property name="spacing">
+         <number>4</number>
+        </property>
+        <property name="leftMargin">
+         <number>16</number>
+        </property>
+        <property name="topMargin">
+         <number>14</number>
+        </property>
+        <property name="rightMargin">
+         <number>16</number>
+        </property>
+        <property name="bottomMargin">
+         <number>14</number>
+        </property>
+        <item>
+         <widget class="QLabel" name="statefulsetsTitle">
+          <property name="text">
+           <string>STATEFULSETS</string>
+          </property>
+          <property name="variant" stdset="0">
+           <string notr="true">cardTitle</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="statefulsetsValue">
+          <property name="text">
+           <string notr="true">2</string>
+          </property>
+          <property name="variant" stdset="0">
+           <string notr="true">cardValue</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="statefulsetsCaption">
+          <property name="text">
+           <string>workloads</string>
+          </property>
+          <property name="variant" stdset="0">
+           <string notr="true">cardCaption</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </item>
+     <item>
+      <widget class="QFrame" name="daemonsetsCard">
+       <property name="card" stdset="0">
+        <string notr="true">true</string>
+       </property>
+       <layout class="QVBoxLayout" name="daemonsetsCardLayout">
+        <property name="spacing">
+         <number>4</number>
+        </property>
+        <property name="leftMargin">
+         <number>16</number>
+        </property>
+        <property name="topMargin">
+         <number>14</number>
+        </property>
+        <property name="rightMargin">
+         <number>16</number>
+        </property>
+        <property name="bottomMargin">
+         <number>14</number>
+        </property>
+        <item>
+         <widget class="QLabel" name="daemonsetsTitle">
+          <property name="text">
+           <string>DAEMONSETS</string>
+          </property>
+          <property name="variant" stdset="0">
+           <string notr="true">cardTitle</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="daemonsetsValue">
+          <property name="text">
+           <string notr="true">4</string>
+          </property>
+          <property name="variant" stdset="0">
+           <string notr="true">cardValue</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="daemonsetsCaption">
+          <property name="text">
+           <string>workloads</string>
+          </property>
+          <property name="variant" stdset="0">
+           <string notr="true">cardCaption</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <widget class="QLabel" name="nodesHeading">
+     <property name="text">
+      <string>Nodes</string>
+     </property>
+     <property name="variant" stdset="0">
+      <string notr="true">cardTitle</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QTableWidget" name="nodesTable">
+     <property name="editTriggers">
+      <set>QAbstractItemView::NoEditTriggers</set>
+     </property>
+     <property name="selectionMode">
+      <enum>QAbstractItemView::SingleSelection</enum>
+     </property>
+     <property name="selectionBehavior">
+      <enum>QAbstractItemView::SelectRows</enum>
+     </property>
+     <property name="alternatingRowColors">
+      <bool>false</bool>
+     </property>
+     <attribute name="verticalHeaderVisible">
+      <bool>false</bool>
+     </attribute>
+     <attribute name="verticalHeaderDefaultSectionSize">
+      <number>44</number>
+     </attribute>
+     <attribute name="horizontalHeaderStretchLastSection">
+      <bool>false</bool>
+     </attribute>
+     <column>
+      <property name="text">
+       <string>NODE</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>STATUS</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>ROLE</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>VERSION</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>CPU</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>MEMORY</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>PODS</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>AGE</string>
+      </property>
+     </column>
+     <property name="variant" stdset="0">
+      <string notr="true">data</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLabel" name="noticeLabel">
+     <property name="text">
+      <string notr="true" />
+     </property>
+     <property name="variant" stdset="0">
+      <string notr="true">muted</string>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources />
+ <connections />
+</ui>
