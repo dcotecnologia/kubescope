@@ -28,10 +28,16 @@ if sys.platform == "linux":
     bundled_binaries.append((str(xcb_cursor), "."))
 
 analysis = Analysis(
-    [str(root / "src" / "kubectl_gui" / "app.py")],
+    [str(root / "src" / "kubescope" / "app.py")],
     pathex=[str(root / "src")],
     binaries=bundled_binaries,
-    datas=[],
+    datas=[
+        (str(root / "src" / "kubescope" / "assets" / "icon.png"), "kubescope/assets"),
+        *(
+            (str(path), "kubescope/translations")
+            for path in (root / "src" / "kubescope" / "translations").glob("*.qm")
+        ),
+    ],
     hiddenimports=collect_submodules("PySide6"),
     hookspath=[],
     hooksconfig={},
@@ -47,6 +53,7 @@ executable = EXE(
     [],
     exclude_binaries=True,
     name="KubeScope",
+    icon=str(root / "src" / "kubescope" / "assets" / "icon.ico") if os.name == "nt" else None,
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,

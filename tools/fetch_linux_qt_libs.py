@@ -5,7 +5,6 @@ import sys
 import tempfile
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[1]
 PACKAGE_NAME = "libxcb-cursor0"
 
@@ -21,7 +20,7 @@ def main() -> int:
         print(f"Using staged library: {library_target}")
         return 0
 
-    with tempfile.TemporaryDirectory(prefix="kubectl-gui-xcb-") as temp_dir:
+    with tempfile.TemporaryDirectory(prefix="kubescope-xcb-") as temp_dir:
         download_dir = Path(temp_dir) / "download"
         extract_dir = Path(temp_dir) / "extract"
         download_dir.mkdir()

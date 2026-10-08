@@ -2,12 +2,12 @@
 
 UV ?= uv
 
-.PHONY: help setup run test kubectl qt-libs build clean
+.PHONY: help setup run preview designer ui i18n appimage deb windows windows-remote lint format test kubectl qt-libs build clean
 
-help: ## Lista os comandos disponíveis
+help: ## List the available commands
 	@awk 'BEGIN { FS = ":.*##" } /^[a-zA-Z_-]+:.*##/ { printf "  %-12s %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
 
-setup: ## Sincroniza as dependências do projeto
+setup: ## Sync the project dependencies
 	$(UV) sync --extra dev --extra build
 
 ifeq ($(shell uname -s),Linux)
@@ -17,24 +17,70 @@ else
 RUN_ENV :=
 endif
 
-run: qt-libs ## Inicia a aplicação desktop
+run: qt-libs $(UI_PY) $(QM_FILES) ## Start the desktop app
 	$(RUN_ENV) $(UV) run kubescope
 
-test: ## Executa os testes
+preview: qt-libs $(UI_PY) $(QM_FILES) ## Open the UI with fake data, no cluster needed
+	$(RUN_ENV) $(UV) run python tools/preview.py
+
+UI_DIR := src/kubescope/ui
+UI_FILES := $(wildcard $(UI_DIR)/*.ui)
+UI_PY := $(UI_FILES:$(UI_DIR)/%.ui=$(UI_DIR)/ui_%.py)
+
+$(UI_DIR)/ui_%.py: $(UI_DIR)/%.ui
+	$(UV) run pyside6-uic $< -o $@
+
+designer: qt-libs ## Open the .ui files in Qt Designer
+	$(RUN_ENV) $(UV) run pyside6-designer -style fusion $(UI_FILES)
+
+ui: $(UI_PY) ## Regenerate ui_*.py from changed .ui files (run/preview/build do it too)
+
+TS_FILES := $(wildcard src/kubescope/translations/*.ts)
+QM_FILES := $(TS_FILES:.ts=.qm)
+I18N_SOURCES := src/kubescope/window.py src/kubescope/log_tab.py $(UI_FILES)
+
+%.qm: %.ts
+	$(UV) run pyside6-lrelease $< -qm $@
+
+i18n: ## Extract new texts into the .ts files and compile the .qm (edit .ts in Qt Linguist)
+	$(UV) run pyside6-lupdate -no-obsolete $(I18N_SOURCES) -ts $(TS_FILES)
+	$(MAKE) --always-make $(QM_FILES)
+
+appimage: build ## Package the bundle as an AppImage in dist/ (Linux x86_64)
+	$(UV) run python tools/build_appimage.py
+
+deb: build ## Package the bundle as a .deb in dist/ (Debian/Ubuntu)
+	$(UV) run python tools/build_deb.py
+
+windows: ## Build the Windows installer and zip (run this on Windows)
+	$(UV) run python tools/build_windows.py
+
+windows-remote: ## Build the Windows packages on GitHub Actions and download them to dist/
+	$(UV) run python tools/windows_remote.py
+
+lint: ## Check the code with ruff (lint and formatting)
+	$(UV) run --extra dev ruff check .
+	$(UV) run --extra dev ruff format --check .
+
+format: ## Fix lint issues and format the code with ruff
+	$(UV) run --extra dev ruff check --fix .
+	$(UV) run --extra dev ruff format .
+
+test: $(UI_PY) $(QM_FILES) ## Run the tests
 	$(UV) run --extra dev pytest -q
 
-kubectl: ## Baixa e verifica o kubectl oficial
+kubectl: ## Download and verify the official kubectl
 	$(UV) run --extra dev python tools/fetch_kubectl.py
 
-qt-libs: ## Baixa e extrai bibliotecas Qt/XCB para Linux
+qt-libs: ## Download and extract the Qt/XCB libraries for Linux
 ifeq ($(shell uname -s),Linux)
 	$(UV) run --extra dev python tools/fetch_linux_qt_libs.py
 else
 	@echo "Skipping Linux Qt libraries on $(shell uname -s)"
 endif
 
-build: qt-libs ## Gera o bundle desktop com kubectl e dependência XCB
+build: qt-libs $(UI_PY) $(QM_FILES) ## Build the desktop bundle with kubectl and the XCB library
 	$(UV) run --extra build pyinstaller --noconfirm KubeScope.spec
 
-clean: ## Remove os artefatos de build e cache de testes
+clean: ## Remove build artifacts and the test cache
 	rm -rf build dist .pytest_cache

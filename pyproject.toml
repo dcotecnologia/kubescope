@@ -18,16 +18,46 @@ build-backend = "setuptools.build_meta"
 dev = [
     "pre-commit>=4.6.2",
     "pytest>=9.1.1",
+    "ruff>=0.15.0",
 ]
 build = [
     "pyinstaller>=6.22.3",
 ]
 
 [project.scripts]
-kubescope = "kubectl_gui.app:main"
+kubescope = "kubescope.app:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[tool.setuptools.package-data]
+kubescope = ["translations/*.qm", "assets/*.png", "assets/*.ico"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[tool.pyside6-project]
+files = [
+    "main.py",
+    "src/kubescope/app.py",
+    "src/kubescope/cluster.py",
+    "src/kubescope/models.py",
+    "src/kubescope/window.py",
+    "src/kubescope/settings.py",
+    "src/kubescope/i18n.py",
+    "src/kubescope/ui/main_window.ui",
+    "src/kubescope/ui/overview_page.ui",
+    "src/kubescope/ui/pods_dialog.ui",
+    "src/kubescope/ui/settings_page.ui",
+    "src/kubescope/translations/kubescope_pt.ts",
+    "src/kubescope/ui/viewer_page.ui",
+    "tools/preview.py",
+]
+
+[tool.ruff]
+line-length = 88
+target-version = "py312"
+extend-exclude = ["src/kubescope/ui/ui_*.py", "vendor", "build", "dist"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "SIM"]
