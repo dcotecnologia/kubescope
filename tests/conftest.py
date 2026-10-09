@@ -20,3 +20,13 @@ def no_blocking_dialogs(monkeypatch):
 
     monkeypatch.setattr(QDialog, "exec", refuse)
     monkeypatch.setattr(QMessageBox, "exec", refuse)
+
+
+@pytest.fixture(autouse=True)
+def light_theme():
+    """The theme is process-wide state; every test starts and ends on light."""
+    from kubescope import theme
+
+    theme.set_theme("light")
+    yield
+    theme.set_theme("light")

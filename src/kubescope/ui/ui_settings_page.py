@@ -75,16 +75,30 @@ class Ui_SettingsPage(object):
 
         self.generalForm.setWidget(0, QFormLayout.ItemRole.FieldRole, self.languageCombo)
 
+        self.themeLabel = QLabel(SettingsPage)
+        self.themeLabel.setObjectName(u"themeLabel")
+
+        self.generalForm.setWidget(1, QFormLayout.ItemRole.LabelRole, self.themeLabel)
+
+        self.themeCombo = QComboBox(SettingsPage)
+        self.themeCombo.addItem(u"Light")
+        self.themeCombo.addItem(u"Dark")
+        self.themeCombo.setObjectName(u"themeCombo")
+        self.themeCombo.setMinimumSize(QSize(200, 0))
+        self.themeCombo.setProperty(u"variant", u"filter")
+
+        self.generalForm.setWidget(1, QFormLayout.ItemRole.FieldRole, self.themeCombo)
+
         self.rememberCheck = QCheckBox(SettingsPage)
         self.rememberCheck.setObjectName(u"rememberCheck")
         self.rememberCheck.setChecked(True)
 
-        self.generalForm.setWidget(1, QFormLayout.ItemRole.SpanningRole, self.rememberCheck)
+        self.generalForm.setWidget(2, QFormLayout.ItemRole.SpanningRole, self.rememberCheck)
 
         self.debugCheck = QCheckBox(SettingsPage)
         self.debugCheck.setObjectName(u"debugCheck")
 
-        self.generalForm.setWidget(2, QFormLayout.ItemRole.SpanningRole, self.debugCheck)
+        self.generalForm.setWidget(3, QFormLayout.ItemRole.SpanningRole, self.debugCheck)
 
         self.debugHint = QLabel(SettingsPage)
         self.debugHint.setObjectName(u"debugHint")
@@ -93,12 +107,12 @@ class Ui_SettingsPage(object):
         self.debugHint.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         self.debugHint.setProperty(u"variant", u"muted")
 
-        self.generalForm.setWidget(3, QFormLayout.ItemRole.SpanningRole, self.debugHint)
+        self.generalForm.setWidget(4, QFormLayout.ItemRole.SpanningRole, self.debugHint)
 
         self.openLogsButton = QPushButton(SettingsPage)
         self.openLogsButton.setObjectName(u"openLogsButton")
 
-        self.generalForm.setWidget(4, QFormLayout.ItemRole.SpanningRole, self.openLogsButton)
+        self.generalForm.setWidget(5, QFormLayout.ItemRole.SpanningRole, self.openLogsButton)
 
 
         self.settingsLayout.addLayout(self.generalForm)
@@ -157,6 +171,8 @@ class Ui_SettingsPage(object):
         self.saveButton.setText(QCoreApplication.translate("SettingsPage", u"Save changes", None))
         self.generalHeading.setText(QCoreApplication.translate("SettingsPage", u"GENERAL", None))
         self.languageLabel.setText(QCoreApplication.translate("SettingsPage", u"Language", None))
+
+        self.themeLabel.setText(QCoreApplication.translate("SettingsPage", u"Theme", None))
 
         self.rememberCheck.setText(QCoreApplication.translate("SettingsPage", u"Remember the last used context", None))
         self.debugCheck.setText(QCoreApplication.translate("SettingsPage", u"Debug mode: write a log file I can share", None))

@@ -11,7 +11,7 @@ import kubescope
 from kubescope.diagnostics import configure_logging
 from kubescope.i18n import apply_language
 from kubescope.settings import Settings
-from kubescope.theme import apply_light_theme
+from kubescope.theme import apply_theme
 from kubescope.window import WorkloadWindow
 
 # __file__ of the entry script points at the bundle root once frozen, so anchor
@@ -56,7 +56,7 @@ def main() -> int:
     application = QApplication(sys.argv)
     application.setApplicationName("KubeScope")
     application.setWindowIcon(load_app_icon())
-    apply_light_theme(application)
+    apply_theme(application, settings.theme)
     apply_language(settings.language)
     window = WorkloadWindow(settings)
     window.show()

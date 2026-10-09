@@ -5,7 +5,7 @@ import time
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 from PySide6.QtCore import QObject, QPoint, QTimer, Signal
-from PySide6.QtGui import QCloseEvent
+from PySide6.QtGui import QCloseEvent, QPalette
 from PySide6.QtWidgets import (
     QApplication,
     QDialog,
@@ -27,6 +27,7 @@ from kubescope.models import (
     Workload,
     WorkloadsOverview,
 )
+from kubescope.theme import themed
 
 application = QApplication.instance() or QApplication([])
 
@@ -1208,3 +1209,49 @@ def test_the_overview_follows_a_language_change(monkeypatch) -> None:
     assert window.workloads_ui.podsLink.text() == "Pods (18)"  # counts survive
     assert window.workloads_table.rowCount() == 2
     window.close()
+
+
+def test_the_theme_is_chosen_in_settings_and_applied_at_once(monkeypatch) -> None:
+    window = _ready_window(monkeypatch)
+    window._open_list_view("pods")
+    window._show_pods(["ns"], [POD])
+    window._overview = ClusterOverview()
+    window._workloads_overview = _workloads_overview()
+    form = window.settings_ui
+
+    window._load_settings_form()
+    assert [form.themeCombo.itemData(i) for i in range(2)] == ["light", "dark"]
+    assert form.themeCombo.currentData() == "light"
+    light_style = window.styleSheet()
+    assert "#f7f7fa" in light_style and "#11141a" not in light_style
+    light_icon = window_module._chevron_icon_path()
+
+    form.themeCombo.setCurrentIndex(form.themeCombo.findData("dark"))
+    window._save_preferences()
+
+    assert window.settings.theme == "dark"
+    assert "#11141a" in window.styleSheet() and "#f7f7fa" not in window.styleSheet()
+    assert window.table.item(0, 4).foreground().color().name() == themed("#176b58")
+    assert "dark" in window_module._chevron_icon_path() != light_icon
+    assert QApplication.palette().color(QPalette.ColorRole.Window).name() == "#11141a"
+
+    window._save_preferences()  # unchanged: nothing is restyled again
+    form.themeCombo.setCurrentIndex(form.themeCombo.findData("light"))
+    window._save_preferences()
+    assert window.styleSheet() == light_style
+    window.close()
+
+
+def test_the_window_starts_in_the_saved_theme(monkeypatch, tmp_path) -> None:
+    from kubescope.settings import Settings
+    from kubescope.theme import apply_theme
+
+    settings = Settings(tmp_path / "settings.json")
+    settings.theme = "dark"
+    apply_theme(QApplication.instance(), settings.theme)
+
+    window = _ready_window(monkeypatch)
+
+    assert "#11141a" in window.styleSheet()
+    window.close()
+    apply_theme(QApplication.instance(), "light")

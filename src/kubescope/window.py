@@ -67,7 +67,7 @@ from kubescope.cluster import (
     run_login,
 )
 from kubescope.diagnostics import configure_logging, log_file
-from kubescope.errors import describe_error, first_line, is_auth_error
+from kubescope.errors import ErrorInfo, describe_error, first_line, is_auth_error
 from kubescope.i18n import apply_language
 from kubescope.log_tab import LOG_REFRESH_MS, LogTab
 from kubescope.models import (
@@ -85,6 +85,7 @@ from kubescope.models import (
     workload_sort_key,
 )
 from kubescope.settings import Settings, log_directory
+from kubescope.theme import active_theme, apply_theme, themed, themed_stylesheet
 from kubescope.ui.ui_main_window import Ui_MainWindow
 from kubescope.ui.ui_overview_page import Ui_OverviewPage
 from kubescope.ui.ui_pods_dialog import Ui_PodsDialog
@@ -107,7 +108,7 @@ WORKLOAD_LINKS = {
 def _icon_path(name: str, draw: Callable[[QPainter], None], size: QSize) -> str:
     """Render a small PNG once; Qt style sheets cannot draw shapes
     themselves."""
-    path = Path(tempfile.gettempdir()) / f"kubescope-{name}.png"
+    path = Path(tempfile.gettempdir()) / f"kubescope-{active_theme()}-{name}.png"
     pixmap = QPixmap(size)
     pixmap.fill(Qt.GlobalColor.transparent)
     painter = QPainter(pixmap)
@@ -121,7 +122,7 @@ def _icon_path(name: str, draw: Callable[[QPainter], None], size: QSize) -> str:
 def _chevron_icon_path(color: str = "#6b7380", name: str = "chevron-down") -> str:
     def draw(painter: QPainter) -> None:
         painter.setPen(Qt.PenStyle.NoPen)
-        painter.setBrush(QColor(color))
+        painter.setBrush(QColor(themed(color)))
         painter.drawPolygon(QPolygonF([QPointF(0, 0), QPointF(10, 0), QPointF(5, 6)]))
 
     return _icon_path(name, draw, QSize(10, 6))
@@ -130,7 +131,7 @@ def _chevron_icon_path(color: str = "#6b7380", name: str = "chevron-down") -> st
 def _sort_icon_path(up: bool) -> str:
     def draw(painter: QPainter) -> None:
         painter.setPen(Qt.PenStyle.NoPen)
-        painter.setBrush(QColor("#3220a0"))
+        painter.setBrush(QColor(themed("#3220a0")))
         points = [QPointF(0, 6), QPointF(9, 6), QPointF(4.5, 0)]
         if not up:
             points = [QPointF(0, 0), QPointF(9, 0), QPointF(4.5, 6)]
@@ -141,7 +142,7 @@ def _sort_icon_path(up: bool) -> str:
 
 def _close_icon_path(color: str, name: str) -> str:
     def draw(painter: QPainter) -> None:
-        pen = QPen(QColor(color), 1.6)
+        pen = QPen(QColor(themed(color)), 1.6)
         pen.setCapStyle(Qt.PenCapStyle.RoundCap)
         painter.setPen(pen)
         painter.drawLine(QPointF(1.5, 1.5), QPointF(8.5, 8.5))
@@ -413,15 +414,8 @@ class WorkloadWindow(QMainWindow):
             self.table.setColumnWidth(column, width)
         header.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         header.customContextMenuRequested.connect(self._show_column_menu)
-        self.setStyleSheet(
-            self.styleSheet()
-            .replace("SORT_UP", _sort_icon_path(up=True))
-            .replace("SORT_DOWN", _sort_icon_path(up=False))
-            .replace("CHEVRON_LIGHT", _chevron_icon_path("#b8c7dc", "chevron-light"))
-            .replace("CHEVRON", _chevron_icon_path())
-            .replace("CLOSE_ICON_HOVER", _close_icon_path("#3220a0", "close-hover"))
-            .replace("CLOSE_ICON", _close_icon_path("#6b7380", "close"))
-        )
+        self._style_template = self.styleSheet()
+        self._apply_style()
 
         self._spinner_angle = 0
         self._spinner_button: QPushButton | None = None
@@ -602,6 +596,30 @@ class WorkloadWindow(QMainWindow):
             }[self._view]
             self.ui.pageTitle.setText(title)
             self.ui.pageSubtitle.setText(subtitle)
+
+    def _apply_style(self) -> None:
+        """Style the window for the active theme; the icons Qt style sheets
+        cannot draw are rendered in the theme's colors."""
+        self.setStyleSheet(
+            themed_stylesheet(self._style_template)
+            .replace("SORT_UP", _sort_icon_path(up=True))
+            .replace("SORT_DOWN", _sort_icon_path(up=False))
+            .replace("CHEVRON_LIGHT", _chevron_icon_path("#b8c7dc", "chevron-light"))
+            .replace("CHEVRON", _chevron_icon_path())
+            .replace("CLOSE_ICON_HOVER", _close_icon_path("#3220a0", "close-hover"))
+            .replace("CLOSE_ICON", _close_icon_path("#6b7380", "close"))
+        )
+
+    def _apply_theme(self) -> None:
+        """Switch to the theme in the settings and redraw what was drawn with
+        the old colors."""
+        apply_theme(QApplication.instance(), self.settings.theme)
+        self._apply_style()
+        self._render_rows()
+        if self._overview is not None:
+            self._render_overview(self._overview)
+        if self._workloads_overview is not None:
+            self._render_workloads_overview(self._workloads_overview)
 
     def _toggle_submenu(self) -> None:
         """Slide the Pods, Deployments, StatefulSets, Jobs and CronJobs entries
@@ -800,10 +818,7 @@ class WorkloadWindow(QMainWindow):
         info = describe_error(message)
         label = self.workloads_ui.noticeLabel
         label.setTextFormat(Qt.TextFormat.RichText)
-        label.setText(
-            f'<span style="color:#a33d45"><b>{html.escape(info.title)}</b></span>'
-            f"<br>{html.escape(info.hint)}"
-        )
+        label.setText(self._error_html(info))
         label.setToolTip(info.details)
 
     def _show_workloads_overview(
@@ -872,7 +887,11 @@ class WorkloadWindow(QMainWindow):
                 item = QTableWidgetItem(value)
                 item.setToolTip(event.message)
                 item.setForeground(
-                    QColor("#985415" if event.type == "Warning" else "#242a33")
+                    QColor(
+                        themed("#985415")
+                        if event.type == "Warning"
+                        else themed("#242a33")
+                    )
                 )
                 table.setItem(row, column, item)
 
@@ -894,6 +913,14 @@ class WorkloadWindow(QMainWindow):
             on_error=self._show_overview_error,
         )
 
+    @staticmethod
+    def _error_html(info: ErrorInfo) -> str:
+        color = themed("#a33d45")
+        return (
+            f'<span style="color:{color}"><b>{html.escape(info.title)}</b></span>'
+            f"<br>{html.escape(info.hint)}"
+        )
+
     def _show_overview_error(self, message: str) -> None:
         logger.info("Overview failed: %s", first_line(message))
         self._overview_busy = False
@@ -902,10 +929,7 @@ class WorkloadWindow(QMainWindow):
         info = describe_error(message)
         label = self.overview_ui.noticeLabel
         label.setTextFormat(Qt.TextFormat.RichText)
-        label.setText(
-            f'<span style="color:#a33d45"><b>{html.escape(info.title)}</b></span>'
-            f"<br>{html.escape(info.hint)}"
-        )
+        label.setText(self._error_html(info))
         label.setToolTip(info.details)
 
     def _reset_overview(self) -> None:
@@ -1022,10 +1046,12 @@ class WorkloadWindow(QMainWindow):
             )
             for column, value in enumerate(values):
                 item = QTableWidgetItem(value)
-                item.setForeground(QColor("#242a33"))
+                item.setForeground(QColor(themed("#242a33")))
                 if column == 1:
                     text_color, background = (
-                        ("#176b58", "#e5f4eb") if node.ready else ("#a33d45", "#fce9ea")
+                        (themed("#176b58"), themed("#e5f4eb"))
+                        if node.ready
+                        else (themed("#a33d45"), themed("#fce9ea"))
                     )
                     item.setForeground(QColor(text_color))
                     item.setBackground(QColor(background))
@@ -1078,7 +1104,7 @@ class WorkloadWindow(QMainWindow):
             self.overview_refresh_button,
             self.workloads_refresh_button,
         )
-        color = "#ffffff" if self._spinner_button in primary else "#3220a0"
+        color = "#ffffff" if self._spinner_button in primary else themed("#3220a0")
         self._spinner_button.setIcon(_spinner_icon(self._spinner_angle, color))
 
     def refresh(self, *_args: object) -> None:
@@ -1209,12 +1235,15 @@ class WorkloadWindow(QMainWindow):
     def _render_pods(self) -> None:
         pods = self._pods
         colors = {
-            "Running": ("#176b58", "#e5f4eb"),
-            "Pending": ("#985415", "#fff2de"),
-            "Succeeded": ("#505963", "#eff1f3"),
-            "Failed": ("#a33d45", "#fce9ea"),
+            "Running": (themed("#176b58"), themed("#e5f4eb")),
+            "Pending": (themed("#985415"), themed("#fff2de")),
+            "Succeeded": (themed("#505963"), themed("#eff1f3")),
+            "Failed": (themed("#a33d45"), themed("#fce9ea")),
         }
-        tints = {"problem": QColor("#fbe4e4"), "young": QColor("#e2f5e8")}
+        tints = {
+            "problem": QColor(themed("#fbe4e4")),
+            "young": QColor(themed("#e2f5e8")),
+        }
         self.table.setRowCount(len(pods))
         for row_index, pod in enumerate(pods):
             tint = tints.get(pod_highlight(pod) or "")
@@ -1231,12 +1260,12 @@ class WorkloadWindow(QMainWindow):
             )
             for column, value in enumerate(values):
                 item = QTableWidgetItem(value)
-                item.setForeground(QColor("#242a33"))
+                item.setForeground(QColor(themed("#242a33")))
                 if tint is not None:
                     item.setBackground(tint)
                 if column == 4:
                     foreground, background = colors.get(
-                        pod.phase, ("#a33d45", "#fce9ea")
+                        pod.phase, (themed("#a33d45"), themed("#fce9ea"))
                     )
                     item.setForeground(QColor(foreground))
                     item.setBackground(QColor(background))
@@ -1280,12 +1309,12 @@ class WorkloadWindow(QMainWindow):
             )
             for column, value in enumerate(values):
                 item = QTableWidgetItem(value)
-                item.setForeground(QColor("#242a33"))
+                item.setForeground(QColor(themed("#242a33")))
                 if column == 4:
-                    good = ("#176b58", "#e5f4eb")
-                    warning = ("#985415", "#fff2de")
-                    bad = ("#a33d45", "#fce9ea")
-                    muted = ("#505963", "#eff1f3")
+                    good = (themed("#176b58"), themed("#e5f4eb"))
+                    warning = (themed("#985415"), themed("#fff2de"))
+                    bad = (themed("#a33d45"), themed("#fce9ea"))
+                    muted = (themed("#505963"), themed("#eff1f3"))
                     color = {
                         "Healthy": good,
                         "Complete": good,
@@ -1491,7 +1520,7 @@ class WorkloadWindow(QMainWindow):
             )
             for column, value in enumerate(values):
                 item = QTableWidgetItem(value)
-                item.setForeground(QColor("#242a33"))
+                item.setForeground(QColor(themed("#242a33")))
                 table.setItem(row, column, item)
 
         def selected_pod() -> PodInfo | None:
@@ -1686,6 +1715,12 @@ class WorkloadWindow(QMainWindow):
         form.languageCombo.setCurrentIndex(
             max(form.languageCombo.findData(self.settings.language), 0)
         )
+        form.themeCombo.clear()
+        for code, label in (("light", self.tr("Light")), ("dark", self.tr("Dark"))):
+            form.themeCombo.addItem(label, code)
+        form.themeCombo.setCurrentIndex(
+            max(form.themeCombo.findData(self.settings.theme), 0)
+        )
         form.rememberCheck.setChecked(self.settings.remember_last_context)
         form.debugCheck.setChecked(self.settings.debug_logging)
         form.debugHint.setText(
@@ -1740,7 +1775,9 @@ class WorkloadWindow(QMainWindow):
             kept = {c: a for c, a in aliases.items() if c not in edited}
             self.settings.set_context_aliases({**kept, **edited})
         previous_language = self.settings.language
+        previous_theme = self.settings.theme
         self.settings.language = form.languageCombo.currentData()
+        self.settings.theme = form.themeCombo.currentData()
         self.settings.remember_last_context = form.rememberCheck.isChecked()
         if self.settings.remember_last_context:
             self.settings.last_context = self._context()
@@ -1754,6 +1791,9 @@ class WorkloadWindow(QMainWindow):
         self._fill_contexts(self._context())
         if self.settings.language != previous_language:
             apply_language(self.settings.language)
+        if self.settings.theme != previous_theme:
+            logger.info("Theme changed to %s", self.settings.theme)
+            self._apply_theme()
         form.noticeLabel.setText(self.tr("Settings saved."))
 
     def changeEvent(self, event: QEvent) -> None:

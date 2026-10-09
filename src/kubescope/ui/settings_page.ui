@@ -108,7 +108,37 @@
        </property>
       </widget>
      </item>
-     <item row="1" column="0" colspan="2">
+     <item row="1" column="0">
+      <widget class="QLabel" name="themeLabel">
+       <property name="text">
+        <string>Theme</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="1">
+      <widget class="QComboBox" name="themeCombo">
+       <property name="minimumSize">
+        <size>
+         <width>200</width>
+         <height>0</height>
+        </size>
+       </property>
+       <item>
+        <property name="text">
+         <string notr="true">Light</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">Dark</string>
+        </property>
+       </item>
+       <property name="variant" stdset="0">
+        <string notr="true">filter</string>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="0" colspan="2">
       <widget class="QCheckBox" name="rememberCheck">
        <property name="text">
         <string>Remember the last used context</string>
@@ -118,14 +148,14 @@
        </property>
       </widget>
      </item>
-     <item row="2" column="0" colspan="2">
+     <item row="3" column="0" colspan="2">
       <widget class="QCheckBox" name="debugCheck">
        <property name="text">
         <string>Debug mode: write a log file I can share</string>
        </property>
       </widget>
      </item>
-     <item row="3" column="0" colspan="2">
+     <item row="4" column="0" colspan="2">
       <widget class="QLabel" name="debugHint">
        <property name="text">
         <string notr="true" />
@@ -141,7 +171,7 @@
        </property>
       </widget>
      </item>
-     <item row="4" column="0" colspan="2">
+     <item row="5" column="0" colspan="2">
       <widget class="QPushButton" name="openLogsButton">
        <property name="text">
         <string>Open the log folder</string>

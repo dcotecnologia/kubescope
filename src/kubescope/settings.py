@@ -8,9 +8,11 @@ from typing import Any
 
 CONFIG_DIR_ENV = "KUBESCOPE_CONFIG_DIR"
 LANGUAGE_CHOICES = ("auto", "en", "pt")
+THEME_CHOICES = ("light", "dark")
 
 DEFAULTS: dict[str, Any] = {
     "language": "auto",
+    "theme": "light",
     "remember_last_context": True,
     "last_context": None,
     "context_aliases": {},
@@ -73,6 +75,8 @@ class Settings:
         }
         if self._data["language"] not in LANGUAGE_CHOICES:
             self._data["language"] = DEFAULTS["language"]
+        if self._data["theme"] not in THEME_CHOICES:
+            self._data["theme"] = DEFAULTS["theme"]
 
     def save(self) -> None:
         self.path.parent.mkdir(parents=True, exist_ok=True)
@@ -90,6 +94,14 @@ class Settings:
     @language.setter
     def language(self, value: str) -> None:
         self._data["language"] = value if value in LANGUAGE_CHOICES else "auto"
+
+    @property
+    def theme(self) -> str:
+        return self._data["theme"]
+
+    @theme.setter
+    def theme(self, value: str) -> None:
+        self._data["theme"] = value if value in THEME_CHOICES else DEFAULTS["theme"]
 
     @property
     def remember_last_context(self) -> bool:

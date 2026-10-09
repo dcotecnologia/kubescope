@@ -4,7 +4,8 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 from PySide6.QtWidgets import QApplication
 
-from kubescope import widgets
+from kubescope import theme, widgets
+from kubescope.theme import themed
 from kubescope.widgets import StatusBar
 
 application = QApplication.instance() or QApplication([])
@@ -48,3 +49,13 @@ def test_status_bar_is_thin_and_stretches_sideways() -> None:
 
     assert bar.height() == StatusBar.HEIGHT == bar.sizeHint().height()
     assert bar.sizeHint().width() > 0
+
+
+def test_status_bar_follows_the_theme() -> None:
+    bar = _bar()
+    bar.set_summary(ok=1, warning=0, bad=0, total=2)
+
+    theme.set_theme("dark")
+
+    assert _colors(bar, 0.25, 0.75) == [themed(widgets.OK), themed(widgets.TRACK)]
+    assert themed(widgets.OK) != widgets.OK

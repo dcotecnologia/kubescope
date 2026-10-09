@@ -59,7 +59,9 @@ def test_main_builds_the_window_and_runs_the_event_loop(monkeypatch) -> None:
     _capture_logging(monkeypatch)
     monkeypatch.setattr(app, "QApplication", FakeApplication)
     monkeypatch.setattr(app, "load_app_icon", lambda: "icon")
-    monkeypatch.setattr(app, "apply_light_theme", lambda _app: events.append("theme"))
+    monkeypatch.setattr(
+        app, "apply_theme", lambda _app, name: events.append(("theme", name))
+    )
     monkeypatch.setattr(
         app, "apply_language", lambda code: events.append(("lang", code))
     )

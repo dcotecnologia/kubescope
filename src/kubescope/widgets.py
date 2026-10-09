@@ -4,6 +4,8 @@ from PySide6.QtCore import QRectF, QSize, Qt
 from PySide6.QtGui import QColor, QPainter, QPaintEvent
 from PySide6.QtWidgets import QSizePolicy, QWidget
 
+from kubescope.theme import themed
+
 TRACK = "#e8eaee"
 OK = "#3d9a6d"
 WARNING = "#e0a030"
@@ -36,7 +38,7 @@ class StatusBar(QWidget):
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         painter.setPen(Qt.PenStyle.NoPen)
         radius = self.HEIGHT / 2
-        painter.setBrush(QColor(TRACK))
+        painter.setBrush(QColor(themed(TRACK)))
         painter.drawRoundedRect(QRectF(self.rect()), radius, radius)
         if self._total <= 0:
             return
@@ -44,7 +46,7 @@ class StatusBar(QWidget):
         for count, color in zip(self._parts, (OK, WARNING, BAD), strict=True):
             width = self.width() * count / self._total
             if width > 0:
-                painter.setBrush(QColor(color))
+                painter.setBrush(QColor(themed(color)))
                 painter.drawRoundedRect(
                     QRectF(x, 0, width, self.height()), radius, radius
                 )

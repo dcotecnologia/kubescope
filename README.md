@@ -115,8 +115,8 @@ The **Settings** page (sidebar) stores preferences as JSON in
 `~/.config/kubescope/settings.json` (`%APPDATA%\\kubescope` on Windows,
 `~/Library/Application Support/kubescope` on macOS; override with
 `KUBESCOPE_CONFIG_DIR`). It lets you pick the language (automatic, English or
-Portuguese), remember the last context, and give each kubeconfig context a
-friendlier display name. The real context name is still used for every request.
+Portuguese), the theme (light or dark), remember the last context, and give each
+kubeconfig context a friendlier display name. The real context name is still used for every request.
 Hidden table columns are stored in the same file.
 
 Source strings are English; translations live in
