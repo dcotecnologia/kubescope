@@ -38,6 +38,7 @@ class Ui_LogTab(object):
 
         self.refreshButton = QPushButton(LogTab)
         self.refreshButton.setObjectName(u"refreshButton")
+        self.refreshButton.setProperty(u"iconOnly", u"true")
         self.refreshButton.setProperty(u"variant", u"secondary")
 
         self.logToolbar.addWidget(self.refreshButton)
@@ -76,7 +77,9 @@ class Ui_LogTab(object):
 #if QT_CONFIG(tooltip)
         self.autoCheck.setToolTip(QCoreApplication.translate("LogTab", u"Fetch new log lines every few seconds and follow the end of the log", None))
 #endif // QT_CONFIG(tooltip)
-        self.refreshButton.setText(QCoreApplication.translate("LogTab", u"Refresh now", None))
+#if QT_CONFIG(tooltip)
+        self.refreshButton.setToolTip(QCoreApplication.translate("LogTab", u"Refresh now", None))
+#endif // QT_CONFIG(tooltip)
         pass
     # retranslateUi
 

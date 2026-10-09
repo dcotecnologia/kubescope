@@ -377,6 +377,9 @@ class WorkloadWindow(QMainWindow):
         self.nav_workloads.setIcon(
             style.standardIcon(QStyle.StandardPixmap.SP_FileDialogListView)
         )
+        self.workloads_refresh_button.setIcon(
+            style.standardIcon(QStyle.StandardPixmap.SP_BrowserReload)
+        )
         self.overview_refresh_button.setIcon(
             style.standardIcon(QStyle.StandardPixmap.SP_BrowserReload)
         )
@@ -1090,7 +1093,8 @@ class WorkloadWindow(QMainWindow):
         if button is not None and self._spinner_button is None:
             self._spinner_button = button
             self._spinner_saved = (button.icon(), button.text())
-            button.setText(label)
+            if button.text():  # icon-only buttons just spin
+                button.setText(label)
             self._spinner_timer.start()
             self._tick_spinner()
         finished = False
@@ -1672,6 +1676,9 @@ class WorkloadWindow(QMainWindow):
         timer.setInterval(LOG_REFRESH_MS)
         timer.timeout.connect(lambda: self._refresh_log(tab))
         timer.start()
+        tab.ui.refreshButton.setIcon(
+            self.style().standardIcon(QStyle.StandardPixmap.SP_BrowserReload)
+        )
         tab.ui.refreshButton.clicked.connect(lambda: self._refresh_log(tab, True))
         title = self.tr("Logs: {pod} / {container}").format(
             pod=pod.name, container=container

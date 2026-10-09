@@ -122,6 +122,9 @@ class Ui_MainWindow(object):
 "    background: #f3f1f9; border-color: #a9a0d6;\n"
 "}\n"
 "QPushButton[variant=\"secondary\"]:disabled { color: #7b8089; }\n"
+"QPushButton[iconOnly=\"true\"] {\n"
+"    padding: 0; min-width: 36px; max-width: 36px;\n"
+"}\n"
 "QLabel#summaryLabel { color: #4f5966; font-size: 11px; font-weight: 600; }\n"
 "QTableWidget[variant=\"data\"] {\n"
 "    background: #ffffff; color: #242a33;\n"
@@ -131,10 +134,10 @@ class Ui_MainWindow(object):
 "}\n"
 "QHeaderView { background: #fbfbfc; }\n"
 "QHeaderView::up-arrow { image: url(SORT_UP); width: 9px; height: 6px; }\n"
-"QHeaderView::down-arrow { image: url(SORT_DOWN); width: 9px; height: 6px; }\n"
+"QHeaderView::down-arrow { image: url(SORT_DOWN); wi"
+                        "dth: 9px; height: 6px; }\n"
 "QHeaderView::section {\n"
-"    background: #fbfbfc; color: #3c4149; "
-                        "border: 0;\n"
+"    background: #fbfbfc; color: #3c4149; border: 0;\n"
 "    border-bottom: 1px solid #dfe2e9; padding: 10px 8px;\n"
 "    font-size: 9px; font-weight: 700;\n"
 "}\n"
@@ -155,9 +158,9 @@ class Ui_MainWindow(object):
 "    background: #ffffff; border: 1px solid #dfe2e9; border-radius: 8px;\n"
 "}\n"
 "QFrame[card=\"true\"] QLabel { background: transparent; border: 0; }\n"
-"QLabel[variant=\"cardTitle\"] { color: #535d69; font-size: 9px; font-weight: 700; }\n"
-"QLabel[variant=\"cardValue\"] { color: #17191e; font-size: 20px; font-w"
-                        "eight: 700; }\n"
+"QLabel[variant=\"cardTitle\"] { color: #535d69; font-size: 9px"
+                        "; font-weight: 700; }\n"
+"QLabel[variant=\"cardValue\"] { color: #17191e; font-size: 20px; font-weight: 700; }\n"
 "QLabel[variant=\"cardCaption\"] { color: #4f5966; font-size: 10px; }\n"
 "QProgressBar {\n"
 "    background: #eceef3; border: 0; border-radius: 3px;\n"
@@ -176,9 +179,9 @@ class Ui_MainWindow(object):
 "}\n"
 "QTabBar::tab:hover { color: #3220a0; }\n"
 "QTabBar::tab:selected { color: #3220a0; border-bottom: 2px solid #3220a0; }\n"
-"QTabBar::close-button {\n"
-"    image: url(CLOSE_ICON); subcontrol-position: right; margin-left: 6px"
-                        ";\n"
+"QTa"
+                        "bBar::close-button {\n"
+"    image: url(CLOSE_ICON); subcontrol-position: right; margin-left: 6px;\n"
 "    width: 10px; height: 10px; padding: 3px; border-radius: 4px;\n"
 "}\n"
 "QTabBar::close-button:hover { image: url(CLOSE_ICON_HOVER); background: #eee9f7; }\n"
@@ -491,6 +494,7 @@ class Ui_MainWindow(object):
 
         self.refreshButton = QPushButton(self.workArea)
         self.refreshButton.setObjectName(u"refreshButton")
+        self.refreshButton.setProperty(u"iconOnly", u"true")
         self.refreshButton.setProperty(u"variant", u"primary")
 
         self.filtersLayout.addWidget(self.refreshButton)
@@ -807,7 +811,9 @@ class Ui_MainWindow(object):
         self.filterLabel.setText(QCoreApplication.translate("MainWindow", u"NAMESPACE", None))
 
         self.searchInput.setPlaceholderText(QCoreApplication.translate("MainWindow", u"Search by name or namespace...", None))
-        self.refreshButton.setText(QCoreApplication.translate("MainWindow", u"Refresh", None))
+#if QT_CONFIG(tooltip)
+        self.refreshButton.setToolTip(QCoreApplication.translate("MainWindow", u"Refresh", None))
+#endif // QT_CONFIG(tooltip)
 #if QT_CONFIG(tooltip)
         self.podsButton.setToolTip(QCoreApplication.translate("MainWindow", u"View Pods of the selected workload", None))
 #endif // QT_CONFIG(tooltip)

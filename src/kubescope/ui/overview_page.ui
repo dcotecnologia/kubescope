@@ -48,8 +48,11 @@
      </item>
      <item>
       <widget class="QPushButton" name="overviewRefreshButton">
-       <property name="text">
+       <property name="toolTip">
         <string>Refresh</string>
+       </property>
+       <property name="iconOnly" stdset="0">
+        <string notr="true">true</string>
        </property>
        <property name="variant" stdset="0">
         <string notr="true">primary</string>

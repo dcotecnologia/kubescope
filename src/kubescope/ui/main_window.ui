@@ -111,6 +111,9 @@ QPushButton[variant="secondary"]:hover:enabled {
     background: #f3f1f9; border-color: #a9a0d6;
 }
 QPushButton[variant="secondary"]:disabled { color: #7b8089; }
+QPushButton[iconOnly="true"] {
+    padding: 0; min-width: 36px; max-width: 36px;
+}
 QLabel#summaryLabel { color: #4f5966; font-size: 11px; font-weight: 600; }
 QTableWidget[variant="data"] {
     background: #ffffff; color: #242a33;
@@ -936,8 +939,11 @@ Resources in read-only mode</string>
                </item>
                <item>
                 <widget class="QPushButton" name="refreshButton">
-                 <property name="text">
+                 <property name="toolTip">
                   <string>Refresh</string>
+                 </property>
+                 <property name="iconOnly" stdset="0">
+                  <string notr="true">true</string>
                  </property>
                  <property name="variant" stdset="0">
                   <string notr="true">primary</string>

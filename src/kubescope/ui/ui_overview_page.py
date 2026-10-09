@@ -43,6 +43,7 @@ class Ui_OverviewPage(object):
 
         self.overviewRefreshButton = QPushButton(OverviewPage)
         self.overviewRefreshButton.setObjectName(u"overviewRefreshButton")
+        self.overviewRefreshButton.setProperty(u"iconOnly", u"true")
         self.overviewRefreshButton.setProperty(u"variant", u"primary")
 
         self.headerRow.addWidget(self.overviewRefreshButton)
@@ -371,7 +372,9 @@ class Ui_OverviewPage(object):
 
     def retranslateUi(self, OverviewPage):
         self.overviewHeading.setText(QCoreApplication.translate("OverviewPage", u"Cluster resources", None))
-        self.overviewRefreshButton.setText(QCoreApplication.translate("OverviewPage", u"Refresh", None))
+#if QT_CONFIG(tooltip)
+        self.overviewRefreshButton.setToolTip(QCoreApplication.translate("OverviewPage", u"Refresh", None))
+#endif // QT_CONFIG(tooltip)
         self.nodesTitle.setText(QCoreApplication.translate("OverviewPage", u"NODES", None))
         self.nodesCaption.setText(QCoreApplication.translate("OverviewPage", u"nodes ready", None))
         self.podsTitle.setText(QCoreApplication.translate("OverviewPage", u"PODS", None))

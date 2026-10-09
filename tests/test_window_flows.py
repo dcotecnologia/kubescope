@@ -174,25 +174,54 @@ def test_action_worker_returns_results_and_errors() -> None:
 def test_loading_spins_the_button_and_leaves_the_cursor_alone(monkeypatch) -> None:
     window = _ready_window(monkeypatch)
     window._tick_spinner()  # nothing to animate yet
-    primary, secondary = window.refresh_button, window.details_button
-    original = primary.text()
+    labelled, other = window.details_button, window.logs_button
+    original = labelled.text()
+    assert original  # this one has a text, which shows the label meanwhile
 
-    end = window._begin_loading(primary, "Wait")
-    nested = window._begin_loading(secondary, "Other")
+    end = window._begin_loading(labelled, "Wait")
+    nested = window._begin_loading(other, "Other")
     window._begin_loading(None, "ignored")
     assert QApplication.overrideCursor() is None  # never a busy cursor
-    assert primary.text() == "Wait"
-    assert secondary.text() != "Other"  # only one spinner at a time
+    assert labelled.text() == "Wait"
+    assert other.text() != "Other"  # only one spinner at a time
 
-    window._spinner_button = secondary
+    window._spinner_button = other
     window._tick_spinner()
-    window._spinner_button = primary
+    window._spinner_button = labelled
     end()
     end()  # a second call changes nothing
-    assert primary.text() == original
+    assert labelled.text() == original
     nested()
     window._end_loading(None)
     assert QApplication.overrideCursor() is None
+    window.close()
+
+
+def test_refresh_buttons_show_only_an_icon_and_keep_it_spinning(monkeypatch) -> None:
+    window = _ready_window(monkeypatch)
+    pods = PodInfo("ns", "api-1", "Running", 1, 1, "1h", ("app",))
+    window._show_logs_dialog(pods, "app", "line")
+    buttons = {
+        "list": window.refresh_button,
+        "cluster overview": window.overview_refresh_button,
+        "workloads overview": window.workloads_refresh_button,
+        "logs": window.viewer_tabs.widget(0).ui.refreshButton,
+    }
+
+    for name, button in buttons.items():
+        assert button.text() == "", name
+        assert button.toolTip().startswith("Refresh"), name
+        assert not button.icon().isNull(), name
+        assert button.property("iconOnly") == "true", name
+
+    button = window.refresh_button
+    end = window._begin_loading(button, "Refreshing...")
+    assert button.text() == ""  # it spins; no label is squeezed into the icon
+    spinning = button.icon().cacheKey()
+    window._tick_spinner()
+    assert button.icon().cacheKey() != spinning
+    end()
+    assert button.text() == "" and not button.icon().isNull()
     window.close()
 
 
