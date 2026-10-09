@@ -8,6 +8,18 @@ Python 3.12+ and PySide6 (Qt). It shells out to a bundled `kubectl`. It is
 read-only for now; that is a current scope limit, not a permanent rule, and write
 actions are expected later.
 
+## Project documents
+
+Read the document that covers your task before you start, and follow it. When
+two documents disagree, stop and ask instead of picking one.
+
+| Document | Read it when | Rule |
+| -------- | ------------ | ---- |
+| [COMMITING.md](COMMITING.md) | You write any commit message | Source of truth for the commit format |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | You set up, branch, test, or open a PR | The workflow a change goes through |
+| [SECURITY.md](SECURITY.md) | You touch credentials, kubectl calls, logs, settings, permissions, or packaging | Do not break its guarantees; update it when they change |
+| [README.md](README.md) | You change user-facing behavior, requirements, or packaging | Keep it accurate |
+
 ## 1) Architecture and responsibilities
 
 Keep the layers separate and the dependency direction one-way
@@ -82,7 +94,8 @@ Golden rule:
 ## 4) Commits: follow COMMITING.md
 
 [COMMITING.md](./COMMITING.md) is the source of truth for commit messages. Read it
-before committing; the points below only reinforce it.
+before every commit; the points below only reinforce it. For the branch and PR
+flow, follow [CONTRIBUTING.md](./CONTRIBUTING.md).
 
 - Use Conventional Commits: `<type>(<optional-scope>): <subject>`.
 - Allowed types: `feat`, `fix`, `refactor`, `perf`, `style`, `test`, `docs`,
@@ -139,7 +152,28 @@ Requirements:
 - The Flatpak app ID is `com.dcotecnologia.KubeScope`; keep it consistent across the
   manifest, desktop file, metainfo, and `tools/build_flatpak.py`.
 
-## 7) Quick checklist for agents
+## 7) Security
+
+Follow [SECURITY.md](SECURITY.md); its guarantees are part of the product.
+
+- Never read, store, print, or log credentials, tokens, kubeconfig contents, or
+  secrets. `kubectl` and its credential plugins handle authentication.
+- Never commit secrets, real cluster names, ARNs, or account IDs; use fake data
+  in tests and in `tools/preview.py`. The `gitleaks` hook must pass.
+- Do not add telemetry or network calls of the app's own. Cluster traffic goes
+  through the bundled `kubectl` only.
+- Keep `settings.json` free of secrets, and validate it on load.
+- Build `kubectl` calls as an argument list, never as a shell string, and treat
+  names that come from the cluster as untrusted data.
+- Keep Pod logs and resource details on screen only; do not write them to disk.
+- Do not widen the Flatpak permissions or add dependencies without a reason.
+- When a change affects what SECURITY.md describes (a write action, a new
+  permission, stored data, a new network call), update SECURITY.md in the same
+  pull request.
+- If you find a vulnerability while working, report it as SECURITY.md describes;
+  do not describe it in a public issue, commit message, or PR.
+
+## 8) Quick checklist for agents
 
 - Identify the layer the change belongs to (`models`, `cluster`, `window`,
   `settings`) and keep it there.
@@ -147,6 +181,10 @@ Requirements:
 - Add or update tests next to the code, in English and function-based.
 - Edit the `.ui` and regenerate `ui_*.py`; never hand-edit generated files.
 - Wrap new UI text in `tr(...)` and complete the Portuguese translations.
+- Read the documents in the table above that apply, and follow them.
+- Check the change against [SECURITY.md](SECURITY.md); update it if the change
+  alters what it promises.
+- Update README.md and CONTRIBUTING.md when setup, behavior, or packaging changes.
 - Run `make lint` and `make test` before finishing.
 - Write the commit message following [COMMITING.md](./COMMITING.md), with no
   AI co-author.
