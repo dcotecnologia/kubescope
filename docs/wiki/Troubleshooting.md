@@ -7,7 +7,7 @@ an error dialog.
 | Message | What it means | What to do |
 | ------- | ------------- | ---------- |
 | Login tool not found | The kubeconfig runs a program (usually `aws`) that is not installed or not on the `PATH` | Install it, make sure it is on the `PATH`, then Refresh |
-| Authentication failed | The credentials are missing or expired | Sign in again (for example `aws sso login`) and Refresh |
+| Authentication failed | The credentials are missing or expired | Use the **Sign in to AWS** button, or run `aws sso login` yourself, then Refresh. For access keys, update them with `aws configure` |
 | Access denied | Your user cannot read that resource | Ask for a read-only role; see [Connecting to clusters](Connecting-to-clusters#permissions) |
 | Cluster unreachable | The API server did not answer | Check the network or VPN and that the cluster is running |
 | Context not found | The context is not in your kubeconfig | Check `~/.kube/config` or `KUBECONFIG` |

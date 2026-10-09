@@ -32,8 +32,15 @@ prefer otherwise.
   certificates, or cloud credentials itself; `kubectl` and its credential plugins
   (for example `aws eks get-token`) do that.
 - **It is read-only for now.** The app only runs read commands (`get`, `config
-  get-contexts`, `logs`). Write actions are planned, and they will be explicit
-  and confirmed by the user.
+  get-contexts`, `config view`, `logs`). Write actions are planned, and they will
+  be explicit and confirmed by the user.
+- **The sign-in check and button run the AWS CLI, not the app.** To tell whether
+  you are signed in, the app runs `aws sts get-caller-identity` and `aws configure
+  get` for the profile your kubeconfig names, and reads that profile from
+  `kubectl config view` without `--raw`, so secrets stay redacted. The **Sign in
+  to AWS** button runs `aws sso login` for you to approve in the browser. The app
+  never sees, asks for, or stores keys or tokens, and it does not change the
+  cluster.
 - **No telemetry and no network calls of its own.** The only traffic is what
   `kubectl` sends to your clusters.
 - **Local settings hold no secrets.** `settings.json` keeps the language, the

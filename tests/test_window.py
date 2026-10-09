@@ -11,6 +11,13 @@ from kubescope.models import ClusterOverview, NodeInfo, PodInfo, Workload
 application = QApplication.instance() or QApplication([])
 
 
+def _inline_actions(_self, operation, on_success, *arguments, **_kwargs) -> None:
+    """Stand-in for _run_action: only the kubeconfig read runs, and at once, so
+    a test sees the contexts right after building the window."""
+    if operation is window_module.list_contexts:
+        on_success(operation(*arguments))
+
+
 def test_workload_actions_dispatch_and_follow_visible_selection(monkeypatch) -> None:
     monkeypatch.setattr(window_module, "list_contexts", lambda: ([], None))
     window = window_module.WorkloadWindow()
@@ -110,7 +117,11 @@ def test_navigation_switches_pages_and_loads_overview(monkeypatch) -> None:
     monkeypatch.setattr(
         window_module.WorkloadWindow,
         "_run_action",
-        lambda _self, _operation, _ok, *args, **_kw: requested.append(args),
+        lambda _self, operation, _ok, *args, **_kw: (
+            requested.append(args)
+            if operation.__name__ == "get_cluster_overview"
+            else None  # the login check runs too; it has its own tests
+        ),
     )
     window = window_module.WorkloadWindow()
     window.context_combo.addItem("prod")
@@ -148,9 +159,7 @@ def test_context_aliases_show_in_combo_but_actions_use_real_name(
         lambda: (["arn:aws:eks:prod", "dev"], "dev"),
     )
     monkeypatch.setattr(window_module.WorkloadWindow, "refresh", lambda *_a: None)
-    monkeypatch.setattr(
-        window_module.WorkloadWindow, "_run_action", lambda *_a, **_k: None
-    )
+    monkeypatch.setattr(window_module.WorkloadWindow, "_run_action", _inline_actions)
 
     window = window_module.WorkloadWindow(settings)
     window.context_combo.setCurrentIndex(0)
@@ -167,9 +176,7 @@ def test_last_context_is_remembered_and_restored(monkeypatch, tmp_path) -> None:
     path = tmp_path / "settings.json"
     monkeypatch.setattr(window_module, "list_contexts", lambda: (["a", "b"], "a"))
     monkeypatch.setattr(window_module.WorkloadWindow, "refresh", lambda *_a: None)
-    monkeypatch.setattr(
-        window_module.WorkloadWindow, "_run_action", lambda *_a, **_k: None
-    )
+    monkeypatch.setattr(window_module.WorkloadWindow, "_run_action", _inline_actions)
     first = window_module.WorkloadWindow(Settings(path))
     first.context_combo.setCurrentIndex(1)
     first.close()
@@ -189,9 +196,7 @@ def test_settings_page_saves_preferences_and_switches_language(
     path = tmp_path / "settings.json"
     monkeypatch.setattr(window_module, "list_contexts", lambda: (["prod"], "prod"))
     monkeypatch.setattr(window_module.WorkloadWindow, "refresh", lambda *_a: None)
-    monkeypatch.setattr(
-        window_module.WorkloadWindow, "_run_action", lambda *_a, **_k: None
-    )
+    monkeypatch.setattr(window_module.WorkloadWindow, "_run_action", _inline_actions)
     window = window_module.WorkloadWindow(Settings(path))
     try:
         window.ui.settingsButton.click()
@@ -286,9 +291,7 @@ def _open_log_tab(monkeypatch):
     monkeypatch.setattr(window_module, "list_contexts", lambda: ([], None))
     # selecting a context must not start real kubectl workers in tests
     monkeypatch.setattr(window_module.WorkloadWindow, "refresh", lambda *_a: None)
-    monkeypatch.setattr(
-        window_module.WorkloadWindow, "_run_action", lambda *_a, **_k: None
-    )
+    monkeypatch.setattr(window_module.WorkloadWindow, "_run_action", _inline_actions)
     window = window_module.WorkloadWindow()
     window.context_combo.addItem("prod")
     window.context_combo.setCurrentIndex(0)
@@ -473,9 +476,7 @@ def test_settings_page_shows_long_context_names_in_full(monkeypatch) -> None:
     arn = "arn:aws:eks:us-east-1:123456789012:cluster/prd-api"
     monkeypatch.setattr(window_module, "list_contexts", lambda: ([arn], arn))
     monkeypatch.setattr(window_module.WorkloadWindow, "refresh", lambda *_a: None)
-    monkeypatch.setattr(
-        window_module.WorkloadWindow, "_run_action", lambda *_a, **_k: None
-    )
+    monkeypatch.setattr(window_module.WorkloadWindow, "_run_action", _inline_actions)
     window = window_module.WorkloadWindow()
 
     window.ui.settingsButton.click()

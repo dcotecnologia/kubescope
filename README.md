@@ -38,6 +38,12 @@ resources but does not change the cluster.
 - **Readable errors:** a missing login tool, an unreachable cluster, expired
   credentials or denied access appear as a short message with a hint; the
   original `kubectl` text stays one click away as details.
+- **Sign-in check:** when you open an AWS context, KubeScope checks that you are
+  signed in (SSO session or access keys). If not, a **Sign in to AWS** button
+  runs `aws sso login` for the profile your kubeconfig uses and reloads the data.
+  Access-key profiles show a hint instead, since they have no browser sign-in.
+- **Always responsive:** every cluster call runs in the background, so the window
+  never freezes while `kubectl` or the AWS CLI work.
 - **English and Portuguese**, selectable in Settings.
 
 ## Requirements

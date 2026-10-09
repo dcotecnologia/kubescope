@@ -55,6 +55,7 @@ def _ready_window(monkeypatch):
     )
     monkeypatch.setattr(window_module, "RefreshWorker", FakeRefreshWorker)
     window = window_module.WorkloadWindow()
+    _wait_until(lambda: not window._action_workers)  # the kubeconfig read
     window.context_combo.blockSignals(True)
     window.context_combo.addItem("prod")
     window.context_combo.setCurrentIndex(0)
@@ -468,6 +469,7 @@ def test_a_kubeconfig_error_disables_the_controls(monkeypatch) -> None:
 
     monkeypatch.setattr(window_module, "list_contexts", broken)
     window = window_module.WorkloadWindow()
+    _wait_until(lambda: not window._action_workers)
 
     assert not window.context_combo.isEnabled()
     assert not window.refresh_button.isEnabled()
@@ -552,4 +554,142 @@ def test_overview_without_pod_or_metrics_data_shows_dashes(monkeypatch) -> None:
     window._render_overview(ClusterOverview(nodes=(node,), metrics_available=True))
     assert "usage" in window.overview_ui.cpuCaption.text()
     assert "usage" in window.overview_ui.memCaption.text()
+    window.close()
+
+
+def _login_window(monkeypatch):
+    window = _ready_window(monkeypatch)
+    ran = []
+    monkeypatch.setattr(
+        window,
+        "_run_action",
+        lambda op, ok, *args, **kw: ran.append((op.__name__, ok, args, kw)),
+    )
+    return window, ran
+
+
+def test_login_check_runs_once_per_context_and_shows_the_button(monkeypatch) -> None:
+    window, ran = _login_window(monkeypatch)
+
+    window._check_login()
+    window._check_login()  # one check at a time
+    assert [(name, args) for name, _ok, args, _kw in ran] == [
+        ("check_login", ("prod",))
+    ]
+    assert ran[0][3]["quiet"] is True
+
+    ran[0][1]((True, ["aws", "sso", "login"]))
+    assert not window.login_button.isHidden()
+    assert "Not signed in" in window.status_label.text()
+    assert window._login_checking is False
+    window.close()
+
+
+def test_login_check_failures_and_other_results_hide_the_button(monkeypatch) -> None:
+    window, ran = _login_window(monkeypatch)
+    window.login_button.setVisible(True)
+
+    window._show_login("prod", (False, None))
+    assert window.login_button.isHidden()
+
+    window._show_login("other", (True, ["aws"]))  # a stale answer is ignored
+    assert window._login_command is None
+
+    window._show_login("prod", (True, None))  # access keys: no button, a hint
+    assert window.login_button.isHidden()
+    assert "credentials are missing or invalid" in window.status_label.text()
+
+    window._check_login()
+    ran[0][3]["on_error"](Exception("boom"))
+    assert window._login_checking is False
+
+    window.context_combo.clear()
+    window._check_login()  # no context: nothing to check
+    assert len(ran) == 1
+    window.close()
+
+
+def test_context_change_rechecks_the_login(monkeypatch) -> None:
+    window, ran = _login_window(monkeypatch)
+    window._login_command = ["aws", "sso", "login"]
+    window.login_button.setVisible(True)
+
+    window._context_changed()
+
+    assert window._login_command is None
+    assert window.login_button.isHidden()
+    assert ran[0][0] == "check_login"
+    window.close()
+
+
+def test_sign_in_runs_the_command_and_reloads_the_data(monkeypatch) -> None:
+    window, ran = _login_window(monkeypatch)
+    window._sign_in()  # nothing to run without a command
+    assert ran == []
+
+    command = ["aws", "sso", "login", "--profile", "work"]
+    window._login_command = command
+    window._sign_in()
+    name, done, args, kwargs = ran[0]
+    assert (name, args) == ("run_login", (command,))
+    assert kwargs["on_error"] == window._show_action_error
+
+    refreshed = []
+    monkeypatch.setattr(window, "refresh", lambda: refreshed.append("list"))
+    monkeypatch.setattr(
+        window, "refresh_overview", lambda: refreshed.append("overview")
+    )
+    window._overview_context = "prod"
+    done(None)
+    assert refreshed == ["list", "overview"]
+    assert window._login_command is None
+    window.close()
+
+
+def test_authentication_errors_trigger_a_login_check(monkeypatch) -> None:
+    window, ran = _login_window(monkeypatch)
+
+    window._show_error("Unable to connect: i/o timeout")
+    window._show_overview_error("Unable to connect: i/o timeout")
+    assert ran == []
+
+    window._show_error("error: You must be logged in to the server (Unauthorized)")
+    window._login_checking = False
+    window._show_overview_error("the SSO session has expired")
+    assert [name for name, *_rest in ran] == ["check_login", "check_login"]
+    window.close()
+
+
+def test_contexts_load_in_the_background(monkeypatch) -> None:
+    release = []
+    started = []
+
+    def slow_contexts():
+        started.append(True)
+        _wait_until(lambda: release, seconds=3.0)
+        return ["a", "b"], "b"
+
+    monkeypatch.setattr(window_module, "list_contexts", slow_contexts)
+    monkeypatch.setattr(window_module.WorkloadWindow, "refresh", lambda *_a: None)
+    monkeypatch.setattr(
+        window_module.WorkloadWindow, "refresh_overview", lambda *_a: None
+    )
+    monkeypatch.setattr(window_module.WorkloadWindow, "_check_login", lambda *_a: None)
+
+    window = window_module.WorkloadWindow()  # returns while kubectl is still busy
+
+    assert "Loading contexts" in window.status_label.text()
+    assert window.context_combo.count() == 0
+    assert not window.refresh_button.isEnabled()
+    release.append(True)
+    _wait_until(lambda: window.context_combo.count() == 2)
+    assert window._context() == "b"
+    window.close()
+
+
+def test_no_contexts_in_the_kubeconfig_is_reported(monkeypatch) -> None:
+    window = _ready_window(monkeypatch)  # list_contexts returns nothing
+
+    assert "No contexts found" in window.status_label.text()
+    assert not window.refresh_button.isEnabled()
     window.close()

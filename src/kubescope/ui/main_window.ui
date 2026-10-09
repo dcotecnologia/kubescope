@@ -1411,6 +1411,22 @@ Resources in read-only mode</string>
                 </widget>
                </item>
                <item>
+                <widget class="QPushButton" name="loginButton">
+                 <property name="visible">
+                  <bool>false</bool>
+                 </property>
+                 <property name="toolTip">
+                  <string>Sign in with the AWS CLI, then reload the cluster data</string>
+                 </property>
+                 <property name="text">
+                  <string>Sign in to AWS</string>
+                 </property>
+                 <property name="variant" stdset="0">
+                  <string notr="true">primary</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
                 <spacer name="footerSpacer">
                  <property name="orientation">
                   <enum>Qt::Orientation::Horizontal</enum>

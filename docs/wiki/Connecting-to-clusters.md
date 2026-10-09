@@ -18,6 +18,13 @@ EKS kubeconfigs call `aws eks get-token`, so the **AWS CLI must be installed** a
 you must be signed in (for example `aws sso login`). On Windows it has to be on
 the `PATH`. The Flatpak bundles the AWS CLI for you.
 
+When you open a context, KubeScope checks that you are signed in. If your AWS SSO
+session has expired, a **Sign in to AWS** button appears in the footer. It runs
+`aws sso login` with the profile your kubeconfig uses, opens the browser, and
+reloads the data when you are done. If the profile uses access keys, there is no
+browser sign-in: KubeScope tells you the credentials are missing or invalid, and
+you update them yourself (for example with `aws configure`).
+
 ## Permissions
 
 Use a read-only role. KubeScope needs:

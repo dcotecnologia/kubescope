@@ -21,6 +21,16 @@ from kubescope.errors import describe_error
             "error: You must be logged in to the server (Unauthorized)",
             "Authentication failed",
         ),
+        (
+            "The SSO session associated with this profile has expired or is not valid",
+            "Authentication failed",
+        ),
+        ("Unable to locate credentials", "Authentication failed"),
+        (
+            "An error occurred (InvalidClientTokenId) when calling the "
+            "GetCallerIdentity operation",
+            "Authentication failed",
+        ),
         ("pods is forbidden: User cannot list resource", "Access denied"),
         (
             "Error in configuration: context was not found for specified context: x",

@@ -575,3 +575,172 @@ def test_get_usage_skips_pods_without_a_controlling_workload(monkeypatch) -> Non
     monkeypatch.setattr(cluster, "_pods_with_usage", lambda *_a: [owned, orphan])
 
     assert cluster.get_usage("ctx") == {("ns", "Deployment", "api"): (2, 0.5, 100.0)}
+
+
+def _aws_kubeconfig(arguments=None, env=None, command="/usr/local/bin/aws") -> dict:
+    exec_block = {"command": command, "args": arguments or [], "env": env}
+    return {"users": [{"user": {"exec": exec_block}}]}
+
+
+def test_run_command_returns_output_and_reports_failures(monkeypatch) -> None:
+    def completed(returncode, stdout="", stderr=""):
+        return lambda command, **_kw: cluster.subprocess.CompletedProcess(
+            command, returncode, stdout, stderr
+        )
+
+    monkeypatch.setattr(cluster.subprocess, "run", completed(0, "out"))
+    assert cluster._run_command(["aws", "x"], 5) == "out"
+
+    for run, message in (
+        (completed(1, "", "bad credentials"), "bad credentials"),
+        (completed(1, "from stdout", ""), "from stdout"),
+        (completed(2), "exited with 2"),
+    ):
+        monkeypatch.setattr(cluster.subprocess, "run", run)
+        with pytest.raises(cluster.KubectlError, match=message):
+            cluster._run_command(["aws", "x"], 5)
+
+    def timeout(command, **_kwargs):
+        raise cluster.subprocess.TimeoutExpired(command, 5)
+
+    def missing(_command, **_kwargs):
+        raise OSError("not found")
+
+    monkeypatch.setattr(cluster.subprocess, "run", timeout)
+    with pytest.raises(cluster.KubectlError, match="timed out"):
+        cluster._run_command(["aws"], 5)
+    monkeypatch.setattr(cluster.subprocess, "run", missing)
+    with pytest.raises(cluster.KubectlError, match="Could not start aws"):
+        cluster._run_command(["aws"], 5)
+
+
+def test_aws_profile_is_read_from_the_kubeconfig_exec_entry(monkeypatch) -> None:
+    def config(document):
+        monkeypatch.setattr(cluster, "_get_json", lambda *_a, **_k: document)
+
+    config(_aws_kubeconfig(["eks", "get-token", "--profile", "work"]))
+    assert cluster._aws_profile("ctx") == (True, "work")
+
+    config(_aws_kubeconfig(env=[{"name": "AWS_PROFILE", "value": "env-profile"}]))
+    assert cluster._aws_profile("ctx") == (True, "env-profile")
+
+    config(
+        _aws_kubeconfig(["--profile", "arg"], [{"name": "AWS_PROFILE", "value": "x"}])
+    )
+    assert cluster._aws_profile("ctx") == (True, "arg")
+
+    config(_aws_kubeconfig(["eks", "get-token"], [{"name": "OTHER", "value": "x"}]))
+    assert cluster._aws_profile("ctx") == (True, None)
+
+    config(_aws_kubeconfig(command="kubelogin"))
+    assert cluster._aws_profile("ctx") == (False, None)
+    config({})
+    assert cluster._aws_profile("ctx") == (False, None)
+
+
+def test_login_command_signs_in_with_sso_profiles_only(monkeypatch) -> None:
+    monkeypatch.setattr(cluster, "_aws_profile", lambda _c: (True, "work"))
+    answers = {"sso_session": "", "sso_start_url": "https://example.awsapps.com/start"}
+
+    def configure(command, _timeout):
+        assert command[:3] == ["aws", "configure", "get"]
+        assert command[4:] == ["--profile", "work"]
+        value = answers[command[3]]
+        if value is None:
+            raise cluster.KubectlError("not set")
+        return value + "\n"
+
+    monkeypatch.setattr(cluster, "_run_command", configure)
+    assert cluster.login_command("ctx") == ["aws", "sso", "login", "--profile", "work"]
+
+    answers.update(sso_session=None, sso_start_url=None)  # access keys
+    assert cluster.login_command("ctx") is None
+
+    monkeypatch.setattr(cluster, "_aws_profile", lambda _c: (False, None))
+    assert cluster.login_command("ctx") is None
+
+    monkeypatch.setattr(cluster, "_aws_profile", lambda _c: (True, None))
+    answers.update(sso_session="main", sso_start_url=None)
+    monkeypatch.setattr(
+        cluster,
+        "_run_command",
+        lambda command, _t: "main" if "--profile" not in command else "",
+    )
+    assert cluster.login_command("ctx") == ["aws", "sso", "login"]
+
+
+def test_check_login_reports_signed_in_when_everything_answers(monkeypatch) -> None:
+    calls = []
+    monkeypatch.setattr(cluster, "_run_kubectl", lambda *a, **_k: calls.append(a) or "")
+    monkeypatch.setattr(cluster, "_run_command", lambda c, _t: calls.append(c) or "")
+
+    monkeypatch.setattr(cluster, "_aws_profile", lambda _c: (False, None))
+    assert cluster.check_login("ctx") == (False, None)
+
+    monkeypatch.setattr(cluster, "_aws_profile", lambda _c: (True, "work"))
+    assert cluster.check_login("ctx") == (False, None)
+    assert ["aws", "sts", "get-caller-identity", "--profile", "work"] in calls
+
+
+def test_check_login_detects_expired_sso_and_bad_access_keys(monkeypatch) -> None:
+    command = ["aws", "sso", "login"]
+    monkeypatch.setattr(cluster, "login_command", lambda _c: command)
+
+    def kubectl_fails(*_a, **_k):
+        raise cluster.KubectlError("Error: the SSO session has expired")
+
+    monkeypatch.setattr(cluster, "_run_kubectl", kubectl_fails)
+    assert cluster.check_login("ctx") == (True, command)
+
+    monkeypatch.setattr(cluster, "_run_kubectl", lambda *_a, **_k: "")
+    monkeypatch.setattr(cluster, "_aws_profile", lambda _c: (True, None))
+
+    def sts_fails(*_a):
+        raise cluster.KubectlError("InvalidClientTokenId: the token is invalid")
+
+    monkeypatch.setattr(cluster, "_run_command", sts_fails)
+    assert cluster.check_login("ctx") == (True, command)
+
+    monkeypatch.setattr(cluster, "login_command", lambda _c: None)  # access keys
+    assert cluster.check_login("ctx") == (True, None)
+
+    def unreadable(_context):
+        raise cluster.KubectlError("config view failed")
+
+    monkeypatch.setattr(cluster, "login_command", unreadable)
+    assert cluster.check_login("ctx") == (True, None)
+
+
+def test_check_login_ignores_failures_that_are_not_about_credentials(
+    monkeypatch,
+) -> None:
+    def unreachable(*_a, **_k):
+        raise cluster.KubectlError("Unable to connect: i/o timeout")
+
+    monkeypatch.setattr(cluster, "_run_kubectl", unreachable)
+    assert cluster.check_login("ctx") == (False, None)
+
+    monkeypatch.setattr(cluster, "_run_kubectl", lambda *_a, **_k: "")
+    monkeypatch.setattr(cluster, "_aws_profile", lambda _c: (True, None))
+
+    def no_cli(*_a):
+        raise cluster.KubectlError("Could not start aws: not found")
+
+    monkeypatch.setattr(cluster, "_run_command", no_cli)
+    assert cluster.check_login("ctx") == (False, None)
+
+    def broken_json(*_a, **_k):
+        raise ValueError("expired token in a bad document")
+
+    monkeypatch.setattr(cluster, "_aws_profile", broken_json)
+    monkeypatch.setattr(cluster, "login_command", broken_json)
+    assert cluster.check_login("ctx") == (True, None)
+
+
+def test_run_login_runs_the_command_with_a_long_timeout(monkeypatch) -> None:
+    seen = []
+    monkeypatch.setattr(cluster, "_run_command", lambda c, t: seen.append((c, t)) or "")
+
+    cluster.run_login(["aws", "sso", "login"])
+
+    assert seen == [(["aws", "sso", "login"], cluster.LOGIN_TIMEOUT)]

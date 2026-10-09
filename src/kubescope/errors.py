@@ -14,6 +14,28 @@ class ErrorInfo:
     details: str  # the original kubectl text, kept for the "Show details" view
 
 
+_AUTH_WORDS = (
+    "unauthorized",
+    "you must be logged in",
+    "token has expired",
+    "sso session",
+    "error loading sso token",
+    "unable to locate credentials",
+    "invalidclienttokenid",
+    "security token included in the request",
+    "signaturedoesnotmatch",
+    "expiredtoken",
+)
+
+
+def is_auth_error(message: str) -> bool:
+    """Whether the failure means the user has to sign in again."""
+    lowered = message.lower()
+    return any(word in lowered for word in _AUTH_WORDS) or (
+        "expired" in lowered and ("credential" in lowered or "token" in lowered)
+    )
+
+
 def describe_error(message: str) -> ErrorInfo:
     """Classify a kubectl error message; unknown ones keep their first line."""
     details = message.strip()
@@ -48,10 +70,7 @@ def describe_error(message: str) -> ErrorInfo:
             ),
             details,
         )
-    if any(
-        word in lowered
-        for word in ("unauthorized", "you must be logged in", "token has expired")
-    ) or ("expired" in lowered and "credential" in lowered):
+    if is_auth_error(details):
         return ErrorInfo(
             QCoreApplication.translate("Errors", "Authentication failed"),
             QCoreApplication.translate(

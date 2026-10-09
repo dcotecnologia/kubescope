@@ -49,7 +49,7 @@ from PySide6.QtWidgets import (
 )
 
 from kubescope.cluster import (
-    KubectlError,
+    check_login,
     get_cluster_overview,
     get_pod_logs,
     get_pods,
@@ -58,8 +58,9 @@ from kubescope.cluster import (
     get_workload_pods,
     get_workloads,
     list_contexts,
+    run_login,
 )
-from kubescope.errors import describe_error
+from kubescope.errors import describe_error, is_auth_error
 from kubescope.i18n import apply_language
 from kubescope.log_tab import LOG_REFRESH_MS, LogTab
 from kubescope.models import (
@@ -250,6 +251,7 @@ class WorkloadWindow(QMainWindow):
         self.logs_button = ui.logsButton
         self.table = ui.workloadTable
         self.status_label = ui.statusLabel
+        self.login_button = ui.loginButton
         self.pages = ui.pages
         self.nav_overview = ui.navOverview
         self.nav_workloads = ui.navWorkloads
@@ -369,6 +371,9 @@ class WorkloadWindow(QMainWindow):
         self._spinner_timer.setInterval(70)
         self._spinner_timer.timeout.connect(self._tick_spinner)
 
+        self._login_command: list[str] | None = None
+        self._login_checking = False
+        self.login_button.clicked.connect(self._sign_in)
         self.refresh_button.clicked.connect(self.refresh)
         self.pods_button.clicked.connect(self._view_workload_pods)
         self.details_button.clicked.connect(self._view_details)
@@ -396,21 +401,27 @@ class WorkloadWindow(QMainWindow):
         self.search_input.textChanged.connect(self._filter_rows)
 
     def _load_contexts(self) -> None:
-        try:
-            contexts, active_context = list_contexts()
-        except KubectlError as error:
-            reason = str(error)
-            self._set_status(
-                lambda: self.tr("Could not load kubeconfig: {error}").format(
-                    error=self._error_line(reason)
-                )
-            )
-            self.status_label.setToolTip(describe_error(reason).details)
-            self.context_combo.setEnabled(False)
-            self.namespace_combo.setEnabled(False)
-            self.refresh_button.setEnabled(False)
-            return
+        """Read the kubeconfig contexts in a worker; kubectl can take a while
+        and must not freeze the window."""
+        self._set_status(lambda: self.tr("Loading contexts..."))
+        self.refresh_button.setEnabled(False)
+        self._run_action(
+            list_contexts, self._contexts_loaded, on_error=self._contexts_failed
+        )
 
+    def _contexts_failed(self, reason: str) -> None:
+        self._set_status(
+            lambda: self.tr("Could not load kubeconfig: {error}").format(
+                error=self._error_line(reason)
+            )
+        )
+        self.status_label.setToolTip(describe_error(reason).details)
+        self.context_combo.setEnabled(False)
+        self.namespace_combo.setEnabled(False)
+        self.refresh_button.setEnabled(False)
+
+    def _contexts_loaded(self, result: tuple[list[str], str | None]) -> None:
+        contexts, active_context = result
         self._contexts = contexts
         remembered = self.settings.last_context
         if self.settings.remember_last_context and remembered in contexts:
@@ -424,6 +435,7 @@ class WorkloadWindow(QMainWindow):
             return
         self.refresh()
         self._ensure_overview()
+        self._check_login()
 
     def _fill_contexts(self, selected: str | None) -> None:
         """Show contexts under their custom names while keeping the real
@@ -572,11 +584,67 @@ class WorkloadWindow(QMainWindow):
 
     def _context_changed(self, *_args: object) -> None:
         self._overview_context = None
+        self._hide_login()
+        self._check_login()
         if self.settings.remember_last_context and self._contexts:
             self.settings.last_context = self._context()
             self._save_settings()
         if self.pages.currentIndex() == 0:
             self._ensure_overview()
+
+    def _hide_login(self) -> None:
+        self._login_command = None
+        self.login_button.setVisible(False)
+
+    def _check_login(self) -> None:
+        """Ask the cluster whether this context still needs a sign-in; the
+        button appears only when it does and the kubeconfig names a login
+        tool."""
+        context = self._context()
+        if not context or self._login_checking:
+            return
+        self._login_checking = True
+
+        def finished(_result: object = None) -> None:
+            self._login_checking = False
+
+        def show(result: tuple[bool, list[str] | None]) -> None:
+            finished()
+            self._show_login(context, result)
+
+        self._run_action(check_login, show, context, on_error=finished, quiet=True)
+
+    def _show_login(self, context: str, result: tuple[bool, list[str] | None]) -> None:
+        needs_login, command = result
+        if context != self._context():
+            return  # the person switched contexts while this was running
+        self._login_command = command if needs_login else None
+        self.login_button.setVisible(self._login_command is not None)
+        if self._login_command is not None:
+            self._set_status(lambda: self.tr("Not signed in to AWS for this context"))
+        elif needs_login:
+            self._set_status(
+                lambda: self.tr(
+                    "AWS credentials are missing or invalid. Update them "
+                    "(for example with “aws configure”) and refresh."
+                )
+            )
+
+    def _sign_in(self) -> None:
+        if self._login_command is None:
+            return
+        self._run_action(
+            run_login,
+            self._signed_in,
+            self._login_command,
+            on_error=self._show_action_error,
+        )
+
+    def _signed_in(self, _result: object) -> None:
+        self._hide_login()
+        self.refresh()
+        self._overview_context = None
+        self._ensure_overview()
 
     def _ensure_overview(self) -> None:
         context = self._context()
@@ -598,6 +666,8 @@ class WorkloadWindow(QMainWindow):
 
     def _show_overview_error(self, message: str) -> None:
         self._overview_busy = False
+        if is_auth_error(message):
+            self._check_login()
         info = describe_error(message)
         label = self.overview_ui.noticeLabel
         label.setTextFormat(Qt.TextFormat.RichText)
@@ -1415,6 +1485,8 @@ class WorkloadWindow(QMainWindow):
         box.exec()
 
     def _show_error(self, message: str) -> None:
+        if is_auth_error(message):
+            self._check_login()
         self._workloads = []
         self._pods = []
         self._set_status(lambda: self._error_line(message))

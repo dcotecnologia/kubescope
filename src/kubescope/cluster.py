@@ -8,6 +8,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from kubescope.errors import is_auth_error
 from kubescope.models import (
     ClusterOverview,
     NodeInfo,
@@ -76,6 +77,120 @@ def list_contexts() -> tuple[list[str], str | None]:
     if contexts:
         active_context = _run_kubectl("config", "current-context").strip() or None
     return contexts, active_context
+
+
+LOGIN_TIMEOUT = 300  # seconds; the sign-in waits for the person in the browser
+AWS_TIMEOUT = 30
+
+
+def _run_command(command: list[str], timeout: float) -> str:
+    try:
+        result = subprocess.run(
+            command,
+            capture_output=True,
+            check=False,
+            text=True,
+            timeout=timeout,
+        )
+    except subprocess.TimeoutExpired as error:
+        raise KubectlError(f"{command[0]} timed out") from error
+    except OSError as error:
+        raise KubectlError(f"Could not start {command[0]}: {error}") from error
+    if result.returncode != 0:
+        detail = result.stderr.strip() or result.stdout.strip()
+        raise KubectlError(detail or f"{command[0]} exited with {result.returncode}")
+    return result.stdout
+
+
+def _aws_profile(context: str) -> tuple[bool, str | None]:
+    """Whether the context signs in through the AWS CLI, and with which
+    profile.
+
+    Read from the kubeconfig entry; secrets stay redacted because
+    `config view` runs without --raw.
+    """
+    users = _get_json("config", "view", "--minify", context=context).get("users")
+    login = ((users or [{}])[0].get("user") or {}).get("exec") or {}
+    if Path(login.get("command") or "").stem != "aws":
+        return False, None
+    arguments = login.get("args") or []
+    profile = next(
+        (
+            arguments[index + 1]
+            for index, argument in enumerate(arguments[:-1])
+            if argument == "--profile"
+        ),
+        None,
+    )
+    for variable in login.get("env") or []:
+        if variable.get("name") == "AWS_PROFILE":
+            profile = profile or variable.get("value")
+    return True, profile
+
+
+def _profile_arguments(profile: str | None) -> list[str]:
+    return ["--profile", profile] if profile else []
+
+
+def _is_sso_profile(profile: str | None) -> bool:
+    """SSO profiles sign in through the browser; the others use access keys."""
+    for key in ("sso_session", "sso_start_url"):
+        try:
+            value = _run_command(
+                ["aws", "configure", "get", key, *_profile_arguments(profile)],
+                AWS_TIMEOUT,
+            )
+        except KubectlError:
+            continue
+        if value.strip():
+            return True
+    return False
+
+
+def login_command(context: str) -> list[str] | None:
+    """The command that signs in to a context: "aws sso login" for an AWS SSO
+    profile.
+
+    Access-key profiles have no browser sign-in, and other login tools
+    are not supported, so both return None.
+    """
+    uses_aws, profile = _aws_profile(context)
+    if not uses_aws or not _is_sso_profile(profile):
+        return None
+    return ["aws", "sso", "login", *_profile_arguments(profile)]
+
+
+def check_login(context: str) -> tuple[bool, list[str] | None]:
+    """Whether the context needs a sign-in, and the command that does it.
+
+    kubectl catches an expired SSO session. Access keys that were
+    rotated or revoked only fail at the cluster, because `aws eks get-
+    token` signs locally, so AWS contexts are also checked with STS.
+    Other failures (an unreachable cluster, denied access) are not a
+    login problem and report as signed in.
+    """
+    try:
+        _run_kubectl("get", "--raw", "/version", context=context)
+        uses_aws, profile = _aws_profile(context)
+        if uses_aws:
+            _run_command(
+                ["aws", "sts", "get-caller-identity", *_profile_arguments(profile)],
+                AWS_TIMEOUT,
+            )
+    except (KubectlError, ValueError) as error:
+        if not is_auth_error(str(error)):
+            return False, None
+        try:
+            return True, login_command(context)
+        except (KubectlError, ValueError):
+            return True, None
+    return False, None
+
+
+def run_login(command: list[str]) -> None:
+    """Run the sign-in command; it opens the browser and waits for the
+    person."""
+    _run_command(command, LOGIN_TIMEOUT)
 
 
 def _parse_workload(item: dict[str, Any], now: datetime) -> Workload | None:

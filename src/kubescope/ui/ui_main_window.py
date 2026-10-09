@@ -655,6 +655,13 @@ class Ui_MainWindow(object):
 
         self.footerRow.addWidget(self.statusLabel)
 
+        self.loginButton = QPushButton(self.workArea)
+        self.loginButton.setObjectName(u"loginButton")
+        self.loginButton.setVisible(False)
+        self.loginButton.setProperty(u"variant", u"primary")
+
+        self.footerRow.addWidget(self.loginButton)
+
         self.footerSpacer = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
 
         self.footerRow.addItem(self.footerSpacer)
@@ -768,6 +775,10 @@ class Ui_MainWindow(object):
         self.workloadTable.setSortingEnabled(__sortingEnabled)
 
         self.statusLabel.setText(QCoreApplication.translate("MainWindow", u"Select a context to load workloads", None))
+#if QT_CONFIG(tooltip)
+        self.loginButton.setToolTip(QCoreApplication.translate("MainWindow", u"Sign in with the AWS CLI, then reload the cluster data", None))
+#endif // QT_CONFIG(tooltip)
+        self.loginButton.setText(QCoreApplication.translate("MainWindow", u"Sign in to AWS", None))
         self.footerNote.setText(QCoreApplication.translate("MainWindow", u"Data fetched via kubectl", None))
         self.footerLicense.setText(QCoreApplication.translate("MainWindow", u"\u00a9 2026 DCO Tecnologia \u00b7 MIT License", None))
 #if QT_CONFIG(tooltip)
