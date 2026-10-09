@@ -106,7 +106,7 @@
     <name>MainWindow</name>
     <message>
         <location filename="../ui/main_window.ui" line="20"/>
-        <location filename="../ui/main_window.ui" line="322"/>
+        <location filename="../ui/main_window.ui" line="338"/>
         <source>KubeScope</source>
         <translation>KubeScope</translation>
     </message>
@@ -121,126 +121,126 @@
         <translation>Contexto do Kubernetes do seu kubeconfig</translation>
     </message>
     <message>
-        <location filename="../ui/main_window.ui" line="265"/>
+        <location filename="../ui/main_window.ui" line="281"/>
         <source>READ ONLY</source>
         <translation>SOMENTE LEITURA</translation>
     </message>
     <message>
-        <location filename="../ui/main_window.ui" line="329"/>
+        <location filename="../ui/main_window.ui" line="345"/>
         <source>Kubernetes console</source>
         <translation>Console Kubernetes</translation>
     </message>
     <message>
-        <location filename="../ui/main_window.ui" line="352"/>
+        <location filename="../ui/main_window.ui" line="368"/>
         <source>MONITORING</source>
         <translation>MONITORAMENTO</translation>
     </message>
     <message>
-        <location filename="../ui/main_window.ui" line="359"/>
-        <location filename="../ui/main_window.ui" line="635"/>
+        <location filename="../ui/main_window.ui" line="375"/>
+        <location filename="../ui/main_window.ui" line="651"/>
         <source>Overview</source>
         <translation>Visão geral</translation>
     </message>
     <message>
-        <location filename="../ui/main_window.ui" line="390"/>
+        <location filename="../ui/main_window.ui" line="406"/>
         <source>Workloads</source>
         <translation>Workloads</translation>
     </message>
     <message>
-        <location filename="../ui/main_window.ui" line="507"/>
+        <location filename="../ui/main_window.ui" line="523"/>
         <source>Details &amp;&amp; Logs</source>
         <translation>Detalhes e Logs</translation>
     </message>
     <message>
-        <location filename="../ui/main_window.ui" line="551"/>
+        <location filename="../ui/main_window.ui" line="567"/>
         <source>Settings</source>
         <translation>Configurações</translation>
     </message>
     <message>
-        <location filename="../ui/main_window.ui" line="586"/>
+        <location filename="../ui/main_window.ui" line="602"/>
         <source>SECURE ACCESS
 Resources in read-only mode</source>
         <translation>ACESSO SEGURO
 Recursos em modo somente leitura</translation>
     </message>
     <message>
-        <location filename="../ui/main_window.ui" line="642"/>
+        <location filename="../ui/main_window.ui" line="658"/>
         <source>Cluster resources and capacity</source>
         <translation>Recursos e capacidade do cluster</translation>
     </message>
     <message>
         <location filename="../window.py" line="548"/>
-        <location filename="../ui/main_window.ui" line="717"/>
-        <location filename="../ui/main_window.ui" line="903"/>
+        <location filename="../ui/main_window.ui" line="733"/>
+        <location filename="../ui/main_window.ui" line="919"/>
         <source>NAMESPACE</source>
         <translation>NAMESPACE</translation>
     </message>
     <message>
-        <location filename="../ui/main_window.ui" line="769"/>
+        <location filename="../ui/main_window.ui" line="785"/>
         <source>Search by name or namespace...</source>
         <translation>Buscar por nome ou namespace...</translation>
     </message>
     <message>
-        <location filename="../ui/main_window.ui" line="792"/>
+        <location filename="../ui/main_window.ui" line="808"/>
         <source>Refresh</source>
         <translation>Atualizar</translation>
     </message>
     <message>
-        <location filename="../ui/main_window.ui" line="829"/>
+        <location filename="../ui/main_window.ui" line="845"/>
         <source>View Pods of the selected workload</source>
         <translation>Ver Pods do workload selecionado</translation>
     </message>
     <message>
-        <location filename="../ui/main_window.ui" line="442"/>
-        <location filename="../ui/main_window.ui" line="832"/>
+        <location filename="../ui/main_window.ui" line="458"/>
+        <location filename="../ui/main_window.ui" line="848"/>
         <source>Pods</source>
         <translation>Pods</translation>
     </message>
     <message>
-        <location filename="../ui/main_window.ui" line="473"/>
+        <location filename="../ui/main_window.ui" line="489"/>
         <source>Deployments</source>
         <translation>Deployments</translation>
     </message>
     <message>
-        <location filename="../ui/main_window.ui" line="845"/>
+        <location filename="../ui/main_window.ui" line="861"/>
         <source>View JSON details of the selected workload</source>
         <translation>Ver os detalhes JSON do workload selecionado</translation>
     </message>
     <message>
-        <location filename="../ui/main_window.ui" line="848"/>
+        <location filename="../ui/main_window.ui" line="864"/>
         <source>Details</source>
         <translation>Detalhes</translation>
     </message>
     <message>
-        <location filename="../ui/main_window.ui" line="861"/>
+        <location filename="../ui/main_window.ui" line="877"/>
         <source>View logs of a Pod of the selected workload</source>
         <translation>Ver logs de um Pod do workload selecionado</translation>
     </message>
     <message>
-        <location filename="../ui/main_window.ui" line="864"/>
+        <location filename="../ui/main_window.ui" line="880"/>
         <source>Logs</source>
         <translation>Logs</translation>
     </message>
     <message>
-        <location filename="../ui/main_window.ui" line="908"/>
+        <location filename="../ui/main_window.ui" line="924"/>
         <source>KIND</source>
         <translation>TIPO</translation>
     </message>
     <message>
         <location filename="../window.py" line="550"/>
-        <location filename="../ui/main_window.ui" line="913"/>
+        <location filename="../ui/main_window.ui" line="929"/>
         <source>NAME</source>
         <translation>NOME</translation>
     </message>
     <message>
         <location filename="../window.py" line="551"/>
-        <location filename="../ui/main_window.ui" line="918"/>
+        <location filename="../ui/main_window.ui" line="934"/>
         <source>READY</source>
         <translation>PRONTOS</translation>
     </message>
     <message>
         <location filename="../window.py" line="552"/>
-        <location filename="../ui/main_window.ui" line="923"/>
+        <location filename="../ui/main_window.ui" line="939"/>
         <source>STATUS</source>
         <translation>STATUS</translation>
     </message>
@@ -261,24 +261,24 @@ Recursos em modo somente leitura</translation>
     </message>
     <message>
         <location filename="../window.py" line="556"/>
-        <location filename="../ui/main_window.ui" line="928"/>
+        <location filename="../ui/main_window.ui" line="944"/>
         <source>AGE</source>
         <translation>IDADE</translation>
     </message>
     <message>
-        <location filename="../ui/main_window.ui" line="1406"/>
+        <location filename="../ui/main_window.ui" line="1422"/>
         <source>Select a context to load workloads</source>
         <translation>Selecione um contexto para carregar os workloads</translation>
     </message>
     <message>
-        <location filename="../ui/main_window.ui" line="1419"/>
+        <location filename="../ui/main_window.ui" line="268"/>
         <source>Sign in with the AWS CLI, then reload the cluster data</source>
-        <translation>Entrar com a AWS CLI e recarregar os dados do cluster</translation>
+        <translation>Autenticar com a AWS CLI e recarregar os dados do cluster</translation>
     </message>
     <message>
-        <location filename="../ui/main_window.ui" line="1422"/>
+        <location filename="../ui/main_window.ui" line="271"/>
         <source>Sign in to AWS</source>
-        <translation>Entrar na AWS</translation>
+        <translation>Autenticar</translation>
     </message>
     <message>
         <location filename="../ui/main_window.ui" line="1445"/>
@@ -710,7 +710,7 @@ Recursos em modo somente leitura</translation>
     <message>
         <location filename="../window.py" line="641"/>
         <source>Sign in to AWS ({profile})</source>
-        <translation>Entrar na AWS ({profile})</translation>
+        <translation>Autenticar ({profile})</translation>
     </message>
     <message>
         <location filename="../window.py" line="644"/>
