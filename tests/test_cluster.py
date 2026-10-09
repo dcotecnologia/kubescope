@@ -1,7 +1,11 @@
 import json
 from datetime import UTC, datetime
+from types import SimpleNamespace
+
+import pytest
 
 from kubescope import cluster
+from kubescope.models import PodInfo
 
 
 def test_parse_deployment_workload() -> None:
@@ -328,3 +332,246 @@ def test_get_pods_and_usage_include_metrics_restarts_and_owner(monkeypatch) -> N
 
     monkeypatch.setattr(cluster, "_run_kubectl", no_metrics)
     assert cluster.get_pods("dev")[1][0].cpu is None
+
+
+def test_kubectl_executable_in_the_source_tree_and_in_a_bundle(
+    monkeypatch, tmp_path
+) -> None:
+    source = cluster.kubectl_executable()
+    assert source.parts[-3:] == ("vendor", "kubectl", "kubectl")
+
+    monkeypatch.setattr(cluster, "os", SimpleNamespace(name="nt"))
+    monkeypatch.setattr(cluster.sys, "frozen", True, raising=False)
+    monkeypatch.setattr(cluster.sys, "_MEIPASS", str(tmp_path), raising=False)
+    assert cluster.kubectl_executable() == tmp_path / "kubectl" / "kubectl.exe"
+
+
+def _fake_kubectl(monkeypatch, tmp_path, run):
+    executable = tmp_path / "kubectl"
+    executable.write_text("")
+    monkeypatch.setattr(cluster, "kubectl_executable", lambda: executable)
+    monkeypatch.setattr(cluster.subprocess, "run", run)
+    return executable
+
+
+def test_run_kubectl_builds_the_command_and_returns_stdout(
+    monkeypatch, tmp_path
+) -> None:
+    calls = []
+
+    def run(command, **kwargs):
+        calls.append((command, kwargs))
+        return cluster.subprocess.CompletedProcess(command, 0, "out\n", "")
+
+    executable = _fake_kubectl(monkeypatch, tmp_path, run)
+
+    assert cluster._run_kubectl("get", "pods", context="prod") == "out\n"
+    assert calls[0][0] == [str(executable), "--context", "prod", "get", "pods"]
+    assert calls[0][1]["timeout"] == 45
+    cluster._run_kubectl("version")
+    assert calls[1][0] == [str(executable), "version"]
+
+
+def test_run_kubectl_reports_every_failure(monkeypatch, tmp_path) -> None:
+    monkeypatch.setattr(cluster, "kubectl_executable", lambda: tmp_path / "missing")
+    with pytest.raises(cluster.KubectlError, match="missing"):
+        cluster._run_kubectl("get")
+
+    def failing(returncode, stdout, stderr):
+        def run(command, **_kwargs):
+            return cluster.subprocess.CompletedProcess(
+                command, returncode, stdout, stderr
+            )
+
+        return run
+
+    for run, message in (
+        (failing(1, "", " denied \n"), "denied"),
+        (failing(1, "from stdout", ""), "from stdout"),
+        (failing(3, "", ""), "exited with 3"),
+    ):
+        _fake_kubectl(monkeypatch, tmp_path, run)
+        with pytest.raises(cluster.KubectlError, match=message):
+            cluster._run_kubectl("get")
+
+    def timeout(command, **_kwargs):
+        raise cluster.subprocess.TimeoutExpired(command, 45)
+
+    def broken(_command, **_kwargs):
+        raise OSError("exec format error")
+
+    _fake_kubectl(monkeypatch, tmp_path, timeout)
+    with pytest.raises(cluster.KubectlError, match="timed out"):
+        cluster._run_kubectl("get")
+    _fake_kubectl(monkeypatch, tmp_path, broken)
+    with pytest.raises(cluster.KubectlError, match="Could not start"):
+        cluster._run_kubectl("get")
+
+
+def test_get_json_rejects_documents_that_are_not_objects(monkeypatch) -> None:
+    monkeypatch.setattr(cluster, "_run_kubectl", lambda *_a, **_k: '{"a": 1}')
+    assert cluster._get_json("get", "x", context="c") == {"a": 1}
+
+    monkeypatch.setattr(cluster, "_run_kubectl", lambda *_a, **_k: "[1]")
+    with pytest.raises(cluster.KubectlError, match="unexpected JSON"):
+        cluster._get_json("get", "x", context="c")
+
+
+def test_list_contexts_returns_names_and_the_active_one(monkeypatch) -> None:
+    outputs = {"get-contexts": "a\n\n b \n", "current-context": " b \n"}
+    monkeypatch.setattr(
+        cluster, "_run_kubectl", lambda *arguments, **_k: outputs[arguments[1]]
+    )
+    assert cluster.list_contexts() == (["a", "b"], "b")
+
+    monkeypatch.setattr(cluster, "_run_kubectl", lambda *_a, **_k: "\n")
+    assert cluster.list_contexts() == ([], None)
+
+    monkeypatch.setattr(
+        cluster,
+        "_run_kubectl",
+        lambda *arguments, **_k: "a\n" if arguments[1] == "get-contexts" else "\n",
+    )
+    assert cluster.list_contexts() == (["a"], None)
+
+
+def test_parse_workload_skips_unknown_kinds_and_handles_daemon_sets() -> None:
+    now = datetime(2025, 1, 1, tzinfo=UTC)
+
+    assert (
+        cluster._parse_workload({"kind": "Job", "metadata": {"name": "x"}}, now) is None
+    )
+    assert cluster._parse_workload({"kind": "Deployment", "metadata": {}}, now) is None
+    daemon = cluster._parse_workload(
+        {
+            "kind": "DaemonSet",
+            "metadata": {"name": "agent"},
+            "status": {"desiredNumberScheduled": 4, "numberReady": 3},
+        },
+        now,
+    )
+    assert daemon is not None
+    assert (daemon.ready, daemon.desired, daemon.age) == (3, 4, "unknown")
+
+
+def test_get_resource_details_rejects_unsupported_kinds() -> None:
+    with pytest.raises(cluster.KubectlError, match="Unsupported resource kind"):
+        cluster.get_resource_details("c", "Job", "ns", "x")
+
+
+def test_label_selector_supports_every_expression_operator() -> None:
+    resource = {
+        "spec": {
+            "selector": {
+                "matchLabels": {"b": "2", "a": "1"},
+                "matchExpressions": [
+                    {"key": "tier", "operator": "In", "values": ["x", "y"]},
+                    {"key": "env", "operator": "NotIn", "values": ["dev"]},
+                    {"key": "canary", "operator": "Exists"},
+                    {"key": "legacy", "operator": "DoesNotExist"},
+                ],
+            }
+        }
+    }
+
+    assert cluster._label_selector(resource) == (
+        "a=1,b=2,tier in (x,y),env notin (dev),canary,!legacy"
+    )
+
+
+@pytest.mark.parametrize(
+    ("selector", "message"),
+    [
+        ({"matchExpressions": [{"operator": "Exists"}]}, "without a key"),
+        (
+            {"matchExpressions": [{"key": "k", "operator": "In", "values": []}]},
+            "requires values",
+        ),
+        (
+            {"matchExpressions": [{"key": "k", "operator": "Gt", "values": ["1"]}]},
+            "Unsupported workload selector operator",
+        ),
+        ({}, "no label selector"),
+    ],
+)
+def test_label_selector_rejects_unusable_selectors(selector, message) -> None:
+    with pytest.raises(cluster.KubectlError, match=message):
+        cluster._label_selector({"spec": {"selector": selector}})
+
+
+def test_parse_pod_handles_missing_names_and_ages() -> None:
+    now = datetime(2025, 1, 1, 1, tzinfo=UTC)
+
+    assert cluster._parse_pod({"metadata": {}}, now) is None
+    pod = cluster._parse_pod(
+        {
+            "metadata": {
+                "name": "web",
+                "creationTimestamp": "2025-01-01T00:00:00Z",
+            },
+            "spec": {"containers": [{"name": "app"}, {}]},
+        },
+        now,
+    )
+    assert pod is not None
+    assert (pod.age, pod.containers, pod.phase, pod.namespace) == (
+        "1h",
+        ("app",),
+        "Unknown",
+        "default",
+    )
+
+
+def test_pod_owner_prefers_controllers_and_maps_replica_sets() -> None:
+    owner = cluster._pod_owner
+    assert owner({}) is None
+    assert owner({"ownerReferences": [{"kind": "Node"}]}) is None
+    assert owner(
+        {
+            "ownerReferences": [
+                {"kind": "Job", "name": "j", "controller": False},
+                {"kind": "ReplicaSet", "name": "api-7d9f"},
+            ]
+        }
+    ) == ("Deployment", "api")
+    assert owner({"ownerReferences": [{"kind": "StatefulSet", "name": "db"}]}) == (
+        "StatefulSet",
+        "db",
+    )
+
+
+def test_item_age_is_unknown_without_a_timestamp() -> None:
+    now = datetime(2025, 1, 1, tzinfo=UTC)
+    assert cluster._item_age({}, now) == "unknown"
+
+
+def test_build_overview_ignores_pods_not_scheduled_on_a_node() -> None:
+    now = datetime(2025, 1, 1, tzinfo=UTC)
+    results = {
+        "nodes": {"items": [_node("a")]},
+        "pods": {"items": [{"status": {"phase": "Pending"}}, _pod("a", "Running")]},
+    }
+
+    overview = cluster._build_overview(results, {}, now)
+
+    assert overview.nodes[0].pods_running == 1
+
+
+def test_get_usage_skips_pods_without_a_controlling_workload(monkeypatch) -> None:
+    owned = PodInfo(
+        "ns",
+        "api-1",
+        "Running",
+        1,
+        1,
+        "1h",
+        ("c",),
+        2,
+        0.5,
+        100.0,
+        ("Deployment", "api"),
+    )
+    orphan = PodInfo("ns", "solo", "Running", 1, 1, "1h", ("c",))
+    monkeypatch.setattr(cluster, "_pods_with_usage", lambda *_a: [owned, orphan])
+
+    assert cluster.get_usage("ctx") == {("ns", "Deployment", "api"): (2, 0.5, 100.0)}

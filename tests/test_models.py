@@ -1,6 +1,19 @@
 import pytest
 
-from kubescope.models import Workload, format_age
+from kubescope.models import (
+    POD_SORT_COLUMNS,
+    SORT_COLUMNS,
+    PodInfo,
+    Workload,
+    format_age,
+    format_bytes,
+    format_cpu,
+    format_memory,
+    parse_cpu,
+    parse_memory,
+    pod_sort_key,
+    workload_sort_key,
+)
 
 
 @pytest.mark.parametrize(
@@ -89,3 +102,75 @@ def test_pod_highlight_flags_problems_over_young_pods() -> None:
     assert pod_highlight(pod(ready=0)) == "problem"
     assert pod_highlight(pod(age="5m", restarts=1)) == "problem"  # problem wins
     assert pod_highlight(pod(phase="Pending", ready=0, age="5m")) == "young"
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [(None, 0.0), ("", 0.0), ("250m", 0.25), ("2", 2.0), ("1500u", 0.0015)],
+)
+def test_parse_cpu(value: str | None, expected: float) -> None:
+    assert parse_cpu(value) == pytest.approx(expected)
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        (None, 0.0),
+        ("512Mi", 512 * 2**20),
+        ("2G", 2e9),
+        ("1500m", 1.5),
+        ("1024", 1024.0),
+    ],
+)
+def test_parse_memory(value: str | None, expected: float) -> None:
+    assert parse_memory(value) == pytest.approx(expected)
+
+
+@pytest.mark.parametrize(
+    ("cores", "expected"), [(None, "—"), (0.25, "250m"), (2.0, "2.00")]
+)
+def test_format_cpu(cores: float | None, expected: str) -> None:
+    assert format_cpu(cores) == expected
+
+
+@pytest.mark.parametrize(
+    ("size", "expected"),
+    [(None, "—"), (512 * 2**20, "512 MiB"), (3 * 2**30, "3.0 GiB")],
+)
+def test_format_memory_and_bytes(size: float | None, expected: str) -> None:
+    assert format_memory(size) == expected
+    if size is not None:
+        assert format_bytes(size) == expected
+
+
+def test_workload_sort_key_covers_every_column() -> None:
+    workload = Workload("ns", "Deployment", "Api", 1, 2, "3h", 4, 0.5, 100.0)
+    bare = Workload("ns", "Deployment", "api", 0, 0, "1d")
+
+    keys = [workload_sort_key(workload, column) for column in range(len(SORT_COLUMNS))]
+
+    assert keys[3][:2] == (0.5, 2)
+    assert workload_sort_key(bare, 3)[:2] == (1.0, 0)
+    assert workload_sort_key(bare, 5)[0] == -1.0
+    assert workload_sort_key(workload, 5)[0] == 0.5
+    assert workload_sort_key(workload, 8)[0] == 3 * 3600
+    assert workload_sort_key(workload, 1)[0] == "Deployment"
+    assert workload_sort_key(workload, 2)[0] == "api"
+    assert workload_sort_key(workload, 0)[0] == "ns"
+
+
+def test_pod_sort_key_covers_every_column() -> None:
+    pod = PodInfo("ns", "Web", "Running", 1, 2, "2d", ("a", "b"), 3, 0.2, 50.0)
+    empty = PodInfo("ns", "web", "Weird", 0, 0, "1h", ())
+
+    assert len(POD_SORT_COLUMNS) == 9
+    assert pod_sort_key(pod, 1)[0] == 2
+    assert pod_sort_key(pod, 3)[:2] == (0.5, 2)
+    assert pod_sort_key(empty, 3)[:2] == (1.0, 0)
+    assert pod_sort_key(pod, 4)[0] == 3
+    assert pod_sort_key(empty, 4)[0] == 4
+    assert pod_sort_key(empty, 5)[0] == -1.0
+    assert pod_sort_key(pod, 7)[0] == 3
+    assert pod_sort_key(pod, 8)[0] == 2 * 86400
+    assert pod_sort_key(pod, 2)[0] == "web"
+    assert pod_sort_key(pod, 0)[0] == "ns"

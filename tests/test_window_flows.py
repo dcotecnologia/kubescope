@@ -1,0 +1,555 @@
+import os
+import time
+
+os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+
+from PySide6.QtCore import QObject, QPoint, QTimer, Signal
+from PySide6.QtGui import QCloseEvent
+from PySide6.QtWidgets import (
+    QApplication,
+    QDialog,
+    QInputDialog,
+    QMenu,
+    QMessageBox,
+    QPushButton,
+    QTableWidget,
+)
+
+from kubescope import window as window_module
+from kubescope.cluster import KubectlError
+from kubescope.models import ClusterOverview, NodeInfo, PodInfo, Workload
+
+application = QApplication.instance() or QApplication([])
+
+
+class FakeRefreshWorker(QObject):
+    """Stands in for RefreshWorker: finishes at once with a canned outcome."""
+
+    completed = Signal(list, list)
+    failed = Signal(str)
+    finished = Signal()
+    outcome: tuple = ("ok", ([], []))
+    running = False
+
+    def __init__(self, context, namespace, view="deployments") -> None:
+        super().__init__()
+        self.context, self.namespace, self.view = context, namespace, view
+
+    def isRunning(self) -> bool:  # noqa: N802
+        return self.running
+
+    def start(self) -> None:
+        kind, payload = self.outcome
+        if kind == "ok":
+            self.completed.emit(*payload)
+        else:
+            self.failed.emit(payload)
+        self.finished.emit()
+
+
+def _ready_window(monkeypatch):
+    """A window with a "prod" context and no real kubectl behind it."""
+    monkeypatch.setattr(window_module, "list_contexts", lambda: ([], None))
+    monkeypatch.setattr(
+        window_module.WorkloadWindow, "refresh_overview", lambda *_a: None
+    )
+    monkeypatch.setattr(window_module, "RefreshWorker", FakeRefreshWorker)
+    window = window_module.WorkloadWindow()
+    window.context_combo.blockSignals(True)
+    window.context_combo.addItem("prod")
+    window.context_combo.setCurrentIndex(0)
+    window.context_combo.blockSignals(False)
+    return window
+
+
+def _wait_until(condition, seconds: float = 3.0) -> None:
+    deadline = time.monotonic() + seconds
+    while not condition() and time.monotonic() < deadline:
+        application.processEvents()
+        time.sleep(0.005)
+    assert condition()
+
+
+POD = PodInfo("ns", "api-1", "Running", 1, 2, "1h", ("app", "sidecar"))
+
+
+def test_refresh_worker_adds_restarts_and_usage_to_deployments(monkeypatch) -> None:
+    deployment = Workload("a", "Deployment", "api", 1, 1, "1d")
+    stateful = Workload("a", "StatefulSet", "db", 1, 1, "1d")
+    other = Workload("a", "Deployment", "web", 1, 1, "1d")
+    monkeypatch.setattr(
+        window_module,
+        "get_workloads",
+        lambda *_a: (["a"], [deployment, stateful, other]),
+    )
+    monkeypatch.setattr(
+        window_module,
+        "get_usage",
+        lambda *_a: {("a", "Deployment", "api"): (2, 0.5, 100.0)},
+    )
+    done = []
+    worker = window_module.RefreshWorker("ctx", None)
+    worker.completed.connect(lambda namespaces, items: done.append((namespaces, items)))
+
+    worker.run()
+
+    namespaces, items = done[0]
+    assert namespaces == ["a"]
+    assert [(i.name, i.restarts, i.cpu, i.memory) for i in items] == [
+        ("api", 2, 0.5, 100.0),
+        ("web", 0, None, None),
+    ]
+
+
+def test_refresh_worker_keeps_going_when_usage_fails(monkeypatch) -> None:
+    monkeypatch.setattr(
+        window_module,
+        "get_workloads",
+        lambda *_a: (["a"], [Workload("a", "Deployment", "api", 1, 1, "1d")]),
+    )
+
+    def broken(*_args):
+        raise KubectlError("no metrics")
+
+    monkeypatch.setattr(window_module, "get_usage", broken)
+    done = []
+    worker = window_module.RefreshWorker("ctx", "a")
+    worker.completed.connect(lambda _n, items: done.append(items))
+
+    worker.run()
+
+    assert done[0][0].cpu is None
+
+
+def test_refresh_worker_loads_pods_and_reports_failures(monkeypatch) -> None:
+    monkeypatch.setattr(window_module, "get_pods", lambda *_a: (["ns"], [POD]))
+    done, failures = [], []
+    worker = window_module.RefreshWorker("ctx", None, "pods")
+    worker.completed.connect(lambda namespaces, items: done.append((namespaces, items)))
+    worker.failed.connect(failures.append)
+
+    worker.run()
+    assert done == [(["ns"], [POD])]
+
+    def broken(*_args):
+        raise KubectlError("denied")
+
+    monkeypatch.setattr(window_module, "get_pods", broken)
+    worker.run()
+    assert failures == ["denied"]
+
+
+def test_action_worker_returns_results_and_errors() -> None:
+    done, failures = [], []
+    worker = window_module.ActionWorker(lambda a, b: a + b, (1, 2))
+    worker.completed.connect(done.append)
+    worker.failed.connect(failures.append)
+
+    worker.run()
+    assert done == [3]
+
+    def broken():
+        raise KubectlError("nope")
+
+    failing = window_module.ActionWorker(broken, ())
+    failing.failed.connect(failures.append)
+    failing.run()
+    assert failures == ["nope"]
+
+
+def test_loading_shows_a_busy_cursor_and_a_spinner_on_the_button(monkeypatch) -> None:
+    window = _ready_window(monkeypatch)
+    window._tick_spinner()  # nothing to animate yet
+    primary, secondary = window.refresh_button, window.details_button
+    original = primary.text()
+
+    end = window._begin_loading(primary, "Wait")
+    nested = window._begin_loading(secondary, "Other")
+    window._begin_loading(None, "ignored")
+    assert QApplication.overrideCursor() is not None
+    assert primary.text() == "Wait"
+    assert secondary.text() != "Other"  # only one spinner at a time
+
+    window._spinner_button = secondary
+    window._tick_spinner()
+    window._spinner_button = primary
+    end()
+    end()  # a second call changes nothing
+    assert primary.text() == original
+    nested()
+    window._end_loading(None)
+    window._end_loading(None)
+    assert QApplication.overrideCursor() is None
+    window.close()
+
+
+def test_refresh_fills_the_table_or_shows_the_error(monkeypatch) -> None:
+    window = _ready_window(monkeypatch)
+    workload = Workload("ns", "Deployment", "api", 1, 1, "1d")
+    FakeRefreshWorker.outcome = ("ok", (["ns"], [workload]))
+
+    window.refresh()
+    assert window.table.rowCount() == 1
+    assert window.refresh_button.isEnabled()
+
+    FakeRefreshWorker.outcome = ("ok", (["ns"], [POD]))
+    window._open_list_view("pods")
+    window.refresh()
+    assert window.table.rowCount() == 1
+
+    FakeRefreshWorker.outcome = ("error", "Unable to connect to the server")
+    window.refresh()
+    assert window.table.rowCount() == 0
+    assert "Unable to connect" in window.status_label.toolTip()
+    FakeRefreshWorker.outcome = ("ok", ([], []))
+    window.close()
+
+
+def test_refresh_does_nothing_without_a_context_or_while_running(monkeypatch) -> None:
+    window = _ready_window(monkeypatch)
+    window.context_combo.clear()
+    window.refresh()
+    assert window._worker is None
+
+    window.context_combo.addItem("prod")
+    running = FakeRefreshWorker("prod", None)
+    running.running = True
+    window._worker = running
+    window.refresh()
+    assert window._worker is running
+    window.close()
+
+
+def test_refresh_requeues_when_the_view_changed_mid_request(monkeypatch) -> None:
+    window = _ready_window(monkeypatch)
+    queued = []
+    monkeypatch.setattr(
+        QTimer, "singleShot", staticmethod(lambda *args: queued.append(args))
+    )
+    window._worker = FakeRefreshWorker("prod", None, "pods")
+    window._view = "deployments"
+
+    window._refresh_finished()
+
+    assert queued and window.refresh_button.isEnabled()
+    window.close()
+
+
+def test_actions_run_in_workers_and_report_back(monkeypatch) -> None:
+    window = _ready_window(monkeypatch)
+    results, errors = [], []
+
+    window._run_action(lambda: "ok", results.append)
+    _wait_until(lambda: results and not window._action_workers)
+    window._run_action(lambda: "quiet", results.append, quiet=True)
+    _wait_until(lambda: len(results) == 2 and not window._action_workers)
+
+    def broken():
+        raise KubectlError("denied")
+
+    window._run_action(broken, results.append, on_error=errors.append)
+    _wait_until(lambda: errors and not window._action_workers)
+    shown = []
+    monkeypatch.setattr(window, "_show_action_error", shown.append)
+    window._run_action(broken, results.append)
+    _wait_until(lambda: shown and not window._action_workers)
+
+    button = QPushButton()
+    monkeypatch.setattr(window, "sender", lambda: button)
+    window._run_action(lambda: "from button", results.append)
+    _wait_until(lambda: len(results) == 3 and not window._action_workers)
+    assert results == ["ok", "quiet", "from button"]
+    assert errors == ["denied"] and shown == ["denied"]
+    assert QApplication.overrideCursor() is None
+    window.close()
+
+
+def test_actions_are_ignored_while_the_window_waits_to_close(monkeypatch) -> None:
+    window = _ready_window(monkeypatch)
+    window._close_when_worker_stops = True
+
+    window._run_action(lambda: "x", lambda _r: None)
+
+    assert window._action_workers == []
+    closed = []
+    monkeypatch.setattr(window, "close", lambda: closed.append(True))
+    window._finish_deferred_close()
+    assert closed == [True]
+
+
+def test_closing_waits_for_running_workers(monkeypatch) -> None:
+    window = _ready_window(monkeypatch)
+    running = FakeRefreshWorker("prod", None)
+    running.running = True
+    window._worker = running
+
+    event = QCloseEvent()
+    window.closeEvent(event)
+    assert not event.isAccepted() and window._close_when_worker_stops
+
+    window._worker = None
+    window._action_workers = [running]
+    window._finish_deferred_close()  # an action is still running: stay open
+    event = QCloseEvent()
+    window.closeEvent(event)
+    assert not event.isAccepted()
+
+    window._action_workers = []
+    window._close_when_worker_stops = False
+    event = QCloseEvent()
+    window.closeEvent(event)
+    assert event.isAccepted()
+
+
+def test_actions_without_a_selection_do_nothing(monkeypatch) -> None:
+    window = _ready_window(monkeypatch)
+    dispatched = []
+    monkeypatch.setattr(window, "_run_action", lambda *a, **_k: dispatched.append(a))
+
+    window._view_workload_pods()
+    window._view_details()
+    window._view_logs()
+    window._view_workload_details()
+    window._view_workload_logs()
+
+    assert dispatched == []
+    window.close()
+
+
+def test_pod_view_actions_use_the_selected_pod(monkeypatch) -> None:
+    window = _ready_window(monkeypatch)
+    window._view = "pods"
+    monkeypatch.setattr(window, "_selected_pod", lambda: POD)
+    dispatched, chosen = [], []
+    monkeypatch.setattr(
+        window, "_run_action", lambda op, _ok, *a, **_k: dispatched.append((op, a))
+    )
+    monkeypatch.setattr(
+        window, "_choose_container_for_logs", lambda *a: chosen.append(a)
+    )
+
+    window._view_details()
+    window._view_logs()
+
+    assert dispatched[0][0].__name__ == "get_resource_details"
+    assert dispatched[0][1] == ("prod", "Pod", "ns", "api-1")
+    assert chosen == [("prod", POD)]
+    window.close()
+
+
+def test_workload_details_and_logs_dispatch_for_the_selection(monkeypatch) -> None:
+    window = _ready_window(monkeypatch)
+    workload = Workload("ns", "Deployment", "api", 1, 1, "1d")
+    monkeypatch.setattr(window, "_selected_workload", lambda: workload)
+    dispatched = []
+    monkeypatch.setattr(
+        window,
+        "_run_action",
+        lambda op, ok, *a, **_k: dispatched.append((op.__name__, ok, a)),
+    )
+    shown = []
+    monkeypatch.setattr(window, "_show_json_dialog", lambda *a: shown.append(a))
+    monkeypatch.setattr(window, "_choose_pod_for_logs", lambda *a: shown.append(a))
+
+    window._view_workload_details()
+    window._view_workload_logs()
+    window._view_workload_pods()
+    monkeypatch.setattr(window, "_show_pods_dialog", lambda *a: shown.append(a))
+    for _name, callback, _args in dispatched:
+        callback([POD])
+
+    assert [name for name, _cb, _a in dispatched] == [
+        "get_resource_details",
+        "get_workload_pods",
+        "get_workload_pods",
+    ]
+    assert len(shown) == 3
+    window.close()
+
+
+def test_pods_dialog_lists_pods_and_opens_details_and_logs(monkeypatch) -> None:
+    window = _ready_window(monkeypatch)
+    workload = Workload("ns", "Deployment", "api", 1, 1, "1d")
+    dispatched, chosen = [], []
+    monkeypatch.setattr(
+        window, "_run_action", lambda op, _ok, *a, **_k: dispatched.append((op, a))
+    )
+    monkeypatch.setattr(
+        window, "_choose_container_for_logs", lambda *a: chosen.append(a)
+    )
+    seen = {}
+
+    def fake_exec(dialog) -> int:
+        table = dialog.findChild(QTableWidget, "podsTable")
+        details = dialog.findChild(QPushButton, "detailsButton")
+        logs = dialog.findChild(QPushButton, "logsButton")
+        seen["rows"] = table.rowCount()
+        details.clicked.emit()  # nothing selected yet
+        logs.clicked.emit()
+        table.selectRow(0)
+        seen["enabled"] = details.isEnabled() and logs.isEnabled()
+        details.clicked.emit()
+        logs.clicked.emit()
+        table.cellDoubleClicked.emit(0, 0)
+        dialog.findChild(QPushButton, "closeButton").click()
+        return 0
+
+    monkeypatch.setattr(QDialog, "exec", fake_exec)
+
+    window._show_pods_dialog(workload, [POD])
+
+    assert seen == {"rows": 1, "enabled": True}
+    assert len(dispatched) == 2 and chosen == [("prod", POD)]
+
+    seen.clear()
+    window._show_pods_dialog(workload, [])
+    assert seen["rows"] == 0
+    window.close()
+
+
+def test_choosing_pods_and_containers_for_logs(monkeypatch) -> None:
+    window = _ready_window(monkeypatch)
+    messages, dispatched = [], []
+    monkeypatch.setattr(
+        QMessageBox, "information", staticmethod(lambda *a: messages.append(a[2]))
+    )
+    monkeypatch.setattr(
+        window, "_run_action", lambda op, _ok, *a, **_k: dispatched.append(a)
+    )
+    other = PodInfo("ns", "api-2", "Running", 1, 1, "1h", ("app",))
+    empty = PodInfo("ns", "bare", "Running", 0, 0, "1h", ())
+    answers = iter([("api-2", True), ("api-1", False), ("sidecar", True)])
+    monkeypatch.setattr(
+        QInputDialog, "getItem", staticmethod(lambda *_a: next(answers))
+    )
+
+    window._choose_pod_for_logs("prod", [])
+    window._choose_pod_for_logs("prod", [POD, other])  # picks api-2
+    window._choose_pod_for_logs("prod", [POD, other])  # cancelled
+    window._choose_container_for_logs("prod", empty)
+    window._choose_container_for_logs("prod", POD)  # picks sidecar
+
+    assert len(messages) == 2
+    assert dispatched == [
+        ("prod", "ns", "api-2", "app"),
+        ("prod", "ns", "api-1", "sidecar"),
+    ]
+    window.close()
+
+
+def test_errors_are_shown_in_a_message_box_and_in_the_status(monkeypatch) -> None:
+    window = _ready_window(monkeypatch)
+    executed = []
+    monkeypatch.setattr(QMessageBox, "exec", lambda box: executed.append(box.text()))
+
+    window._show_action_error("Unable to connect to the server")
+    window._show_error("Unable to connect to the server")
+    window._show_overview_error("Unable to connect to the server")
+
+    assert executed and window.table.rowCount() == 0
+    assert "Unable to connect" in window.overview_ui.noticeLabel.toolTip()
+    window.close()
+
+
+def test_overview_for_another_context_is_refetched(monkeypatch) -> None:
+    window = _ready_window(monkeypatch)
+    calls = []
+    monkeypatch.setattr(window, "refresh_overview", lambda: calls.append(True))
+
+    window._show_overview("other", ClusterOverview())
+
+    assert calls == [True] and window._overview_context is None
+    window.close()
+
+
+def test_a_kubeconfig_error_disables_the_controls(monkeypatch) -> None:
+    def broken():
+        raise KubectlError("Unable to read kubeconfig")
+
+    monkeypatch.setattr(window_module, "list_contexts", broken)
+    window = window_module.WorkloadWindow()
+
+    assert not window.context_combo.isEnabled()
+    assert not window.refresh_button.isEnabled()
+    assert "kubeconfig" in window.status_label.text()
+    window.close()
+
+
+def test_header_menu_toggles_columns_and_keeps_the_name(monkeypatch) -> None:
+    window = _ready_window(monkeypatch)
+
+    class FakeMenu(QMenu):
+        def exec(self, *_args) -> None:
+            actions = self.actions()
+            assert actions[2].isEnabled() is False
+            actions[0].toggle()
+
+    monkeypatch.setattr(window_module, "QMenu", FakeMenu)
+
+    window._show_column_menu(QPoint(0, 0))
+
+    assert window.table.isColumnHidden(0)
+    window.close()
+
+
+def test_settings_save_failures_are_logged_not_raised(monkeypatch) -> None:
+    window = _ready_window(monkeypatch)
+
+    def broken():
+        raise OSError("disk full")
+
+    monkeypatch.setattr(window.settings, "save", broken)
+    window._save_settings()
+    window._load_settings_form()  # no contexts: shows the hint
+    assert "No contexts" in window.settings_ui.contextsHint.text()
+    window.close()
+
+
+def test_log_tab_shows_refresh_errors_unless_it_was_closed(monkeypatch) -> None:
+    window = _ready_window(monkeypatch)
+    window._show_logs_dialog(POD, "app", "line 1")
+    tab = window.viewer_tabs.widget(0)
+    calls = []
+    monkeypatch.setattr(
+        window, "_run_action", lambda op, ok, *a, **k: calls.append(k["on_error"])
+    )
+
+    window._refresh_log(tab, force=True)
+    calls[0]("Unable to connect to the server")
+    assert not tab.busy
+    assert "Unable to connect" in tab.ui.logStatus.text()
+
+    tab.busy = True
+    tab.closed = True
+    calls[0]("late failure")  # must not touch a closed tab
+    assert not tab.busy
+    assert "late failure" not in tab.ui.logStatus.text()
+    window.close()
+
+
+def test_overview_without_pod_or_metrics_data_shows_dashes(monkeypatch) -> None:
+    window = _ready_window(monkeypatch)
+
+    window._render_overview(ClusterOverview())
+    assert window.overview_ui.podsValue.text() == "—"
+    assert window.overview_ui.podsCaption.text() == ""
+
+    node = NodeInfo(
+        name="n",
+        ready=True,
+        roles="worker",
+        version="v1",
+        age="1d",
+        cpu_allocatable=4.0,
+        memory_allocatable=8 * 2**30,
+        pods_allocatable=10,
+        pods_running=1,
+        cpu_requests=1.0,
+        memory_requests=2**30,
+        cpu_usage=0.5,
+        memory_usage=2**30,
+    )
+    window._render_overview(ClusterOverview(nodes=(node,), metrics_available=True))
+    assert "usage" in window.overview_ui.cpuCaption.text()
+    assert "usage" in window.overview_ui.memCaption.text()
+    window.close()

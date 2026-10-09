@@ -66,5 +66,5 @@ def main() -> int:
     return application.exec()
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     raise SystemExit(main())
