@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>com.dcotecnologia.KubeScope</id>
+  <name>KubeScope</name>
+  <summary>Desktop viewer for Kubernetes and Amazon EKS workloads</summary>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>MIT</project_license>
+  <developer_name>DCO Tecnologia</developer_name>
+  <description>
+    <p>
+      KubeScope is a read-only desktop console for Kubernetes and Amazon EKS:
+      cluster overview, Pods and Deployments with CPU, memory and restarts,
+      resource details and live logs. It bundles its own kubectl.
+    </p>
+  </description>
+  <launchable type="desktop-id">com.dcotecnologia.KubeScope.desktop</launchable>
+  <url type="homepage">https://github.com/dcotecnologia/kubescope</url>
+  <url type="bugtracker">https://github.com/dcotecnologia/kubescope/issues</url>
+  <screenshots>
+    <screenshot type="default">
+      <image>https://raw.githubusercontent.com/dcotecnologia/kubescope/main/docs/screenshots/overview.png</image>
+    </screenshot>
+  </screenshots>
+  <content_rating type="oars-1.1" />
+  <releases>
+    <release version="@VERSION@" date="@DATE@" />
+  </releases>
+</component>

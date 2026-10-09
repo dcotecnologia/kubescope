@@ -2,7 +2,7 @@
 
 UV ?= uv
 
-.PHONY: help setup run preview screenshot designer ui i18n appimage deb windows windows-remote lint format test kubectl qt-libs build clean
+.PHONY: help setup run preview screenshot designer ui i18n appimage deb flatpak windows windows-remote lint format test kubectl qt-libs build clean
 
 help: ## List the available commands
 	@awk 'BEGIN { FS = ":.*##" } /^[a-zA-Z_-]+:.*##/ { printf "  %-12s %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
@@ -55,6 +55,9 @@ appimage: build ## Package the bundle as an AppImage in dist/ (Linux x86_64)
 
 deb: build ## Package the bundle as a .deb in dist/ (Debian/Ubuntu)
 	$(UV) run python tools/build_deb.py
+
+flatpak: build ## Package the bundle as a Flatpak in dist/ (needs flatpak-builder)
+	$(UV) run python tools/build_flatpak.py
 
 windows: ## Build the Windows installer and zip (run this on Windows)
 	$(UV) run python tools/build_windows.py
