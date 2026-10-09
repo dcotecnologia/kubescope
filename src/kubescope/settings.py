@@ -14,6 +14,7 @@ DEFAULTS: dict[str, Any] = {
     "remember_last_context": True,
     "last_context": None,
     "context_aliases": {},
+    "hidden_columns": {},
 }
 
 
@@ -55,6 +56,15 @@ class Settings:
                 else {}
             ).items()
             if str(alias).strip()
+        }
+        stored_columns = self._data["hidden_columns"]
+        self._data["hidden_columns"] = {
+            str(view): sorted({int(column) for column in columns})
+            for view, columns in (
+                stored_columns.items() if isinstance(stored_columns, dict) else []
+            )
+            if isinstance(columns, list)
+            and all(isinstance(column, int) and column >= 0 for column in columns)
         }
         if self._data["language"] not in LANGUAGE_CHOICES:
             self._data["language"] = DEFAULTS["language"]
@@ -102,6 +112,12 @@ class Settings:
             for context, alias in aliases.items()
             if alias.strip()
         }
+
+    def hidden_columns(self, view: str) -> set[int]:
+        return set(self._data["hidden_columns"].get(view, []))
+
+    def set_hidden_columns(self, view: str, columns: set[int]) -> None:
+        self._data["hidden_columns"][view] = sorted(columns)
 
     def display_name(self, context: str) -> str:
         return self._data["context_aliases"].get(context) or context

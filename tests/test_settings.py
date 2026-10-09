@@ -50,3 +50,16 @@ def test_unknown_language_is_ignored_on_assignment(tmp_path) -> None:
     settings = Settings(tmp_path / "settings.json")
     settings.language = "xx"
     assert settings.language == "auto"
+
+
+def test_hidden_columns_persist_and_ignore_damaged_values(tmp_path) -> None:
+    path = tmp_path / "settings.json"
+    settings = Settings(path)
+    assert settings.hidden_columns("pods") == set()
+    settings.set_hidden_columns("pods", {7, 5})
+    settings.save()
+
+    assert Settings(path).hidden_columns("pods") == {5, 7}
+    path.write_text('{"hidden_columns": {"pods": [1, "x"], "deployments": 3}}')
+    assert Settings(path).hidden_columns("pods") == set()
+    assert Settings(path).hidden_columns("deployments") == set()
