@@ -68,14 +68,6 @@ Edit layouts in the `.ui` files and run `make ui`; never edit `ui_*.py` by hand.
 Wrap user-visible text in `self.tr(...)` and complete the Portuguese
 translations with `make i18n`.
 
-## Signing the Windows installer
-
-The Release workflow signs the installer through SignPath once the repository
-variable `SIGNPATH_ORGANIZATION_ID` and the secret `SIGNPATH_API_TOKEN` are set
-(Settings, Secrets and variables, Actions). The SignPath project slug is
-`kubescope` and the signing policy slug is `release-signing`. Without them the
-installer is published unsigned.
-
 ## Security
 
 Report vulnerabilities privately as described in [SECURITY.md](SECURITY.md), not

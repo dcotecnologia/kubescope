@@ -149,13 +149,6 @@ it to the list in `KubeScope.pyproject` too.
 Widget `objectName`s are used by the style sheet and by `window.py`, so keep
 them when renaming or moving widgets.
 
-## Code signing
-
-Free code signing for the Windows installer is provided by
-[SignPath.io](https://signpath.io), certificate by the
-[SignPath Foundation](https://signpath.org). See the
-[code signing policy](https://kubescope.dcotecnologia.com/code-signing).
-
 ## Contributing and security
 
 Read [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) and [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request, and
