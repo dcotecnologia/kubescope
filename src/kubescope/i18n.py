@@ -1,4 +1,5 @@
-"""Language handling: source strings are English, Portuguese ships as a .qm file."""
+"""Language handling: source strings are English, Portuguese ships as a .qm
+file."""
 
 from pathlib import Path
 
@@ -11,7 +12,8 @@ _installed: list[QTranslator] = []
 
 
 def resolve_language(choice: str) -> str:
-    """Map a stored choice ("auto", "en", "pt") to a supported language code."""
+    """Map a stored choice ("auto", "en", "pt") to a supported language
+    code."""
     if choice in LANGUAGES:
         return choice
     system = QLocale.system().name().split("_")[0].lower()
@@ -19,7 +21,8 @@ def resolve_language(choice: str) -> str:
 
 
 def apply_language(choice: str) -> str:
-    """Install the translators for the choice and return the language in use."""
+    """Install the translators for the choice and return the language in
+    use."""
     application = QCoreApplication.instance()
     code = resolve_language(choice)
     for translator in _installed:

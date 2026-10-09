@@ -32,7 +32,8 @@ class LogTab(QWidget):
         return self.ui.autoCheck.isChecked()
 
     def set_logs(self, text: str) -> None:
-        """Replace the text, keeping the view pinned to the end only if it was."""
+        """Replace the text, keeping the view pinned to the end only if it
+        was."""
         editor = self.ui.logText
         scrollbar = editor.verticalScrollBar()
         was_at_end = scrollbar.value() >= scrollbar.maximum() - 2

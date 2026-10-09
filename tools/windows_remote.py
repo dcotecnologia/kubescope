@@ -1,7 +1,8 @@
 """Build the Windows packages on GitHub Actions and download them to dist/.
 
-Needs the GitHub CLI (`gh`) logged in, and .github/workflows/release.yml pushed.
-Usage: python tools/windows_remote.py [branch]   (default: current branch)
+Needs the GitHub CLI (`gh`) logged in, and .github/workflows/release.yml
+pushed. Usage: python tools/windows_remote.py [branch]   (default:
+current branch)
 """
 
 import json

@@ -1,8 +1,9 @@
 """Open KubeScope with fake cluster data to review the UI without a cluster.
 
-python tools/preview.py            # interactive window, every button works;
-                                   # saving any .ui regenerates and reopens it
-python tools/preview.py out.png    # render the main window to a PNG and exit
+Run it without arguments for an interactive window where every button
+works; saving any .ui file regenerates it and reopens the window. Pass a
+PNG path (and optionally a page name) to render the main window to that
+file and exit.
 """
 
 import os
@@ -115,7 +116,8 @@ UI_DIR = Path(__file__).resolve().parent.parent / "src/kubescope/ui"
 
 
 def watch_ui(main_window: window.WorkloadWindow) -> QFileSystemWatcher:
-    """Regenerate the ui_*.py and restart the preview when a .ui file is saved."""
+    """Regenerate the ui_*.py and restart the preview when a .ui file is
+    saved."""
     files = [str(path) for path in UI_DIR.glob("*.ui")]
     watcher = QFileSystemWatcher(files, main_window)
     uic = Path(sys.executable).parent / "pyside6-uic"

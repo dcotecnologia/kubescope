@@ -215,7 +215,8 @@ def _parse_pod(item: dict[str, Any], now: datetime) -> PodInfo | None:
 
 
 def _pod_owner(metadata: dict[str, Any]) -> tuple[str, str] | None:
-    """The workload that controls a Pod; ReplicaSets map back to their Deployment."""
+    """The workload that controls a Pod; ReplicaSets map back to their
+    Deployment."""
     for reference in metadata.get("ownerReferences") or []:
         kind, name = reference.get("kind"), reference.get("name")
         if not kind or not name or not reference.get("controller", True):
@@ -280,7 +281,8 @@ def _pods_with_usage(context: str, namespace: str | None) -> list[PodInfo]:
 def get_usage(
     context: str, namespace: str | None = None
 ) -> dict[tuple[str, str, str], tuple[int, float | None, float | None]]:
-    """Restarts, CPU and memory per (namespace, kind, name) workload, from its Pods."""
+    """Restarts, CPU and memory per (namespace, kind, name) workload, from its
+    Pods."""
     totals: dict[tuple[str, str, str], tuple[int, float | None, float | None]] = {}
     for pod in _pods_with_usage(context, namespace):
         if pod.owner is None:
@@ -469,7 +471,8 @@ def _build_overview(
 
 
 def get_cluster_overview(context: str) -> ClusterOverview:
-    """Collect cluster-wide totals; sections the user cannot read become warnings."""
+    """Collect cluster-wide totals; sections the user cannot read become
+    warnings."""
     tasks = {
         "nodes": lambda: _get_json("get", "nodes", context=context),
         "pods": lambda: _get_json("get", "pods", "-A", context=context),

@@ -228,7 +228,7 @@ def workload_sort_key(workload: Workload, column: int) -> tuple:
 
 
 def pod_highlight(pod: PodInfo) -> str | None:
-    """ "problem" for restarting/failing Pods, "young" for ones under an hour old."""
+    """Classify a Pod as "problem", "young" (under an hour old) or neither."""
     not_ready = pod.phase == "Running" and pod.ready < pod.total
     if pod.restarts > 0 or pod.phase in {"Failed", "Unknown"} or not_ready:
         return "problem"

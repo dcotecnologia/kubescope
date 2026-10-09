@@ -18,7 +18,8 @@ ICON_SIZES = (16, 24, 32, 48, 64, 128, 256, 512)
 
 
 def load_app_icon() -> QIcon:
-    """Several sizes, so taskbars and docks never have to scale one huge image."""
+    """Several sizes, so taskbars and docks never have to scale one huge
+    image."""
     source = QPixmap(str(ICON_PATH))
     icon = QIcon()
     for size in ICON_SIZES:
