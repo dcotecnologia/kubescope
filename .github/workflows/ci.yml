@@ -21,17 +21,20 @@ jobs:
 
       - uses: astral-sh/setup-uv@v10.2.0
         with:
-          python-version: "3.12"
+          # the pre-commit config pins Python 3.14 for its hook environments
+          python-version: "3.14"
           enable-cache: true
 
       - name: Install dependencies
         run: uv sync --extra dev --frozen
 
-      - name: Ruff check
-        run: uv run ruff check .
+      - uses: actions/cache@v6
+        with:
+          path: ~/.cache/pre-commit
+          key: pre-commit-${{ hashFiles('.pre-commit-config.yaml') }}
 
-      - name: Ruff format
-        run: uv run ruff format --check .
+      - name: Pre-commit
+        run: uv run pre-commit run --all-files --show-diff-on-failure
 
       - name: Generated UI code is up to date
         run: |
@@ -47,7 +50,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.12", "3.14"]
+        python-version: ["3.12", "3.13", "3.14"]
     env:
       QT_QPA_PLATFORM: offscreen
     steps:
