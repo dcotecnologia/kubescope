@@ -109,13 +109,12 @@ jumps to it (`logs/` next to `settings.json`). The file rotates and stays small.
 `make debug` also prints the log to the terminal. See [SECURITY.md](SECURITY.md)
 for exactly what is recorded.
 
-## Settings and language
+## Settings, themes and languages
 
 The **Settings** page (sidebar) stores preferences as JSON in
 `~/.config/kubescope/settings.json` (`%APPDATA%\\kubescope` on Windows,
 `~/Library/Application Support/kubescope` on macOS; override with
-`KUBESCOPE_CONFIG_DIR`). It lets you pick the language (automatic, English or
-Portuguese), the theme, remember the last context, and give each kubeconfig
+`KUBESCOPE_CONFIG_DIR`). It lets you pick the language, the theme, remember the last context, and give each kubeconfig
 context a friendlier display name. The real context name is still used for every
 request. Hidden table columns are stored in the same file.
 
@@ -149,9 +148,45 @@ folder, so it shows up in the list. A theme is copied once, so your edits are ne
 overwritten and a theme you delete stays deleted. To share a theme, add its file there
 and open a pull request (the folder's README has the steps).
 
-Source strings are English; translations live in
-`src/kubescope/translations/*.ts` (editable in Qt Linguist). After adding or
-changing texts run `make i18n` to extract new strings and compile the `.qm` files.
+### Languages
+
+KubeScope speaks **English** and **Portuguese**. **Automatic** (the default) follows
+your system language and falls back to English. The texts in the code are English;
+each other language is a Qt translation file, `src/kubescope/translations/kubescope_<code>.ts`,
+that `make i18n` compiles into the `.qm` the app loads.
+
+## Contribute a theme or a language
+
+Both are welcome as pull requests; `make test` checks them, and
+[CONTRIBUTING.md](CONTRIBUTING.md) has the general workflow.
+
+### Add a theme
+
+1. In KubeScope, **Settings > New theme...**, pick your colors and save.
+2. Copy the file from your themes folder (**Open the themes folder**) into
+   `src/kubescope/community_themes/`, with a short lowercase name such as
+   `my-theme.json`.
+3. Run `make test`. It checks that every shared theme is valid, uses known color names
+   and keeps its text readable (a 4.5:1 contrast between text and page).
+4. Open a pull request, ideally with a screenshot. Once merged, the theme ships with
+   the app and installs itself in everyone's themes folder.
+
+### Add a language
+
+1. `make language CODE=es` creates `src/kubescope/translations/kubescope_es.ts` with
+   every text to translate. Use the two-letter language code.
+2. Add the language to `LANGUAGES` in `src/kubescope/settings.py`, named in itself
+   (`"es": "Español"`).
+3. Translate the texts in Qt Linguist (`uv run pyside6-linguist
+   src/kubescope/translations/kubescope_es.ts`) or in any text editor. Keep the
+   `{placeholders}` as they are.
+4. `make i18n` compiles the `.qm` file. `make test` fails while any text is
+   unfinished.
+5. Open a pull request. To fix or improve an existing translation, edit its `.ts`
+   and run `make i18n`.
+
+New texts in the code are wrapped in `self.tr(...)`; after adding or changing some, run
+`make i18n` to extract them into every `.ts` and complete the translations.
 
 ## Packaging
 

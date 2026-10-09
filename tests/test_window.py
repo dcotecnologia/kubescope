@@ -559,3 +559,31 @@ def test_hidden_columns_are_applied_and_saved(monkeypatch, tmp_path) -> None:
     assert reopened.table.isColumnHidden(6)
     assert not reopened.table.isColumnHidden(5)
     reopened.close()
+
+
+def test_every_language_ships_a_complete_translation() -> None:
+    """A language listed in Settings must have all its texts translated."""
+    from xml.etree import ElementTree
+
+    from kubescope import i18n
+
+    for code in i18n.LANGUAGES:
+        if code == "en":  # the source strings
+            continue
+        source = i18n.TRANSLATIONS_DIR / f"kubescope_{code}.ts"
+        compiled = i18n.TRANSLATIONS_DIR / f"kubescope_{code}.qm"
+        assert source.is_file() and compiled.is_file(), f"run make i18n for {code}"
+        unfinished = [
+            message.findtext("source")
+            for message in ElementTree.parse(source).iter("message")
+            if message.find("translation").get("type") == "unfinished"
+        ]
+        assert unfinished == [], f"{code} has untranslated texts: {unfinished[:3]}"
+
+
+def test_the_language_choices_follow_the_languages_list() -> None:
+    from kubescope import i18n
+    from kubescope.settings import LANGUAGE_CHOICES, LANGUAGES
+
+    assert ("auto", *LANGUAGES) == LANGUAGE_CHOICES
+    assert i18n.LANGUAGES is LANGUAGES

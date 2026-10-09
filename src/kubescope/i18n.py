@@ -1,11 +1,12 @@
-"""Language handling: source strings are English, Portuguese ships as a .qm
-file."""
+"""Language handling: source strings are English, the other languages ship as
+.qm files made from the .ts files in translations/."""
 
 from pathlib import Path
 
 from PySide6.QtCore import QCoreApplication, QLibraryInfo, QLocale, QTranslator
 
-LANGUAGES = {"en": "English", "pt": "Português"}
+from kubescope.settings import LANGUAGES
+
 TRANSLATIONS_DIR = Path(__file__).resolve().parent / "translations"
 
 _installed: list[QTranslator] = []

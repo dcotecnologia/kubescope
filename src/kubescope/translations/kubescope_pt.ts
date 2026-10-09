@@ -496,7 +496,7 @@ Recursos em modo somente leitura</translation>
 <context>
     <name>SettingsPage</name>
     <message>
-        <location filename="../window.py" line="1764"/>
+        <location filename="../window.py" line="1761"/>
         <location filename="../ui/settings_page.ui" line="294"/>
         <source>Give your contexts friendlier names. Leave a name empty to keep the original one.</source>
         <translation>Dê nomes mais amigáveis aos seus contextos. Deixe o nome vazio para manter o original.</translation>
@@ -815,7 +815,7 @@ Recursos em modo somente leitura</translation>
     <message>
         <location filename="../window.py" line="415"/>
         <location filename="../window.py" line="1183"/>
-        <location filename="../window.py" line="1881"/>
+        <location filename="../window.py" line="1878"/>
         <source>All namespaces</source>
         <translation>Todos os namespaces</translation>
     </message>
@@ -1202,42 +1202,42 @@ Recursos em modo somente leitura</translation>
         <translation>Logs: {pod} / {container}</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1727"/>
+        <location filename="../window.py" line="1726"/>
         <source>Automatic</source>
         <translation>Automático</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1778"/>
+        <location filename="../window.py" line="1775"/>
         <source>Light</source>
         <translation>Claro</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1778"/>
+        <location filename="../window.py" line="1775"/>
         <source>Dark</source>
         <translation>Escuro</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1740"/>
+        <location filename="../window.py" line="1737"/>
         <source>Off by default. When on, KubeScope writes what it does, never Pod logs or resource contents, to {path}. Read it before sharing: it includes context names.</source>
         <translation>Desligado por padrão. Quando ligado, o KubeScope registra o que faz, nunca logs de Pods nem o conteúdo de recursos, em {path}. Leia antes de compartilhar: ele inclui nomes de contextos.</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1770"/>
+        <location filename="../window.py" line="1767"/>
         <source>No contexts were found in kubeconfig.</source>
         <translation>Nenhum contexto foi encontrado no kubeconfig.</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1796"/>
+        <location filename="../window.py" line="1793"/>
         <source>My theme</source>
         <translation>Meu tema</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1862"/>
+        <location filename="../window.py" line="1859"/>
         <source>Settings saved.</source>
         <translation>Configurações salvas.</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1897"/>
+        <location filename="../window.py" line="1894"/>
         <source>Query failed</source>
         <translation>Falha na consulta</translation>
     </message>

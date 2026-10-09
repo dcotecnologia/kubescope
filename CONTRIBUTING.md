@@ -36,7 +36,7 @@ make lint     # ruff
 make test     # pytest, must stay at 100% coverage (headless: QT_QPA_PLATFORM=offscreen)
 uv run pre-commit run --all-files
 make ui       # leaves no diff in src/kubescope/ui
-make i18n     # leaves no unfinished Portuguese translations
+make i18n     # leaves no unfinished translations
 ```
 
 CI runs the same pre-commit hooks, the generated-UI check, and the tests on
@@ -69,6 +69,17 @@ English, imperative mood, no trailing period, and no AI assistant as co-author.
 Edit layouts in the `.ui` files and run `make ui`; never edit `ui_*.py` by hand.
 Wrap user-visible text in `self.tr(...)` and complete the Portuguese
 translations with `make i18n`.
+
+## Themes and languages
+
+- **A theme:** build it in Settings > New theme..., copy its JSON file into
+  `src/kubescope/community_themes/` and run `make test`. The folder's README has the
+  rules.
+- **A language:** `make language CODE=<code>`, add the code to `LANGUAGES` in
+  `src/kubescope/settings.py`, translate the `.ts` and run `make i18n`. `make test`
+  fails while any text is unfinished.
+
+The steps are in the "Contribute a theme or a language" section of the README.
 
 ## Security
 

@@ -7,7 +7,11 @@ from pathlib import Path
 from typing import Any
 
 CONFIG_DIR_ENV = "KUBESCOPE_CONFIG_DIR"
-LANGUAGE_CHOICES = ("auto", "en", "pt")
+# The languages the app speaks, by code, each named in itself. To add one, add it
+# here and ship src/kubescope/translations/kubescope_<code>.ts
+# (`make language CODE=<code>` starts it).
+LANGUAGES = {"en": "English", "pt": "Português"}
+LANGUAGE_CHOICES = ("auto", *LANGUAGES)
 
 DEFAULTS: dict[str, Any] = {
     "language": "auto",

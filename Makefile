@@ -2,7 +2,7 @@
 
 UV ?= uv
 
-.PHONY: help setup run debug preview screenshot designer ui i18n appimage deb flatpak windows windows-remote lint format test kubectl qt-libs build clean
+.PHONY: help setup run debug preview language screenshot designer ui i18n appimage deb flatpak windows windows-remote lint format test kubectl qt-libs build clean
 
 help: ## List the available commands
 	@awk 'BEGIN { FS = ":.*##" } /^[a-zA-Z_-]+:.*##/ { printf "  %-12s %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
@@ -48,6 +48,12 @@ I18N_SOURCES := src/kubescope/window.py src/kubescope/log_tab.py src/kubescope/e
 
 %.qm: %.ts
 	$(UV) run pyside6-lrelease $< -qm $@
+
+language: ## Start a new translation: make language CODE=es (then translate the .ts)
+	@test -n "$(CODE)" || { echo "Usage: make language CODE=<code>, for example es"; exit 1; }
+	@test ! -e src/kubescope/translations/kubescope_$(CODE).ts || { echo "kubescope_$(CODE).ts already exists"; exit 1; }
+	$(UV) run pyside6-lupdate -no-obsolete $(I18N_SOURCES) -ts src/kubescope/translations/kubescope_$(CODE).ts -target-language $(CODE)
+	@echo "Now add '$(CODE)' to LANGUAGES in src/kubescope/settings.py, translate the .ts, then run: make i18n"
 
 i18n: ## Extract new texts into the .ts files and compile the .qm (edit .ts in Qt Linguist)
 	$(UV) run pyside6-lupdate -no-obsolete $(I18N_SOURCES) -ts $(TS_FILES)

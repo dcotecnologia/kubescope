@@ -84,7 +84,7 @@ from kubescope.models import (
     pod_sort_key,
     workload_sort_key,
 )
-from kubescope.settings import Settings, log_directory
+from kubescope.settings import LANGUAGES, Settings, log_directory
 from kubescope.theme import (
     Theme,
     active_theme,
@@ -1723,12 +1723,9 @@ class WorkloadWindow(QMainWindow):
         """Fill the settings page from the saved preferences."""
         form = self.settings_ui
         form.languageCombo.clear()
-        for code, label in (
-            ("auto", self.tr("Automatic")),
-            ("en", "English"),
-            ("pt", "Português"),
-        ):
-            form.languageCombo.addItem(label, code)
+        form.languageCombo.addItem(self.tr("Automatic"), "auto")
+        for code, name in LANGUAGES.items():
+            form.languageCombo.addItem(name, code)
         form.languageCombo.setCurrentIndex(
             max(form.languageCombo.findData(self.settings.language), 0)
         )
