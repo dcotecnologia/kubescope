@@ -10,12 +10,34 @@
 
 Desktop viewer for Kubernetes workloads, including Amazon EKS clusters available
 through the local Kubernetes configuration. The packaged application includes
-its own `kubectl` executable.
+its own `kubectl` executable. It is read-only for now: it lists and inspects
+resources but does not change the cluster.
 
 ![KubeScope cluster overview](docs/screenshots/overview.png)
 
 *The cluster overview, shown with sample data. Regenerate it with
 `make screenshot`.*
+
+## Features
+
+- **Overview:** nodes, Pod counts, CPU and memory requests against capacity, and
+  the number of namespaces, Deployments, StatefulSets and DaemonSets.
+- **Workloads:** open the **Workloads** menu to slide out **Pods** and
+  **Deployments**.
+  - Both lists show CPU, memory and restarts next to the status, and can be
+    filtered by namespace and searched by name.
+  - CPU and memory are live usage from `metrics-server`; without it they show
+    `—`. A Deployment's numbers are the sum of its Pods.
+  - In the Pods list, young Pods (under an hour) get a soft green row and Pods
+    that are restarting, failing or not ready get a soft red one.
+- **Details and logs:** JSON details of a Pod or Deployment, and live Pod logs,
+  each in its own closable tab.
+- **Your table, your way:** drag any column border to resize it, and right-click
+  a table header to hide or show columns. The choice is remembered.
+- **Readable errors:** a missing login tool, an unreachable cluster, expired
+  credentials or denied access appear as a short message with a hint; the
+  original `kubectl` text stays one click away as details.
+- **English and Portuguese**, selectable in Settings.
 
 ## Requirements
 
@@ -23,17 +45,17 @@ its own `kubectl` executable.
 - Linux Mint/Ubuntu: `apt-get` and `dpkg-deb` to stage the Qt XCB runtime library
 - AWS CLI and valid AWS credentials for EKS contexts whose kubeconfig uses the
   AWS `exec` credential plugin
-- Read access to namespaces, deployments, statefulsets, and daemonsets
+- Read access to namespaces, pods, deployments, statefulsets, and daemonsets
 - Optional, for the cluster overview page: read access to nodes and pods across
-  namespaces, and `metrics-server` for real CPU/memory usage. Sections the role
+  namespaces. Optional, for CPU and memory in the Pods and Deployments lists and
+  on the overview: `metrics-server` for real usage. Sections the role
   cannot read are reported on the page instead of failing it
 
 ## Run from source
 
 ```bash
-python -m venv .venv
-source .venv/bin/activate
-python -m pip install -e '.[dev]'
+make setup                      # uv sync with the dev and build extras
+uv run pre-commit install       # run the checks on every commit
 python tools/fetch_kubectl.py
 make run
 ```
@@ -69,6 +91,7 @@ The **Settings** page (sidebar) stores preferences as JSON in
 `KUBESCOPE_CONFIG_DIR`). It lets you pick the language (automatic, English or
 Portuguese), remember the last context, and give each kubeconfig context a
 friendlier display name. The real context name is still used for every request.
+Hidden table columns are stored in the same file.
 
 Source strings are English; translations live in
 `src/kubescope/translations/*.ts` (editable in Qt Linguist). After adding or
@@ -80,9 +103,20 @@ changing texts run `make i18n` to extract new strings and compile the `.qm` file
 make build      # PyInstaller bundle in dist/KubeScope
 make deb        # dist/kubescope_<version>_amd64.deb (Debian/Ubuntu)
 make appimage   # dist/KubeScope-<version>-x86_64.AppImage (any Linux with glibc)
+make flatpak    # dist/KubeScope-<version>.flatpak (needs flatpak-builder)
+make windows    # installer and portable zip; on Linux it builds inside Wine
 ```
 
-Windows packages cannot be cross-built. The **Release** workflow
+Each of these packages the bundle in `dist/KubeScope`, so build one platform at a
+time. `make windows` keeps its Wine prefix in `.wine/` and downloads Python and
+Inno Setup on the first run.
+
+The Flatpak (`com.dcotecnologia.KubeScope`) bundles the AWS CLI so EKS contexts
+can sign in from the sandbox, and can read `~/.kube` (read-only) and `~/.aws`.
+Other credential plugins, such as `gcloud` or `kubelogin`, are not available
+inside it.
+
+Windows packages can also be built without Wine: the **Release** workflow
 (`.github/workflows/release.yml`) builds everything on GitHub runners: the Linux
 `.deb` and AppImage on Ubuntu 22.04 (lower glibc requirement) and the Windows
 installer plus a portable zip on Windows. Run it from the Actions tab, or push a
@@ -100,6 +134,13 @@ make preview    # open the app with fake data, no cluster needed
 
 Widget `objectName`s are used by the style sheet and by `window.py`, so keep
 them when renaming or moving widgets.
+
+## Contributing and security
+
+Read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request, and
+[COMMITING.md](COMMITING.md) for the commit message format. [AGENTS.md](AGENTS.md)
+holds the architecture and standards that people and AI assistants follow.
+Report vulnerabilities privately as described in [SECURITY.md](SECURITY.md).
 
 ## Author
 
