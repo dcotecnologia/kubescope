@@ -3,7 +3,7 @@ import os
 import platform
 import sys
 
-from PyInstaller.utils.hooks import collect_submodules
+from PyInstaller.utils.hooks import collect_submodules, get_package_paths
 
 
 root = Path(SPECPATH)
@@ -27,11 +27,24 @@ if sys.platform == "linux":
         )
     bundled_binaries.append((str(xcb_cursor), "."))
 
+# The PySide6 hook can miss the Qt plugins (seen in Wine builds), which leaves the
+# app unable to start: "no Qt platform plugin could be initialized". Bundle the
+# ones the app needs explicitly.
+qt_plugins = []
+if sys.platform == "win32":
+    plugins_dir = Path(get_package_paths("PySide6")[1]) / "plugins"
+    for name in ("platforms", "styles", "imageformats", "iconengines"):
+        folder = plugins_dir / name
+        if not folder.is_dir():
+            raise FileNotFoundError(f"Qt plugin folder not found: {folder}")
+        qt_plugins.append((str(folder), f"PySide6/plugins/{name}"))
+
 analysis = Analysis(
     [str(root / "src" / "kubescope" / "app.py")],
     pathex=[str(root / "src")],
     binaries=bundled_binaries,
     datas=[
+        *qt_plugins,
         (str(root / "src" / "kubescope" / "assets" / "icon.png"), "kubescope/assets"),
         *(
             (str(path), "kubescope/translations")
