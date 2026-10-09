@@ -137,13 +137,13 @@ make preview    # open the app with fake data, no cluster needed
 
 ### Qt Creator
 
-Open the project with **File > Open File or Project** and pick `pyproject.toml`
-(Qt Creator 13 or newer); its `[tool.pyside6-project]` section lists the files.
-Under **Projects > Run**, choose `main.py` as the script and `.venv/bin/python` as
-the interpreter. `main.py` loads the staged Qt library itself, so no
-`LD_LIBRARY_PATH` is needed; run `make qt-libs` once on Linux. Qt Creator keeps
-its per-user settings in `*.pyproject.user`, which git ignores. When you add a
-source or `.ui` file, add it to that list too.
+Open the project with **File > Open File or Project** and pick
+`KubeScope.pyproject`, which lists the project files. Under **Projects > Run**,
+choose `main.py` as the script and `.venv/bin/python` as the interpreter.
+`main.py` loads the staged Qt library itself, so no `LD_LIBRARY_PATH` is needed;
+run `make qt-libs` once on Linux. Qt Creator keeps its per-user settings in
+`*.pyproject.user`, which git ignores. When you add a source or `.ui` file, add
+it to the list in `KubeScope.pyproject` too.
 
 Widget `objectName`s are used by the style sheet and by `window.py`, so keep
 them when renaming or moving widgets.
