@@ -2,7 +2,7 @@
 
 UV ?= uv
 
-.PHONY: help setup run preview screenshot designer ui i18n appimage deb flatpak windows windows-remote lint format test kubectl qt-libs build clean
+.PHONY: help setup run debug preview screenshot designer ui i18n appimage deb flatpak windows windows-remote lint format test kubectl qt-libs build clean
 
 help: ## List the available commands
 	@awk 'BEGIN { FS = ":.*##" } /^[a-zA-Z_-]+:.*##/ { printf "  %-12s %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
@@ -19,6 +19,9 @@ endif
 
 run: qt-libs $(UI_PY) $(QM_FILES) ## Start the desktop app
 	$(RUN_ENV) $(UV) run kubescope
+
+debug: qt-libs $(UI_PY) $(QM_FILES) ## Start the app with debug logging, Python dev mode and Qt plugin tracing
+	KUBESCOPE_DEBUG=1 QT_LOGGING_RULES="qt.qpa.*=true" $(RUN_ENV) $(UV) run python -X dev main.py
 
 preview: qt-libs $(UI_PY) $(QM_FILES) ## Open the UI with fake data, no cluster needed
 	$(RUN_ENV) $(UV) run python tools/preview.py

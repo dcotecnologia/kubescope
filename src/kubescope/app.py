@@ -1,3 +1,6 @@
+import faulthandler
+import logging
+import os
 import sys
 from pathlib import Path
 
@@ -34,7 +37,24 @@ def load_app_icon() -> QIcon:
     return icon
 
 
+DEBUG_ENV = "KUBESCOPE_DEBUG"
+
+
+def configure_debug() -> bool:
+    """With KUBESCOPE_DEBUG=1, log at DEBUG level to stderr (never to disk) and
+    dump the traceback if the process crashes."""
+    if os.environ.get(DEBUG_ENV) != "1":
+        return False
+    logging.basicConfig(
+        level=logging.DEBUG,
+        format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+    )
+    faulthandler.enable()
+    return True
+
+
 def main() -> int:
+    configure_debug()
     application = QApplication(sys.argv)
     application.setApplicationName("KubeScope")
     application.setWindowIcon(load_app_icon())

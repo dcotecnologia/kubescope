@@ -64,6 +64,9 @@ make run
 runtime library path. This avoids installing `libxcb-cursor0` system-wide. On
 non-Linux systems, the target starts the app without the Linux-specific library.
 
+`make debug` runs the app with debug logging on stderr (`KUBESCOPE_DEBUG=1`),
+Python dev mode and Qt platform-plugin tracing. Nothing is written to disk.
+
 The app reads contexts from the default kubeconfig (`~/.kube/config` or the path
 in `KUBECONFIG`). It only reads cluster resources. Configure a read-only
 Kubernetes role for the contexts used by the app.
