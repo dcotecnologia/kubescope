@@ -86,6 +86,35 @@ jobs:
       - name: Build the installer and the portable zip
         run: uv run python tools/build_windows.py
 
+      # Code signing by SignPath Foundation. It only runs once the repository
+      # variable SIGNPATH_ORGANIZATION_ID and the secret SIGNPATH_API_TOKEN are
+      # set; until then the installer is published unsigned.
+      - name: Upload the unsigned installer
+        id: unsigned
+        if: vars.SIGNPATH_ORGANIZATION_ID != ''
+        uses: actions/upload-artifact@v7
+        with:
+          name: windows-installer-unsigned
+          path: dist/*-setup.exe
+          if-no-files-found: error
+
+      - name: Sign the installer with SignPath
+        if: vars.SIGNPATH_ORGANIZATION_ID != ''
+        uses: signpath/github-action-submit-signing-request@v2
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: kubescope
+          signing-policy-slug: release-signing
+          github-artifact-id: ${{ steps.unsigned.outputs.artifact-id }}
+          wait-for-completion: true
+          output-artifact-directory: signed
+
+      - name: Replace the installer with the signed one
+        if: vars.SIGNPATH_ORGANIZATION_ID != ''
+        shell: bash
+        run: cp signed/*-setup.exe dist/
+
       - uses: actions/upload-artifact@v7
         with:
           name: windows-packages
