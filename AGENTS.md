@@ -46,7 +46,7 @@ Keep the layers separate and the dependency direction one-way
     fetch). `packaging/` holds the static packaging files.
 - `tests/`
   - Mirrors `src/kubescope/`: `test_cluster.py`, `test_models.py`,
-    `test_settings.py`, `test_window.py`.
+    `test_settings.py`, `test_window.py`, `test_app.py`, `test_theme.py`.
 
 Golden rule:
 
@@ -133,6 +133,12 @@ Run locally and make all of it pass:
 Requirements:
 
 - The test suite passes. New behavior has tests; bug fixes have a regression test.
+- Test coverage stays at 100%. `make test` enforces it (`--cov-fail-under=100`), so
+  a change that leaves lines or branches uncovered fails. Cover the code with
+  tests; never lower the threshold or widen the coverage omissions to get green.
+  Generated `ui_*.py` files are the only omission. A `# pragma: no cover` needs a
+  reason, and is for code a test cannot reach, such as an
+  `if __name__ == "__main__":` guard.
 - Do not introduce `DeprecationWarning` or `PendingDeprecationWarning`. Fix them
   with the recommended API, or update the dependency. Do not hide them with warning
   filters without a documented reason.
@@ -178,7 +184,8 @@ Follow [SECURITY.md](SECURITY.md); its guarantees are part of the product.
 - Identify the layer the change belongs to (`models`, `cluster`, `window`,
   `settings`) and keep it there.
 - Keep cluster access read-only (until a task says otherwise) and off the UI thread.
-- Add or update tests next to the code, in English and function-based.
+- Add or update tests next to the code, in English and function-based, and keep
+  coverage at 100%.
 - Edit the `.ui` and regenerate `ui_*.py`; never hand-edit generated files.
 - Wrap new UI text in `tr(...)` and complete the Portuguese translations.
 - Read the documents in the table above that apply, and follow them.

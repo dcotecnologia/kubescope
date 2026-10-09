@@ -33,7 +33,7 @@ data with `make preview`.
 
 ```bash
 make lint     # ruff
-make test     # pytest (headless: QT_QPA_PLATFORM=offscreen)
+make test     # pytest, must stay at 100% coverage (headless: QT_QPA_PLATFORM=offscreen)
 uv run pre-commit run --all-files
 make ui       # leaves no diff in src/kubescope/ui
 make i18n     # leaves no unfinished Portuguese translations
