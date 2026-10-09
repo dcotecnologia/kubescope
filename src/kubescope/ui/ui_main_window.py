@@ -191,7 +191,8 @@ class Ui_MainWindow(object):
 "    selection-color: #20232a;\n"
 "}\n"
 "QFrame#appFooter { background: #ffffff; border-top: 1px solid #e4e5eb; }\n"
-"QLabel#footerLicense { color: #6b7380; font-size: 10px; }\n"
+"QLabel#footerLicense, QLabel#footerVersion { color: #6b7380; font-size: 10px; }\n"
+"QFrame#appFooter QPushButton[variant=\"link\"] { font-size: 10px; padding: 0 0 0 6px; }\n"
 "")
         self.centralwidget = QWidget(MainWindow)
         self.centralwidget.setObjectName(u"centralwidget")
@@ -768,6 +769,20 @@ class Ui_MainWindow(object):
 
         self.appFooterLayout.addItem(self.appFooterSpacer)
 
+        self.footerVersion = QLabel(self.appFooter)
+        self.footerVersion.setObjectName(u"footerVersion")
+        self.footerVersion.setText(u"v0.0.0")
+
+        self.appFooterLayout.addWidget(self.footerVersion)
+
+        self.githubLink = QPushButton(self.appFooter)
+        self.githubLink.setObjectName(u"githubLink")
+        self.githubLink.setText(u"GitHub")
+        self.githubLink.setFlat(True)
+        self.githubLink.setProperty(u"variant", u"link")
+
+        self.appFooterLayout.addWidget(self.githubLink)
+
 
         self.rootLayout.addWidget(self.appFooter)
 
@@ -848,6 +863,9 @@ class Ui_MainWindow(object):
         self.footerLicense.setText(QCoreApplication.translate("MainWindow", u"\u00a9 2026 DCO Tecnologia \u00b7 MIT License", None))
 #if QT_CONFIG(tooltip)
         self.footerLicense.setToolTip(QCoreApplication.translate("MainWindow", u"KubeScope is open source software released under the MIT License", None))
+#endif // QT_CONFIG(tooltip)
+#if QT_CONFIG(tooltip)
+        self.githubLink.setToolTip(QCoreApplication.translate("MainWindow", u"Open the project on GitHub", None))
 #endif // QT_CONFIG(tooltip)
     # retranslateUi
 

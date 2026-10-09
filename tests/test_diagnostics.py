@@ -99,10 +99,7 @@ def test_an_unwritable_log_folder_is_reported_not_fatal(
     assert logging.getLogger("kubescope").level == logging.WARNING
 
 
-def test_the_environment_description_survives_a_source_checkout(monkeypatch) -> None:
-    def missing(_name):
-        raise diagnostics.metadata.PackageNotFoundError
+def test_the_environment_description_starts_with_the_app_version() -> None:
+    import kubescope
 
-    monkeypatch.setattr(diagnostics.metadata, "version", missing)
-
-    assert diagnostics.describe_environment()[0] == "KubeScope unknown"
+    assert diagnostics.describe_environment()[0] == f"KubeScope {kubescope.__version__}"

@@ -13,10 +13,10 @@ import logging.handlers
 import platform
 import re
 import sys
-from importlib import metadata
 from pathlib import Path
 from typing import IO
 
+import kubescope
 from kubescope.settings import log_directory
 
 LOG_FILE = "kubescope.log"
@@ -64,20 +64,13 @@ def log_file() -> Path:
     return log_directory() / LOG_FILE
 
 
-def _version() -> str:
-    try:
-        return metadata.version("kubescope")
-    except metadata.PackageNotFoundError:  # running from a source checkout
-        return "unknown"
-
-
 def describe_environment() -> list[str]:
     """What a person reading a shared log needs to know about the machine."""
     from PySide6 import __version__ as pyside_version
     from PySide6.QtCore import qVersion
 
     return [
-        f"KubeScope {_version()}",
+        f"KubeScope {kubescope.__version__}",
         f"Python {platform.python_version()} on {platform.platform()}",
         f"PySide6 {pyside_version}, Qt {qVersion()}",
         f"Frozen bundle: {bool(getattr(sys, 'frozen', False))}",

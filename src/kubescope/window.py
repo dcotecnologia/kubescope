@@ -50,6 +50,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from kubescope import PROJECT_URL, __version__
 from kubescope.cluster import (
     KubectlError,
     LoginAction,
@@ -436,6 +437,8 @@ class WorkloadWindow(QMainWindow):
         header.customContextMenuRequested.connect(self._show_column_menu)
         self._style_template = self.styleSheet()
         self._apply_style()
+        self._show_version()
+        self.ui.githubLink.clicked.connect(self._open_project)
 
         self._spinner_angle = 0
         self._spinner_button: QPushButton | None = None
@@ -616,6 +619,18 @@ class WorkloadWindow(QMainWindow):
             }[self._view]
             self.ui.pageTitle.setText(title)
             self.ui.pageSubtitle.setText(subtitle)
+
+    def _show_version(self) -> None:
+        """The version in the footer's corner; the link opens the project."""
+        self.ui.footerVersion.setText(
+            self.tr("Version {version}").format(version=__version__)
+        )
+        self.ui.githubLink.setToolTip(
+            self.tr("Open the project on GitHub") + f"\n{PROJECT_URL}"
+        )
+
+    def _open_project(self) -> None:
+        QDesktopServices.openUrl(QUrl(PROJECT_URL))
 
     def _apply_style(self) -> None:
         """Style the window for the active theme; the icons Qt style sheets
@@ -1873,6 +1888,7 @@ class WorkloadWindow(QMainWindow):
     def _retranslate(self) -> None:
         """Re-apply every visible text after the translator changed."""
         self.ui.retranslateUi(self)
+        self._show_version()
         self.overview_ui.retranslateUi(self.ui.overviewHost)
         self.settings_ui.retranslateUi(self.ui.settingsHost)
         self.workloads_ui.retranslateUi(self.ui.workloadsOverviewHost)

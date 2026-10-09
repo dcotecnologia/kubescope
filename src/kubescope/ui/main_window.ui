@@ -177,7 +177,8 @@ QPlainTextEdit {
     selection-color: #20232a;
 }
 QFrame#appFooter { background: #ffffff; border-top: 1px solid #e4e5eb; }
-QLabel#footerLicense { color: #6b7380; font-size: 10px; }
+QLabel#footerLicense, QLabel#footerVersion { color: #6b7380; font-size: 10px; }
+QFrame#appFooter QPushButton[variant="link"] { font-size: 10px; padding: 0 0 0 6px; }
 </string>
   </property>
   <widget class="QWidget" name="centralwidget">
@@ -1650,6 +1651,29 @@ Resources in read-only mode</string>
           </size>
          </property>
         </spacer>
+       </item>
+       <item>
+        <widget class="QLabel" name="footerVersion">
+         <property name="text">
+          <string notr="true">v0.0.0</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="githubLink">
+         <property name="text">
+          <string notr="true">GitHub</string>
+         </property>
+         <property name="toolTip">
+          <string>Open the project on GitHub</string>
+         </property>
+         <property name="flat">
+          <bool>true</bool>
+         </property>
+         <property name="variant" stdset="0">
+          <string notr="true">link</string>
+         </property>
+        </widget>
        </item>
       </layout>
      </widget>

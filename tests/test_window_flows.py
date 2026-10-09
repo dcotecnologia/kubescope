@@ -1399,3 +1399,25 @@ def test_the_themes_folder_opens_in_the_file_manager(monkeypatch) -> None:
     folder = window_module.themes_directory()
     assert opened == [str(folder)] and folder.is_dir()
     window.close()
+
+
+def test_the_footer_shows_the_version_and_links_to_the_project(monkeypatch) -> None:
+    import kubescope
+
+    window = _ready_window(monkeypatch)
+    opened = []
+    monkeypatch.setattr(
+        window_module.QDesktopServices,
+        "openUrl",
+        staticmethod(lambda url: opened.append(url.toString())),
+    )
+
+    assert window.ui.footerVersion.text() == f"Version {kubescope.__version__}"
+    assert kubescope.PROJECT_URL in window.ui.githubLink.toolTip()
+
+    window.ui.githubLink.click()
+    assert opened == [kubescope.PROJECT_URL]
+
+    window._retranslate()  # a language change rewrites the .ui texts
+    assert window.ui.footerVersion.text() == f"Version {kubescope.__version__}"
+    window.close()

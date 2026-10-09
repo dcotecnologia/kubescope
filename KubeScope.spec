@@ -3,7 +3,7 @@ import os
 import platform
 import sys
 
-from PyInstaller.utils.hooks import collect_submodules, get_package_paths
+from PyInstaller.utils.hooks import collect_submodules, copy_metadata, get_package_paths
 
 
 root = Path(SPECPATH)
@@ -45,6 +45,8 @@ analysis = Analysis(
     binaries=bundled_binaries,
     datas=[
         *qt_plugins,
+        # the footer shows the version, which the app reads from this metadata
+        *copy_metadata("kubescope"),
         (str(root / "src" / "kubescope" / "assets" / "icon.png"), "kubescope/assets"),
         *(
             (str(path), "kubescope/community_themes")
