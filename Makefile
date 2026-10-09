@@ -59,8 +59,12 @@ deb: build ## Package the bundle as a .deb in dist/ (Debian/Ubuntu)
 flatpak: build ## Package the bundle as a Flatpak in dist/ (needs flatpak-builder)
 	$(UV) run python tools/build_flatpak.py
 
-windows: ## Build the Windows installer and zip (run this on Windows)
+windows: $(UI_PY) $(QM_FILES) ## Build the Windows installer and zip (on Linux it runs in Wine)
+ifeq ($(shell uname -s),Linux)
+	$(UV) run python tools/windows_wine.py
+else
 	$(UV) run python tools/build_windows.py
+endif
 
 windows-remote: ## Build the Windows packages on GitHub Actions and download them to dist/
 	$(UV) run python tools/windows_remote.py
