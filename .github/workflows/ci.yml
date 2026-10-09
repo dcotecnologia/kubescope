@@ -72,3 +72,46 @@ jobs:
 
       - name: Run tests
         run: uv run pytest -q
+
+      - name: Keep the coverage report for the badge
+        if: matrix.python-version == '3.14'
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage-report
+          path: coverage.xml
+          if-no-files-found: error
+
+  coverage-badge:
+    name: Coverage badge
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: coverage-report
+
+      - name: Publish the badge data on the badges branch
+        run: |
+          percent=$(python3 - <<'PY'
+          import xml.etree.ElementTree as ET
+          rate = float(ET.parse("coverage.xml").getroot().get("line-rate"))
+          print(f"{rate * 100:.0f}" if rate in (0, 1) else f"{rate * 100:.1f}")
+          PY
+          )
+          color=red
+          if awk "BEGIN { exit !($percent >= 100) }"; then color=brightgreen
+          elif awk "BEGIN { exit !($percent >= 90) }"; then color=green
+          elif awk "BEGIN { exit !($percent >= 75) }"; then color=yellow
+          fi
+          mkdir badges && cd badges
+          git init -q
+          git checkout -q -b badges
+          printf '{"schemaVersion":1,"label":"coverage","message":"%s%%","color":"%s"}\n' \
+            "$percent" "$color" > coverage.json
+          git add coverage.json
+          git -c user.name=github-actions -c user.email=github-actions@github.com \
+            commit -q -m "chore(badges): coverage ${percent}%"
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" badges
