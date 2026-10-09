@@ -23,15 +23,16 @@ resources but does not change the cluster.
 
 - **Overview:** nodes, Pod counts, CPU and memory requests against capacity, and
   the number of namespaces, Deployments, StatefulSets and DaemonSets.
-- **Workloads:** open the **Workloads** menu to slide out **Pods** and
-  **Deployments**.
-  - Both lists show CPU, memory and restarts next to the status, and can be
+- **Workloads:** open the **Workloads** menu to slide out **Pods**,
+  **Deployments**, **StatefulSets**, **Jobs** and **CronJobs**.
+  - The lists show CPU, memory and restarts next to the status, and can be
     filtered by namespace and searched by name.
   - CPU and memory are live usage from `metrics-server`; without it they show
-    `—`. A Deployment's numbers are the sum of its Pods.
+    `—`. A workload's numbers are the sum of its Pods. Jobs show completions and
+    a Complete, Running, Failed or Suspended status; CronJobs show their schedule.
   - In the Pods list, young Pods (under an hour) get a soft green row and Pods
     that are restarting, failing or not ready get a soft red one.
-- **Details and logs:** JSON details of a Pod or Deployment, and live Pod logs,
+- **Details and logs:** JSON details of a Pod or workload, and live Pod logs,
   each in its own closable tab.
 - **Your table, your way:** drag any column border to resize it, and right-click
   a table header to hide or show columns. The choice is remembered.
@@ -53,7 +54,8 @@ resources but does not change the cluster.
 - Linux Mint/Ubuntu: `apt-get` and `dpkg-deb` to stage the Qt XCB runtime library
 - AWS CLI and valid AWS credentials for EKS contexts whose kubeconfig uses the
   AWS `exec` credential plugin
-- Read access to namespaces, pods, deployments, statefulsets, and daemonsets
+- Read access to namespaces, pods, deployments, statefulsets, daemonsets, jobs, and
+  cronjobs
 - Optional, for the cluster overview page: read access to nodes and pods across
   namespaces. Optional, for CPU and memory in the Pods and Deployments lists and
   on the overview: `metrics-server` for real usage. Sections the role

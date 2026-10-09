@@ -13,19 +13,24 @@ memory), Pod counts by state, and the number of namespaces, Deployments,
 StatefulSets and DaemonSets. Real CPU and memory usage appears when the cluster
 has `metrics-server`.
 
-## Pods and Deployments
+## Pods and workloads
 
-Click **Workloads** to slide out **Pods** and **Deployments**.
+Click **Workloads** to slide out **Pods**, **Deployments**, **StatefulSets**, **Jobs**
+and **CronJobs**.
 
 - **Pods:** every Pod of the selected namespace (or all). Columns: namespace,
   containers, name, ready, status, CPU, memory, restarts and age. Young Pods (under
   an hour) get a soft green row; Pods that are restarting, failing or not ready get
   a soft red one.
-- **Deployments:** namespace, kind, name, ready, status, CPU, memory, restarts and
-  age. The numbers are the sum of the Deployment's Pods.
+- **Deployments** and **StatefulSets:** namespace, kind, name, ready, status, CPU,
+  memory, restarts and age. The numbers are the sum of the workload's Pods.
+- **Jobs:** the same columns, with **Completions** (done / wanted) instead of Ready.
+  The status is Complete, Running, Pending, Failed or Suspended.
+- **CronJobs:** the **Schedule** replaces Ready. The status is Scheduled, Active (a
+  Job is running) or Suspended. Its Pods are the ones of the Jobs it created.
 
 Select a row, then use **Details** (the JSON of the resource) or **Logs**. From a
-Deployment you can also open **Pods** to list its Pods. Double-click a row for
+workload you can also open **Pods** to list its Pods. Double-click a row for
 details.
 
 ## Logs

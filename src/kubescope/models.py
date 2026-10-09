@@ -12,9 +12,13 @@ class Workload:
     restarts: int = 0
     cpu: float | None = None  # cores in use, None without metrics-server
     memory: float | None = None  # bytes in use
+    state: str | None = None  # Jobs and CronJobs name their own state
+    schedule: str | None = None  # CronJobs only
 
     @property
     def status(self) -> str:
+        if self.state:
+            return self.state
         if self.desired == 0:
             return "Scaled to zero"
         if self.ready == self.desired:
@@ -176,7 +180,26 @@ class ClusterOverview:
 
 
 _AGE_UNITS = {"m": 60, "h": 3600, "d": 86400}
-STATUS_SEVERITY = {"Unavailable": 0, "Degraded": 1, "Scaled to zero": 2, "Healthy": 3}
+# The list views that show workloads, and the Kubernetes kind each one lists.
+WORKLOAD_VIEWS = {
+    "deployments": "Deployment",
+    "statefulsets": "StatefulSet",
+    "jobs": "Job",
+    "cronjobs": "CronJob",
+}
+STATUS_SEVERITY = {
+    "Failed": 0,
+    "Unavailable": 0,
+    "Degraded": 1,
+    "Pending": 1,
+    "Suspended": 2,
+    "Scaled to zero": 2,
+    "Running": 3,
+    "Active": 3,
+    "Scheduled": 3,
+    "Complete": 3,
+    "Healthy": 3,
+}
 SORT_COLUMNS = (
     "namespace",
     "kind",

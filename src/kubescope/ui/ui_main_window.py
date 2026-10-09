@@ -309,6 +309,39 @@ class Ui_MainWindow(object):
 
         self.workloadsSubmenuLayout.addWidget(self.navDeployments)
 
+        self.navStatefulSets = QPushButton(self.workloadsSubmenu)
+        self.navStatefulSets.setObjectName(u"navStatefulSets")
+        self.navStatefulSets.setMinimumSize(QSize(0, 42))
+        self.navStatefulSets.setIconSize(QSize(16, 16))
+        self.navStatefulSets.setCheckable(True)
+        self.navStatefulSets.setChecked(False)
+        self.navStatefulSets.setAutoExclusive(True)
+        self.navStatefulSets.setProperty(u"nav", u"true")
+
+        self.workloadsSubmenuLayout.addWidget(self.navStatefulSets)
+
+        self.navJobs = QPushButton(self.workloadsSubmenu)
+        self.navJobs.setObjectName(u"navJobs")
+        self.navJobs.setMinimumSize(QSize(0, 42))
+        self.navJobs.setIconSize(QSize(16, 16))
+        self.navJobs.setCheckable(True)
+        self.navJobs.setChecked(False)
+        self.navJobs.setAutoExclusive(True)
+        self.navJobs.setProperty(u"nav", u"true")
+
+        self.workloadsSubmenuLayout.addWidget(self.navJobs)
+
+        self.navCronJobs = QPushButton(self.workloadsSubmenu)
+        self.navCronJobs.setObjectName(u"navCronJobs")
+        self.navCronJobs.setMinimumSize(QSize(0, 42))
+        self.navCronJobs.setIconSize(QSize(16, 16))
+        self.navCronJobs.setCheckable(True)
+        self.navCronJobs.setChecked(False)
+        self.navCronJobs.setAutoExclusive(True)
+        self.navCronJobs.setProperty(u"nav", u"true")
+
+        self.workloadsSubmenuLayout.addWidget(self.navCronJobs)
+
 
         self.sidebarLayout.addWidget(self.workloadsSubmenu)
 
@@ -739,6 +772,9 @@ class Ui_MainWindow(object):
         self.navWorkloads.setText(QCoreApplication.translate("MainWindow", u"Workloads", None))
         self.navPods.setText(QCoreApplication.translate("MainWindow", u"Pods", None))
         self.navDeployments.setText(QCoreApplication.translate("MainWindow", u"Deployments", None))
+        self.navStatefulSets.setText(QCoreApplication.translate("MainWindow", u"StatefulSets", None))
+        self.navJobs.setText(QCoreApplication.translate("MainWindow", u"Jobs", None))
+        self.navCronJobs.setText(QCoreApplication.translate("MainWindow", u"CronJobs", None))
         self.navViewer.setText(QCoreApplication.translate("MainWindow", u"Details && Logs", None))
         self.settingsButton.setText(QCoreApplication.translate("MainWindow", u"Settings", None))
         self.sidebarNote.setText(QCoreApplication.translate("MainWindow", u"SECURE ACCESS\n"

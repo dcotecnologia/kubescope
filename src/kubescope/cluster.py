@@ -314,18 +314,56 @@ def run_login(action: LoginAction) -> None:
         logger.info("Sign-in finished for profile %s", action.profile or "default")
 
 
+# Kubernetes kind -> the plural name kubectl uses to list it.
+_RESOURCES = {
+    "Deployment": "deployments",
+    "StatefulSet": "statefulsets",
+    "DaemonSet": "daemonsets",
+    "Job": "jobs",
+    "CronJob": "cronjobs",
+}
+_REPLICATED_KINDS = ("Deployment", "StatefulSet", "DaemonSet")
+
+
+def _job_state(spec: dict[str, Any], status: dict[str, Any]) -> str:
+    conditions = {
+        condition.get("type")
+        for condition in status.get("conditions") or []
+        if condition.get("status") == "True"
+    }
+    if "Failed" in conditions:
+        return "Failed"
+    if "Complete" in conditions:
+        return "Complete"
+    if spec.get("suspend"):
+        return "Suspended"
+    return "Running" if status.get("active") else "Pending"
+
+
 def _parse_workload(item: dict[str, Any], now: datetime) -> Workload | None:
     metadata = item.get("metadata") or {}
     spec = item.get("spec") or {}
     status = item.get("status") or {}
     kind = item.get("kind")
     name = metadata.get("name")
-    if kind not in {"Deployment", "StatefulSet", "DaemonSet"} or not name:
+    if kind not in _RESOURCES or not name:
         return None
 
+    state = schedule = None
     if kind == "DaemonSet":
         desired = status.get("desiredNumberScheduled") or 0
         ready = status.get("numberReady") or 0
+    elif kind == "Job":
+        desired = spec.get("completions") or 1
+        ready = status.get("succeeded") or 0
+        state = _job_state(spec, status)
+    elif kind == "CronJob":
+        active = len(status.get("active") or [])
+        desired, ready = 0, active
+        schedule = spec.get("schedule")
+        state = (
+            "Suspended" if spec.get("suspend") else "Active" if active else "Scheduled"
+        )
     else:
         desired = spec.get("replicas") or 0
         ready = status.get("readyReplicas") or 0
@@ -342,6 +380,8 @@ def _parse_workload(item: dict[str, Any], now: datetime) -> Workload | None:
         ready=ready,
         desired=desired,
         age=age,
+        state=state,
+        schedule=schedule,
     )
 
 
@@ -357,9 +397,10 @@ def _get_namespaces(context: str) -> list[str]:
 def get_workloads(
     context: str,
     namespace: str | None = None,
+    kinds: tuple[str, ...] = _REPLICATED_KINDS,
 ) -> tuple[list[str], list[Workload]]:
     namespaces = _get_namespaces(context)
-    arguments = ["get", "deployments,statefulsets,daemonsets"]
+    arguments = ["get", ",".join(_RESOURCES[kind] for kind in kinds)]
     arguments.extend(("-n", namespace) if namespace else ("-A",))
     workloads_document = _get_json(*arguments, context=context)
     now = datetime.now(UTC)
@@ -378,13 +419,8 @@ def get_resource_details(
     namespace: str,
     name: str,
 ) -> dict[str, Any]:
-    resource_name = {
-        "Deployment": "deployment",
-        "StatefulSet": "statefulset",
-        "DaemonSet": "daemonset",
-        "Pod": "pod",
-    }.get(kind)
-    if resource_name is None:
+    resource_name = _RESOURCES.get(kind, "pods" if kind == "Pod" else "")[:-1]
+    if not resource_name:
         raise KubectlError(f"Unsupported resource kind: {kind}")
     return _get_json("get", resource_name, name, "-n", namespace, context=context)
 
@@ -532,11 +568,31 @@ def get_usage(
     return totals
 
 
+def _cronjob_pod_selector(context: str, workload: Workload) -> str | None:
+    """A CronJob has no selector of its own: its Pods belong to the Jobs it
+    created, which carry the job-name label."""
+    document = _get_json("get", "jobs", "-n", workload.namespace, context=context)
+    names = [
+        job["metadata"]["name"]
+        for job in document.get("items", [])
+        if any(
+            owner.get("kind") == "CronJob" and owner.get("name") == workload.name
+            for owner in job["metadata"].get("ownerReferences") or []
+        )
+    ]
+    return f"job-name in ({','.join(names)})" if names else None
+
+
 def get_workload_pods(context: str, workload: Workload) -> list[PodInfo]:
-    resource = get_resource_details(
-        context, workload.kind, workload.namespace, workload.name
-    )
-    selector = _label_selector(resource)
+    if workload.kind == "CronJob":
+        selector = _cronjob_pod_selector(context, workload)
+        if selector is None:
+            return []
+    else:
+        resource = get_resource_details(
+            context, workload.kind, workload.namespace, workload.name
+        )
+        selector = _label_selector(resource)
     document = _get_json(
         "get",
         "pods",

@@ -8,7 +8,7 @@ from types import SimpleNamespace
 import pytest
 
 from kubescope import cluster
-from kubescope.models import PodInfo
+from kubescope.models import PodInfo, Workload
 
 
 def test_parse_deployment_workload() -> None:
@@ -442,7 +442,8 @@ def test_parse_workload_skips_unknown_kinds_and_handles_daemon_sets() -> None:
     now = datetime(2025, 1, 1, tzinfo=UTC)
 
     assert (
-        cluster._parse_workload({"kind": "Job", "metadata": {"name": "x"}}, now) is None
+        cluster._parse_workload({"kind": "Ingress", "metadata": {"name": "x"}}, now)
+        is None
     )
     assert cluster._parse_workload({"kind": "Deployment", "metadata": {}}, now) is None
     daemon = cluster._parse_workload(
@@ -459,7 +460,7 @@ def test_parse_workload_skips_unknown_kinds_and_handles_daemon_sets() -> None:
 
 def test_get_resource_details_rejects_unsupported_kinds() -> None:
     with pytest.raises(cluster.KubectlError, match="Unsupported resource kind"):
-        cluster.get_resource_details("c", "Job", "ns", "x")
+        cluster.get_resource_details("c", "Ingress", "ns", "x")
 
 
 def test_label_selector_supports_every_expression_operator() -> None:
@@ -919,3 +920,133 @@ def test_login_steps_are_logged(monkeypatch, caplog) -> None:
     monkeypatch.setattr(cluster, "_run_kubectl", fail)
     cluster.check_login("ctx")
     assert "not a credentials problem" in caplog.text
+
+
+def _job(**status) -> dict:
+    return {
+        "kind": "Job",
+        "metadata": {"name": "backup", "namespace": "ops"},
+        "spec": status.pop("spec", {}),
+        "status": status,
+    }
+
+
+def test_parse_job_reports_progress_and_state() -> None:
+    now = datetime(2025, 1, 1, tzinfo=UTC)
+
+    def parse(**status):
+        workload = cluster._parse_workload(_job(**status), now)
+        assert workload is not None
+        return workload
+
+    done = parse(
+        succeeded=3,
+        conditions=[{"type": "Complete", "status": "True"}],
+        spec={"completions": 3},
+    )
+    assert (done.ready, done.desired, done.status) == (3, 3, "Complete")
+
+    failed = parse(failed=2, conditions=[{"type": "Failed", "status": "True"}])
+    assert (failed.status, failed.desired) == ("Failed", 1)  # completions default
+
+    assert parse(active=1).status == "Running"
+    assert parse().status == "Pending"
+    assert parse(spec={"suspend": True}).status == "Suspended"
+    # a condition that is not true says nothing
+    assert parse(conditions=[{"type": "Failed", "status": "False"}]).status == "Pending"
+
+
+def test_parse_cron_job_shows_schedule_and_activity() -> None:
+    now = datetime(2025, 1, 1, tzinfo=UTC)
+
+    def parse(spec, status=None):
+        item = {
+            "kind": "CronJob",
+            "metadata": {"name": "nightly", "namespace": "ops"},
+            "spec": spec,
+            "status": status or {},
+        }
+        workload = cluster._parse_workload(item, now)
+        assert workload is not None
+        return workload
+
+    idle = parse({"schedule": "0 3 * * *"})
+    assert (idle.schedule, idle.status, idle.ready) == ("0 3 * * *", "Scheduled", 0)
+    assert parse({"schedule": "* * * * *"}, {"active": [{}, {}]}).status == "Active"
+    assert parse({"schedule": "* * * * *", "suspend": True}).status == "Suspended"
+
+
+def test_get_workloads_lists_only_the_requested_kinds(monkeypatch) -> None:
+    calls = []
+
+    def fake_get_json(*arguments, context):
+        calls.append(arguments)
+        if arguments[1] == "namespaces":
+            return {"items": [{"metadata": {"name": "ops"}}]}
+        return {"items": [_job(succeeded=1)]}
+
+    monkeypatch.setattr(cluster, "_get_json", fake_get_json)
+
+    namespaces, workloads = cluster.get_workloads("ctx", "ops", ("Job", "CronJob"))
+
+    assert namespaces == ["ops"] and [w.name for w in workloads] == ["backup"]
+    assert calls[1] == ("get", "jobs,cronjobs", "-n", "ops")
+    cluster.get_workloads("ctx")
+    assert calls[-1] == ("get", "deployments,statefulsets,daemonsets", "-A")
+
+
+@pytest.mark.parametrize(
+    ("kind", "resource"),
+    [
+        ("Job", "job"),
+        ("CronJob", "cronjob"),
+        ("StatefulSet", "statefulset"),
+        ("Pod", "pod"),
+    ],
+)
+def test_get_resource_details_knows_every_listed_kind(
+    monkeypatch, kind, resource
+) -> None:
+    seen = []
+    monkeypatch.setattr(cluster, "_get_json", lambda *a, context: seen.append(a) or {})
+
+    cluster.get_resource_details("ctx", kind, "ns", "x")
+
+    assert seen == [("get", resource, "x", "-n", "ns")]
+
+
+def test_cron_job_pods_come_from_the_jobs_it_created(monkeypatch) -> None:
+    cron = Workload("ops", "CronJob", "nightly", 0, 0, "1d", state="Scheduled")
+    owned = {
+        "metadata": {
+            "name": "nightly-1",
+            "ownerReferences": [{"kind": "CronJob", "name": "nightly"}],
+        }
+    }
+    other = {
+        "metadata": {
+            "name": "other-1",
+            "ownerReferences": [{"kind": "CronJob", "name": "other"}],
+        }
+    }
+    standalone = {"metadata": {"name": "manual"}}
+    pod = {"metadata": {"name": "nightly-1-abc", "namespace": "ops"}, "status": {}}
+    seen = []
+
+    def fake_get_json(*arguments, context):
+        seen.append(arguments)
+        if arguments[1] == "jobs":
+            return {"items": [owned, other, standalone]}
+        return {"items": [pod]}
+
+    monkeypatch.setattr(cluster, "_get_json", fake_get_json)
+
+    pods = cluster.get_workload_pods("ctx", cron)
+
+    assert [p.name for p in pods] == ["nightly-1-abc"]
+    assert seen[-1] == ("get", "pods", "-n", "ops", "-l", "job-name in (nightly-1)")
+
+    monkeypatch.setattr(
+        cluster, "_get_json", lambda *a, context: {"items": [other, standalone]}
+    )
+    assert cluster.get_workload_pods("ctx", cron) == []  # no Jobs, no Pods

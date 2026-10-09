@@ -33,7 +33,7 @@ Use a read-only role. KubeScope needs:
 | What | Used for |
 | ---- | -------- |
 | `get`, `list` on `namespaces` | Namespace filter |
-| `get`, `list` on `pods`, `deployments`, `statefulsets`, `daemonsets` | Lists, details, overview |
+| `get`, `list` on `pods`, `deployments`, `statefulsets`, `daemonsets`, `jobs`, `cronjobs` | Lists, details, overview |
 | `get` on `pods/log` | Logs |
 | `get`, `list` on `nodes` | Overview (optional) |
 | `get`, `list` on `pods` and `nodes` in `metrics.k8s.io` | CPU and memory usage (optional) |
@@ -51,6 +51,9 @@ rules:
     verbs: [get, list]
   - apiGroups: [apps]
     resources: [deployments, statefulsets, daemonsets]
+    verbs: [get, list]
+  - apiGroups: [batch]
+    resources: [jobs, cronjobs]
     verbs: [get, list]
   - apiGroups: [metrics.k8s.io]
     resources: [nodes, pods]

@@ -70,6 +70,7 @@ from kubescope.errors import describe_error, first_line, is_auth_error
 from kubescope.i18n import apply_language
 from kubescope.log_tab import LOG_REFRESH_MS, LogTab
 from kubescope.models import (
+    WORKLOAD_VIEWS,
     ClusterOverview,
     PodInfo,
     Workload,
@@ -172,10 +173,14 @@ class RefreshWorker(QThread):
             if self.view == "pods":
                 namespaces, items = get_pods(self.context, self.namespace)
             else:
-                namespaces, workloads = get_workloads(self.context, self.namespace)
-                items = [item for item in workloads if item.kind == "Deployment"]
+                kind = WORKLOAD_VIEWS[self.view]
+                namespaces, items = get_workloads(self.context, self.namespace, (kind,))
                 try:
-                    usage = get_usage(self.context, self.namespace)
+                    usage = (
+                        {}  # a CronJob's Pods belong to the Jobs it creates
+                        if kind == "CronJob"
+                        else get_usage(self.context, self.namespace)
+                    )
                 except KubectlError as error:  # metrics-server is optional
                     logger.debug("No Pod usage for %s: %s", self.context, error)
                     usage = {}
@@ -277,6 +282,16 @@ class WorkloadWindow(QMainWindow):
         self.submenu = ui.workloadsSubmenu
         self.nav_pods = ui.navPods
         self.nav_deployments = ui.navDeployments
+        self.nav_statefulsets = ui.navStatefulSets
+        self.nav_jobs = ui.navJobs
+        self.nav_cronjobs = ui.navCronJobs
+        self._nav_views = {
+            "pods": self.nav_pods,
+            "deployments": self.nav_deployments,
+            "statefulsets": self.nav_statefulsets,
+            "jobs": self.nav_jobs,
+            "cronjobs": self.nav_cronjobs,
+        }
 
         self.overview_ui = Ui_OverviewPage()
         self.overview_ui.setupUi(ui.overviewHost)
@@ -306,8 +321,7 @@ class WorkloadWindow(QMainWindow):
         for button in (
             self.nav_overview,
             self.nav_workloads,
-            self.nav_pods,
-            self.nav_deployments,
+            *self._nav_views.values(),
             ui.navViewer,
             ui.settingsButton,
         ):
@@ -410,10 +424,10 @@ class WorkloadWindow(QMainWindow):
         ui.settingsButton.clicked.connect(lambda: self._show_page(2))
         self.nav_overview.clicked.connect(lambda: self._show_page(0))
         self.nav_workloads.clicked.connect(self._toggle_submenu)
-        self.nav_pods.clicked.connect(lambda: self._open_list_view("pods"))
-        self.nav_deployments.clicked.connect(
-            lambda: self._open_list_view("deployments")
-        )
+        for view, button in self._nav_views.items():
+            button.clicked.connect(
+                lambda _checked=False, view=view: self._open_list_view(view)
+            )
         self.overview_refresh_button.clicked.connect(self.refresh_overview)
         self.context_combo.currentTextChanged.connect(self._context_changed)
         self.context_combo.currentTextChanged.connect(self.refresh)
@@ -504,8 +518,8 @@ class WorkloadWindow(QMainWindow):
     def _show_page(self, index: int) -> None:
         self.pages.setCurrentIndex(index)
         self.nav_overview.setChecked(index == 0)
-        self.nav_pods.setChecked(index == 1 and self._view == "pods")
-        self.nav_deployments.setChecked(index == 1 and self._view == "deployments")
+        for view, button in self._nav_views.items():
+            button.setChecked(index == 1 and self._view == view)
         self.ui.settingsButton.setChecked(index == 2)
         self.nav_viewer.setChecked(index == 3)
         self._apply_page_titles()
@@ -526,15 +540,26 @@ class WorkloadWindow(QMainWindow):
         elif self.pages.currentIndex() == 2:
             self.ui.pageTitle.setText(self.tr("Settings"))
             self.ui.pageSubtitle.setText(self.tr("Preferences and context names"))
-        elif self._view == "pods":
-            self.ui.pageTitle.setText(self.tr("Pods"))
-            self.ui.pageSubtitle.setText(self.tr("Pods of the cluster"))
         else:
-            self.ui.pageTitle.setText(self.tr("Deployments"))
-            self.ui.pageSubtitle.setText(self.tr("Deployments of the cluster"))
+            title, subtitle = {
+                "pods": (self.tr("Pods"), self.tr("Pods of the cluster")),
+                "deployments": (
+                    self.tr("Deployments"),
+                    self.tr("Deployments of the cluster"),
+                ),
+                "statefulsets": (
+                    self.tr("StatefulSets"),
+                    self.tr("StatefulSets of the cluster"),
+                ),
+                "jobs": (self.tr("Jobs"), self.tr("Jobs of the cluster")),
+                "cronjobs": (self.tr("CronJobs"), self.tr("CronJobs of the cluster")),
+            }[self._view]
+            self.ui.pageTitle.setText(title)
+            self.ui.pageSubtitle.setText(subtitle)
 
     def _toggle_submenu(self) -> None:
-        """Slide the Pods / Deployments entries open or closed."""
+        """Slide the Pods, Deployments, StatefulSets, Jobs and CronJobs entries
+        open or closed."""
         animation = self._submenu_animation
         expand = self.submenu.maximumHeight() == 0 or (
             animation.state() == QPropertyAnimation.State.Running
@@ -546,8 +571,10 @@ class WorkloadWindow(QMainWindow):
         animation.start()
 
     def _open_list_view(self, view: str) -> None:
-        """Show the Pods or Deployments list; both share one table."""
+        """Show a Pods or workload list; they all share one table."""
         changed = view != self._view
+        if changed and view in WORKLOAD_VIEWS and self._view in WORKLOAD_VIEWS:
+            self._workloads = []  # another kind: do not show these rows meanwhile
         logger.debug("Opening the %s list", view)
         self._view = view
         if changed:
@@ -562,6 +589,10 @@ class WorkloadWindow(QMainWindow):
 
     def _apply_view_columns(self) -> None:
         second = "CONTAINERS" if self._view == "pods" else "KIND"
+        ready_header = {
+            "jobs": QCoreApplication.translate("MainWindow", "COMPLETIONS"),
+            "cronjobs": QCoreApplication.translate("MainWindow", "SCHEDULE"),
+        }.get(self._view) or QCoreApplication.translate("MainWindow", "READY")
         context = "PodsDialog" if self._view == "pods" else "MainWindow"
         self.table.setColumnCount(9)
         self.table.setHorizontalHeaderLabels(
@@ -569,7 +600,7 @@ class WorkloadWindow(QMainWindow):
                 QCoreApplication.translate("MainWindow", "NAMESPACE"),
                 QCoreApplication.translate(context, second),
                 QCoreApplication.translate("MainWindow", "NAME"),
-                QCoreApplication.translate("MainWindow", "READY"),
+                ready_header,
                 QCoreApplication.translate("MainWindow", "STATUS"),
                 QCoreApplication.translate("MainWindow", "CPU"),
                 QCoreApplication.translate("MainWindow", "MEMORY"),
@@ -577,7 +608,7 @@ class WorkloadWindow(QMainWindow):
                 QCoreApplication.translate("MainWindow", "AGE"),
             ]
         )
-        self.pods_button.setVisible(self._view == "deployments")
+        self.pods_button.setVisible(self._view in WORKLOAD_VIEWS)
         hidden = self.settings.hidden_columns(self._view)
         for column in range(self.table.columnCount()):
             self.table.setColumnHidden(column, column in hidden)
@@ -916,8 +947,13 @@ class WorkloadWindow(QMainWindow):
         self._worker.completed.connect(end_loading)
         self._worker.failed.connect(end_loading)
         self._worker.finished.connect(end_loading)
+        show = self._show_pods if view == "pods" else self._show_workloads
+        # an answer for a view the person has left is dropped; the list is
+        # requested again for the new one when this request finishes
         self._worker.completed.connect(
-            self._show_pods if view == "pods" else self._show_workloads
+            lambda namespaces, items: (
+                show(namespaces, items) if view == self._view else None
+            )
         )
         self._worker.failed.connect(self._show_error)
         self._worker.finished.connect(self._refresh_finished)
@@ -925,14 +961,12 @@ class WorkloadWindow(QMainWindow):
 
     def _show_workloads(self, namespaces: list, workloads: list) -> None:
         logger.info(
-            "Loaded %d deployment(s) in %d namespace(s)",
-            len(workloads),
-            len(namespaces),
+            "Loaded %d workload(s) in %d namespace(s)", len(workloads), len(namespaces)
         )
         self._workloads = workloads
         self._apply_sort()
         self._fill_namespaces(namespaces)
-        if self._view == "deployments":
+        if self._view in WORKLOAD_VIEWS:
             self._render_workloads()
 
     def _show_pods(self, namespaces: list, pods: list) -> None:
@@ -1066,6 +1100,13 @@ class WorkloadWindow(QMainWindow):
             "Degraded": self.tr("Degraded"),
             "Unavailable": self.tr("Unavailable"),
             "Scaled to zero": self.tr("Scaled to zero"),
+            "Complete": self.tr("Complete"),
+            "Failed": self.tr("Failed"),
+            "Pending": self.tr("Pending"),
+            "Suspended": self.tr("Suspended"),
+            "Active": self.tr("Active"),
+            "Scheduled": self.tr("Scheduled"),
+            "Running": self.tr("Running"),
         }
         self.table.setRowCount(len(workloads))
         for row_index, workload in enumerate(workloads):
@@ -1073,7 +1114,9 @@ class WorkloadWindow(QMainWindow):
                 workload.namespace,
                 workload.kind,
                 workload.name,
-                f"{workload.ready}/{workload.desired}",
+                workload.schedule or ""
+                if workload.kind == "CronJob"
+                else f"{workload.ready}/{workload.desired}",
                 statuses[workload.status],
                 format_cpu(workload.cpu),
                 format_memory(workload.memory),
@@ -1084,18 +1127,40 @@ class WorkloadWindow(QMainWindow):
                 item = QTableWidgetItem(value)
                 item.setForeground(QColor("#242a33"))
                 if column == 4:
+                    good = ("#176b58", "#e5f4eb")
+                    warning = ("#985415", "#fff2de")
+                    bad = ("#a33d45", "#fce9ea")
+                    muted = ("#505963", "#eff1f3")
                     color = {
-                        "Healthy": ("#176b58", "#e5f4eb"),
-                        "Degraded": ("#985415", "#fff2de"),
-                        "Unavailable": ("#a33d45", "#fce9ea"),
-                        "Scaled to zero": ("#505963", "#eff1f3"),
+                        "Healthy": good,
+                        "Complete": good,
+                        "Running": good,
+                        "Active": good,
+                        "Degraded": warning,
+                        "Pending": warning,
+                        "Unavailable": bad,
+                        "Failed": bad,
+                        "Scaled to zero": muted,
+                        "Suspended": muted,
+                        "Scheduled": muted,
                     }[workload.status]
                     item.setForeground(QColor(color[0]))
                     item.setBackground(QColor(color[1]))
                 self.table.setItem(row_index, column, item)
         self._filter_rows()
+        summaries = {
+            "deployments": lambda: self.tr(
+                "{count} Deployments in {namespaces} namespaces"
+            ),
+            "statefulsets": lambda: self.tr(
+                "{count} StatefulSets in {namespaces} namespaces"
+            ),
+            "jobs": lambda: self.tr("{count} Jobs in {namespaces} namespaces"),
+            "cronjobs": lambda: self.tr("{count} CronJobs in {namespaces} namespaces"),
+        }
+        summary = summaries[self._view]
         self._set_status(
-            lambda: self.tr("{count} Deployments in {namespaces} namespaces").format(
+            lambda: summary().format(
                 count=len(workloads), namespaces=len(self._namespaces)
             )
         )
@@ -1110,11 +1175,13 @@ class WorkloadWindow(QMainWindow):
             self.table.setRowHidden(row_index, not matches)
             visible_rows += matches
         self._update_workload_actions()
-        template = (
-            self.tr("{visible} of {total} Pods")
-            if self._view == "pods"
-            else self.tr("{visible} of {total} Deployments")
-        )
+        template = {
+            "pods": self.tr("{visible} of {total} Pods"),
+            "deployments": self.tr("{visible} of {total} Deployments"),
+            "statefulsets": self.tr("{visible} of {total} StatefulSets"),
+            "jobs": self.tr("{visible} of {total} Jobs"),
+            "cronjobs": self.tr("{visible} of {total} CronJobs"),
+        }[self._view]
         self.summary_label.setText(
             template.format(visible=visible_rows, total=len(rows))
         )

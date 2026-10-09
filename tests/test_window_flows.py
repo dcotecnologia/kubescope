@@ -82,7 +82,10 @@ def test_refresh_worker_adds_restarts_and_usage_to_deployments(monkeypatch) -> N
     monkeypatch.setattr(
         window_module,
         "get_workloads",
-        lambda *_a: (["a"], [deployment, stateful, other]),
+        lambda _c, _n, kinds: (
+            ["a"],
+            [w for w in (deployment, stateful, other) if w.kind in kinds],
+        ),
     )
     monkeypatch.setattr(
         window_module,
@@ -876,8 +879,159 @@ def test_the_app_logs_what_it_does(monkeypatch, caplog) -> None:
     messages = [record.getMessage() for record in caplog.records]
     assert any("Loaded 0 context(s)" in m for m in messages)
     assert any("Refreshing deployments in prod (namespace all)" in m for m in messages)
-    assert any("Loaded 1 deployment(s) in 1 namespace(s)" in m for m in messages)
+    assert any("Loaded 1 workload(s) in 1 namespace(s)" in m for m in messages)
     assert any(m == "Refresh failed: Unable to connect" for m in messages)
     assert any("Opening the pods list" in m for m in messages)
     assert any(m.startswith("Action: ") for m in messages)
     window.close()
+
+
+def _header(window, column: int) -> str:
+    return window.table.horizontalHeaderItem(column).text()
+
+
+def test_every_workload_list_has_its_menu_entry_title_and_columns(monkeypatch) -> None:
+    window = _ready_window(monkeypatch)
+    expected = {
+        "navStatefulSets": ("StatefulSets", "READY", "statefulsets"),
+        "navJobs": ("Jobs", "COMPLETIONS", "jobs"),
+        "navCronJobs": ("CronJobs", "SCHEDULE", "cronjobs"),
+        "navDeployments": ("Deployments", "READY", "deployments"),
+    }
+    for name, (title, ready_header, view) in expected.items():
+        getattr(window.ui, name).click()
+        assert window._view == view
+        assert window.ui.pageTitle.text() == title
+        assert _header(window, 3) == ready_header
+        assert window.pods_button.isVisibleTo(window)  # their Pods can be listed
+        assert getattr(window.ui, name).isChecked()
+
+    window.nav_pods.click()
+    assert not window.pods_button.isVisibleTo(window)
+    window.close()
+
+
+def test_switching_between_workload_kinds_clears_the_old_rows(monkeypatch) -> None:
+    window = _ready_window(monkeypatch)
+    window._workloads = [Workload("ns", "Deployment", "api", 1, 1, "1d")]
+
+    window._open_list_view("jobs")
+
+    assert window._workloads == []
+    window.close()
+
+
+def test_jobs_and_cron_jobs_render_their_own_states(monkeypatch) -> None:
+    window = _ready_window(monkeypatch)
+    window._open_list_view("jobs")
+    window._show_workloads(
+        ["ops"],
+        [
+            Workload("ops", "Job", "backup", 3, 3, "1d", state="Complete"),
+            Workload("ops", "Job", "sync", 0, 1, "5m", state="Failed"),
+            Workload("ops", "Job", "load", 0, 1, "1m", state="Running"),
+            Workload("ops", "Job", "wait", 0, 1, "1m", state="Pending"),
+        ],
+    )
+    table = window.table
+    assert [table.item(row, 4).text() for row in range(4)] == [
+        "Complete",
+        "Failed",
+        "Running",
+        "Pending",
+    ]
+    assert table.item(0, 3).text() == "3/3"
+    assert "4 Jobs in 1 namespaces" in window.status_label.text()
+    assert window.summary_label.text() == "4 of 4 Jobs"
+
+    window._open_list_view("cronjobs")
+    window._show_workloads(
+        ["ops"],
+        [
+            Workload(
+                "ops",
+                "CronJob",
+                "nightly",
+                0,
+                0,
+                "9d",
+                state="Scheduled",
+                schedule="0 3 * * *",
+            ),
+            Workload(
+                "ops",
+                "CronJob",
+                "paused",
+                0,
+                0,
+                "9d",
+                state="Suspended",
+                schedule="@daily",
+            ),
+            Workload(
+                "ops",
+                "CronJob",
+                "busy",
+                1,
+                0,
+                "9d",
+                state="Active",
+                schedule="* * * * *",
+            ),
+        ],
+    )
+    assert [table.item(row, 3).text() for row in range(3)] == [
+        "0 3 * * *",
+        "@daily",
+        "* * * * *",
+    ]
+    assert [table.item(row, 4).text() for row in range(3)] == [
+        "Scheduled",
+        "Suspended",
+        "Active",
+    ]
+    assert "3 CronJobs in 1 namespaces" in window.status_label.text()
+    assert window.summary_label.text() == "3 of 3 CronJobs"
+
+    window._open_list_view("statefulsets")
+    window._show_workloads(["ops"], [Workload("ops", "StatefulSet", "db", 1, 1, "2d")])
+    assert "1 StatefulSets in 1 namespaces" in window.status_label.text()
+    assert window.summary_label.text() == "1 of 1 StatefulSets"
+    window.close()
+
+
+def test_an_answer_for_a_view_the_person_left_is_dropped(monkeypatch) -> None:
+    window = _ready_window(monkeypatch)
+    late = []
+    monkeypatch.setattr(window, "_show_workloads", lambda *a: late.append(a))
+    FakeRefreshWorker.outcome = (
+        "ok",
+        (["ns"], [Workload("ns", "Deployment", "api", 1, 1, "1d")]),
+    )
+    window._open_list_view("pods")  # changes the view before refresh() runs
+
+    window.refresh()
+    assert window._worker.view == "pods"
+
+    window._view = "deployments"
+    window._worker.completed.emit(["ns"], [])  # the pods request answers late
+    assert late == []
+    FakeRefreshWorker.outcome = ("ok", ([], []))
+    window.close()
+
+
+def test_cron_job_lists_skip_the_pod_usage_lookup(monkeypatch) -> None:
+    cron = Workload("ops", "CronJob", "nightly", 0, 0, "1d", state="Scheduled")
+    monkeypatch.setattr(window_module, "get_workloads", lambda *_a: (["ops"], [cron]))
+
+    def forbidden(*_args):
+        raise AssertionError("a CronJob has no Pods of its own to measure")
+
+    monkeypatch.setattr(window_module, "get_usage", forbidden)
+    done = []
+    worker = window_module.RefreshWorker("ctx", None, "cronjobs")
+    worker.completed.connect(lambda _n, items: done.append(items))
+
+    worker.run()
+
+    assert done[0][0].name == "nightly" and done[0][0].cpu is None

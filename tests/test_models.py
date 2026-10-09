@@ -174,3 +174,14 @@ def test_pod_sort_key_covers_every_column() -> None:
     assert pod_sort_key(pod, 8)[0] == 2 * 86400
     assert pod_sort_key(pod, 2)[0] == "web"
     assert pod_sort_key(pod, 0)[0] == "ns"
+
+
+def test_job_and_cron_job_states_replace_the_replica_status() -> None:
+    complete = Workload("ns", "Job", "j", 1, 1, "1h", state="Complete")
+    cron = Workload(
+        "ns", "CronJob", "c", 0, 0, "1h", state="Suspended", schedule="* * * * *"
+    )
+
+    assert complete.status == "Complete" and cron.status == "Suspended"
+    failed = Workload("ns", "Job", "k", 0, 1, "1h", state="Failed")
+    assert workload_sort_key(failed, 4) < workload_sort_key(complete, 4)  # worst first
