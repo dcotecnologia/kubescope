@@ -16,7 +16,7 @@ from PySide6.QtWidgets import (
 )
 
 from kubescope import window as window_module
-from kubescope.cluster import KubectlError
+from kubescope.cluster import KubectlError, LoginAction
 from kubescope.models import ClusterOverview, NodeInfo, PodInfo, Workload
 
 application = QApplication.instance() or QApplication([])
@@ -568,98 +568,6 @@ def _login_window(monkeypatch):
     return window, ran
 
 
-def test_login_check_runs_once_per_context_and_shows_the_button(monkeypatch) -> None:
-    window, ran = _login_window(monkeypatch)
-
-    window._check_login()
-    window._check_login()  # one check at a time
-    assert [(name, args) for name, _ok, args, _kw in ran] == [
-        ("check_login", ("prod",))
-    ]
-    assert ran[0][3]["quiet"] is True
-
-    ran[0][1]((True, ["aws", "sso", "login"]))
-    assert not window.login_button.isHidden()
-    assert "Not signed in" in window.status_label.text()
-    assert window._login_checking is False
-    window.close()
-
-
-def test_login_check_failures_and_other_results_hide_the_button(monkeypatch) -> None:
-    window, ran = _login_window(monkeypatch)
-    window.login_button.setVisible(True)
-
-    window._show_login("prod", (False, None))
-    assert window.login_button.isHidden()
-
-    window._show_login("other", (True, ["aws"]))  # a stale answer is ignored
-    assert window._login_command is None
-
-    window._show_login("prod", (True, None))  # access keys: no button, a hint
-    assert window.login_button.isHidden()
-    assert "credentials are missing or invalid" in window.status_label.text()
-
-    window._check_login()
-    ran[0][3]["on_error"](Exception("boom"))
-    assert window._login_checking is False
-
-    window.context_combo.clear()
-    window._check_login()  # no context: nothing to check
-    assert len(ran) == 1
-    window.close()
-
-
-def test_context_change_rechecks_the_login(monkeypatch) -> None:
-    window, ran = _login_window(monkeypatch)
-    window._login_command = ["aws", "sso", "login"]
-    window.login_button.setVisible(True)
-
-    window._context_changed()
-
-    assert window._login_command is None
-    assert window.login_button.isHidden()
-    assert ran[0][0] == "check_login"
-    window.close()
-
-
-def test_sign_in_runs_the_command_and_reloads_the_data(monkeypatch) -> None:
-    window, ran = _login_window(monkeypatch)
-    window._sign_in()  # nothing to run without a command
-    assert ran == []
-
-    command = ["aws", "sso", "login", "--profile", "work"]
-    window._login_command = command
-    window._sign_in()
-    name, done, args, kwargs = ran[0]
-    assert (name, args) == ("run_login", (command,))
-    assert kwargs["on_error"] == window._show_action_error
-
-    refreshed = []
-    monkeypatch.setattr(window, "refresh", lambda: refreshed.append("list"))
-    monkeypatch.setattr(
-        window, "refresh_overview", lambda: refreshed.append("overview")
-    )
-    window._overview_context = "prod"
-    done(None)
-    assert refreshed == ["list", "overview"]
-    assert window._login_command is None
-    window.close()
-
-
-def test_authentication_errors_trigger_a_login_check(monkeypatch) -> None:
-    window, ran = _login_window(monkeypatch)
-
-    window._show_error("Unable to connect: i/o timeout")
-    window._show_overview_error("Unable to connect: i/o timeout")
-    assert ran == []
-
-    window._show_error("error: You must be logged in to the server (Unauthorized)")
-    window._login_checking = False
-    window._show_overview_error("the SSO session has expired")
-    assert [name for name, *_rest in ran] == ["check_login", "check_login"]
-    window.close()
-
-
 def test_contexts_load_in_the_background(monkeypatch) -> None:
     release = []
     started = []
@@ -692,4 +600,130 @@ def test_no_contexts_in_the_kubeconfig_is_reported(monkeypatch) -> None:
 
     assert "No contexts found" in window.status_label.text()
     assert not window.refresh_button.isEnabled()
+    window.close()
+
+
+SSO = LoginAction(["aws", "sso", "login", "--profile", "work"], "work", False)
+KEYS = LoginAction(["aws", "configure", "--profile", "work"], "work", True)
+
+
+def test_login_check_runs_once_per_context_and_shows_the_profile(monkeypatch) -> None:
+    window, ran = _login_window(monkeypatch)
+
+    window._check_login()
+    window._check_login()  # one check at a time
+    assert [(name, args) for name, _ok, args, _kw in ran] == [
+        ("check_login", ("prod",))
+    ]
+    assert ran[0][3]["quiet"] is True
+
+    ran[0][1]((True, SSO))
+    assert not window.login_button.isHidden()
+    assert window.login_button.text() == "Sign in to AWS (work)"
+    assert "Not signed in to AWS (profile work)" in window.status_label.text()
+    assert window._login_checking is False
+    window.close()
+
+
+def test_access_key_profiles_offer_to_configure_the_credentials(monkeypatch) -> None:
+    window, _ran = _login_window(monkeypatch)
+
+    window._show_login("prod", (True, KEYS))
+    assert window.login_button.text() == "Configure AWS credentials (work)"
+    assert "work are missing or invalid" in window.status_label.text()
+
+    default = LoginAction(["aws", "configure"], None, True)
+    window._show_login("prod", (True, default))
+    assert "(default)" in window.login_button.text()
+    window.close()
+
+
+def test_login_check_failures_and_other_results_hide_the_button(monkeypatch) -> None:
+    window, ran = _login_window(monkeypatch)
+    window.login_button.setVisible(True)
+
+    window._show_login("prod", (False, None))
+    assert window.login_button.isHidden()
+
+    window._show_login("other", (True, SSO))  # a stale answer is ignored
+    assert window._login_action is None
+
+    window._show_login("prod", (True, None))  # not an AWS context: no button
+    assert window.login_button.isHidden()
+
+    window._check_login()
+    ran[0][3]["on_error"](Exception("boom"))
+    assert window._login_checking is False
+
+    window.context_combo.clear()
+    window._check_login()  # no context: nothing to check
+    assert len(ran) == 1
+    window.close()
+
+
+def test_context_change_and_refresh_recheck_the_login(monkeypatch) -> None:
+    window, ran = _login_window(monkeypatch)
+    window._login_action = SSO
+    window.login_button.setVisible(True)
+
+    window._context_changed()
+
+    assert window._login_action is None
+    assert window.login_button.isHidden()
+    assert ran[0][0] == "check_login"
+    ran[0][3]["on_error"](None)
+    window.refresh_button.clicked.emit()
+    assert [name for name, *_rest in ran].count("check_login") == 2
+    window.close()
+
+
+def test_sso_sign_in_runs_the_command_and_reloads_the_data(monkeypatch) -> None:
+    window, ran = _login_window(monkeypatch)
+    window._sign_in()  # nothing to run without an action
+    assert ran == []
+
+    window._login_action = SSO
+    window._sign_in()
+    name, done, args, kwargs = ran[0]
+    assert (name, args) == ("run_login", (SSO,))
+    assert kwargs["on_error"] == window._show_action_error
+
+    refreshed = []
+    monkeypatch.setattr(window, "refresh", lambda: refreshed.append("list"))
+    monkeypatch.setattr(
+        window, "refresh_overview", lambda: refreshed.append("overview")
+    )
+    window._overview_context = "prod"
+    done(None)
+    assert refreshed == ["list", "overview"]
+    assert window._login_action is None
+    window.close()
+
+
+def test_access_key_sign_in_waits_for_the_terminal(monkeypatch) -> None:
+    window, ran = _login_window(monkeypatch)
+    window._login_action = KEYS
+    window.login_button.setVisible(True)
+    refreshed = []
+    monkeypatch.setattr(window, "refresh", lambda: refreshed.append("list"))
+
+    window._sign_in()
+    ran[0][1](None)
+
+    assert refreshed == [] and window._login_action == KEYS
+    assert "terminal that opened" in window.status_label.text()
+    window.close()
+
+
+def test_authentication_errors_trigger_a_login_check(monkeypatch) -> None:
+    window, ran = _login_window(monkeypatch)
+
+    window._show_error("Unable to connect: i/o timeout")
+    window._show_overview_error("Unable to connect: i/o timeout")
+    assert ran == []
+
+    window._show_error("error: You must be logged in to the server (Unauthorized)")
+    window._login_checking = False
+    window._show_overview_error("the SSO session has expired")
+    assert [name for name, *_rest in ran] == ["check_login", "check_login"]
     window.close()

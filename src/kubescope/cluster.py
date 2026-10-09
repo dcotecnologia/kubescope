@@ -1,9 +1,10 @@
 import json
 import os
+import shutil
 import subprocess
 import sys
 from concurrent.futures import ThreadPoolExecutor
-from dataclasses import replace
+from dataclasses import dataclass, replace
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -147,21 +148,32 @@ def _is_sso_profile(profile: str | None) -> bool:
     return False
 
 
-def login_command(context: str) -> list[str] | None:
-    """The command that signs in to a context: "aws sso login" for an AWS SSO
-    profile.
+@dataclass(frozen=True, slots=True)
+class LoginAction:
+    """How to sign in to a context's AWS profile."""
 
-    Access-key profiles have no browser sign-in, and other login tools
-    are not supported, so both return None.
+    command: list[str]
+    profile: str | None
+    interactive: bool  # access keys are typed in a terminal; SSO uses the browser
+
+
+def login_action(context: str) -> LoginAction | None:
+    """The sign-in for a context: "aws sso login" for an AWS SSO profile, and
+    "aws configure" in a terminal for an access-key profile.
+
+    Other login tools are not supported and return None.
     """
     uses_aws, profile = _aws_profile(context)
-    if not uses_aws or not _is_sso_profile(profile):
+    if not uses_aws:
         return None
-    return ["aws", "sso", "login", *_profile_arguments(profile)]
+    arguments = _profile_arguments(profile)
+    if _is_sso_profile(profile):
+        return LoginAction(["aws", "sso", "login", *arguments], profile, False)
+    return LoginAction(["aws", "configure", *arguments], profile, True)
 
 
-def check_login(context: str) -> tuple[bool, list[str] | None]:
-    """Whether the context needs a sign-in, and the command that does it.
+def check_login(context: str) -> tuple[bool, LoginAction | None]:
+    """Whether the context needs a sign-in, and how to do it.
 
     kubectl catches an expired SSO session. Access keys that were
     rotated or revoked only fail at the cluster, because `aws eks get-
@@ -181,16 +193,54 @@ def check_login(context: str) -> tuple[bool, list[str] | None]:
         if not is_auth_error(str(error)):
             return False, None
         try:
-            return True, login_command(context)
+            return True, login_action(context)
         except (KubectlError, ValueError):
             return True, None
     return False, None
 
 
-def run_login(command: list[str]) -> None:
-    """Run the sign-in command; it opens the browser and waits for the
-    person."""
-    _run_command(command, LOGIN_TIMEOUT)
+_TERMINALS = (
+    ("x-terminal-emulator", "-e"),
+    ("gnome-terminal", "--"),
+    ("konsole", "-e"),
+    ("xfce4-terminal", "-x"),
+    ("xterm", "-e"),
+)
+
+
+def _open_terminal(command: list[str]) -> None:
+    """Run a command in a new terminal window and return without waiting."""
+    if sys.platform == "win32":
+        launcher = ["cmd", "/c", "start", "", "cmd", "/k", *command]
+    else:
+        launcher = next(
+            (
+                [path, flag, *command]
+                for name, flag in _TERMINALS
+                if (path := shutil.which(name))
+            ),
+            None,
+        )
+        if launcher is None:
+            raise KubectlError(
+                "No terminal found. Run this in a terminal: " + " ".join(command)
+            )
+    try:
+        subprocess.Popen(launcher)
+    except OSError as error:
+        raise KubectlError(f"Could not open a terminal: {error}") from error
+
+
+def run_login(action: LoginAction) -> None:
+    """Start the sign-in.
+
+    SSO opens the browser and is waited for; access keys open a terminal
+    where the person types them, so the app never sees them.
+    """
+    if action.interactive:
+        _open_terminal(action.command)
+    else:
+        _run_command(action.command, LOGIN_TIMEOUT)
 
 
 def _parse_workload(item: dict[str, Any], now: datetime) -> Workload | None:

@@ -49,6 +49,7 @@ from PySide6.QtWidgets import (
 )
 
 from kubescope.cluster import (
+    LoginAction,
     check_login,
     get_cluster_overview,
     get_pod_logs,
@@ -371,10 +372,11 @@ class WorkloadWindow(QMainWindow):
         self._spinner_timer.setInterval(70)
         self._spinner_timer.timeout.connect(self._tick_spinner)
 
-        self._login_command: list[str] | None = None
+        self._login_action: LoginAction | None = None
         self._login_checking = False
         self.login_button.clicked.connect(self._sign_in)
         self.refresh_button.clicked.connect(self.refresh)
+        self.refresh_button.clicked.connect(lambda: self._check_login())
         self.pods_button.clicked.connect(self._view_workload_pods)
         self.details_button.clicked.connect(self._view_details)
         self.logs_button.clicked.connect(self._view_logs)
@@ -593,13 +595,13 @@ class WorkloadWindow(QMainWindow):
             self._ensure_overview()
 
     def _hide_login(self) -> None:
-        self._login_command = None
+        self._login_action = None
         self.login_button.setVisible(False)
 
     def _check_login(self) -> None:
         """Ask the cluster whether this context still needs a sign-in; the
-        button appears only when it does and the kubeconfig names a login
-        tool."""
+        button appears only when it does and the kubeconfig names an AWS
+        profile."""
         context = self._context()
         if not context or self._login_checking:
             return
@@ -608,39 +610,62 @@ class WorkloadWindow(QMainWindow):
         def finished(_result: object = None) -> None:
             self._login_checking = False
 
-        def show(result: tuple[bool, list[str] | None]) -> None:
+        def show(result: tuple[bool, LoginAction | None]) -> None:
             finished()
             self._show_login(context, result)
 
         self._run_action(check_login, show, context, on_error=finished, quiet=True)
 
-    def _show_login(self, context: str, result: tuple[bool, list[str] | None]) -> None:
-        needs_login, command = result
+    def _show_login(
+        self, context: str, result: tuple[bool, LoginAction | None]
+    ) -> None:
+        needs_login, action = result
         if context != self._context():
             return  # the person switched contexts while this was running
-        self._login_command = command if needs_login else None
-        self.login_button.setVisible(self._login_command is not None)
-        if self._login_command is not None:
-            self._set_status(lambda: self.tr("Not signed in to AWS for this context"))
-        elif needs_login:
+        self._login_action = action if needs_login else None
+        self.login_button.setVisible(self._login_action is not None)
+        if self._login_action is None:
+            return
+        profile = self._login_action.profile or "default"
+        if self._login_action.interactive:
+            self.login_button.setText(
+                self.tr("Configure AWS credentials ({profile})").format(profile=profile)
+            )
             self._set_status(
                 lambda: self.tr(
-                    "AWS credentials are missing or invalid. Update them "
-                    "(for example with “aws configure”) and refresh."
+                    "AWS credentials for profile {profile} are missing or invalid"
+                ).format(profile=profile)
+            )
+        else:
+            self.login_button.setText(
+                self.tr("Sign in to AWS ({profile})").format(profile=profile)
+            )
+            self._set_status(
+                lambda: self.tr("Not signed in to AWS (profile {profile})").format(
+                    profile=profile
                 )
             )
 
     def _sign_in(self) -> None:
-        if self._login_command is None:
+        action = self._login_action
+        if action is None:
             return
         self._run_action(
             run_login,
-            self._signed_in,
-            self._login_command,
+            lambda _result: self._signed_in(action),
+            action,
             on_error=self._show_action_error,
         )
 
-    def _signed_in(self, _result: object) -> None:
+    def _signed_in(self, action: LoginAction) -> None:
+        if action.interactive:
+            # the keys are typed in the terminal that opened; nothing to wait for
+            self._set_status(
+                lambda: self.tr(
+                    "Finish in the terminal that opened, then press Refresh."
+                )
+            )
+            return
         self._hide_login()
         self.refresh()
         self._overview_context = None

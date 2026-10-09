@@ -38,9 +38,10 @@ prefer otherwise.
   you are signed in, the app runs `aws sts get-caller-identity` and `aws configure
   get` for the profile your kubeconfig names, and reads that profile from
   `kubectl config view` without `--raw`, so secrets stay redacted. The **Sign in
-  to AWS** button runs `aws sso login` for you to approve in the browser. The app
-  never sees, asks for, or stores keys or tokens, and it does not change the
-  cluster.
+  to AWS** button runs `aws sso login` for you to approve in the browser. For an
+  access-key profile, **Configure AWS credentials** opens a terminal running `aws
+  configure` so you type the keys there. The app never sees, asks for, or stores
+  keys or tokens, and it does not change the cluster.
 - **No telemetry and no network calls of its own.** The only traffic is what
   `kubectl` sends to your clusters.
 - **Local settings hold no secrets.** `settings.json` keeps the language, the

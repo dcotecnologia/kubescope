@@ -638,8 +638,28 @@ def test_aws_profile_is_read_from_the_kubeconfig_exec_entry(monkeypatch) -> None
     assert cluster._aws_profile("ctx") == (False, None)
 
 
-def test_login_command_signs_in_with_sso_profiles_only(monkeypatch) -> None:
+SSO = cluster.LoginAction(["aws", "sso", "login", "--profile", "work"], "work", False)
+KEYS = cluster.LoginAction(["aws", "configure", "--profile", "work"], "work", True)
+
+
+def test_login_action_picks_sso_or_access_keys_by_profile(monkeypatch) -> None:
     monkeypatch.setattr(cluster, "_aws_profile", lambda _c: (True, "work"))
+    monkeypatch.setattr(cluster, "_is_sso_profile", lambda _p: True)
+    assert cluster.login_action("ctx") == SSO
+
+    monkeypatch.setattr(cluster, "_is_sso_profile", lambda _p: False)
+    assert cluster.login_action("ctx") == KEYS
+
+    monkeypatch.setattr(cluster, "_aws_profile", lambda _c: (True, None))
+    assert cluster.login_action("ctx") == cluster.LoginAction(
+        ["aws", "configure"], None, True
+    )
+
+    monkeypatch.setattr(cluster, "_aws_profile", lambda _c: (False, None))
+    assert cluster.login_action("ctx") is None
+
+
+def test_sso_profiles_are_told_apart_from_access_key_profiles(monkeypatch) -> None:
     answers = {"sso_session": "", "sso_start_url": "https://example.awsapps.com/start"}
 
     def configure(command, _timeout):
@@ -651,22 +671,16 @@ def test_login_command_signs_in_with_sso_profiles_only(monkeypatch) -> None:
         return value + "\n"
 
     monkeypatch.setattr(cluster, "_run_command", configure)
-    assert cluster.login_command("ctx") == ["aws", "sso", "login", "--profile", "work"]
+    assert cluster._is_sso_profile("work") is True  # the legacy start URL
 
-    answers.update(sso_session=None, sso_start_url=None)  # access keys
-    assert cluster.login_command("ctx") is None
-
-    monkeypatch.setattr(cluster, "_aws_profile", lambda _c: (False, None))
-    assert cluster.login_command("ctx") is None
-
-    monkeypatch.setattr(cluster, "_aws_profile", lambda _c: (True, None))
     answers.update(sso_session="main", sso_start_url=None)
-    monkeypatch.setattr(
-        cluster,
-        "_run_command",
-        lambda command, _t: "main" if "--profile" not in command else "",
-    )
-    assert cluster.login_command("ctx") == ["aws", "sso", "login"]
+    assert cluster._is_sso_profile("work") is True
+
+    answers.update(sso_session=None, sso_start_url=None)
+    assert cluster._is_sso_profile("work") is False
+
+    monkeypatch.setattr(cluster, "_run_command", lambda _c, _t: "main")
+    assert cluster._is_sso_profile(None) is True  # the default profile
 
 
 def test_check_login_reports_signed_in_when_everything_answers(monkeypatch) -> None:
@@ -683,14 +697,13 @@ def test_check_login_reports_signed_in_when_everything_answers(monkeypatch) -> N
 
 
 def test_check_login_detects_expired_sso_and_bad_access_keys(monkeypatch) -> None:
-    command = ["aws", "sso", "login"]
-    monkeypatch.setattr(cluster, "login_command", lambda _c: command)
+    monkeypatch.setattr(cluster, "login_action", lambda _c: SSO)
 
     def kubectl_fails(*_a, **_k):
         raise cluster.KubectlError("Error: the SSO session has expired")
 
     monkeypatch.setattr(cluster, "_run_kubectl", kubectl_fails)
-    assert cluster.check_login("ctx") == (True, command)
+    assert cluster.check_login("ctx") == (True, SSO)
 
     monkeypatch.setattr(cluster, "_run_kubectl", lambda *_a, **_k: "")
     monkeypatch.setattr(cluster, "_aws_profile", lambda _c: (True, None))
@@ -699,15 +712,16 @@ def test_check_login_detects_expired_sso_and_bad_access_keys(monkeypatch) -> Non
         raise cluster.KubectlError("InvalidClientTokenId: the token is invalid")
 
     monkeypatch.setattr(cluster, "_run_command", sts_fails)
-    assert cluster.check_login("ctx") == (True, command)
+    monkeypatch.setattr(cluster, "login_action", lambda _c: KEYS)
+    assert cluster.check_login("ctx") == (True, KEYS)
 
-    monkeypatch.setattr(cluster, "login_command", lambda _c: None)  # access keys
+    monkeypatch.setattr(cluster, "login_action", lambda _c: None)  # not AWS
     assert cluster.check_login("ctx") == (True, None)
 
     def unreadable(_context):
         raise cluster.KubectlError("config view failed")
 
-    monkeypatch.setattr(cluster, "login_command", unreadable)
+    monkeypatch.setattr(cluster, "login_action", unreadable)
     assert cluster.check_login("ctx") == (True, None)
 
 
@@ -733,14 +747,53 @@ def test_check_login_ignores_failures_that_are_not_about_credentials(
         raise ValueError("expired token in a bad document")
 
     monkeypatch.setattr(cluster, "_aws_profile", broken_json)
-    monkeypatch.setattr(cluster, "login_command", broken_json)
+    monkeypatch.setattr(cluster, "login_action", broken_json)
     assert cluster.check_login("ctx") == (True, None)
 
 
-def test_run_login_runs_the_command_with_a_long_timeout(monkeypatch) -> None:
-    seen = []
-    monkeypatch.setattr(cluster, "_run_command", lambda c, t: seen.append((c, t)) or "")
+def test_run_login_waits_for_sso_and_opens_a_terminal_for_access_keys(
+    monkeypatch,
+) -> None:
+    ran, opened = [], []
+    monkeypatch.setattr(cluster, "_run_command", lambda c, t: ran.append((c, t)) or "")
+    monkeypatch.setattr(cluster, "_open_terminal", opened.append)
 
-    cluster.run_login(["aws", "sso", "login"])
+    cluster.run_login(SSO)
+    cluster.run_login(KEYS)
 
-    assert seen == [(["aws", "sso", "login"], cluster.LOGIN_TIMEOUT)]
+    assert ran == [(SSO.command, cluster.LOGIN_TIMEOUT)]
+    assert opened == [KEYS.command]
+
+
+def test_open_terminal_uses_the_first_terminal_found(monkeypatch) -> None:
+    launched = []
+    monkeypatch.setattr(cluster.sys, "platform", "linux")
+    monkeypatch.setattr(cluster.subprocess, "Popen", lambda cmd: launched.append(cmd))
+    monkeypatch.setattr(
+        cluster.shutil,
+        "which",
+        lambda name: "/usr/bin/konsole" if name == "konsole" else None,
+    )
+
+    cluster._open_terminal(["aws", "configure"])
+    assert launched == [["/usr/bin/konsole", "-e", "aws", "configure"]]
+
+    monkeypatch.setattr(cluster.shutil, "which", lambda _name: None)
+    with pytest.raises(cluster.KubectlError, match="aws configure"):
+        cluster._open_terminal(["aws", "configure"])
+
+
+def test_open_terminal_on_windows_and_when_it_cannot_start(monkeypatch) -> None:
+    launched = []
+    monkeypatch.setattr(cluster.sys, "platform", "win32")
+    monkeypatch.setattr(cluster.subprocess, "Popen", lambda cmd: launched.append(cmd))
+
+    cluster._open_terminal(["aws", "configure"])
+    assert launched == [["cmd", "/c", "start", "", "cmd", "/k", "aws", "configure"]]
+
+    def broken(_command):
+        raise OSError("no cmd")
+
+    monkeypatch.setattr(cluster.subprocess, "Popen", broken)
+    with pytest.raises(cluster.KubectlError, match="Could not open a terminal"):
+        cluster._open_terminal(["aws", "configure"])

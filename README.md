@@ -41,7 +41,8 @@ resources but does not change the cluster.
 - **Sign-in check:** when you open an AWS context, KubeScope checks that you are
   signed in (SSO session or access keys). If not, a **Sign in to AWS** button
   runs `aws sso login` for the profile your kubeconfig uses and reloads the data.
-  Access-key profiles show a hint instead, since they have no browser sign-in.
+  Access-key profiles get a **Configure AWS credentials** button that opens a
+  terminal with `aws configure` for that profile.
 - **Always responsive:** every cluster call runs in the background, so the window
   never freezes while `kubectl` or the AWS CLI work.
 - **English and Portuguese**, selectable in Settings.
