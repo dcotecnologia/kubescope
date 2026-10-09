@@ -58,7 +58,8 @@ def main() -> int:
         )
     branch = sys.argv[1] if len(sys.argv) > 1 else current_branch()
 
-    if gh("workflow", "view", WORKFLOW, "--ref", branch, check=False).returncode != 0:
+    viewed = gh("workflow", "view", WORKFLOW, "--ref", branch, "--yaml", check=False)
+    if viewed.returncode != 0:
         raise SystemExit(
             f".github/workflows/{WORKFLOW} was not found on '{branch}' in GitHub.\n"
             "Commit and push the workflow first, then run this again."
