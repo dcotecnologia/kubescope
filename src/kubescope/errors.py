@@ -36,6 +36,11 @@ def is_auth_error(message: str) -> bool:
     )
 
 
+def first_line(text: str) -> str:
+    """The first non-empty line, for one-line summaries and logs."""
+    return next((line.strip() for line in text.splitlines() if line.strip()), "")
+
+
 def describe_error(message: str) -> ErrorInfo:
     """Classify a kubectl error message; unknown ones keep their first line."""
     details = message.strip()
@@ -106,11 +111,8 @@ def describe_error(message: str) -> ErrorInfo:
             ),
             details,
         )
-    first_line = next(
-        (line.strip() for line in details.splitlines() if line.strip()), ""
-    )
     return ErrorInfo(
         QCoreApplication.translate("Errors", "Something went wrong"),
-        first_line,
+        first_line(details),
         details,
     )

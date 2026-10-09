@@ -118,6 +118,36 @@
        </property>
       </widget>
      </item>
+     <item row="2" column="0" colspan="2">
+      <widget class="QCheckBox" name="debugCheck">
+       <property name="text">
+        <string>Debug mode: write a log file I can share</string>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="0" colspan="2">
+      <widget class="QLabel" name="debugHint">
+       <property name="text">
+        <string notr="true" />
+       </property>
+       <property name="wordWrap">
+        <bool>true</bool>
+       </property>
+       <property name="textInteractionFlags">
+        <set>Qt::TextInteractionFlag::TextSelectableByMouse</set>
+       </property>
+       <property name="variant" stdset="0">
+        <string notr="true">muted</string>
+       </property>
+      </widget>
+     </item>
+     <item row="4" column="0" colspan="2">
+      <widget class="QPushButton" name="openLogsButton">
+       <property name="text">
+        <string>Open the log folder</string>
+       </property>
+      </widget>
+     </item>
     </layout>
    </item>
    <item>

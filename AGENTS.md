@@ -76,6 +76,17 @@ Golden rule:
 - Code, comments, identifiers, test names, and commit messages are in English,
   whatever the interface language.
 
+## Logging
+
+- Log with `logging.getLogger(__name__)`. INFO is for milestones a person reading
+  a shared log needs (context changed, refresh started and finished, sign-in);
+  DEBUG is for detail (each command, its exit code and duration).
+- Never log Pod logs, resource contents, kubeconfig data, tokens, or keys. A
+  failed command logs only the first line of its error, at DEBUG. Expected cluster
+  errors are not logged with a traceback; the window explains them.
+- The debug log file is off by default and turned on in Settings; keep new log
+  lines safe to share, and update SECURITY.md if what is recorded changes.
+
 ## 3) UI and translations
 
 - Edit layouts in the `.ui` files, then run `make ui`. Commit the regenerated

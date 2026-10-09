@@ -19,12 +19,14 @@ from PySide6.QtCore import (
     Qt,
     QThread,
     QTimer,
+    QUrl,
     Signal,
 )
 from PySide6.QtGui import (
     QAction,
     QCloseEvent,
     QColor,
+    QDesktopServices,
     QFontDatabase,
     QIcon,
     QPainter,
@@ -63,7 +65,8 @@ from kubescope.cluster import (
     list_contexts,
     run_login,
 )
-from kubescope.errors import describe_error, is_auth_error
+from kubescope.diagnostics import configure_logging, log_file
+from kubescope.errors import describe_error, first_line, is_auth_error
 from kubescope.i18n import apply_language
 from kubescope.log_tab import LOG_REFRESH_MS, LogTab
 from kubescope.models import (
@@ -78,7 +81,7 @@ from kubescope.models import (
     pod_sort_key,
     workload_sort_key,
 )
-from kubescope.settings import Settings
+from kubescope.settings import Settings, log_directory
 from kubescope.ui.ui_main_window import Ui_MainWindow
 from kubescope.ui.ui_overview_page import Ui_OverviewPage
 from kubescope.ui.ui_pods_dialog import Ui_PodsDialog
@@ -292,6 +295,7 @@ class WorkloadWindow(QMainWindow):
         self.settings_ui.setupUi(ui.settingsHost)
         self.settings_ui.contextsTable.setRowCount(0)
         self.settings_ui.saveButton.clicked.connect(self._save_preferences)
+        self.settings_ui.openLogsButton.clicked.connect(self._open_log_folder)
         self._overview_context: str | None = None
         self._overview_busy = False
 
@@ -426,6 +430,7 @@ class WorkloadWindow(QMainWindow):
         )
 
     def _contexts_failed(self, reason: str) -> None:
+        logger.warning("Could not load kubeconfig: %s", first_line(reason))
         self._set_status(
             lambda: self.tr("Could not load kubeconfig: {error}").format(
                 error=self._error_line(reason)
@@ -444,6 +449,7 @@ class WorkloadWindow(QMainWindow):
             selected = remembered
         else:
             selected = active_context
+        logger.info("Loaded %d context(s); selected %s", len(contexts), selected)
         self._fill_contexts(selected)
         if not contexts:
             self._set_status(lambda: self.tr("No contexts found in kubeconfig"))
@@ -542,6 +548,7 @@ class WorkloadWindow(QMainWindow):
     def _open_list_view(self, view: str) -> None:
         """Show the Pods or Deployments list; both share one table."""
         changed = view != self._view
+        logger.debug("Opening the %s list", view)
         self._view = view
         if changed:
             self._sort = None
@@ -599,6 +606,7 @@ class WorkloadWindow(QMainWindow):
         self.table.setColumnHidden(column, not visible)
 
     def _context_changed(self, *_args: object) -> None:
+        logger.info("Context changed to %s", self._context())
         self._overview_context = None
         self._hide_login()
         self._check_login()
@@ -664,6 +672,7 @@ class WorkloadWindow(QMainWindow):
         action = self._login_action
         if action is None:
             return
+        logger.info("Sign-in requested for profile %s", action.profile or "default")
         self._run_action(
             run_login,
             lambda _result: self._signed_in(action),
@@ -704,6 +713,7 @@ class WorkloadWindow(QMainWindow):
         )
 
     def _show_overview_error(self, message: str) -> None:
+        logger.info("Overview failed: %s", first_line(message))
         self._overview_busy = False
         if is_auth_error(message):
             self._check_login()
@@ -749,6 +759,11 @@ class WorkloadWindow(QMainWindow):
             return
         self._overview_context = context
         self._overview = overview
+        logger.info(
+            "Overview loaded: %d node(s), %s Pod(s)",
+            len(overview.nodes),
+            overview.pods_total,
+        )
         self._render_overview(overview)
 
     def _render_overview(self, overview: ClusterOverview) -> None:
@@ -885,6 +900,12 @@ class WorkloadWindow(QMainWindow):
         if not context or (self._worker is not None and self._worker.isRunning()):
             return
         namespace = self.namespace_combo.currentData() or None
+        logger.info(
+            "Refreshing %s in %s (namespace %s)",
+            self._view,
+            context,
+            namespace or "all",
+        )
         self.refresh_button.setEnabled(False)
         self.context_combo.setEnabled(False)
         self.namespace_combo.setEnabled(False)
@@ -903,6 +924,11 @@ class WorkloadWindow(QMainWindow):
         self._worker.start()
 
     def _show_workloads(self, namespaces: list, workloads: list) -> None:
+        logger.info(
+            "Loaded %d deployment(s) in %d namespace(s)",
+            len(workloads),
+            len(namespaces),
+        )
         self._workloads = workloads
         self._apply_sort()
         self._fill_namespaces(namespaces)
@@ -910,6 +936,7 @@ class WorkloadWindow(QMainWindow):
             self._render_workloads()
 
     def _show_pods(self, namespaces: list, pods: list) -> None:
+        logger.info("Loaded %d Pod(s) in %d namespace(s)", len(pods), len(namespaces))
         self._pods = pods
         self._apply_sort()
         self._fill_namespaces(namespaces)
@@ -1119,6 +1146,7 @@ class WorkloadWindow(QMainWindow):
     ) -> None:
         if self._close_when_worker_stops:
             return
+        logger.debug("Action: %s", getattr(operation, "__name__", operation))
         worker = ActionWorker(operation, arguments)
         self._action_workers.append(worker)
         if not quiet:  # background refreshes must not flash a spinner
@@ -1437,6 +1465,14 @@ class WorkloadWindow(QMainWindow):
             max(form.languageCombo.findData(self.settings.language), 0)
         )
         form.rememberCheck.setChecked(self.settings.remember_last_context)
+        form.debugCheck.setChecked(self.settings.debug_logging)
+        form.debugHint.setText(
+            self.tr(
+                "Off by default. When on, KubeScope writes what it does, "
+                "never Pod logs or resource contents, to {path}. Read it before "
+                "sharing: it includes context names."
+            ).format(path=log_file())
+        )
 
         aliases = self.settings.context_aliases
         table = form.contextsTable
@@ -1465,6 +1501,11 @@ class WorkloadWindow(QMainWindow):
             form.contextsHint.setText(self.tr("No contexts were found in kubeconfig."))
         form.noticeLabel.setText("")
 
+    def _open_log_folder(self) -> None:
+        directory = log_directory()
+        directory.mkdir(parents=True, exist_ok=True)
+        QDesktopServices.openUrl(QUrl.fromLocalFile(str(directory)))
+
     def _save_preferences(self) -> None:
         form = self.settings_ui
         table = form.contextsTable
@@ -1481,7 +1522,13 @@ class WorkloadWindow(QMainWindow):
         self.settings.remember_last_context = form.rememberCheck.isChecked()
         if self.settings.remember_last_context:
             self.settings.last_context = self._context()
+        was_debugging = self.settings.debug_logging
+        self.settings.debug_logging = form.debugCheck.isChecked()
         self._save_settings()
+        if self.settings.debug_logging != was_debugging:
+            configure_logging(to_file=self.settings.debug_logging)
+            logger.info("Debug mode %s", "on" if self.settings.debug_logging else "off")
+        logger.info("Settings saved")
         self._fill_contexts(self._context())
         if self.settings.language != previous_language:
             apply_language(self.settings.language)
@@ -1524,6 +1571,7 @@ class WorkloadWindow(QMainWindow):
         box.exec()
 
     def _show_error(self, message: str) -> None:
+        logger.info("Refresh failed: %s", first_line(message))
         if is_auth_error(message):
             self._check_login()
         self._workloads = []
@@ -1545,6 +1593,7 @@ class WorkloadWindow(QMainWindow):
         refresh_running = self._worker is not None and self._worker.isRunning()
         actions_running = any(worker.isRunning() for worker in self._action_workers)
         if refresh_running or actions_running:
+            logger.info("Closing while requests are running; stopping them")
             # Stop kubectl and the AWS CLI so the workers return at once, hide the
             # window so closing feels instant, and quit when the last one is done.
             self._close_when_worker_stops = True

@@ -2,7 +2,7 @@ import json
 import sys
 from pathlib import Path
 
-from kubescope.settings import Settings, config_directory
+from kubescope.settings import Settings, config_directory, log_directory
 
 
 def test_defaults_when_no_file_exists(tmp_path) -> None:
@@ -87,3 +87,22 @@ def test_config_directory_follows_the_platform(monkeypatch, tmp_path) -> None:
     assert config_directory() == tmp_path / "xdg" / "kubescope"
     monkeypatch.delenv("XDG_CONFIG_HOME")
     assert config_directory() == tmp_path / ".config" / "kubescope"
+
+
+def test_debug_logging_defaults_off_and_persists(tmp_path) -> None:
+    path = tmp_path / "settings.json"
+    settings = Settings(path)
+    assert settings.debug_logging is False
+
+    settings.debug_logging = True
+    settings.save()
+    assert Settings(path).debug_logging is True
+
+    path.write_text('{"debug_logging": "yes"}', encoding="utf-8")
+    assert Settings(path).debug_logging is False  # only a real true turns it on
+
+
+def test_log_directory_lives_in_the_config_directory(monkeypatch, tmp_path) -> None:
+    monkeypatch.setenv("KUBESCOPE_CONFIG_DIR", str(tmp_path))
+
+    assert log_directory() == tmp_path / "logs"

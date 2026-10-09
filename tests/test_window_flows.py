@@ -815,3 +815,69 @@ def test_unexpected_failures_are_still_logged_with_a_traceback(
 
     assert len(caplog.records) == 3
     assert all(record.exc_info for record in caplog.records)
+
+
+def test_debug_mode_is_switched_from_the_settings_page(monkeypatch, tmp_path) -> None:
+    window = _ready_window(monkeypatch)
+    configured = []
+    monkeypatch.setattr(
+        window_module, "configure_logging", lambda **kwargs: configured.append(kwargs)
+    )
+    form = window.settings_ui
+
+    window._load_settings_form()
+    assert form.debugCheck.isChecked() is False
+    assert "never Pod logs" in form.debugHint.text()
+    assert str(window_module.log_file()) in form.debugHint.text()
+
+    form.debugCheck.setChecked(True)
+    window._save_preferences()
+    assert window.settings.debug_logging is True
+    assert configured == [{"to_file": True}]
+
+    window._save_preferences()  # unchanged: the log is not reconfigured
+    assert len(configured) == 1
+
+    form.debugCheck.setChecked(False)
+    window._save_preferences()
+    assert configured[-1] == {"to_file": False}
+    window.close()
+
+
+def test_the_log_folder_opens_in_the_file_manager(monkeypatch) -> None:
+    window = _ready_window(monkeypatch)
+    opened = []
+    monkeypatch.setattr(
+        window_module.QDesktopServices,
+        "openUrl",
+        staticmethod(lambda url: opened.append(url.toLocalFile())),
+    )
+
+    window.settings_ui.openLogsButton.click()
+
+    folder = window_module.log_directory()
+    assert opened == [str(folder)] and folder.is_dir()
+    window.close()
+
+
+def test_the_app_logs_what_it_does(monkeypatch, caplog) -> None:
+    caplog.set_level("DEBUG", logger="kubescope")
+    window = _ready_window(monkeypatch)
+    FakeRefreshWorker.outcome = (
+        "ok",
+        (["ns"], [Workload("ns", "Deployment", "api", 1, 1, "1d")]),
+    )
+    window.refresh()
+    FakeRefreshWorker.outcome = ("error", "Unable to connect\nsecond line")
+    window.refresh()
+    window._open_list_view("pods")
+    FakeRefreshWorker.outcome = ("ok", ([], []))
+
+    messages = [record.getMessage() for record in caplog.records]
+    assert any("Loaded 0 context(s)" in m for m in messages)
+    assert any("Refreshing deployments in prod (namespace all)" in m for m in messages)
+    assert any("Loaded 1 deployment(s) in 1 namespace(s)" in m for m in messages)
+    assert any(m == "Refresh failed: Unable to connect" for m in messages)
+    assert any("Opening the pods list" in m for m in messages)
+    assert any(m.startswith("Action: ") for m in messages)
+    window.close()

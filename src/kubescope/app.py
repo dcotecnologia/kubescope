@@ -1,4 +1,3 @@
-import faulthandler
 import logging
 import os
 import sys
@@ -9,6 +8,7 @@ from PySide6.QtGui import QIcon, QPixmap
 from PySide6.QtWidgets import QApplication
 
 import kubescope
+from kubescope.diagnostics import configure_logging
 from kubescope.i18n import apply_language
 from kubescope.settings import Settings
 from kubescope.theme import apply_light_theme
@@ -37,33 +37,32 @@ def load_app_icon() -> QIcon:
     return icon
 
 
+logger = logging.getLogger(__name__)
 DEBUG_ENV = "KUBESCOPE_DEBUG"
 
 
-def configure_debug() -> bool:
-    """With KUBESCOPE_DEBUG=1, log at DEBUG level to stderr (never to disk) and
-    dump the traceback if the process crashes."""
-    if os.environ.get(DEBUG_ENV) != "1":
-        return False
-    logging.basicConfig(
-        level=logging.DEBUG,
-        format="%(asctime)s %(levelname)s %(name)s: %(message)s",
-    )
-    faulthandler.enable()
-    return True
+def configure_debug(settings: Settings) -> bool:
+    """Set up logging: the Debug mode setting writes a log file; the
+    KUBESCOPE_DEBUG=1 variable also prints DEBUG lines to the terminal."""
+    console = os.environ.get(DEBUG_ENV) == "1"
+    configure_logging(to_file=settings.debug_logging, to_console=console)
+    return console or settings.debug_logging
 
 
 def main() -> int:
-    configure_debug()
+    settings = Settings()
+    configure_debug(settings)
+    logger.info("Starting KubeScope")
     application = QApplication(sys.argv)
     application.setApplicationName("KubeScope")
     application.setWindowIcon(load_app_icon())
     apply_light_theme(application)
-    settings = Settings()
     apply_language(settings.language)
     window = WorkloadWindow(settings)
     window.show()
-    return application.exec()
+    exit_code = application.exec()
+    logger.info("KubeScope stopped (exit code %s)", exit_code)
+    return exit_code
 
 
 if __name__ == "__main__":  # pragma: no cover

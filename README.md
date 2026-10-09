@@ -94,6 +94,15 @@ pyinstaller --noconfirm KubeScope.spec
 
 The distributable application is created under `dist/KubeScope/`.
 
+## Debug log
+
+**Settings > Debug mode** writes a log file you can share when something goes
+wrong: the commands the app ran, how long they took and how they ended, never Pod
+logs or resource contents, with tokens and keys scrubbed. **Open the log folder**
+jumps to it (`logs/` next to `settings.json`). The file rotates and stays small.
+`make debug` also prints the log to the terminal. See [SECURITY.md](SECURITY.md)
+for exactly what is recorded.
+
 ## Settings and language
 
 The **Settings** page (sidebar) stores preferences as JSON in

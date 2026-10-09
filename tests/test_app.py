@@ -1,25 +1,34 @@
-import logging
-
 from kubescope import app
+from kubescope.settings import Settings
 
 
-def test_debug_is_off_by_default(monkeypatch) -> None:
+def _capture_logging(monkeypatch) -> list:
+    calls = []
+    monkeypatch.setattr(app, "configure_logging", lambda **kwargs: calls.append(kwargs))
+    return calls
+
+
+def test_debug_is_off_by_default(monkeypatch, tmp_path) -> None:
     monkeypatch.delenv(app.DEBUG_ENV, raising=False)
-    calls = []
-    monkeypatch.setattr(logging, "basicConfig", lambda **kwargs: calls.append(kwargs))
+    calls = _capture_logging(monkeypatch)
 
-    assert app.configure_debug() is False
-    assert calls == []
+    assert app.configure_debug(Settings(tmp_path / "s.json")) is False
+    assert calls == [{"to_file": False, "to_console": False}]
 
 
-def test_debug_logs_at_debug_level_when_enabled(monkeypatch) -> None:
+def test_debug_follows_the_setting_and_the_environment(monkeypatch, tmp_path) -> None:
+    calls = _capture_logging(monkeypatch)
+    settings = Settings(tmp_path / "s.json")
+
+    settings.debug_logging = True
+    monkeypatch.delenv(app.DEBUG_ENV, raising=False)
+    assert app.configure_debug(settings) is True
+    assert calls[-1] == {"to_file": True, "to_console": False}
+
+    settings.debug_logging = False
     monkeypatch.setenv(app.DEBUG_ENV, "1")
-    calls = []
-    monkeypatch.setattr(logging, "basicConfig", lambda **kwargs: calls.append(kwargs))
-    monkeypatch.setattr(app.faulthandler, "enable", lambda: None)
-
-    assert app.configure_debug() is True
-    assert calls[0]["level"] == logging.DEBUG
+    assert app.configure_debug(settings) is True
+    assert calls[-1] == {"to_file": False, "to_console": True}
 
 
 def test_main_builds_the_window_and_runs_the_event_loop(monkeypatch) -> None:
@@ -47,6 +56,7 @@ def test_main_builds_the_window_and_runs_the_event_loop(monkeypatch) -> None:
             events.append("show")
 
     monkeypatch.delenv(app.DEBUG_ENV, raising=False)
+    _capture_logging(monkeypatch)
     monkeypatch.setattr(app, "QApplication", FakeApplication)
     monkeypatch.setattr(app, "load_app_icon", lambda: "icon")
     monkeypatch.setattr(app, "apply_light_theme", lambda _app: events.append("theme"))

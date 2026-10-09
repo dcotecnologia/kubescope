@@ -1,18 +1,20 @@
 import contextlib
 import json
+import logging
 import os
 import shutil
 import signal
 import subprocess
 import sys
 import threading
+import time
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, replace
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from kubescope.errors import is_auth_error
+from kubescope.errors import first_line, is_auth_error
 from kubescope.models import (
     ClusterOverview,
     NodeInfo,
@@ -22,6 +24,8 @@ from kubescope.models import (
     parse_cpu,
     parse_memory,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class KubectlError(RuntimeError):
@@ -41,6 +45,11 @@ def kubectl_executable() -> Path:
     return project_directory / "vendor" / "kubectl" / executable_name
 
 
+def _describe(command: list[str]) -> str:
+    """A command line for the log: the program name, then its arguments."""
+    return " ".join([Path(command[0]).name, *command[1:]])
+
+
 def _stop(process: subprocess.Popen) -> None:
     """Stop a command and everything it started: kubectl runs `aws eks get-
     token`, and the AWS CLI can start more, all holding the output open."""
@@ -58,6 +67,9 @@ def _stop(process: subprocess.Popen) -> None:
 def _run_process(command: list[str], timeout: float) -> subprocess.CompletedProcess:
     """Run a command and capture its output, keeping it listed while it runs so
     closing the app can stop it."""
+    label = _describe(command)
+    logger.debug("Run: %s", label)
+    started = time.monotonic()
     process = subprocess.Popen(
         command,
         stdout=subprocess.PIPE,
@@ -70,12 +82,18 @@ def _run_process(command: list[str], timeout: float) -> subprocess.CompletedProc
     try:
         stdout, stderr = process.communicate(timeout=timeout)
     except subprocess.TimeoutExpired:
+        logger.warning("Timed out after %ss: %s", timeout, label)
         _stop(process)
         process.communicate()
         raise
     finally:
         with _running_lock:
             _running.discard(process)
+    logger.debug(
+        "Exit %s after %.2fs: %s", process.returncode, time.monotonic() - started, label
+    )
+    if process.returncode != 0:
+        logger.debug("stderr: %s", first_line(stderr))
     return subprocess.CompletedProcess(command, process.returncode, stdout, stderr)
 
 
@@ -83,6 +101,8 @@ def cancel_running() -> None:
     """Stop every kubectl or AWS CLI process in flight; their callers see a
     failure and return at once."""
     with _running_lock:
+        if _running:
+            logger.info("Stopping %d running command(s)", len(_running))
         for process in _running:
             _stop(process)
 
@@ -124,6 +144,7 @@ def list_contexts() -> tuple[list[str], str | None]:
     active_context = None
     if contexts:
         active_context = _run_kubectl("config", "current-context").strip() or None
+    logger.info("Found %d kubeconfig context(s)", len(contexts))
     return contexts, active_context
 
 
@@ -209,7 +230,9 @@ def login_action(context: str) -> LoginAction | None:
         return None
     arguments = _profile_arguments(profile)
     if _is_sso_profile(profile):
+        logger.info("AWS profile %s signs in with SSO", profile or "default")
         return LoginAction(["aws", "sso", "login", *arguments], profile, False)
+    logger.info("AWS profile %s uses access keys", profile or "default")
     return LoginAction(["aws", "configure", *arguments], profile, True)
 
 
@@ -232,11 +255,16 @@ def check_login(context: str) -> tuple[bool, LoginAction | None]:
             )
     except (KubectlError, ValueError) as error:
         if not is_auth_error(str(error)):
+            logger.info("Login check for %s: not a credentials problem", context)
+            logger.debug("Login check detail: %s", first_line(str(error)))
             return False, None
+        logger.info("Login check for %s: sign-in needed", context)
+        logger.debug("Login check detail: %s", first_line(str(error)))
         try:
             return True, login_action(context)
         except (KubectlError, ValueError):
             return True, None
+    logger.info("Login check for %s: signed in", context)
     return False, None
 
 
@@ -278,10 +306,12 @@ def run_login(action: LoginAction) -> None:
     SSO opens the browser and is waited for; access keys open a terminal
     where the person types them, so the app never sees them.
     """
+    logger.info("Starting sign-in: %s", _describe(action.command))
     if action.interactive:
         _open_terminal(action.command)
     else:
         _run_command(action.command, LOGIN_TIMEOUT)
+        logger.info("Sign-in finished for profile %s", action.profile or "default")
 
 
 def _parse_workload(item: dict[str, Any], now: datetime) -> Workload | None:
@@ -703,5 +733,7 @@ def get_cluster_overview(context: str) -> ClusterOverview:
                 errors[name] = str(error)
     if not any(key in results for key in _OVERVIEW_SECTIONS):
         raise KubectlError(next(iter(errors.values()), "No data returned"))
+    for name, reason in errors.items():
+        logger.info("Overview section %s unavailable: %s", name, first_line(reason))
     errors.pop("metrics", None)
     return _build_overview(results, errors, datetime.now(UTC))

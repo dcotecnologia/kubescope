@@ -861,3 +861,61 @@ def test_stop_handles_windows_and_already_finished_processes(monkeypatch) -> Non
     monkeypatch.setattr(cluster.sys, "platform", "linux")
     monkeypatch.setattr(cluster.os, "killpg", gone)
     cluster._stop(process)  # must not raise
+
+
+def test_commands_are_logged_with_their_outcome(caplog) -> None:
+    caplog.set_level("DEBUG", logger="kubescope.cluster")
+
+    cluster._run_process([sys.executable, "-c", "import sys; sys.exit(2)"], timeout=20)
+
+    messages = [record.getMessage() for record in caplog.records]
+    assert any(m.startswith("Run: ") and "-c" in m for m in messages)
+    assert any(m.startswith("Exit 2 after ") for m in messages)
+    assert any(m.startswith("stderr:") for m in messages)
+
+
+def test_timeouts_and_cancellations_are_logged(caplog) -> None:
+    caplog.set_level("INFO", logger="kubescope.cluster")
+
+    with pytest.raises(cluster.subprocess.TimeoutExpired):
+        cluster._run_process(["sh", "-c", "sleep 30; true"], timeout=0.2)
+    assert "Timed out after 0.2s" in caplog.text
+
+    thread = threading.Thread(
+        target=lambda: cluster._run_process(["sh", "-c", "sleep 30; true"], 60)
+    )
+    thread.start()
+    deadline = time.monotonic() + 5
+    while not cluster._running and time.monotonic() < deadline:
+        time.sleep(0.01)
+    cluster.cancel_running()
+    thread.join(10)
+    assert "Stopping 1 running command(s)" in caplog.text
+
+
+def test_login_steps_are_logged(monkeypatch, caplog) -> None:
+    caplog.set_level("INFO", logger="kubescope.cluster")
+    monkeypatch.setattr(cluster, "_run_kubectl", lambda *_a, **_k: "")
+    monkeypatch.setattr(cluster, "_run_command", lambda *_a: "")
+    monkeypatch.setattr(cluster, "_aws_profile", lambda _c: (True, "work"))
+    cluster.check_login("ctx")
+    monkeypatch.setattr(cluster, "_is_sso_profile", lambda _p: True)
+    cluster.login_action("ctx")
+    monkeypatch.setattr(cluster, "_is_sso_profile", lambda _p: False)
+    cluster.login_action("ctx")
+    cluster.run_login(SSO)
+
+    assert "Login check for ctx: signed in" in caplog.text
+    assert "profile work signs in with SSO" in caplog.text
+    assert "profile work uses access keys" in caplog.text
+    assert "Starting sign-in: aws sso login --profile work" in caplog.text
+    assert "Sign-in finished for profile work" in caplog.text
+
+    caplog.clear()
+
+    def fail(*_a, **_k):
+        raise cluster.KubectlError("Unable to connect: i/o timeout")
+
+    monkeypatch.setattr(cluster, "_run_kubectl", fail)
+    cluster.check_login("ctx")
+    assert "not a credentials problem" in caplog.text

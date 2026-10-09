@@ -13,6 +13,14 @@ an error dialog.
 | Context not found | The context is not in your kubeconfig | Check `~/.kube/config` or `KUBECONFIG` |
 | kubectl is missing | The bundled `kubectl` was not found | Reinstall the app |
 
+## Reporting a problem
+
+Turn on **Settings > Debug mode**, reproduce the problem, then use **Open the log
+folder** and attach `kubescope.log` (and `crash.log` if the app closed by itself)
+to your report. The log records the commands the app ran and how they ended,
+never Pod logs or resource contents, and hides tokens and keys. It does include
+context names, so read it first and edit what you do not want to share.
+
 ## CPU and memory show a dash
 
 The cluster has no `metrics-server`, or your role cannot read `metrics.k8s.io`.

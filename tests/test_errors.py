@@ -55,3 +55,10 @@ def test_missing_login_tool_names_the_executable() -> None:
 
 def test_unknown_error_keeps_its_first_line_as_hint() -> None:
     assert describe_error("\n  boom happened\nmore").hint == "boom happened"
+
+
+def test_first_line_skips_blank_lines() -> None:
+    from kubescope.errors import first_line
+
+    assert first_line("\n  \n  boom  \nsecond") == "boom"
+    assert first_line("") == ""

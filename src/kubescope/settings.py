@@ -15,6 +15,7 @@ DEFAULTS: dict[str, Any] = {
     "last_context": None,
     "context_aliases": {},
     "hidden_columns": {},
+    "debug_logging": False,
 }
 
 
@@ -29,6 +30,10 @@ def config_directory() -> Path:
     else:
         base = Path(os.environ.get("XDG_CONFIG_HOME") or Path.home() / ".config")
     return base / "kubescope"
+
+
+def log_directory() -> Path:
+    return config_directory() / "logs"
 
 
 class Settings:
@@ -93,6 +98,14 @@ class Settings:
     @remember_last_context.setter
     def remember_last_context(self, value: bool) -> None:
         self._data["remember_last_context"] = bool(value)
+
+    @property
+    def debug_logging(self) -> bool:
+        return self._data["debug_logging"] is True
+
+    @debug_logging.setter
+    def debug_logging(self, value: bool) -> None:
+        self._data["debug_logging"] = bool(value)
 
     @property
     def last_context(self) -> str | None:

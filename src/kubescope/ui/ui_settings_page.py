@@ -81,6 +81,25 @@ class Ui_SettingsPage(object):
 
         self.generalForm.setWidget(1, QFormLayout.ItemRole.SpanningRole, self.rememberCheck)
 
+        self.debugCheck = QCheckBox(SettingsPage)
+        self.debugCheck.setObjectName(u"debugCheck")
+
+        self.generalForm.setWidget(2, QFormLayout.ItemRole.SpanningRole, self.debugCheck)
+
+        self.debugHint = QLabel(SettingsPage)
+        self.debugHint.setObjectName(u"debugHint")
+        self.debugHint.setText(u"")
+        self.debugHint.setWordWrap(True)
+        self.debugHint.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+        self.debugHint.setProperty(u"variant", u"muted")
+
+        self.generalForm.setWidget(3, QFormLayout.ItemRole.SpanningRole, self.debugHint)
+
+        self.openLogsButton = QPushButton(SettingsPage)
+        self.openLogsButton.setObjectName(u"openLogsButton")
+
+        self.generalForm.setWidget(4, QFormLayout.ItemRole.SpanningRole, self.openLogsButton)
+
 
         self.settingsLayout.addLayout(self.generalForm)
 
@@ -140,6 +159,8 @@ class Ui_SettingsPage(object):
         self.languageLabel.setText(QCoreApplication.translate("SettingsPage", u"Language", None))
 
         self.rememberCheck.setText(QCoreApplication.translate("SettingsPage", u"Remember the last used context", None))
+        self.debugCheck.setText(QCoreApplication.translate("SettingsPage", u"Debug mode: write a log file I can share", None))
+        self.openLogsButton.setText(QCoreApplication.translate("SettingsPage", u"Open the log folder", None))
         self.contextsHeading.setText(QCoreApplication.translate("SettingsPage", u"CONTEXT NAMES", None))
         self.contextsHint.setText(QCoreApplication.translate("SettingsPage", u"Give your contexts friendlier names. Leave a name empty to keep the original one.", None))
         ___qtablewidgetitem = self.contextsTable.horizontalHeaderItem(0)
