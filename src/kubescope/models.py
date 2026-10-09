@@ -9,6 +9,9 @@ class Workload:
     ready: int
     desired: int
     age: str
+    restarts: int = 0
+    cpu: float | None = None  # cores in use, None without metrics-server
+    memory: float | None = None  # bytes in use
 
     @property
     def status(self) -> str:
@@ -30,6 +33,10 @@ class PodInfo:
     total: int
     age: str
     containers: tuple[str, ...]
+    restarts: int = 0
+    cpu: float | None = None
+    memory: float | None = None
+    owner: tuple[str, str] | None = None  # (kind, name) of the controlling workload
 
 
 def format_age(seconds: float) -> str:
@@ -79,6 +86,18 @@ def parse_memory(value: str | None) -> float:
 
 def format_cores(cores: float) -> str:
     return f"{cores:.1f}"
+
+
+def format_cpu(cores: float | None) -> str:
+    if cores is None:
+        return "—"
+    if cores < 1:
+        return f"{cores * 1000:.0f}m"
+    return f"{cores:.2f}"
+
+
+def format_memory(size: float | None) -> str:
+    return "—" if size is None else format_bytes(size)
 
 
 def format_bytes(size: float) -> str:
@@ -158,7 +177,17 @@ class ClusterOverview:
 
 _AGE_UNITS = {"m": 60, "h": 3600, "d": 86400}
 STATUS_SEVERITY = {"Unavailable": 0, "Degraded": 1, "Scaled to zero": 2, "Healthy": 3}
-SORT_COLUMNS = ("namespace", "kind", "name", "ready", "status", "age")
+SORT_COLUMNS = (
+    "namespace",
+    "kind",
+    "name",
+    "ready",
+    "status",
+    "cpu",
+    "memory",
+    "restarts",
+    "age",
+)
 
 
 def age_seconds(age: str) -> float:
@@ -184,12 +213,61 @@ def workload_sort_key(workload: Workload, column: int) -> tuple:
         primary: tuple = (fraction, workload.desired)
     elif field == "status":
         primary = (STATUS_SEVERITY[workload.status],)
+    elif field in {"cpu", "memory", "restarts"}:
+        value = getattr(workload, field)
+        primary = (-1.0 if value is None else value,)
     elif field == "age":
         primary = (age_seconds(workload.age),)
     elif field == "kind":
         primary = (workload.kind,)
     elif field == "name":
         primary = (workload.name.casefold(),)
+    else:
+        primary = ()
+    return (*primary, *by_name)
+
+
+def pod_highlight(pod: PodInfo) -> str | None:
+    """ "problem" for restarting/failing Pods, "young" for ones under an hour old."""
+    not_ready = pod.phase == "Running" and pod.ready < pod.total
+    if pod.restarts > 0 or pod.phase in {"Failed", "Unknown"} or not_ready:
+        return "problem"
+    if age_seconds(pod.age) < 3600:
+        return "young"
+    return None
+
+
+POD_SORT_COLUMNS = (
+    "namespace",
+    "containers",
+    "name",
+    "ready",
+    "status",
+    "cpu",
+    "memory",
+    "restarts",
+    "age",
+)
+_PHASE_SEVERITY = {"Failed": 0, "Unknown": 1, "Pending": 2, "Running": 3}
+
+
+def pod_sort_key(pod: PodInfo, column: int) -> tuple:
+    """Sort key for a Pods table column; phase ranks worst first."""
+    by_name = (pod.namespace.casefold(), pod.name.casefold())
+    field = POD_SORT_COLUMNS[column]
+    if field == "containers":
+        primary: tuple = (pod.total,)
+    elif field == "ready":
+        primary = (pod.ready / pod.total if pod.total else 1.0, pod.total)
+    elif field == "status":
+        primary = (_PHASE_SEVERITY.get(pod.phase, 4),)
+    elif field in {"cpu", "memory", "restarts"}:
+        value = getattr(pod, field)
+        primary = (-1.0 if value is None else value,)
+    elif field == "age":
+        primary = (age_seconds(pod.age),)
+    elif field == "name":
+        primary = (pod.name.casefold(),)
     else:
         primary = ()
     return (*primary, *by_name)

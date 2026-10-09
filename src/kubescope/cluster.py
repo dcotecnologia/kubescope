@@ -3,6 +3,7 @@ import os
 import subprocess
 import sys
 from concurrent.futures import ThreadPoolExecutor
+from dataclasses import replace
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -108,16 +109,20 @@ def _parse_workload(item: dict[str, Any], now: datetime) -> Workload | None:
     )
 
 
+def _get_namespaces(context: str) -> list[str]:
+    document = _get_json("get", "namespaces", context=context)
+    return sorted(
+        item["metadata"]["name"]
+        for item in document.get("items", [])
+        if item.get("metadata", {}).get("name")
+    )
+
+
 def get_workloads(
     context: str,
     namespace: str | None = None,
 ) -> tuple[list[str], list[Workload]]:
-    namespaces_document = _get_json("get", "namespaces", context=context)
-    namespaces = sorted(
-        item["metadata"]["name"]
-        for item in namespaces_document.get("items", [])
-        if item.get("metadata", {}).get("name")
-    )
+    namespaces = _get_namespaces(context)
     arguments = ["get", "deployments,statefulsets,daemonsets"]
     arguments.extend(("-n", namespace) if namespace else ("-A",))
     workloads_document = _get_json(*arguments, context=context)
@@ -202,7 +207,91 @@ def _parse_pod(item: dict[str, Any], now: datetime) -> PodInfo | None:
         total=len(containers),
         age=age,
         containers=containers,
+        restarts=sum(
+            container.get("restartCount") or 0 for container in container_statuses
+        ),
+        owner=_pod_owner(metadata),
     )
+
+
+def _pod_owner(metadata: dict[str, Any]) -> tuple[str, str] | None:
+    """The workload that controls a Pod; ReplicaSets map back to their Deployment."""
+    for reference in metadata.get("ownerReferences") or []:
+        kind, name = reference.get("kind"), reference.get("name")
+        if not kind or not name or not reference.get("controller", True):
+            continue
+        if kind == "ReplicaSet" and "-" in name:
+            return "Deployment", name.rsplit("-", 1)[0]
+        return kind, name
+    return None
+
+
+def _pod_metrics(
+    context: str, namespace: str | None
+) -> dict[tuple[str, str], tuple[float, float]] | None:
+    """Live (cores, bytes) per Pod; None when metrics-server is unavailable."""
+    scope = f"namespaces/{namespace}/" if namespace else ""
+    try:
+        document = json.loads(
+            _run_kubectl(
+                "get",
+                "--raw",
+                f"/apis/metrics.k8s.io/v1beta1/{scope}pods",
+                context=context,
+            )
+        )
+    except (KubectlError, ValueError):
+        return None
+    usage: dict[tuple[str, str], tuple[float, float]] = {}
+    for item in document.get("items", []):
+        metadata = item.get("metadata") or {}
+        cpu = memory = 0.0
+        for container in item.get("containers") or []:
+            container_usage = container.get("usage") or {}
+            cpu += parse_cpu(container_usage.get("cpu"))
+            memory += parse_memory(container_usage.get("memory"))
+        usage[(metadata.get("namespace") or "default", metadata.get("name", ""))] = (
+            cpu,
+            memory,
+        )
+    return usage
+
+
+def _pods_with_usage(context: str, namespace: str | None) -> list[PodInfo]:
+    arguments = ["get", "pods"]
+    arguments.extend(("-n", namespace) if namespace else ("-A",))
+    document = _get_json(*arguments, context=context)
+    now = datetime.now(UTC)
+    pods = [
+        pod
+        for item in document.get("items", [])
+        if (pod := _parse_pod(item, now)) is not None
+    ]
+    metrics = _pod_metrics(context, namespace)
+    if metrics is not None:
+        pods = [
+            replace(pod, cpu=cpu, memory=memory)
+            for pod in pods
+            for cpu, memory in [metrics.get((pod.namespace, pod.name), (None, None))]
+        ]
+    return pods
+
+
+def get_usage(
+    context: str, namespace: str | None = None
+) -> dict[tuple[str, str, str], tuple[int, float | None, float | None]]:
+    """Restarts, CPU and memory per (namespace, kind, name) workload, from its Pods."""
+    totals: dict[tuple[str, str, str], tuple[int, float | None, float | None]] = {}
+    for pod in _pods_with_usage(context, namespace):
+        if pod.owner is None:
+            continue
+        key = (pod.namespace, *pod.owner)
+        restarts, cpu, memory = totals.get(key, (0, None, None))
+        if pod.cpu is not None and pod.memory is not None:
+            cpu = (cpu or 0.0) + pod.cpu
+            memory = (memory or 0.0) + pod.memory
+        totals[key] = (restarts + pod.restarts, cpu, memory)
+    return totals
 
 
 def get_workload_pods(context: str, workload: Workload) -> list[PodInfo]:
@@ -226,6 +315,16 @@ def get_workload_pods(context: str, workload: Workload) -> list[PodInfo]:
         if (pod := _parse_pod(item, now)) is not None
     ]
     return sorted(pods, key=lambda pod: pod.name)
+
+
+def get_pods(
+    context: str,
+    namespace: str | None = None,
+) -> tuple[list[str], list[PodInfo]]:
+    namespaces = _get_namespaces(context)
+    pods = _pods_with_usage(context, namespace)
+    pods.sort(key=lambda pod: (pod.namespace, pod.name))
+    return namespaces, pods
 
 
 def get_pod_logs(

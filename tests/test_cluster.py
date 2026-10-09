@@ -1,3 +1,4 @@
+import json
 from datetime import UTC, datetime
 
 from kubescope import cluster
@@ -284,3 +285,46 @@ def test_get_cluster_overview_fails_when_nothing_is_readable(monkeypatch) -> Non
         assert "unreachable" in str(error)
     else:
         raise AssertionError("expected KubectlError")
+
+
+def test_get_pods_and_usage_include_metrics_restarts_and_owner(monkeypatch) -> None:
+    pod = {
+        "metadata": {
+            "name": "api-5f7d9c-abcde",
+            "namespace": "default",
+            "ownerReferences": [{"kind": "ReplicaSet", "name": "api-5f7d9c"}],
+        },
+        "spec": {"containers": [{"name": "app"}]},
+        "status": {
+            "phase": "Running",
+            "containerStatuses": [{"ready": True, "restartCount": 3}],
+        },
+    }
+    metrics = {
+        "items": [
+            {
+                "metadata": {"name": "api-5f7d9c-abcde", "namespace": "default"},
+                "containers": [{"usage": {"cpu": "250m", "memory": "128Mi"}}],
+            }
+        ]
+    }
+    monkeypatch.setattr(
+        cluster,
+        "_get_json",
+        lambda *a, context: {"items": [pod]} if "pods" in a else {"items": []},
+    )
+    monkeypatch.setattr(
+        cluster, "_run_kubectl", lambda *a, context: json.dumps(metrics)
+    )
+
+    _, pods = cluster.get_pods("dev")
+    assert (pods[0].restarts, pods[0].cpu, pods[0].memory) == (3, 0.25, 128 * 2**20)
+    assert pods[0].owner == ("Deployment", "api")
+    usage = cluster.get_usage("dev")
+    assert usage[("default", "Deployment", "api")] == (3, 0.25, 128 * 2**20)
+
+    def no_metrics(*_a, context):
+        raise cluster.KubectlError("no metrics")
+
+    monkeypatch.setattr(cluster, "_run_kubectl", no_metrics)
+    assert cluster.get_pods("dev")[1][0].cpu is None

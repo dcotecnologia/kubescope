@@ -71,4 +71,21 @@ def test_workload_sort_keys_rank_status_worst_first_and_ready_by_fraction() -> N
     assert order(2) == ["api", "db", "job", "web"]
     assert order(3) == ["db", "web", "job", "api"]  # 0/1, 1/4, 0/0, 3/3
     assert order(4) == ["db", "web", "job", "api"]  # Unavailable first
-    assert order(5) == ["job", "api", "web", "db"]  # youngest first
+    assert order(8) == ["job", "api", "web", "db"]  # youngest first
+
+
+def test_pod_highlight_flags_problems_over_young_pods() -> None:
+    from kubescope.models import PodInfo, pod_highlight
+
+    def pod(phase="Running", ready=1, restarts=0, age="2d") -> PodInfo:
+        return PodInfo("d", "p", phase, ready, 1, age, ("a",), restarts=restarts)
+
+    assert pod_highlight(pod()) is None
+    assert pod_highlight(pod(age="<1m")) == "young"
+    assert pod_highlight(pod(age="59m")) == "young"
+    assert pod_highlight(pod(age="1h")) is None
+    assert pod_highlight(pod(restarts=2)) == "problem"
+    assert pod_highlight(pod(phase="Failed", ready=0)) == "problem"
+    assert pod_highlight(pod(ready=0)) == "problem"
+    assert pod_highlight(pod(age="5m", restarts=1)) == "problem"  # problem wins
+    assert pod_highlight(pod(phase="Pending", ready=0, age="5m")) == "young"
