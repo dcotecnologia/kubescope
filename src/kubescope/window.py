@@ -33,7 +33,6 @@ from PySide6.QtGui import (
     QPolygonF,
 )
 from PySide6.QtWidgets import (
-    QApplication,
     QDialog,
     QHeaderView,
     QInputDialog,
@@ -364,7 +363,6 @@ class WorkloadWindow(QMainWindow):
             .replace("CLOSE_ICON", _close_icon_path("#6b7380", "close"))
         )
 
-        self._loading = 0
         self._spinner_angle = 0
         self._spinner_button: QPushButton | None = None
         self._spinner_saved: tuple[QIcon, str] | None = None
@@ -828,11 +826,11 @@ class WorkloadWindow(QMainWindow):
         page.noticeLabel.setText("  ·  ".join(notices))
 
     def _begin_loading(self, button: QPushButton | None, label: str) -> Callable:
-        """Show a busy cursor and button spinner; return a one-shot
-        finisher."""
-        self._loading += 1
-        if self._loading == 1:
-            QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
+        """Spin the button while work runs in the background; return a one-shot
+        finisher.
+
+        The cursor is left alone so the window never looks frozen.
+        """
         if button is not None and self._spinner_button is None:
             self._spinner_button = button
             self._spinner_saved = (button.icon(), button.text())
@@ -850,7 +848,6 @@ class WorkloadWindow(QMainWindow):
         return end
 
     def _end_loading(self, button: QPushButton | None) -> None:
-        self._loading = max(0, self._loading - 1)
         if button is not None and button is self._spinner_button:
             self._spinner_timer.stop()
             if self._spinner_saved is not None:
@@ -858,8 +855,6 @@ class WorkloadWindow(QMainWindow):
                 button.setText(self._spinner_saved[1])
             self._spinner_button = None
             self._spinner_saved = None
-        if self._loading == 0:
-            QApplication.restoreOverrideCursor()
 
     def _tick_spinner(self) -> None:
         if self._spinner_button is None:
@@ -1110,7 +1105,7 @@ class WorkloadWindow(QMainWindow):
             return
         worker = ActionWorker(operation, arguments)
         self._action_workers.append(worker)
-        if not quiet:  # background refreshes must not flash the busy cursor
+        if not quiet:  # background refreshes must not flash a spinner
             sender = self.sender()
             end_loading = self._begin_loading(
                 sender if isinstance(sender, QPushButton) else None,

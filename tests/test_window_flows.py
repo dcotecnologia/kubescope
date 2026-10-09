@@ -1,4 +1,5 @@
 import os
+import threading
 import time
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
@@ -158,7 +159,7 @@ def test_action_worker_returns_results_and_errors() -> None:
     assert failures == ["nope"]
 
 
-def test_loading_shows_a_busy_cursor_and_a_spinner_on_the_button(monkeypatch) -> None:
+def test_loading_spins_the_button_and_leaves_the_cursor_alone(monkeypatch) -> None:
     window = _ready_window(monkeypatch)
     window._tick_spinner()  # nothing to animate yet
     primary, secondary = window.refresh_button, window.details_button
@@ -167,7 +168,7 @@ def test_loading_shows_a_busy_cursor_and_a_spinner_on_the_button(monkeypatch) ->
     end = window._begin_loading(primary, "Wait")
     nested = window._begin_loading(secondary, "Other")
     window._begin_loading(None, "ignored")
-    assert QApplication.overrideCursor() is not None
+    assert QApplication.overrideCursor() is None  # never a busy cursor
     assert primary.text() == "Wait"
     assert secondary.text() != "Other"  # only one spinner at a time
 
@@ -178,7 +179,6 @@ def test_loading_shows_a_busy_cursor_and_a_spinner_on_the_button(monkeypatch) ->
     end()  # a second call changes nothing
     assert primary.text() == original
     nested()
-    window._end_loading(None)
     window._end_loading(None)
     assert QApplication.overrideCursor() is None
     window.close()
@@ -261,7 +261,7 @@ def test_actions_run_in_workers_and_report_back(monkeypatch) -> None:
     _wait_until(lambda: len(results) == 3 and not window._action_workers)
     assert results == ["ok", "quiet", "from button"]
     assert errors == ["denied"] and shown == ["denied"]
-    assert QApplication.overrideCursor() is None
+    assert QApplication.overrideCursor() is None  # no busy cursor while loading
     window.close()
 
 
@@ -726,4 +726,21 @@ def test_authentication_errors_trigger_a_login_check(monkeypatch) -> None:
     window._login_checking = False
     window._show_overview_error("the SSO session has expired")
     assert [name for name, *_rest in ran] == ["check_login", "check_login"]
+    window.close()
+
+
+def test_actions_never_run_on_the_main_thread(monkeypatch) -> None:
+    window = _ready_window(monkeypatch)
+    threads = []
+    results = []
+
+    def operation():
+        threads.append(threading.current_thread())
+        return "done"
+
+    window._run_action(operation, results.append)
+
+    assert QApplication.overrideCursor() is None
+    _wait_until(lambda: results and not window._action_workers)
+    assert threads[0] is not threading.main_thread()
     window.close()

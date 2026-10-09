@@ -314,7 +314,7 @@ def test_log_tab_refreshes_quietly_with_the_pods_context(monkeypatch) -> None:
     operation, ok, args, kwargs = calls[0]
     assert operation.__name__ == "get_pod_logs"
     assert args == ("prod", "default", "api-1", "app")
-    assert kwargs["quiet"] is True  # no busy cursor every few seconds
+    assert kwargs["quiet"] is True  # no spinner every few seconds
     assert tab.busy
     window._refresh_log(tab, force=True)  # one request in flight at a time
     assert len(calls) == 1

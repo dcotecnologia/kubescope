@@ -33,7 +33,8 @@ Keep the layers separate and the dependency direction one-way
     JSON, and returns models. No Qt imports.
 - `src/kubescope/window.py` and `src/kubescope/log_tab.py`
   - Qt widgets and wiring. Blocking cluster calls must run in a worker
-    (`RefreshWorker` / `ActionWorker`), never on the UI thread.
+    (`RefreshWorker` / `ActionWorker`), never on the UI thread. Show loading
+    with the button spinner and the status text, never the busy cursor.
 - `src/kubescope/settings.py`
   - User preferences stored as JSON; tolerant of missing or damaged files.
 - `src/kubescope/i18n.py` and `src/kubescope/translations/`
