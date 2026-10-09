@@ -1,0 +1,19 @@
+{
+    "base": "dark",
+    "colors": {
+        "accent": "#7aa2f7",
+        "accent_hover": "#4a6bbd",
+        "accent_soft": "#1a2540",
+        "accent_strong": "#3d59a1",
+        "badge_text": "#9db8f9",
+        "border": "#222c38",
+        "focus": "#7aa2f7",
+        "page": "#0b0f14",
+        "surface": "#10161d",
+        "surface_alt": "#161d26",
+        "topbar": "#000000",
+        "topbar_brand": "#080b10",
+        "topbar_field": "#0d1218"
+    },
+    "name": "Midnight"
+}

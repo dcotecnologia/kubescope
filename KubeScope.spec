@@ -47,6 +47,10 @@ analysis = Analysis(
         *qt_plugins,
         (str(root / "src" / "kubescope" / "assets" / "icon.png"), "kubescope/assets"),
         *(
+            (str(path), "kubescope/community_themes")
+            for path in (root / "src" / "kubescope" / "community_themes").glob("*.json")
+        ),
+        *(
             (str(path), "kubescope/translations")
             for path in (root / "src" / "kubescope" / "translations").glob("*.qm")
         ),

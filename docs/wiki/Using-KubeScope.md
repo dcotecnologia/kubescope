@@ -58,5 +58,32 @@ checkbox, or refresh by hand. Close a tab with its **x**.
 
 ## Settings
 
-Language (automatic, English or Portuguese), remembering the last context, and
-display names for contexts.
+Language (automatic, English or Portuguese), the theme, remembering the last
+context, display names for contexts, and the debug log.
+
+### Themes
+
+Choose **Light**, **Dark**, or a theme of your own. **New theme...** opens an editor
+that starts from the selected theme: name it, click a color to change it, and save.
+**Edit theme...** changes one of yours (the built-in ones are fixed; copy one with
+**New theme...** instead). A theme is a JSON file in the `themes` folder next to
+`settings.json`; **Open the themes folder** takes you there. The page scrolls when
+the window is small.
+
+```json
+{
+  "name": "Midnight",
+  "base": "dark",
+  "colors": { "page": "#0b0f14", "accent": "#7aa2f7", "topbar": "#000000" }
+}
+```
+
+A theme starts from its `base` (`light` or `dark`) and lists only the colors it
+changes. The names are the ones the editor shows, such as `page`, `surface`, `text`,
+`accent`, `topbar`, `good` and `bad`. A file that is damaged or names an unknown
+color is skipped, and the debug log says why.
+
+KubeScope also ships a few **community themes** (Midnight, High contrast, Sepia). The
+first time it starts with one, it copies the file into your `themes` folder, where you
+can edit or delete it: edits are kept and a deleted theme does not come back. To share
+a theme, see the README in `src/kubescope/community_themes/` in the repository.

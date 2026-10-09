@@ -1,9 +1,11 @@
+import json
 import os
 import re
 from pathlib import Path
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
+import pytest
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor, QPalette
 from PySide6.QtWidgets import QApplication, QLabel, QPushButton
@@ -140,3 +142,313 @@ def test_a_theme_always_runs_on_the_fusion_style() -> None:
     assert application.style().objectName().lower() == "fusion"
     apply_theme(application, "light")
     assert application.style().objectName().lower() == "fusion"
+
+
+@pytest.fixture
+def themes_dir(tmp_path):
+    folder = tmp_path / "config" / "themes"
+    folder.mkdir(parents=True)
+    return folder
+
+
+def _write(folder, name: str, document) -> None:
+    text = document if isinstance(document, str) else json.dumps(document)
+    (folder / name).write_text(text, encoding="utf-8")
+
+
+def test_a_custom_theme_starts_from_its_base_and_changes_only_what_it_lists() -> None:
+    custom = theme.parse_theme(
+        "ocean", {"name": "Ocean", "base": "dark", "colors": {"page": "#001122"}}
+    )
+
+    assert custom.base == "dark" and custom.name == "Ocean" and not custom.builtin
+    assert custom.colors["#f7f7fa"] == "#001122"  # the role it changed
+    assert custom.colors["#20232a"] == theme._DARK["#20232a"]  # inherited from dark
+
+    light_based = theme.parse_theme("plain", {"name": "Plain"})
+    assert light_based.base == "light" and light_based.colors == {}
+
+
+def test_a_role_recolors_every_light_color_it_covers() -> None:
+    custom = theme.parse_theme("x", {"name": "X", "colors": {"border": "#ABCDEF"}})
+
+    assert {custom.colors[color] for color in theme.ROLES["border"]} == {"#abcdef"}
+
+
+def test_on_accent_sets_the_color_of_text_that_is_white_in_the_light_theme() -> None:
+    custom = theme.parse_theme("x", {"name": "X", "colors": {"on_accent": "#EEEEEE"}})
+    set_theme("light")
+    theme._active = custom
+
+    assert themed("#ffffff", text=True) == "#eeeeee"
+    assert themed("#ffffff") == "#ffffff"  # as a background it is untouched
+    assert "color: #eeeeee" in themed_stylesheet("QLabel { color: #ffffff; }")
+    assert "background: #ffffff" in themed_stylesheet("QLabel { background: #ffffff; }")
+
+
+@pytest.mark.parametrize(
+    "document",
+    [
+        [],
+        {"base": "light"},
+        {"name": 3},
+        {"name": "X", "base": "neon"},
+        {"name": "X", "colors": []},
+        {"name": "X", "colors": {"nonsense": "#112233"}},
+        {"name": "X", "colors": {"page": "red"}},
+        {"name": "X", "colors": {"page": 12}},
+    ],
+)
+def test_malformed_themes_are_rejected(document) -> None:
+    with pytest.raises(ValueError):
+        theme.parse_theme("x", document)
+
+
+def test_custom_themes_are_loaded_from_the_themes_folder(themes_dir, caplog) -> None:
+    _write(themes_dir, "ocean.json", {"name": "Ocean", "colors": {"page": "#001122"}})
+    _write(themes_dir, "broken.json", "{not json")
+    _write(themes_dir, "wrong.json", {"name": "Wrong", "base": "neon"})
+    _write(themes_dir, "notes.txt", "ignored")
+    _write(themes_dir, "dark.json", {"name": "Fake dark"})  # cannot replace a built-in
+
+    with caplog.at_level("WARNING"):
+        themes = theme.load_custom_themes()
+        listed = theme.available_themes()
+
+    assert set(themes) == {"ocean", "dark"}
+    assert [t.id for t in listed] == ["light", "dark", "ocean"]
+    assert "Skipping theme broken.json" in caplog.text
+    assert "Skipping theme wrong.json" in caplog.text
+
+
+def test_no_themes_folder_means_only_the_built_in_themes() -> None:
+    assert theme.load_custom_themes() == {}
+    assert [t.id for t in theme.available_themes()] == ["light", "dark"]
+
+
+def test_a_custom_theme_can_be_made_active_and_a_missing_one_falls_back(
+    themes_dir,
+) -> None:
+    _write(themes_dir, "ocean.json", {"name": "Ocean", "colors": {"page": "#001122"}})
+
+    set_theme("ocean")
+    assert active_theme() == "ocean" and themed("#f7f7fa") == "#001122"
+
+    (themes_dir / "ocean.json").unlink()
+    set_theme("ocean")  # the file is gone
+    assert active_theme() == "light" and themed("#f7f7fa") == "#f7f7fa"
+
+    set_theme("dark")
+    assert active_theme() == "dark"
+
+
+def test_theme_tokens_show_the_color_of_every_role() -> None:
+    light = theme.theme_tokens(theme.LIGHT_THEME)
+    dark = theme.theme_tokens(theme.DARK_THEME)
+
+    assert set(light) == set(theme.TOKENS) == set(dark)
+    assert light["page"] == "#f7f7fa" and dark["page"] == "#11141a"
+    assert light["on_accent"] == dark["on_accent"] == "#ffffff"
+    assert dark["bar_warning"] == "#e0a030"  # the same orange in both
+
+
+def test_saving_a_theme_stores_only_what_differs_and_never_overwrites(
+    themes_dir,
+) -> None:
+    tokens = theme.theme_tokens(theme.LIGHT_THEME)
+    tokens["page"] = "#001122"
+
+    saved = theme.save_custom_theme("Ocean Blue!", "light", tokens)
+
+    assert saved.id == "ocean-blue" and saved.colors["#f7f7fa"] == "#001122"
+    document = json.loads((themes_dir / "ocean-blue.json").read_text(encoding="utf-8"))
+    assert document == {
+        "name": "Ocean Blue!",
+        "base": "light",
+        "colors": {"page": "#001122"},
+    }
+
+    again = theme.save_custom_theme("Ocean Blue!", "light", tokens)
+    assert again.id == "ocean-blue-2"  # a second theme with the same name
+    assert (
+        theme.save_custom_theme("Dark", "dark", theme.theme_tokens(theme.DARK_THEME)).id
+        == "dark-2"
+    )
+    assert theme.save_custom_theme("???", "light", tokens).id == "theme"  # no letters
+
+    tokens["page"] = "#334455"
+    edited = theme.save_custom_theme(
+        "Ocean Blue (edited)", "light", tokens, "ocean-blue"
+    )
+    assert edited.id == "ocean-blue" and edited.name == "Ocean Blue (edited)"
+    assert theme.load_custom_themes()["ocean-blue"].colors["#f7f7fa"] == "#334455"
+
+
+def test_applying_a_custom_theme_colors_the_palette(themes_dir) -> None:
+    _write(themes_dir, "ocean.json", {"name": "Ocean", "colors": {"page": "#001122"}})
+
+    apply_theme(application, "ocean")
+
+    assert application.palette().color(QPalette.ColorRole.Window).name() == "#001122"
+    apply_theme(application, "light")
+
+
+@pytest.fixture
+def community(tmp_path):
+    folder = tmp_path / "community"
+    folder.mkdir()
+    return folder
+
+
+def test_community_themes_are_copied_to_the_themes_folder(
+    community, themes_dir
+) -> None:
+    _write(community, "ocean.json", {"name": "Ocean", "colors": {"page": "#001122"}})
+    _write(community, "reef.json", {"name": "Reef", "base": "dark"})
+    _write(community, "notes.txt", "ignored")
+
+    added = theme.install_community_themes(community)
+
+    assert added == ["ocean", "reef"]
+    assert (themes_dir / "ocean.json").read_text(encoding="utf-8") == (
+        community / "ocean.json"
+    ).read_text(encoding="utf-8")
+    assert not (themes_dir / "notes.txt").exists()
+    assert [t.id for t in theme.available_themes()] == [
+        "light",
+        "dark",
+        "ocean",
+        "reef",
+    ]
+    assert theme.install_community_themes(community) == []  # nothing new the 2nd time
+
+
+def test_installed_themes_are_not_overwritten_or_brought_back(
+    community, themes_dir
+) -> None:
+    _write(community, "ocean.json", {"name": "Ocean", "colors": {"page": "#001122"}})
+    theme.install_community_themes(community)
+
+    _write(
+        themes_dir, "ocean.json", {"name": "My ocean", "colors": {"page": "#999999"}}
+    )
+    _write(community, "ocean.json", {"name": "Ocean v2", "colors": {"page": "#000011"}})
+    theme.install_community_themes(community)
+    assert (
+        json.loads((themes_dir / "ocean.json").read_text(encoding="utf-8"))["name"]
+        == "My ocean"
+    )
+
+    (themes_dir / "ocean.json").unlink()  # the person deleted it
+    assert theme.install_community_themes(community) == []
+    assert not (themes_dir / "ocean.json").exists()
+
+
+def test_a_file_of_the_same_name_is_the_persons_own(community, themes_dir) -> None:
+    _write(themes_dir, "ocean.json", {"name": "Mine"})
+    _write(community, "ocean.json", {"name": "Ocean"})
+
+    assert theme.install_community_themes(community) == [
+        "ocean"
+    ]  # recorded, not copied
+
+    assert (
+        json.loads((themes_dir / "ocean.json").read_text(encoding="utf-8"))["name"]
+        == "Mine"
+    )
+
+
+def test_unusable_community_themes_are_skipped(community, themes_dir, caplog) -> None:
+    _write(community, "broken.json", "{not json")
+    _write(community, "wrong.json", {"name": "Wrong", "base": "neon"})
+    _write(community, "dark.json", {"name": "Fake dark"})
+    _write(community, "fine.json", {"name": "Fine"})
+
+    with caplog.at_level("WARNING"):
+        added = theme.install_community_themes(community)
+
+    assert added == ["fine"]
+    assert "Skipping community theme broken.json" in caplog.text
+    assert "Skipping community theme wrong.json" in caplog.text
+    assert "hide a built-in theme" in caplog.text
+
+
+def test_a_missing_community_folder_or_unwritable_config_is_harmless(
+    community, tmp_path, monkeypatch, caplog
+) -> None:
+    assert theme.install_community_themes(tmp_path / "nothing") == []
+
+    _write(community, "ocean.json", {"name": "Ocean"})
+    blocker = tmp_path / "blocker"
+    blocker.write_text("a file where a folder is needed")
+    monkeypatch.setattr(theme, "themes_directory", lambda: blocker / "themes")
+    with caplog.at_level("WARNING"):
+        assert theme.install_community_themes(community) == []
+    assert "Skipping community theme ocean.json" in caplog.text
+
+
+def test_failing_to_record_the_installed_themes_only_warns(
+    community, themes_dir, tmp_path, monkeypatch, caplog
+) -> None:
+    _write(community, "ocean.json", {"name": "Ocean"})
+    monkeypatch.setattr(theme, "INSTALLED_FILE", "missing-folder/installed.json")
+
+    with caplog.at_level("WARNING"):
+        assert theme.install_community_themes(community) == ["ocean"]
+
+    assert "Could not record the installed themes" in caplog.text
+
+
+def test_a_damaged_record_of_installed_themes_is_ignored(
+    community, themes_dir, tmp_path
+) -> None:
+    _write(community, "ocean.json", {"name": "Ocean"})
+    record = tmp_path / "config" / theme.INSTALLED_FILE
+    record.write_text('{"not": "a list"}', encoding="utf-8")
+    assert theme.install_community_themes(community) == ["ocean"]
+
+    record.write_text('["ocean", 3, null]', encoding="utf-8")
+    (themes_dir / "ocean.json").unlink()
+    assert theme.install_community_themes(community) == []  # still recorded
+
+
+def test_every_community_theme_that_ships_is_valid() -> None:
+    files = sorted(theme.COMMUNITY_DIRECTORY.glob("*.json"))
+
+    assert {f.stem for f in files} >= {"midnight", "high-contrast", "sepia"}
+    for path in files:
+        assert path.stem == theme.slugify(path.stem), "use a lowercase-with-dashes name"
+        assert path.stem not in theme.BUILTIN
+        parsed = theme.parse_theme(
+            path.stem, json.loads(path.read_text(encoding="utf-8"))
+        )
+        assert parsed.name
+
+
+def test_community_themes_keep_their_text_readable() -> None:
+    def contrast(a: str, b: str) -> float:
+        def luminance(color: str) -> float:
+            def channel(value: float) -> float:
+                value /= 255
+                return (
+                    value / 12.92
+                    if value <= 0.03928
+                    else ((value + 0.055) / 1.055) ** 2.4
+                )
+
+            c = QColor(color)
+            return (
+                0.2126 * channel(c.red())
+                + 0.7152 * channel(c.green())
+                + 0.0722 * channel(c.blue())
+            )
+
+        high, low = sorted((luminance(a), luminance(b)), reverse=True)
+        return (high + 0.05) / (low + 0.05)
+
+    for path in theme.COMMUNITY_DIRECTORY.glob("*.json"):
+        tokens = theme.theme_tokens(
+            theme.parse_theme(path.stem, json.loads(path.read_text(encoding="utf-8")))
+        )
+        assert contrast(tokens["text"], tokens["page"]) >= 4.5, path.name
+        assert contrast(tokens["text"], tokens["surface"]) >= 4.5, path.name

@@ -85,7 +85,18 @@ from kubescope.models import (
     workload_sort_key,
 )
 from kubescope.settings import Settings, log_directory
-from kubescope.theme import active_theme, apply_theme, themed, themed_stylesheet
+from kubescope.theme import (
+    Theme,
+    active_theme,
+    apply_theme,
+    available_themes,
+    save_custom_theme,
+    theme_tokens,
+    themed,
+    themed_stylesheet,
+    themes_directory,
+)
+from kubescope.theme_editor import ThemeEditor
 from kubescope.ui.ui_main_window import Ui_MainWindow
 from kubescope.ui.ui_overview_page import Ui_OverviewPage
 from kubescope.ui.ui_pods_dialog import Ui_PodsDialog
@@ -337,6 +348,12 @@ class WorkloadWindow(QMainWindow):
         self.settings_ui.contextsTable.setRowCount(0)
         self.settings_ui.saveButton.clicked.connect(self._save_preferences)
         self.settings_ui.openLogsButton.clicked.connect(self._open_log_folder)
+        self.settings_ui.newThemeButton.clicked.connect(self._new_theme)
+        self.settings_ui.editThemeButton.clicked.connect(self._edit_theme)
+        self.settings_ui.openThemesButton.clicked.connect(self._open_themes_folder)
+        self.settings_ui.themeCombo.currentIndexChanged.connect(
+            self._update_theme_buttons
+        )
         self._overview_context: str | None = None
         self._overview_busy = False
 
@@ -1715,12 +1732,7 @@ class WorkloadWindow(QMainWindow):
         form.languageCombo.setCurrentIndex(
             max(form.languageCombo.findData(self.settings.language), 0)
         )
-        form.themeCombo.clear()
-        for code, label in (("light", self.tr("Light")), ("dark", self.tr("Dark"))):
-            form.themeCombo.addItem(label, code)
-        form.themeCombo.setCurrentIndex(
-            max(form.themeCombo.findData(self.settings.theme), 0)
-        )
+        self._fill_theme_combo(self.settings.theme)
         form.rememberCheck.setChecked(self.settings.remember_last_context)
         form.debugCheck.setChecked(self.settings.debug_logging)
         form.debugHint.setText(
@@ -1757,6 +1769,59 @@ class WorkloadWindow(QMainWindow):
         else:
             form.contextsHint.setText(self.tr("No contexts were found in kubeconfig."))
         form.noticeLabel.setText("")
+
+    def _fill_theme_combo(self, selected: str) -> None:
+        """List the built-in and custom themes, choosing `selected`."""
+        combo = self.settings_ui.themeCombo
+        combo.blockSignals(True)
+        combo.clear()
+        names = {"light": self.tr("Light"), "dark": self.tr("Dark")}
+        for theme in available_themes():
+            combo.addItem(names.get(theme.id, theme.name), theme.id)
+        combo.setCurrentIndex(max(combo.findData(selected), 0))
+        combo.blockSignals(False)
+        self._update_theme_buttons()
+
+    def _selected_theme(self) -> Theme:
+        theme_id = self.settings_ui.themeCombo.currentData()
+        return next(t for t in available_themes() if t.id == theme_id)
+
+    def _update_theme_buttons(self) -> None:
+        # the built-in themes are fixed; copy one with New theme to change it
+        self.settings_ui.editThemeButton.setEnabled(not self._selected_theme().builtin)
+
+    def _edit_theme_dialog(self, theme: Theme, *, new: bool) -> Theme | None:
+        editor = ThemeEditor(
+            self,
+            name=self.tr("My theme") if new else theme.name,
+            base=theme.base,
+            tokens=theme_tokens(theme),
+            new=new,
+        )
+        if editor.exec() != QDialog.DialogCode.Accepted:
+            return None
+        name, base, tokens = editor.values()
+        return save_custom_theme(name, base, tokens, None if new else theme.id)
+
+    def _new_theme(self) -> None:
+        """Start a new theme from the selected one."""
+        saved = self._edit_theme_dialog(self._selected_theme(), new=True)
+        if saved is not None:
+            logger.info("Created theme %s", saved.id)
+            self._fill_theme_combo(saved.id)
+
+    def _edit_theme(self) -> None:
+        theme = self._selected_theme()
+        saved = self._edit_theme_dialog(theme, new=False)
+        if saved is not None:
+            logger.info("Edited theme %s", saved.id)
+            self._fill_theme_combo(saved.id)
+            if self.settings.theme == saved.id:
+                self._apply_theme()  # the theme in use changed: show it now
+
+    def _open_themes_folder(self) -> None:
+        themes_directory().mkdir(parents=True, exist_ok=True)
+        QDesktopServices.openUrl(QUrl.fromLocalFile(str(themes_directory())))
 
     def _open_log_folder(self) -> None:
         directory = log_directory()

@@ -1,0 +1,23 @@
+{
+    "base": "dark",
+    "colors": {
+        "accent": "#ffd54a",
+        "accent_hover": "#ffe27d",
+        "accent_strong": "#ffd54a",
+        "bad": "#ff6b6b",
+        "border": "#6b6b6b",
+        "focus": "#ffd54a",
+        "good": "#4cff9a",
+        "muted": "#d0d0d0",
+        "on_accent": "#000000",
+        "page": "#000000",
+        "subtle": "#a8a8a8",
+        "surface": "#0a0a0a",
+        "surface_alt": "#141414",
+        "text": "#ffffff",
+        "topbar": "#000000",
+        "topbar_text": "#ffffff",
+        "warning": "#ffb84a"
+    },
+    "name": "High contrast"
+}

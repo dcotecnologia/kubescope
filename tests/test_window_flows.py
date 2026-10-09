@@ -1255,3 +1255,118 @@ def test_the_window_starts_in_the_saved_theme(monkeypatch, tmp_path) -> None:
     assert "#11141a" in window.styleSheet()
     window.close()
     apply_theme(QApplication.instance(), "light")
+
+
+def _accept_editor(monkeypatch, *, name=None, page=None, result=None):
+    """Answer the theme editor as a person would, without showing it."""
+    from kubescope.theme_editor import ThemeEditor
+
+    seen = []
+
+    def fake_exec(dialog) -> int:
+        seen.append(dialog)
+        if isinstance(dialog, ThemeEditor):
+            if name is not None:
+                dialog.name_edit.setText(name)
+            if page is not None:
+                dialog._tokens["page"] = page
+        return QDialog.DialogCode.Accepted if result is None else result
+
+    monkeypatch.setattr(QDialog, "exec", fake_exec)
+    return seen
+
+
+def test_a_new_theme_is_made_in_the_editor_and_then_chosen(monkeypatch) -> None:
+    window = _ready_window(monkeypatch)
+    page = window.settings_ui
+    window._load_settings_form()
+    assert [page.themeCombo.itemData(i) for i in range(page.themeCombo.count())] == [
+        "light",
+        "dark",
+    ]
+    assert not page.editThemeButton.isEnabled()  # built-in themes are fixed
+    seen = _accept_editor(monkeypatch, name="Ocean", page="#001122")
+
+    page.newThemeButton.click()
+
+    assert seen[0].values()[0] == "Ocean"
+    assert page.themeCombo.currentData() == "ocean"
+    assert page.themeCombo.currentText() == "Ocean"
+    assert page.editThemeButton.isEnabled()
+    assert window.settings.theme == "light"  # chosen, but not applied until saved
+
+    page.saveButton.click()
+    assert window.settings.theme == "ocean"
+    assert "#001122" in window.styleSheet()
+    window.close()
+
+
+def test_cancelling_the_editor_creates_nothing(monkeypatch) -> None:
+    window = _ready_window(monkeypatch)
+    window._load_settings_form()
+    _accept_editor(monkeypatch, name="Nope", result=QDialog.DialogCode.Rejected)
+
+    window.settings_ui.newThemeButton.click()
+    window.settings_ui.editThemeButton.setEnabled(True)
+    window._edit_theme()  # also cancelled: the built-in Light is not changed
+
+    assert window.settings_ui.themeCombo.count() == 2
+    assert not list(window_module.themes_directory().glob("*.json"))
+    window.close()
+
+
+def test_editing_the_theme_in_use_restyles_the_window_at_once(monkeypatch) -> None:
+    window = _ready_window(monkeypatch)
+    window._load_settings_form()
+    _accept_editor(monkeypatch, name="Ocean", page="#001122")
+    window.settings_ui.newThemeButton.click()
+    window.settings_ui.saveButton.click()
+    assert "#001122" in window.styleSheet()
+
+    _accept_editor(monkeypatch, page="#334455")
+    window._edit_theme()
+
+    assert "#334455" in window.styleSheet() and "#001122" not in window.styleSheet()
+    assert window.settings_ui.themeCombo.currentData() == "ocean"
+
+    # editing one that is not in use leaves the look alone
+    window.settings_ui.themeCombo.setCurrentIndex(0)
+    window.settings.theme = "light"
+    window._apply_theme()
+    _accept_editor(monkeypatch, name="Other", page="#778899")
+    window.settings_ui.newThemeButton.click()
+    window.settings_ui.themeCombo.setCurrentIndex(
+        window.settings_ui.themeCombo.findData("ocean")
+    )
+    _accept_editor(monkeypatch, page="#556677")
+    window._edit_theme()
+    assert "#556677" not in window.styleSheet()
+    window.close()
+
+
+def test_a_theme_that_was_deleted_falls_back_to_light(monkeypatch) -> None:
+    window = _ready_window(monkeypatch)
+    window.settings.theme = "gone"
+
+    window._load_settings_form()
+
+    assert window.settings_ui.themeCombo.currentData() == "light"
+    window._apply_theme()
+    assert "#f7f7fa" in window.styleSheet()
+    window.close()
+
+
+def test_the_themes_folder_opens_in_the_file_manager(monkeypatch) -> None:
+    window = _ready_window(monkeypatch)
+    opened = []
+    monkeypatch.setattr(
+        window_module.QDesktopServices,
+        "openUrl",
+        staticmethod(lambda url: opened.append(url.toLocalFile())),
+    )
+
+    window.settings_ui.openThemesButton.click()
+
+    folder = window_module.themes_directory()
+    assert opened == [str(folder)] and folder.is_dir()
+    window.close()

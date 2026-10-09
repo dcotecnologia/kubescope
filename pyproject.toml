@@ -32,7 +32,12 @@ kubescope = "kubescope.app:main"
 where = ["src"]
 
 [tool.setuptools.package-data]
-kubescope = ["translations/*.qm", "assets/*.png", "assets/*.ico"]
+kubescope = [
+    "translations/*.qm",
+    "assets/*.png",
+    "assets/*.ico",
+    "community_themes/*.json",
+]
 
 [tool.pytest.ini_options]
 log_cli = false

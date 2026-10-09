@@ -56,205 +56,313 @@
     <number>22</number>
    </property>
    <item>
-    <widget class="QLabel" name="generalHeading">
-     <property name="text">
-      <string>GENERAL</string>
+    <widget class="QScrollArea" name="settingsScroll">
+     <property name="frameShape">
+      <enum>QFrame::NoFrame</enum>
      </property>
-     <property name="variant" stdset="0">
-      <string notr="true">cardTitle</string>
-     </property>
-    </widget>
-   </item>
-   <item>
-    <layout class="QFormLayout" name="generalForm">
-     <property name="horizontalSpacing">
-      <number>16</number>
-     </property>
-     <property name="verticalSpacing">
-      <number>10</number>
-     </property>
-     <item row="0" column="0">
-      <widget class="QLabel" name="languageLabel">
-       <property name="text">
-        <string>Language</string>
-       </property>
-      </widget>
-     </item>
-     <item row="0" column="1">
-      <widget class="QComboBox" name="languageCombo">
-       <property name="minimumSize">
-        <size>
-         <width>200</width>
-         <height>0</height>
-        </size>
-       </property>
-       <item>
-        <property name="text">
-         <string notr="true">Automatic</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string notr="true">English</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string notr="true">Português</string>
-        </property>
-       </item>
-       <property name="variant" stdset="0">
-        <string notr="true">filter</string>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="0">
-      <widget class="QLabel" name="themeLabel">
-       <property name="text">
-        <string>Theme</string>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="1">
-      <widget class="QComboBox" name="themeCombo">
-       <property name="minimumSize">
-        <size>
-         <width>200</width>
-         <height>0</height>
-        </size>
-       </property>
-       <item>
-        <property name="text">
-         <string notr="true">Light</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string notr="true">Dark</string>
-        </property>
-       </item>
-       <property name="variant" stdset="0">
-        <string notr="true">filter</string>
-       </property>
-      </widget>
-     </item>
-     <item row="2" column="0" colspan="2">
-      <widget class="QCheckBox" name="rememberCheck">
-       <property name="text">
-        <string>Remember the last used context</string>
-       </property>
-       <property name="checked">
-        <bool>true</bool>
-       </property>
-      </widget>
-     </item>
-     <item row="3" column="0" colspan="2">
-      <widget class="QCheckBox" name="debugCheck">
-       <property name="text">
-        <string>Debug mode: write a log file I can share</string>
-       </property>
-      </widget>
-     </item>
-     <item row="4" column="0" colspan="2">
-      <widget class="QLabel" name="debugHint">
-       <property name="text">
-        <string notr="true" />
-       </property>
-       <property name="wordWrap">
-        <bool>true</bool>
-       </property>
-       <property name="textInteractionFlags">
-        <set>Qt::TextInteractionFlag::TextSelectableByMouse</set>
-       </property>
-       <property name="variant" stdset="0">
-        <string notr="true">muted</string>
-       </property>
-      </widget>
-     </item>
-     <item row="5" column="0" colspan="2">
-      <widget class="QPushButton" name="openLogsButton">
-       <property name="text">
-        <string>Open the log folder</string>
-       </property>
-      </widget>
-     </item>
-    </layout>
-   </item>
-   <item>
-    <widget class="QLabel" name="contextsHeading">
-     <property name="text">
-      <string>CONTEXT NAMES</string>
-     </property>
-     <property name="variant" stdset="0">
-      <string notr="true">cardTitle</string>
-     </property>
-    </widget>
-   </item>
-   <item>
-    <widget class="QLabel" name="contextsHint">
-     <property name="text">
-      <string>Give your contexts friendlier names. Leave a name empty to keep the original one.</string>
-     </property>
-     <property name="wordWrap">
+     <property name="widgetResizable">
       <bool>true</bool>
      </property>
-     <property name="variant" stdset="0">
-      <string notr="true">muted</string>
-     </property>
-    </widget>
-   </item>
-   <item>
-    <widget class="QTableWidget" name="contextsTable">
-     <property name="selectionMode">
-      <enum>QAbstractItemView::SingleSelection</enum>
-     </property>
-     <property name="selectionBehavior">
-      <enum>QAbstractItemView::SelectRows</enum>
-     </property>
-     <attribute name="verticalHeaderVisible">
-      <bool>false</bool>
-     </attribute>
-     <attribute name="verticalHeaderDefaultSectionSize">
-      <number>40</number>
-     </attribute>
-     <attribute name="horizontalHeaderStretchLastSection">
-      <bool>true</bool>
-     </attribute>
-     <column>
-      <property name="text">
-       <string>CONTEXT</string>
-      </property>
-     </column>
-     <column>
-      <property name="text">
-       <string>DISPLAY NAME</string>
-      </property>
-     </column>
-     <row />
-     <item row="0" column="0">
-      <property name="text">
-       <string notr="true">prod-eks</string>
-      </property>
-     </item>
-     <item row="0" column="1">
-      <property name="text">
-       <string notr="true">Production</string>
-      </property>
-     </item>
-     <row />
-     <item row="1" column="0">
-      <property name="text">
-       <string notr="true">staging-eks</string>
-      </property>
-     </item>
-     <item row="1" column="1">
-      <property name="text">
-       <string notr="true">Staging</string>
-      </property>
-     </item>
-     <property name="variant" stdset="0">
-      <string notr="true">data</string>
-     </property>
+     <widget class="QWidget" name="settingsContent">
+      <layout class="QVBoxLayout" name="settingsContentLayout">
+       <property name="spacing">
+        <number>12</number>
+       </property>
+       <property name="leftMargin">
+        <number>0</number>
+       </property>
+       <property name="topMargin">
+        <number>0</number>
+       </property>
+       <property name="rightMargin">
+        <number>16</number>
+       </property>
+       <property name="bottomMargin">
+        <number>8</number>
+       </property>
+         <item>
+          <widget class="QLabel" name="generalHeading">
+           <property name="text">
+            <string>GENERAL</string>
+           </property>
+           <property name="variant" stdset="0">
+            <string notr="true">cardTitle</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <layout class="QFormLayout" name="generalForm">
+         <property name="labelAlignment">
+          <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+         </property>
+           <property name="horizontalSpacing">
+            <number>16</number>
+           </property>
+           <property name="verticalSpacing">
+            <number>10</number>
+           </property>
+           <item row="0" column="0">
+            <widget class="QLabel" name="languageLabel">
+             <property name="text">
+              <string>Language</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <widget class="QComboBox" name="languageCombo">
+             <property name="minimumSize">
+              <size>
+               <width>200</width>
+               <height>0</height>
+              </size>
+             </property>
+             <item>
+              <property name="text">
+               <string notr="true">Automatic</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string notr="true">English</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string notr="true">Português</string>
+              </property>
+             </item>
+             <property name="variant" stdset="0">
+              <string notr="true">filter</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0">
+            <widget class="QLabel" name="themeLabel">
+             <property name="text">
+              <string>Theme</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="1">
+            <widget class="QComboBox" name="themeCombo">
+             <property name="minimumSize">
+              <size>
+               <width>200</width>
+               <height>0</height>
+              </size>
+             </property>
+             <item>
+              <property name="text">
+               <string notr="true">Light</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string notr="true">Dark</string>
+              </property>
+             </item>
+             <property name="variant" stdset="0">
+              <string notr="true">filter</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="0" colspan="2">
+            <layout class="QHBoxLayout" name="themeButtonsRow">
+             <property name="spacing">
+              <number>8</number>
+             </property>
+             <item>
+              <widget class="QPushButton" name="newThemeButton">
+               <property name="text">
+                <string>New theme...</string>
+               </property>
+           <property name="variant" stdset="0">
+            <string notr="true">secondary</string>
+           </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="editThemeButton">
+               <property name="text">
+                <string>Edit theme...</string>
+               </property>
+           <property name="variant" stdset="0">
+            <string notr="true">secondary</string>
+           </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="openThemesButton">
+               <property name="text">
+                <string>Open the themes folder</string>
+               </property>
+           <property name="variant" stdset="0">
+            <string notr="true">secondary</string>
+           </property>
+              </widget>
+             </item>
+             <item>
+              <spacer name="themeButtonsSpacer">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>40</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+            </layout>
+           </item>
+           <item row="3" column="0" colspan="2">
+            <widget class="QCheckBox" name="rememberCheck">
+             <property name="text">
+              <string>Remember the last used context</string>
+             </property>
+             <property name="checked">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="4" column="0" colspan="2">
+            <widget class="QCheckBox" name="debugCheck">
+             <property name="text">
+              <string>Debug mode: write a log file I can share</string>
+             </property>
+            </widget>
+           </item>
+           <item row="5" column="0" colspan="2">
+            <widget class="QLabel" name="debugHint">
+             <property name="text">
+              <string notr="true" />
+             </property>
+             <property name="wordWrap">
+              <bool>true</bool>
+             </property>
+             <property name="textInteractionFlags">
+              <set>Qt::TextInteractionFlag::TextSelectableByMouse</set>
+             </property>
+             <property name="variant" stdset="0">
+              <string notr="true">muted</string>
+             </property>
+            </widget>
+           </item>
+           <item row="6" column="0" colspan="2">
+            <layout class="QHBoxLayout" name="logButtonsRow">
+             <item>
+              <widget class="QPushButton" name="openLogsButton">
+               <property name="text">
+                <string>Open the log folder</string>
+               </property>
+               <property name="variant" stdset="0">
+                <string notr="true">secondary</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <spacer name="logButtonsSpacer">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>40</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+            </layout>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <widget class="QLabel" name="contextsHeading">
+           <property name="text">
+            <string>CONTEXT NAMES</string>
+           </property>
+           <property name="variant" stdset="0">
+            <string notr="true">cardTitle</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="contextsHint">
+           <property name="text">
+            <string>Give your contexts friendlier names. Leave a name empty to keep the original one.</string>
+           </property>
+           <property name="wordWrap">
+            <bool>true</bool>
+           </property>
+           <property name="variant" stdset="0">
+            <string notr="true">muted</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QTableWidget" name="contextsTable">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>260</height>
+           </size>
+          </property>
+           <property name="selectionMode">
+            <enum>QAbstractItemView::SingleSelection</enum>
+           </property>
+           <property name="selectionBehavior">
+            <enum>QAbstractItemView::SelectRows</enum>
+           </property>
+           <attribute name="verticalHeaderVisible">
+            <bool>false</bool>
+           </attribute>
+           <attribute name="verticalHeaderDefaultSectionSize">
+            <number>40</number>
+           </attribute>
+           <attribute name="horizontalHeaderStretchLastSection">
+            <bool>true</bool>
+           </attribute>
+           <column>
+            <property name="text">
+             <string>CONTEXT</string>
+            </property>
+           </column>
+           <column>
+            <property name="text">
+             <string>DISPLAY NAME</string>
+            </property>
+           </column>
+           <row />
+           <item row="0" column="0">
+            <property name="text">
+             <string notr="true">prod-eks</string>
+            </property>
+           </item>
+           <item row="0" column="1">
+            <property name="text">
+             <string notr="true">Production</string>
+            </property>
+           </item>
+           <row />
+           <item row="1" column="0">
+            <property name="text">
+             <string notr="true">staging-eks</string>
+            </property>
+           </item>
+           <item row="1" column="1">
+            <property name="text">
+             <string notr="true">Staging</string>
+            </property>
+           </item>
+           <property name="variant" stdset="0">
+            <string notr="true">data</string>
+           </property>
+          </widget>
+         </item>
+      </layout>
+     </widget>
     </widget>
    </item>
   </layout>

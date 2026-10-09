@@ -16,9 +16,10 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
 from PySide6.QtWidgets import (QAbstractItemView, QApplication, QCheckBox, QComboBox,
-    QFormLayout, QHBoxLayout, QHeaderView, QLabel,
-    QPushButton, QSizePolicy, QSpacerItem, QTableWidget,
-    QTableWidgetItem, QVBoxLayout, QWidget)
+    QFormLayout, QFrame, QHBoxLayout, QHeaderView,
+    QLabel, QPushButton, QScrollArea, QSizePolicy,
+    QSpacerItem, QTableWidget, QTableWidgetItem, QVBoxLayout,
+    QWidget)
 
 class Ui_SettingsPage(object):
     def setupUi(self, SettingsPage):
@@ -50,22 +51,33 @@ class Ui_SettingsPage(object):
 
         self.settingsLayout.addLayout(self.settingsHeader)
 
-        self.generalHeading = QLabel(SettingsPage)
+        self.settingsScroll = QScrollArea(SettingsPage)
+        self.settingsScroll.setObjectName(u"settingsScroll")
+        self.settingsScroll.setFrameShape(QFrame.NoFrame)
+        self.settingsScroll.setWidgetResizable(True)
+        self.settingsContent = QWidget()
+        self.settingsContent.setObjectName(u"settingsContent")
+        self.settingsContentLayout = QVBoxLayout(self.settingsContent)
+        self.settingsContentLayout.setSpacing(12)
+        self.settingsContentLayout.setObjectName(u"settingsContentLayout")
+        self.settingsContentLayout.setContentsMargins(0, 0, 16, 8)
+        self.generalHeading = QLabel(self.settingsContent)
         self.generalHeading.setObjectName(u"generalHeading")
         self.generalHeading.setProperty(u"variant", u"cardTitle")
 
-        self.settingsLayout.addWidget(self.generalHeading)
+        self.settingsContentLayout.addWidget(self.generalHeading)
 
         self.generalForm = QFormLayout()
         self.generalForm.setObjectName(u"generalForm")
+        self.generalForm.setLabelAlignment(Qt.AlignLeading|Qt.AlignLeft|Qt.AlignVCenter)
         self.generalForm.setHorizontalSpacing(16)
         self.generalForm.setVerticalSpacing(10)
-        self.languageLabel = QLabel(SettingsPage)
+        self.languageLabel = QLabel(self.settingsContent)
         self.languageLabel.setObjectName(u"languageLabel")
 
         self.generalForm.setWidget(0, QFormLayout.ItemRole.LabelRole, self.languageLabel)
 
-        self.languageCombo = QComboBox(SettingsPage)
+        self.languageCombo = QComboBox(self.settingsContent)
         self.languageCombo.addItem(u"Automatic")
         self.languageCombo.addItem(u"English")
         self.languageCombo.addItem(u"Portugu\u00eas")
@@ -75,12 +87,12 @@ class Ui_SettingsPage(object):
 
         self.generalForm.setWidget(0, QFormLayout.ItemRole.FieldRole, self.languageCombo)
 
-        self.themeLabel = QLabel(SettingsPage)
+        self.themeLabel = QLabel(self.settingsContent)
         self.themeLabel.setObjectName(u"themeLabel")
 
         self.generalForm.setWidget(1, QFormLayout.ItemRole.LabelRole, self.themeLabel)
 
-        self.themeCombo = QComboBox(SettingsPage)
+        self.themeCombo = QComboBox(self.settingsContent)
         self.themeCombo.addItem(u"Light")
         self.themeCombo.addItem(u"Dark")
         self.themeCombo.setObjectName(u"themeCombo")
@@ -89,48 +101,86 @@ class Ui_SettingsPage(object):
 
         self.generalForm.setWidget(1, QFormLayout.ItemRole.FieldRole, self.themeCombo)
 
-        self.rememberCheck = QCheckBox(SettingsPage)
+        self.themeButtonsRow = QHBoxLayout()
+        self.themeButtonsRow.setSpacing(8)
+        self.themeButtonsRow.setObjectName(u"themeButtonsRow")
+        self.newThemeButton = QPushButton(self.settingsContent)
+        self.newThemeButton.setObjectName(u"newThemeButton")
+        self.newThemeButton.setProperty(u"variant", u"secondary")
+
+        self.themeButtonsRow.addWidget(self.newThemeButton)
+
+        self.editThemeButton = QPushButton(self.settingsContent)
+        self.editThemeButton.setObjectName(u"editThemeButton")
+        self.editThemeButton.setProperty(u"variant", u"secondary")
+
+        self.themeButtonsRow.addWidget(self.editThemeButton)
+
+        self.openThemesButton = QPushButton(self.settingsContent)
+        self.openThemesButton.setObjectName(u"openThemesButton")
+        self.openThemesButton.setProperty(u"variant", u"secondary")
+
+        self.themeButtonsRow.addWidget(self.openThemesButton)
+
+        self.themeButtonsSpacer = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+
+        self.themeButtonsRow.addItem(self.themeButtonsSpacer)
+
+
+        self.generalForm.setLayout(2, QFormLayout.ItemRole.SpanningRole, self.themeButtonsRow)
+
+        self.rememberCheck = QCheckBox(self.settingsContent)
         self.rememberCheck.setObjectName(u"rememberCheck")
         self.rememberCheck.setChecked(True)
 
-        self.generalForm.setWidget(2, QFormLayout.ItemRole.SpanningRole, self.rememberCheck)
+        self.generalForm.setWidget(3, QFormLayout.ItemRole.SpanningRole, self.rememberCheck)
 
-        self.debugCheck = QCheckBox(SettingsPage)
+        self.debugCheck = QCheckBox(self.settingsContent)
         self.debugCheck.setObjectName(u"debugCheck")
 
-        self.generalForm.setWidget(3, QFormLayout.ItemRole.SpanningRole, self.debugCheck)
+        self.generalForm.setWidget(4, QFormLayout.ItemRole.SpanningRole, self.debugCheck)
 
-        self.debugHint = QLabel(SettingsPage)
+        self.debugHint = QLabel(self.settingsContent)
         self.debugHint.setObjectName(u"debugHint")
         self.debugHint.setText(u"")
         self.debugHint.setWordWrap(True)
         self.debugHint.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         self.debugHint.setProperty(u"variant", u"muted")
 
-        self.generalForm.setWidget(4, QFormLayout.ItemRole.SpanningRole, self.debugHint)
+        self.generalForm.setWidget(5, QFormLayout.ItemRole.SpanningRole, self.debugHint)
 
-        self.openLogsButton = QPushButton(SettingsPage)
+        self.logButtonsRow = QHBoxLayout()
+        self.logButtonsRow.setObjectName(u"logButtonsRow")
+        self.openLogsButton = QPushButton(self.settingsContent)
         self.openLogsButton.setObjectName(u"openLogsButton")
+        self.openLogsButton.setProperty(u"variant", u"secondary")
 
-        self.generalForm.setWidget(5, QFormLayout.ItemRole.SpanningRole, self.openLogsButton)
+        self.logButtonsRow.addWidget(self.openLogsButton)
+
+        self.logButtonsSpacer = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+
+        self.logButtonsRow.addItem(self.logButtonsSpacer)
 
 
-        self.settingsLayout.addLayout(self.generalForm)
+        self.generalForm.setLayout(6, QFormLayout.ItemRole.SpanningRole, self.logButtonsRow)
 
-        self.contextsHeading = QLabel(SettingsPage)
+
+        self.settingsContentLayout.addLayout(self.generalForm)
+
+        self.contextsHeading = QLabel(self.settingsContent)
         self.contextsHeading.setObjectName(u"contextsHeading")
         self.contextsHeading.setProperty(u"variant", u"cardTitle")
 
-        self.settingsLayout.addWidget(self.contextsHeading)
+        self.settingsContentLayout.addWidget(self.contextsHeading)
 
-        self.contextsHint = QLabel(SettingsPage)
+        self.contextsHint = QLabel(self.settingsContent)
         self.contextsHint.setObjectName(u"contextsHint")
         self.contextsHint.setWordWrap(True)
         self.contextsHint.setProperty(u"variant", u"muted")
 
-        self.settingsLayout.addWidget(self.contextsHint)
+        self.settingsContentLayout.addWidget(self.contextsHint)
 
-        self.contextsTable = QTableWidget(SettingsPage)
+        self.contextsTable = QTableWidget(self.settingsContent)
         if (self.contextsTable.columnCount() < 2):
             self.contextsTable.setColumnCount(2)
         __qtablewidgetitem = QTableWidgetItem()
@@ -152,6 +202,7 @@ class Ui_SettingsPage(object):
         __qtablewidgetitem5.setText(u"Staging")
         self.contextsTable.setItem(1, 1, __qtablewidgetitem5)
         self.contextsTable.setObjectName(u"contextsTable")
+        self.contextsTable.setMinimumSize(QSize(0, 260))
         self.contextsTable.setSelectionMode(QAbstractItemView.SingleSelection)
         self.contextsTable.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.contextsTable.setProperty(u"variant", u"data")
@@ -159,7 +210,11 @@ class Ui_SettingsPage(object):
         self.contextsTable.verticalHeader().setVisible(False)
         self.contextsTable.verticalHeader().setDefaultSectionSize(40)
 
-        self.settingsLayout.addWidget(self.contextsTable)
+        self.settingsContentLayout.addWidget(self.contextsTable)
+
+        self.settingsScroll.setWidget(self.settingsContent)
+
+        self.settingsLayout.addWidget(self.settingsScroll)
 
 
         self.retranslateUi(SettingsPage)
@@ -174,6 +229,9 @@ class Ui_SettingsPage(object):
 
         self.themeLabel.setText(QCoreApplication.translate("SettingsPage", u"Theme", None))
 
+        self.newThemeButton.setText(QCoreApplication.translate("SettingsPage", u"New theme...", None))
+        self.editThemeButton.setText(QCoreApplication.translate("SettingsPage", u"Edit theme...", None))
+        self.openThemesButton.setText(QCoreApplication.translate("SettingsPage", u"Open the themes folder", None))
         self.rememberCheck.setText(QCoreApplication.translate("SettingsPage", u"Remember the last used context", None))
         self.debugCheck.setText(QCoreApplication.translate("SettingsPage", u"Debug mode: write a log file I can share", None))
         self.openLogsButton.setText(QCoreApplication.translate("SettingsPage", u"Open the log folder", None))

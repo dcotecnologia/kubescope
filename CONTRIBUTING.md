@@ -63,6 +63,8 @@ English, imperative mood, no trailing period, and no AI assistant as co-author.
 | Widgets, pages and interactions | `src/kubescope/window.py` and the `.ui` files |
 | Preferences | `src/kubescope/settings.py` |
 | Friendly error messages | `src/kubescope/errors.py` |
+| Colors, themes and the theme editor | `src/kubescope/theme.py`, `theme_editor.py` |
+| A theme to share with everyone | `src/kubescope/community_themes/` (see its README) |
 
 Edit layouts in the `.ui` files and run `make ui`; never edit `ui_*.py` by hand.
 Wrap user-visible text in `self.tr(...)` and complete the Portuguese

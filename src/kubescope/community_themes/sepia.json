@@ -1,0 +1,21 @@
+{
+    "base": "light",
+    "colors": {
+        "accent": "#8a4b12",
+        "accent_hover": "#a35a1a",
+        "accent_soft": "#efdfbf",
+        "accent_strong": "#8a4b12",
+        "border": "#d8cba8",
+        "focus": "#b0702a",
+        "muted": "#6b5d48",
+        "page": "#f4ecd8",
+        "surface": "#fbf6e9",
+        "surface_alt": "#efe6cf",
+        "text": "#3b3226",
+        "topbar": "#5a4630",
+        "topbar_border": "#8a7352",
+        "topbar_brand": "#6b543a",
+        "topbar_field": "#6b543a"
+    },
+    "name": "Sepia"
+}

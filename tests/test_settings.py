@@ -108,17 +108,18 @@ def test_log_directory_lives_in_the_config_directory(monkeypatch, tmp_path) -> N
     assert log_directory() == tmp_path / "logs"
 
 
-def test_theme_defaults_to_light_and_ignores_unknown_values(tmp_path) -> None:
+def test_theme_defaults_to_light_and_keeps_any_theme_id(tmp_path) -> None:
     path = tmp_path / "settings.json"
     settings = Settings(path)
     assert settings.theme == "light"
 
-    settings.theme = "dark"
+    settings.theme = "midnight"  # a custom theme's id
     settings.save()
-    assert Settings(path).theme == "dark"
+    assert Settings(path).theme == "midnight"
 
-    settings.theme = "neon"  # not a theme
-    assert settings.theme == "light"
+    for empty in ("", "  ", None):
+        settings.theme = empty
+        assert settings.theme == "light"
 
-    path.write_text('{"theme": "sepia"}', encoding="utf-8")
+    path.write_text('{"theme": 42}', encoding="utf-8")
     assert Settings(path).theme == "light"

@@ -115,9 +115,39 @@ The **Settings** page (sidebar) stores preferences as JSON in
 `~/.config/kubescope/settings.json` (`%APPDATA%\\kubescope` on Windows,
 `~/Library/Application Support/kubescope` on macOS; override with
 `KUBESCOPE_CONFIG_DIR`). It lets you pick the language (automatic, English or
-Portuguese), the theme (light or dark), remember the last context, and give each
-kubeconfig context a friendlier display name. The real context name is still used for every request.
-Hidden table columns are stored in the same file.
+Portuguese), the theme, remember the last context, and give each kubeconfig
+context a friendlier display name. The real context name is still used for every
+request. Hidden table columns are stored in the same file.
+
+### Themes
+
+KubeScope ships a **Light** and a **Dark** theme, and you can make your own. In
+Settings, **New theme...** opens an editor that starts from the selected theme: give
+it a name, pick a color for each part of the interface (page, panels, top bar,
+accent, status colors, and more) and save. **Edit theme...** changes one of your
+themes, and the window follows at once when it is the one in use.
+
+A theme is a small JSON file in the `themes/` folder next to `settings.json` (the
+**Open the themes folder** button jumps there), so you can also edit or share it by
+hand. It starts from a base theme and lists only the colors it changes:
+
+```json
+{
+  "name": "Midnight",
+  "base": "dark",
+  "colors": { "page": "#0b0f14", "accent": "#7aa2f7", "topbar": "#000000" }
+}
+```
+
+The color names are the ones the editor shows (`page`, `surface`, `text`, `accent`,
+`topbar`, `good`, `bad`, ...; see `ROLES` in `src/kubescope/theme.py`). A file that
+is damaged or uses an unknown name is skipped and noted in the debug log.
+
+**Community themes** live in `src/kubescope/community_themes/` and ship with the
+app: the first time KubeScope starts with one, it copies the file into your themes
+folder, so it shows up in the list. A theme is copied once, so your edits are never
+overwritten and a theme you delete stays deleted. To share a theme, add its file there
+and open a pull request (the folder's README has the steps).
 
 Source strings are English; translations live in
 `src/kubescope/translations/*.ts` (editable in Qt Linguist). After adding or
