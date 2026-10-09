@@ -1,0 +1,94 @@
+---
+exclude: '^(cdk\.out/|src/kubescope/ui/ui_.*\.py$)'
+default_language_version:
+  python: python3.14
+
+default_install_hook_types:
+  - pre-commit
+  - pre-merge-commit
+
+repos:
+  - repo: https://github.com/astral-sh/uv-pre-commit
+    rev: 0.12.24
+    hooks:
+      - id: uv-lock
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: '\.svg$|\.log$|\.txt$'
+      - id: check-added-large-files
+      - id: fix-byte-order-marker
+      - id: check-docstring-first
+      - id: pretty-format-json
+        args: [--autofix, --indent=4]
+      - id: check-json
+      - id: check-merge-conflict
+      - id: check-symlinks
+      - id: check-toml
+      - id: check-vcs-permalinks
+      - id: check-xml
+      - id: check-yaml
+        args: [--unsafe]
+      - id: file-contents-sorter
+      - id: mixed-line-ending
+      - id: name-tests-test
+        args: [--pytest-test-first]
+      - id: sort-simple-yaml
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.16.10
+    hooks:
+      - id: ruff
+        args:
+          - --fix
+          - --config=pyproject.toml
+
+      - id: ruff-format
+        args:
+          - --config=pyproject.toml
+
+  - repo: https://github.com/PyCQA/docformatter
+    rev: v1.7.8
+    hooks:
+      - id: docformatter
+        args:
+          - --in-place
+          - --config=pyproject.toml
+
+  - repo: https://github.com/adrienverge/yamllint.git
+    rev: v1.38.0
+    hooks:
+      - id: yamllint
+        args:
+          - -d
+          - "{extends: default, rules: {document-start: disable, line-length: disable, truthy: disable, comments-indentation: disable}}"
+
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.30.0
+    hooks:
+      - id: gitleaks
+
+  - repo: https://github.com/Mateusz-Grzelinski/actionlint-py
+    rev: v1.7.12.25
+    hooks:
+      - id: actionlint
+        additional_dependencies: [shellcheck-py]
+
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.49.1
+    hooks:
+      - id: markdownlint
+        args: ["--config", ".markdownlint.json", "--fix"]
+
+  - repo: local
+    hooks:
+      - id: no-merge-commit
+        name: block merge commits (rebase-only)
+        entry: >-
+          Merge commit blocked: this project uses rebase only.
+          Run: git fetch origin && git rebase origin/dev
+        language: fail
+        always_run: true
+        stages: [pre-merge-commit]

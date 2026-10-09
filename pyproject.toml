@@ -7,7 +7,7 @@ license = "MIT"
 authors = [{ name = "Danilo Carolino", email = "danilogcarolino@gmail.com" }]
 requires-python = ">=3.12"
 dependencies = [
-    "pyside6>=6.11.2",
+    "pyside6>=6.12.0",
 ]
 
 [build-system]
@@ -18,7 +18,7 @@ build-backend = "setuptools.build_meta"
 dev = [
     "pre-commit>=4.6.2",
     "pytest>=9.1.1",
-    "ruff>=0.15.0",
+    "ruff>=0.16.10",
 ]
 build = [
     "pyinstaller>=6.22.3",
@@ -61,3 +61,8 @@ extend-exclude = ["src/kubescope/ui/ui_*.py", "vendor", "build", "dist"]
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "B", "UP", "SIM"]
+
+[dependency-groups]
+development = [
+    "pre-commit>=4.6.2",
+]
