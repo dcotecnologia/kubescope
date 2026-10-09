@@ -407,12 +407,98 @@ QLabel#footerLicense { color: #6b7380; font-size: 10px; }
            <property name="checked">
             <bool>false</bool>
            </property>
-           <property name="autoExclusive">
-            <bool>true</bool>
-           </property>
-           <property name="nav" stdset="0">
+                      <property name="nav" stdset="0">
             <string notr="true">true</string>
            </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QFrame" name="workloadsSubmenu">
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>0</height>
+            </size>
+           </property>
+           <layout class="QVBoxLayout" name="workloadsSubmenuLayout">
+            <property name="spacing">
+             <number>0</number>
+            </property>
+            <property name="leftMargin">
+             <number>16</number>
+            </property>
+            <property name="topMargin">
+             <number>0</number>
+            </property>
+            <property name="rightMargin">
+             <number>0</number>
+            </property>
+            <property name="bottomMargin">
+             <number>0</number>
+            </property>
+              <item>
+               <widget class="QPushButton" name="navPods">
+                <property name="text">
+                 <string>Pods</string>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>42</height>
+                 </size>
+                </property>
+                <property name="iconSize">
+                 <size>
+                  <width>16</width>
+                  <height>16</height>
+                 </size>
+                </property>
+                <property name="checkable">
+                 <bool>true</bool>
+                </property>
+                <property name="checked">
+                 <bool>false</bool>
+                </property>
+                <property name="autoExclusive">
+                 <bool>true</bool>
+                </property>
+                <property name="nav" stdset="0">
+                 <string notr="true">true</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="navDeployments">
+                <property name="text">
+                 <string>Deployments</string>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>42</height>
+                 </size>
+                </property>
+                <property name="iconSize">
+                 <size>
+                  <width>16</width>
+                  <height>16</height>
+                 </size>
+                </property>
+                <property name="checkable">
+                 <bool>true</bool>
+                </property>
+                <property name="checked">
+                 <bool>false</bool>
+                </property>
+                <property name="autoExclusive">
+                 <bool>true</bool>
+                </property>
+                <property name="nav" stdset="0">
+                 <string notr="true">true</string>
+                </property>
+               </widget>
+              </item>
+           </layout>
           </widget>
          </item>
          <item>

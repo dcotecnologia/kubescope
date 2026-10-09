@@ -92,6 +92,14 @@ window.get_workloads = lambda _context, namespace=None: (
     sorted({item.namespace for item in WORKLOADS}),
     [item for item in WORKLOADS if namespace in (None, item.namespace)],
 )
+window.get_usage = lambda _context, namespace=None: {
+    (item.namespace, item.kind, item.name): (
+        index % 3,
+        0.05 + index * 0.4,
+        (index + 1) * 96 * 2**20,
+    )
+    for index, item in enumerate(WORKLOADS)
+}
 window.get_workload_pods = fake_pods
 window.get_resource_details = lambda _c, kind, namespace, name: {
     "kind": kind,
@@ -145,8 +153,8 @@ def main() -> int:
     if len(sys.argv) > 1:
         page = sys.argv[2] if len(sys.argv) > 2 else "overview"
         wait_until_idle(application, main_window)
-        if page == "workloads":
-            main_window.nav_workloads.click()
+        if page in ("workloads", "deployments"):
+            main_window.nav_deployments.click()
             wait_until_idle(application, main_window)
         main_window.grab().save(sys.argv[1])
         return 0

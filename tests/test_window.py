@@ -119,9 +119,9 @@ def test_navigation_switches_pages_and_loads_overview(monkeypatch) -> None:
     window._overview_busy = False
     requested.clear()
 
-    window.nav_workloads.click()
+    window.nav_deployments.click()
     assert window.pages.currentIndex() == 1
-    assert window.ui.pageTitle.text() == "Workloads"
+    assert window.ui.pageTitle.text() == "Deployments"
     assert requested == []
 
     window.nav_overview.click()
@@ -340,7 +340,7 @@ def test_log_tab_does_not_poll_when_paused_or_hidden(monkeypatch) -> None:
     window._refresh_log(tab)
     assert len(calls) == 1
 
-    window.nav_workloads.click()  # another page is visible now
+    window.nav_deployments.click()  # another page is visible now
     tab.busy = False
     window._refresh_log(tab)
     assert len(calls) == 1
@@ -485,5 +485,76 @@ def test_settings_page_shows_long_context_names_in_full(monkeypatch) -> None:
     assert table.item(0, 0).toolTip() == arn  # hover shows the whole name
     assert table.textElideMode() == Qt.TextElideMode.ElideMiddle
     header = table.horizontalHeader()
-    assert header.sectionResizeMode(0) == header.ResizeMode.ResizeToContents
+    assert header.sectionResizeMode(0) == header.ResizeMode.Interactive
     window.close()
+
+
+def test_pods_menu_lists_pods_and_deployments_menu_lists_deployments(
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(window_module, "list_contexts", lambda: ([], None))
+    monkeypatch.setattr(window_module.WorkloadWindow, "refresh", lambda *_a: None)
+    window = window_module.WorkloadWindow()
+
+    window.nav_pods.click()
+    assert window.pages.currentIndex() == 1
+    assert window.ui.pageTitle.text() == "Pods"
+    assert window.table.horizontalHeaderItem(1).text() == "CONTAINERS"
+    assert not window.pods_button.isVisibleTo(window)
+
+    pods = [
+        PodInfo("default", "web-1", "Running", 1, 1, "2d", ("app",)),
+        PodInfo("default", "job-1", "Failed", 0, 2, "1h", ("a", "b")),
+    ]
+    window._show_pods(["default"], pods)
+    assert window.table.rowCount() == 2
+    assert window.table.item(0, 2).text() == "web-1"
+    assert window.table.item(1, 4).text() == "Failed"
+
+    window.table.selectRow(1)
+    assert window._selected_pod().name == "job-1"
+    window.table.horizontalHeader().sectionClicked.emit(4)  # worst phase first
+    assert window.table.item(0, 2).text() == "job-1"
+
+    window.nav_deployments.click()
+    assert window.ui.pageTitle.text() == "Deployments"
+    assert window.table.horizontalHeaderItem(1).text() == "KIND"
+    assert window.pods_button.isVisibleTo(window)
+    window.close()
+
+
+def test_workloads_menu_slides_open_the_pods_and_deployments_entries(
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(window_module, "list_contexts", lambda: ([], None))
+    window = window_module.WorkloadWindow()
+    assert window.submenu.maximumHeight() == 0
+
+    window.nav_workloads.click()
+    animation = window._submenu_animation
+    assert animation.endValue() > 0
+    animation.setCurrentTime(animation.duration())
+    assert window.submenu.maximumHeight() == animation.endValue()
+
+    window.nav_workloads.click()
+    assert animation.endValue() == 0
+    window.close()
+
+
+def test_hidden_columns_are_applied_and_saved(monkeypatch, tmp_path) -> None:
+    from kubescope.settings import Settings
+
+    monkeypatch.setattr(window_module, "list_contexts", lambda: ([], None))
+    monkeypatch.setattr(window_module.WorkloadWindow, "refresh", lambda *_a: None)
+    path = tmp_path / "settings.json"
+    window = window_module.WorkloadWindow(Settings(path))
+    assert window.table.columnCount() == 9
+
+    window._set_column_visible(6, False)
+    assert window.table.isColumnHidden(6)
+    window.close()
+
+    reopened = window_module.WorkloadWindow(Settings(path))
+    assert reopened.table.isColumnHidden(6)
+    assert not reopened.table.isColumnHidden(5)
+    reopened.close()

@@ -1,3 +1,4 @@
+import dataclasses
 import json
 import logging
 import tempfile
@@ -7,8 +8,11 @@ from typing import Any
 
 from PySide6.QtCore import (
     QCoreApplication,
+    QEasingCurve,
     QEvent,
+    QPoint,
     QPointF,
+    QPropertyAnimation,
     QRectF,
     QSize,
     Qt,
@@ -17,6 +21,7 @@ from PySide6.QtCore import (
     Signal,
 )
 from PySide6.QtGui import (
+    QAction,
     QCloseEvent,
     QColor,
     QFontDatabase,
@@ -32,6 +37,7 @@ from PySide6.QtWidgets import (
     QHeaderView,
     QInputDialog,
     QMainWindow,
+    QMenu,
     QMessageBox,
     QPlainTextEdit,
     QProgressBar,
@@ -45,7 +51,9 @@ from kubescope.cluster import (
     KubectlError,
     get_cluster_overview,
     get_pod_logs,
+    get_pods,
     get_resource_details,
+    get_usage,
     get_workload_pods,
     get_workloads,
     list_contexts,
@@ -58,6 +66,10 @@ from kubescope.models import (
     Workload,
     format_bytes,
     format_cores,
+    format_cpu,
+    format_memory,
+    pod_highlight,
+    pod_sort_key,
     workload_sort_key,
 )
 from kubescope.settings import Settings
@@ -136,19 +148,46 @@ class RefreshWorker(QThread):
     completed = Signal(list, list)
     failed = Signal(str)
 
-    def __init__(self, context: str, namespace: str | None) -> None:
+    def __init__(
+        self, context: str, namespace: str | None, view: str = "deployments"
+    ) -> None:
         super().__init__()
         self.context = context
         self.namespace = namespace
+        self.view = view
 
     def run(self) -> None:
         try:
-            namespaces, workloads = get_workloads(self.context, self.namespace)
+            if self.view == "pods":
+                namespaces, items = get_pods(self.context, self.namespace)
+            else:
+                namespaces, workloads = get_workloads(self.context, self.namespace)
+                items = [item for item in workloads if item.kind == "Deployment"]
+                try:
+                    usage = get_usage(self.context, self.namespace)
+                except Exception:
+                    logger.exception("Could not load Pod usage for %s", self.context)
+                    usage = {}
+                items = [
+                    dataclasses.replace(
+                        item,
+                        restarts=restarts,
+                        cpu=cpu,
+                        memory=memory,
+                    )
+                    for item in items
+                    for restarts, cpu, memory in [
+                        usage.get((item.namespace, item.kind, item.name))
+                        or (0, None, None)
+                    ]
+                ]
         except Exception as error:
-            logger.exception("Could not load workloads from context %s", self.context)
+            logger.exception(
+                "Could not load %s from context %s", self.view, self.context
+            )
             self.failed.emit(str(error))
             return
-        self.completed.emit(namespaces, workloads)
+        self.completed.emit(namespaces, items)
 
 
 class ActionWorker(QThread):
@@ -188,6 +227,8 @@ class WorkloadWindow(QMainWindow):
         self._action_workers: list[ActionWorker] = []
         self._close_when_worker_stops = False
         self._workloads: list[Workload] = []
+        self._pods: list[PodInfo] = []
+        self._view = "deployments"  # which list the shared table shows
         self._build_ui()
         self._load_contexts()
 
@@ -208,6 +249,9 @@ class WorkloadWindow(QMainWindow):
         self.pages = ui.pages
         self.nav_overview = ui.navOverview
         self.nav_workloads = ui.navWorkloads
+        self.submenu = ui.workloadsSubmenu
+        self.nav_pods = ui.navPods
+        self.nav_deployments = ui.navDeployments
 
         self.overview_ui = Ui_OverviewPage()
         self.overview_ui.setupUi(ui.overviewHost)
@@ -233,6 +277,19 @@ class WorkloadWindow(QMainWindow):
         self.nav_overview.setIcon(
             style.standardIcon(QStyle.StandardPixmap.SP_ComputerIcon)
         )
+        for button in (
+            self.nav_overview,
+            self.nav_workloads,
+            self.nav_pods,
+            self.nav_deployments,
+            ui.navViewer,
+            ui.settingsButton,
+        ):
+            button.setAutoExclusive(False)  # _show_page keeps the checked state
+        self.nav_workloads.setCheckable(False)
+        self._submenu_animation = QPropertyAnimation(self.submenu, b"maximumHeight")
+        self._submenu_animation.setDuration(180)
+        self._submenu_animation.setEasingCurve(QEasingCurve.Type.InOutCubic)
         self.nav_workloads.setIcon(
             style.standardIcon(QStyle.StandardPixmap.SP_FileDialogListView)
         )
@@ -255,13 +312,13 @@ class WorkloadWindow(QMainWindow):
         self.context_combo.clear()
         self.namespace_combo.clear()
         self.table.setRowCount(0)
-        self.summary_label.setText(self.tr("0 workloads"))
+        self.summary_label.setText(self.tr("0 Deployments"))
         self.nodes_table.setRowCount(0)
         self._reset_overview()
-        self.nodes_table.horizontalHeader().setSectionResizeMode(
-            0, QHeaderView.ResizeMode.Stretch
-        )
+        # every column stays user-resizable; the last one takes the spare room
+        self.nodes_table.horizontalHeader().setStretchLastSection(True)
         for column, width in (
+            (0, 220),
             (1, 100),
             (2, 80),
             (3, 105),
@@ -273,11 +330,23 @@ class WorkloadWindow(QMainWindow):
             self.nodes_table.setColumnWidth(column, width)
         self.namespace_combo.addItem(self.tr("All namespaces"), "")
         header = self.table.horizontalHeader()
-        header.setSectionResizeMode(2, QHeaderView.ResizeMode.Stretch)
+        header.setStretchLastSection(True)
         header.setSectionsClickable(True)
-        header.sectionClicked.connect(self._sort_workloads)
-        for column, width in ((0, 160), (1, 150), (3, 110), (4, 150), (5, 90)):
+        header.sectionClicked.connect(self._sort_rows)
+        self._apply_view_columns()
+        for column, width in (
+            (0, 160),
+            (1, 150),
+            (2, 320),
+            (3, 110),
+            (4, 150),
+            (5, 90),
+            (6, 100),
+            (7, 90),
+        ):
             self.table.setColumnWidth(column, width)
+        header.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        header.customContextMenuRequested.connect(self._show_column_menu)
         self.setStyleSheet(
             self.styleSheet()
             .replace("SORT_UP", _sort_icon_path(up=True))
@@ -298,12 +367,10 @@ class WorkloadWindow(QMainWindow):
 
         self.refresh_button.clicked.connect(self.refresh)
         self.pods_button.clicked.connect(self._view_workload_pods)
-        self.details_button.clicked.connect(self._view_workload_details)
-        self.logs_button.clicked.connect(self._view_workload_logs)
+        self.details_button.clicked.connect(self._view_details)
+        self.logs_button.clicked.connect(self._view_logs)
         self.table.itemSelectionChanged.connect(self._update_workload_actions)
-        self.table.cellDoubleClicked.connect(
-            lambda _row, _column: self._view_workload_details()
-        )
+        self.table.cellDoubleClicked.connect(lambda _row, _column: self._view_details())
         self.nav_viewer.setIcon(
             style.standardIcon(QStyle.StandardPixmap.SP_FileDialogContentsView)
         )
@@ -313,7 +380,11 @@ class WorkloadWindow(QMainWindow):
         )
         ui.settingsButton.clicked.connect(lambda: self._show_page(2))
         self.nav_overview.clicked.connect(lambda: self._show_page(0))
-        self.nav_workloads.clicked.connect(lambda: self._show_page(1))
+        self.nav_workloads.clicked.connect(self._toggle_submenu)
+        self.nav_pods.clicked.connect(lambda: self._open_list_view("pods"))
+        self.nav_deployments.clicked.connect(
+            lambda: self._open_list_view("deployments")
+        )
         self.overview_refresh_button.clicked.connect(self.refresh_overview)
         self.context_combo.currentTextChanged.connect(self._context_changed)
         self.context_combo.currentTextChanged.connect(self.refresh)
@@ -387,7 +458,8 @@ class WorkloadWindow(QMainWindow):
     def _show_page(self, index: int) -> None:
         self.pages.setCurrentIndex(index)
         self.nav_overview.setChecked(index == 0)
-        self.nav_workloads.setChecked(index == 1)
+        self.nav_pods.setChecked(index == 1 and self._view == "pods")
+        self.nav_deployments.setChecked(index == 1 and self._view == "deployments")
         self.ui.settingsButton.setChecked(index == 2)
         self.nav_viewer.setChecked(index == 3)
         self._apply_page_titles()
@@ -408,11 +480,82 @@ class WorkloadWindow(QMainWindow):
         elif self.pages.currentIndex() == 2:
             self.ui.pageTitle.setText(self.tr("Settings"))
             self.ui.pageSubtitle.setText(self.tr("Preferences and context names"))
+        elif self._view == "pods":
+            self.ui.pageTitle.setText(self.tr("Pods"))
+            self.ui.pageSubtitle.setText(self.tr("Pods of the cluster"))
         else:
-            self.ui.pageTitle.setText(self.tr("Workloads"))
-            self.ui.pageSubtitle.setText(
-                self.tr("Deployments, StatefulSets and DaemonSets of the cluster")
+            self.ui.pageTitle.setText(self.tr("Deployments"))
+            self.ui.pageSubtitle.setText(self.tr("Deployments of the cluster"))
+
+    def _toggle_submenu(self) -> None:
+        """Slide the Pods / Deployments entries open or closed."""
+        animation = self._submenu_animation
+        expand = self.submenu.maximumHeight() == 0 or (
+            animation.state() == QPropertyAnimation.State.Running
+            and animation.endValue() == 0
+        )
+        animation.stop()
+        animation.setStartValue(self.submenu.maximumHeight())
+        animation.setEndValue(self.submenu.sizeHint().height() if expand else 0)
+        animation.start()
+
+    def _open_list_view(self, view: str) -> None:
+        """Show the Pods or Deployments list; both share one table."""
+        changed = view != self._view
+        self._view = view
+        if changed:
+            self._sort = None
+            header = self.table.horizontalHeader()
+            header.setSortIndicatorShown(False)
+            self._apply_view_columns()
+            self._render_rows()
+        self._show_page(1)
+        if changed:
+            self.refresh()
+
+    def _apply_view_columns(self) -> None:
+        second = "CONTAINERS" if self._view == "pods" else "KIND"
+        context = "PodsDialog" if self._view == "pods" else "MainWindow"
+        self.table.setColumnCount(9)
+        self.table.setHorizontalHeaderLabels(
+            [
+                QCoreApplication.translate("MainWindow", "NAMESPACE"),
+                QCoreApplication.translate(context, second),
+                QCoreApplication.translate("MainWindow", "NAME"),
+                QCoreApplication.translate("MainWindow", "READY"),
+                QCoreApplication.translate("MainWindow", "STATUS"),
+                QCoreApplication.translate("MainWindow", "CPU"),
+                QCoreApplication.translate("MainWindow", "MEMORY"),
+                QCoreApplication.translate("MainWindow", "RESTARTS"),
+                QCoreApplication.translate("MainWindow", "AGE"),
+            ]
+        )
+        self.pods_button.setVisible(self._view == "deployments")
+        hidden = self.settings.hidden_columns(self._view)
+        for column in range(self.table.columnCount()):
+            self.table.setColumnHidden(column, column in hidden)
+
+    def _show_column_menu(self, position: QPoint) -> None:
+        """Header right-click: tick the columns to show; the choice is saved."""
+        menu = QMenu(self)
+        hidden = self.settings.hidden_columns(self._view)
+        for column in range(self.table.columnCount()):
+            label = self.table.horizontalHeaderItem(column).text()
+            action = QAction(label, menu, checkable=True)
+            action.setChecked(column not in hidden)
+            action.setEnabled(column != 2)  # the name stays, rows need an identity
+            action.toggled.connect(
+                lambda visible, column=column: self._set_column_visible(column, visible)
             )
+            menu.addAction(action)
+        menu.exec(self.table.horizontalHeader().mapToGlobal(position))
+
+    def _set_column_visible(self, column: int, visible: bool) -> None:
+        hidden = self.settings.hidden_columns(self._view)
+        hidden.discard(column) if visible else hidden.add(column)
+        self.settings.set_hidden_columns(self._view, hidden)
+        self._save_settings()
+        self.table.setColumnHidden(column, not visible)
 
     def _context_changed(self, *_args: object) -> None:
         self._overview_context = None
@@ -619,12 +762,15 @@ class WorkloadWindow(QMainWindow):
         self.context_combo.setEnabled(False)
         self.namespace_combo.setEnabled(False)
         self._set_status(lambda: self.tr("Loading resources..."))
-        self._worker = RefreshWorker(context, namespace)
+        view = self._view
+        self._worker = RefreshWorker(context, namespace, view)
         end_loading = self._begin_loading(self.refresh_button, self.tr("Refreshing..."))
         self._worker.completed.connect(end_loading)
         self._worker.failed.connect(end_loading)
         self._worker.finished.connect(end_loading)
-        self._worker.completed.connect(self._show_workloads)
+        self._worker.completed.connect(
+            self._show_pods if view == "pods" else self._show_workloads
+        )
         self._worker.failed.connect(self._show_error)
         self._worker.finished.connect(self._refresh_finished)
         self._worker.start()
@@ -632,6 +778,18 @@ class WorkloadWindow(QMainWindow):
     def _show_workloads(self, namespaces: list, workloads: list) -> None:
         self._workloads = workloads
         self._apply_sort()
+        self._fill_namespaces(namespaces)
+        if self._view == "deployments":
+            self._render_workloads()
+
+    def _show_pods(self, namespaces: list, pods: list) -> None:
+        self._pods = pods
+        self._apply_sort()
+        self._fill_namespaces(namespaces)
+        if self._view == "pods":
+            self._render_pods()
+
+    def _fill_namespaces(self, namespaces: list) -> None:
         self._namespaces = namespaces
         selected_namespace = self.namespace_combo.currentData()
         self.namespace_combo.blockSignals(True)
@@ -643,19 +801,23 @@ class WorkloadWindow(QMainWindow):
         self.namespace_combo.setCurrentIndex(max(index, 0))
         self.namespace_combo.blockSignals(False)
 
-        self._render_workloads()
-
     def _apply_sort(self) -> None:
         """Order self._workloads by the chosen header; no-op until one is clicked."""
         if self._sort is None:
             return
         column, order = self._sort
-        self._workloads.sort(
-            key=lambda workload: workload_sort_key(workload, column),
-            reverse=order == Qt.SortOrder.DescendingOrder,
-        )
+        descending = order == Qt.SortOrder.DescendingOrder
+        if self._view == "pods":
+            self._pods.sort(
+                key=lambda pod: pod_sort_key(pod, column), reverse=descending
+            )
+        else:
+            self._workloads.sort(
+                key=lambda workload: workload_sort_key(workload, column),
+                reverse=descending,
+            )
 
-    def _sort_workloads(self, column: int) -> None:
+    def _sort_rows(self, column: int) -> None:
         """Header click: sort ascending, click again to reverse."""
         if self._sort is not None and self._sort[0] == column:
             flipped = self._sort[1] == Qt.SortOrder.AscendingOrder
@@ -665,15 +827,82 @@ class WorkloadWindow(QMainWindow):
         else:
             order = Qt.SortOrder.AscendingOrder
         self._sort = (column, order)
-        selected = self._selected_workload()
+        selected = self._selected_row()
         self._apply_sort()
         header = self.table.horizontalHeader()
         header.setSortIndicatorShown(True)
         header.setSortIndicator(column, order)
-        self._render_workloads()
-        if selected in self._workloads:
-            self.table.selectRow(self._workloads.index(selected))
+        self._render_rows()
+        rows = self._current_rows()
+        if selected in rows:
+            self.table.selectRow(rows.index(selected))
         self._update_workload_actions()
+
+    def _current_rows(self) -> list:
+        return self._pods if self._view == "pods" else self._workloads
+
+    def _selected_row(self) -> Workload | PodInfo | None:
+        return (
+            self._selected_pod() if self._view == "pods" else self._selected_workload()
+        )
+
+    def _render_rows(self) -> None:
+        if self._view == "pods":
+            self._render_pods()
+        else:
+            self._render_workloads()
+
+    def _phase_label(self, phase: str) -> str:
+        labels = {
+            "Running": self.tr("Running"),
+            "Pending": self.tr("Pending"),
+            "Succeeded": self.tr("Succeeded"),
+            "Failed": self.tr("Failed"),
+            "Unknown": self.tr("Unknown"),
+        }
+        return labels.get(phase, phase)
+
+    def _render_pods(self) -> None:
+        pods = self._pods
+        colors = {
+            "Running": ("#176b58", "#e5f4eb"),
+            "Pending": ("#985415", "#fff2de"),
+            "Succeeded": ("#505963", "#eff1f3"),
+            "Failed": ("#a33d45", "#fce9ea"),
+        }
+        tints = {"problem": QColor("#fbe4e4"), "young": QColor("#e2f5e8")}
+        self.table.setRowCount(len(pods))
+        for row_index, pod in enumerate(pods):
+            tint = tints.get(pod_highlight(pod) or "")
+            values = (
+                pod.namespace,
+                str(len(pod.containers)),
+                pod.name,
+                f"{pod.ready}/{pod.total}",
+                self._phase_label(pod.phase),
+                format_cpu(pod.cpu),
+                format_memory(pod.memory),
+                str(pod.restarts),
+                pod.age,
+            )
+            for column, value in enumerate(values):
+                item = QTableWidgetItem(value)
+                item.setForeground(QColor("#242a33"))
+                if tint is not None:
+                    item.setBackground(tint)
+                if column == 4:
+                    foreground, background = colors.get(
+                        pod.phase, ("#a33d45", "#fce9ea")
+                    )
+                    item.setForeground(QColor(foreground))
+                    item.setBackground(QColor(background))
+                self.table.setItem(row_index, column, item)
+        self._filter_rows()
+        self._set_status(
+            lambda: self.tr("{count} Pods in {namespaces} namespaces").format(
+                count=len(pods), namespaces=len(self._namespaces)
+            )
+        )
 
     def _render_workloads(self) -> None:
         workloads = self._workloads
@@ -691,6 +920,9 @@ class WorkloadWindow(QMainWindow):
                 workload.name,
                 f"{workload.ready}/{workload.desired}",
                 statuses[workload.status],
+                format_cpu(workload.cpu),
+                format_memory(workload.memory),
+                str(workload.restarts),
                 workload.age,
             )
             for column, value in enumerate(values):
@@ -708,7 +940,7 @@ class WorkloadWindow(QMainWindow):
                 self.table.setItem(row_index, column, item)
         self._filter_rows()
         self._set_status(
-            lambda: self.tr("{count} workloads in {namespaces} namespaces").format(
+            lambda: self.tr("{count} Deployments in {namespaces} namespaces").format(
                 count=len(workloads), namespaces=len(self._namespaces)
             )
         )
@@ -716,16 +948,20 @@ class WorkloadWindow(QMainWindow):
     def _filter_rows(self, *_args: object) -> None:
         query = self.search_input.text().strip().casefold()
         visible_rows = 0
-        for row_index, workload in enumerate(self._workloads):
-            searchable_text = f"{workload.namespace} {workload.kind} {workload.name}"
-            matches = query in searchable_text.casefold()
+        rows = self._current_rows()
+        for row_index, row in enumerate(rows):
+            kind = row.kind if isinstance(row, Workload) else "Pod"
+            matches = query in f"{row.namespace} {kind} {row.name}".casefold()
             self.table.setRowHidden(row_index, not matches)
             visible_rows += matches
         self._update_workload_actions()
+        template = (
+            self.tr("{visible} of {total} Pods")
+            if self._view == "pods"
+            else self.tr("{visible} of {total} Deployments")
+        )
         self.summary_label.setText(
-            self.tr("{visible} of {total} workloads").format(
-                visible=visible_rows, total=len(self._workloads)
-            )
+            template.format(visible=visible_rows, total=len(rows))
         )
 
     def _selected_workload(self) -> Workload | None:
@@ -734,8 +970,14 @@ class WorkloadWindow(QMainWindow):
             return self._workloads[row]
         return None
 
+    def _selected_pod(self) -> PodInfo | None:
+        row = self.table.currentRow()
+        if 0 <= row < len(self._pods) and not self.table.isRowHidden(row):
+            return self._pods[row]
+        return None
+
     def _update_workload_actions(self) -> None:
-        enabled = self._selected_workload() is not None
+        enabled = self._selected_row() is not None
         for button in (self.pods_button, self.details_button, self.logs_button):
             button.setEnabled(enabled and not self._close_when_worker_stops)
 
@@ -792,6 +1034,29 @@ class WorkloadWindow(QMainWindow):
             workload,
         )
 
+    def _view_details(self) -> None:
+        pod = self._selected_pod() if self._view == "pods" else None
+        if pod is None:
+            self._view_workload_details()
+            return
+        self._run_action(
+            get_resource_details,
+            lambda result: self._show_json_dialog(
+                self.tr("Pod: {name}").format(name=pod.name), result
+            ),
+            self._context(),
+            "Pod",
+            pod.namespace,
+            pod.name,
+        )
+
+    def _view_logs(self) -> None:
+        pod = self._selected_pod() if self._view == "pods" else None
+        if pod is None:
+            self._view_workload_logs()
+        else:
+            self._choose_container_for_logs(self._context(), pod)
+
     def _view_workload_details(self) -> None:
         workload = self._selected_workload()
         if workload is None:
@@ -834,14 +1099,14 @@ class WorkloadWindow(QMainWindow):
         logs_button = form.logsButton
         table.setRowCount(0)
         table.setRowCount(len(pods))
-        table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
-        for column, width in ((1, 90), (2, 120), (3, 110), (4, 90)):
+        table.horizontalHeader().setStretchLastSection(True)
+        for column, width in ((0, 320), (1, 90), (2, 120), (3, 110)):
             table.setColumnWidth(column, width)
         for row, pod in enumerate(pods):
             values = (
                 pod.name,
                 f"{pod.ready}/{pod.total}",
-                pod.phase,
+                self._phase_label(pod.phase),
                 str(len(pod.containers)),
                 pod.age,
             )
@@ -1050,8 +1315,8 @@ class WorkloadWindow(QMainWindow):
         # Real context names (often long ARNs) must stay readable: size the first
         # column to its content and let the editable name take the rest.
         header = table.horizontalHeader()
-        header.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
-        header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
+        header.setSectionResizeMode(0, QHeaderView.ResizeMode.Interactive)
+        header.setStretchLastSection(True)
         table.setTextElideMode(Qt.TextElideMode.ElideMiddle)
         for row, context in enumerate(self._contexts):
             name_item = QTableWidgetItem(context)
@@ -1059,6 +1324,7 @@ class WorkloadWindow(QMainWindow):
             name_item.setFlags(name_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
             table.setItem(row, 0, name_item)
             table.setItem(row, 1, QTableWidgetItem(aliases.get(context, "")))
+        table.resizeColumnToContents(0)  # a starting width; the user can drag it
         if self._contexts:
             form.contextsHint.setText(
                 QCoreApplication.translate(
@@ -1107,7 +1373,8 @@ class WorkloadWindow(QMainWindow):
         self._apply_page_titles()
         if self.namespace_combo.count():
             self.namespace_combo.setItemText(0, self.tr("All namespaces"))
-        self._render_workloads()
+        self._apply_view_columns()
+        self._render_rows()
         if self._overview is not None:
             self._render_overview(self._overview)
         else:
@@ -1120,8 +1387,9 @@ class WorkloadWindow(QMainWindow):
 
     def _show_error(self, message: str) -> None:
         self._workloads = []
+        self._pods = []
         self._set_status(
-            lambda: self.tr("Could not load workloads: {message}").format(
+            lambda: self.tr("Could not load resources: {message}").format(
                 message=message
             )
         )
@@ -1133,6 +1401,8 @@ class WorkloadWindow(QMainWindow):
         self.context_combo.setEnabled(True)
         self.namespace_combo.setEnabled(True)
         self._finish_deferred_close()
+        if self._worker is not None and self._worker.view != self._view:
+            QTimer.singleShot(0, self.refresh)  # the view changed mid-request
 
     def closeEvent(self, event: QCloseEvent) -> None:
         refresh_running = self._worker is not None and self._worker.isRunning()

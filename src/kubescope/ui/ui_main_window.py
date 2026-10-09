@@ -269,10 +269,41 @@ class Ui_MainWindow(object):
         self.navWorkloads.setIconSize(QSize(16, 16))
         self.navWorkloads.setCheckable(True)
         self.navWorkloads.setChecked(False)
-        self.navWorkloads.setAutoExclusive(True)
         self.navWorkloads.setProperty(u"nav", u"true")
 
         self.sidebarLayout.addWidget(self.navWorkloads)
+
+        self.workloadsSubmenu = QFrame(self.sidebar)
+        self.workloadsSubmenu.setObjectName(u"workloadsSubmenu")
+        self.workloadsSubmenu.setMaximumSize(QSize(16777215, 0))
+        self.workloadsSubmenuLayout = QVBoxLayout(self.workloadsSubmenu)
+        self.workloadsSubmenuLayout.setSpacing(0)
+        self.workloadsSubmenuLayout.setObjectName(u"workloadsSubmenuLayout")
+        self.workloadsSubmenuLayout.setContentsMargins(16, 0, 0, 0)
+        self.navPods = QPushButton(self.workloadsSubmenu)
+        self.navPods.setObjectName(u"navPods")
+        self.navPods.setMinimumSize(QSize(0, 42))
+        self.navPods.setIconSize(QSize(16, 16))
+        self.navPods.setCheckable(True)
+        self.navPods.setChecked(False)
+        self.navPods.setAutoExclusive(True)
+        self.navPods.setProperty(u"nav", u"true")
+
+        self.workloadsSubmenuLayout.addWidget(self.navPods)
+
+        self.navDeployments = QPushButton(self.workloadsSubmenu)
+        self.navDeployments.setObjectName(u"navDeployments")
+        self.navDeployments.setMinimumSize(QSize(0, 42))
+        self.navDeployments.setIconSize(QSize(16, 16))
+        self.navDeployments.setCheckable(True)
+        self.navDeployments.setChecked(False)
+        self.navDeployments.setAutoExclusive(True)
+        self.navDeployments.setProperty(u"nav", u"true")
+
+        self.workloadsSubmenuLayout.addWidget(self.navDeployments)
+
+
+        self.sidebarLayout.addWidget(self.workloadsSubmenu)
 
         self.navViewer = QPushButton(self.sidebar)
         self.navViewer.setObjectName(u"navViewer")
@@ -695,6 +726,8 @@ class Ui_MainWindow(object):
         self.navSection.setText(QCoreApplication.translate("MainWindow", u"MONITORING", None))
         self.navOverview.setText(QCoreApplication.translate("MainWindow", u"Overview", None))
         self.navWorkloads.setText(QCoreApplication.translate("MainWindow", u"Workloads", None))
+        self.navPods.setText(QCoreApplication.translate("MainWindow", u"Pods", None))
+        self.navDeployments.setText(QCoreApplication.translate("MainWindow", u"Deployments", None))
         self.navViewer.setText(QCoreApplication.translate("MainWindow", u"Details && Logs", None))
         self.settingsButton.setText(QCoreApplication.translate("MainWindow", u"Settings", None))
         self.sidebarNote.setText(QCoreApplication.translate("MainWindow", u"SECURE ACCESS\n"
