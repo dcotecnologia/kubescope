@@ -1,0 +1,5 @@
+title: KubeScope
+description: Read-only desktop viewer for Kubernetes and Amazon EKS.
+theme: jekyll-theme-cayman
+exclude:
+  - wiki
