@@ -1,4 +1,7 @@
 import json
+import sys
+import threading
+import time
 from datetime import UTC, datetime
 from types import SimpleNamespace
 
@@ -350,7 +353,7 @@ def _fake_kubectl(monkeypatch, tmp_path, run):
     executable = tmp_path / "kubectl"
     executable.write_text("")
     monkeypatch.setattr(cluster, "kubectl_executable", lambda: executable)
-    monkeypatch.setattr(cluster.subprocess, "run", run)
+    monkeypatch.setattr(cluster, "_run_process", run)
     return executable
 
 
@@ -588,7 +591,7 @@ def test_run_command_returns_output_and_reports_failures(monkeypatch) -> None:
             command, returncode, stdout, stderr
         )
 
-    monkeypatch.setattr(cluster.subprocess, "run", completed(0, "out"))
+    monkeypatch.setattr(cluster, "_run_process", completed(0, "out"))
     assert cluster._run_command(["aws", "x"], 5) == "out"
 
     for run, message in (
@@ -596,7 +599,7 @@ def test_run_command_returns_output_and_reports_failures(monkeypatch) -> None:
         (completed(1, "from stdout", ""), "from stdout"),
         (completed(2), "exited with 2"),
     ):
-        monkeypatch.setattr(cluster.subprocess, "run", run)
+        monkeypatch.setattr(cluster, "_run_process", run)
         with pytest.raises(cluster.KubectlError, match=message):
             cluster._run_command(["aws", "x"], 5)
 
@@ -606,10 +609,10 @@ def test_run_command_returns_output_and_reports_failures(monkeypatch) -> None:
     def missing(_command, **_kwargs):
         raise OSError("not found")
 
-    monkeypatch.setattr(cluster.subprocess, "run", timeout)
+    monkeypatch.setattr(cluster, "_run_process", timeout)
     with pytest.raises(cluster.KubectlError, match="timed out"):
         cluster._run_command(["aws"], 5)
-    monkeypatch.setattr(cluster.subprocess, "run", missing)
+    monkeypatch.setattr(cluster, "_run_process", missing)
     with pytest.raises(cluster.KubectlError, match="Could not start aws"):
         cluster._run_command(["aws"], 5)
 
@@ -797,3 +800,64 @@ def test_open_terminal_on_windows_and_when_it_cannot_start(monkeypatch) -> None:
     monkeypatch.setattr(cluster.subprocess, "Popen", broken)
     with pytest.raises(cluster.KubectlError, match="Could not open a terminal"):
         cluster._open_terminal(["aws", "configure"])
+
+
+def test_run_process_captures_output_and_the_exit_code() -> None:
+    script = "import sys; print('out'); print('err', file=sys.stderr); sys.exit(3)"
+
+    result = cluster._run_process([sys.executable, "-c", script], timeout=20)
+
+    assert (result.stdout.strip(), result.stderr.strip(), result.returncode) == (
+        "out",
+        "err",
+        3,
+    )
+    assert not cluster._running
+
+
+def test_run_process_stops_the_whole_process_group_on_timeout() -> None:
+    started = time.monotonic()
+
+    with pytest.raises(cluster.subprocess.TimeoutExpired):
+        cluster._run_process(["sh", "-c", "sleep 30; true"], timeout=0.3)
+
+    assert time.monotonic() - started < 10  # the grandchild did not hold it up
+    assert not cluster._running
+
+
+def test_cancel_running_stops_commands_that_are_in_flight() -> None:
+    outcome = []
+
+    def run() -> None:
+        outcome.append(cluster._run_process(["sh", "-c", "sleep 30; true"], 60))
+
+    worker = threading.Thread(target=run)
+    started = time.monotonic()
+    worker.start()
+    deadline = time.monotonic() + 5
+    while not cluster._running and time.monotonic() < deadline:
+        time.sleep(0.01)
+
+    cluster.cancel_running()
+    worker.join(10)
+
+    assert not worker.is_alive() and time.monotonic() - started < 10
+    assert outcome[0].returncode != 0
+    cluster.cancel_running()  # nothing left: harmless
+
+
+def test_stop_handles_windows_and_already_finished_processes(monkeypatch) -> None:
+    calls = []
+    process = SimpleNamespace(pid=4242)
+
+    monkeypatch.setattr(cluster.sys, "platform", "win32")
+    monkeypatch.setattr(cluster.subprocess, "run", lambda cmd, **_kw: calls.append(cmd))
+    cluster._stop(process)
+    assert calls == [["taskkill", "/F", "/T", "/PID", "4242"]]
+
+    def gone(_pid, _signal):
+        raise ProcessLookupError
+
+    monkeypatch.setattr(cluster.sys, "platform", "linux")
+    monkeypatch.setattr(cluster.os, "killpg", gone)
+    cluster._stop(process)  # must not raise

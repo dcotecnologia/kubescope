@@ -273,13 +273,24 @@ def test_actions_are_ignored_while_the_window_waits_to_close(monkeypatch) -> Non
 
     assert window._action_workers == []
     closed = []
-    monkeypatch.setattr(window, "close", lambda: closed.append(True))
+    monkeypatch.setattr(window, "close", lambda: closed.append("close"))
+    monkeypatch.setattr(
+        QApplication, "quit", staticmethod(lambda: closed.append("quit"))
+    )
     window._finish_deferred_close()
-    assert closed == [True]
+    assert closed == ["close", "quit"]  # the app ends once the last worker is done
 
 
-def test_closing_waits_for_running_workers(monkeypatch) -> None:
+def test_closing_hides_the_window_and_stops_the_running_requests(
+    monkeypatch,
+) -> None:
     window = _ready_window(monkeypatch)
+    window.show()
+    cancelled = []
+    monkeypatch.setattr(window_module, "cancel_running", lambda: cancelled.append(True))
+    monkeypatch.setattr(
+        QApplication, "quit", staticmethod(lambda: cancelled.append("quit"))
+    )
     running = FakeRefreshWorker("prod", None)
     running.running = True
     window._worker = running
@@ -287,19 +298,38 @@ def test_closing_waits_for_running_workers(monkeypatch) -> None:
     event = QCloseEvent()
     window.closeEvent(event)
     assert not event.isAccepted() and window._close_when_worker_stops
+    assert not window.isVisible()  # closing feels instant
+    assert cancelled == [True]
+    assert QApplication.quitOnLastWindowClosed() is False
 
     window._worker = None
     window._action_workers = [running]
-    window._finish_deferred_close()  # an action is still running: stay open
-    event = QCloseEvent()
-    window.closeEvent(event)
-    assert not event.isAccepted()
-
+    window._finish_deferred_close()  # an action is still running: not yet
+    assert "quit" not in cancelled
     window._action_workers = []
+    window._finish_deferred_close()  # the last one is done
+    assert cancelled[-1] == "quit"
+
+    QApplication.setQuitOnLastWindowClosed(True)
     window._close_when_worker_stops = False
     event = QCloseEvent()
     window.closeEvent(event)
     assert event.isAccepted()
+
+
+def test_no_error_box_while_the_window_is_closing(monkeypatch) -> None:
+    window = _ready_window(monkeypatch)
+    shown = []
+    monkeypatch.setattr(QMessageBox, "exec", lambda box: shown.append(box.text()))
+
+    window._close_when_worker_stops = True
+    window._show_action_error("kubectl exited with -15")
+    assert shown == []
+
+    window._close_when_worker_stops = False
+    window._show_action_error("kubectl exited with 1")
+    assert shown
+    window.close()
 
 
 def test_actions_without_a_selection_do_nothing(monkeypatch) -> None:
@@ -744,3 +774,44 @@ def test_actions_never_run_on_the_main_thread(monkeypatch) -> None:
     _wait_until(lambda: results and not window._action_workers)
     assert threads[0] is not threading.main_thread()
     window.close()
+
+
+def test_expected_cluster_errors_are_not_logged_as_errors(monkeypatch, caplog) -> None:
+    def expired(*_args):
+        raise KubectlError("Error loading SSO Token: Token does not exist")
+
+    monkeypatch.setattr(window_module, "get_pods", expired)
+    monkeypatch.setattr(window_module, "get_workloads", lambda *_a: (["a"], []))
+    monkeypatch.setattr(window_module, "get_usage", expired)
+    failures = []
+
+    with caplog.at_level("INFO"):
+        pods = window_module.RefreshWorker("ctx", None, "pods")
+        pods.failed.connect(failures.append)
+        pods.run()
+        window_module.RefreshWorker("ctx", None).run()  # usage is optional
+        action = window_module.ActionWorker(expired, ())
+        action.failed.connect(failures.append)
+        action.run()
+
+    assert len(failures) == 2 and "SSO Token" in failures[0]
+    assert caplog.records == []
+
+
+def test_unexpected_failures_are_still_logged_with_a_traceback(
+    monkeypatch, caplog
+) -> None:
+    def broken(*_args):
+        raise RuntimeError("a bug")
+
+    monkeypatch.setattr(window_module, "get_pods", broken)
+    monkeypatch.setattr(window_module, "get_workloads", lambda *_a: (["a"], []))
+    monkeypatch.setattr(window_module, "get_usage", broken)
+
+    with caplog.at_level("INFO"):
+        window_module.RefreshWorker("ctx", None, "pods").run()
+        window_module.RefreshWorker("ctx", None).run()
+        window_module.ActionWorker(broken, ()).run()
+
+    assert len(caplog.records) == 3
+    assert all(record.exc_info for record in caplog.records)

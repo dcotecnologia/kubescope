@@ -33,6 +33,7 @@ from PySide6.QtGui import (
     QPolygonF,
 )
 from PySide6.QtWidgets import (
+    QApplication,
     QDialog,
     QHeaderView,
     QInputDialog,
@@ -48,7 +49,9 @@ from PySide6.QtWidgets import (
 )
 
 from kubescope.cluster import (
+    KubectlError,
     LoginAction,
+    cancel_running,
     check_login,
     get_cluster_overview,
     get_pod_logs,
@@ -170,6 +173,9 @@ class RefreshWorker(QThread):
                 items = [item for item in workloads if item.kind == "Deployment"]
                 try:
                     usage = get_usage(self.context, self.namespace)
+                except KubectlError as error:  # metrics-server is optional
+                    logger.debug("No Pod usage for %s: %s", self.context, error)
+                    usage = {}
                 except Exception:
                     logger.exception("Could not load Pod usage for %s", self.context)
                     usage = {}
@@ -186,6 +192,12 @@ class RefreshWorker(QThread):
                         or (0, None, None)
                     ]
                 ]
+        except KubectlError as error:  # expected: the window explains it
+            logger.debug(
+                "Could not load %s from %s: %s", self.view, self.context, error
+            )
+            self.failed.emit(str(error))
+            return
         except Exception as error:
             logger.exception(
                 "Could not load %s from context %s", self.view, self.context
@@ -211,6 +223,10 @@ class ActionWorker(QThread):
     def run(self) -> None:
         try:
             result = self.operation(*self.arguments)
+        except KubectlError as error:  # expected: the window explains it
+            logger.debug("Kubernetes action failed: %s", error)
+            self.failed.emit(str(error))
+            return
         except Exception as error:
             logger.exception("Kubernetes detail action failed")
             self.failed.emit(str(error))
@@ -1133,6 +1149,7 @@ class WorkloadWindow(QMainWindow):
             and not actions_running
         ):
             self.close()
+            QApplication.quit()
 
     def _view_workload_pods(self) -> None:
         workload = self._selected_workload()
@@ -1495,6 +1512,8 @@ class WorkloadWindow(QMainWindow):
             self.status_label.setText(self._status_message())
 
     def _show_action_error(self, message: str) -> None:
+        if self._close_when_worker_stops:
+            return  # the window is closing; the cancelled request is no news
         info = describe_error(message)
         box = QMessageBox(self)
         box.setIcon(QMessageBox.Icon.Warning)
@@ -1526,11 +1545,12 @@ class WorkloadWindow(QMainWindow):
         refresh_running = self._worker is not None and self._worker.isRunning()
         actions_running = any(worker.isRunning() for worker in self._action_workers)
         if refresh_running or actions_running:
+            # Stop kubectl and the AWS CLI so the workers return at once, hide the
+            # window so closing feels instant, and quit when the last one is done.
             self._close_when_worker_stops = True
-            self._set_status(
-                lambda: self.tr("Finishing the current cluster request...")
-            )
-            self._update_workload_actions()
+            QApplication.setQuitOnLastWindowClosed(False)
+            cancel_running()
+            self.hide()
             event.ignore()
             return
         super().closeEvent(event)

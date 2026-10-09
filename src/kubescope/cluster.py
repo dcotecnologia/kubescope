@@ -1,8 +1,11 @@
+import contextlib
 import json
 import os
 import shutil
+import signal
 import subprocess
 import sys
+import threading
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, replace
 from datetime import UTC, datetime
@@ -25,6 +28,10 @@ class KubectlError(RuntimeError):
     """Raised when the bundled kubectl command fails."""
 
 
+_running: set[subprocess.Popen] = set()
+_running_lock = threading.Lock()
+
+
 def kubectl_executable() -> Path:
     executable_name = "kubectl.exe" if os.name == "nt" else "kubectl"
     if getattr(sys, "frozen", False):
@@ -32,6 +39,52 @@ def kubectl_executable() -> Path:
         return bundle_directory / "kubectl" / executable_name
     project_directory = Path(__file__).resolve().parents[2]
     return project_directory / "vendor" / "kubectl" / executable_name
+
+
+def _stop(process: subprocess.Popen) -> None:
+    """Stop a command and everything it started: kubectl runs `aws eks get-
+    token`, and the AWS CLI can start more, all holding the output open."""
+    if sys.platform == "win32":
+        subprocess.run(
+            ["taskkill", "/F", "/T", "/PID", str(process.pid)],
+            capture_output=True,
+            check=False,
+        )
+    else:
+        with contextlib.suppress(ProcessLookupError):  # it may already be gone
+            os.killpg(process.pid, signal.SIGTERM)
+
+
+def _run_process(command: list[str], timeout: float) -> subprocess.CompletedProcess:
+    """Run a command and capture its output, keeping it listed while it runs so
+    closing the app can stop it."""
+    process = subprocess.Popen(
+        command,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        start_new_session=sys.platform != "win32",  # its own group, to stop it whole
+    )
+    with _running_lock:
+        _running.add(process)
+    try:
+        stdout, stderr = process.communicate(timeout=timeout)
+    except subprocess.TimeoutExpired:
+        _stop(process)
+        process.communicate()
+        raise
+    finally:
+        with _running_lock:
+            _running.discard(process)
+    return subprocess.CompletedProcess(command, process.returncode, stdout, stderr)
+
+
+def cancel_running() -> None:
+    """Stop every kubectl or AWS CLI process in flight; their callers see a
+    failure and return at once."""
+    with _running_lock:
+        for process in _running:
+            _stop(process)
 
 
 def _run_kubectl(*arguments: str, context: str | None = None) -> str:
@@ -46,13 +99,7 @@ def _run_kubectl(*arguments: str, context: str | None = None) -> str:
         command.extend(("--context", context))
     command.extend(arguments)
     try:
-        result = subprocess.run(
-            command,
-            capture_output=True,
-            check=False,
-            text=True,
-            timeout=45,
-        )
+        result = _run_process(command, timeout=45)
     except subprocess.TimeoutExpired as error:
         raise KubectlError("kubectl timed out while contacting the cluster") from error
     except OSError as error:
@@ -86,13 +133,7 @@ AWS_TIMEOUT = 30
 
 def _run_command(command: list[str], timeout: float) -> str:
     try:
-        result = subprocess.run(
-            command,
-            capture_output=True,
-            check=False,
-            text=True,
-            timeout=timeout,
-        )
+        result = _run_process(command, timeout=timeout)
     except subprocess.TimeoutExpired as error:
         raise KubectlError(f"{command[0]} timed out") from error
     except OSError as error:
