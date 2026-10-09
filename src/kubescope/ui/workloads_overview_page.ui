@@ -1,0 +1,357 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>WorkloadsOverviewPage</class>
+ <widget class="QWidget" name="WorkloadsOverviewPage">
+  <layout class="QVBoxLayout" name="workloadsOverviewLayout" stretch="0,0,0,0,1">
+   <property name="spacing">
+    <number>14</number>
+   </property>
+   <property name="leftMargin">
+    <number>32</number>
+   </property>
+   <property name="topMargin">
+    <number>24</number>
+   </property>
+   <property name="rightMargin">
+    <number>32</number>
+   </property>
+   <property name="bottomMargin">
+    <number>22</number>
+   </property>
+   <item>
+    <layout class="QHBoxLayout" name="workloadsHeaderRow">
+     <property name="spacing">
+      <number>12</number>
+     </property>
+     <item>
+      <widget class="QLabel" name="workloadsHeading">
+       <property name="text">
+        <string>Workloads</string>
+       </property>
+       <property name="variant" stdset="0">
+        <string notr="true">cardTitle</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <spacer name="workloadsHeaderSpacer">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item>
+      <widget class="QPushButton" name="workloadsRefreshButton">
+       <property name="text">
+        <string>Refresh</string>
+       </property>
+       <property name="variant" stdset="0">
+        <string notr="true">primary</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <widget class="QFrame" name="kindsCard">
+     <property name="card" stdset="0">
+      <string notr="true">true</string>
+     </property>
+     <layout class="QGridLayout" name="kindsGrid" columnstretch="0,1,0,0,1">
+      <property name="leftMargin">
+       <number>20</number>
+      </property>
+      <property name="topMargin">
+       <number>14</number>
+      </property>
+      <property name="rightMargin">
+       <number>20</number>
+      </property>
+      <property name="bottomMargin">
+       <number>14</number>
+      </property>
+      <property name="horizontalSpacing">
+       <number>12</number>
+      </property>
+      <property name="verticalSpacing">
+       <number>6</number>
+      </property>
+     <item row="0" column="0">
+      <widget class="QPushButton" name="podsLink">
+       <property name="text">
+        <string>Pods</string>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>150</width>
+         <height>28</height>
+        </size>
+       </property>
+       <property name="flat">
+        <bool>true</bool>
+       </property>
+       <property name="variant" stdset="0">
+        <string notr="true">link</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="1">
+      <widget class="StatusBar" name="podsBar" />
+     </item>
+     <item row="1" column="0">
+      <widget class="QPushButton" name="deploymentsLink">
+       <property name="text">
+        <string>Deployments</string>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>150</width>
+         <height>28</height>
+        </size>
+       </property>
+       <property name="flat">
+        <bool>true</bool>
+       </property>
+       <property name="variant" stdset="0">
+        <string notr="true">link</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="1">
+      <widget class="StatusBar" name="deploymentsBar" />
+     </item>
+     <item row="2" column="0">
+      <widget class="QPushButton" name="daemonsetsLink">
+       <property name="text">
+        <string>DaemonSets</string>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>150</width>
+         <height>28</height>
+        </size>
+       </property>
+       <property name="flat">
+        <bool>true</bool>
+       </property>
+       <property name="variant" stdset="0">
+        <string notr="true">link</string>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="1">
+      <widget class="StatusBar" name="daemonsetsBar" />
+     </item>
+     <item row="3" column="0">
+      <widget class="QPushButton" name="statefulsetsLink">
+       <property name="text">
+        <string>StatefulSets</string>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>150</width>
+         <height>28</height>
+        </size>
+       </property>
+       <property name="flat">
+        <bool>true</bool>
+       </property>
+       <property name="variant" stdset="0">
+        <string notr="true">link</string>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="1">
+      <widget class="StatusBar" name="statefulsetsBar" />
+     </item>
+     <item row="0" column="3">
+      <widget class="QPushButton" name="replicasetsLink">
+       <property name="text">
+        <string>ReplicaSets</string>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>150</width>
+         <height>28</height>
+        </size>
+       </property>
+       <property name="flat">
+        <bool>true</bool>
+       </property>
+       <property name="variant" stdset="0">
+        <string notr="true">link</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="4">
+      <widget class="StatusBar" name="replicasetsBar" />
+     </item>
+     <item row="1" column="3">
+      <widget class="QPushButton" name="jobsLink">
+       <property name="text">
+        <string>Jobs</string>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>150</width>
+         <height>28</height>
+        </size>
+       </property>
+       <property name="flat">
+        <bool>true</bool>
+       </property>
+       <property name="variant" stdset="0">
+        <string notr="true">link</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="4">
+      <widget class="StatusBar" name="jobsBar" />
+     </item>
+     <item row="2" column="3">
+      <widget class="QPushButton" name="cronjobsLink">
+       <property name="text">
+        <string>CronJobs</string>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>150</width>
+         <height>28</height>
+        </size>
+       </property>
+       <property name="flat">
+        <bool>true</bool>
+       </property>
+       <property name="variant" stdset="0">
+        <string notr="true">link</string>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="4">
+      <widget class="StatusBar" name="cronjobsBar" />
+     </item>
+      <item row="0" column="2" rowspan="4">
+       <spacer name="kindsGap">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>32</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLabel" name="noticeLabel">
+     <property name="text">
+      <string notr="true" />
+     </property>
+     <property name="variant" stdset="0">
+      <string notr="true">muted</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLabel" name="eventsHeading">
+     <property name="text">
+      <string>Events</string>
+     </property>
+     <property name="variant" stdset="0">
+      <string notr="true">cardTitle</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QTableWidget" name="eventsTable">
+     <property name="editTriggers">
+      <set>QAbstractItemView::NoEditTriggers</set>
+     </property>
+     <property name="selectionMode">
+      <enum>QAbstractItemView::SingleSelection</enum>
+     </property>
+     <property name="selectionBehavior">
+      <enum>QAbstractItemView::SelectRows</enum>
+     </property>
+     <property name="alternatingRowColors">
+      <bool>false</bool>
+     </property>
+     <property name="textElideMode">
+      <enum>Qt::ElideRight</enum>
+     </property>
+     <attribute name="verticalHeaderVisible">
+      <bool>false</bool>
+     </attribute>
+     <attribute name="verticalHeaderDefaultSectionSize">
+      <number>40</number>
+     </attribute>
+     <attribute name="horizontalHeaderStretchLastSection">
+      <bool>false</bool>
+     </attribute>
+     <column>
+      <property name="text">
+       <string>TYPE</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>SOURCE</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>NAMESPACE</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>INVOLVED OBJECT</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>MESSAGE</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>COUNT</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>AGE</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>LAST SEEN</string>
+      </property>
+     </column>
+     <property name="variant" stdset="0">
+      <string notr="true">data</string>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>StatusBar</class>
+   <extends>QWidget</extends>
+   <header>kubescope.widgets</header>
+  </customwidget>
+ </customwidgets>
+ <resources />
+ <connections />
+</ui>

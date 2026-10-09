@@ -13,6 +13,16 @@ memory), Pod counts by state, and the number of namespaces, Deployments,
 StatefulSets and DaemonSets. Real CPU and memory usage appears when the cluster
 has `metrics-server`.
 
+## Workloads overview
+
+**Workloads > Overview** shows how many Pods, Deployments, DaemonSets, StatefulSets,
+ReplicaSets, Jobs and CronJobs the cluster has, each with a bar: green for healthy,
+orange for coming up or degraded, red for failing. The grey remainder is idle on
+purpose, such as a Deployment scaled to zero. Click a name to open its list. Below,
+the **Events** table lists the latest events of the cluster (warnings in orange),
+newest first, with their count, age and when they were last seen. A section you are
+not allowed to read is named under the bars instead of failing the page.
+
 ## Pods and workloads
 
 Click **Workloads** to slide out **Pods**, **Deployments**, **StatefulSets**, **Jobs**

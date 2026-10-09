@@ -1050,3 +1050,205 @@ def test_cron_job_pods_come_from_the_jobs_it_created(monkeypatch) -> None:
         cluster, "_get_json", lambda *a, context: {"items": [other, standalone]}
     )
     assert cluster.get_workload_pods("ctx", cron) == []  # no Jobs, no Pods
+
+
+NOW = datetime(2025, 1, 2, 12, 0, tzinfo=UTC)
+
+
+def _item(kind, name="x", spec=None, status=None) -> dict:
+    return {
+        "kind": kind,
+        "metadata": {"name": name, "namespace": "ns"},
+        "spec": spec or {},
+        "status": status or {},
+    }
+
+
+def test_workloads_are_counted_by_health() -> None:
+    items = [
+        _item("Deployment", spec={"replicas": 2}, status={"readyReplicas": 2}),  # ok
+        _item(
+            "Deployment", spec={"replicas": 2}, status={"readyReplicas": 1}
+        ),  # warning
+        _item("Deployment", spec={"replicas": 2}),  # bad
+        _item("Deployment", spec={"replicas": 0}),  # idle: scaled to zero
+        {"kind": "Deployment", "metadata": {}},  # unnamed: not counted
+    ]
+
+    summary = cluster._summarize_workloads(items, NOW)
+
+    assert (summary.total, summary.ok, summary.warning, summary.bad) == (4, 1, 1, 1)
+
+
+def test_pods_are_counted_by_phase_and_readiness() -> None:
+    def pod(phase, ready, total=1):
+        return {
+            "metadata": {"name": "p"},
+            "spec": {"containers": [{"name": f"c{i}"} for i in range(total)]},
+            "status": {
+                "phase": phase,
+                "containerStatuses": [{"ready": i < ready} for i in range(total)],
+            },
+        }
+
+    items = [
+        pod("Running", 1),  # ok
+        pod("Succeeded", 0),  # ok
+        pod("Running", 1, 2),  # running but not ready: warning
+        pod("Pending", 0),  # warning
+        pod("Failed", 0),  # bad
+        pod("Unknown", 0),  # bad
+        {"metadata": {}},  # unnamed
+    ]
+
+    summary = cluster._summarize_pods(items, NOW)
+
+    assert (summary.total, summary.ok, summary.warning, summary.bad) == (6, 2, 2, 2)
+
+
+def test_events_use_whichever_timestamp_the_cluster_provides() -> None:
+    created = "2025-01-02T03:00:00Z"
+    base = {
+        "metadata": {"namespace": "ns", "creationTimestamp": created},
+        "message": "hi",
+    }
+
+    classic = cluster._parse_event(
+        {
+            **base,
+            "type": "Warning",
+            "lastTimestamp": "2025-01-02T11:00:00Z",
+            "count": 7,
+            "source": {"component": "kubelet"},
+            "involvedObject": {"kind": "Pod", "name": "api-1"},
+        },
+        NOW,
+    )
+    assert classic is not None
+    seen, event = classic
+    assert seen == 3600 and event.type == "Warning" and event.count == 7
+    assert (event.source, event.namespace, event.involved) == (
+        "kubelet",
+        "ns",
+        "Pod: api-1",
+    )
+    assert (event.age, event.last_seen) == ("9h", "1h")
+
+    modern = cluster._parse_event(
+        {
+            **base,
+            "series": {"lastObservedTime": "2025-01-02T11:30:00Z", "count": 3},
+            "reportingComponent": "secret-store",
+            "involvedObject": {"namespace": "other"},
+        },
+        NOW,
+    )
+    assert modern is not None
+    assert modern[1].count == 3 and modern[1].source == "secret-store"
+    assert modern[1].involved == "?: ?" and modern[1].type == "Normal"
+
+    only_event_time = cluster._parse_event(
+        {
+            "message": "hi",
+            "eventTime": "2025-01-02T11:59:00Z",
+            "involvedObject": {"namespace": "o"},
+            "metadata": {},
+        },
+        NOW,
+    )
+    assert only_event_time is not None and only_event_time[1].namespace == "o"
+    assert only_event_time[1].age == "unknown" and only_event_time[1].source == ""
+
+    undated = cluster._parse_event({"message": "hi", "metadata": {}}, NOW)
+    assert undated is not None and undated[0] == float("inf")
+    assert undated[1].last_seen == "unknown"
+    assert cluster._parse_event({"metadata": {}}, NOW) is None  # nothing to say
+
+
+def _overview_documents(extra_events=0):
+    events = [
+        {
+            "message": f"event {i}",
+            "metadata": {
+                "namespace": "ns",
+                "creationTimestamp": "2025-01-01T00:00:00Z",
+            },
+            "lastTimestamp": f"2025-01-02T{i % 24:02d}:00:00Z",
+            "involvedObject": {"kind": "Pod", "name": "p"},
+        }
+        for i in range(2 + extra_events)
+    ]
+    return {
+        "pods": {"items": []},
+        "deployments": {
+            "items": [
+                _item("Deployment", spec={"replicas": 1}, status={"readyReplicas": 1})
+            ]
+        },
+        "daemonsets": {"items": []},
+        "statefulsets": {"items": []},
+        "replicasets": {"items": [_item("ReplicaSet", spec={"replicas": 0})]},
+        "jobs": {
+            "items": [
+                _item(
+                    "Job",
+                    status={
+                        "succeeded": 1,
+                        "conditions": [{"type": "Complete", "status": "True"}],
+                    },
+                )
+            ]
+        },
+        "cronjobs": {"items": []},
+        "events": {"items": events},
+    }
+
+
+def test_workloads_overview_counts_every_kind_and_lists_recent_events(
+    monkeypatch,
+) -> None:
+    documents = _overview_documents()
+    monkeypatch.setattr(cluster, "_get_json", lambda *a, context: documents[a[1]])
+
+    overview = cluster.get_workloads_overview("ctx")
+
+    assert set(overview.kinds) == set(cluster.OVERVIEW_KINDS)
+    assert (
+        overview.kinds["Deployment"].ok == 1 and overview.kinds["ReplicaSet"].total == 1
+    )
+    assert overview.kinds["ReplicaSet"].ok == 0  # scaled to zero: idle
+    assert overview.kinds["Job"].ok == 1
+    assert [e.message for e in overview.events] == [
+        "event 1",
+        "event 0",
+    ]  # newest first
+    assert overview.unreadable == ()
+
+
+def test_workloads_overview_reports_unreadable_sections_and_caps_events(
+    monkeypatch,
+) -> None:
+    documents = _overview_documents(extra_events=cluster.EVENT_LIMIT + 10)
+
+    def fake(*arguments, context):
+        if arguments[1] in {"daemonsets", "replicasets"}:
+            raise cluster.KubectlError("forbidden: cannot list")
+        return documents[arguments[1]]
+
+    monkeypatch.setattr(cluster, "_get_json", fake)
+
+    overview = cluster.get_workloads_overview("ctx")
+
+    assert "DaemonSet" not in overview.kinds and "ReplicaSet" not in overview.kinds
+    assert set(overview.unreadable) == {"DaemonSet", "ReplicaSet"}
+    assert len(overview.events) == cluster.EVENT_LIMIT
+
+
+def test_workloads_overview_fails_when_nothing_is_readable(monkeypatch) -> None:
+    def forbidden(*_a, context):
+        raise cluster.KubectlError("Unable to connect to the server")
+
+    monkeypatch.setattr(cluster, "_get_json", forbidden)
+
+    with pytest.raises(cluster.KubectlError, match="Unable to connect"):
+        cluster.get_workloads_overview("ctx")

@@ -11,15 +11,22 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, replace
 from datetime import UTC, datetime
+from functools import partial
 from pathlib import Path
 from typing import Any
 
 from kubescope.errors import first_line, is_auth_error
 from kubescope.models import (
+    BAD_STATUSES,
+    OK_STATUSES,
+    WARNING_STATUSES,
     ClusterOverview,
+    EventInfo,
+    KindSummary,
     NodeInfo,
     PodInfo,
     Workload,
+    WorkloadsOverview,
     format_age,
     parse_cpu,
     parse_memory,
@@ -319,6 +326,7 @@ _RESOURCES = {
     "Deployment": "deployments",
     "StatefulSet": "statefulsets",
     "DaemonSet": "daemonsets",
+    "ReplicaSet": "replicasets",
     "Job": "jobs",
     "CronJob": "cronjobs",
 }
@@ -793,3 +801,143 @@ def get_cluster_overview(context: str) -> ClusterOverview:
         logger.info("Overview section %s unavailable: %s", name, first_line(reason))
     errors.pop("metrics", None)
     return _build_overview(results, errors, datetime.now(UTC))
+
+
+OVERVIEW_KINDS = (
+    "Pod",
+    "Deployment",
+    "DaemonSet",
+    "StatefulSet",
+    "ReplicaSet",
+    "Job",
+    "CronJob",
+)
+EVENT_LIMIT = 200  # the most recent events are the useful ones
+
+
+def _summarize_workloads(items: list[dict[str, Any]], now: datetime) -> KindSummary:
+    counts = {"ok": 0, "warning": 0, "bad": 0}
+    total = 0
+    for item in items:
+        workload = _parse_workload(item, now)
+        if workload is None:
+            continue
+        total += 1
+        if workload.status in OK_STATUSES:
+            counts["ok"] += 1
+        elif workload.status in WARNING_STATUSES:
+            counts["warning"] += 1
+        elif workload.status in BAD_STATUSES:
+            counts["bad"] += 1
+    return KindSummary(total, **counts)
+
+
+def _summarize_pods(items: list[dict[str, Any]], now: datetime) -> KindSummary:
+    counts = {"ok": 0, "warning": 0, "bad": 0}
+    total = 0
+    for item in items:
+        pod = _parse_pod(item, now)
+        if pod is None:
+            continue
+        total += 1
+        if pod.phase == "Succeeded" or (
+            pod.phase == "Running" and pod.ready >= pod.total
+        ):
+            counts["ok"] += 1
+        elif pod.phase in {"Pending", "Running"}:
+            counts["warning"] += 1
+        else:
+            counts["bad"] += 1
+    return KindSummary(total, **counts)
+
+
+def _seconds_since(timestamp: str | None, now: datetime) -> float | None:
+    if not timestamp:
+        return None
+    return (
+        now - datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
+    ).total_seconds()
+
+
+def _parse_event(item: dict[str, Any], now: datetime) -> tuple[float, EventInfo] | None:
+    """An event and how long ago it was last seen, for ordering."""
+    metadata = item.get("metadata") or {}
+    involved = item.get("involvedObject") or {}
+    message = item.get("message")
+    if not message:
+        return None
+    series = item.get("series") or {}
+    last_seen = _seconds_since(
+        item.get("lastTimestamp")
+        or series.get("lastObservedTime")
+        or item.get("eventTime")
+        or metadata.get("creationTimestamp"),
+        now,
+    )
+    created = _seconds_since(metadata.get("creationTimestamp"), now)
+    source = (item.get("source") or {}).get("component") or item.get(
+        "reportingComponent"
+    )
+    return (
+        last_seen if last_seen is not None else float("inf"),
+        EventInfo(
+            type=item.get("type") or "Normal",
+            source=source or "",
+            namespace=metadata.get("namespace") or involved.get("namespace") or "",
+            involved=f"{involved.get('kind') or '?'}: {involved.get('name') or '?'}",
+            message=message,
+            count=item.get("count") or series.get("count") or 1,
+            age=format_age(created) if created is not None else "unknown",
+            last_seen=format_age(last_seen) if last_seen is not None else "unknown",
+        ),
+    )
+
+
+def get_workloads_overview(context: str) -> WorkloadsOverview:
+    """Count every workload kind by health and list the latest events.
+
+    A section the user cannot read is reported instead of failing the
+    page.
+    """
+    tasks = {
+        kind: partial(
+            _get_json, "get", _RESOURCES.get(kind, "pods"), "-A", context=context
+        )
+        for kind in OVERVIEW_KINDS
+    }
+    tasks["Event"] = partial(_get_json, "get", "events", "-A", context=context)
+    results: dict[str, Any] = {}
+    errors: dict[str, str] = {}
+    with ThreadPoolExecutor(max_workers=len(tasks)) as pool:
+        futures = {name: pool.submit(task) for name, task in tasks.items()}
+        for name, future in futures.items():
+            try:
+                results[name] = future.result()
+            except (KubectlError, ValueError) as error:
+                errors[name] = str(error)
+    if not results:
+        raise KubectlError(next(iter(errors.values()), "No data returned"))
+    for name, reason in errors.items():
+        logger.info("Workloads overview: %s unavailable: %s", name, first_line(reason))
+
+    now = datetime.now(UTC)
+    kinds = {
+        kind: (_summarize_pods if kind == "Pod" else _summarize_workloads)(
+            results[kind].get("items") or [], now
+        )
+        for kind in OVERVIEW_KINDS
+        if kind in results
+    }
+    events = sorted(
+        (
+            parsed
+            for item in (results.get("Event") or {}).get("items") or []
+            if (parsed := _parse_event(item, now)) is not None
+        ),
+        key=lambda pair: pair[0],
+    )[:EVENT_LIMIT]
+    return WorkloadsOverview(
+        kinds=kinds,
+        events=tuple(event for _seen, event in events),
+        unreadable=tuple(errors),
+    )

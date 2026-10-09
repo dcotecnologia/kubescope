@@ -18,7 +18,15 @@ from PySide6.QtWidgets import (
 
 from kubescope import window as window_module
 from kubescope.cluster import KubectlError, LoginAction
-from kubescope.models import ClusterOverview, NodeInfo, PodInfo, Workload
+from kubescope.models import (
+    ClusterOverview,
+    EventInfo,
+    KindSummary,
+    NodeInfo,
+    PodInfo,
+    Workload,
+    WorkloadsOverview,
+)
 
 application = QApplication.instance() or QApplication([])
 
@@ -1035,3 +1043,168 @@ def test_cron_job_lists_skip_the_pod_usage_lookup(monkeypatch) -> None:
     worker.run()
 
     assert done[0][0].name == "nightly" and done[0][0].cpu is None
+
+
+def _workloads_overview(**changes) -> WorkloadsOverview:
+    kinds = {
+        "Pod": KindSummary(18, 17, 1, 0),
+        "Deployment": KindSummary(17, 15, 2, 0),
+        "DaemonSet": KindSummary(0),
+        "StatefulSet": KindSummary(1, 1, 0, 0),
+        "ReplicaSet": KindSummary(161, 17, 0, 1),
+        "Job": KindSummary(4, 3, 0, 1),
+        "CronJob": KindSummary(0),
+    }
+    events = (
+        EventInfo("Warning", "kubelet", "ns", "Pod: api-1", "Back-off", 12, "2h", "5m"),
+        EventInfo("Normal", "ctl", "ns", "Deployment: web", "Scaled up", 1, "1d", "1d"),
+    )
+    return WorkloadsOverview(**{"kinds": kinds, "events": events, **changes})
+
+
+def test_workloads_overview_is_the_first_entry_of_the_workloads_menu(
+    monkeypatch,
+) -> None:
+    window = _ready_window(monkeypatch)
+    layout = window.ui.workloadsSubmenuLayout
+
+    assert layout.indexOf(window.nav_workloads_overview) == 0
+    assert layout.indexOf(window.nav_pods) == 1
+    assert window.nav_workloads_overview.text() == "Overview"
+    window.close()
+
+
+def test_opening_the_workloads_overview_loads_it_once_per_context(monkeypatch) -> None:
+    window, ran = _login_window(monkeypatch)
+
+    window.nav_workloads_overview.click()
+
+    assert window.pages.currentIndex() == 4
+    assert window.ui.pageTitle.text() == "Workloads overview"
+    assert window.nav_workloads_overview.isChecked()
+    assert [(name, args) for name, _ok, args, _kw in ran] == [
+        ("get_workloads_overview", ("prod",))
+    ]
+    assert "Loading workloads" in window.workloads_ui.noticeLabel.text()
+
+    window.refresh_workloads_overview()  # one request at a time
+    assert len(ran) == 1
+
+    ran[0][1](_workloads_overview())
+    window.nav_workloads_overview.click()  # loaded for this context: no reload
+    assert len(ran) == 1
+    window.close()
+
+
+def test_the_overview_shows_counts_bars_and_events(monkeypatch) -> None:
+    window, ran = _login_window(monkeypatch)
+    window.nav_workloads_overview.click()
+
+    ran[0][1](_workloads_overview())
+
+    page = window.workloads_ui
+    assert page.podsLink.text() == "Pods (18)"
+    assert page.replicasetsLink.text() == "ReplicaSets (161)"
+    assert page.daemonsetsLink.text() == "DaemonSets (0)"
+    assert page.noticeLabel.text() == ""
+    table = window.workloads_table
+    assert table.rowCount() == 2
+    assert [table.item(0, c).text() for c in range(8)] == [
+        "Warning",
+        "kubelet",
+        "ns",
+        "Pod: api-1",
+        "Back-off",
+        "12",
+        "2h",
+        "5m",
+    ]
+    assert table.item(0, 4).toolTip() == "Back-off"
+    window.close()
+
+
+def test_unreadable_sections_are_named_and_shown_as_dashes(monkeypatch) -> None:
+    window, ran = _login_window(monkeypatch)
+    window.nav_workloads_overview.click()
+    kinds = _workloads_overview().kinds
+    del kinds["ReplicaSet"]
+
+    ran[0][1](_workloads_overview(kinds=kinds, unreadable=("ReplicaSet", "Event")))
+
+    page = window.workloads_ui
+    assert page.replicasetsLink.text() == "ReplicaSets (—)"
+    assert page.noticeLabel.text() == "Could not read: ReplicaSet, Event"
+    window.close()
+
+
+def test_the_overview_links_open_the_lists_that_exist(monkeypatch) -> None:
+    window, _ran = _login_window(monkeypatch)
+    page = window.workloads_ui
+    monkeypatch.setattr(window, "refresh", lambda: None)
+
+    for link, view in (
+        (page.podsLink, "pods"),
+        (page.deploymentsLink, "deployments"),
+        (page.statefulsetsLink, "statefulsets"),
+        (page.jobsLink, "jobs"),
+        (page.cronjobsLink, "cronjobs"),
+    ):
+        link.click()
+        assert window._view == view and window.pages.currentIndex() == 1
+
+    assert not page.daemonsetsLink.isEnabled()  # counted, but there is no list
+    assert not page.replicasetsLink.isEnabled()
+    window.close()
+
+
+def test_overview_answers_for_another_context_are_requested_again(monkeypatch) -> None:
+    window, ran = _login_window(monkeypatch)
+    window.nav_workloads_overview.click()
+
+    window._show_workloads_overview("other", _workloads_overview())
+
+    assert [name for name, *_rest in ran] == ["get_workloads_overview"] * 2
+    assert window._workloads_overview_context is None
+    window.close()
+
+
+def test_a_context_change_reloads_the_overview_when_it_is_showing(monkeypatch) -> None:
+    window, ran = _login_window(monkeypatch)
+    window.nav_workloads_overview.click()
+    ran[0][1](_workloads_overview())
+    assert len(ran) == 1
+
+    window._context_changed()
+
+    assert [name for name, *_rest in ran].count("get_workloads_overview") == 2
+    window.close()
+
+
+def test_overview_errors_are_explained_and_authentication_is_rechecked(
+    monkeypatch,
+) -> None:
+    window, ran = _login_window(monkeypatch)
+    window.nav_workloads_overview.click()
+
+    ran[0][3]["on_error"]("Unable to connect: i/o timeout")
+    assert "Cluster unreachable" in window.workloads_ui.noticeLabel.text()
+    assert not window._workloads_overview_busy
+    assert [name for name, *_rest in ran] == ["get_workloads_overview"]
+
+    window.refresh_workloads_overview()
+    window._workloads_overview_busy = True
+    window._show_workloads_overview_error("You must be logged in (Unauthorized)")
+    assert [name for name, *_rest in ran][-1] == "check_login"
+    window.close()
+
+
+def test_the_overview_follows_a_language_change(monkeypatch) -> None:
+    window, ran = _login_window(monkeypatch)
+    window.nav_workloads_overview.click()
+    ran[0][1](_workloads_overview())
+
+    window._retranslate()
+
+    assert window.workloads_ui.podsLink.text() == "Pods (18)"  # counts survive
+    assert window.workloads_table.rowCount() == 2
+    window.close()

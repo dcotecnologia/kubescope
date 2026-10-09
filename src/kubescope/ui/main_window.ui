@@ -94,6 +94,12 @@ QPushButton[variant="primary"] {
 }
 QPushButton[variant="primary"]:hover { background: #4030b8; }
 QPushButton[variant="primary"]:disabled { background: #6c5fc4; color: #ffffff; }
+QPushButton[variant="link"] {
+  border: none; background: transparent; padding: 2px 0; text-align: left;
+  color: #3220a0; font-weight: 600; text-decoration: underline;
+}
+QPushButton[variant="link"]:hover { color: #4030b8; }
+QPushButton[variant="link"]:disabled { color: #4f5966; text-decoration: none; }
 QPushButton[variant="secondary"] {
     background: #ffffff; color: #3220a0; border: 1px solid #d9dce4;
     border-radius: 5px; min-height: 32px; padding: 0 10px;
@@ -452,6 +458,37 @@ QLabel#footerLicense { color: #6b7380; font-size: 10px; }
             <property name="bottomMargin">
              <number>0</number>
             </property>
+              <item>
+               <widget class="QPushButton" name="navWorkloadsOverview">
+                <property name="text">
+                 <string>Overview</string>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>42</height>
+                 </size>
+                </property>
+                <property name="iconSize">
+                 <size>
+                  <width>16</width>
+                  <height>16</height>
+                 </size>
+                </property>
+                <property name="checkable">
+                 <bool>true</bool>
+                </property>
+                <property name="checked">
+                 <bool>false</bool>
+                </property>
+                <property name="autoExclusive">
+                 <bool>true</bool>
+                </property>
+                <property name="nav" stdset="0">
+                 <string notr="true">true</string>
+                </property>
+               </widget>
+              </item>
               <item>
                <widget class="QPushButton" name="navPods">
                 <property name="text">
@@ -1548,6 +1585,7 @@ Resources in read-only mode</string>
            </widget>
            <widget class="QWidget" name="settingsHost" />
            <widget class="QWidget" name="viewerHost" />
+           <widget class="QWidget" name="workloadsOverviewHost" />
           </widget>
          </item>
         </layout>

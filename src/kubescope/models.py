@@ -180,6 +180,46 @@ class ClusterOverview:
 
 
 _AGE_UNITS = {"m": 60, "h": 3600, "d": 86400}
+
+
+@dataclass(frozen=True, slots=True)
+class KindSummary:
+    """How many resources of one kind there are, and how many are healthy (ok),
+    still coming up or degraded (warning), or failing (bad).
+
+    The rest are idle on purpose, such as a Deployment scaled to zero.
+    """
+
+    total: int = 0
+    ok: int = 0
+    warning: int = 0
+    bad: int = 0
+
+
+@dataclass(frozen=True, slots=True)
+class EventInfo:
+    type: str
+    source: str
+    namespace: str
+    involved: str  # "Kind: name"
+    message: str
+    count: int
+    age: str
+    last_seen: str
+
+
+@dataclass(frozen=True, slots=True)
+class WorkloadsOverview:
+    kinds: dict[str, KindSummary]  # by Kubernetes kind
+    events: tuple[EventInfo, ...] = ()
+    unreadable: tuple[str, ...] = ()  # sections this user cannot read
+
+
+# How a workload status counts in a KindSummary; anything else is idle.
+OK_STATUSES = frozenset({"Healthy", "Complete", "Running", "Active", "Scheduled"})
+WARNING_STATUSES = frozenset({"Degraded", "Pending"})
+BAD_STATUSES = frozenset({"Unavailable", "Failed"})
+
 # The list views that show workloads, and the Kubernetes kind each one lists.
 WORKLOAD_VIEWS = {
     "deployments": "Deployment",

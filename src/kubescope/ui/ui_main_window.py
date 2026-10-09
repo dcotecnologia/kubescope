@@ -104,8 +104,15 @@ class Ui_MainWindow(object):
 "}\n"
 "QPushButton[variant=\"primary\"]:hover { background: #4030b8; }\n"
 "QPushButton[variant=\"primary\"]:disabled { background: #6c5fc4; color: #ffffff; }\n"
+"QPushButton[variant=\"link\"] {\n"
+"  border: none; background: transparent; padding: 2px 0; text-align: left;\n"
+"  color: #3220a0; font-weight: 600; text-decoration: underline;\n"
+"}\n"
+"QPushButton[variant=\"link\"]:hover { color: #4030b8; }\n"
+"QPushButton[variant=\"link\"]:disabled { color: #4f5966; text-decoration: none; }\n"
 "QPushButton[variant=\"secondary\"] {\n"
-"    background: #ffffff; color: #3220a0; border: 1px solid #d9dce4;\n"
+"    background: #ffffff; color: #3220a0; bor"
+                        "der: 1px solid #d9dce4;\n"
 "    border-radius: 5px; min-height: 32px; padding: 0 10px;\n"
 "    font-size: 11px; font-weight: 600;\n"
 "}\n"
@@ -113,8 +120,7 @@ class Ui_MainWindow(object):
 "    background: #f3f1f9; border-color: #a9a0d6;\n"
 "}\n"
 "QPushButton[variant=\"secondary\"]:disabled { color: #7b8089; }\n"
-"QLabel#summary"
-                        "Label { color: #4f5966; font-size: 11px; font-weight: 600; }\n"
+"QLabel#summaryLabel { color: #4f5966; font-size: 11px; font-weight: 600; }\n"
 "QTableWidget[variant=\"data\"] {\n"
 "    background: #ffffff; color: #242a33;\n"
 "    border: 1px solid #dfe2e9; border-radius: 5px;\n"
@@ -127,7 +133,8 @@ class Ui_MainWindow(object):
 "QHeaderView::section {\n"
 "    background: #fbfbfc; color: #3c4149; border: 0;\n"
 "    border-bottom: 1px solid #dfe2e9; padding: 10px 8px;\n"
-"    font-size: 9px; font-weight: 700;\n"
+"    font-size: 9px; font-weight: 700;"
+                        "\n"
 "}\n"
 "QTableWidget[variant=\"data\"]::item {\n"
 "    padding: 6px 8px; border-bottom: 1px solid #e8e9ee;\n"
@@ -135,8 +142,7 @@ class Ui_MainWindow(object):
 "QPushButton[nav=\"true\"] {\n"
 "    text-align: left; color: #4f5966; background: transparent;\n"
 "    border: 0; border-right: 3px solid transparent; border-radius: 0;\n"
-"    padding: 0 12px; font-size: 12px; font"
-                        "-weight: 600;\n"
+"    padding: 0 12px; font-size: 12px; font-weight: 600;\n"
 "}\n"
 "QPushButton[nav=\"true\"]:hover { background: #f6f6fa; }\n"
 "QPushButton[nav=\"true\"]:checked {\n"
@@ -151,14 +157,14 @@ class Ui_MainWindow(object):
 "QLabel[variant=\"cardValue\"] { color: #17191e; font-size: 20px; font-weight: 700; }\n"
 "QLabel[variant=\"cardCaption\"] { color: #4f5966; font-size: 10px; }\n"
 "QProgressBar {\n"
-"    background: #eceef3; border: 0; border-radius: 3px;\n"
+"   "
+                        " background: #eceef3; border: 0; border-radius: 3px;\n"
 "    min-height: 6px; max-height: 6px;\n"
 "}\n"
 "QProgressBar::chunk { background: #6252b5; border-radius: 3px; }\n"
 "QProgressBar[level=\"warn\"]::chunk { background: #d58a2b; }\n"
 "QProgressBar[level=\"high\"]::chunk { background: #c9484f; }\n"
-"QCheckBox { color: #20232a; spa"
-                        "cing: 8px; font-size: 11px; }\n"
+"QCheckBox { color: #20232a; spacing: 8px; font-size: 11px; }\n"
 "QLabel { color: #20232a; }\n"
 "QTabWidget::pane { border: 0; border-top: 1px solid #dfe2e9; top: -1px; }\n"
 "QTabBar::tab {\n"
@@ -172,14 +178,14 @@ class Ui_MainWindow(object):
 "    image: url(CLOSE_ICON); subcontrol-position: right; margin-left: 6px;\n"
 "    width: 10px; height: 10px; padding: 3px; border-radius: 4px;\n"
 "}\n"
-"QTabBar::close-button:hover { image: url(CLOSE_ICON_HOVER); background: #eee9f7; }\n"
+"QTabBar::close-button:hover { im"
+                        "age: url(CLOSE_ICON_HOVER); background: #eee9f7; }\n"
 "QPlainTextEdit {\n"
 "    background: #ffffff; color: #242a33; border: 1px solid #dfe2e9;\n"
 "    border-radius: 5px; padding: 8px; selection-background-color: #d9d3f2;\n"
 "    selection-color: #20232a;\n"
 "}\n"
-"QFrame#appFooter { background: #ffffff; border-top: 1px solid #e4e5e"
-                        "b; }\n"
+"QFrame#appFooter { background: #ffffff; border-top: 1px solid #e4e5eb; }\n"
 "QLabel#footerLicense { color: #6b7380; font-size: 10px; }\n"
 "")
         self.centralwidget = QWidget(MainWindow)
@@ -287,6 +293,17 @@ class Ui_MainWindow(object):
         self.workloadsSubmenuLayout.setSpacing(0)
         self.workloadsSubmenuLayout.setObjectName(u"workloadsSubmenuLayout")
         self.workloadsSubmenuLayout.setContentsMargins(16, 0, 0, 0)
+        self.navWorkloadsOverview = QPushButton(self.workloadsSubmenu)
+        self.navWorkloadsOverview.setObjectName(u"navWorkloadsOverview")
+        self.navWorkloadsOverview.setMinimumSize(QSize(0, 42))
+        self.navWorkloadsOverview.setIconSize(QSize(16, 16))
+        self.navWorkloadsOverview.setCheckable(True)
+        self.navWorkloadsOverview.setChecked(False)
+        self.navWorkloadsOverview.setAutoExclusive(True)
+        self.navWorkloadsOverview.setProperty(u"nav", u"true")
+
+        self.workloadsSubmenuLayout.addWidget(self.navWorkloadsOverview)
+
         self.navPods = QPushButton(self.workloadsSubmenu)
         self.navPods.setObjectName(u"navPods")
         self.navPods.setMinimumSize(QSize(0, 42))
@@ -715,6 +732,9 @@ class Ui_MainWindow(object):
         self.viewerHost = QWidget()
         self.viewerHost.setObjectName(u"viewerHost")
         self.pages.addWidget(self.viewerHost)
+        self.workloadsOverviewHost = QWidget()
+        self.workloadsOverviewHost.setObjectName(u"workloadsOverviewHost")
+        self.pages.addWidget(self.workloadsOverviewHost)
 
         self.pageLayout.addWidget(self.pages)
 
@@ -770,6 +790,7 @@ class Ui_MainWindow(object):
         self.navSection.setText(QCoreApplication.translate("MainWindow", u"MONITORING", None))
         self.navOverview.setText(QCoreApplication.translate("MainWindow", u"Overview", None))
         self.navWorkloads.setText(QCoreApplication.translate("MainWindow", u"Workloads", None))
+        self.navWorkloadsOverview.setText(QCoreApplication.translate("MainWindow", u"Overview", None))
         self.navPods.setText(QCoreApplication.translate("MainWindow", u"Pods", None))
         self.navDeployments.setText(QCoreApplication.translate("MainWindow", u"Deployments", None))
         self.navStatefulSets.setText(QCoreApplication.translate("MainWindow", u"StatefulSets", None))

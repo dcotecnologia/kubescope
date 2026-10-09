@@ -23,8 +23,12 @@ resources but does not change the cluster.
 
 - **Overview:** nodes, Pod counts, CPU and memory requests against capacity, and
   the number of namespaces, Deployments, StatefulSets and DaemonSets.
-- **Workloads:** open the **Workloads** menu to slide out **Pods**,
-  **Deployments**, **StatefulSets**, **Jobs** and **CronJobs**.
+- **Workloads overview:** the first entry of the **Workloads** menu counts Pods,
+  Deployments, DaemonSets, StatefulSets, ReplicaSets, Jobs and CronJobs with a
+  health bar each (green healthy, orange coming up or degraded, red failing, grey
+  idle) and lists the latest cluster events. Each count links to its list.
+- **Workloads:** the same menu slides out **Pods**, **Deployments**,
+  **StatefulSets**, **Jobs** and **CronJobs**.
   - The lists show CPU, memory and restarts next to the status, and can be
     filtered by namespace and searched by name.
   - CPU and memory are live usage from `metrics-server`; without it they show
@@ -54,8 +58,8 @@ resources but does not change the cluster.
 - Linux Mint/Ubuntu: `apt-get` and `dpkg-deb` to stage the Qt XCB runtime library
 - AWS CLI and valid AWS credentials for EKS contexts whose kubeconfig uses the
   AWS `exec` credential plugin
-- Read access to namespaces, pods, deployments, statefulsets, daemonsets, jobs, and
-  cronjobs
+- Read access to namespaces, pods, events, deployments, statefulsets, daemonsets,
+  replicasets, jobs, and cronjobs
 - Optional, for the cluster overview page: read access to nodes and pods across
   namespaces. Optional, for CPU and memory in the Pods and Deployments lists and
   on the overview: `metrics-server` for real usage. Sections the role

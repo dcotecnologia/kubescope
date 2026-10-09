@@ -62,6 +62,7 @@ from kubescope.cluster import (
     get_usage,
     get_workload_pods,
     get_workloads,
+    get_workloads_overview,
     list_contexts,
     run_login,
 )
@@ -74,6 +75,7 @@ from kubescope.models import (
     ClusterOverview,
     PodInfo,
     Workload,
+    WorkloadsOverview,
     format_bytes,
     format_cores,
     format_cpu,
@@ -88,8 +90,18 @@ from kubescope.ui.ui_overview_page import Ui_OverviewPage
 from kubescope.ui.ui_pods_dialog import Ui_PodsDialog
 from kubescope.ui.ui_settings_page import Ui_SettingsPage
 from kubescope.ui.ui_viewer_page import Ui_ViewerPage
+from kubescope.ui.ui_workloads_overview_page import Ui_WorkloadsOverviewPage
 
 logger = logging.getLogger(__name__)
+
+# Overview rows that open a list when clicked, and the list each opens.
+WORKLOAD_LINKS = {
+    "pods": "pods",
+    "deployments": "deployments",
+    "statefulsets": "statefulsets",
+    "jobs": "jobs",
+    "cronjobs": "cronjobs",
+}
 
 
 def _icon_path(name: str, draw: Callable[[QPainter], None], size: QSize) -> str:
@@ -280,6 +292,7 @@ class WorkloadWindow(QMainWindow):
         self.nav_overview = ui.navOverview
         self.nav_workloads = ui.navWorkloads
         self.submenu = ui.workloadsSubmenu
+        self.nav_workloads_overview = ui.navWorkloadsOverview
         self.nav_pods = ui.navPods
         self.nav_deployments = ui.navDeployments
         self.nav_statefulsets = ui.navStatefulSets
@@ -297,6 +310,18 @@ class WorkloadWindow(QMainWindow):
         self.overview_ui.setupUi(ui.overviewHost)
         self.overview_refresh_button = self.overview_ui.overviewRefreshButton
         self.nodes_table = self.overview_ui.nodesTable
+        self.workloads_ui = Ui_WorkloadsOverviewPage()
+        self.workloads_ui.setupUi(ui.workloadsOverviewHost)
+        self.workloads_refresh_button = self.workloads_ui.workloadsRefreshButton
+        self.workloads_table = self.workloads_ui.eventsTable
+        events_header = self.workloads_table.horizontalHeader()
+        for column in range(self.workloads_table.columnCount()):
+            events_header.setSectionResizeMode(
+                column,
+                QHeaderView.ResizeMode.Stretch
+                if column == 4  # the message takes what the others leave
+                else QHeaderView.ResizeMode.ResizeToContents,
+            )
         self.viewer_ui = Ui_ViewerPage()
         self.viewer_ui.setupUi(ui.viewerHost)
         self.viewer_tabs = self.viewer_ui.viewerTabs
@@ -321,6 +346,7 @@ class WorkloadWindow(QMainWindow):
         for button in (
             self.nav_overview,
             self.nav_workloads,
+            self.nav_workloads_overview,
             *self._nav_views.values(),
             ui.navViewer,
             ui.settingsButton,
@@ -404,6 +430,9 @@ class WorkloadWindow(QMainWindow):
         self._spinner_timer.setInterval(70)
         self._spinner_timer.timeout.connect(self._tick_spinner)
 
+        self._workloads_overview: WorkloadsOverview | None = None
+        self._workloads_overview_context: str | None = None
+        self._workloads_overview_busy = False
         self._login_action: LoginAction | None = None
         self._login_checking = False
         self.login_button.clicked.connect(self._sign_in)
@@ -428,6 +457,15 @@ class WorkloadWindow(QMainWindow):
             button.clicked.connect(
                 lambda _checked=False, view=view: self._open_list_view(view)
             )
+        self.nav_workloads_overview.clicked.connect(lambda: self._show_page(4))
+        self.workloads_refresh_button.clicked.connect(self.refresh_workloads_overview)
+        # the overview names each kind; the ones that have a list link to it
+        for key, view in WORKLOAD_LINKS.items():
+            getattr(self.workloads_ui, f"{key}Link").clicked.connect(
+                lambda _checked=False, view=view: self._open_list_view(view)
+            )
+        for key in ("daemonsets", "replicasets"):  # counted, but no list of their own
+            getattr(self.workloads_ui, f"{key}Link").setEnabled(False)
         self.overview_refresh_button.clicked.connect(self.refresh_overview)
         self.context_combo.currentTextChanged.connect(self._context_changed)
         self.context_combo.currentTextChanged.connect(self.refresh)
@@ -522,9 +560,12 @@ class WorkloadWindow(QMainWindow):
             button.setChecked(index == 1 and self._view == view)
         self.ui.settingsButton.setChecked(index == 2)
         self.nav_viewer.setChecked(index == 3)
+        self.nav_workloads_overview.setChecked(index == 4)
         self._apply_page_titles()
         if index == 0:
             self._ensure_overview()
+        elif index == 4:
+            self._ensure_workloads_overview()
         elif index == 2:
             self._load_settings_form()
 
@@ -540,6 +581,11 @@ class WorkloadWindow(QMainWindow):
         elif self.pages.currentIndex() == 2:
             self.ui.pageTitle.setText(self.tr("Settings"))
             self.ui.pageSubtitle.setText(self.tr("Preferences and context names"))
+        elif self.pages.currentIndex() == 4:
+            self.ui.pageTitle.setText(self.tr("Workloads overview"))
+            self.ui.pageSubtitle.setText(
+                self.tr("Health of every workload kind and the latest events")
+            )
         else:
             title, subtitle = {
                 "pods": (self.tr("Pods"), self.tr("Pods of the cluster")),
@@ -639,8 +685,11 @@ class WorkloadWindow(QMainWindow):
     def _context_changed(self, *_args: object) -> None:
         logger.info("Context changed to %s", self._context())
         self._overview_context = None
+        self._workloads_overview_context = None
         self._hide_login()
         self._check_login()
+        if self.pages.currentIndex() == 4:
+            self._ensure_workloads_overview()
         if self.settings.remember_last_context and self._contexts:
             self.settings.last_context = self._context()
             self._save_settings()
@@ -724,6 +773,108 @@ class WorkloadWindow(QMainWindow):
         self.refresh()
         self._overview_context = None
         self._ensure_overview()
+
+    def _ensure_workloads_overview(self) -> None:
+        context = self._context()
+        if context and context != self._workloads_overview_context:
+            self.refresh_workloads_overview()
+
+    def refresh_workloads_overview(self, *_args: object) -> None:
+        context = self._context()
+        if not context or self._workloads_overview_busy:
+            return
+        self._workloads_overview_busy = True
+        self.workloads_ui.noticeLabel.setText(self.tr("Loading workloads..."))
+        self._run_action(
+            get_workloads_overview,
+            lambda result: self._show_workloads_overview(context, result),
+            context,
+            on_error=self._show_workloads_overview_error,
+        )
+
+    def _show_workloads_overview_error(self, message: str) -> None:
+        logger.info("Workloads overview failed: %s", first_line(message))
+        self._workloads_overview_busy = False
+        if is_auth_error(message):
+            self._check_login()
+        info = describe_error(message)
+        label = self.workloads_ui.noticeLabel
+        label.setTextFormat(Qt.TextFormat.RichText)
+        label.setText(
+            f'<span style="color:#a33d45"><b>{html.escape(info.title)}</b></span>'
+            f"<br>{html.escape(info.hint)}"
+        )
+        label.setToolTip(info.details)
+
+    def _show_workloads_overview(
+        self, context: str, overview: WorkloadsOverview
+    ) -> None:
+        self._workloads_overview_busy = False
+        if context != self._context():
+            self._workloads_overview_context = None
+            self.refresh_workloads_overview()
+            return
+        self._workloads_overview_context = context
+        self._workloads_overview = overview
+        logger.info(
+            "Workloads overview loaded: %d kind(s), %d event(s)",
+            len(overview.kinds),
+            len(overview.events),
+        )
+        self._render_workloads_overview(overview)
+
+    def _render_workloads_overview(self, overview: WorkloadsOverview) -> None:
+        page = self.workloads_ui
+        labels = {
+            "pods": ("Pod", self.tr("Pods")),
+            "deployments": ("Deployment", self.tr("Deployments")),
+            "daemonsets": ("DaemonSet", self.tr("DaemonSets")),
+            "statefulsets": ("StatefulSet", self.tr("StatefulSets")),
+            "replicasets": ("ReplicaSet", self.tr("ReplicaSets")),
+            "jobs": ("Job", self.tr("Jobs")),
+            "cronjobs": ("CronJob", self.tr("CronJobs")),
+        }
+        for key, (kind, label) in labels.items():
+            summary = overview.kinds.get(kind)
+            link, bar = getattr(page, f"{key}Link"), getattr(page, f"{key}Bar")
+            if summary is None:  # this user cannot read it
+                link.setText(f"{label} (—)")
+                bar.set_summary(0, 0, 0, 0)
+            else:
+                link.setText(f"{label} ({summary.total})")
+                bar.set_summary(summary.ok, summary.warning, summary.bad, summary.total)
+        self._render_events(overview)
+        page.noticeLabel.setTextFormat(Qt.TextFormat.PlainText)
+        page.noticeLabel.setToolTip("")
+        page.noticeLabel.setText(
+            self.tr("Could not read: {names}").format(
+                names=", ".join(overview.unreadable)
+            )
+            if overview.unreadable
+            else ""
+        )
+
+    def _render_events(self, overview: WorkloadsOverview) -> None:
+        table = self.workloads_table
+        table.setRowCount(len(overview.events))
+        for row, event in enumerate(overview.events):
+            values = (
+                event.type,
+                event.source,
+                event.namespace,
+                event.involved,
+                event.message,
+                str(event.count),
+                event.age,
+                event.last_seen,
+            )
+            for column, value in enumerate(values):
+                item = QTableWidgetItem(value)
+                item.setToolTip(event.message)
+                item.setForeground(
+                    QColor("#985415" if event.type == "Warning" else "#242a33")
+                )
+                table.setItem(row, column, item)
 
     def _ensure_overview(self) -> None:
         context = self._context()
@@ -922,7 +1073,11 @@ class WorkloadWindow(QMainWindow):
         if self._spinner_button is None:
             return
         self._spinner_angle = (self._spinner_angle + 30) % 360
-        primary = (self.refresh_button, self.overview_refresh_button)
+        primary = (
+            self.refresh_button,
+            self.overview_refresh_button,
+            self.workloads_refresh_button,
+        )
         color = "#ffffff" if self._spinner_button in primary else "#3220a0"
         self._spinner_button.setIcon(_spinner_icon(self._spinner_angle, color))
 
@@ -1611,6 +1766,9 @@ class WorkloadWindow(QMainWindow):
         self.ui.retranslateUi(self)
         self.overview_ui.retranslateUi(self.ui.overviewHost)
         self.settings_ui.retranslateUi(self.ui.settingsHost)
+        self.workloads_ui.retranslateUi(self.ui.workloadsOverviewHost)
+        if self._workloads_overview is not None:
+            self._render_workloads_overview(self._workloads_overview)
         if self.pages.currentIndex() == 2:
             self._load_settings_form()
         self._apply_page_titles()
