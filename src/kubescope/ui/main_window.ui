@@ -260,6 +260,22 @@ QLabel#footerLicense { color: #6b7380; font-size: 10px; }
         </widget>
        </item>
        <item>
+        <widget class="QPushButton" name="loginButton">
+         <property name="visible">
+          <bool>false</bool>
+         </property>
+         <property name="toolTip">
+          <string>Sign in with the AWS CLI, then reload the cluster data</string>
+         </property>
+         <property name="text">
+          <string>Sign in to AWS</string>
+         </property>
+         <property name="variant" stdset="0">
+          <string notr="true">primary</string>
+         </property>
+        </widget>
+       </item>
+       <item>
         <widget class="QLabel" name="topAccess">
          <property name="text">
           <string>READ ONLY</string>
@@ -1407,22 +1423,6 @@ Resources in read-only mode</string>
                  </property>
                  <property name="variant" stdset="0">
                   <string notr="true">muted</string>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QPushButton" name="loginButton">
-                 <property name="visible">
-                  <bool>false</bool>
-                 </property>
-                 <property name="toolTip">
-                  <string>Sign in with the AWS CLI, then reload the cluster data</string>
-                 </property>
-                 <property name="text">
-                  <string>Sign in to AWS</string>
-                 </property>
-                 <property name="variant" stdset="0">
-                  <string notr="true">primary</string>
                  </property>
                 </widget>
                </item>

@@ -1,7 +1,8 @@
 """Fixed light look so system dark themes never leak into unstyled widgets."""
 
+from PySide6.QtCore import QEvent, QObject, Qt
 from PySide6.QtGui import QColor, QPalette
-from PySide6.QtWidgets import QApplication
+from PySide6.QtWidgets import QAbstractButton, QApplication
 
 _ROLES = {
     QPalette.ColorRole.Window: "#f7f7fa",
@@ -25,7 +26,25 @@ _DISABLED = (
 )
 
 
+class ButtonCursor(QObject):
+    """Show a pointing hand over every enabled button, in every window and
+    dialog; style sheets cannot set a cursor."""
+
+    _EVENTS = (QEvent.Type.Polish, QEvent.Type.EnabledChange)
+
+    def eventFilter(self, watched: QObject, event: QEvent) -> bool:  # noqa: N802
+        if event.type() in self._EVENTS and isinstance(watched, QAbstractButton):
+            watched.setCursor(
+                Qt.CursorShape.PointingHandCursor
+                if watched.isEnabled()
+                else Qt.CursorShape.ArrowCursor
+            )
+        return False
+
+
 def apply_light_theme(application: QApplication) -> None:
+    if application.findChild(ButtonCursor) is None:
+        application.installEventFilter(ButtonCursor(application))
     application.setStyle("Fusion")
     palette = QPalette()
     for role, color in _ROLES.items():
