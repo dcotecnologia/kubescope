@@ -1,4 +1,5 @@
 import dataclasses
+import html
 import json
 import logging
 import tempfile
@@ -58,6 +59,7 @@ from kubescope.cluster import (
     get_workloads,
     list_contexts,
 )
+from kubescope.errors import describe_error
 from kubescope.i18n import apply_language
 from kubescope.log_tab import LOG_REFRESH_MS, LogTab
 from kubescope.models import (
@@ -83,7 +85,8 @@ logger = logging.getLogger(__name__)
 
 
 def _icon_path(name: str, draw: Callable[[QPainter], None], size: QSize) -> str:
-    """Render a small PNG once; Qt style sheets cannot draw shapes themselves."""
+    """Render a small PNG once; Qt style sheets cannot draw shapes
+    themselves."""
     path = Path(tempfile.gettempdir()) / f"kubescope-{name}.png"
     pixmap = QPixmap(size)
     pixmap.fill(Qt.GlobalColor.transparent)
@@ -128,7 +131,8 @@ def _close_icon_path(color: str, name: str) -> str:
 
 
 def _spinner_icon(angle: int, color: str) -> QIcon:
-    """Draw one frame of the loading spinner; the disabled state keeps its color."""
+    """Draw one frame of the loading spinner; the disabled state keeps its
+    color."""
     pixmap = QPixmap(16, 16)
     pixmap.fill(Qt.GlobalColor.transparent)
     painter = QPainter(pixmap)
@@ -398,9 +402,10 @@ class WorkloadWindow(QMainWindow):
             reason = str(error)
             self._set_status(
                 lambda: self.tr("Could not load kubeconfig: {error}").format(
-                    error=reason
+                    error=self._error_line(reason)
                 )
             )
+            self.status_label.setToolTip(describe_error(reason).details)
             self.context_combo.setEnabled(False)
             self.namespace_combo.setEnabled(False)
             self.refresh_button.setEnabled(False)
@@ -421,7 +426,8 @@ class WorkloadWindow(QMainWindow):
         self._ensure_overview()
 
     def _fill_contexts(self, selected: str | None) -> None:
-        """Show contexts under their custom names while keeping the real name."""
+        """Show contexts under their custom names while keeping the real
+        name."""
         self.context_combo.blockSignals(True)
         self.context_combo.clear()
         for context in self._contexts:
@@ -451,7 +457,13 @@ class WorkloadWindow(QMainWindow):
         """Real kubeconfig context name, whatever the combo displays."""
         return self.context_combo.currentData() or self.context_combo.currentText()
 
+    @staticmethod
+    def _error_line(message: str) -> str:
+        info = describe_error(message)
+        return f"{info.title}. {info.hint}" if info.hint else info.title
+
     def _set_status(self, message: Callable[[], str]) -> None:
+        self.status_label.setToolTip("")
         self._status_message = message
         self.status_label.setText(message())
 
@@ -536,7 +548,8 @@ class WorkloadWindow(QMainWindow):
             self.table.setColumnHidden(column, column in hidden)
 
     def _show_column_menu(self, position: QPoint) -> None:
-        """Header right-click: tick the columns to show; the choice is saved."""
+        """Header right-click: tick the columns to show; the choice is
+        saved."""
         menu = QMenu(self)
         hidden = self.settings.hidden_columns(self._view)
         for column in range(self.table.columnCount()):
@@ -585,9 +598,14 @@ class WorkloadWindow(QMainWindow):
 
     def _show_overview_error(self, message: str) -> None:
         self._overview_busy = False
-        self.overview_ui.noticeLabel.setText(
-            self.tr("Could not load the overview: {message}").format(message=message)
+        info = describe_error(message)
+        label = self.overview_ui.noticeLabel
+        label.setTextFormat(Qt.TextFormat.RichText)
+        label.setText(
+            f'<span style="color:#a33d45"><b>{html.escape(info.title)}</b></span>'
+            f"<br>{html.escape(info.hint)}"
         )
+        label.setToolTip(info.details)
 
     def _reset_overview(self) -> None:
         overview = self.overview_ui
@@ -710,10 +728,13 @@ class WorkloadWindow(QMainWindow):
         notices = list(overview.warnings)
         if overview.nodes and not overview.metrics_available:
             notices.append(self.tr("Real usage unavailable: metrics-server not found."))
+        page.noticeLabel.setTextFormat(Qt.TextFormat.PlainText)
+        page.noticeLabel.setToolTip("")
         page.noticeLabel.setText("  ·  ".join(notices))
 
     def _begin_loading(self, button: QPushButton | None, label: str) -> Callable:
-        """Show a busy cursor and button spinner; return a one-shot finisher."""
+        """Show a busy cursor and button spinner; return a one-shot
+        finisher."""
         self._loading += 1
         if self._loading == 1:
             QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
@@ -802,7 +823,8 @@ class WorkloadWindow(QMainWindow):
         self.namespace_combo.blockSignals(False)
 
     def _apply_sort(self) -> None:
-        """Order self._workloads by the chosen header; no-op until one is clicked."""
+        """Order self._workloads by the chosen header; no-op until one is
+        clicked."""
         if self._sort is None:
             return
         column, order = self._sort
@@ -1383,16 +1405,20 @@ class WorkloadWindow(QMainWindow):
             self.status_label.setText(self._status_message())
 
     def _show_action_error(self, message: str) -> None:
-        QMessageBox.warning(self, self.tr("Query failed"), message)
+        info = describe_error(message)
+        box = QMessageBox(self)
+        box.setIcon(QMessageBox.Icon.Warning)
+        box.setWindowTitle(self.tr("Query failed"))
+        box.setText(info.title)
+        box.setInformativeText(info.hint)
+        box.setDetailedText(info.details)
+        box.exec()
 
     def _show_error(self, message: str) -> None:
         self._workloads = []
         self._pods = []
-        self._set_status(
-            lambda: self.tr("Could not load resources: {message}").format(
-                message=message
-            )
-        )
+        self._set_status(lambda: self._error_line(message))
+        self.status_label.setToolTip(describe_error(message).details)
         self.table.setRowCount(0)
         self._filter_rows()
 

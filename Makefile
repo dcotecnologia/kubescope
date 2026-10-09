@@ -41,7 +41,7 @@ ui: $(UI_PY) ## Regenerate ui_*.py from changed .ui files (run/preview/build do 
 
 TS_FILES := $(wildcard src/kubescope/translations/*.ts)
 QM_FILES := $(TS_FILES:.ts=.qm)
-I18N_SOURCES := src/kubescope/window.py src/kubescope/log_tab.py $(UI_FILES)
+I18N_SOURCES := src/kubescope/window.py src/kubescope/log_tab.py src/kubescope/errors.py $(UI_FILES)
 
 %.qm: %.ts
 	$(UV) run pyside6-lrelease $< -qm $@
