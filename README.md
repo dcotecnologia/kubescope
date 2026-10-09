@@ -137,7 +137,7 @@ them when renaming or moving widgets.
 
 ## Contributing and security
 
-Read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request, and
+Read [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) and [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request, and
 [COMMITING.md](COMMITING.md) for the commit message format. [AGENTS.md](AGENTS.md)
 holds the architecture and standards that people and AI assistants follow.
 Report vulnerabilities privately as described in [SECURITY.md](SECURITY.md).
