@@ -1,0 +1,46 @@
+{
+    "configurations": [
+        {
+            "cwd": "${workspaceFolder}",
+            "justMyCode": true,
+            "linux": {
+                "env": {
+                    "LD_LIBRARY_PATH": "${workspaceFolder}/vendor/linux/x86_64:${env:LD_LIBRARY_PATH}"
+                }
+            },
+            "name": "KubeScope",
+            "program": "${workspaceFolder}/main.py",
+            "python": "${workspaceFolder}/.venv/bin/python",
+            "request": "launch",
+            "type": "debugpy"
+        },
+        {
+            "cwd": "${workspaceFolder}",
+            "justMyCode": true,
+            "linux": {
+                "env": {
+                    "LD_LIBRARY_PATH": "${workspaceFolder}/vendor/linux/x86_64:${env:LD_LIBRARY_PATH}"
+                }
+            },
+            "name": "KubeScope preview (fake data)",
+            "program": "${workspaceFolder}/tools/preview.py",
+            "python": "${workspaceFolder}/.venv/bin/python",
+            "request": "launch",
+            "type": "debugpy"
+        },
+        {
+            "args": [
+                "${file}",
+                "-q"
+            ],
+            "cwd": "${workspaceFolder}",
+            "justMyCode": false,
+            "module": "pytest",
+            "name": "Pytest: current file",
+            "python": "${workspaceFolder}/.venv/bin/python",
+            "request": "launch",
+            "type": "debugpy"
+        }
+    ],
+    "version": "0.2.0"
+}
