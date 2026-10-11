@@ -224,6 +224,9 @@ BAD_STATUSES = frozenset({"Unavailable", "Failed"})
 WORKLOAD_VIEWS = {
     "deployments": "Deployment",
     "statefulsets": "StatefulSet",
+    "daemonsets": "DaemonSet",
+    "replicasets": "ReplicaSet",
+    "replicationcontrollers": "ReplicationController",
     "jobs": "Job",
     "cronjobs": "CronJob",
 }
