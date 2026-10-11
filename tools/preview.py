@@ -160,6 +160,17 @@ def wait_until_idle(application: QApplication, main_window) -> None:
         application.processEvents()
 
 
+def open_menus(application: QApplication, main_window) -> None:
+    """Slide out both menus and let the animation finish, for the
+    screenshot."""
+    main_window.nav_workloads.click()
+    main_window.nav_network.click()
+    deadline = time.monotonic() + 1
+    while time.monotonic() < deadline:
+        application.processEvents()
+        time.sleep(0.02)
+
+
 def main() -> int:
     application = QApplication(sys.argv[:1])
     apply_theme(application)
@@ -169,6 +180,7 @@ def main() -> int:
     if len(sys.argv) > 1:
         page = sys.argv[2] if len(sys.argv) > 2 else "overview"
         wait_until_idle(application, main_window)
+        open_menus(application, main_window)
         if page in ("workloads", "deployments"):
             main_window.nav_deployments.click()
             wait_until_idle(application, main_window)

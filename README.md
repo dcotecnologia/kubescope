@@ -42,7 +42,8 @@ resources but does not change the cluster.
   columns, and **Details** for the JSON of a row. The two menus open on their own,
   and the navigation scrolls when they do not fit.
 - **Details and logs:** JSON details of a Pod or workload, and live Pod logs,
-  each in its own closable tab.
+  each in its own closable tab, colored like Monokai. **Save...** writes the open
+  tab to a file you choose.
 - **Your table, your way:** drag any column border to resize it, and right-click
   a table header to hide or show columns. The choice is remembered.
 - **Readable errors:** a missing login tool, an unreachable cluster, expired

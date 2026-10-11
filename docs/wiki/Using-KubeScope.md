@@ -67,6 +67,13 @@ Logs open in their own tab. If the Pod has several containers you pick one first
 The tab shows the latest lines and refreshes on its own; pause it with the
 checkbox, or refresh by hand. Close a tab with its **x**.
 
+## Saving details and logs
+
+**Save...**, at the top right of the tab bar, writes the open tab to a file: the
+JSON of a resource, or the lines of a log as shown (the latest 500). You choose
+where; nothing is written until you do, and the app keeps no copy. Logs can
+contain secrets printed by an application, so keep the file somewhere safe.
+
 ## Tables
 
 - Drag a column border to resize it.

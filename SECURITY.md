@@ -47,9 +47,12 @@ prefer otherwise.
 - **Local settings hold no secrets.** `settings.json` keeps the language, the
   last context, context display names, and hidden table columns. It lives in your
   user configuration directory (`~/.config/kubescope` on Linux).
-- **Logs and resource details are shown on screen only.** They are not written to
-  disk or sent anywhere, not even by the debug log below. Pod logs can contain secrets printed by an application,
-  so treat screenshots and recordings with care.
+- **Logs and resource details are shown on screen.** The app does not write them
+  to disk or send them anywhere, not even in the debug log below. The one
+  exception is **Save...** in the Details & Logs page: it writes the text of the
+  open tab to a file only after you pick where, and the app keeps no copy. Pod
+  logs can contain secrets printed by an application, so treat saved files,
+  screenshots and recordings with care.
 - **The bundled `kubectl` is verified.** `tools/fetch_kubectl.py` downloads the
   official stable release and checks its published SHA-256 before PyInstaller
   includes it.
