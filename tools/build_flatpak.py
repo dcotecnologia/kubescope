@@ -8,17 +8,12 @@ org.freedesktop.Sdk//25.08`).
 import shutil
 import subprocess
 import sys
-import tomllib
-from datetime import date
 from pathlib import Path
 
-from PySide6.QtCore import Qt
-from PySide6.QtGui import QImage
+from flathub import project_version, render_icons, render_sources
 
 ROOT = Path(__file__).resolve().parents[1]
 BUNDLE = ROOT / "dist" / "KubeScope"
-ICON = ROOT / "src" / "kubescope" / "assets" / "icon.png"
-SOURCE = ROOT / "packaging" / "flatpak"
 STAGING = ROOT / "build" / "flatpak"
 APP_ID = "com.dcotecnologia.KubeScope"
 MANIFEST = f"{APP_ID}.yml"
@@ -29,26 +24,14 @@ def main() -> int:
         raise SystemExit("Building a Flatpak needs Linux with flatpak-builder")
     if not (BUNDLE / "KubeScope").is_file():
         raise SystemExit("Run `make build` before packaging the Flatpak")
-    with (ROOT / "pyproject.toml").open("rb") as handle:
-        version = tomllib.load(handle)["project"]["version"]
+    version = project_version()
 
     if STAGING.exists():
         shutil.rmtree(STAGING)
-    STAGING.mkdir(parents=True)
-    for path in SOURCE.iterdir():
-        text = path.read_text(encoding="utf-8")
-        text = text.replace("@VERSION@", version).replace("@DATE@", str(date.today()))
-        (STAGING / path.name).write_text(text, encoding="utf-8")
+    render_sources(STAGING, version)
     (STAGING / "bundle").symlink_to(BUNDLE)
 
-    source = QImage(str(ICON))
-    for size in (256, 512):
-        source.scaled(
-            size,
-            size,
-            Qt.AspectRatioMode.KeepAspectRatio,
-            Qt.TransformationMode.SmoothTransformation,
-        ).save(str(STAGING / f"icon-{size}.png"), "PNG")
+    render_icons(STAGING)
 
     repository = STAGING / "repo"
     subprocess.run(

@@ -5,7 +5,9 @@
   <summary>Desktop viewer for Kubernetes and Amazon EKS workloads</summary>
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>MIT</project_license>
-  <developer_name>DCO Tecnologia</developer_name>
+  <developer id="com.dcotecnologia">
+    <name>DCO Tecnologia</name>
+  </developer>
   <description>
     <p>
       KubeScope is a read-only desktop console for Kubernetes and Amazon EKS:
