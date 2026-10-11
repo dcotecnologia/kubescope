@@ -393,6 +393,14 @@ def _parse_workload(item: dict[str, Any], now: datetime) -> Workload | None:
     )
 
 
+def _together(*calls: Any) -> list[Any]:
+    """Run independent cluster calls at the same time, so a list waits for the
+    slowest one instead of the sum; the first failure, in order, is raised."""
+    with ThreadPoolExecutor(max_workers=len(calls)) as pool:
+        futures = [pool.submit(call) for call in calls]
+        return [future.result() for future in futures]
+
+
 def _get_namespaces(context: str) -> list[str]:
     document = _get_json("get", "namespaces", context=context)
     return sorted(
@@ -407,10 +415,12 @@ def get_workloads(
     namespace: str | None = None,
     kinds: tuple[str, ...] = _REPLICATED_KINDS,
 ) -> tuple[list[str], list[Workload]]:
-    namespaces = _get_namespaces(context)
     arguments = ["get", ",".join(_RESOURCES[kind] for kind in kinds)]
     arguments.extend(("-n", namespace) if namespace else ("-A",))
-    workloads_document = _get_json(*arguments, context=context)
+    namespaces, workloads_document = _together(
+        partial(_get_namespaces, context),
+        partial(_get_json, *arguments, context=context),
+    )
     now = datetime.now(UTC)
     workloads = [
         workload
@@ -541,14 +551,16 @@ def _pod_metrics(
 def _pods_with_usage(context: str, namespace: str | None) -> list[PodInfo]:
     arguments = ["get", "pods"]
     arguments.extend(("-n", namespace) if namespace else ("-A",))
-    document = _get_json(*arguments, context=context)
+    document, metrics = _together(
+        partial(_get_json, *arguments, context=context),
+        partial(_pod_metrics, context, namespace),
+    )
     now = datetime.now(UTC)
     pods = [
         pod
         for item in document.get("items", [])
         if (pod := _parse_pod(item, now)) is not None
     ]
-    metrics = _pod_metrics(context, namespace)
     if metrics is not None:
         pods = [
             replace(pod, cpu=cpu, memory=memory)
@@ -623,8 +635,10 @@ def get_pods(
     context: str,
     namespace: str | None = None,
 ) -> tuple[list[str], list[PodInfo]]:
-    namespaces = _get_namespaces(context)
-    pods = _pods_with_usage(context, namespace)
+    namespaces, pods = _together(
+        partial(_get_namespaces, context),
+        partial(_pods_with_usage, context, namespace),
+    )
     pods.sort(key=lambda pod: (pod.namespace, pod.name))
     return namespaces, pods
 

@@ -1252,3 +1252,22 @@ def test_workloads_overview_fails_when_nothing_is_readable(monkeypatch) -> None:
 
     with pytest.raises(cluster.KubectlError, match="Unable to connect"):
         cluster.get_workloads_overview("ctx")
+
+
+def test_together_runs_calls_at_the_same_time_and_raises_the_first_failure() -> None:
+    barrier = threading.Barrier(2, timeout=5)  # both must be running to pass
+
+    def meet(value: str) -> str:
+        barrier.wait()
+        return value
+
+    assert cluster._together(lambda: meet("a"), lambda: meet("b")) == ["a", "b"]
+
+    def fail() -> None:
+        raise cluster.KubectlError("first")
+
+    def fail_later() -> None:
+        raise cluster.KubectlError("second")
+
+    with pytest.raises(cluster.KubectlError, match="first"):
+        cluster._together(fail, fail_later)
