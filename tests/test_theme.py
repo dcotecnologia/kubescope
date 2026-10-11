@@ -26,7 +26,7 @@ application = QApplication.instance() or QApplication([])
 
 
 def test_light_theme_sets_a_light_palette_and_greys_disabled_text() -> None:
-    apply_theme(application)
+    apply_theme(application, "light")
 
     palette = application.palette()
     assert application.style().objectName().lower() == "fusion"
@@ -66,8 +66,8 @@ def test_light_colors_pass_through_and_dark_ones_are_mapped() -> None:
     assert themed("#e0a030") == "#e0a030"  # the same warning orange in both themes
     assert themed("#123456") == "#123456"  # unknown colors are left alone
 
-    set_theme("neon")  # not a theme: back to the default
-    assert active_theme() == "light"
+    set_theme("neon")  # not a theme: back to the default, which is dark
+    assert active_theme() == "dark"
 
 
 def test_white_is_a_surface_in_dark_but_stays_white_as_text() -> None:
@@ -236,10 +236,10 @@ def test_a_custom_theme_can_be_made_active_and_a_missing_one_falls_back(
 
     (themes_dir / "ocean.json").unlink()
     set_theme("ocean")  # the file is gone
-    assert active_theme() == "light" and themed("#f7f7fa") == "#f7f7fa"
+    assert active_theme() == "dark" and themed("#f7f7fa") == "#11141a"
 
-    set_theme("dark")
-    assert active_theme() == "dark"
+    set_theme("light")
+    assert active_theme() == "light"
 
 
 def test_theme_tokens_show_the_color_of_every_role() -> None:
