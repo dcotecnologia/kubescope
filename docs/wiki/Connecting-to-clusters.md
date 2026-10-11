@@ -33,7 +33,7 @@ Use a read-only role. KubeScope needs:
 | What | Used for |
 | ---- | -------- |
 | `get`, `list` on `namespaces` | Namespace filter |
-| `get`, `list` on `pods`, `deployments`, `statefulsets`, `daemonsets`, `replicasets`, `jobs`, `cronjobs` | Lists, details, overview |
+| `get`, `list` on `pods`, `replicationcontrollers`, `deployments`, `statefulsets`, `daemonsets`, `replicasets`, `jobs`, `cronjobs` | Lists, details, overview |
 | `get` on `pods/log` | Logs |
 | `get`, `list` on `events` | Events in the workloads overview (optional) |
 | `get`, `list` on `nodes` | Overview (optional) |
@@ -48,7 +48,7 @@ metadata:
   name: kubescope-viewer
 rules:
   - apiGroups: [""]
-    resources: [namespaces, nodes, pods, pods/log]
+    resources: [namespaces, nodes, pods, pods/log, replicationcontrollers]
     verbs: [get, list]
   - apiGroups: [apps]
     resources: [deployments, statefulsets, daemonsets, replicasets]

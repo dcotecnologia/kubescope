@@ -25,15 +25,16 @@ not allowed to read is named under the bars instead of failing the page.
 
 ## Pods and workloads
 
-Click **Workloads** to slide out **Pods**, **Deployments**, **StatefulSets**, **Jobs**
-and **CronJobs**.
+Click **Workloads** to slide out **Pods**, **Deployments**, **StatefulSets**,
+**DaemonSets**, **ReplicaSets**, **ReplicationControllers**, **Jobs** and **CronJobs**.
 
 - **Pods:** every Pod of the selected namespace (or all). Columns: namespace,
   containers, name, ready, status, CPU, memory, restarts and age. Young Pods (under
   an hour) get a soft green row; Pods that are restarting, failing or not ready get
   a soft red one.
-- **Deployments** and **StatefulSets:** namespace, kind, name, ready, status, CPU,
-  memory, restarts and age. The numbers are the sum of the workload's Pods.
+- **Deployments**, **StatefulSets**, **DaemonSets**, **ReplicaSets** and
+  **ReplicationControllers:** namespace, kind, name, ready, status, CPU, memory,
+  restarts and age. The numbers are the sum of the workload's Pods.
 - **Jobs:** the same columns, with **Completions** (done / wanted) instead of Ready.
   The status is Complete, Running, Pending, Failed or Suspended.
 - **CronJobs:** the **Schedule** replaces Ready. The status is Scheduled, Active (a
