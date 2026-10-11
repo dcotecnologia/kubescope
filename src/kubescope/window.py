@@ -218,6 +218,47 @@ def _gear_icon() -> QIcon:
     return icon
 
 
+def _nav_icon(shape: str) -> QIcon:
+    """A line icon for the side menu in the theme's colors: muted at rest, the
+    accent while its page is open."""
+    scale = 3  # drawn three times larger so the edges stay smooth
+    icon = QIcon()
+    for state, color in (
+        (QIcon.State.Off, themed("#4f5966")),
+        (QIcon.State.On, themed("#3220a0")),
+    ):
+        pixmap = QPixmap(18 * scale, 18 * scale)
+        pixmap.fill(Qt.GlobalColor.transparent)
+        painter = QPainter(pixmap)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        painter.scale(scale, scale)
+        pen = QPen(QColor(color), 1.6)
+        pen.setCapStyle(Qt.PenCapStyle.RoundCap)
+        pen.setJoinStyle(Qt.PenJoinStyle.RoundJoin)
+        painter.setPen(pen)
+        painter.setBrush(Qt.BrushStyle.NoBrush)
+        if shape == "overview":  # a screen on its stand
+            painter.drawRoundedRect(QRectF(2.5, 3, 13, 9), 1.5, 1.5)
+            painter.drawLine(QPointF(9, 12), QPointF(9, 15))
+            painter.drawLine(QPointF(6, 15), QPointF(12, 15))
+        elif shape == "workloads":  # four tiles
+            for x, y in ((3, 3), (10, 3), (3, 10), (10, 10)):
+                painter.drawRoundedRect(QRectF(x, y, 5, 5), 1.2, 1.2)
+        else:  # network: three linked nodes
+            top, left, right = QPointF(9, 3.5), QPointF(3.5, 14), QPointF(14.5, 14)
+            painter.drawLine(top, left)
+            painter.drawLine(top, right)
+            painter.drawLine(left, right)
+            painter.setBrush(QColor(color))
+            for node in (top, left, right):
+                painter.drawEllipse(node, 2, 2)
+        painter.end()
+        pixmap.setDevicePixelRatio(scale)
+        icon.addPixmap(pixmap, QIcon.Mode.Normal, state)
+        icon.addPixmap(pixmap, QIcon.Mode.Active, state)
+    return icon
+
+
 def _spinner_icon(angle: int, color: str) -> QIcon:
     """Draw one frame of the loading spinner; the disabled state keeps its
     color."""
@@ -452,9 +493,6 @@ class WorkloadWindow(QMainWindow):
         self._overview_busy = False
 
         style = self.style()
-        self.nav_overview.setIcon(
-            style.standardIcon(QStyle.StandardPixmap.SP_ComputerIcon)
-        )
         for button in (
             self.nav_overview,
             self.nav_workloads,
@@ -473,12 +511,6 @@ class WorkloadWindow(QMainWindow):
             animation.setDuration(180)
             animation.setEasingCurve(QEasingCurve.Type.InOutCubic)
             self._submenus[submenu] = animation
-        self.nav_workloads.setIcon(
-            style.standardIcon(QStyle.StandardPixmap.SP_FileDialogListView)
-        )
-        self.nav_network.setIcon(
-            style.standardIcon(QStyle.StandardPixmap.SP_DriveNetIcon)
-        )
         self.workloads_refresh_button.setIcon(
             style.standardIcon(QStyle.StandardPixmap.SP_BrowserReload)
         )
@@ -788,6 +820,9 @@ class WorkloadWindow(QMainWindow):
             .replace("CLOSE_ICON_HOVER", _close_icon_path("#3220a0", "close-hover"))
             .replace("CLOSE_ICON", _close_icon_path("#6b7380", "close"))
         )
+        self.nav_overview.setIcon(_nav_icon("overview"))
+        self.nav_workloads.setIcon(_nav_icon("workloads"))
+        self.nav_network.setIcon(_nav_icon("network"))
 
     def _apply_theme(self) -> None:
         """Switch to the theme in the settings and redraw what was drawn with
