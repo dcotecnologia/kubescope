@@ -3,6 +3,8 @@
 from importlib import metadata
 
 PROJECT_URL = "https://github.com/dcotecnologia/kubescope"
+COMPANY_URL = "https://dcotecnologia.com"
+LICENSE_URL = f"{PROJECT_URL}/blob/main/LICENSE"
 
 try:
     __version__ = metadata.version("kubescope")

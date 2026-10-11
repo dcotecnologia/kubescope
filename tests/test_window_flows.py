@@ -4,7 +4,7 @@ import time
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
-from PySide6.QtCore import QObject, QPoint, QTimer, Signal
+from PySide6.QtCore import QObject, QPoint, Signal
 from PySide6.QtGui import QCloseEvent, QPalette
 from PySide6.QtWidgets import (
     QApplication,
@@ -251,29 +251,78 @@ def test_refresh_does_nothing_without_a_context_or_while_running(monkeypatch) ->
     window = _ready_window(monkeypatch)
     window.context_combo.clear()
     window.refresh()
-    assert window._worker is None
+    assert window._workers == {}
 
     window.context_combo.addItem("prod")
     running = FakeRefreshWorker("prod", None)
     running.running = True
-    window._worker = running
+    window._workers["deployments"] = running
     window.refresh()
-    assert window._worker is running
+    assert window._workers["deployments"] is running
     window.close()
 
 
-def test_refresh_requeues_when_the_view_changed_mid_request(monkeypatch) -> None:
+def test_each_list_loads_in_parallel_with_the_others(monkeypatch) -> None:
     window = _ready_window(monkeypatch)
-    queued = []
-    monkeypatch.setattr(
-        QTimer, "singleShot", staticmethod(lambda *args: queued.append(args))
-    )
-    window._worker = FakeRefreshWorker("prod", None, "pods")
+    window.context_combo.addItem("prod")
+    pods = FakeRefreshWorker("prod", None, "pods")
+    pods.running = True
+    window._workers["pods"] = pods
     window._view = "deployments"
 
-    window._refresh_finished()
+    window.refresh()  # does not wait for the Pods request
 
-    assert queued and window.refresh_button.isEnabled()
+    assert window._workers["pods"] is pods
+    assert window._workers["deployments"] is not pods
+    assert not window.context_combo.isEnabled()  # a list is still loading
+    window._view = "pods"  # back on the list that is loading: it spins
+    window._sync_loading()
+    assert not window.refresh_button.isEnabled()
+    pods.running = False
+    window._refresh_finished()
+    assert window.context_combo.isEnabled() and window.refresh_button.isEnabled()
+    window.close()
+
+
+def test_an_answer_for_a_list_the_person_left_is_kept_for_when_they_return(
+    monkeypatch,
+) -> None:
+    window = _ready_window(monkeypatch)
+    shown = []
+    monkeypatch.setattr(window, "_show_pods", lambda *a: shown.append(("pods", a)))
+    monkeypatch.setattr(window, "_show_workloads", lambda *a: shown.append(("w", a)))
+    window.context_combo.addItem("prod")
+    window._view = "deployments"
+
+    window._answered("prod", None, "pods", ["ns"], ["pod"])  # pods answers late
+    assert shown == []
+
+    window._open_list_view("pods")  # back on Pods: the kept answer shows at once
+    assert shown == [("pods", (["ns"], ["pod"]))]
+
+    window._answered("prod", None, "pods", ["ns"], ["fresh"])  # the fresh one
+    window._open_list_view("deployments")
+    window._answered("prod", None, "deployments", ["ns"], ["dep"])
+    assert shown[-1] == ("w", (["ns"], ["dep"]))
+    window.close()
+
+
+def test_a_failure_only_shows_for_the_list_the_person_is_on(monkeypatch) -> None:
+    window = _ready_window(monkeypatch)
+    errors = []
+    monkeypatch.setattr(window, "_show_error", errors.append)
+    window.context_combo.addItem("prod")
+    FakeRefreshWorker.outcome = ("fail", "boom")
+
+    window.refresh()  # the deployments list is on screen
+    assert errors == ["boom"]
+
+    window.refresh()
+    worker = window._workers["deployments"]
+    window._view = "pods"  # the person moved on before it failed
+    worker.failed.emit("late")
+    assert errors == ["boom", "boom"]
+    FakeRefreshWorker.outcome = ("ok", ([], []))
     window.close()
 
 
@@ -334,7 +383,7 @@ def test_closing_hides_the_window_and_stops_the_running_requests(
     )
     running = FakeRefreshWorker("prod", None)
     running.running = True
-    window._worker = running
+    window._workers = {"deployments": running}
 
     event = QCloseEvent()
     window.closeEvent(event)
@@ -343,7 +392,7 @@ def test_closing_hides_the_window_and_stops_the_running_requests(
     assert cancelled == [True]
     assert QApplication.quitOnLastWindowClosed() is False
 
-    window._worker = None
+    window._workers = {}
     window._action_workers = [running]
     window._finish_deferred_close()  # an action is still running: not yet
     assert "quit" not in cancelled
@@ -562,6 +611,44 @@ def test_header_menu_toggles_columns_and_keeps_the_name(monkeypatch) -> None:
     window._show_column_menu(QPoint(0, 0))
 
     assert window.table.isColumnHidden(0)
+    window.close()
+
+
+def test_row_menu_selects_the_row_and_offers_the_actions(monkeypatch) -> None:
+    window = _ready_window(monkeypatch)
+    window.show()
+    window._show_workloads(
+        ["ns"],
+        [
+            Workload("ns", "Deployment", "api", 1, 1, "1d"),
+            Workload("ns", "Deployment", "web", 1, 1, "1d"),
+        ],
+    )
+    seen = []
+
+    class FakeMenu(QMenu):
+        def exec(self, *_args) -> None:
+            seen.append([action.text() for action in self.actions()])
+            self.actions()[1].trigger()  # Details
+
+    monkeypatch.setattr(window_module, "QMenu", FakeMenu)
+    clicked = []
+    monkeypatch.setattr(window, "_view_details", lambda: clicked.append(True))
+    window.details_button.clicked.disconnect()
+    window.details_button.clicked.connect(window._view_details)
+
+    second = window.table.rowViewportPosition(1) + 2
+    window._show_row_menu(QPoint(5, second))  # on the second row
+
+    assert window.table.currentRow() == 1
+    assert seen == [["Pods", "Details", "Logs"]] and clicked
+
+    window._show_row_menu(QPoint(5, 5000))  # below the rows: no menu
+    assert len(seen) == 1
+    window._open_list_view("pods")
+    window._show_pods(["ns"], [PodInfo("ns", "p", "Running", 1, 1, "1d", ("c",))])
+    window._show_row_menu(QPoint(5, 20))
+    assert seen[-1] == ["Details", "Logs"]  # a Pod has no Pods of its own
     window.close()
 
 
@@ -1040,26 +1127,6 @@ def test_jobs_and_cron_jobs_render_their_own_states(monkeypatch) -> None:
     window.close()
 
 
-def test_an_answer_for_a_view_the_person_left_is_dropped(monkeypatch) -> None:
-    window = _ready_window(monkeypatch)
-    late = []
-    monkeypatch.setattr(window, "_show_workloads", lambda *a: late.append(a))
-    FakeRefreshWorker.outcome = (
-        "ok",
-        (["ns"], [Workload("ns", "Deployment", "api", 1, 1, "1d")]),
-    )
-    window._open_list_view("pods")  # changes the view before refresh() runs
-
-    window.refresh()
-    assert window._worker.view == "pods"
-
-    window._view = "deployments"
-    window._worker.completed.emit(["ns"], [])  # the pods request answers late
-    assert late == []
-    FakeRefreshWorker.outcome = ("ok", ([], []))
-    window.close()
-
-
 def test_cron_job_lists_skip_the_pod_usage_lookup(monkeypatch) -> None:
     cron = Workload("ops", "CronJob", "nightly", 0, 0, "1d", state="Scheduled")
     monkeypatch.setattr(window_module, "get_workloads", lambda *_a: (["ops"], [cron]))
@@ -1420,6 +1487,38 @@ def test_the_footer_shows_the_version_and_links_to_the_project(monkeypatch) -> N
     window.ui.githubLink.click()
     assert opened == [kubescope.PROJECT_URL]
 
+    window.ui.companyLink.click()
+    assert opened[-1] == "https://dcotecnologia.com"
+
+    window.ui.licenseLink.click()  # the real license, on GitHub
+    assert opened[-1] == f"{kubescope.PROJECT_URL}/blob/main/LICENSE"
+
     window._retranslate()  # a language change rewrites the .ui texts
     assert window.ui.footerVersion.text() == f"Version {kubescope.__version__}"
+    window.close()
+
+
+def test_the_top_bar_shows_the_logo(monkeypatch) -> None:
+    window = _ready_window(monkeypatch)
+
+    assert not window.ui.topLogo.pixmap().isNull()
+    window.close()
+
+
+def test_clicking_through_the_lists_quickly_loads_only_the_last_one(
+    monkeypatch,
+) -> None:
+    window = _ready_window(monkeypatch)
+    started = []
+    monkeypatch.setattr(window, "refresh", lambda *_a: started.append(window._view))
+    window._list_timer.timeout.disconnect()
+    window._list_timer.timeout.connect(window.refresh)
+
+    window._open_list_view("pods")
+    window._open_list_view("deployments")
+    window._open_list_view("jobs")
+    assert started == [] and "Loading" in window.status_label.text()
+    _wait_until(lambda: started)
+
+    assert started == ["jobs"]
     window.close()
