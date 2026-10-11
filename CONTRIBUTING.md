@@ -79,8 +79,8 @@ The release workflow publishes the section of the tag as the release notes.
 | A theme to share with everyone | `src/kubescope/community_themes/` (see its README) |
 
 Edit layouts in the `.ui` files and run `make ui`; never edit `ui_*.py` by hand.
-Wrap user-visible text in `self.tr(...)` and complete the Portuguese
-translations with `make i18n`.
+Wrap user-visible text in `self.tr(...)` and complete the translations of every
+language with `make i18n`.
 
 ## Themes and languages
 

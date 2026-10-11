@@ -95,11 +95,12 @@ Golden rule:
 - Every user-visible string goes through `self.tr(...)` (or
   `QCoreApplication.translate(...)` for strings that belong to a `.ui` context), with
   a literal string so Qt can extract it.
-- After adding or changing texts, run `make i18n`, fill the Portuguese translations
-  in `kubescope_pt.ts` (no `unfinished` entries), and commit the `.ts` and the
-  compiled `.qm`.
-- Kubernetes terms that read the same in Portuguese (Pods, Deployments, Logs,
-  NAMESPACE) may stay as they are; states such as Pod phases must be translated.
+- After adding or changing texts, run `make i18n`, fill the translations of every
+  language in `kubescope_<code>.ts` (`LANGUAGES` in `settings.py` lists them; no
+  `unfinished` entries), and commit the `.ts` and the compiled `.qm`.
+- Kubernetes terms that read the same in the other languages (Pods, Deployments,
+  Logs, NAMESPACE) may stay as they are; states such as Pod phases must be
+  translated.
 - Use `make preview` (fake data, no cluster) to look at UI changes, and
   `make screenshot` to refresh `docs/screenshots/overview.png` when the overview
   changes.
@@ -216,7 +217,7 @@ Follow [SECURITY.md](SECURITY.md); its guarantees are part of the product.
 - Add or update tests next to the code, in English and function-based, and keep
   coverage at 100%.
 - Edit the `.ui` and regenerate `ui_*.py`; never hand-edit generated files.
-- Wrap new UI text in `tr(...)` and complete the Portuguese translations.
+- Wrap new UI text in `tr(...)` and complete the translations of every language.
 - Read the documents in the table above that apply, and follow them.
 - Check the change against [SECURITY.md](SECURITY.md); update it if the change
   alters what it promises.

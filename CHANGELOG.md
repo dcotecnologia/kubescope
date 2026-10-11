@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+### Added
+
+- Spanish, Italian, French, Chinese (simplified) and Japanese translations, selectable in Settings; **Automatic** follows the system language. The `.deb` recommends `fonts-noto-cjk` for the Chinese and Japanese text by @danilogco
+
 ## [0.2.0] - 2026-10-11
 
 ### Added
