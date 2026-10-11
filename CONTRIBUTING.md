@@ -19,7 +19,8 @@ python tools/fetch_kubectl.py
 ```
 
 Run the app against a cluster with `make run`, or without any cluster using fake
-data with `make preview`.
+data with `make preview`. `make dev` runs the app and restarts it every time you
+save a source, `.ui` or `.ts` file.
 
 ## Workflow
 
