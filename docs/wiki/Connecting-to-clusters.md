@@ -2,8 +2,8 @@
 
 ## Which kubeconfig is used
 
-KubeScope runs its bundled `kubectl` without extra options, so it uses the same
-configuration `kubectl` would:
+KubeScope reads the kubeconfig with the official Kubernetes client, so it finds
+the same configuration `kubectl` would:
 
 - the files listed in the `KUBECONFIG` environment variable, if it is set;
 - otherwise `~/.kube/config` (`%USERPROFILE%\.kube\config` on Windows).
@@ -25,6 +25,22 @@ reloads the data when you are done. The button names the profile it will use. If
 the profile uses access keys instead, the button reads **Configure AWS
 credentials** and opens a terminal with `aws configure` for that profile; type
 the keys there, then press Refresh. KubeScope never sees the keys.
+
+## Google GKE
+
+GKE kubeconfigs call `gke-gcloud-auth-plugin`, so install it and the Google Cloud
+CLI (`gcloud`), and make sure both are on the `PATH`. When your credentials
+expire, a **Sign in to Google Cloud** button appears in the footer. It runs
+`gcloud auth login`, opens the browser, and reloads the data when you are done.
+
+## Azure AKS
+
+AKS kubeconfigs call `kubelogin`, so install it and the Azure CLI (`az`), and make
+sure both are on the `PATH`. When your credentials expire, a **Sign in to Azure**
+button appears in the footer. It runs `az login`, opens the browser, and reloads
+the data when you are done. This fits kubeconfigs converted with
+`kubelogin convert-kubeconfig -l azurecli`; with other login modes of `kubelogin`
+(service principal, device code) sign in the way that mode asks.
 
 ## Permissions
 

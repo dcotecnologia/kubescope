@@ -86,6 +86,15 @@ contain secrets printed by an application, so keep the file somewhere safe.
 Language (automatic, English or Portuguese), the theme, remembering the last
 context, display names for contexts, and the debug log.
 
+### Updates
+
+When it starts, KubeScope asks the public GitHub API for the latest release. The
+icon in the footer spins while it looks, shows **Up to date** for a moment, or
+shows **Update available**: click it to open the download page. Click the icon at
+any time to check again. Only the app version is sent, and nothing is installed.
+To turn the startup check off, clear **Check GitHub for a new version when the app
+starts** in Settings.
+
 ### Themes
 
 Choose **Light**, **Dark**, or a theme of your own. **New theme...** opens an editor

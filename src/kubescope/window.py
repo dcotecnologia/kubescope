@@ -4,12 +4,14 @@ import json
 import logging
 import math
 import tempfile
+import time
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Any
 
 from PySide6.QtCore import (
+    QByteArray,
     QCoreApplication,
     QEasingCurve,
     QEvent,
@@ -56,10 +58,11 @@ from PySide6.QtWidgets import (
 
 from kubescope import COMPANY_URL, LICENSE_URL, PROJECT_URL, __version__
 from kubescope.cluster import (
-    KubectlError,
+    ClusterError,
     LoginAction,
     cancel_running,
     check_login,
+    forget_clients,
     get_cluster_overview,
     get_network,
     get_pod_logs,
@@ -70,7 +73,11 @@ from kubescope.cluster import (
     get_workloads,
     get_workloads_overview,
     list_contexts,
+    parse_command,
     run_login,
+)
+from kubescope.cluster import (
+    configure as configure_cluster,
 )
 from kubescope.diagnostics import configure_logging, log_file
 from kubescope.errors import (
@@ -123,10 +130,13 @@ from kubescope.ui.ui_pods_dialog import Ui_PodsDialog
 from kubescope.ui.ui_settings_page import Ui_SettingsPage
 from kubescope.ui.ui_viewer_page import Ui_ViewerPage
 from kubescope.ui.ui_workloads_overview_page import Ui_WorkloadsOverviewPage
+from kubescope.updates import Release, UpdateCheck, check_for_update
 
 logger = logging.getLogger(__name__)
 
 LIST_DEBOUNCE_MS = 150
+UPDATE_SEARCH_MS = 5000  # an update check shows as searching for at least this long
+UPDATE_NOTICE_MS = 4000  # how long "Up to date" stays next to the icon
 
 LOGO_PATH = Path(__file__).resolve().parent / "assets" / "icon.png"
 
@@ -329,6 +339,48 @@ def _spinner_icon(angle: int, color: str) -> QIcon:
     return icon
 
 
+def _update_icon(state: str, opacity: float = 1.0) -> QIcon:
+    """The footer icon of the update check: a circle with a check when up to
+    date, an exclamation mark when the check failed, an arrow up in the accent
+    color when there is a new version, and the reload arrow before any
+    check."""
+    muted = themed("#6b7380", text=True)
+    if state == "idle":
+        return _nav_icon("reload", (muted, muted))
+    scale = 3  # drawn three times larger so the edges stay smooth
+    pixmap = QPixmap(18 * scale, 18 * scale)
+    pixmap.fill(Qt.GlobalColor.transparent)
+    painter = QPainter(pixmap)
+    painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+    painter.scale(scale, scale)
+    color = QColor(themed("#3220a0") if state == "available" else muted)
+    color.setAlphaF(opacity)
+    pen = QPen(color, 1.6)
+    pen.setCapStyle(Qt.PenCapStyle.RoundCap)
+    pen.setJoinStyle(Qt.PenJoinStyle.RoundJoin)
+    painter.setPen(pen)
+    painter.setBrush(Qt.BrushStyle.NoBrush)
+    painter.drawEllipse(QPointF(9, 9), 6.5, 6.5)
+    if state == "current":
+        painter.drawPolyline(
+            QPolygonF([QPointF(5.9, 9.2), QPointF(8, 11.3), QPointF(12.1, 6.9)])
+        )
+    elif state == "failed":
+        painter.drawLine(QPointF(9, 5.6), QPointF(9, 9.8))
+        painter.drawPoint(QPointF(9, 12.3))
+    else:  # available
+        painter.drawLine(QPointF(9, 12.2), QPointF(9, 6))
+        painter.drawPolyline(
+            QPolygonF([QPointF(6.2, 8.6), QPointF(9, 5.8), QPointF(11.8, 8.6)])
+        )
+    painter.end()
+    pixmap.setDevicePixelRatio(scale)
+    icon = QIcon()
+    icon.addPixmap(pixmap, QIcon.Mode.Normal)
+    icon.addPixmap(pixmap, QIcon.Mode.Active)
+    return icon
+
+
 class RefreshWorker(QThread):
     completed = Signal(list, list)
     failed = Signal(str)
@@ -348,7 +400,7 @@ class RefreshWorker(QThread):
                 if kind == "CronJob"
                 else get_usage(self.context, self.namespace)
             )
-        except KubectlError as error:  # metrics-server is optional
+        except ClusterError as error:  # metrics-server is optional
             logger.debug("No Pod usage for %s: %s", self.context, error)
         except Exception:
             logger.exception("Could not load Pod usage for %s", self.context)
@@ -384,7 +436,7 @@ class RefreshWorker(QThread):
                         or (0, None, None)
                     ]
                 ]
-        except KubectlError as error:  # expected: the window explains it
+        except ClusterError as error:  # expected: the window explains it
             logger.debug(
                 "Could not load %s from %s: %s", self.view, self.context, error
             )
@@ -415,7 +467,7 @@ class ActionWorker(QThread):
     def run(self) -> None:
         try:
             result = self.operation(*self.arguments)
-        except KubectlError as error:  # expected: the window explains it
+        except ClusterError as error:  # expected: the window explains it
             logger.debug("Kubernetes action failed: %s", error)
             self.failed.emit(str(error))
             return
@@ -454,7 +506,24 @@ class WorkloadWindow(QMainWindow):
         self._pods: list[PodInfo] = []
         self._network: list[NetworkResource] = []
         self._view = "deployments"  # which list the shared table shows
+        self._update_state = "idle"  # idle, checking, current, available or failed
+        self._update_release: Release | None = None
+        self._update_phase = 0  # frame of the icon animation
+        self._update_timer = QTimer(self)
+        self._update_timer.setInterval(60)
+        self._update_timer.timeout.connect(self._tick_update)
+        self._update_started = 0.0
+        self._update_result = UpdateCheck("current")
+        # a check shows as searching for a while, so it reads as a real look
+        self._update_delay = QTimer(self)
+        self._update_delay.setSingleShot(True)
+        self._update_delay.timeout.connect(self._update_checked)
+        self._update_notice_timer = QTimer(self)  # hides "Up to date" again
+        self._update_notice_timer.setSingleShot(True)
+        self._update_notice_timer.setInterval(UPDATE_NOTICE_MS)
+        self._apply_cluster_settings()
         self._build_ui()
+        self._restore_geometry()
         self._load_contexts()
 
     def _build_ui(self) -> None:
@@ -540,6 +609,13 @@ class WorkloadWindow(QMainWindow):
         self.settings_ui.contextsTable.setRowCount(0)
         self.settings_ui.saveButton.clicked.connect(self._save_preferences)
         self.settings_ui.openLogsButton.clicked.connect(self._open_log_folder)
+        self.settings_ui.clearCacheButton.clicked.connect(self._clear_cache)
+        self.settings_ui.kubeconfigAddButton.clicked.connect(self._add_kubeconfig_file)
+        self.settings_ui.kubeconfigRemoveButton.clicked.connect(
+            self._remove_kubeconfig_file
+        )
+        self.settings_ui.loginAddButton.clicked.connect(self._add_login_row)
+        self.settings_ui.loginRemoveButton.clicked.connect(self._remove_login_row)
         self.settings_ui.newThemeButton.clicked.connect(self._new_theme)
         self.settings_ui.editThemeButton.clicked.connect(self._edit_theme)
         self.settings_ui.openThemesButton.clicked.connect(self._open_themes_folder)
@@ -611,6 +687,13 @@ class WorkloadWindow(QMainWindow):
         self._style_template = self.styleSheet()
         self._apply_style()
         self._show_version()
+        self._update_notice_timer.timeout.connect(self.ui.updateNotice.hide)
+        self.ui.updateLink.clicked.connect(self._open_release)
+        self.ui.updateButton.clicked.connect(self._update_clicked)
+        self.ui.updateButton.setContextMenuPolicy(
+            Qt.ContextMenuPolicy.CustomContextMenu
+        )
+        self.ui.updateButton.customContextMenuRequested.connect(self._show_update_menu)
         self.ui.githubLink.clicked.connect(self._open_project)
         self.ui.licenseLink.clicked.connect(self._open_license)
         self.ui.companyLink.clicked.connect(self._open_company)
@@ -678,8 +761,8 @@ class WorkloadWindow(QMainWindow):
             button.click()
 
     def _load_contexts(self) -> None:
-        """Read the kubeconfig contexts in a worker; kubectl can take a while
-        and must not freeze the window."""
+        """Read the kubeconfig contexts in a worker; reading them can take a
+        while and must not freeze the window."""
         self._set_status(lambda: self.tr("Loading contexts..."))
         self.refresh_button.setEnabled(False)
         self._run_action(
@@ -852,6 +935,107 @@ class WorkloadWindow(QMainWindow):
             self.tr("Open the project on GitHub") + f"\n{PROJECT_URL}"
         )
 
+    def start_update_check(self) -> None:
+        """Look for a new version when the app starts, if Settings allow it."""
+        if self.settings.check_updates:
+            self.check_updates()
+
+    def check_updates(self) -> None:
+        if self._update_state == "checking":
+            return
+        self._update_started = time.monotonic()
+        self._set_update_state("checking")
+        self._run_action(
+            check_for_update,
+            self._update_answered,
+            quiet=True,
+            on_error=lambda _message: self._update_answered(UpdateCheck("failed")),
+        )
+
+    def _update_answered(self, result: UpdateCheck) -> None:
+        """Show the answer once the icon has searched for long enough."""
+        self._update_result = result
+        remaining = UPDATE_SEARCH_MS / 1000 - (time.monotonic() - self._update_started)
+        if remaining > 0:
+            self._update_delay.start(int(remaining * 1000))
+        else:
+            self._update_checked()
+
+    def _update_checked(self) -> None:
+        result = self._update_result
+        self._update_release = result.release
+        self._set_update_state(result.status)
+        notice = {
+            "current": self.tr("Up to date"),
+            "failed": self.tr("Could not check"),
+        }.get(result.status)
+        if notice is not None:
+            self.ui.updateNotice.setText(notice)
+            self.ui.updateNotice.show()
+            self._update_notice_timer.start()
+
+    def _set_update_state(self, state: str) -> None:
+        self._update_state = state
+        self._update_phase = 0
+        tips = {
+            "idle": self.tr("Check for updates"),
+            "checking": self.tr("Checking for updates..."),
+            "current": self.tr("KubeScope is up to date. Click to check again."),
+            "failed": self.tr("Could not check for updates. Click to try again."),
+        }
+        release = self._update_release
+        available = state == "available" and release is not None
+        if available:
+            tip = self.tr(
+                "Update available: {version}. Click to open the download page; "
+                "right-click to check again."
+            ).format(version=release.version)
+        else:
+            tip = tips.get(state, tips["idle"])
+        self.ui.updateButton.setToolTip(tip)
+        self.ui.updateLink.setVisible(available)
+        if release is not None and available:
+            self.ui.updateLink.setText(self.tr("Update available"))
+            self.ui.updateLink.setToolTip(
+                self.tr("Download KubeScope {version}").format(version=release.version)
+                + f"\n{release.url}"
+            )
+        self.ui.updateNotice.hide()
+        self._update_notice_timer.stop()
+        if state in ("checking", "available"):
+            self._update_timer.start()
+        else:
+            self._update_timer.stop()
+        self._tick_update(advance=False)
+
+    def _tick_update(self, advance: bool = True) -> None:
+        """Draw the next frame of the footer icon: it spins while checking and
+        pulses while an update waits."""
+        self._update_phase += 1 if advance else 0
+        state, phase = self._update_state, self._update_phase
+        if state == "checking":
+            icon = _spinner_icon(phase * 30 % 360, themed("#6b7380", text=True))
+        elif state == "available":
+            icon = _update_icon(state, 0.6 + 0.4 * math.sin(phase / 6) ** 2)
+        else:
+            icon = _update_icon(state)
+        self.ui.updateButton.setIcon(icon)
+
+    def _update_clicked(self) -> None:
+        if self._update_state == "available":
+            self._open_release()
+        else:
+            self.check_updates()
+
+    def _open_release(self) -> None:
+        if self._update_release is not None:
+            QDesktopServices.openUrl(QUrl(self._update_release.url))
+
+    def _show_update_menu(self, position: QPoint) -> None:
+        menu = QMenu(self)
+        menu.addAction(self.tr("Check for updates again"), self.check_updates)
+        menu.exec(self.ui.updateButton.mapToGlobal(position))
+
     def _open_project(self) -> None:
         QDesktopServices.openUrl(QUrl(PROJECT_URL))
 
@@ -878,6 +1062,7 @@ class WorkloadWindow(QMainWindow):
         self.nav_network.setIcon(_nav_icon("network"))
         self.save_button.setIcon(_nav_icon("save"))
         self.nav_viewer.setIcon(_nav_icon("document"))
+        self._set_update_state(self._update_state)  # redraw its icon in this theme
         light = (themed("#ffffff", text=True),) * 2  # on the filled buttons
         for button in (
             self.workloads_refresh_button,
@@ -1089,8 +1274,8 @@ class WorkloadWindow(QMainWindow):
 
     def _check_login(self) -> None:
         """Ask the cluster whether this context still needs a sign-in; the
-        button appears only when it does and the kubeconfig names an AWS
-        profile."""
+        button appears only when it does and the kubeconfig names an AWS,
+        Google Cloud or Azure sign-in."""
         context = self._context()
         if not context or self._login_checking:
             return
@@ -1115,7 +1300,10 @@ class WorkloadWindow(QMainWindow):
         self.login_button.setVisible(self._login_action is not None)
         if self._login_action is None:
             return
-        profile = self._login_action.profile or "default"
+        provider = self._login_action.provider
+        profile = self._login_action.profile or (
+            "default" if provider == "AWS" else None
+        )
         if self._login_action.interactive:
             self.login_button.setText(
                 self.tr("Configure AWS credentials ({profile})").format(profile=profile)
@@ -1125,14 +1313,23 @@ class WorkloadWindow(QMainWindow):
                     "AWS credentials for profile {profile} are missing or invalid"
                 ).format(profile=profile)
             )
-        else:
+        elif profile is None:
             self.login_button.setText(
-                self.tr("Sign in to AWS ({profile})").format(profile=profile)
+                self.tr("Sign in to {provider}").format(provider=provider)
             )
             self._set_status(
-                lambda: self.tr("Not signed in to AWS (profile {profile})").format(
-                    profile=profile
+                lambda: self.tr("Not signed in to {provider}").format(provider=provider)
+            )
+        else:
+            self.login_button.setText(
+                self.tr("Sign in to {provider} ({profile})").format(
+                    provider=provider, profile=profile
                 )
+            )
+            self._set_status(
+                lambda: self.tr(
+                    "Not signed in to {provider} (profile {profile})"
+                ).format(provider=provider, profile=profile)
             )
 
     def _sign_in(self) -> None:
@@ -2301,6 +2498,7 @@ class WorkloadWindow(QMainWindow):
         self._fill_default_namespaces()
         form.rememberCheck.setChecked(self.settings.remember_last_context)
         form.debugCheck.setChecked(self.settings.debug_logging)
+        form.updatesCheck.setChecked(self.settings.check_updates)
         form.debugHint.setText(
             self.tr(
                 "Off by default. When on, KubeScope writes what it does, "
@@ -2335,7 +2533,87 @@ class WorkloadWindow(QMainWindow):
             )
         else:
             form.contextsHint.setText(self.tr("No contexts were found in kubeconfig."))
+        form.kubeconfigList.clear()
+        form.kubeconfigList.addItems(self.settings.kubeconfig_files)
+        form.loginTable.setRowCount(0)
+        for program, command in self.settings.sign_in_commands.items():
+            self._add_login_row(program, command)
+        self._show_config_tables()
         form.noticeLabel.setText("")
+
+    def _show_config_tables(self) -> None:
+        """The kubeconfig list and the sign-in table (and their Remove buttons)
+        only show while they have rows; the Add buttons are always there."""
+        form = self.settings_ui
+        has_files = form.kubeconfigList.count() > 0
+        form.kubeconfigList.setVisible(has_files)
+        form.kubeconfigRemoveButton.setVisible(has_files)
+        has_commands = form.loginTable.rowCount() > 0
+        form.loginTable.setVisible(has_commands)
+        form.loginRemoveButton.setVisible(has_commands)
+
+    def _apply_cluster_settings(self) -> None:
+        """Tell the cluster layer which kubeconfig files to read and which
+        commands sign in for programs the app does not know."""
+        configure_cluster(
+            self.settings.kubeconfig_files, self.settings.sign_in_commands
+        )
+
+    def _add_kubeconfig_file(self) -> None:
+        path, _filter = QFileDialog.getOpenFileName(
+            self, self.tr("Choose a kubeconfig file"), str(Path.home() / ".kube")
+        )
+        files = self.settings_ui.kubeconfigList
+        if path and not files.findItems(path, Qt.MatchFlag.MatchExactly):
+            files.addItem(path)
+        self._show_config_tables()
+
+    def _remove_kubeconfig_file(self) -> None:
+        files = self.settings_ui.kubeconfigList
+        for item in files.selectedItems():
+            files.takeItem(files.row(item))
+        self._show_config_tables()
+
+    def _add_login_row(self, program: str = "", command: str = "") -> None:
+        table = self.settings_ui.loginTable
+        row = table.rowCount()
+        table.insertRow(row)
+        table.setItem(row, 0, QTableWidgetItem(program))
+        table.setItem(row, 1, QTableWidgetItem(command))
+        self._show_config_tables()
+
+    def _remove_login_row(self) -> None:
+        table = self.settings_ui.loginTable
+        if table.currentRow() >= 0:
+            table.removeRow(table.currentRow())
+        self._show_config_tables()
+
+    def _login_commands_from_form(self) -> dict[str, str] | None:
+        """The sign-in commands in the table; None (with a notice) when one of
+        them cannot be read.
+
+        Empty rows are skipped.
+        """
+        table = self.settings_ui.loginTable
+        commands: dict[str, str] = {}
+        for row in range(table.rowCount()):
+            program = table.item(row, 0).text().strip()
+            command = table.item(row, 1).text().strip()
+            if not program and not command:
+                continue
+            try:
+                if not program:
+                    raise ValueError("no program")
+                parse_command(command)
+            except ValueError:
+                self.settings_ui.noticeLabel.setText(
+                    self.tr("The sign-in command in row {row} is not valid.").format(
+                        row=row + 1
+                    )
+                )
+                return None
+            commands[program] = command
+        return commands
 
     def _fill_theme_combo(self, selected: str) -> None:
         """List the built-in and custom themes, choosing `selected`."""
@@ -2391,6 +2669,23 @@ class WorkloadWindow(QMainWindow):
         themes_directory().mkdir(parents=True, exist_ok=True)
         QDesktopServices.openUrl(QUrl.fromLocalFile(str(themes_directory())))
 
+    def _clear_cache(self) -> None:
+        """Forget what was loaded and the sign-in of every cluster; pages load
+        again, and the sign-in runs again, the next time they are needed."""
+        logger.info("Clearing the cache")
+        forget_clients()
+        self._answers.clear()
+        self._overviews.clear()
+        self._workloads_overviews.clear()
+        self._overview = None
+        self._workloads_overview = None
+        self._shown_key = None
+        self._overview_context = None
+        self._workloads_overview_context = None
+        self.settings_ui.noticeLabel.setText(
+            self.tr("Cache cleared. Everything loads again the next time it is needed.")
+        )
+
     def _open_log_folder(self) -> None:
         directory = log_directory()
         directory.mkdir(parents=True, exist_ok=True)
@@ -2398,6 +2693,17 @@ class WorkloadWindow(QMainWindow):
 
     def _save_preferences(self) -> None:
         form = self.settings_ui
+        commands = self._login_commands_from_form()
+        if commands is None:
+            return  # nothing is saved until every command is valid
+        files = [
+            form.kubeconfigList.item(row).text()
+            for row in range(form.kubeconfigList.count())
+        ]
+        files_changed = files != self.settings.kubeconfig_files
+        self.settings.kubeconfig_files = files
+        self.settings.sign_in_commands = commands
+        self._apply_cluster_settings()
         self.settings.default_namespace = form.defaultNamespaceCombo.currentData()
         table = form.contextsTable
         aliases = self.settings.context_aliases
@@ -2415,6 +2721,10 @@ class WorkloadWindow(QMainWindow):
         self.settings.remember_last_context = form.rememberCheck.isChecked()
         if self.settings.remember_last_context:
             self.settings.last_context = self._context()
+        was_checking = self.settings.check_updates
+        self.settings.check_updates = form.updatesCheck.isChecked()
+        if self.settings.check_updates and not was_checking:
+            self.check_updates()
         was_debugging = self.settings.debug_logging
         self.settings.debug_logging = form.debugCheck.isChecked()
         self._save_settings()
@@ -2429,6 +2739,8 @@ class WorkloadWindow(QMainWindow):
             logger.info("Theme changed to %s", self.settings.theme)
             self._apply_theme()
         form.noticeLabel.setText(self.tr("Settings saved."))
+        if files_changed:
+            self._load_contexts()  # the contexts come from other files now
 
     def changeEvent(self, event: QEvent) -> None:
         if event.type() == QEvent.Type.LanguageChange and hasattr(self, "ui"):
@@ -2512,13 +2824,26 @@ class WorkloadWindow(QMainWindow):
         self._sync_loading()
         self._finish_deferred_close()
 
+    def _restore_geometry(self) -> None:
+        """Open at the size and place the window had when it was last
+        closed."""
+        saved = self.settings.window_geometry
+        if saved and not self.restoreGeometry(QByteArray.fromBase64(saved.encode())):
+            logger.debug("The saved window geometry was not usable")
+
+    def _remember_geometry(self) -> None:
+        self.settings.window_geometry = bytes(self.saveGeometry().toBase64()).decode()
+        self._save_settings()
+
     def closeEvent(self, event: QCloseEvent) -> None:
+        self._remember_geometry()
         refresh_running = any(self._loading(view) for view in self._workers)
         actions_running = any(worker.isRunning() for worker in self._action_workers)
         if refresh_running or actions_running:
             logger.info("Closing while requests are running; stopping them")
-            # Stop kubectl and the AWS CLI so the workers return at once, hide the
-            # window so closing feels instant, and quit when the last one is done.
+            # Stop the cluster requests and the cloud CLIs so the workers return at
+            # once, hide the window so closing feels instant, and quit when the
+            # last one is done.
             self._close_when_worker_stops = True
             QApplication.setQuitOnLastWindowClosed(False)
             cancel_running()

@@ -17,9 +17,9 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QPalette, QPixmap, QRadialGradient, QTransform)
 from PySide6.QtWidgets import (QAbstractItemView, QApplication, QCheckBox, QComboBox,
     QFormLayout, QFrame, QHBoxLayout, QHeaderView,
-    QLabel, QPushButton, QScrollArea, QSizePolicy,
-    QSpacerItem, QTableWidget, QTableWidgetItem, QVBoxLayout,
-    QWidget)
+    QLabel, QListWidget, QListWidgetItem, QPushButton,
+    QScrollArea, QSizePolicy, QSpacerItem, QTableWidget,
+    QTableWidgetItem, QVBoxLayout, QWidget)
 
 class Ui_SettingsPage(object):
     def setupUi(self, SettingsPage):
@@ -146,10 +146,16 @@ class Ui_SettingsPage(object):
 
         self.generalForm.setWidget(4, QFormLayout.ItemRole.SpanningRole, self.rememberCheck)
 
+        self.updatesCheck = QCheckBox(self.settingsContent)
+        self.updatesCheck.setObjectName(u"updatesCheck")
+        self.updatesCheck.setChecked(True)
+
+        self.generalForm.setWidget(5, QFormLayout.ItemRole.SpanningRole, self.updatesCheck)
+
         self.debugCheck = QCheckBox(self.settingsContent)
         self.debugCheck.setObjectName(u"debugCheck")
 
-        self.generalForm.setWidget(5, QFormLayout.ItemRole.SpanningRole, self.debugCheck)
+        self.generalForm.setWidget(6, QFormLayout.ItemRole.SpanningRole, self.debugCheck)
 
         self.debugHint = QLabel(self.settingsContent)
         self.debugHint.setObjectName(u"debugHint")
@@ -158,7 +164,7 @@ class Ui_SettingsPage(object):
         self.debugHint.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         self.debugHint.setProperty(u"variant", u"muted")
 
-        self.generalForm.setWidget(6, QFormLayout.ItemRole.SpanningRole, self.debugHint)
+        self.generalForm.setWidget(7, QFormLayout.ItemRole.SpanningRole, self.debugHint)
 
         self.logButtonsRow = QHBoxLayout()
         self.logButtonsRow.setObjectName(u"logButtonsRow")
@@ -168,15 +174,115 @@ class Ui_SettingsPage(object):
 
         self.logButtonsRow.addWidget(self.openLogsButton)
 
+        self.clearCacheButton = QPushButton(self.settingsContent)
+        self.clearCacheButton.setObjectName(u"clearCacheButton")
+        self.clearCacheButton.setProperty(u"variant", u"secondary")
+
+        self.logButtonsRow.addWidget(self.clearCacheButton)
+
         self.logButtonsSpacer = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
 
         self.logButtonsRow.addItem(self.logButtonsSpacer)
 
 
-        self.generalForm.setLayout(7, QFormLayout.ItemRole.SpanningRole, self.logButtonsRow)
+        self.generalForm.setLayout(8, QFormLayout.ItemRole.SpanningRole, self.logButtonsRow)
 
 
         self.settingsContentLayout.addLayout(self.generalForm)
+
+        self.kubeconfigHeading = QLabel(self.settingsContent)
+        self.kubeconfigHeading.setObjectName(u"kubeconfigHeading")
+        self.kubeconfigHeading.setWordWrap(True)
+        self.kubeconfigHeading.setProperty(u"variant", u"cardTitle")
+
+        self.settingsContentLayout.addWidget(self.kubeconfigHeading)
+
+        self.kubeconfigHint = QLabel(self.settingsContent)
+        self.kubeconfigHint.setObjectName(u"kubeconfigHint")
+        self.kubeconfigHint.setWordWrap(True)
+        self.kubeconfigHint.setProperty(u"variant", u"muted")
+
+        self.settingsContentLayout.addWidget(self.kubeconfigHint)
+
+        self.kubeconfigList = QListWidget(self.settingsContent)
+        self.kubeconfigList.setObjectName(u"kubeconfigList")
+        self.kubeconfigList.setMinimumSize(QSize(0, 90))
+        self.kubeconfigList.setProperty(u"variant", u"data")
+
+        self.settingsContentLayout.addWidget(self.kubeconfigList)
+
+        self.kubeconfigButtonsRow = QHBoxLayout()
+        self.kubeconfigButtonsRow.setObjectName(u"kubeconfigButtonsRow")
+        self.kubeconfigAddButton = QPushButton(self.settingsContent)
+        self.kubeconfigAddButton.setObjectName(u"kubeconfigAddButton")
+        self.kubeconfigAddButton.setProperty(u"variant", u"secondary")
+
+        self.kubeconfigButtonsRow.addWidget(self.kubeconfigAddButton)
+
+        self.kubeconfigRemoveButton = QPushButton(self.settingsContent)
+        self.kubeconfigRemoveButton.setObjectName(u"kubeconfigRemoveButton")
+        self.kubeconfigRemoveButton.setProperty(u"variant", u"secondary")
+
+        self.kubeconfigButtonsRow.addWidget(self.kubeconfigRemoveButton)
+
+        self.kubeconfigButtonsRowSpacer = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+
+        self.kubeconfigButtonsRow.addItem(self.kubeconfigButtonsRowSpacer)
+
+
+        self.settingsContentLayout.addLayout(self.kubeconfigButtonsRow)
+
+        self.loginHeading = QLabel(self.settingsContent)
+        self.loginHeading.setObjectName(u"loginHeading")
+        self.loginHeading.setWordWrap(True)
+        self.loginHeading.setProperty(u"variant", u"cardTitle")
+
+        self.settingsContentLayout.addWidget(self.loginHeading)
+
+        self.loginHint = QLabel(self.settingsContent)
+        self.loginHint.setObjectName(u"loginHint")
+        self.loginHint.setWordWrap(True)
+        self.loginHint.setProperty(u"variant", u"muted")
+
+        self.settingsContentLayout.addWidget(self.loginHint)
+
+        self.loginTable = QTableWidget(self.settingsContent)
+        if (self.loginTable.columnCount() < 2):
+            self.loginTable.setColumnCount(2)
+        __qtablewidgetitem = QTableWidgetItem()
+        self.loginTable.setHorizontalHeaderItem(0, __qtablewidgetitem)
+        __qtablewidgetitem1 = QTableWidgetItem()
+        self.loginTable.setHorizontalHeaderItem(1, __qtablewidgetitem1)
+        self.loginTable.setObjectName(u"loginTable")
+        self.loginTable.setMinimumSize(QSize(0, 120))
+        self.loginTable.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.loginTable.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.loginTable.setProperty(u"variant", u"data")
+        self.loginTable.horizontalHeader().setStretchLastSection(True)
+        self.loginTable.verticalHeader().setVisible(False)
+
+        self.settingsContentLayout.addWidget(self.loginTable)
+
+        self.loginButtonsRow = QHBoxLayout()
+        self.loginButtonsRow.setObjectName(u"loginButtonsRow")
+        self.loginAddButton = QPushButton(self.settingsContent)
+        self.loginAddButton.setObjectName(u"loginAddButton")
+        self.loginAddButton.setProperty(u"variant", u"secondary")
+
+        self.loginButtonsRow.addWidget(self.loginAddButton)
+
+        self.loginRemoveButton = QPushButton(self.settingsContent)
+        self.loginRemoveButton.setObjectName(u"loginRemoveButton")
+        self.loginRemoveButton.setProperty(u"variant", u"secondary")
+
+        self.loginButtonsRow.addWidget(self.loginRemoveButton)
+
+        self.loginButtonsRowSpacer = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+
+        self.loginButtonsRow.addItem(self.loginButtonsRowSpacer)
+
+
+        self.settingsContentLayout.addLayout(self.loginButtonsRow)
 
         self.contextsHeading = QLabel(self.settingsContent)
         self.contextsHeading.setObjectName(u"contextsHeading")
@@ -194,24 +300,24 @@ class Ui_SettingsPage(object):
         self.contextsTable = QTableWidget(self.settingsContent)
         if (self.contextsTable.columnCount() < 2):
             self.contextsTable.setColumnCount(2)
-        __qtablewidgetitem = QTableWidgetItem()
-        self.contextsTable.setHorizontalHeaderItem(0, __qtablewidgetitem)
-        __qtablewidgetitem1 = QTableWidgetItem()
-        self.contextsTable.setHorizontalHeaderItem(1, __qtablewidgetitem1)
+        __qtablewidgetitem2 = QTableWidgetItem()
+        self.contextsTable.setHorizontalHeaderItem(0, __qtablewidgetitem2)
+        __qtablewidgetitem3 = QTableWidgetItem()
+        self.contextsTable.setHorizontalHeaderItem(1, __qtablewidgetitem3)
         if (self.contextsTable.rowCount() < 2):
             self.contextsTable.setRowCount(2)
-        __qtablewidgetitem2 = QTableWidgetItem()
-        __qtablewidgetitem2.setText(u"prod-eks")
-        self.contextsTable.setItem(0, 0, __qtablewidgetitem2)
-        __qtablewidgetitem3 = QTableWidgetItem()
-        __qtablewidgetitem3.setText(u"Production")
-        self.contextsTable.setItem(0, 1, __qtablewidgetitem3)
         __qtablewidgetitem4 = QTableWidgetItem()
-        __qtablewidgetitem4.setText(u"staging-eks")
-        self.contextsTable.setItem(1, 0, __qtablewidgetitem4)
+        __qtablewidgetitem4.setText(u"prod-eks")
+        self.contextsTable.setItem(0, 0, __qtablewidgetitem4)
         __qtablewidgetitem5 = QTableWidgetItem()
-        __qtablewidgetitem5.setText(u"Staging")
-        self.contextsTable.setItem(1, 1, __qtablewidgetitem5)
+        __qtablewidgetitem5.setText(u"Production")
+        self.contextsTable.setItem(0, 1, __qtablewidgetitem5)
+        __qtablewidgetitem6 = QTableWidgetItem()
+        __qtablewidgetitem6.setText(u"staging-eks")
+        self.contextsTable.setItem(1, 0, __qtablewidgetitem6)
+        __qtablewidgetitem7 = QTableWidgetItem()
+        __qtablewidgetitem7.setText(u"Staging")
+        self.contextsTable.setItem(1, 1, __qtablewidgetitem7)
         self.contextsTable.setObjectName(u"contextsTable")
         self.contextsTable.setMinimumSize(QSize(0, 260))
         self.contextsTable.setSelectionMode(QAbstractItemView.SingleSelection)
@@ -248,14 +354,34 @@ class Ui_SettingsPage(object):
         self.defaultNamespaceCombo.setToolTip(QCoreApplication.translate("SettingsPage", u"The namespace each context opens on. Leave empty to show all of them.", None))
 #endif // QT_CONFIG(tooltip)
         self.rememberCheck.setText(QCoreApplication.translate("SettingsPage", u"Remember the last used context", None))
+        self.updatesCheck.setText(QCoreApplication.translate("SettingsPage", u"Check GitHub for a new version when the app starts", None))
+#if QT_CONFIG(tooltip)
+        self.updatesCheck.setToolTip(QCoreApplication.translate("SettingsPage", u"Asks the public GitHub API for the latest release and sends nothing but the app version. The icon in the footer checks on demand.", None))
+#endif // QT_CONFIG(tooltip)
         self.debugCheck.setText(QCoreApplication.translate("SettingsPage", u"Debug mode: write a log file I can share", None))
         self.openLogsButton.setText(QCoreApplication.translate("SettingsPage", u"Open the log folder", None))
+        self.clearCacheButton.setText(QCoreApplication.translate("SettingsPage", u"Clear the cache", None))
+#if QT_CONFIG(tooltip)
+        self.clearCacheButton.setToolTip(QCoreApplication.translate("SettingsPage", u"Forgets the lists and overviews already loaded and the sign-in of every cluster, so the next request signs in and loads everything again. Your settings are kept.", None))
+#endif // QT_CONFIG(tooltip)
+        self.kubeconfigHeading.setText(QCoreApplication.translate("SettingsPage", u"KUBECONFIG FILES", None))
+        self.kubeconfigHint.setText(QCoreApplication.translate("SettingsPage", u"KubeScope reads the files in the KUBECONFIG variable, or ~/.kube/config. Add files here to read those instead. Press Save to apply.", None))
+        self.kubeconfigAddButton.setText(QCoreApplication.translate("SettingsPage", u"Add file...", None))
+        self.kubeconfigRemoveButton.setText(QCoreApplication.translate("SettingsPage", u"Remove", None))
+        self.loginHeading.setText(QCoreApplication.translate("SettingsPage", u"SIGN-IN COMMANDS", None))
+        self.loginHint.setText(QCoreApplication.translate("SettingsPage", u"For a cloud KubeScope does not know, give the program your kubeconfig uses to sign in (for example oci) and the command that signs you in (for example oci session authenticate). The Sign in button then runs it, without a shell. Press Save to apply.", None))
+        ___qtablewidgetitem = self.loginTable.horizontalHeaderItem(0)
+        ___qtablewidgetitem.setText(QCoreApplication.translate("SettingsPage", u"PROGRAM", None))
+        ___qtablewidgetitem1 = self.loginTable.horizontalHeaderItem(1)
+        ___qtablewidgetitem1.setText(QCoreApplication.translate("SettingsPage", u"SIGN-IN COMMAND", None))
+        self.loginAddButton.setText(QCoreApplication.translate("SettingsPage", u"Add row", None))
+        self.loginRemoveButton.setText(QCoreApplication.translate("SettingsPage", u"Remove", None))
         self.contextsHeading.setText(QCoreApplication.translate("SettingsPage", u"CONTEXT NAMES", None))
         self.contextsHint.setText(QCoreApplication.translate("SettingsPage", u"Give your contexts friendlier names. Leave a name empty to keep the original one.", None))
-        ___qtablewidgetitem = self.contextsTable.horizontalHeaderItem(0)
-        ___qtablewidgetitem.setText(QCoreApplication.translate("SettingsPage", u"CONTEXT", None))
-        ___qtablewidgetitem1 = self.contextsTable.horizontalHeaderItem(1)
-        ___qtablewidgetitem1.setText(QCoreApplication.translate("SettingsPage", u"DISPLAY NAME", None))
+        ___qtablewidgetitem2 = self.contextsTable.horizontalHeaderItem(0)
+        ___qtablewidgetitem2.setText(QCoreApplication.translate("SettingsPage", u"CONTEXT", None))
+        ___qtablewidgetitem3 = self.contextsTable.horizontalHeaderItem(1)
+        ___qtablewidgetitem3.setText(QCoreApplication.translate("SettingsPage", u"DISPLAY NAME", None))
 
         __sortingEnabled = self.contextsTable.isSortingEnabled()
         self.contextsTable.setSortingEnabled(False)

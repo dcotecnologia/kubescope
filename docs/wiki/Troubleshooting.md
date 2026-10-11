@@ -1,17 +1,16 @@
 # Troubleshooting
 
-KubeScope turns common `kubectl` failures into a short message with a hint. The
+KubeScope turns common cluster failures into a short message with a hint. The
 original text is always available: hover the message, or press **Show details** in
 an error dialog.
 
 | Message | What it means | What to do |
 | ------- | ------------- | ---------- |
-| Login tool not found | The kubeconfig runs a program (usually `aws`) that is not installed or not on the `PATH` | Install it, make sure it is on the `PATH`, then Refresh |
-| Authentication failed | The credentials are missing or expired | Use the **Sign in to AWS** button, or run `aws sso login` yourself, then Refresh. For access keys, use **Configure AWS credentials** or run `aws configure` |
+| Login tool not found | The kubeconfig runs a program (usually `aws`, `gke-gcloud-auth-plugin` or `kubelogin`) that is not installed or not on the `PATH` | Install it, make sure it is on the `PATH`, then Refresh |
+| Authentication failed | The credentials are missing or expired | Use the **Sign in** button of your cloud, or run `aws sso login`, `gcloud auth login` or `az login` yourself, then Refresh. For access keys, use **Configure AWS credentials** or run `aws configure` |
 | Access denied | Your user cannot read that resource | Ask for a read-only role; see [Connecting to clusters](Connecting-to-clusters#permissions) |
 | Cluster unreachable | The API server did not answer | Check the network or VPN and that the cluster is running |
 | Context not found | The context is not in your kubeconfig | Check `~/.kube/config` or `KUBECONFIG` |
-| kubectl is missing | The bundled `kubectl` was not found | Reinstall the app |
 
 ## Reporting a problem
 
@@ -31,10 +30,10 @@ The other columns are unaffected.
 The numbers add up only the Pods that have metrics. Pods that just started may not
 have reported yet.
 
-## EKS works in a terminal but not in the Flatpak
+## GKE or AKS works in a terminal but not in the Flatpak
 
-The Flatpak only has the AWS CLI. If your kubeconfig uses another login tool, use
-the `.deb` or the AppImage.
+The Flatpak only has the AWS CLI. If your kubeconfig uses another login tool, such
+as `gke-gcloud-auth-plugin` or `kubelogin`, use the `.deb` or the AppImage.
 
 ## Where are the settings
 

@@ -15,7 +15,6 @@ git clone https://github.com/dcotecnologia/kubescope.git
 cd kubescope
 make setup          # uv sync with the dev and build extras
 uv run pre-commit install
-python tools/fetch_kubectl.py
 ```
 
 Run the app against a cluster with `make run`, or without any cluster using fake
@@ -59,7 +58,7 @@ English, imperative mood, no trailing period, and no AI assistant as co-author.
 
 | Change | Place |
 | ------ | ----- |
-| Cluster queries and kubectl parsing | `src/kubescope/cluster.py` |
+| Cluster queries and parsing of the API responses | `src/kubescope/cluster.py` |
 | Data shapes, formatters, sort and highlight rules | `src/kubescope/models.py` |
 | Widgets, pages and interactions | `src/kubescope/window.py` and the `.ui` files |
 | Preferences | `src/kubescope/settings.py` |

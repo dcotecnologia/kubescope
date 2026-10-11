@@ -16,7 +16,12 @@ from kubescope.errors import describe_error
             "Unable to connect to the server: dial tcp: i/o timeout",
             "Cluster unreachable",
         ),
-        ("kubectl timed out while contacting the cluster", "Cluster unreachable"),
+        ("The request timed out while contacting the cluster", "Cluster unreachable"),
+        (
+            "HTTPSConnection(host='x', port=443): Failed to establish a new "
+            "connection: [Errno -2] Name or service not known",
+            "Cluster unreachable",
+        ),
         (
             "error: You must be logged in to the server (Unauthorized)",
             "Authentication failed",
@@ -27,6 +32,16 @@ from kubescope.errors import describe_error
         ),
         ("Unable to locate credentials", "Authentication failed"),
         (
+            "exec: process returned 1. ERROR: Reauthentication failed. "
+            "Please run: gcloud auth login",
+            "Authentication failed",
+        ),
+        (
+            "exec: process returned 1. AADSTS70043: The refresh token has expired",
+            "Authentication failed",
+        ),
+        ("Please run 'az login' to setup account.", "Authentication failed"),
+        (
             "An error occurred (InvalidClientTokenId) when calling the "
             "GetCallerIdentity operation",
             "Authentication failed",
@@ -36,11 +51,10 @@ from kubescope.errors import describe_error
             "Error in configuration: context was not found for specified context: x",
             "Context not found",
         ),
-        ("Bundled kubectl is missing. Run fetch", "kubectl is missing"),
         ("something odd\nsecond line", "Something went wrong"),
     ],
 )
-def test_describe_error_classifies_kubectl_failures(message: str, title: str) -> None:
+def test_describe_error_classifies_cluster_failures(message: str, title: str) -> None:
     info = describe_error(message)
 
     assert info.title == title

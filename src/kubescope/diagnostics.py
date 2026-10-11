@@ -1,10 +1,10 @@
 """Application logging, and the debug mode that writes a log file to share.
 
 The file is off by default. When it is on, it records what the app does
-(which kubectl and AWS CLI commands ran, how long they took, how they
-ended) and never the content of Pod logs or resources. Common secrets
-are scrubbed from every line, but the person should still read the file
-before sending it.
+(which cluster requests and cloud CLI commands ran, how long they took,
+how they ended) and never the content of Pod logs or resources. Common
+secrets are scrubbed from every line, but the person should still read
+the file before sending it.
 """
 
 import faulthandler

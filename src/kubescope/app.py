@@ -63,6 +63,7 @@ def main() -> int:
     apply_language(settings.language)
     window = WorkloadWindow(settings)
     window.show()
+    window.start_update_check()
     exit_code = application.exec()
     logger.info("KubeScope stopped (exit code %s)", exit_code)
     return exit_code

@@ -4,7 +4,7 @@ Guide for agents (human and AI) working in this repository.
 Goal: keep the architecture, tests, translations, and commit history consistent.
 
 KubeScope is a read-only desktop viewer for Kubernetes and Amazon EKS, built with
-Python 3.12+ and PySide6 (Qt). It shells out to a bundled `kubectl`. It is
+Python 3.12+ and PySide6 (Qt). It talks to the cluster with the official `kubernetes` Python client. It is
 read-only for now; that is a current scope limit, not a permanent rule, and write
 actions are expected later.
 
@@ -17,7 +17,7 @@ two documents disagree, stop and ask instead of picking one.
 | -------- | ------------ | ---- |
 | [COMMITING.md](COMMITING.md) | You write any commit message | Source of truth for the commit format |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | You set up, branch, test, or open a PR | The workflow a change goes through |
-| [SECURITY.md](SECURITY.md) | You touch credentials, kubectl calls, logs, settings, permissions, or packaging | Do not break its guarantees; update it when they change |
+| [SECURITY.md](SECURITY.md) | You touch credentials, cluster requests, logs, settings, permissions, or packaging | Do not break its guarantees; update it when they change |
 | [README.md](README.md) | You change user-facing behavior, requirements, or packaging | Keep it accurate |
 
 ## 1) Architecture and responsibilities
@@ -27,14 +27,16 @@ Keep the layers separate and the dependency direction one-way
 
 - `src/kubescope/models.py`
   - Plain dataclasses (`Workload`, `PodInfo`, `NodeInfo`, ...), formatters, and sort
-    or highlight rules. Pure functions, no Qt and no kubectl.
+    or highlight rules. Pure functions, no Qt and no cluster access.
 - `src/kubescope/cluster.py`
-  - Everything that talks to the cluster: runs the bundled `kubectl`, parses its
-    JSON, and returns models. No Qt imports.
+  - Everything that talks to the cluster: sends the requests to the API server through
+    the `kubernetes` client, parses the JSON, and returns models. No Qt imports.
 - `src/kubescope/window.py` and `src/kubescope/log_tab.py`
   - Qt widgets and wiring. Blocking cluster calls must run in a worker
     (`RefreshWorker` / `ActionWorker`), never on the UI thread. Show loading
     with the button spinner and the status text, never the busy cursor.
+- `src/kubescope/updates.py`
+  - The update check against GitHub's public API. No Qt; it never raises.
 - `src/kubescope/settings.py`
   - User preferences stored as JSON; tolerant of missing or damaged files.
 - `src/kubescope/i18n.py` and `src/kubescope/translations/`
@@ -43,15 +45,14 @@ Keep the layers separate and the dependency direction one-way
   - Qt Designer layouts. `ui_*.py` next to them are generated, never edit them by
     hand.
 - `tools/`
-  - Build and packaging scripts (deb, AppImage, Flatpak, Windows/Wine, kubectl
-    fetch). `packaging/` holds the static packaging files.
+  - Build and packaging scripts (deb, AppImage, Flatpak, Windows/Wine). `packaging/` holds the static packaging files.
 - `tests/`
   - Mirrors `src/kubescope/`: `test_cluster.py`, `test_models.py`,
     `test_settings.py`, `test_window.py`, `test_app.py`, `test_theme.py`.
 
 Golden rule:
 
-- New cluster query or kubectl parsing -> `cluster.py`
+- New cluster query or API response parsing -> `cluster.py`
 - New data shape, formatter, sort key, or display rule -> `models.py`
 - New widget, page, menu, or interaction -> `window.py` and the matching `.ui`
 - New preference -> `settings.py` (with a safe default and validation on load)
@@ -65,9 +66,9 @@ Golden rule:
   only where Qt requires them (widgets, `QThread` workers).
 - Tests are plain `pytest` functions; avoid test classes unless clearly needed.
 - Internal code keeps strict contracts (fail fast). Defensive validation belongs at
-  the boundaries: kubectl output, the settings file, and user input.
+  the boundaries: API responses, the settings file, and user input.
 - Never block the UI thread; long work goes through the existing workers.
-- The app is read-only for now. Do not add kubectl verbs that change cluster state
+- The app is read-only for now. Do not add API calls that change cluster state
   unless the task asks for a write feature. When one does, keep it explicit and
   confirmed by the user, and keep the write logic apart from the read paths in
   `cluster.py` so the read-only parts stay obviously safe.
@@ -177,25 +178,26 @@ Requirements:
   packages and the Windows build one after the other, not at the same time.
 - The Flatpak app ID is `com.dcotecnologia.KubeScope`; keep it consistent across the
   manifest, desktop file, metainfo, `tools/build_flatpak.py` and `tools/flathub.py`.
-- `make flatpak-lint` and `make flathub-submission` prepare a Flathub submission and
-  send nothing; the pull request to flathub/flathub is opened by a person. Flathub's
-  Generative AI policy forbids AI tools from opening it or writing its text, and
-  forbids AI-generated or AI-assisted content in the manifest it reviews, so an AI
-  agent must not submit it or write the manifest that goes there.
+- `python3-kubernetes.json` lists the Python packages of the Kubernetes client for
+  the Flatpak; regenerate it with `python tools/flatpak_python_deps.py` whenever
+  `uv.lock` changes them.
 
 ## 7) Security
 
 Follow [SECURITY.md](SECURITY.md); its guarantees are part of the product.
 
 - Never read, store, print, or log credentials, tokens, kubeconfig contents, or
-  secrets. `kubectl` and its credential plugins handle authentication.
+  secrets. The `kubernetes` client and the credential plugins of the kubeconfig handle authentication.
 - Never commit secrets, real cluster names, ARNs, or account IDs; use fake data
   in tests and in `tools/preview.py`. The `gitleaks` hook must pass.
-- Do not add telemetry or network calls of the app's own. Cluster traffic goes
-  through the bundled `kubectl` only.
+- Do not add telemetry or network calls of the app's own, beyond the update
+  check in `updates.py` (GitHub's public API, sends only the version, can be turned
+  off in Settings). Cluster traffic goes through the `kubernetes` client only;
+  never write to the kubeconfig.
 - Keep `settings.json` free of secrets, and validate it on load.
-- Build `kubectl` calls as an argument list, never as a shell string, and treat
-  names that come from the cluster as untrusted data.
+- Build request paths with the encoded names (`_resource_path`), and run programs
+  as an argument list, never as a shell string; treat names that come from the
+  cluster as untrusted data.
 - Keep Pod logs and resource details on screen; do not write them to disk on your
   own. The only exception is the **Save...** button, which writes a tab to a file
   the user picks.

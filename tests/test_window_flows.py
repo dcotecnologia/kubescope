@@ -3,6 +3,8 @@ import os
 import threading
 import time
 
+import pytest
+
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 from PySide6.QtCore import QObject, QPoint, Signal
@@ -17,9 +19,10 @@ from PySide6.QtWidgets import (
     QTableWidget,
 )
 
+from kubescope import cluster as cluster_module
 from kubescope import json_view, theme
 from kubescope import window as window_module
-from kubescope.cluster import KubectlError, LoginAction
+from kubescope.cluster import ClusterError, LoginAction
 from kubescope.models import (
     ClusterOverview,
     EventInfo,
@@ -30,7 +33,9 @@ from kubescope.models import (
     Workload,
     WorkloadsOverview,
 )
+from kubescope.settings import Settings
 from kubescope.theme import themed
+from kubescope.updates import Release, UpdateCheck
 
 application = QApplication.instance() or QApplication([])
 
@@ -126,7 +131,7 @@ def test_refresh_worker_keeps_going_when_usage_fails(monkeypatch) -> None:
     )
 
     def broken(*_args):
-        raise KubectlError("no metrics")
+        raise ClusterError("no metrics")
 
     monkeypatch.setattr(window_module, "get_usage", broken)
     done = []
@@ -149,7 +154,7 @@ def test_refresh_worker_loads_pods_and_reports_failures(monkeypatch) -> None:
     assert done == [(["ns"], [POD])]
 
     def broken(*_args):
-        raise KubectlError("denied")
+        raise ClusterError("denied")
 
     monkeypatch.setattr(window_module, "get_pods", broken)
     worker.run()
@@ -166,7 +171,7 @@ def test_action_worker_returns_results_and_errors() -> None:
     assert done == [3]
 
     def broken():
-        raise KubectlError("nope")
+        raise ClusterError("nope")
 
     failing = window_module.ActionWorker(broken, ())
     failing.failed.connect(failures.append)
@@ -339,7 +344,7 @@ def test_actions_run_in_workers_and_report_back(monkeypatch) -> None:
     _wait_until(lambda: len(results) == 2 and not window._action_workers)
 
     def broken():
-        raise KubectlError("denied")
+        raise ClusterError("denied")
 
     window._run_action(broken, results.append, on_error=errors.append)
     _wait_until(lambda: errors and not window._action_workers)
@@ -588,7 +593,7 @@ def test_overview_for_another_context_is_refetched(monkeypatch) -> None:
 
 def test_a_kubeconfig_error_disables_the_controls(monkeypatch) -> None:
     def broken():
-        raise KubectlError("Unable to read kubeconfig")
+        raise ClusterError("Unable to read kubeconfig")
 
     monkeypatch.setattr(window_module, "list_contexts", broken)
     window = window_module.WorkloadWindow()
@@ -801,6 +806,24 @@ def test_access_key_profiles_offer_to_configure_the_credentials(monkeypatch) -> 
     window.close()
 
 
+def test_google_cloud_and_azure_contexts_offer_to_sign_in(monkeypatch) -> None:
+    window, _ran = _login_window(monkeypatch)
+
+    google = LoginAction(["gcloud", "auth", "login"], None, False, "Google Cloud")
+    window._show_login("prod", (True, google))
+    assert window.login_button.text() == "Sign in to Google Cloud"
+    assert "Not signed in to Google Cloud" in window.status_label.text()
+
+    azure = LoginAction(["az", "login"], None, False, "Azure")
+    window._show_login("prod", (True, azure))
+    assert window.login_button.text() == "Sign in to Azure"
+
+    named = LoginAction(["az", "login"], "my-subscription", False, "Azure")
+    window._show_login("prod", (True, named))
+    assert window.login_button.text() == "Sign in to Azure (my-subscription)"
+    window.close()
+
+
 def test_login_check_failures_and_other_results_hide_the_button(monkeypatch) -> None:
     window, ran = _login_window(monkeypatch)
     window.login_button.setVisible(True)
@@ -911,7 +934,7 @@ def test_actions_never_run_on_the_main_thread(monkeypatch) -> None:
 
 def test_expected_cluster_errors_are_not_logged_as_errors(monkeypatch, caplog) -> None:
     def expired(*_args):
-        raise KubectlError("Error loading SSO Token: Token does not exist")
+        raise ClusterError("Error loading SSO Token: Token does not exist")
 
     monkeypatch.setattr(window_module, "get_pods", expired)
     monkeypatch.setattr(window_module, "get_workloads", lambda *_a: (["a"], []))
@@ -2039,4 +2062,382 @@ def test_ctrl_r_and_f5_press_the_refresh_button_of_the_page_on_screen(
     window.pages.setCurrentIndex(1)
     window._press_refresh()
     assert len(pressed) == 4
+    window.close()
+
+
+RELEASE = Release(
+    "0.3.0", "https://github.com/dcotecnologia/kubescope/releases/tag/v0.3.0"
+)
+
+
+def _update_window(monkeypatch, search_ms: int = 0):
+    monkeypatch.setattr(window_module, "UPDATE_SEARCH_MS", search_ms)
+    return _login_window(monkeypatch)
+
+
+def test_the_update_icon_checks_on_demand_and_reports_each_outcome(monkeypatch) -> None:
+    window, ran = _update_window(monkeypatch)
+    ui = window.ui
+    assert window._update_state == "idle"
+    assert ui.updateButton.toolTip() == "Check for updates"
+
+    ui.updateButton.click()
+    ui.updateButton.click()  # one check at a time
+    assert [name for name, *_rest in ran] == ["check_for_update"]
+    assert ran[0][3]["quiet"] is True
+    assert window._update_state == "checking" and window._update_timer.isActive()
+    assert "Checking" in ui.updateButton.toolTip()
+
+    ran[0][1](UpdateCheck("current"))
+    assert window._update_state == "current" and not window._update_timer.isActive()
+    assert "up to date" in ui.updateButton.toolTip()
+    assert not ui.updateNotice.isHidden() and ui.updateNotice.text() == "Up to date"
+    assert window._update_notice_timer.isActive()
+
+    window._update_notice_timer.timeout.emit()  # the notice goes away by itself
+    assert ui.updateNotice.isHidden()
+
+    ui.updateButton.click()  # checking again from the up-to-date state
+    assert ui.updateNotice.isHidden()
+    ran[1][3]["on_error"]("boom")
+    assert window._update_state == "failed"
+    assert ui.updateNotice.text() == "Could not check"
+    assert "Could not check" in ui.updateButton.toolTip()
+    window.close()
+
+
+def test_a_check_looks_like_a_search_for_at_least_five_seconds(monkeypatch) -> None:
+    window, ran = _update_window(monkeypatch, search_ms=300)
+
+    window.check_updates()
+    ran[0][1](UpdateCheck("available", RELEASE))  # the answer is already here
+    assert window._update_state == "checking"  # but it is shown later
+    assert window._update_delay.isActive()
+
+    _wait_until(lambda: window._update_state == "available")
+    assert window._update_release == RELEASE
+    window.close()
+
+
+def test_an_available_update_shows_a_link_to_the_download(monkeypatch) -> None:
+    window, ran = _update_window(monkeypatch)
+    opened = []
+    monkeypatch.setattr(
+        window_module.QDesktopServices,
+        "openUrl",
+        lambda url: opened.append(url.toString()),
+    )
+    ui = window.ui
+
+    window.check_updates()
+    assert ui.updateLink.isHidden()
+    ran[0][1](UpdateCheck("available", RELEASE))
+    assert window._update_state == "available" and window._update_timer.isActive()
+    assert not ui.updateLink.isHidden() and ui.updateLink.text() == "Update available"
+    assert "0.3.0" in ui.updateButton.toolTip()
+    frames = {ui.updateButton.icon().cacheKey()}
+    window._tick_update()
+    frames.add(ui.updateButton.icon().cacheKey())
+    assert len(frames) == 2  # the icon pulses
+
+    ui.updateLink.click()
+    ui.updateButton.click()
+    assert opened == [RELEASE.url, RELEASE.url]
+    assert len(ran) == 1  # opening the page does not check again
+
+    window._open_release()
+    window._update_release = None  # nothing to open
+    window._open_release()
+    assert len(opened) == 3
+
+    window.check_updates()  # the right-click menu checks again
+    assert ui.updateLink.isHidden()
+    window.close()
+
+
+def test_the_update_icon_spins_while_checking(monkeypatch) -> None:
+    window, _ran = _update_window(monkeypatch)
+    window.check_updates()
+    first = window.ui.updateButton.icon().cacheKey()
+
+    window._tick_update()
+
+    assert window.ui.updateButton.icon().cacheKey() != first
+    window.close()
+
+
+def test_the_update_menu_checks_again(monkeypatch) -> None:
+    window, ran = _update_window(monkeypatch)
+    shown = []
+
+    class FakeMenu(QMenu):
+        def exec(self, _position):
+            shown.append([action.text() for action in self.actions()])
+            self.actions()[0].trigger()
+
+    monkeypatch.setattr(window_module, "QMenu", FakeMenu)
+
+    window._show_update_menu(QPoint(1, 1))
+
+    assert shown == [["Check for updates again"]]
+    assert [name for name, *_rest in ran] == ["check_for_update"]
+    window.close()
+
+
+def test_the_update_check_runs_at_start_only_when_settings_allow(monkeypatch) -> None:
+    window, ran = _update_window(monkeypatch)
+    window.settings.check_updates = False
+    window.start_update_check()
+    assert ran == []
+
+    window.settings.check_updates = True
+    window.start_update_check()
+    assert [name for name, *_rest in ran] == ["check_for_update"]
+    window.close()
+
+
+def test_the_update_check_is_switched_from_the_settings_page(monkeypatch) -> None:
+    window, ran = _update_window(monkeypatch)
+    form = window.settings_ui
+
+    window._load_settings_form()
+    assert form.updatesCheck.isChecked() is True
+
+    window._save_preferences()  # still on: no new check
+    assert ran == []
+
+    form.updatesCheck.setChecked(False)
+    window._save_preferences()
+    assert window.settings.check_updates is False
+
+    form.updatesCheck.setChecked(True)
+    window._save_preferences()
+    assert window.settings.check_updates is True
+    assert [name for name, *_rest in ran] == ["check_for_update"]
+    window.close()
+
+
+def test_the_update_check_really_runs_in_the_background(monkeypatch) -> None:
+    monkeypatch.setattr(window_module, "UPDATE_SEARCH_MS", 0)
+    window = _ready_window(monkeypatch)
+    monkeypatch.setattr(
+        window_module, "check_for_update", lambda: UpdateCheck("available", RELEASE)
+    )
+
+    window.check_updates()
+    _wait_until(lambda: window._update_state == "available")
+
+    assert window._update_release == RELEASE
+    window.close()
+
+
+def test_a_check_keeps_searching_for_at_least_five_seconds(monkeypatch) -> None:
+    window, ran = _login_window(monkeypatch)
+    monkeypatch.setattr(window_module, "UPDATE_SEARCH_MS", 5000)
+    clock = [100.0]
+    monkeypatch.setattr(window_module.time, "monotonic", lambda: clock[0])
+
+    window.check_updates()
+    clock[0] += 0.4  # the answer came back quickly
+    ran[0][1](UpdateCheck("current"))
+
+    assert window._update_state == "checking"  # still searching
+    assert 4000 <= window._update_delay.remainingTime() <= 5000
+    window._update_delay.timeout.emit()
+    assert window._update_state == "current"
+    assert window.ui.updateNotice.text() == "Up to date"
+    assert not window.ui.updateNotice.isHidden()
+
+    window.check_updates()
+    clock[0] += 7  # a slow answer is shown at once
+    ran[1][1](UpdateCheck("current"))
+    assert window._update_state == "current"
+    window.close()
+
+
+def test_the_up_to_date_text_goes_away_by_itself(monkeypatch) -> None:
+    window, ran = _login_window(monkeypatch)
+    window.check_updates()
+    ran[0][1](UpdateCheck("current"))
+    assert not window.ui.updateNotice.isHidden()
+    assert window._update_notice_timer.isActive()
+
+    window._update_notice_timer.timeout.emit()
+    assert window.ui.updateNotice.isHidden()
+
+    window.check_updates()  # a new check hides the old text at once
+    assert window.ui.updateNotice.isHidden()
+    ran[1][3]["on_error"]("offline")
+    assert window.ui.updateNotice.text() == "Could not check"
+    window.close()
+
+
+def test_the_window_opens_at_the_size_it_was_closed_with(monkeypatch) -> None:
+    window = _ready_window(monkeypatch)
+    window.show()
+    first = window.size()
+    window.resize(first.width(), first.height() + 10)  # the test screen is narrow
+    resized = window.size()
+    assert resized != first
+    window.close()
+    assert window.settings.window_geometry
+
+    reopened = window_module.WorkloadWindow(window.settings)
+    assert reopened.size() == resized
+    reopened.close()
+
+
+def test_a_damaged_saved_geometry_is_ignored(monkeypatch) -> None:
+    window = _ready_window(monkeypatch)
+    window.settings.window_geometry = "not a geometry"
+
+    reopened = window_module.WorkloadWindow(window.settings)
+
+    assert reopened.isVisible() is False and reopened.width() > 0
+    reopened.close()
+    window.close()
+
+
+def test_the_settings_page_lists_kubeconfig_files_and_sign_in_commands(
+    monkeypatch,
+) -> None:
+    window = _ready_window(monkeypatch)
+    window.settings.kubeconfig_files = ["/home/me/work.yaml"]
+    window.settings.sign_in_commands = {"oci": "oci session authenticate"}
+    window._load_settings_form()
+    form = window.settings_ui
+
+    assert [form.kubeconfigList.item(i).text() for i in range(1)] == [
+        "/home/me/work.yaml"
+    ]
+    assert form.loginTable.rowCount() == 1
+    assert form.loginTable.item(0, 0).text() == "oci"
+    assert form.loginTable.item(0, 1).text() == "oci session authenticate"
+    window.close()
+
+
+def test_kubeconfig_files_are_added_removed_and_applied(monkeypatch) -> None:
+    window = _ready_window(monkeypatch)
+    reloaded = []
+    monkeypatch.setattr(window, "_load_contexts", lambda: reloaded.append(True))
+    chosen = iter([("/home/me/a.yaml", ""), ("/home/me/a.yaml", ""), ("", "")])
+    monkeypatch.setattr(
+        window_module.QFileDialog, "getOpenFileName", lambda *_a, **_k: next(chosen)
+    )
+    form = window.settings_ui
+    window._load_settings_form()
+
+    window._add_kubeconfig_file()
+    window._add_kubeconfig_file()  # the same file twice counts once
+    window._add_kubeconfig_file()  # a cancelled dialog adds nothing
+    assert form.kubeconfigList.count() == 1
+
+    window._save_preferences()
+    assert window.settings.kubeconfig_files == ["/home/me/a.yaml"]
+    assert cluster_module._kubeconfig_files == ["/home/me/a.yaml"]
+    assert reloaded == [True]  # the contexts come from other files now
+
+    window._save_preferences()  # unchanged: nothing reloads
+    assert reloaded == [True]
+
+    form.kubeconfigList.setCurrentRow(0)
+    window._remove_kubeconfig_file()
+    window._save_preferences()
+    assert window.settings.kubeconfig_files == []
+    assert reloaded == [True, True]
+    window.close()
+
+
+def test_sign_in_commands_are_edited_in_the_settings_page(monkeypatch) -> None:
+    window = _ready_window(monkeypatch)
+    form = window.settings_ui
+    window._load_settings_form()
+
+    window._add_login_row("oci", "oci session authenticate")
+    window._add_login_row()  # an empty row is ignored
+    window._save_preferences()
+    assert window.settings.sign_in_commands == {"oci": "oci session authenticate"}
+    assert form.noticeLabel.text() == "Settings saved."
+
+    form.loginTable.setCurrentCell(0, 0)
+    window._remove_login_row()
+    window._remove_login_row()  # nothing selected anymore: nothing happens
+    window._save_preferences()
+    assert window.settings.sign_in_commands == {}
+    window.close()
+
+
+@pytest.mark.parametrize(
+    ("program", "command"), [("oci", 'oci "unclosed'), ("", "oci login"), ("oci", "")]
+)
+def test_an_invalid_sign_in_command_is_not_saved(monkeypatch, program, command) -> None:
+    window = _ready_window(monkeypatch)
+    window._load_settings_form()
+    window._add_login_row(program, command)
+
+    window._save_preferences()
+
+    assert "row 1 is not valid" in window.settings_ui.noticeLabel.text()
+    assert window.settings.sign_in_commands == {}
+    window.close()
+
+
+def test_the_window_gives_the_cluster_layer_its_settings_at_start(monkeypatch) -> None:
+    settings = Settings()
+    settings.kubeconfig_files = ["/x.yaml"]
+    settings.sign_in_commands = {"oci": "oci login"}
+    settings.save()
+
+    window = _ready_window(monkeypatch)
+
+    assert cluster_module._kubeconfig_files == ["/x.yaml"]
+    assert cluster_module._custom_logins == {"oci": "oci login"}
+    window.close()
+
+
+def test_the_kubeconfig_and_sign_in_tables_show_only_with_rows(monkeypatch) -> None:
+    window = _ready_window(monkeypatch)
+    form = window.settings_ui
+    window.show()
+    window._load_settings_form()
+    assert form.kubeconfigList.isHidden() and form.kubeconfigRemoveButton.isHidden()
+    assert form.loginTable.isHidden() and form.loginRemoveButton.isHidden()
+    assert not form.kubeconfigAddButton.isHidden()  # adding is always possible
+    assert not form.loginAddButton.isHidden()
+
+    window._add_login_row("oci", "oci login")
+    assert not form.loginTable.isHidden() and not form.loginRemoveButton.isHidden()
+    form.loginTable.setCurrentCell(0, 0)
+    window._remove_login_row()
+    assert form.loginTable.isHidden() and form.loginRemoveButton.isHidden()
+
+    form.kubeconfigList.addItem("/home/me/a.yaml")
+    window._show_config_tables()
+    assert not form.kubeconfigList.isHidden()
+    form.kubeconfigList.setCurrentRow(0)
+    window._remove_kubeconfig_file()
+    assert form.kubeconfigList.isHidden()
+    window.close()
+
+
+def test_clearing_the_cache_forgets_answers_overviews_and_sign_ins(monkeypatch) -> None:
+    window = _ready_window(monkeypatch)
+    forgotten = []
+    monkeypatch.setattr(window_module, "forget_clients", lambda: forgotten.append(True))
+    window._answers[("prod", None, "pods")] = (["ns"], [])
+    window._overviews["prod"] = ClusterOverview()
+    window._workloads_overviews["prod"] = WorkloadsOverview(kinds={}, events=())
+    window._overview = ClusterOverview()
+    window._shown_key = ("prod", None, "pods")
+    window._overview_context = window._workloads_overview_context = "prod"
+
+    window.settings_ui.clearCacheButton.click()
+
+    assert forgotten == [True]
+    assert not window._answers and not window._overviews
+    assert not window._workloads_overviews
+    assert window._overview is None and window._shown_key is None
+    assert window._overview_context is None
+    assert window._workloads_overview_context is None
+    assert "Cache cleared" in window.settings_ui.noticeLabel.text()
     window.close()

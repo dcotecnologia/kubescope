@@ -7,12 +7,7 @@ from PyInstaller.utils.hooks import collect_submodules, copy_metadata, get_packa
 
 
 root = Path(SPECPATH)
-kubectl_name = "kubectl.exe" if os.name == "nt" else "kubectl"
-kubectl = root / "vendor" / "kubectl" / kubectl_name
-if not kubectl.is_file():
-    raise FileNotFoundError("Run python tools/fetch_kubectl.py before building")
-
-bundled_binaries = [(str(kubectl), "kubectl")]
+bundled_binaries = []
 if sys.platform == "linux":
     xcb_cursor = (
         root

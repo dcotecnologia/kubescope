@@ -4,8 +4,8 @@
 
 # KubeScope
 
-Desktop viewer for Kubernetes workloads, including Amazon EKS clusters available
-through your local Kubernetes configuration. It ships with its own `kubectl` and
+Desktop viewer for Kubernetes workloads, including Amazon EKS, Google GKE and Azure AKS clusters available
+through your local Kubernetes configuration. It uses the official Kubernetes Python client, so it needs no `kubectl`, and
 is read-only for now: it lists and inspects resources but does not change the
 cluster.
 
@@ -17,7 +17,7 @@ cluster.
 - **Workloads:** Pods and Deployments with status, CPU, memory and restarts,
   filtered by namespace and searchable by name.
 - **Details and logs:** JSON details and live Pod logs, each in its own tab.
-- **Readable errors:** short messages with a hint, with the original `kubectl`
+- **Readable errors:** short messages with a hint, with the original error
   text one click away.
 - **English and Portuguese**, selectable in Settings.
 

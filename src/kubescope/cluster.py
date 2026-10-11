@@ -2,18 +2,28 @@ import contextlib
 import json
 import logging
 import os
+import re
+import shlex
 import shutil
 import signal
 import subprocess
 import sys
 import threading
 import time
-from concurrent.futures import ThreadPoolExecutor
+from collections.abc import Callable
+from concurrent.futures import Future, InvalidStateError, ThreadPoolExecutor
 from dataclasses import dataclass, replace
 from datetime import UTC, datetime
 from functools import partial
 from pathlib import Path
 from typing import Any
+from urllib.parse import quote
+
+from kubernetes import client, config
+from kubernetes.client.exceptions import ApiException
+from kubernetes.config.config_exception import ConfigException
+from kubernetes.config.kube_config import ConfigNode, KubeConfigMerger
+from urllib3.exceptions import HTTPError
 
 from kubescope.errors import first_line, is_auth_error
 from kubescope.models import (
@@ -36,21 +46,14 @@ from kubescope.models import (
 logger = logging.getLogger(__name__)
 
 
-class KubectlError(RuntimeError):
-    """Raised when the bundled kubectl command fails."""
+class ClusterError(RuntimeError):
+    """Raised when a request to the cluster or an AWS CLI command fails."""
 
 
+REQUEST_TIMEOUT = 45  # seconds a cluster request may take
 _running: set[subprocess.Popen] = set()
+_pending: set[Future] = set()
 _running_lock = threading.Lock()
-
-
-def kubectl_executable() -> Path:
-    executable_name = "kubectl.exe" if os.name == "nt" else "kubectl"
-    if getattr(sys, "frozen", False):
-        bundle_directory = Path(sys._MEIPASS)
-        return bundle_directory / "kubectl" / executable_name
-    project_directory = Path(__file__).resolve().parents[2]
-    return project_directory / "vendor" / "kubectl" / executable_name
 
 
 def _describe(command: list[str]) -> str:
@@ -59,8 +62,8 @@ def _describe(command: list[str]) -> str:
 
 
 def _stop(process: subprocess.Popen) -> None:
-    """Stop a command and everything it started: kubectl runs `aws eks get-
-    token`, and the AWS CLI can start more, all holding the output open."""
+    """Stop a command and everything it started: the AWS CLI can start more
+    processes, all holding the output open."""
     if sys.platform == "win32":
         subprocess.run(
             ["taskkill", "/F", "/T", "/PID", str(process.pid)],
@@ -78,6 +81,8 @@ def _run_process(command: list[str], timeout: float) -> subprocess.CompletedProc
     label = _describe(command)
     logger.debug("Run: %s", label)
     started = time.monotonic()
+    if sys.platform == "win32":  # az and gcloud are .cmd files there
+        command = [shutil.which(command[0]) or command[0], *command[1:]]
     process = subprocess.Popen(
         command,
         stdout=subprocess.PIPE,
@@ -106,54 +111,347 @@ def _run_process(command: list[str], timeout: float) -> subprocess.CompletedProc
 
 
 def cancel_running() -> None:
-    """Stop every kubectl or AWS CLI process in flight; their callers see a
-    failure and return at once."""
+    """Stop every AWS CLI process and cluster request in flight; their callers
+    see a failure and return at once."""
     with _running_lock:
-        if _running:
-            logger.info("Stopping %d running command(s)", len(_running))
+        if _running or _pending:
+            logger.info("Stopping %d running command(s)", len(_running) + len(_pending))
         for process in _running:
             _stop(process)
+        for outcome in _pending:
+            with contextlib.suppress(InvalidStateError):  # it may have just ended
+                outcome.set_exception(ClusterError("The request was cancelled"))
 
 
-def _run_kubectl(*arguments: str, context: str | None = None) -> str:
-    executable = kubectl_executable()
-    if not executable.is_file():
-        raise KubectlError(
-            "Bundled kubectl is missing. Run `python tools/fetch_kubectl.py` "
-            "before starting the app."
-        )
-    command = [str(executable)]
-    if context:
-        command.extend(("--context", context))
-    command.extend(arguments)
+def _in_background[T](call: Callable[[], T], timeout: float) -> T:
+    """Run a blocking call in a daemon thread and wait for it, so that
+    `cancel_running` and the timeout can give up on it at once; the thread ends
+    on its own, and never keeps the app from quitting."""
+    outcome: Future = Future()
+
+    def work() -> None:
+        with contextlib.suppress(InvalidStateError):  # nobody is waiting anymore
+            try:
+                outcome.set_result(call())
+            except Exception as error:
+                outcome.set_exception(error)
+
+    with _running_lock:
+        _pending.add(outcome)
+    threading.Thread(target=work, daemon=True).start()
     try:
-        result = _run_process(command, timeout=45)
-    except subprocess.TimeoutExpired as error:
-        raise KubectlError("kubectl timed out while contacting the cluster") from error
+        return outcome.result(timeout=timeout)
+    finally:
+        with _running_lock:
+            _pending.discard(outcome)
+
+
+_kubeconfig_files: list[str] = []
+_custom_logins: dict[str, str] = {}
+
+
+def configure(
+    kubeconfig_files: list[str] | None = None,
+    sign_in_commands: dict[str, str] | None = None,
+) -> None:
+    """Apply the preferences that change how clusters are reached: the
+    kubeconfig files to read (none means KUBECONFIG, or ~/.kube/config) and the
+    commands that sign in for sign-in programs the app does not know."""
+    global _kubeconfig_files, _custom_logins
+    _kubeconfig_files = list(kubeconfig_files or [])
+    _custom_logins = dict(sign_in_commands or {})
+    forget_clients()  # they were made from the previous files
+
+
+def parse_command(text: str) -> list[str]:
+    """A command line as a list of arguments; raises ValueError when it is
+    empty or has an unclosed quote.
+
+    It is never run through a shell.
+    """
+    arguments = shlex.split(text, posix=sys.platform != "win32")
+    arguments = [argument.strip('"') for argument in arguments]
+    if not arguments:
+        raise ValueError("The command is empty")
+    return arguments
+
+
+def _kubeconfig_paths() -> str:
+    if _kubeconfig_files:
+        return os.pathsep.join(_kubeconfig_files)
+    return os.environ.get("KUBECONFIG") or "~/.kube/config"
+
+
+def _plain(node: Any) -> Any:
+    return node.value if isinstance(node, ConfigNode) else node
+
+
+def _kubeconfig() -> dict[str, Any]:
+    """The kubeconfig files merged into one document; empty when there are
+    none."""
+    try:
+        merged = KubeConfigMerger(_kubeconfig_paths()).config
+    except (ConfigException, OSError, KeyError) as error:  # KeyError: no name
+        raise ClusterError(f"Could not read the kubeconfig: {error}") from error
+    return _plain(merged) or {}
+
+
+def _named(entries: list[Any] | None, name: str | None) -> dict[str, Any]:
+    """The kubeconfig entry (context, user...) with that name."""
+    return next(
+        (entry for entry in map(_plain, entries or []) if entry.get("name") == name),
+        {},
+    )
+
+
+class _SignInErrors(logging.Handler):
+    """Collects what the kubernetes library logs, on the thread that created
+    it, when the sign-in program of a kubeconfig fails: the library logs that
+    failure and goes on without credentials, which would only show later as a
+    vague "Unauthorized"."""
+
+    def __init__(self) -> None:
+        super().__init__(logging.ERROR)
+        self.thread = threading.get_ident()
+        self.messages: list[str] = []
+
+    def emit(self, record: logging.LogRecord) -> None:
+        if record.thread == self.thread and record.module == "kube_config":
+            self.messages.append(record.getMessage())
+
+
+_MISSING_PROGRAM = re.compile(
+    r"No such file or directory: '([^']+)'|'([^']+)' is not recognized"
+)
+
+
+def _sign_in_failure(message: str) -> str:
+    """The failure of a sign-in program, worded for `describe_error`."""
+    if "has no attribute 'strip'" in message:
+        # started from a terminal, the library shows the program's error there
+        # and then fails to read it
+        return (
+            "exec: the sign-in command failed, and its error went to the "
+            "terminal; your credentials may have expired"
+        )
+    missing = _MISSING_PROGRAM.search(message)
+    if missing:
+        return f"exec: executable {missing.group(1) or missing.group(2)} not found"
+    return message
+
+
+def _api_client(context: str) -> client.ApiClient:
+    """A client for one context.
+
+    The kubeconfig is only read: refreshed
+    credentials are never written back to it.
+    """
+    errors = _SignInErrors()
+    logging.getLogger().addHandler(errors)
+    try:
+        api = config.new_client_from_config(
+            config_file=_kubeconfig_paths(), context=context, persist_config=False
+        )
+    except ConfigException as error:
+        if "Expected object with name" in str(error):
+            raise ClusterError(
+                f"context was not found for specified context: {context}"
+            ) from error
+        raise ClusterError(str(error)) from error
     except OSError as error:
-        raise KubectlError(f"Could not start bundled kubectl: {error}") from error
-    if result.returncode != 0:
-        detail = result.stderr.strip() or result.stdout.strip()
-        raise KubectlError(detail or f"kubectl exited with {result.returncode}")
-    return result.stdout
+        raise ClusterError(f"Could not read the kubeconfig: {error}") from error
+    finally:
+        logging.getLogger().removeHandler(errors)
+    if errors.messages:
+        api.close()
+        raise ClusterError(_sign_in_failure(errors.messages[0]))
+    return api
 
 
-def _get_json(*arguments: str, context: str) -> dict[str, Any]:
-    output = _run_kubectl(*arguments, "-o", "json", context=context)
-    payload = json.loads(output)
+_clients: dict[str, client.ApiClient] = {}
+_client_locks: dict[str, threading.Lock] = {}
+
+
+def _cached_client(context: str, fresh: bool = False) -> client.ApiClient:
+    """The client of a context, made once and then reused, with its token and
+    its open connections: the sign-in program of the kubeconfig runs again only
+    when there is no client yet, or `fresh` asks for a new one because the
+    cluster refused the token. Calls for the same context wait for the first
+    one instead of each running the sign-in."""
+    with _running_lock:
+        lock = _client_locks.setdefault(context, threading.Lock())
+    with lock:
+        if fresh and (old := _clients.pop(context, None)) is not None:
+            old.close()
+        if context not in _clients:
+            _clients[context] = _api_client(context)
+        return _clients[context]
+
+
+def forget_clients() -> None:
+    """Drop every client, so the next request signs in again."""
+    with _running_lock:
+        stale = list(_clients.values())
+        _clients.clear()
+    for api in stale:
+        api.close()
+
+
+def _status_message(status: int, reason: str | None, body: bytes) -> str:
+    """The cluster's own explanation of a refused request, as kubectl shows
+    it."""
+    try:
+        message = json.loads(body).get("message")
+    except (ValueError, AttributeError):  # not a Status document
+        message = None
+    return message or f"{status} {reason or 'Error'}"
+
+
+def _fetch(path: str, context: str, query: list[tuple[str, str]], accept: str) -> bytes:
+    started = time.monotonic()
+    for attempt in (1, 2):
+        api = _cached_client(context, fresh=attempt == 2)
+        try:
+            method, url, headers, body, _form = api.param_serialize(
+                "GET",
+                path,
+                query_params=query,
+                header_params={"Accept": accept},
+                auth_settings=["BearerToken"],
+            )
+            response = api.call_api(
+                method, url, headers, body, _request_timeout=REQUEST_TIMEOUT
+            )
+            data = response.read()
+        except ApiException as error:  # the TLS handshake failed
+            raise ClusterError(str(error.reason or error)) from error
+        except HTTPError as error:  # unreachable, timed out, connection reset
+            raise ClusterError(str(getattr(error, "reason", None) or error)) from error
+        if response.status != 401 or attempt == 2:
+            break
+        logger.debug("The cluster refused the token; signing in again")
+    logger.debug(
+        "GET %s: %s after %.2fs", path, response.status, time.monotonic() - started
+    )
+    if not 200 <= response.status < 300:
+        message = _status_message(response.status, response.reason, data)
+        logger.debug("error: %s", first_line(message))
+        raise ClusterError(message)
+    return data
+
+
+def _request(
+    path: str,
+    context: str,
+    query: list[tuple[str, str]] | None = None,
+    accept: str = "application/json",
+) -> bytes:
+    """GET a path of the cluster's API and return the body."""
+    try:
+        return _in_background(
+            partial(_fetch, path, context, query or [], accept), REQUEST_TIMEOUT
+        )
+    except TimeoutError as error:
+        logger.warning("Timed out after %ss: GET %s", REQUEST_TIMEOUT, path)
+        raise ClusterError(
+            "The request timed out while contacting the cluster"
+        ) from error
+
+
+def _get_json(
+    path: str, context: str, query: list[tuple[str, str]] | None = None
+) -> dict[str, Any]:
+    try:
+        payload = json.loads(_request(path, context, query))
+    except ValueError as error:
+        raise ClusterError("The cluster returned an unexpected response") from error
     if not isinstance(payload, dict):
-        raise KubectlError("kubectl returned an unexpected JSON document")
+        raise ClusterError("The cluster returned an unexpected JSON document")
     return payload
 
 
+# The API group each resource lives in; the core group is "/api/v1".
+_API_PATHS = {
+    "pods": "/api/v1",
+    "nodes": "/api/v1",
+    "namespaces": "/api/v1",
+    "events": "/api/v1",
+    "services": "/api/v1",
+    "endpoints": "/api/v1",
+    "replicationcontrollers": "/api/v1",
+    "deployments": "/apis/apps/v1",
+    "statefulsets": "/apis/apps/v1",
+    "daemonsets": "/apis/apps/v1",
+    "replicasets": "/apis/apps/v1",
+    "jobs": "/apis/batch/v1",
+    "cronjobs": "/apis/batch/v1",
+    "endpointslices": "/apis/discovery.k8s.io/v1",
+    "ingresses": "/apis/networking.k8s.io/v1",
+    "ingressclasses": "/apis/networking.k8s.io/v1",
+    "networkpolicies": "/apis/networking.k8s.io/v1",
+}
+_METRICS_PATH = "/apis/metrics.k8s.io/v1beta1"
+
+
+def _resource_path(
+    resource: str, namespace: str | None = None, name: str | None = None
+) -> str:
+    """The API path of a resource type, or of one object.
+
+    Names come from the cluster, so they are encoded.
+    """
+    parts = [_API_PATHS[resource]]
+    if namespace:
+        parts += ["namespaces", quote(namespace, safe="")]
+    parts.append(resource)
+    if name:
+        parts.append(quote(name, safe=""))
+    return "/".join(parts)
+
+
+def _list(
+    resource: str,
+    context: str,
+    namespace: str | None = None,
+    selector: str | None = None,
+) -> dict[str, Any]:
+    """Every object of a type, in a namespace or in all of them.
+
+    A list does not name the kind of its items, so each gets it.
+    """
+    query = [("labelSelector", selector)] if selector else []
+    document = _get_json(_resource_path(resource, namespace), context, query)
+    kind = _KINDS[resource]
+    for item in document.get("items") or []:
+        item.setdefault("kind", kind)
+    return document
+
+
+def _list_kinds(
+    kinds: tuple[str, ...], context: str, namespace: str | None
+) -> dict[str, Any]:
+    """The objects of several kinds, listed at the same time, in one
+    document."""
+    documents = _together(
+        *(partial(_list, _RESOURCES[kind], context, namespace) for kind in kinds)
+    )
+    return {
+        "items": [
+            item for document in documents for item in document.get("items") or []
+        ]
+    }
+
+
 def list_contexts() -> tuple[list[str], str | None]:
-    output = _run_kubectl("config", "get-contexts", "-o", "name")
-    contexts = [line.strip() for line in output.splitlines() if line.strip()]
-    active_context = None
-    if contexts:
-        active_context = _run_kubectl("config", "current-context").strip() or None
+    document = _kubeconfig()
+    contexts = sorted(
+        name
+        for entry in document.get("contexts") or []
+        if (name := _plain(entry).get("name"))
+    )
+    current = document.get("current-context")
     logger.info("Found %d kubeconfig context(s)", len(contexts))
-    return contexts, active_context
+    return contexts, current if current in contexts else None
 
 
 LOGIN_TIMEOUT = 300  # seconds; the sign-in waits for the person in the browser
@@ -164,24 +462,30 @@ def _run_command(command: list[str], timeout: float) -> str:
     try:
         result = _run_process(command, timeout=timeout)
     except subprocess.TimeoutExpired as error:
-        raise KubectlError(f"{command[0]} timed out") from error
+        raise ClusterError(f"{command[0]} timed out") from error
     except OSError as error:
-        raise KubectlError(f"Could not start {command[0]}: {error}") from error
+        raise ClusterError(f"Could not start {command[0]}: {error}") from error
     if result.returncode != 0:
         detail = result.stderr.strip() or result.stdout.strip()
-        raise KubectlError(detail or f"{command[0]} exited with {result.returncode}")
+        raise ClusterError(detail or f"{command[0]} exited with {result.returncode}")
     return result.stdout
+
+
+def _sign_in_program(context: str) -> dict[str, Any]:
+    """The sign-in program (the `exec` entry) of the context's user.
+
+    Only that entry is read from the kubeconfig; its credentials are not
+    touched.
+    """
+    document = _kubeconfig()
+    user = (_named(document.get("contexts"), context).get("context") or {}).get("user")
+    return (_named(document.get("users"), user).get("user") or {}).get("exec") or {}
 
 
 def _aws_profile(context: str) -> tuple[bool, str | None]:
     """Whether the context signs in through the AWS CLI, and with which
-    profile.
-
-    Read from the kubeconfig entry; secrets stay redacted because
-    `config view` runs without --raw.
-    """
-    users = _get_json("config", "view", "--minify", context=context).get("users")
-    login = ((users or [{}])[0].get("user") or {}).get("exec") or {}
+    profile."""
+    login = _sign_in_program(context)
     if Path(login.get("command") or "").stem != "aws":
         return False, None
     arguments = login.get("args") or []
@@ -211,7 +515,7 @@ def _is_sso_profile(profile: str | None) -> bool:
                 ["aws", "configure", "get", key, *_profile_arguments(profile)],
                 AWS_TIMEOUT,
             )
-        except KubectlError:
+        except ClusterError:
             continue
         if value.strip():
             return True
@@ -225,17 +529,44 @@ class LoginAction:
     command: list[str]
     profile: str | None
     interactive: bool  # access keys are typed in a terminal; SSO uses the browser
+    provider: str = "AWS"
+
+
+# sign-in program of the kubeconfig -> the cloud, and the command that signs in
+_CLOUD_LOGINS = {
+    "gke-gcloud-auth-plugin": ("Google Cloud", ["gcloud", "auth", "login"]),
+    "gcloud": ("Google Cloud", ["gcloud", "auth", "login"]),
+    "kubelogin": ("Azure", ["az", "login"]),
+    "az": ("Azure", ["az", "login"]),
+}
 
 
 def login_action(context: str) -> LoginAction | None:
-    """The sign-in for a context: "aws sso login" for an AWS SSO profile, and
-    "aws configure" in a terminal for an access-key profile.
+    """The sign-in for a context: "aws sso login" for an AWS SSO profile, "aws
+    configure" in a terminal for an access-key profile, "gcloud auth login" for
+    Google Cloud and "az login" for Azure.
 
     Other login tools are not supported and return None.
     """
+    if _custom_logins:
+        program = Path(_sign_in_program(context).get("command") or "").stem
+        if program in _custom_logins:
+            try:
+                command = parse_command(_custom_logins[program])
+            except ValueError:
+                return None
+            logger.info(
+                "Context %s signs in with the command set for %s", context, program
+            )
+            return LoginAction(command, None, False, program)
     uses_aws, profile = _aws_profile(context)
     if not uses_aws:
-        return None
+        program = Path(_sign_in_program(context).get("command") or "").stem
+        cloud = _CLOUD_LOGINS.get(program)
+        if cloud is None:
+            return None
+        logger.info("Context %s signs in with %s", context, cloud[0])
+        return LoginAction(cloud[1], None, False, cloud[0])
     arguments = _profile_arguments(profile)
     if _is_sso_profile(profile):
         logger.info("AWS profile %s signs in with SSO", profile or "default")
@@ -244,25 +575,37 @@ def login_action(context: str) -> LoginAction | None:
     return LoginAction(["aws", "configure", *arguments], profile, True)
 
 
+def _custom_sign_in_failed(error: ClusterError, context: str) -> bool:
+    """Whether the sign-in program of the context failed and the person set a
+    command to sign in with it: its error text is not for the app to guess."""
+    if not (_custom_logins and str(error).startswith("exec:")):
+        return False
+    try:
+        program = Path(_sign_in_program(context).get("command") or "").stem
+    except ClusterError:
+        return False
+    return program in _custom_logins
+
+
 def check_login(context: str) -> tuple[bool, LoginAction | None]:
     """Whether the context needs a sign-in, and how to do it.
 
-    kubectl catches an expired SSO session. Access keys that were
-    rotated or revoked only fail at the cluster, because `aws eks get-
-    token` signs locally, so AWS contexts are also checked with STS.
-    Other failures (an unreachable cluster, denied access) are not a
-    login problem and report as signed in.
+    The cluster request catches an expired SSO session. Access keys that
+    were rotated or revoked only fail at the cluster, because `aws eks
+    get- token` signs locally, so AWS contexts are also checked with
+    STS. Other failures (an unreachable cluster, denied access) are not
+    a login problem and report as signed in.
     """
     try:
-        _run_kubectl("get", "--raw", "/version", context=context)
+        _request("/version", context)
         uses_aws, profile = _aws_profile(context)
         if uses_aws:
             _run_command(
                 ["aws", "sts", "get-caller-identity", *_profile_arguments(profile)],
                 AWS_TIMEOUT,
             )
-    except (KubectlError, ValueError) as error:
-        if not is_auth_error(str(error)):
+    except ClusterError as error:
+        if not (is_auth_error(str(error)) or _custom_sign_in_failed(error, context)):
             logger.info("Login check for %s: not a credentials problem", context)
             logger.debug("Login check detail: %s", first_line(str(error)))
             return False, None
@@ -270,7 +613,7 @@ def check_login(context: str) -> tuple[bool, LoginAction | None]:
         logger.debug("Login check detail: %s", first_line(str(error)))
         try:
             return True, login_action(context)
-        except (KubectlError, ValueError):
+        except ClusterError:
             return True, None
     logger.info("Login check for %s: signed in", context)
     return False, None
@@ -299,13 +642,13 @@ def _open_terminal(command: list[str]) -> None:
             None,
         )
         if launcher is None:
-            raise KubectlError(
+            raise ClusterError(
                 "No terminal found. Run this in a terminal: " + " ".join(command)
             )
     try:
         subprocess.Popen(launcher)
     except OSError as error:
-        raise KubectlError(f"Could not open a terminal: {error}") from error
+        raise ClusterError(f"Could not open a terminal: {error}") from error
 
 
 def run_login(action: LoginAction) -> None:
@@ -319,10 +662,11 @@ def run_login(action: LoginAction) -> None:
         _open_terminal(action.command)
     else:
         _run_command(action.command, LOGIN_TIMEOUT)
+        forget_clients()  # the new credentials are picked up by the next request
         logger.info("Sign-in finished for profile %s", action.profile or "default")
 
 
-# Kubernetes kind -> the plural name kubectl uses to list it.
+# Kubernetes kind -> the plural name of its resource.
 _RESOURCES = {
     "Deployment": "deployments",
     "StatefulSet": "statefulsets",
@@ -335,7 +679,7 @@ _RESOURCES = {
 _REPLICATED_KINDS = ("Deployment", "StatefulSet", "DaemonSet")
 
 
-# Network kind -> the plural name kubectl uses to list it.
+# Network kind -> the plural name of its resource.
 _NETWORK_RESOURCES = {
     "Service": "services",
     "EndpointSlice": "endpointslices",
@@ -345,6 +689,17 @@ _NETWORK_RESOURCES = {
     "NetworkPolicy": "networkpolicies",
 }
 _CLUSTER_WIDE = frozenset({"IngressClass"})
+_KINDS = {
+    resource: kind
+    for kind, resource in {
+        **_RESOURCES,
+        **_NETWORK_RESOURCES,
+        "Pod": "pods",
+        "Node": "nodes",
+        "Namespace": "namespaces",
+        "Event": "events",
+    }.items()
+}
 _NO_VALUE = "—"
 _LISTED_VALUES = 3  # a long list of addresses shows its first ones and a count
 
@@ -418,7 +773,7 @@ def _together(*calls: Any) -> list[Any]:
 
 
 def _get_namespaces(context: str) -> list[str]:
-    document = _get_json("get", "namespaces", context=context)
+    document = _list("namespaces", context)
     return sorted(
         item["metadata"]["name"]
         for item in document.get("items", [])
@@ -431,11 +786,9 @@ def get_workloads(
     namespace: str | None = None,
     kinds: tuple[str, ...] = _REPLICATED_KINDS,
 ) -> tuple[list[str], list[Workload]]:
-    arguments = ["get", ",".join(_RESOURCES[kind] for kind in kinds)]
-    arguments.extend(("-n", namespace) if namespace else ("-A",))
     namespaces, workloads_document = _together(
         partial(_get_namespaces, context),
-        partial(_get_json, *arguments, context=context),
+        partial(_list_kinds, kinds, context, namespace),
     )
     now = datetime.now(UTC)
     workloads = [
@@ -453,14 +806,10 @@ def get_resource_details(
     namespace: str,
     name: str,
 ) -> dict[str, Any]:
-    if kind in _NETWORK_RESOURCES:
-        resource_name = kind.lower()
-    else:
-        resource_name = _RESOURCES.get(kind, "pods" if kind == "Pod" else "")[:-1]
-    if not resource_name:
-        raise KubectlError(f"Unsupported resource kind: {kind}")
-    scope = ("-n", namespace) if namespace else ()
-    return _get_json("get", resource_name, name, *scope, context=context)
+    resource = {**_RESOURCES, **_NETWORK_RESOURCES, "Pod": "pods"}.get(kind)
+    if resource is None:
+        raise ClusterError(f"Unsupported resource kind: {kind}")
+    return _get_json(_resource_path(resource, namespace, name), context)
 
 
 def _label_selector(resource: dict[str, Any]) -> str:
@@ -476,10 +825,10 @@ def _label_selector(resource: dict[str, Any]) -> str:
         operator = expression.get("operator")
         values = expression.get("values") or []
         if not key:
-            raise KubectlError("Workload selector has an expression without a key")
+            raise ClusterError("Workload selector has an expression without a key")
         if operator in {"In", "NotIn"}:
             if not values:
-                raise KubectlError(f"Workload selector {operator} requires values")
+                raise ClusterError(f"Workload selector {operator} requires values")
             joined_values = ",".join(values)
             terms.append(f"{key} {operator.lower()} ({joined_values})")
         elif operator == "Exists":
@@ -487,9 +836,9 @@ def _label_selector(resource: dict[str, Any]) -> str:
         elif operator == "DoesNotExist":
             terms.append(f"!{key}")
         else:
-            raise KubectlError(f"Unsupported workload selector operator: {operator}")
+            raise ClusterError(f"Unsupported workload selector operator: {operator}")
     if not terms:
-        raise KubectlError("Workload has no label selector for its Pods")
+        raise ClusterError("Workload has no label selector for its Pods")
     return ",".join(terms)
 
 
@@ -543,17 +892,10 @@ def _pod_metrics(
     context: str, namespace: str | None
 ) -> dict[tuple[str, str], tuple[float, float]] | None:
     """Live (cores, bytes) per Pod; None when metrics-server is unavailable."""
-    scope = f"namespaces/{namespace}/" if namespace else ""
+    scope = f"/namespaces/{quote(namespace, safe='')}" if namespace else ""
     try:
-        document = json.loads(
-            _run_kubectl(
-                "get",
-                "--raw",
-                f"/apis/metrics.k8s.io/v1beta1/{scope}pods",
-                context=context,
-            )
-        )
-    except (KubectlError, ValueError):
+        document = _get_json(f"{_METRICS_PATH}{scope}/pods", context)
+    except ClusterError:
         return None
     usage: dict[tuple[str, str], tuple[float, float]] = {}
     for item in document.get("items", []):
@@ -571,10 +913,8 @@ def _pod_metrics(
 
 
 def _pods_with_usage(context: str, namespace: str | None) -> list[PodInfo]:
-    arguments = ["get", "pods"]
-    arguments.extend(("-n", namespace) if namespace else ("-A",))
     document, metrics = _together(
-        partial(_get_json, *arguments, context=context),
+        partial(_list, "pods", context, namespace),
         partial(_pod_metrics, context, namespace),
     )
     now = datetime.now(UTC)
@@ -620,7 +960,7 @@ def get_usage(
 def _cronjob_pod_selector(context: str, workload: Workload) -> str | None:
     """A CronJob has no selector of its own: its Pods belong to the Jobs it
     created, which carry the job-name label."""
-    document = _get_json("get", "jobs", "-n", workload.namespace, context=context)
+    document = _list("jobs", context, workload.namespace)
     names = [
         job["metadata"]["name"]
         for job in document.get("items", [])
@@ -642,15 +982,7 @@ def get_workload_pods(context: str, workload: Workload) -> list[PodInfo]:
             context, workload.kind, workload.namespace, workload.name
         )
         selector = _label_selector(resource)
-    document = _get_json(
-        "get",
-        "pods",
-        "-n",
-        workload.namespace,
-        "-l",
-        selector,
-        context=context,
-    )
+    document = _list("pods", context, workload.namespace, selector)
     now = datetime.now(UTC)
     pods = [
         pod
@@ -802,12 +1134,10 @@ def _parse_network(
 def get_network(
     context: str, namespace: str | None, kind: str
 ) -> tuple[list[str], list[NetworkResource]]:
-    arguments = ["get", _NETWORK_RESOURCES[kind]]
-    if kind not in _CLUSTER_WIDE:
-        arguments.extend(("-n", namespace) if namespace else ("-A",))
+    scope = None if kind in _CLUSTER_WIDE else namespace
     namespaces, document = _together(
         partial(_get_namespaces, context),
-        partial(_get_json, *arguments, context=context),
+        partial(_list, _NETWORK_RESOURCES[kind], context, scope),
     )
     now = datetime.now(UTC)
     resources = [
@@ -839,16 +1169,10 @@ def get_pod_logs(
     tail_lines: int = 500,
 ) -> str:
     tail = min(max(tail_lines, 1), 500)
-    return _run_kubectl(
-        "logs",
-        pod_name,
-        "-n",
-        namespace,
-        "-c",
-        container,
-        f"--tail={tail}",
-        "--timestamps",
-        context=context,
+    path = f"{_resource_path('pods', namespace, pod_name)}/log"
+    query = [("container", container), ("tailLines", str(tail)), ("timestamps", "true")]
+    return _request(path, context, query, accept="application/json, */*").decode(
+        errors="replace"
     )
 
 
@@ -976,17 +1300,11 @@ def get_cluster_overview(context: str) -> ClusterOverview:
     """Collect cluster-wide totals; sections the user cannot read become
     warnings."""
     tasks = {
-        "nodes": lambda: _get_json("get", "nodes", context=context),
-        "pods": lambda: _get_json("get", "pods", "-A", context=context),
-        "namespaces": lambda: _get_json("get", "namespaces", context=context),
-        "workloads": lambda: _get_json(
-            "get", "deployments,statefulsets,daemonsets", "-A", context=context
-        ),
-        "metrics": lambda: json.loads(
-            _run_kubectl(
-                "get", "--raw", "/apis/metrics.k8s.io/v1beta1/nodes", context=context
-            )
-        ),
+        "nodes": partial(_list, "nodes", context),
+        "pods": partial(_list, "pods", context),
+        "namespaces": partial(_list, "namespaces", context),
+        "workloads": partial(_list_kinds, _REPLICATED_KINDS, context, None),
+        "metrics": partial(_get_json, f"{_METRICS_PATH}/nodes", context),
     }
     results: dict[str, Any] = {}
     errors: dict[str, str] = {}
@@ -995,10 +1313,10 @@ def get_cluster_overview(context: str) -> ClusterOverview:
         for name, future in futures.items():
             try:
                 results[name] = future.result()
-            except (KubectlError, ValueError) as error:
+            except ClusterError as error:
                 errors[name] = str(error)
     if not any(key in results for key in _OVERVIEW_SECTIONS):
-        raise KubectlError(next(iter(errors.values()), "No data returned"))
+        raise ClusterError(next(iter(errors.values()), "No data returned"))
     for name, reason in errors.items():
         logger.info("Overview section %s unavailable: %s", name, first_line(reason))
     errors.pop("metrics", None)
@@ -1102,12 +1420,10 @@ def get_workloads_overview(context: str) -> WorkloadsOverview:
     page.
     """
     tasks = {
-        kind: partial(
-            _get_json, "get", _RESOURCES.get(kind, "pods"), "-A", context=context
-        )
+        kind: partial(_list, _RESOURCES.get(kind, "pods"), context)
         for kind in OVERVIEW_KINDS
     }
-    tasks["Event"] = partial(_get_json, "get", "events", "-A", context=context)
+    tasks["Event"] = partial(_list, "events", context)
     results: dict[str, Any] = {}
     errors: dict[str, str] = {}
     with ThreadPoolExecutor(max_workers=len(tasks)) as pool:
@@ -1115,10 +1431,10 @@ def get_workloads_overview(context: str) -> WorkloadsOverview:
         for name, future in futures.items():
             try:
                 results[name] = future.result()
-            except (KubectlError, ValueError) as error:
+            except ClusterError as error:
                 errors[name] = str(error)
     if not results:
-        raise KubectlError(next(iter(errors.values()), "No data returned"))
+        raise ClusterError(next(iter(errors.values()), "No data returned"))
     for name, reason in errors.items():
         logger.info("Workloads overview: %s unavailable: %s", name, first_line(reason))
 

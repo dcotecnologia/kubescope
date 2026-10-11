@@ -153,3 +153,67 @@ def test_namespace_names_follow_the_kubernetes_rule() -> None:
     assert not is_namespace_name("") and not is_namespace_name("Team")
     assert not is_namespace_name("-x") and not is_namespace_name("x-")
     assert not is_namespace_name("a" * 64) and is_namespace_name("a" * 63)
+
+
+def test_check_updates_defaults_on_and_persists(tmp_path) -> None:
+    path = tmp_path / "settings.json"
+    settings = Settings(path)
+    assert settings.check_updates is True
+
+    settings.check_updates = False
+    settings.save()
+    assert Settings(path).check_updates is False
+
+    path.write_text('{"check_updates": "no"}', encoding="utf-8")
+    assert Settings(path).check_updates is True  # only a real false turns it off
+
+
+def test_window_geometry_persists_and_ignores_damaged_values(tmp_path) -> None:
+    path = tmp_path / "settings.json"
+    settings = Settings(path)
+    assert settings.window_geometry == ""
+
+    settings.window_geometry = "AdnQywAD"
+    settings.save()
+    assert Settings(path).window_geometry == "AdnQywAD"
+
+    path.write_text('{"window_geometry": 5}', encoding="utf-8")
+    assert Settings(path).window_geometry == ""
+
+
+def test_kubeconfig_files_and_sign_in_commands_persist_and_are_validated(
+    tmp_path,
+) -> None:
+    path = tmp_path / "settings.json"
+    settings = Settings(path)
+    assert settings.kubeconfig_files == [] and settings.sign_in_commands == {}
+
+    settings.kubeconfig_files = [" /a/config ", "", "/b/config"]
+    settings.sign_in_commands = {
+        " oci ": " oci session authenticate ",
+        "x": " ",
+        "": "y",
+    }
+    settings.save()
+    reloaded = Settings(path)
+    assert reloaded.kubeconfig_files == ["/a/config", "/b/config"]
+    assert reloaded.sign_in_commands == {"oci": "oci session authenticate"}
+
+    path.write_text(
+        json.dumps(
+            {
+                "kubeconfig_files": ["/ok", 5, " "],
+                "sign_in_commands": {"oci": "login", "bad": 3, "": "x", "empty": " "},
+            }
+        ),
+        encoding="utf-8",
+    )
+    damaged = Settings(path)
+    assert damaged.kubeconfig_files == ["/ok"]
+    assert damaged.sign_in_commands == {"oci": "login"}
+
+    path.write_text(
+        '{"kubeconfig_files": "a", "sign_in_commands": []}', encoding="utf-8"
+    )
+    assert Settings(path).kubeconfig_files == []
+    assert Settings(path).sign_in_commands == {}

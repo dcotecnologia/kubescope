@@ -27,25 +27,37 @@ prefer otherwise.
 
 ## How KubeScope handles sensitive data
 
-- **Cluster access goes through `kubectl`.** The app runs the `kubectl` bundled
-  with it and passes it the context you chose. It never reads or stores tokens,
-  certificates, or cloud credentials itself; `kubectl` and its credential plugins
-  (for example `aws eks get-token`) do that.
-- **It is read-only for now.** The app only runs read commands (`get`, `config
-  get-contexts`, `config view`, `logs`). Write actions are planned, and they will
-  be explicit and confirmed by the user.
-- **The sign-in check and button run the AWS CLI, not the app.** To tell whether
+- **Cluster access goes through the official Kubernetes Python client.** The app
+  uses the `kubernetes` library with the context you chose, and the library reads
+  your kubeconfig and runs its credential plugins (for example `aws eks
+  get-token`). The app never stores tokens, certificates, or cloud credentials,
+  and it never writes the kubeconfig: refreshed credentials are not saved back to
+  it. Certificate data that sits inline in a kubeconfig is written by the library
+  to a temporary file readable only by you, which is removed when the app quits.
+- **It is read-only for now.** The app only sends `GET` requests to the cluster
+  (lists, single objects, Pod logs, `/version`, and metrics). Write actions are
+  planned, and they will be explicit and confirmed by the user.
+- **The sign-in check and button run the cloud CLIs, not the app.** To tell whether
   you are signed in, the app runs `aws sts get-caller-identity` and `aws configure
-  get` for the profile your kubeconfig names, and reads that profile from
-  `kubectl config view` without `--raw`, so secrets stay redacted. The **Sign in
+  get` for the profile your kubeconfig names, and reads that profile from the
+  sign-in command of your kubeconfig entry, never its credentials. The **Sign in
   to AWS** button runs `aws sso login` for you to approve in the browser. For an
   access-key profile, **Configure AWS credentials** opens a terminal running `aws
   configure` so you type the keys there. The app never sees, asks for, or stores
-  keys or tokens, and it does not change the cluster.
-- **No telemetry and no network calls of its own.** The only traffic is what
-  `kubectl` sends to your clusters.
+  keys or tokens, and it does not change the cluster. For Google Cloud the button
+  runs `gcloud auth login`, and for Azure `az login`; both open the browser, and
+  the app only reads which sign-in program your kubeconfig names.
+- **No telemetry.** The traffic is what the Kubernetes client sends to your
+  clusters, plus one optional call of the app's own: the update check. When the
+  app starts (and when you press the update icon in the footer) it asks the public
+  GitHub API (`api.github.com`, over HTTPS) for the latest release of the
+  project. It sends no identifier, only a `User-Agent` with the app version, and
+  GitHub sees your IP address as in any request. It never downloads or installs
+  anything; the link opens the release page in your browser. Turn the startup
+  check off in Settings.
 - **Local settings hold no secrets.** `settings.json` keeps the language, the
-  last context, context display names, and hidden table columns. It lives in your
+  last context, context display names, hidden table columns, and the size
+  and position of the window. It lives in your
   user configuration directory (`~/.config/kubescope` on Linux).
 - **Logs and resource details are shown on screen.** The app does not write them
   to disk or send them anywhere, not even in the debug log below. The one
@@ -53,16 +65,15 @@ prefer otherwise.
   open tab to a file only after you pick where, and the app keeps no copy. Pod
   logs can contain secrets printed by an application, so treat saved files,
   screenshots and recordings with care.
-- **The bundled `kubectl` is verified.** `tools/fetch_kubectl.py` downloads the
-  official stable release and checks its published SHA-256 before PyInstaller
-  includes it.
+- **No separate `kubectl` is shipped.** The packages bundle the Python
+  `kubernetes` library, pinned in `uv.lock`, instead of a downloaded binary.
 
 ## The debug log
 
 - **Off by default.** Turn it on in Settings (Debug mode) to write a log file you
   can attach to a bug report. It lives in the `logs` folder next to
   `settings.json` and rotates, so it stays small (about 1 MB, 3 backups).
-- **What it records:** which `kubectl` and AWS CLI commands ran, how long they
+- **What it records:** which cluster requests and cloud CLI commands ran, how long they
   took and how they ended, the first line of an error, and the app and Qt versions.
   Command lines include context names (often an EKS ARN with the account id) and
   namespaces.
@@ -76,7 +87,7 @@ prefer otherwise.
 
 - Use a read-only Kubernetes role for the contexts you open in KubeScope.
 - Keep `~/.kube/config` private (`chmod 600`) and prefer short-lived credentials
-  such as `aws sso login`.
+  such as `aws sso login`, `gcloud auth login` or `az login`.
 - Install packages only from the project's releases. The install scripts
   (`install.sh` and `install.ps1`) do that: they download only from this project's
   GitHub releases over HTTPS and check each file against the sha256 that GitHub

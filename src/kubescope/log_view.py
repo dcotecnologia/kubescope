@@ -1,7 +1,7 @@
 """Color Pod logs with the palette of the JSON view, which follows the theme.
 
-It colors the timestamp kubectl puts first on each line, the log level
-and the keys of `key=value` lines. The text is never changed.
+It colors the timestamp the cluster puts first on each line, the log
+level and the keys of `key=value` lines. The text is never changed.
 """
 
 import re

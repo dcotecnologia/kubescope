@@ -247,13 +247,26 @@
             </widget>
            </item>
            <item row="5" column="0" colspan="2">
+            <widget class="QCheckBox" name="updatesCheck">
+             <property name="text">
+              <string>Check GitHub for a new version when the app starts</string>
+             </property>
+             <property name="toolTip">
+              <string>Asks the public GitHub API for the latest release and sends nothing but the app version. The icon in the footer checks on demand.</string>
+             </property>
+             <property name="checked">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="6" column="0" colspan="2">
             <widget class="QCheckBox" name="debugCheck">
              <property name="text">
               <string>Debug mode: write a log file I can share</string>
              </property>
             </widget>
            </item>
-           <item row="6" column="0" colspan="2">
+           <item row="7" column="0" colspan="2">
             <widget class="QLabel" name="debugHint">
              <property name="text">
               <string notr="true" />
@@ -269,12 +282,25 @@
              </property>
             </widget>
            </item>
-           <item row="7" column="0" colspan="2">
+           <item row="8" column="0" colspan="2">
             <layout class="QHBoxLayout" name="logButtonsRow">
              <item>
               <widget class="QPushButton" name="openLogsButton">
                <property name="text">
                 <string>Open the log folder</string>
+               </property>
+               <property name="variant" stdset="0">
+                <string notr="true">secondary</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="clearCacheButton">
+               <property name="text">
+                <string>Clear the cache</string>
+               </property>
+               <property name="toolTip">
+                <string>Forgets the lists and overviews already loaded and the sign-in of every cluster, so the next request signs in and loads everything again. Your settings are kept.</string>
                </property>
                <property name="variant" stdset="0">
                 <string notr="true">secondary</string>
@@ -295,6 +321,180 @@
               </spacer>
              </item>
             </layout>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <widget class="QLabel" name="kubeconfigHeading">
+           <property name="text">
+            <string>KUBECONFIG FILES</string>
+           </property>
+           <property name="wordWrap">
+            <bool>true</bool>
+           </property>
+           <property name="variant" stdset="0">
+            <string notr="true">cardTitle</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="kubeconfigHint">
+           <property name="text">
+            <string>KubeScope reads the files in the KUBECONFIG variable, or ~/.kube/config. Add files here to read those instead. Press Save to apply.</string>
+           </property>
+           <property name="wordWrap">
+            <bool>true</bool>
+           </property>
+           <property name="variant" stdset="0">
+            <string notr="true">muted</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QListWidget" name="kubeconfigList">
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>90</height>
+            </size>
+           </property>
+           <property name="variant" stdset="0">
+            <string notr="true">data</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <layout class="QHBoxLayout" name="kubeconfigButtonsRow">
+           <item>
+            <widget class="QPushButton" name="kubeconfigAddButton">
+             <property name="text">
+              <string>Add file...</string>
+             </property>
+             <property name="variant" stdset="0">
+              <string notr="true">secondary</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="kubeconfigRemoveButton">
+             <property name="text">
+              <string>Remove</string>
+             </property>
+             <property name="variant" stdset="0">
+              <string notr="true">secondary</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <spacer name="kubeconfigButtonsRowSpacer">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>40</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <widget class="QLabel" name="loginHeading">
+           <property name="text">
+            <string>SIGN-IN COMMANDS</string>
+           </property>
+           <property name="wordWrap">
+            <bool>true</bool>
+           </property>
+           <property name="variant" stdset="0">
+            <string notr="true">cardTitle</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="loginHint">
+           <property name="text">
+            <string>For a cloud KubeScope does not know, give the program your kubeconfig uses to sign in (for example oci) and the command that signs you in (for example oci session authenticate). The Sign in button then runs it, without a shell. Press Save to apply.</string>
+           </property>
+           <property name="wordWrap">
+            <bool>true</bool>
+           </property>
+           <property name="variant" stdset="0">
+            <string notr="true">muted</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QTableWidget" name="loginTable">
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>120</height>
+            </size>
+           </property>
+           <property name="selectionMode">
+            <enum>QAbstractItemView::SingleSelection</enum>
+           </property>
+           <property name="selectionBehavior">
+            <enum>QAbstractItemView::SelectRows</enum>
+           </property>
+           <attribute name="verticalHeaderVisible">
+            <bool>false</bool>
+           </attribute>
+           <attribute name="horizontalHeaderStretchLastSection">
+            <bool>true</bool>
+           </attribute>
+           <column>
+            <property name="text">
+             <string>PROGRAM</string>
+            </property>
+           </column>
+           <column>
+            <property name="text">
+             <string>SIGN-IN COMMAND</string>
+            </property>
+           </column>
+           <property name="variant" stdset="0">
+            <string notr="true">data</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <layout class="QHBoxLayout" name="loginButtonsRow">
+           <item>
+            <widget class="QPushButton" name="loginAddButton">
+             <property name="text">
+              <string>Add row</string>
+             </property>
+             <property name="variant" stdset="0">
+              <string notr="true">secondary</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="loginRemoveButton">
+             <property name="text">
+              <string>Remove</string>
+             </property>
+             <property name="variant" stdset="0">
+              <string notr="true">secondary</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <spacer name="loginButtonsRowSpacer">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>40</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
            </item>
           </layout>
          </item>
