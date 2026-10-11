@@ -3,6 +3,7 @@ import logging.handlers
 
 import pytest
 
+import kubescope
 from kubescope import diagnostics
 from kubescope.settings import log_directory
 
@@ -102,4 +103,59 @@ def test_an_unwritable_log_folder_is_reported_not_fatal(
 def test_the_environment_description_starts_with_the_app_version() -> None:
     import kubescope
 
-    assert diagnostics.describe_environment()[0] == f"KubeScope {kubescope.__version__}"
+    assert diagnostics.describe_environment()[0].startswith(
+        f"KubeScope {kubescope.__version__} (commit "
+    )
+
+
+def test_crash_log_starts_each_session_with_the_build_and_the_machine() -> None:
+    diagnostics.configure_logging(to_file=True)
+    diagnostics.configure_logging(to_file=True)  # a second session, same file
+
+    text = (log_directory() / diagnostics.CRASH_FILE).read_text(encoding="utf-8")
+
+    assert text.count("=== KubeScope session started ") == 2
+    assert text.count(f"KubeScope {kubescope.__version__} (commit ") == 2
+    assert "Python " in text and "PySide6 " in text and "Frozen bundle: " in text
+
+
+def test_commit_comes_from_the_bundle_file_or_from_git(monkeypatch, tmp_path) -> None:
+    recorded = tmp_path / "_commit.txt"
+    monkeypatch.setattr(diagnostics, "__file__", str(tmp_path / "diagnostics.py"))
+
+    recorded.write_text("abc1234\n", encoding="utf-8")
+    assert diagnostics.commit() == "abc1234"
+
+    recorded.write_text("\n", encoding="utf-8")  # empty: ask git (not a checkout here)
+    assert diagnostics.commit() == "unknown"
+
+
+def test_commit_asks_git_in_a_source_checkout(monkeypatch, tmp_path) -> None:
+    package = tmp_path / "src" / "kubescope"
+    package.mkdir(parents=True)
+    (tmp_path / ".git").mkdir()
+    monkeypatch.setattr(diagnostics, "__file__", str(package / "diagnostics.py"))
+    asked = []
+
+    def run(command, **kwargs):
+        asked.append((command, kwargs["cwd"]))
+        return diagnostics.subprocess.CompletedProcess(command, 0, "9f8e7d6\n", "")
+
+    monkeypatch.setattr(diagnostics.subprocess, "run", run)
+    assert diagnostics.commit() == "9f8e7d6"
+    assert asked == [(["git", "rev-parse", "--short", "HEAD"], tmp_path.resolve())]
+
+    monkeypatch.setattr(
+        diagnostics.subprocess,
+        "run",
+        lambda command, **_k: diagnostics.subprocess.CompletedProcess(
+            command, 128, "", "x"
+        ),
+    )
+    assert diagnostics.commit() == "unknown"  # git said nothing
+
+    def missing(*_a, **_k):
+        raise FileNotFoundError("git")
+
+    monkeypatch.setattr(diagnostics.subprocess, "run", missing)
+    assert diagnostics.commit() == "unknown"
