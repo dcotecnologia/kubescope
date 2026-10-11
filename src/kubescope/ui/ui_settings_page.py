@@ -129,16 +129,27 @@ class Ui_SettingsPage(object):
 
         self.generalForm.setLayout(2, QFormLayout.ItemRole.SpanningRole, self.themeButtonsRow)
 
+        self.defaultNamespaceLabel = QLabel(self.settingsContent)
+        self.defaultNamespaceLabel.setObjectName(u"defaultNamespaceLabel")
+
+        self.generalForm.setWidget(3, QFormLayout.ItemRole.LabelRole, self.defaultNamespaceLabel)
+
+        self.defaultNamespaceCombo = QComboBox(self.settingsContent)
+        self.defaultNamespaceCombo.setObjectName(u"defaultNamespaceCombo")
+        self.defaultNamespaceCombo.setMinimumSize(QSize(200, 0))
+
+        self.generalForm.setWidget(3, QFormLayout.ItemRole.FieldRole, self.defaultNamespaceCombo)
+
         self.rememberCheck = QCheckBox(self.settingsContent)
         self.rememberCheck.setObjectName(u"rememberCheck")
         self.rememberCheck.setChecked(True)
 
-        self.generalForm.setWidget(3, QFormLayout.ItemRole.SpanningRole, self.rememberCheck)
+        self.generalForm.setWidget(4, QFormLayout.ItemRole.SpanningRole, self.rememberCheck)
 
         self.debugCheck = QCheckBox(self.settingsContent)
         self.debugCheck.setObjectName(u"debugCheck")
 
-        self.generalForm.setWidget(4, QFormLayout.ItemRole.SpanningRole, self.debugCheck)
+        self.generalForm.setWidget(5, QFormLayout.ItemRole.SpanningRole, self.debugCheck)
 
         self.debugHint = QLabel(self.settingsContent)
         self.debugHint.setObjectName(u"debugHint")
@@ -147,7 +158,7 @@ class Ui_SettingsPage(object):
         self.debugHint.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         self.debugHint.setProperty(u"variant", u"muted")
 
-        self.generalForm.setWidget(5, QFormLayout.ItemRole.SpanningRole, self.debugHint)
+        self.generalForm.setWidget(6, QFormLayout.ItemRole.SpanningRole, self.debugHint)
 
         self.logButtonsRow = QHBoxLayout()
         self.logButtonsRow.setObjectName(u"logButtonsRow")
@@ -162,7 +173,7 @@ class Ui_SettingsPage(object):
         self.logButtonsRow.addItem(self.logButtonsSpacer)
 
 
-        self.generalForm.setLayout(6, QFormLayout.ItemRole.SpanningRole, self.logButtonsRow)
+        self.generalForm.setLayout(7, QFormLayout.ItemRole.SpanningRole, self.logButtonsRow)
 
 
         self.settingsContentLayout.addLayout(self.generalForm)
@@ -232,6 +243,10 @@ class Ui_SettingsPage(object):
         self.newThemeButton.setText(QCoreApplication.translate("SettingsPage", u"New theme...", None))
         self.editThemeButton.setText(QCoreApplication.translate("SettingsPage", u"Edit theme...", None))
         self.openThemesButton.setText(QCoreApplication.translate("SettingsPage", u"Open the themes folder", None))
+        self.defaultNamespaceLabel.setText(QCoreApplication.translate("SettingsPage", u"Default namespace", None))
+#if QT_CONFIG(tooltip)
+        self.defaultNamespaceCombo.setToolTip(QCoreApplication.translate("SettingsPage", u"The namespace each context opens on. Leave empty to show all of them.", None))
+#endif // QT_CONFIG(tooltip)
         self.rememberCheck.setText(QCoreApplication.translate("SettingsPage", u"Remember the last used context", None))
         self.debugCheck.setText(QCoreApplication.translate("SettingsPage", u"Debug mode: write a log file I can share", None))
         self.openLogsButton.setText(QCoreApplication.translate("SettingsPage", u"Open the log folder", None))

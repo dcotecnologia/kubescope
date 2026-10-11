@@ -2,6 +2,7 @@
 
 import json
 import os
+import re
 import sys
 from pathlib import Path
 from typing import Any
@@ -15,13 +16,22 @@ LANGUAGE_CHOICES = ("auto", *LANGUAGES)
 
 DEFAULTS: dict[str, Any] = {
     "language": "auto",
-    "theme": "light",
+    "theme": "dark",
     "remember_last_context": True,
     "last_context": None,
+    "default_namespace": "",
     "context_aliases": {},
     "hidden_columns": {},
     "debug_logging": False,
 }
+
+
+# What Kubernetes accepts as a namespace name: a DNS label.
+_NAMESPACE_NAME = re.compile(r"[a-z0-9]([-a-z0-9]*[a-z0-9])?")
+
+
+def is_namespace_name(value: str) -> bool:
+    return len(value) <= 63 and _NAMESPACE_NAME.fullmatch(value) is not None
 
 
 def config_directory() -> Path:
@@ -76,6 +86,9 @@ class Settings:
             if isinstance(columns, list)
             and all(isinstance(column, int) and column >= 0 for column in columns)
         }
+        namespace = self._data["default_namespace"]
+        if not (isinstance(namespace, str) and is_namespace_name(namespace)):
+            self._data["default_namespace"] = ""  # empty means all namespaces
         if self._data["language"] not in LANGUAGE_CHOICES:
             self._data["language"] = DEFAULTS["language"]
         self.theme = self._data["theme"]
@@ -131,6 +144,15 @@ class Settings:
     @last_context.setter
     def last_context(self, value: str | None) -> None:
         self._data["last_context"] = value
+
+    @property
+    def default_namespace(self) -> str:
+        """The namespace each context opens on; empty for all of them."""
+        return self._data["default_namespace"]
+
+    @default_namespace.setter
+    def default_namespace(self, value: str) -> None:
+        self._data["default_namespace"] = value if is_namespace_name(value) else ""
 
     @property
     def context_aliases(self) -> dict[str, str]:

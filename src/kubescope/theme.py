@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 
 LIGHT = "light"
 DARK = "dark"
-DEFAULT_THEME = LIGHT
+DEFAULT_THEME = DARK
 WHITE = "#ffffff"
 
 # Each role and the light colors it covers. A custom theme gives one color per
@@ -164,7 +164,7 @@ LIGHT_THEME = Theme(LIGHT, "Light", LIGHT, builtin=True)
 DARK_THEME = Theme(DARK, "Dark", DARK, _DARK, builtin=True)
 BUILTIN = {LIGHT: LIGHT_THEME, DARK: DARK_THEME}
 
-_active = LIGHT_THEME
+_active = DARK_THEME
 _custom: dict[str, Theme] = {}
 
 
@@ -329,7 +329,7 @@ def set_theme(name: str) -> None:
     """Make a theme the active one; an unknown name means the default."""
     global _active, _custom
     _custom = load_custom_themes() if name not in BUILTIN else {}
-    _active = BUILTIN.get(name) or _custom.get(name) or LIGHT_THEME
+    _active = BUILTIN.get(name) or _custom.get(name) or BUILTIN[DEFAULT_THEME]
 
 
 def themed(color: str, *, text: bool = False) -> str:

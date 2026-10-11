@@ -2,7 +2,12 @@ import json
 import sys
 from pathlib import Path
 
-from kubescope.settings import Settings, config_directory, log_directory
+from kubescope.settings import (
+    Settings,
+    config_directory,
+    is_namespace_name,
+    log_directory,
+)
 
 
 def test_defaults_when_no_file_exists(tmp_path) -> None:
@@ -108,10 +113,10 @@ def test_log_directory_lives_in_the_config_directory(monkeypatch, tmp_path) -> N
     assert log_directory() == tmp_path / "logs"
 
 
-def test_theme_defaults_to_light_and_keeps_any_theme_id(tmp_path) -> None:
+def test_theme_defaults_to_dark_and_keeps_any_theme_id(tmp_path) -> None:
     path = tmp_path / "settings.json"
     settings = Settings(path)
-    assert settings.theme == "light"
+    assert settings.theme == "dark"
 
     settings.theme = "midnight"  # a custom theme's id
     settings.save()
@@ -119,7 +124,32 @@ def test_theme_defaults_to_light_and_keeps_any_theme_id(tmp_path) -> None:
 
     for empty in ("", "  ", None):
         settings.theme = empty
-        assert settings.theme == "light"
+        assert settings.theme == "dark"
 
     path.write_text('{"theme": 42}', encoding="utf-8")
-    assert Settings(path).theme == "light"
+    assert Settings(path).theme == "dark"
+
+
+def test_default_namespace_is_validated_and_persists(tmp_path) -> None:
+    path = tmp_path / "settings.json"
+    settings = Settings(path)
+    assert settings.default_namespace == ""  # all namespaces
+
+    settings.default_namespace = "kube-system"
+    settings.save()
+    assert Settings(path).default_namespace == "kube-system"
+
+    settings.default_namespace = "Not Valid!"
+    assert settings.default_namespace == ""
+
+    path.write_text(json.dumps({"default_namespace": "-bad-"}), encoding="utf-8")
+    assert Settings(path).default_namespace == ""
+    path.write_text(json.dumps({"default_namespace": 7}), encoding="utf-8")
+    assert Settings(path).default_namespace == ""
+
+
+def test_namespace_names_follow_the_kubernetes_rule() -> None:
+    assert is_namespace_name("a") and is_namespace_name("team-1")
+    assert not is_namespace_name("") and not is_namespace_name("Team")
+    assert not is_namespace_name("-x") and not is_namespace_name("x-")
+    assert not is_namespace_name("a" * 64) and is_namespace_name("a" * 63)
