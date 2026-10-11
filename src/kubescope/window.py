@@ -515,8 +515,6 @@ class WorkloadWindow(QMainWindow):
             getattr(self.workloads_ui, f"{key}Link").clicked.connect(
                 lambda _checked=False, view=view: self._open_list_view(view)
             )
-        for key in ("daemonsets", "replicasets"):  # counted, but no list of their own
-            getattr(self.workloads_ui, f"{key}Link").setEnabled(False)
         self.overview_refresh_button.clicked.connect(self.refresh_overview)
         self.context_combo.currentTextChanged.connect(self._context_changed)
         self.context_combo.currentTextChanged.connect(self.refresh)

@@ -1264,13 +1264,13 @@ def test_the_overview_links_open_the_lists_that_exist(monkeypatch) -> None:
         (page.deploymentsLink, "deployments"),
         (page.statefulsetsLink, "statefulsets"),
         (page.jobsLink, "jobs"),
+        (page.daemonsetsLink, "daemonsets"),
+        (page.replicasetsLink, "replicasets"),
         (page.cronjobsLink, "cronjobs"),
     ):
         link.click()
+        assert link.isEnabled()
         assert window._view == view and window.pages.currentIndex() == 1
-
-    assert not page.daemonsetsLink.isEnabled()  # counted, but there is no list
-    assert not page.replicasetsLink.isEnabled()
     window.close()
 
 
