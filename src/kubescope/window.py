@@ -81,6 +81,7 @@ from kubescope.errors import (
     is_forbidden,
 )
 from kubescope.i18n import apply_language
+from kubescope.json_view import style_json_view
 from kubescope.log_tab import LOG_REFRESH_MS, LogTab
 from kubescope.models import (
     NETWORK_VIEWS,
@@ -2035,11 +2036,12 @@ class WorkloadWindow(QMainWindow):
             )
 
     def _open_text_tab(self, title: str, text: str) -> None:
-        """Show read-only text in a new closable tab of the viewer page."""
+        """Show read-only JSON in a new closable tab of the viewer page."""
         editor = QPlainTextEdit()
         editor.setReadOnly(True)
         editor.setFont(QFontDatabase.systemFont(QFontDatabase.SystemFont.FixedFont))
         editor.setLineWrapMode(QPlainTextEdit.LineWrapMode.NoWrap)
+        editor.highlighter = style_json_view(editor)  # kept alive with the editor
         editor.setPlainText(text)
         self._add_viewer_tab(editor, title)
 
