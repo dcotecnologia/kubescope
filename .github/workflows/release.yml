@@ -101,12 +101,18 @@ jobs:
     permissions:
       contents: write
     steps:
+      - uses: actions/checkout@v7
+
       - uses: actions/download-artifact@v8
         with:
           path: packages
           merge-multiple: true
 
+      # the release says what the changelog says about this version
+      - name: Write the release notes from the changelog
+        run: python3 tools/release_notes.py "${GITHUB_REF_NAME}" > release-notes.md
+
       - uses: softprops/action-gh-release@v3
         with:
           files: packages/*
-          generate_release_notes: true
+          body_path: release-notes.md
