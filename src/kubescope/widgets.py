@@ -25,7 +25,7 @@ class StatusBar(QWidget):
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         self.setFixedHeight(self.HEIGHT)
 
-    def sizeHint(self) -> QSize:  # noqa: N802
+    def sizeHint(self) -> QSize:
         return QSize(200, self.HEIGHT)
 
     def set_summary(self, ok: int, warning: int, bad: int, total: int) -> None:
@@ -33,7 +33,7 @@ class StatusBar(QWidget):
         self._total = total
         self.update()
 
-    def paintEvent(self, _event: QPaintEvent) -> None:  # noqa: N802
+    def paintEvent(self, _event: QPaintEvent) -> None:
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         painter.setPen(Qt.PenStyle.NoPen)

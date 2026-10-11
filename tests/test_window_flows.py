@@ -45,7 +45,7 @@ class FakeRefreshWorker(QObject):
         super().__init__()
         self.context, self.namespace, self.view = context, namespace, view
 
-    def isRunning(self) -> bool:  # noqa: N802
+    def isRunning(self) -> bool:
         return self.running
 
     def start(self) -> None:

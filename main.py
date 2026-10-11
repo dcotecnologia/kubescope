@@ -15,7 +15,7 @@ if sys.platform == "linux":
     if xcb_cursor.is_file():
         ctypes.CDLL(str(xcb_cursor), mode=ctypes.RTLD_GLOBAL)
 
-from kubescope.app import main  # noqa: E402
-
 if __name__ == "__main__":
+    from kubescope.app import main
+
     raise SystemExit(main())
