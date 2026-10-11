@@ -29,7 +29,6 @@ from PySide6.QtGui import (
     QCloseEvent,
     QColor,
     QDesktopServices,
-    QFontDatabase,
     QIcon,
     QKeySequence,
     QPainter,
@@ -82,6 +81,7 @@ from kubescope.errors import (
     is_auth_error,
     is_forbidden,
 )
+from kubescope.fonts import code_font
 from kubescope.i18n import apply_language
 from kubescope.json_view import restyle, style_json_view
 from kubescope.log_tab import LOG_REFRESH_MS, LogTab
@@ -2204,7 +2204,7 @@ class WorkloadWindow(QMainWindow):
         """Show read-only JSON in a new closable tab of the viewer page."""
         editor = QPlainTextEdit()
         editor.setReadOnly(True)
-        editor.setFont(QFontDatabase.systemFont(QFontDatabase.SystemFont.FixedFont))
+        editor.setFont(code_font())
         editor.setLineWrapMode(QPlainTextEdit.LineWrapMode.NoWrap)
         editor.highlighter = style_json_view(editor)  # kept alive with the editor
         editor.save_name = safe_file_name(title, ".json")

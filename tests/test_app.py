@@ -59,6 +59,7 @@ def test_main_builds_the_window_and_runs_the_event_loop(monkeypatch) -> None:
     _capture_logging(monkeypatch)
     monkeypatch.setattr(app, "QApplication", FakeApplication)
     monkeypatch.setattr(app, "load_app_icon", lambda: "icon")
+    monkeypatch.setattr(app, "apply_fonts", lambda _app: events.append("fonts"))
     monkeypatch.setattr(
         app, "apply_theme", lambda _app, name: events.append(("theme", name))
     )
@@ -73,6 +74,7 @@ def test_main_builds_the_window_and_runs_the_event_loop(monkeypatch) -> None:
     assert app.main() == 7
     # the shipped themes are installed first, so a saved choice of one can apply
     assert events.index("community themes") < events.index(("theme", "dark"))
+    assert events.index("fonts") < events.index(("theme", "dark"))  # before widgets
     assert ("name", "KubeScope") in events
     assert ("lang", "auto") in events
     assert events[-2:] == ["show", "exec"]

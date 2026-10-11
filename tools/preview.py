@@ -17,6 +17,7 @@ from PySide6.QtCore import QFileSystemWatcher
 from PySide6.QtWidgets import QApplication
 
 from kubescope import window
+from kubescope.fonts import apply_fonts
 from kubescope.models import ClusterOverview, NodeInfo, PodInfo, Workload
 from kubescope.theme import apply_theme
 
@@ -173,6 +174,7 @@ def open_menus(application: QApplication, main_window) -> None:
 
 def main() -> int:
     application = QApplication(sys.argv[:1])
+    apply_fonts(application)
     apply_theme(application)
     main_window = window.WorkloadWindow()
     main_window.resize(1280, 800)
