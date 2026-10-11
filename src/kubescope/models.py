@@ -1,3 +1,4 @@
+import re
 from dataclasses import dataclass
 
 
@@ -50,6 +51,12 @@ class PodInfo:
     cpu: float | None = None
     memory: float | None = None
     owner: tuple[str, str] | None = None  # (kind, name) of the controlling workload
+
+
+def safe_file_name(title: str, suffix: str) -> str:
+    """A file name for a tab title: letters, digits, dots and dashes only."""
+    stem = re.sub(r"[^\w.-]+", "-", title).strip("-.")
+    return f"{stem or 'kubescope'}{suffix}"
 
 
 def format_age(seconds: float) -> str:

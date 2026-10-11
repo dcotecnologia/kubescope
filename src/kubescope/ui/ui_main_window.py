@@ -55,23 +55,19 @@ class Ui_MainWindow(object):
 "QFrame#sidebarRule { color: #e6e7ed; }\n"
 "QLabel#sidebarNote { color: #4d5866; font-size: 10px; line-height: 1.4; }\n"
 "QWidget#pageHeader { background: #ffffff; border-bottom: 1px solid #e4e5eb; }\n"
-"QLabel#pageTitle { color: #17191e; font-size: 22px; font-weight: 700; }\n"
+"QLabel#pageTitle { color: #17191e; font-size: 16px; font-weight: 700; }\n"
 "QLabel[variant=\"muted\"] { color: #4f5966; font-size: 11px; }\n"
-"QLabel#profileBadge {\n"
-"    color: #4d35a8; background: #eee9f7; border-radius: 5px;\n"
-"    font-size: 12px; font-weight: 700;\n"
-"}\n"
 "QComboBox[variant=\"filter\"], QLineEdit#searchInput, QPushButton[variant=\"primary\"] {\n"
 "    background: #ffffff; border: 1px solid #d9dce4; border-radius: 5px;\n"
 "    min-height: 36px; padding: 0 10px; font-size: 11px;\n"
 "}\n"
 "QComboBox[variant=\"filter\"], QLineEdit#searchInput {\n"
 "    color: #20232a; selection-background-color: #d9d3f2;\n"
-"  "
-                        "  selection-color: #20232a;\n"
+"    selection-color: #20232a;\n"
 "}\n"
 "QComboBox[variant=\"filter\"] { padding-right: 28px; }\n"
-"QComboBox[variant=\"filter\"]:hover { border-color: #b9b3dc; }\n"
+"QComboBox[variant=\"filter\"]:hover { borde"
+                        "r-color: #b9b3dc; }\n"
 "QComboBox[variant=\"filter\"]:focus, QComboBox[variant=\"filter\"]:on,\n"
 "QLineEdit#searchInput:focus { border: 1px solid #6252b5; }\n"
 "QComboBox[variant=\"filter\"]::drop-down {\n"
@@ -90,10 +86,10 @@ class Ui_MainWindow(object):
 "    color: #6b7380; background: #f3f4f7; border-color: #e4e5eb;\n"
 "}\n"
 "QComboBox#contextCombo:disabled { color: #ffffff; }\n"
-"QC"
-                        "omboBox#contextCombo { padding-right: 28px; }\n"
+"QComboBox#contextCombo { padding-right: 28px; }\n"
 "QComboBox#contextCombo::drop-down {\n"
-"    subcontrol-origin: padding; subcontrol-position: center right;\n"
+"    subcontrol-origin: padding; subcontrol-positio"
+                        "n: center right;\n"
 "    width: 26px; border: 0; background: transparent;\n"
 "}\n"
 "QComboBox#contextCombo::down-arrow {\n"
@@ -112,11 +108,11 @@ class Ui_MainWindow(object):
 "QPushButton[variant=\"primary\"]:disabled { background: #6c5fc4; color: #ffffff; }\n"
 "QPushButton[variant=\"link\"] {\n"
 "  border: none; background: transparent; padding: 2px 0; text-align: left;\n"
-"  color: #3220a0; font-weight:"
-                        " 600; text-decoration: underline;\n"
+"  color: #3220a0; font-weight: 600; text-decoration: underline;\n"
 "}\n"
 "QPushButton[variant=\"link\"]:hover { color: #4030b8; }\n"
-"QPushButton[variant=\"link\"]:disabled { color: #4f5966; text-decoration: none; }\n"
+"QPushButton[variant=\"link\"]:disabl"
+                        "ed { color: #4f5966; text-decoration: none; }\n"
 "QScrollArea { background: transparent; border: 0; }\n"
 "QWidget#settingsContent { background: transparent; }\n"
 "QPushButton[variant=\"secondary\"] {\n"
@@ -135,11 +131,11 @@ class Ui_MainWindow(object):
 "QTableWidget[variant=\"data\"] {\n"
 "    background: #ffffff; color: #242a33;\n"
 "    border: 1px solid #dfe2e9; border-radius: 5px;\n"
-"   "
-                        " gridline-color: #e8e9ee; selection-background-color: #f0edfa;\n"
+"    gridline-color: #e8e9ee; selection-background-color: #f0edfa;\n"
 "    selection-color: #28213f;\n"
 "}\n"
-"QHeaderView { background: #fbfbfc; }\n"
+"QHeaderView { background: #fbfbfc"
+                        "; }\n"
 "QHeaderView::up-arrow { image: url(SORT_UP); width: 9px; height: 6px; }\n"
 "QHeaderView::down-arrow { image: url(SORT_DOWN); width: 9px; height: 6px; }\n"
 "QHeaderView::section {\n"
@@ -158,13 +154,13 @@ class Ui_MainWindow(object):
 "QPushButton[nav=\"true\"]:hover { background: #f6f6fa; }\n"
 "QPushButton[nav=\"true\"]:checked {\n"
 "    color: #3220a0; background: #f3f1f9; border-right: 3px solid #3220a0;\n"
-"  "
-                        "  font-weight: 700;\n"
+"    font-weight: 700;\n"
 "}\n"
 "QFrame[card=\"true\"] {\n"
 "    background: #ffffff; border: 1px solid #dfe2e9; border-radius: 8px;\n"
 "}\n"
-"QFrame[card=\"true\"] QLabel { background: transparent; border: 0; }\n"
+""
+                        "QFrame[card=\"true\"] QLabel { background: transparent; border: 0; }\n"
 "QLabel[variant=\"cardTitle\"] { color: #535d69; font-size: 9px; font-weight: 700; }\n"
 "QLabel[variant=\"cardValue\"] { color: #17191e; font-size: 20px; font-weight: 700; }\n"
 "QLabel[variant=\"cardCaption\"] { color: #4f5966; font-size: 10px; }\n"
@@ -177,12 +173,13 @@ class Ui_MainWindow(object):
 "QProgressBar[level=\"high\"]::chunk { background: #c9484f; }\n"
 "QCheckBox { color: #20232a; spacing: 8px; font-size: 11px; }\n"
 "QLabel { color: #20232a; }\n"
+"QTabBar { qproperty-drawBase: 0; }\n"
 "QTabWidget::pane { border: 0; border-top: 1px solid #dfe2e9; top: -1px; }\n"
 "QTabBar::tab {\n"
-"    background: transparent; color: #4f5966"
-                        "; padding: 9px 14px;\n"
+"    background: transparent; color: #4f5966; padding: 9px 14px;\n"
 "    border: 0; border-bottom: 2px solid transparent; font-size: 11px;\n"
-"    font-weight: 600; max-width: 260px;\n"
+"  "
+                        "  font-weight: 600; max-width: 260px;\n"
 "}\n"
 "QTabBar::tab:hover { color: #3220a0; }\n"
 "QTabBar::tab:selected { color: #3220a0; border-bottom: 2px solid #3220a0; }\n"
@@ -199,9 +196,9 @@ class Ui_MainWindow(object):
 "QFrame#noContextsBanner { background: #fff2de; border-bottom: 1px solid #985415; }\n"
 "QFrame#noContextsBanner QLabel { color: #985415; font-size: 11px; background: transparent; }\n"
 "QFrame#permissionBanner { background: #fce9ea; border-bottom: 1px solid #a33d45; }\n"
-"QF"
-                        "rame#permissionBanner QLabel { color: #a33d45; font-size: 11px; background: transparent; }\n"
-"QFrame#permissionBanner QPushButton { color: #a33d45; font-size: 11px; padding: 0 0 0 12px; }\n"
+"QFrame#permissionBanner QLabel { color: #a33d45; font-size: 11px; background: transparent; }\n"
+"QFrame"
+                        "#permissionBanner QPushButton { color: #a33d45; font-size: 11px; padding: 0 0 0 12px; }\n"
 "QFrame#appFooter { background: #ffffff; border-top: 1px solid #e4e5eb; }\n"
 "QLabel#footerLicense, QLabel#footerDot, QLabel#footerVersion { color: #6b7380; font-size: 10px; }\n"
 "QFrame#appFooter QPushButton[variant=\"link\"] { font-size: 10px; padding: 0 0 0 6px; }\n"
@@ -611,9 +608,9 @@ class Ui_MainWindow(object):
         self.pageHeader.setObjectName(u"pageHeader")
         self.pageHeaderLayout = QHBoxLayout(self.pageHeader)
         self.pageHeaderLayout.setObjectName(u"pageHeaderLayout")
-        self.pageHeaderLayout.setContentsMargins(32, 12, 32, 12)
+        self.pageHeaderLayout.setContentsMargins(32, 8, 32, 8)
         self.titleBlock = QVBoxLayout()
-        self.titleBlock.setSpacing(3)
+        self.titleBlock.setSpacing(0)
         self.titleBlock.setObjectName(u"titleBlock")
         self.pageTitle = QLabel(self.pageHeader)
         self.pageTitle.setObjectName(u"pageTitle")
@@ -632,15 +629,6 @@ class Ui_MainWindow(object):
         self.pageHeaderSpacer = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
 
         self.pageHeaderLayout.addItem(self.pageHeaderSpacer)
-
-        self.profileBadge = QLabel(self.pageHeader)
-        self.profileBadge.setObjectName(u"profileBadge")
-        self.profileBadge.setMinimumSize(QSize(36, 36))
-        self.profileBadge.setMaximumSize(QSize(36, 36))
-        self.profileBadge.setText(u"RO")
-        self.profileBadge.setAlignment(Qt.AlignmentFlag.AlignCenter)
-
-        self.pageHeaderLayout.addWidget(self.profileBadge)
 
 
         self.pageLayout.addWidget(self.pageHeader)

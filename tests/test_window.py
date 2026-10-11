@@ -5,6 +5,7 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QApplication, QTableWidgetItem
 
+from kubescope import log_view, theme
 from kubescope import window as window_module
 from kubescope.models import ClusterOverview, NodeInfo, PodInfo, Workload
 
@@ -587,3 +588,12 @@ def test_the_language_choices_follow_the_languages_list() -> None:
 
     assert ("auto", *LANGUAGES) == LANGUAGE_CHOICES
     assert i18n.LANGUAGES is LANGUAGES
+
+
+def test_log_tab_colors_the_logs_with_the_monokai_view(monkeypatch) -> None:
+    theme.set_theme("dark")
+    window, tab = _open_log_tab(monkeypatch)
+
+    assert isinstance(tab.highlighter, log_view.LogHighlighter)
+    assert "#272822" in tab.ui.logText.styleSheet()
+    window.close()

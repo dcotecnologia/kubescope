@@ -196,3 +196,11 @@ def test_network_sort_key_orders_by_text_and_by_age() -> None:
     assert network_sort_key(web, 2) > network_sort_key(api, 2)  # by name
     assert network_sort_key(web, 3) < network_sort_key(api, 3)  # ClusterIP < NodePort
     assert network_sort_key(web, 5) > network_sort_key(api, 5)  # 2d is older than 5h
+
+
+def test_safe_file_name_keeps_letters_digits_dots_and_dashes() -> None:
+    from kubescope.models import safe_file_name
+
+    assert safe_file_name("Deployment: api", ".json") == "Deployment-api.json"
+    assert safe_file_name("api-1/app v2", ".log") == "api-1-app-v2.log"
+    assert safe_file_name("???", ".json") == "kubescope.json"

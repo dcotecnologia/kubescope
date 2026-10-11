@@ -31,14 +31,17 @@ from PySide6.QtGui import (
     QDesktopServices,
     QFontDatabase,
     QIcon,
+    QKeySequence,
     QPainter,
     QPen,
     QPixmap,
     QPolygonF,
+    QShortcut,
 )
 from PySide6.QtWidgets import (
     QApplication,
     QDialog,
+    QFileDialog,
     QFrame,
     QHeaderView,
     QInputDialog,
@@ -48,7 +51,6 @@ from PySide6.QtWidgets import (
     QPlainTextEdit,
     QProgressBar,
     QPushButton,
-    QStyle,
     QTableWidgetItem,
     QWidget,
 )
@@ -81,7 +83,7 @@ from kubescope.errors import (
     is_forbidden,
 )
 from kubescope.i18n import apply_language
-from kubescope.json_view import style_json_view
+from kubescope.json_view import restyle, style_json_view
 from kubescope.log_tab import LOG_REFRESH_MS, LogTab
 from kubescope.models import (
     NETWORK_VIEWS,
@@ -98,10 +100,12 @@ from kubescope.models import (
     network_sort_key,
     pod_highlight,
     pod_sort_key,
+    safe_file_name,
     workload_sort_key,
 )
 from kubescope.settings import LANGUAGES, Settings, log_directory
 from kubescope.theme import (
+    DEFAULT_THEME,
     Theme,
     active_theme,
     apply_theme,
@@ -219,15 +223,17 @@ def _gear_icon() -> QIcon:
     return icon
 
 
-def _nav_icon(shape: str) -> QIcon:
-    """A line icon for the side menu in the theme's colors: muted at rest, the
-    accent while its page is open."""
+def _nav_icon(shape: str, colors: tuple[str, str] | None = None) -> QIcon:
+    """A line icon in the theme's colors.
+
+    By default it is muted at rest and the accent while its page is
+    open, as in the side menu; `colors` gives the resting and the
+    checked color for a button.
+    """
     scale = 3  # drawn three times larger so the edges stay smooth
     icon = QIcon()
-    for state, color in (
-        (QIcon.State.Off, themed("#4f5966")),
-        (QIcon.State.On, themed("#3220a0")),
-    ):
+    off, on = colors or (themed("#4f5966"), themed("#3220a0"))
+    for state, color in ((QIcon.State.Off, off), (QIcon.State.On, on)):
         pixmap = QPixmap(18 * scale, 18 * scale)
         pixmap.fill(Qt.GlobalColor.transparent)
         painter = QPainter(pixmap)
@@ -245,6 +251,51 @@ def _nav_icon(shape: str) -> QIcon:
         elif shape == "workloads":  # four tiles
             for x, y in ((3, 3), (10, 3), (3, 10), (10, 10)):
                 painter.drawRoundedRect(QRectF(x, y, 5, 5), 1.2, 1.2)
+        elif shape == "details":  # an "i" in a circle
+            painter.drawEllipse(QPointF(9, 9), 6.5, 6.5)
+            painter.drawLine(QPointF(9, 8.3), QPointF(9, 12.3))
+            painter.drawPoint(QPointF(9, 5.6))
+        elif shape == "document":  # a page with lines of text
+            painter.drawRoundedRect(QRectF(3.8, 2.5, 10.4, 13), 1.5, 1.5)
+            for y in (6.3, 9, 11.7):
+                painter.drawLine(QPointF(6.4, y), QPointF(11.6, y))
+        elif shape == "pods":  # stacked layers
+            painter.drawPolygon(
+                QPolygonF(
+                    [
+                        QPointF(2.5, 6.5),
+                        QPointF(9, 3),
+                        QPointF(15.5, 6.5),
+                        QPointF(9, 10),
+                    ]
+                )
+            )
+            painter.drawPolyline(
+                QPolygonF([QPointF(2.5, 9.7), QPointF(9, 13.2), QPointF(15.5, 9.7)])
+            )
+            painter.drawPolyline(
+                QPolygonF([QPointF(2.5, 12.9), QPointF(9, 16.4), QPointF(15.5, 12.9)])
+            )
+        elif shape == "reload":  # an arrow going round
+            painter.drawArc(QRectF(3.5, 3.5, 11, 11), 40 * 16, 280 * 16)
+            painter.drawPolyline(
+                QPolygonF([QPointF(11.8, 3.1), QPointF(14.6, 5.2), QPointF(11.6, 7.2)])
+            )
+        elif shape == "save":  # an arrow down into a tray
+            painter.drawPolyline(
+                QPolygonF(
+                    [
+                        QPointF(3, 11.5),
+                        QPointF(3, 15),
+                        QPointF(15, 15),
+                        QPointF(15, 11.5),
+                    ]
+                )
+            )
+            painter.drawLine(QPointF(9, 2.5), QPointF(9, 11))
+            painter.drawPolyline(
+                QPolygonF([QPointF(5.5, 7.5), QPointF(9, 11), QPointF(12.5, 7.5)])
+            )
         else:  # network: three linked nodes
             top, left, right = QPointF(9, 3.5), QPointF(3.5, 14), QPointF(14.5, 14)
             painter.drawLine(top, left)
@@ -476,6 +527,8 @@ class WorkloadWindow(QMainWindow):
         self.viewer_ui = Ui_ViewerPage()
         self.viewer_ui.setupUi(ui.viewerHost)
         self.viewer_tabs = self.viewer_ui.viewerTabs
+        self.save_button = self.viewer_ui.saveButton
+        self.save_button.clicked.connect(self._save_viewer_tab)
         while self.viewer_tabs.count():  # drop the sample tab used in Designer
             sample = self.viewer_tabs.widget(0)
             self.viewer_tabs.removeTab(0)
@@ -496,7 +549,6 @@ class WorkloadWindow(QMainWindow):
         self._overview_context: str | None = None
         self._overview_busy = False
 
-        style = self.style()
         for button in (
             self.nav_overview,
             self.nav_workloads,
@@ -515,24 +567,6 @@ class WorkloadWindow(QMainWindow):
             animation.setDuration(180)
             animation.setEasingCurve(QEasingCurve.Type.InOutCubic)
             self._submenus[submenu] = animation
-        self.workloads_refresh_button.setIcon(
-            style.standardIcon(QStyle.StandardPixmap.SP_BrowserReload)
-        )
-        self.overview_refresh_button.setIcon(
-            style.standardIcon(QStyle.StandardPixmap.SP_BrowserReload)
-        )
-        self.refresh_button.setIcon(
-            style.standardIcon(QStyle.StandardPixmap.SP_BrowserReload)
-        )
-        self.pods_button.setIcon(
-            style.standardIcon(QStyle.StandardPixmap.SP_FileDialogListView)
-        )
-        self.details_button.setIcon(
-            style.standardIcon(QStyle.StandardPixmap.SP_MessageBoxInformation)
-        )
-        self.logs_button.setIcon(
-            style.standardIcon(QStyle.StandardPixmap.SP_FileDialogDetailedView)
-        )
         # The .ui files carry sample data for Qt Designer; the app starts empty.
         self.context_combo.clear()
         self.namespace_combo.clear()
@@ -602,12 +636,11 @@ class WorkloadWindow(QMainWindow):
         self.logs_button.clicked.connect(self._view_logs)
         self.table.itemSelectionChanged.connect(self._update_workload_actions)
         self.table.cellDoubleClicked.connect(lambda _row, _column: self._view_details())
-        self.nav_viewer.setIcon(
-            style.standardIcon(QStyle.StandardPixmap.SP_FileDialogContentsView)
-        )
         self.nav_viewer.clicked.connect(lambda: self._show_page(3))
         ui.settingsButton.setIcon(_gear_icon())
         ui.settingsButton.clicked.connect(lambda: self._show_page(2))
+        for keys in ("Ctrl+R", "F5"):
+            QShortcut(QKeySequence(keys), self).activated.connect(self._press_refresh)
         self.nav_overview.clicked.connect(lambda: self._show_page(0))
         self.nav_workloads.clicked.connect(lambda: self._toggle_submenu(self.submenu))
         self.nav_network.clicked.connect(
@@ -629,6 +662,20 @@ class WorkloadWindow(QMainWindow):
         self.context_combo.currentTextChanged.connect(self.refresh)
         self.namespace_combo.currentIndexChanged.connect(self.refresh)
         self.search_input.textChanged.connect(self._filter_rows)
+
+    def _press_refresh(self) -> None:
+        """Ctrl+R and F5: press the refresh button of the page on screen, if it
+        has one and it can be pressed now."""
+        page = self.pages.currentIndex()
+        tab = self.viewer_tabs.currentWidget()
+        button = {
+            0: self.overview_refresh_button,
+            1: self.refresh_button,
+            3: tab.ui.refreshButton if isinstance(tab, LogTab) else None,
+            4: self.workloads_refresh_button,
+        }.get(page)
+        if button is not None:
+            button.click()
 
     def _load_contexts(self) -> None:
         """Read the kubeconfig contexts in a worker; kubectl can take a while
@@ -661,6 +708,7 @@ class WorkloadWindow(QMainWindow):
             selected = active_context
         logger.info("Loaded %d context(s); selected %s", len(contexts), selected)
         self._fill_contexts(selected)
+        self._select_default_namespace()
         self.no_contexts_banner.setVisible(not contexts)
         if not contexts:
             self._set_status(lambda: self.tr("No contexts found in kubeconfig"))
@@ -828,12 +876,33 @@ class WorkloadWindow(QMainWindow):
         self.nav_overview.setIcon(_nav_icon("overview"))
         self.nav_workloads.setIcon(_nav_icon("workloads"))
         self.nav_network.setIcon(_nav_icon("network"))
+        self.save_button.setIcon(_nav_icon("save"))
+        self.nav_viewer.setIcon(_nav_icon("document"))
+        light = (themed("#ffffff", text=True),) * 2  # on the filled buttons
+        for button in (
+            self.workloads_refresh_button,
+            self.overview_refresh_button,
+            self.refresh_button,
+        ):
+            button.setIcon(_nav_icon("reload", light))
+        accent = (themed("#3220a0"),) * 2
+        self.pods_button.setIcon(_nav_icon("pods", accent))
+        self.details_button.setIcon(_nav_icon("details", accent))
+        self.logs_button.setIcon(_nav_icon("document", accent))
 
     def _apply_theme(self) -> None:
         """Switch to the theme in the settings and redraw what was drawn with
         the old colors."""
         apply_theme(QApplication.instance(), self.settings.theme)
         self._apply_style()
+        accent = (themed("#3220a0"),) * 2
+        for index in range(self.viewer_tabs.count()):
+            tab = self.viewer_tabs.widget(index)
+            if isinstance(tab, LogTab):
+                tab.ui.refreshButton.setIcon(_nav_icon("reload", accent))
+                restyle(tab.ui.logText, tab.highlighter)
+            else:
+                restyle(tab, tab.highlighter)
         self._render_rows()
         if self._overview is not None:
             self._render_overview(self._overview)
@@ -999,6 +1068,7 @@ class WorkloadWindow(QMainWindow):
 
     def _context_changed(self, *_args: object) -> None:
         logger.info("Context changed to %s", self._context())
+        self._select_default_namespace()
         self._hide_permission_banner()
         self._overview_context = None
         self._workloads_overview_context = None
@@ -1538,6 +1608,30 @@ class WorkloadWindow(QMainWindow):
         if self._view == "pods":
             self._render_pods()
 
+    def _fill_default_namespaces(self) -> None:
+        """The choices for the default namespace: all of them, the ones of the
+        cluster on screen, and the saved one even if this cluster lacks it."""
+        combo = self.settings_ui.defaultNamespaceCombo
+        saved = self.settings.default_namespace
+        combo.clear()
+        combo.addItem(self.tr("All namespaces"), "")
+        for namespace in sorted({*self._namespaces, *([saved] if saved else [])}):
+            combo.addItem(namespace, namespace)
+        combo.setCurrentIndex(max(combo.findData(saved), 0))
+
+    def _select_default_namespace(self) -> None:
+        """Start on the namespace chosen in Settings; the list is still to be
+        loaded, so it is added until the cluster names its own."""
+        default = self.settings.default_namespace
+        combo = self.namespace_combo
+        combo.blockSignals(True)
+        index = combo.findData(default) if default else 0
+        if index < 0:
+            combo.addItem(default, default)
+            index = combo.count() - 1
+        combo.setCurrentIndex(index)
+        combo.blockSignals(False)
+
     def _fill_namespaces(self, namespaces: list) -> None:
         self._namespaces = namespaces
         selected_namespace = self.namespace_combo.currentData()
@@ -1549,6 +1643,8 @@ class WorkloadWindow(QMainWindow):
         index = self.namespace_combo.findData(selected_namespace)
         self.namespace_combo.setCurrentIndex(max(index, 0))
         self.namespace_combo.blockSignals(False)
+        if selected_namespace and index < 0:
+            self._list_timer.start()  # this cluster has no such namespace: show all
 
     def _apply_sort(self) -> None:
         """Order self._workloads by the chosen header; no-op until one is
@@ -2074,6 +2170,36 @@ class WorkloadWindow(QMainWindow):
                 container,
             )
 
+    def _save_viewer_tab(self) -> None:
+        """Write the shown details or logs to a file the person picks.
+
+        Nothing is written until they choose where.
+        """
+        tab = self.viewer_tabs.currentWidget()
+        if tab is None:
+            return
+        editor = tab.ui.logText if isinstance(tab, LogTab) else tab
+        path, _filter = QFileDialog.getSaveFileName(
+            self,
+            self.tr("Save to a file"),
+            str(Path.home() / tab.save_name),
+        )
+        if not path:
+            return
+        try:
+            Path(path).write_text(editor.toPlainText(), encoding="utf-8")
+        except OSError as error:
+            logger.warning("Could not save the tab to a file: %s", error.strerror)
+            QMessageBox.warning(
+                self,
+                self.tr("Could not save"),
+                self.tr("The file could not be written: {reason}").format(
+                    reason=error.strerror or str(error)
+                ),
+            )
+            return
+        logger.info("Saved a tab to a file")
+
     def _open_text_tab(self, title: str, text: str) -> None:
         """Show read-only JSON in a new closable tab of the viewer page."""
         editor = QPlainTextEdit()
@@ -2081,6 +2207,7 @@ class WorkloadWindow(QMainWindow):
         editor.setFont(QFontDatabase.systemFont(QFontDatabase.SystemFont.FixedFont))
         editor.setLineWrapMode(QPlainTextEdit.LineWrapMode.NoWrap)
         editor.highlighter = style_json_view(editor)  # kept alive with the editor
+        editor.save_name = safe_file_name(title, ".json")
         editor.setPlainText(text)
         self._add_viewer_tab(editor, title)
 
@@ -2112,9 +2239,7 @@ class WorkloadWindow(QMainWindow):
         timer.setInterval(LOG_REFRESH_MS)
         timer.timeout.connect(lambda: self._refresh_log(tab))
         timer.start()
-        tab.ui.refreshButton.setIcon(
-            self.style().standardIcon(QStyle.StandardPixmap.SP_BrowserReload)
-        )
+        tab.ui.refreshButton.setIcon(_nav_icon("reload", (themed("#3220a0"),) * 2))
         tab.ui.refreshButton.clicked.connect(lambda: self._refresh_log(tab, True))
         title = self.tr("Logs: {pod} / {container}").format(
             pod=pod.name, container=container
@@ -2173,6 +2298,7 @@ class WorkloadWindow(QMainWindow):
             max(form.languageCombo.findData(self.settings.language), 0)
         )
         self._fill_theme_combo(self.settings.theme)
+        self._fill_default_namespaces()
         form.rememberCheck.setChecked(self.settings.remember_last_context)
         form.debugCheck.setChecked(self.settings.debug_logging)
         form.debugHint.setText(
@@ -2219,7 +2345,8 @@ class WorkloadWindow(QMainWindow):
         names = {"light": self.tr("Light"), "dark": self.tr("Dark")}
         for theme in available_themes():
             combo.addItem(names.get(theme.id, theme.name), theme.id)
-        combo.setCurrentIndex(max(combo.findData(selected), 0))
+        index = combo.findData(selected)
+        combo.setCurrentIndex(index if index >= 0 else combo.findData(DEFAULT_THEME))
         combo.blockSignals(False)
         self._update_theme_buttons()
 
@@ -2271,6 +2398,7 @@ class WorkloadWindow(QMainWindow):
 
     def _save_preferences(self) -> None:
         form = self.settings_ui
+        self.settings.default_namespace = form.defaultNamespaceCombo.currentData()
         table = form.contextsTable
         aliases = self.settings.context_aliases
         if self._contexts:
@@ -2310,6 +2438,7 @@ class WorkloadWindow(QMainWindow):
     def _retranslate(self) -> None:
         """Re-apply every visible text after the translator changed."""
         self.ui.retranslateUi(self)
+        self.viewer_ui.retranslateUi(self.ui.viewerHost)
         self._show_version()
         self.overview_ui.retranslateUi(self.ui.overviewHost)
         self.settings_ui.retranslateUi(self.ui.settingsHost)
