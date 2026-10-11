@@ -183,7 +183,9 @@ Follow [SECURITY.md](SECURITY.md); its guarantees are part of the product.
 - Keep `settings.json` free of secrets, and validate it on load.
 - Build `kubectl` calls as an argument list, never as a shell string, and treat
   names that come from the cluster as untrusted data.
-- Keep Pod logs and resource details on screen only; do not write them to disk.
+- Keep Pod logs and resource details on screen; do not write them to disk on your
+  own. The only exception is the **Save...** button, which writes a tab to a file
+  the user picks.
 - Do not widen the Flatpak permissions or add dependencies without a reason.
 - When a change affects what SECURITY.md describes (a write action, a new
   permission, stored data, a new network call), update SECURITY.md in the same
