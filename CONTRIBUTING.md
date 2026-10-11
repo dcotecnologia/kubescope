@@ -54,6 +54,18 @@ docs: describe the Flatpak build in the README
 
 English, imperative mood, no trailing period, and no AI assistant as co-author.
 
+## Changelog
+
+Every user-visible change adds a line to the `[Unreleased]` section of
+[CHANGELOG.md](CHANGELOG.md), and each line ends with the GitHub user who wrote
+the commit, like GitHub's own release notes do:
+
+```text
+- The window opens at the size it had when it was closed by @danilogco
+```
+
+The release workflow publishes the section of the tag as the release notes.
+
 ## Where changes go
 
 | Change | Place |
