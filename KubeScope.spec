@@ -1,12 +1,31 @@
 from pathlib import Path
 import os
 import platform
+import subprocess
 import sys
 
 from PyInstaller.utils.hooks import collect_submodules, copy_metadata, get_package_paths
 
 
 root = Path(SPECPATH)
+# The commit goes into the bundle, so a crash log can say which build it is from.
+commit_file = root / "src" / "kubescope" / "_commit.txt"
+try:
+    commit_file.write_text(
+        subprocess.run(
+            ["git", "rev-parse", "--short", "HEAD"],
+            cwd=root,
+            capture_output=True,
+            text=True,
+            check=True,
+        ).stdout.strip()
+        + "\n",
+        encoding="utf-8",
+    )
+except (OSError, subprocess.SubprocessError):
+    pass  # not a git checkout: the log says "unknown"
+commit_data = [(str(commit_file), "kubescope")] if commit_file.is_file() else []
+
 bundled_binaries = []
 if sys.platform == "linux":
     xcb_cursor = (
@@ -40,6 +59,7 @@ analysis = Analysis(
     binaries=bundled_binaries,
     datas=[
         *qt_plugins,
+        *commit_data,
         # the footer shows the version, which the app reads from this metadata
         *copy_metadata("kubescope"),
         (str(root / "src" / "kubescope" / "assets" / "icon.png"), "kubescope/assets"),

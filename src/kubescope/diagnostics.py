@@ -12,7 +12,9 @@ import logging
 import logging.handlers
 import platform
 import re
+import subprocess
 import sys
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import IO
 
@@ -64,17 +66,55 @@ def log_file() -> Path:
     return log_directory() / LOG_FILE
 
 
+def commit() -> str:
+    """The short git commit this build is from: written beside the code when a
+    bundle is built, or asked of git in a source checkout; "unknown"
+    otherwise."""
+    recorded = Path(__file__).with_name("_commit.txt")
+    try:
+        text = recorded.read_text(encoding="utf-8").strip()
+        if text:
+            return text
+    except OSError:
+        pass
+    checkout = Path(__file__).resolve().parents[2]
+    if (checkout / ".git").exists():
+        try:
+            result = subprocess.run(
+                ["git", "rev-parse", "--short", "HEAD"],
+                cwd=checkout,
+                capture_output=True,
+                text=True,
+                timeout=3,
+                check=False,
+            )
+        except (OSError, subprocess.SubprocessError):
+            return "unknown"
+        return result.stdout.strip() or "unknown"
+    return "unknown"
+
+
 def describe_environment() -> list[str]:
     """What a person reading a shared log needs to know about the machine."""
     from PySide6 import __version__ as pyside_version
     from PySide6.QtCore import qVersion
 
     return [
-        f"KubeScope {kubescope.__version__}",
+        f"KubeScope {kubescope.__version__} (commit {commit()})",
         f"Python {platform.python_version()} on {platform.platform()}",
         f"PySide6 {pyside_version}, Qt {qVersion()}",
         f"Frozen bundle: {bool(getattr(sys, 'frozen', False))}",
     ]
+
+
+def _write_crash_header(stream: IO[str]) -> None:
+    """Say which build and machine the crashes after this line come from:
+    faulthandler appends bare tracebacks to the same file, session after
+    session."""
+    started = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S UTC")
+    stream.write(f"\n=== KubeScope session started {started} ===\n")
+    stream.writelines(f"{line}\n" for line in describe_environment())
+    stream.flush()
 
 
 def _remove(handler: logging.Handler | None) -> None:
@@ -107,6 +147,7 @@ def configure_logging(*, to_file: bool = False, to_console: bool = False) -> Non
                 log_file(), maxBytes=MAX_BYTES, backupCount=BACKUPS, encoding="utf-8"
             )
             _crash_stream = (directory / CRASH_FILE).open("a", encoding="utf-8")
+            _write_crash_header(_crash_stream)
             faulthandler.enable(file=_crash_stream)
         except OSError as error:
             to_file = False

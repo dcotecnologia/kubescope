@@ -225,3 +225,4 @@ vendor/linux/
 *.pyproject.user
 vendor/appimagetool/
 .wine/
+src/kubescope/_commit.txt
