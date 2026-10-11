@@ -47,12 +47,8 @@ QLabel#navSection, QLabel#filterLabel {
 QFrame#sidebarRule { color: #e6e7ed; }
 QLabel#sidebarNote { color: #4d5866; font-size: 10px; line-height: 1.4; }
 QWidget#pageHeader { background: #ffffff; border-bottom: 1px solid #e4e5eb; }
-QLabel#pageTitle { color: #17191e; font-size: 22px; font-weight: 700; }
+QLabel#pageTitle { color: #17191e; font-size: 16px; font-weight: 700; }
 QLabel[variant="muted"] { color: #4f5966; font-size: 11px; }
-QLabel#profileBadge {
-    color: #4d35a8; background: #eee9f7; border-radius: 5px;
-    font-size: 12px; font-weight: 700;
-}
 QComboBox[variant="filter"], QLineEdit#searchInput, QPushButton[variant="primary"] {
     background: #ffffff; border: 1px solid #d9dce4; border-radius: 5px;
     min-height: 36px; padding: 0 10px; font-size: 11px;
@@ -164,6 +160,7 @@ QProgressBar[level="warn"]::chunk { background: #d58a2b; }
 QProgressBar[level="high"]::chunk { background: #c9484f; }
 QCheckBox { color: #20232a; spacing: 8px; font-size: 11px; }
 QLabel { color: #20232a; }
+QTabBar { qproperty-drawBase: 0; }
 QTabWidget::pane { border: 0; border-top: 1px solid #dfe2e9; top: -1px; }
 QTabBar::tab {
     background: transparent; color: #4f5966; padding: 9px 14px;
@@ -1237,18 +1234,18 @@ Resources in read-only mode</string>
              <number>32</number>
             </property>
             <property name="topMargin">
-             <number>12</number>
+             <number>8</number>
             </property>
             <property name="rightMargin">
              <number>32</number>
             </property>
             <property name="bottomMargin">
-             <number>12</number>
+             <number>8</number>
             </property>
             <item>
              <layout class="QVBoxLayout" name="titleBlock">
               <property name="spacing">
-               <number>3</number>
+               <number>0</number>
               </property>
               <item>
                <widget class="QLabel" name="pageTitle">
@@ -1281,28 +1278,6 @@ Resources in read-only mode</string>
                </size>
               </property>
              </spacer>
-            </item>
-            <item>
-             <widget class="QLabel" name="profileBadge">
-              <property name="minimumSize">
-               <size>
-                <width>36</width>
-                <height>36</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>36</width>
-                <height>36</height>
-               </size>
-              </property>
-              <property name="text">
-               <string notr="true">RO</string>
-              </property>
-              <property name="alignment">
-               <set>Qt::AlignmentFlag::AlignCenter</set>
-              </property>
-             </widget>
             </item>
            </layout>
           </widget>

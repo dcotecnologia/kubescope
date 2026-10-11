@@ -1,3 +1,4 @@
+import json
 import os
 import threading
 import time
@@ -5,7 +6,7 @@ import time
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 from PySide6.QtCore import QObject, QPoint, Signal
-from PySide6.QtGui import QCloseEvent, QPalette
+from PySide6.QtGui import QCloseEvent, QPalette, QShortcut
 from PySide6.QtWidgets import (
     QApplication,
     QDialog,
@@ -16,7 +17,7 @@ from PySide6.QtWidgets import (
     QTableWidget,
 )
 
-from kubescope import json_view
+from kubescope import json_view, theme
 from kubescope import window as window_module
 from kubescope.cluster import KubectlError, LoginAction
 from kubescope.models import (
@@ -1331,6 +1332,7 @@ def test_the_overview_follows_a_language_change(monkeypatch) -> None:
 
 def test_the_theme_is_chosen_in_settings_and_applied_at_once(monkeypatch) -> None:
     window = _ready_window(monkeypatch)
+    window.settings.theme = "light"
     window._open_list_view("pods")
     window._show_pods(["ns"], [POD])
     window._overview = ClusterOverview()
@@ -1396,6 +1398,7 @@ def _accept_editor(monkeypatch, *, name=None, page=None, result=None):
 
 def test_a_new_theme_is_made_in_the_editor_and_then_chosen(monkeypatch) -> None:
     window = _ready_window(monkeypatch)
+    window.settings.theme = "light"
     page = window.settings_ui
     window._load_settings_form()
     assert [page.themeCombo.itemData(i) for i in range(page.themeCombo.count())] == [
@@ -1462,15 +1465,15 @@ def test_editing_the_theme_in_use_restyles_the_window_at_once(monkeypatch) -> No
     window.close()
 
 
-def test_a_theme_that_was_deleted_falls_back_to_light(monkeypatch) -> None:
+def test_a_theme_that_was_deleted_falls_back_to_the_default(monkeypatch) -> None:
     window = _ready_window(monkeypatch)
     window.settings.theme = "gone"
 
     window._load_settings_form()
 
-    assert window.settings_ui.themeCombo.currentData() == "light"
+    assert window.settings_ui.themeCombo.currentData() == "dark"
     window._apply_theme()
-    assert "#f7f7fa" in window.styleSheet()
+    assert "#11141a" in window.styleSheet()
     window.close()
 
 
@@ -1744,6 +1747,7 @@ def test_the_permission_banner_goes_away_once_a_list_loads(monkeypatch) -> None:
 
 
 def test_details_open_as_colored_json(monkeypatch) -> None:
+    theme.set_theme("dark")
     window = _ready_window(monkeypatch)
 
     window._show_json_dialog("Pod: api", {"kind": "Pod", "replicas": 2})
@@ -1829,4 +1833,210 @@ def test_lists_show_the_last_answer_for_the_context_and_namespace(monkeypatch) -
     window.refresh()  # nothing kept for a now: an empty table, not b's rows
     assert window.table.rowCount() == 0
     FakeRefreshWorker.outcome = ("ok", ([], []))
+    window.close()
+
+
+def test_contexts_open_on_the_default_namespace(monkeypatch) -> None:
+    window = _two_context_window(monkeypatch)
+    window.settings.default_namespace = "team-a"
+
+    window.context_combo.setCurrentIndex(1)  # a context change applies it
+    assert window.namespace_combo.currentData() == "team-a"
+    window._select_default_namespace()  # already there: the same item is kept
+    assert window.namespace_combo.count() == 2
+
+    window.settings.default_namespace = ""
+    window._select_default_namespace()
+    assert window.namespace_combo.currentData() == ""
+    window.close()
+
+
+def test_a_default_namespace_the_cluster_lacks_falls_back_to_all(monkeypatch) -> None:
+    window = _two_context_window(monkeypatch)
+    window.settings.default_namespace = "gone"
+    window._select_default_namespace()
+    started = []
+    monkeypatch.setattr(window._list_timer, "start", lambda: started.append(True))
+
+    window._fill_namespaces(["ops", "dev"])  # the cluster does not list it
+
+    assert window.namespace_combo.currentData() == "" and started == [True]
+    window._fill_namespaces(["ops", "dev"])  # all namespaces: nothing to redo
+    assert started == [True]
+    window.close()
+
+
+def test_the_default_namespace_is_chosen_from_the_clusters_namespaces(
+    monkeypatch,
+) -> None:
+    window = _ready_window(monkeypatch)
+    monkeypatch.setattr(window, "_save_settings", lambda: None)
+    window._namespaces = ["ops", "dev"]
+    window._load_settings_form()
+    combo = window.settings_ui.defaultNamespaceCombo
+    assert [combo.itemText(i) for i in range(combo.count())] == [
+        "All namespaces",
+        "dev",
+        "ops",
+    ]
+    assert combo.currentData() == ""
+
+    combo.setCurrentIndex(combo.findData("ops"))
+    window._save_preferences()
+    assert window.settings.default_namespace == "ops"
+
+    window._namespaces = ["other"]  # another cluster: the saved one is still offered
+    window._load_settings_form()
+    assert combo.currentData() == "ops"
+    assert [combo.itemData(i) for i in range(combo.count())] == ["", "ops", "other"]
+
+    combo.setCurrentIndex(0)
+    window._save_preferences()
+    assert window.settings.default_namespace == ""
+    window.close()
+
+
+def test_save_writes_the_open_tab_to_the_chosen_file(monkeypatch, tmp_path) -> None:
+    window = _ready_window(monkeypatch)
+    window._show_json_dialog("Deployment: api", {"kind": "Deployment"})
+    asked = []
+    target = tmp_path / "details.json"
+
+    def choose(_parent, _title, suggestion):
+        asked.append(suggestion)
+        return str(target), ""
+
+    monkeypatch.setattr(window_module.QFileDialog, "getSaveFileName", choose)
+
+    window.save_button.click()
+
+    assert asked[0].endswith("Deployment-api.json")
+    assert json.loads(target.read_text(encoding="utf-8")) == {"kind": "Deployment"}
+    window.close()
+
+
+def test_save_writes_the_shown_logs(monkeypatch, tmp_path) -> None:
+    window = _ready_window(monkeypatch)
+    window._show_logs_dialog(POD, "app", "2026-10-08T05:00:01Z INFO started")
+    asked = []
+    target = tmp_path / "logs.txt"
+    monkeypatch.setattr(
+        window_module.QFileDialog,
+        "getSaveFileName",
+        lambda _p, _t, suggestion: asked.append(suggestion) or (str(target), ""),
+    )
+
+    window._save_viewer_tab()
+
+    assert asked[0].endswith("api-1-app.log")
+    assert target.read_text(encoding="utf-8") == "2026-10-08T05:00:01Z INFO started"
+    window.close()
+
+
+def test_save_does_nothing_when_cancelled_and_reports_a_failed_write(
+    monkeypatch, tmp_path
+) -> None:
+    window = _ready_window(monkeypatch)
+    window._save_viewer_tab()  # no tab open: nothing to save
+    window._show_json_dialog("Pod: x", {"a": 1})
+    shown = []
+    monkeypatch.setattr(QMessageBox, "warning", lambda *a: shown.append(a[2]))
+
+    monkeypatch.setattr(
+        window_module.QFileDialog, "getSaveFileName", lambda *_a: ("", "")
+    )
+    window._save_viewer_tab()
+    assert shown == []
+
+    monkeypatch.setattr(
+        window_module.QFileDialog,
+        "getSaveFileName",
+        lambda *_a: (str(tmp_path / "missing" / "x.json"), ""),
+    )
+    window._save_viewer_tab()
+    assert shown and "could not be written" in shown[0]
+    window.close()
+
+
+def test_the_save_button_is_an_icon_with_a_tooltip(monkeypatch) -> None:
+    window = _ready_window(monkeypatch)
+
+    assert window.save_button.text() == "" and not window.save_button.icon().isNull()
+    assert window.save_button.toolTip()
+    window._retranslate()
+    assert window.save_button.toolTip()
+    window.close()
+
+
+def test_a_theme_change_redraws_the_icons_of_open_log_tabs(monkeypatch) -> None:
+    window = _ready_window(monkeypatch)
+    window._show_logs_dialog(POD, "app", "2026-10-08T05:00:01Z INFO started")
+    tab = window.viewer_tabs.currentWidget()
+    before = tab.ui.refreshButton.icon().pixmap(18, 18).toImage()
+
+    window.settings.theme = "dark"
+    window._apply_theme()
+
+    after = tab.ui.refreshButton.icon().pixmap(18, 18).toImage()
+    assert not after.isNull() and after != before  # drawn in the new accent
+    window.settings.theme = "light"
+    window._apply_theme()
+    window.close()
+
+
+def test_a_theme_change_recolors_open_json_and_log_tabs(monkeypatch) -> None:
+    window = _ready_window(monkeypatch)
+    window._show_json_dialog("Pod: api", {"kind": "Pod"})
+    json_editor = window.viewer_tabs.currentWidget()
+    window._show_logs_dialog(POD, "app", "2026-10-08T05:00:01Z INFO started")
+    log_tab = window.viewer_tabs.currentWidget()
+    assert "#272822" not in json_editor.styleSheet()  # light
+
+    window.settings.theme = "dark"
+    window._apply_theme()
+
+    assert "#272822" in json_editor.styleSheet()
+    assert "#272822" in log_tab.ui.logText.styleSheet()
+    window.settings.theme = "light"
+    window._apply_theme()
+    assert "#272822" not in json_editor.styleSheet()
+    window.close()
+
+
+def test_ctrl_r_and_f5_press_the_refresh_button_of_the_page_on_screen(
+    monkeypatch,
+) -> None:
+    window = _ready_window(monkeypatch)
+    pressed = []
+    for name, button in (
+        ("overview", window.overview_refresh_button),
+        ("list", window.refresh_button),
+        ("workloads", window.workloads_refresh_button),
+    ):
+        button.setEnabled(True)
+        button.clicked.connect(lambda _checked=False, name=name: pressed.append(name))
+    window._show_logs_dialog(POD, "app", "2026-10-08T05:00:01Z INFO started")
+    logs = window.viewer_tabs.currentWidget()
+    logs.ui.refreshButton.clicked.connect(lambda: pressed.append("logs"))
+
+    keys = sorted(
+        shortcut.key().toString() for shortcut in window.findChildren(QShortcut)
+    )
+    assert keys == ["Ctrl+R", "F5"]
+
+    for page in (0, 1, 4, 3):
+        window.pages.setCurrentIndex(page)
+        window._press_refresh()
+    assert pressed == ["overview", "list", "workloads", "logs"]
+
+    window._show_json_dialog("Pod: api", {"kind": "Pod"})  # no refresh on this tab
+    window._press_refresh()
+    window.pages.setCurrentIndex(2)  # settings have none either
+    window._press_refresh()
+    assert len(pressed) == 4
+
+    window.refresh_button.setEnabled(False)  # busy: the button cannot be pressed
+    window.pages.setCurrentIndex(1)
+    window._press_refresh()
+    assert len(pressed) == 4
     window.close()

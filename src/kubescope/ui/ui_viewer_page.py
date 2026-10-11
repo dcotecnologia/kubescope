@@ -15,8 +15,9 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QFont, QFontDatabase, QGradient, QIcon,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
-from PySide6.QtWidgets import (QApplication, QPlainTextEdit, QSizePolicy, QTabWidget,
-    QVBoxLayout, QWidget)
+from PySide6.QtWidgets import (QApplication, QHBoxLayout, QPlainTextEdit, QPushButton,
+    QSizePolicy, QSpacerItem, QTabWidget, QVBoxLayout,
+    QWidget)
 
 class Ui_ViewerPage(object):
     def setupUi(self, ViewerPage):
@@ -51,6 +52,24 @@ class Ui_ViewerPage(object):
 
         self.viewerLayout.addWidget(self.viewerTabs)
 
+        self.viewerFooter = QHBoxLayout()
+        self.viewerFooter.setObjectName(u"viewerFooter")
+        self.viewerFooterSpacer = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+
+        self.viewerFooter.addItem(self.viewerFooterSpacer)
+
+        self.saveButton = QPushButton(ViewerPage)
+        self.saveButton.setObjectName(u"saveButton")
+        self.saveButton.setMinimumSize(QSize(36, 36))
+        self.saveButton.setMaximumSize(QSize(36, 36))
+        self.saveButton.setIconSize(QSize(18, 18))
+        self.saveButton.setProperty(u"variant", u"secondary")
+
+        self.viewerFooter.addWidget(self.saveButton)
+
+
+        self.viewerLayout.addLayout(self.viewerFooter)
+
 
         self.retranslateUi(ViewerPage)
 
@@ -58,6 +77,9 @@ class Ui_ViewerPage(object):
     # setupUi
 
     def retranslateUi(self, ViewerPage):
+#if QT_CONFIG(tooltip)
+        self.saveButton.setToolTip(QCoreApplication.translate("ViewerPage", u"Save what this tab shows to a file", None))
+#endif // QT_CONFIG(tooltip)
         pass
     # retranslateUi
 
