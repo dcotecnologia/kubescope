@@ -14,6 +14,24 @@ through the local Kubernetes configuration. The packaged application includes
 its own `kubectl` executable. It is read-only for now: it lists and inspects
 resources but does not change the cluster.
 
+## Install
+
+Download the package for your system from the
+[latest release](https://github.com/dcotecnologia/kubescope/releases/latest). Every
+package already includes `kubectl`.
+
+| System | Package | How to install |
+| ------ | ------- | -------------- |
+| Debian and Ubuntu | `kubescope_<version>_amd64.deb` | `sudo apt install ./kubescope_<version>_amd64.deb`, then `kubescope` |
+| Any Linux | `KubeScope-<version>-x86_64.AppImage` | `chmod +x` the file and run it |
+| Windows | `KubeScope-<version>-windows-x64-setup.exe` | run the installer; or unzip the portable `KubeScope-<version>-windows-x64.zip` |
+| macOS and others | none yet | [run it from source](#run-from-source) |
+
+For the Flatpak, how to remove the app, and the details of each system, read the
+[installation guide](https://github.com/dcotecnologia/kubescope/wiki/Installation)
+on the wiki. To connect to your clusters, see
+[Connecting to clusters](https://github.com/dcotecnologia/kubescope/wiki/Connecting-to-clusters).
+
 ![KubeScope cluster overview](docs/screenshots/overview.png)
 
 *The cluster overview, shown with sample data. Regenerate it with

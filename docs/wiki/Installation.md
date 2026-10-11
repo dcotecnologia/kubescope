@@ -36,6 +36,12 @@ AppImage if your kubeconfig needs them.
 - **Portable:** unzip `KubeScope-<version>-windows-x64.zip` and run
   `KubeScope\KubeScope.exe`.
 
+## macOS and other systems
+
+There is no package yet. Run it from source with Python 3.12 or newer; the steps
+are in [Building from source](Building-from-source). Its `kubectl` is fetched by
+`python tools/fetch_kubectl.py`.
+
 ## Uninstall
 
 - `.deb`: `sudo apt remove kubescope`
