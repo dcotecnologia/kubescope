@@ -12,7 +12,7 @@
     <p>
       KubeScope is a read-only desktop console for Kubernetes and Amazon EKS:
       cluster overview, Pods and Deployments with CPU, memory and restarts,
-      resource details and live logs. It bundles its own kubectl.
+      resource details and live logs.
     </p>
   </description>
   <launchable type="desktop-id">com.dcotecnologia.KubeScope.desktop</launchable>

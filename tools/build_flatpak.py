@@ -4,8 +4,7 @@ The manifest builds from public sources, like Flathub does. Here the app
 itself comes from this working tree instead of its git tag, so a change
 that is not committed yet can be tried. Needs flatpak-builder and the
 runtimes the manifest names (`flatpak install flathub
-org.kde.Platform//6.11 org.kde.Sdk//6.11 io.qt.PySide.BaseApp//6.11
-org.freedesktop.Sdk.Extension.golang//25.08`).
+org.kde.Platform//6.11 org.kde.Sdk//6.11 io.qt.PySide.BaseApp//6.11`).
 
 FLATPAK_BUILDER_ARGS adds options to flatpak-builder, for example
 `--user`.
