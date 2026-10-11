@@ -16,6 +16,35 @@ resources but does not change the cluster.
 
 ## Install
 
+The easiest way, and the one we recommend, is the install script. It finds the
+latest release, picks the right package for your system, checks it against the
+sha256 that GitHub publishes for it, and installs it. Run the same command again to
+update.
+
+**Linux** (the `.deb` on Debian and Ubuntu, the AppImage elsewhere):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/dcotecnologia/kubescope/main/install.sh | sh
+```
+
+**Windows** (PowerShell, for your user, no administrator needed):
+
+```powershell
+irm https://raw.githubusercontent.com/dcotecnologia/kubescope/main/install.ps1 | iex
+```
+
+To choose a version or look before it acts, save the script and run it with
+`--dry-run` (`-DryRun` on Windows), `--version 0.1.0` (`-Version 0.1.0`) or
+`--method appimage`; `./install.sh --help` lists them. A script that you pipe into a
+shell runs with your rights, so read it first if you prefer:
+[install.sh](install.sh) and [install.ps1](install.ps1). The sha256 check catches a
+damaged or swapped download; it trusts GitHub and this repository, as any download
+from them does.
+
+There is no macOS package yet; see [run it from source](#run-from-source).
+
+### Install by hand
+
 Download the package for your system from the
 [latest release](https://github.com/dcotecnologia/kubescope/releases/latest). Every
 package already includes `kubectl`.

@@ -1,5 +1,40 @@
 # Installation
 
+## The install script (recommended)
+
+One command installs the latest release and, run again, updates it. It picks the
+right package for your system and checks the download against the sha256 that GitHub
+publishes for it before installing anything.
+
+Linux:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/dcotecnologia/kubescope/main/install.sh | sh
+```
+
+Windows (PowerShell, for your user, no administrator needed):
+
+```powershell
+irm https://raw.githubusercontent.com/dcotecnologia/kubescope/main/install.ps1 | iex
+```
+
+- **Linux:** it installs the `.deb` through `apt` (it asks for your password) on
+  Debian and Ubuntu, and otherwise puts the AppImage in `~/.local/share/kubescope`
+  and links it as `~/.local/bin/kubescope`. An update replaces the old file.
+- **Windows:** it runs the installer silently for your user. An update installs over
+  the old version.
+- **Options:** save the script to pass them. `--dry-run` (`-DryRun`) shows what would
+  happen, `--version 0.1.0` (`-Version 0.1.0`) picks a release, `--force` (`-Force`)
+  reinstalls, and on Linux `--method deb` or `--method appimage` picks the package.
+- **Safety:** a script piped into a shell runs with your rights, so you can read
+  [install.sh](https://github.com/dcotecnologia/kubescope/blob/main/install.sh) and
+  [install.ps1](https://github.com/dcotecnologia/kubescope/blob/main/install.ps1)
+  first. The sha256 check catches a damaged or swapped download; it trusts GitHub and
+  the repository.
+- **AppImage:** it needs FUSE 2 (`libfuse2`); if it will not start, install that.
+
+## Install by hand
+
 Download the package for your system from the
 [releases page](https://github.com/dcotecnologia/kubescope/releases). Every
 package already contains `kubectl`.
