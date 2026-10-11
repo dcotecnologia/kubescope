@@ -384,6 +384,9 @@ class WorkloadWindow(QMainWindow):
         self._namespaces: list[str] = []
         self._sort: tuple[int, Qt.SortOrder] | None = None
         self._overview: ClusterOverview | None = None
+        # the last overview of each context, shown at once when it is chosen again
+        self._overviews: dict[str, ClusterOverview] = {}
+        self._workloads_overviews: dict[str, WorkloadsOverview] = {}
         self._status_message: Callable[[], str] | None = None
         self._workers: dict[str, RefreshWorker] = {}  # one request per list
         # the last answer per (context, namespace, list), shown at once while the
@@ -586,6 +589,7 @@ class WorkloadWindow(QMainWindow):
         self._spinner_timer.timeout.connect(self._tick_spinner)
 
         self._workloads_overview: WorkloadsOverview | None = None
+        self._shown_key: tuple[str, str | None, str] | None = None  # what the table has
         self._workloads_overview_context: str | None = None
         self._workloads_overview_busy = False
         self._login_action: LoginAction | None = None
@@ -864,9 +868,9 @@ class WorkloadWindow(QMainWindow):
             header.setSortIndicatorShown(False)
             self._apply_view_columns()
             self._render_rows()
-            known = self._answers.get(
-                (self._context(), self.namespace_combo.currentData() or None, view)
-            )
+            key = (self._context(), self.namespace_combo.currentData() or None, view)
+            known = self._answers.get(key)
+            self._shown_key = key if known else None
             if known:  # the last answer, until the fresh one arrives
                 self._show_answer(view, *known)
         self._show_page(1)
@@ -998,6 +1002,7 @@ class WorkloadWindow(QMainWindow):
         self._hide_permission_banner()
         self._overview_context = None
         self._workloads_overview_context = None
+        self._show_cached_overviews()
         self._hide_login()
         self._check_login()
         if self.pages.currentIndex() == 4:
@@ -1119,6 +1124,7 @@ class WorkloadWindow(QMainWindow):
         self, context: str, overview: WorkloadsOverview
     ) -> None:
         self._workloads_overview_busy = False
+        self._workloads_overviews[context] = overview
         if context != self._context():
             self._workloads_overview_context = None
             self.refresh_workloads_overview()
@@ -1189,6 +1195,23 @@ class WorkloadWindow(QMainWindow):
                 )
                 table.setItem(row, column, item)
 
+    def _show_cached_overviews(self) -> None:
+        """Another context was chosen: show what was last read from it, or
+        nothing, never the numbers of the context left behind.
+
+        The pages still load fresh data.
+        """
+        context = self._context()
+        self._overview = self._overviews.get(context)
+        if self._overview is not None:
+            self._render_overview(self._overview)
+        else:
+            self._reset_overview()
+        self._workloads_overview = self._workloads_overviews.get(context)
+        self._render_workloads_overview(
+            self._workloads_overview or WorkloadsOverview({})
+        )
+
     def _ensure_overview(self) -> None:
         context = self._context()
         if context and context != self._overview_context:
@@ -1253,6 +1276,7 @@ class WorkloadWindow(QMainWindow):
 
     def _show_overview(self, context: str, overview: ClusterOverview) -> None:
         self._overview_busy = False
+        self._overviews[context] = overview
         if context != self._context():
             self._overview_context = None
             self.refresh_overview()
@@ -1407,6 +1431,9 @@ class WorkloadWindow(QMainWindow):
         if not context or self._loading(self._view):
             return
         namespace = self.namespace_combo.currentData() or None
+        key = (context, namespace, self._view)
+        if key != self._shown_key:  # another context or namespace than on screen
+            self._show_cached(key)
         logger.info(
             "Refreshing %s in %s (namespace %s)",
             self._view,
@@ -1448,6 +1475,17 @@ class WorkloadWindow(QMainWindow):
         else:
             self._end_loading(self.refresh_button)
 
+    def _show_cached(self, key: tuple[str, str | None, str]) -> None:
+        """Put the last answer for this context, namespace and list on screen
+        while the fresh one loads, or an empty table when there is none."""
+        known = self._answers.get(key)
+        if known:
+            self._show_answer(key[2], *known)
+        else:
+            self._workloads, self._pods, self._network = [], [], []
+            self._render_rows()
+        self._shown_key = key
+
     def _answered(
         self,
         context: str,
@@ -1459,6 +1497,7 @@ class WorkloadWindow(QMainWindow):
         self._answers[(context, namespace, view)] = (namespaces, items)
         if view == self._view:
             self._hide_permission_banner()  # this list loaded: access is fine
+            self._shown_key = (context, namespace, view)
             self._show_answer(view, namespaces, items)
 
     def _show_answer(self, view: str, namespaces: list, items: list) -> None:
@@ -2334,6 +2373,7 @@ class WorkloadWindow(QMainWindow):
         self._workloads = []
         self._pods = []
         self._network = []
+        self._shown_key = None
         self._set_status(lambda: self._error_line(message))
         self.status_label.setToolTip(describe_error(message).details)
         self.table.setRowCount(0)
