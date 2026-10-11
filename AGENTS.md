@@ -102,6 +102,8 @@ Golden rule:
 - Use `make preview` (fake data, no cluster) to look at UI changes, and
   `make screenshot` to refresh `docs/screenshots/overview.png` when the overview
   changes.
+  `make store-screenshots` redraws `docs/screenshots/store/` (every theme, for the
+  app stores) when the interface changes.
 
 ## 4) Commits: follow COMMITING.md
 
