@@ -192,8 +192,12 @@ class Ui_MainWindow(object):
 "}\n"
 "QFrame#noContextsBanner { background: #fff2de; border-bottom: 1px solid #985415; }\n"
 "QFrame#noContextsBanner QLabel { color: #985415; font-size: 11px; background: transparent; }\n"
+"QFrame#permissionBanner { background: #fce9ea; border-bottom: 1px solid #a33d45; }\n"
+"QFrame#permissionBanner QLabel { color: #a33d45; font-size: 11px; background: transparent; }\n"
+"QFrame#permissionBanner QPushButton { color: #a33d45; font-size: 11px; padding: 0 0 0 12px; }\n"
 "QFrame#appFooter { background: #ffffff; border-top: 1px solid #e4e5eb; }\n"
-"QLabel#footerLicense, QLabel#footerDot, QLabel#footerVersion { color: #6b7380; font-size: 10px; }\n"
+"QL"
+                        "abel#footerLicense, QLabel#footerDot, QLabel#footerVersion { color: #6b7380; font-size: 10px; }\n"
 "QFrame#appFooter QPushButton[variant=\"link\"] { font-size: 10px; padding: 0 0 0 6px; }\n"
 "QPushButton#companyLink, QPushButton#licenseLink { padding: 0; }\n"
 "")
@@ -279,6 +283,30 @@ class Ui_MainWindow(object):
 
 
         self.rootLayout.addWidget(self.noContextsBanner)
+
+        self.permissionBanner = QFrame(self.centralwidget)
+        self.permissionBanner.setObjectName(u"permissionBanner")
+        self.permissionBanner.setVisible(False)
+        self.permissionLayout = QHBoxLayout(self.permissionBanner)
+        self.permissionLayout.setObjectName(u"permissionLayout")
+        self.permissionLayout.setContentsMargins(18, 8, 18, 8)
+        self.permissionLabel = QLabel(self.permissionBanner)
+        self.permissionLabel.setObjectName(u"permissionLabel")
+        self.permissionLabel.setText(u"permission")
+        self.permissionLabel.setWordWrap(True)
+
+        self.permissionLayout.addWidget(self.permissionLabel)
+
+        self.permissionDismiss = QPushButton(self.permissionBanner)
+        self.permissionDismiss.setObjectName(u"permissionDismiss")
+        self.permissionDismiss.setFlat(True)
+        self.permissionDismiss.setProperty(u"variant", u"link")
+
+        self.permissionLayout.addWidget(self.permissionDismiss)
+
+        self.permissionLayout.setStretch(0, 1)
+
+        self.rootLayout.addWidget(self.permissionBanner)
 
         self.shell = QHBoxLayout()
         self.shell.setSpacing(0)
@@ -968,7 +996,7 @@ class Ui_MainWindow(object):
 
         self.rootLayout.addWidget(self.appFooter)
 
-        self.rootLayout.setStretch(2, 1)
+        self.rootLayout.setStretch(3, 1)
         MainWindow.setCentralWidget(self.centralwidget)
 
         self.retranslateUi(MainWindow)
@@ -990,6 +1018,7 @@ class Ui_MainWindow(object):
 #endif // QT_CONFIG(tooltip)
         self.loginButton.setText(QCoreApplication.translate("MainWindow", u"Sign in to AWS", None))
         self.noContextsLabel.setText(QCoreApplication.translate("MainWindow", u"No cluster contexts were found in your kubeconfig. Add a cluster to your kubeconfig (for example with the AWS CLI: aws eks update-kubeconfig) and reload.", None))
+        self.permissionDismiss.setText(QCoreApplication.translate("MainWindow", u"Dismiss", None))
         self.navSection.setText(QCoreApplication.translate("MainWindow", u"MONITORING", None))
         self.navOverview.setText(QCoreApplication.translate("MainWindow", u"Overview", None))
         self.navWorkloads.setText(QCoreApplication.translate("MainWindow", u"Workloads", None))
