@@ -1782,7 +1782,8 @@ class WorkloadWindow(QMainWindow):
             form.contextsHint.setText(
                 QCoreApplication.translate(
                     "SettingsPage",
-                    "Give your contexts friendlier names. Leave a name empty to keep the original one.",  # noqa: E501
+                    "Give your contexts friendlier names. "
+                    "Leave a name empty to keep the original one.",
                 )
             )
         else:

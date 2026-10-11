@@ -38,10 +38,10 @@ def test_main_builds_the_window_and_runs_the_event_loop(monkeypatch) -> None:
         def __init__(self, _arguments) -> None:
             events.append("application")
 
-        def setApplicationName(self, name) -> None:  # noqa: N802
+        def setApplicationName(self, name) -> None:
             events.append(("name", name))
 
-        def setWindowIcon(self, _icon) -> None:  # noqa: N802
+        def setWindowIcon(self, _icon) -> None:
             events.append("icon")
 
         def exec(self) -> int:

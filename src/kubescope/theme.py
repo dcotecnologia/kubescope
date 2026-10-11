@@ -369,7 +369,7 @@ class ButtonCursor(QObject):
 
     _EVENTS = (QEvent.Type.Polish, QEvent.Type.EnabledChange)
 
-    def eventFilter(self, watched: QObject, event: QEvent) -> bool:  # noqa: N802
+    def eventFilter(self, watched: QObject, event: QEvent) -> bool:
         if event.type() in self._EVENTS and isinstance(watched, QAbstractButton):
             watched.setCursor(
                 Qt.CursorShape.PointingHandCursor
