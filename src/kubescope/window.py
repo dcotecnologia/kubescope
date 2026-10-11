@@ -2,6 +2,7 @@ import dataclasses
 import html
 import json
 import logging
+import math
 import tempfile
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
@@ -184,23 +185,33 @@ def _close_icon_path(color: str, name: str) -> str:
 
 def _gear_icon() -> QIcon:
     """A white gear for the top bar, which is dark in every theme."""
-    pixmap = QPixmap(36, 36)  # drawn at twice the size so it stays sharp
+    scale, teeth = 3, 8  # drawn three times larger so the edges stay smooth
+    pixmap = QPixmap(18 * scale, 18 * scale)
     pixmap.fill(Qt.GlobalColor.transparent)
     painter = QPainter(pixmap)
     painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-    painter.translate(18, 18)
+    painter.translate(9 * scale, 9 * scale)
+    painter.scale(scale, scale)
+    outline = QPolygonF()
+    step = 360 / teeth
+    for tooth in range(teeth):
+        # a tooth: wide at its root, narrower at its tip, then the rim to the next
+        for offset, radius in (
+            (-0.30, 6.6),
+            (-0.17, 8.6),
+            (0.17, 8.6),
+            (0.30, 6.6),
+            (0.5, 6.6),
+        ):
+            angle = math.radians((tooth + offset) * step - 90)
+            outline.append(QPointF(radius * math.cos(angle), radius * math.sin(angle)))
     painter.setPen(Qt.PenStyle.NoPen)
     painter.setBrush(QColor(themed("#ffffff", text=True)))
-    for tooth in range(8):
-        painter.save()
-        painter.rotate(tooth * 45)
-        painter.drawRoundedRect(QRectF(-3, -16, 6, 8), 1.5, 1.5)
-        painter.restore()
-    painter.drawEllipse(QPointF(0, 0), 11, 11)
+    painter.drawPolygon(outline)
     painter.setCompositionMode(QPainter.CompositionMode.CompositionMode_Clear)
-    painter.drawEllipse(QPointF(0, 0), 4.5, 4.5)
+    painter.drawEllipse(QPointF(0, 0), 2.7, 2.7)
     painter.end()
-    pixmap.setDevicePixelRatio(2)
+    pixmap.setDevicePixelRatio(scale)
     icon = QIcon()
     icon.addPixmap(pixmap, QIcon.Mode.Normal)
     icon.addPixmap(pixmap, QIcon.Mode.Disabled)
