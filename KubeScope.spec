@@ -49,6 +49,10 @@ analysis = Analysis(
         *copy_metadata("kubescope"),
         (str(root / "src" / "kubescope" / "assets" / "icon.png"), "kubescope/assets"),
         *(
+            (str(path), "kubescope/assets/fonts")
+            for path in (root / "src" / "kubescope" / "assets" / "fonts").iterdir()
+        ),
+        *(
             (str(path), "kubescope/community_themes")
             for path in (root / "src" / "kubescope" / "community_themes").glob("*.json")
         ),

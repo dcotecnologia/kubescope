@@ -19,6 +19,7 @@ repos:
       - id: trailing-whitespace
         exclude: '\.svg$|\.log$|\.txt$'
       - id: check-added-large-files
+        exclude: '^src/kubescope/assets/fonts/'  # the bundled fonts are ~500 KB each
       - id: fix-byte-order-marker
       - id: check-docstring-first
       - id: pretty-format-json

@@ -36,6 +36,7 @@ kubescope = [
     "translations/*.qm",
     "assets/*.png",
     "assets/*.ico",
+    "assets/fonts/*",
     "community_themes/*.json",
 ]
 

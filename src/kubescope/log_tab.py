@@ -1,8 +1,8 @@
 from datetime import datetime
 
-from PySide6.QtGui import QFontDatabase
 from PySide6.QtWidgets import QWidget
 
+from kubescope.fonts import code_font
 from kubescope.log_view import style_log_view
 from kubescope.models import PodInfo, safe_file_name
 from kubescope.ui.ui_log_tab import Ui_LogTab
@@ -17,9 +17,7 @@ class LogTab(QWidget):
         super().__init__()
         self.ui = Ui_LogTab()
         self.ui.setupUi(self)
-        self.ui.logText.setFont(
-            QFontDatabase.systemFont(QFontDatabase.SystemFont.FixedFont)
-        )
+        self.ui.logText.setFont(code_font())
         self.highlighter = style_log_view(self.ui.logText)
         self.save_name = safe_file_name(f"{pod.name}-{container}", ".log")
         self.context = context

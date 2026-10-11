@@ -9,6 +9,7 @@ from PySide6.QtWidgets import QApplication
 
 import kubescope
 from kubescope.diagnostics import configure_logging
+from kubescope.fonts import apply_fonts
 from kubescope.i18n import apply_language
 from kubescope.settings import Settings
 from kubescope.theme import apply_theme, install_community_themes
@@ -56,6 +57,7 @@ def main() -> int:
     application = QApplication(sys.argv)
     application.setApplicationName("KubeScope")
     application.setWindowIcon(load_app_icon())
+    apply_fonts(application)
     install_community_themes()
     apply_theme(application, settings.theme)
     apply_language(settings.language)
