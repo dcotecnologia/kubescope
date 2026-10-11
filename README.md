@@ -111,7 +111,8 @@ on the wiki. To connect to your clusters, see
   **Sign in to Azure** button (`az login`) when their credentials have expired.
 - **Always responsive:** every cluster call runs in the background, so the window
   never freezes while the cluster or the cloud CLIs work.
-- **English, Portuguese, Spanish, Italian, French, Chinese and Japanese**, selectable in Settings.
+- **English, Portuguese, Spanish, Italian, French, Chinese, Japanese and Arabic**,
+  selectable in Settings.
 
 ## Requirements
 
@@ -212,7 +213,8 @@ and open a pull request (the folder's README has the steps).
 ### Languages
 
 KubeScope speaks **English**, **Portuguese** (`pt`), **Spanish** (`es`), **Italian** (`it`),
-**French** (`fr`), **Chinese** (`zh`, simplified) and **Japanese** (`ja`). **Automatic** (the default) follows
+**French** (`fr`), **Chinese** (`zh`, simplified), **Japanese** (`ja`) and **Arabic** (`ar`,
+written right to left: the whole layout mirrors). **Automatic** (the default) follows
 your system language and falls back to English. The texts in the code are English;
 each other language is a Qt translation file, `src/kubescope/translations/kubescope_<code>.ts`,
 that `make i18n` compiles into the `.qm` the app loads.

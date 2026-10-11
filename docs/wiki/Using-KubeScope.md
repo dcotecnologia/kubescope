@@ -83,8 +83,8 @@ contain secrets printed by an application, so keep the file somewhere safe.
 
 ## Settings
 
-Language (automatic, English, Portuguese, Spanish, Italian, French, Chinese or
-Japanese), the theme, remembering the last
+Language (automatic, English, Portuguese, Spanish, Italian, French, Chinese,
+Japanese or Arabic), the theme, remembering the last
 context, display names for contexts, and the debug log.
 
 ### Updates

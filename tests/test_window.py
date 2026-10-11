@@ -237,6 +237,31 @@ def test_portuguese_translation_is_bundled() -> None:
     assert QCoreApplication.translate("MainWindow", "Refresh") == "Refresh"
 
 
+def test_every_new_language_is_bundled_and_arabic_mirrors_the_layout() -> None:
+    from PySide6.QtCore import QCoreApplication, Qt
+    from PySide6.QtWidgets import QApplication
+
+    from kubescope import i18n
+
+    expected = {
+        "es": "Actualizar",
+        "it": "Aggiorna",
+        "fr": "Actualiser",
+        "zh": "刷新",
+        "ja": "更新",
+        "ar": "تحديث",
+    }
+    try:
+        for code, text in expected.items():
+            assert i18n.apply_language(code) == code
+            assert QCoreApplication.translate("MainWindow", "Refresh") == text
+            direction = QApplication.layoutDirection()
+            assert (direction == Qt.LayoutDirection.RightToLeft) == (code == "ar")
+    finally:
+        i18n.apply_language("en")
+    assert QApplication.layoutDirection() == Qt.LayoutDirection.LeftToRight
+
+
 def test_details_and_logs_open_as_closable_tabs(monkeypatch) -> None:
     monkeypatch.setattr(window_module, "list_contexts", lambda: ([], None))
     window = window_module.WorkloadWindow()

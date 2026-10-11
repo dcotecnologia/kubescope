@@ -19,6 +19,7 @@ LANGUAGES = {
     "fr": "Français",
     "zh": "中文",
     "ja": "日本語",
+    "ar": "العربية",
 }
 LANGUAGE_CHOICES = ("auto", *LANGUAGES)
 
