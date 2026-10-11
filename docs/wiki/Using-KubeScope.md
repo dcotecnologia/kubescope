@@ -40,6 +40,23 @@ Click **Workloads** to slide out **Pods**, **Deployments**, **StatefulSets**,
 - **CronJobs:** the **Schedule** replaces Ready. The status is Scheduled, Active (a
   Job is running) or Suspended. Its Pods are the ones of the Jobs it created.
 
+## Network
+
+Click **Network** to slide out **Services**, **Endpoint Slices**, **Endpoints**,
+**Ingresses**, **Ingress Classes** and **Network Policies**. It opens next to
+**Workloads**; neither closes the other.
+
+- **Services:** type, cluster IP, external IP and ports.
+- **Endpoint Slices:** address type, ports and the first addresses.
+- **Endpoints:** the first addresses and ports behind the Service.
+- **Ingresses:** class, hosts, address and ports (443 when TLS is set).
+- **Ingress Classes:** controller and parameters; they belong to the whole cluster,
+  so the namespace filter does not apply.
+- **Network Policies:** the Pods they select (`*` is all) and their policy types.
+
+Long lists of addresses show the first three and a count. Select a row and use
+**Details** for its JSON. Port forwarding is not part of KubeScope yet.
+
 Select a row, then use **Details** (the JSON of the resource) or **Logs**. From a
 workload you can also open **Pods** to list its Pods. Double-click a row for
 details.

@@ -33,7 +33,8 @@ Use a read-only role. KubeScope needs:
 | What | Used for |
 | ---- | -------- |
 | `get`, `list` on `namespaces` | Namespace filter |
-| `get`, `list` on `pods`, `replicationcontrollers`, `deployments`, `statefulsets`, `daemonsets`, `replicasets`, `jobs`, `cronjobs` | Lists, details, overview |
+| `get`, `list` on `pods`, `services`, `endpoints`, `replicationcontrollers`, `deployments`, `statefulsets`, `daemonsets`, `replicasets`, `jobs`, `cronjobs` | Lists, details, overview |
+| `get`, `list` on `endpointslices`, `ingresses`, `ingressclasses`, `networkpolicies` | The Network menu |
 | `get` on `pods/log` | Logs |
 | `get`, `list` on `events` | Events in the workloads overview (optional) |
 | `get`, `list` on `nodes` | Overview (optional) |
@@ -48,10 +49,16 @@ metadata:
   name: kubescope-viewer
 rules:
   - apiGroups: [""]
-    resources: [namespaces, nodes, pods, pods/log, replicationcontrollers]
+    resources: [namespaces, nodes, pods, pods/log, replicationcontrollers, services, endpoints]
     verbs: [get, list]
   - apiGroups: [apps]
     resources: [deployments, statefulsets, daemonsets, replicasets]
+    verbs: [get, list]
+  - apiGroups: [networking.k8s.io]
+    resources: [ingresses, ingressclasses, networkpolicies]
+    verbs: [get, list]
+  - apiGroups: [discovery.k8s.io]
+    resources: [endpointslices]
     verbs: [get, list]
   - apiGroups: [batch]
     resources: [jobs, cronjobs]
