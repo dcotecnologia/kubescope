@@ -36,18 +36,24 @@ class Ui_MainWindow(object):
 "QLabel#topTitle { color: #ffffff; font-size: 14px; font-weight: 700; }\n"
 "QLabel#topSubtitle { color: #b8c7dc; font-size: 9px; }\n"
 "QLabel#topCaption { color: #b8c7dc; font-size: 9px; font-weight: 700; }\n"
+"QPushButton#settingsButton {\n"
+"    background: transparent; border: 1px solid transparent; border-radius: 4px;\n"
+"    padding: 0;\n"
+"}\n"
+"QPushButton#settingsButton:hover { background: #0d315d; }\n"
+"QPushButton#settingsButton:checked { background: #1f4f87; }\n"
 "QComboBox#contextCombo {\n"
 "    background: #0d315d; color: #ffffff; border: 1px solid #2d5077;\n"
 "    border-radius: 4px; min-height: 30px; padding: 0 9px; font-size: 11px;\n"
 "}\n"
 "QWidget#sidebar { background: #ffffff; border-right: 1px solid #e1e3e9; }\n"
-"QScrollArea#sidebarScroll, QWidget#sidebarNav { background: transparent; border: 0; }\n"
+"QScrollArea#side"
+                        "barScroll, QWidget#sidebarNav { background: transparent; border: 0; }\n"
 "QLabel#navSection, QLabel#filterLabel {\n"
 "    color: #535d69; font-size: 9px; font-weight: 700;\n"
 "}\n"
 "QFrame#sidebarRule { color: #e6e7ed; }\n"
-"QLabel#sidebarNote { color: #4d5866; font-si"
-                        "ze: 10px; line-height: 1.4; }\n"
+"QLabel#sidebarNote { color: #4d5866; font-size: 10px; line-height: 1.4; }\n"
 "QWidget#pageHeader { background: #ffffff; border-bottom: 1px solid #e4e5eb; }\n"
 "QLabel#pageTitle { color: #17191e; font-size: 22px; font-weight: 700; }\n"
 "QLabel[variant=\"muted\"] { color: #4f5966; font-size: 11px; }\n"
@@ -61,13 +67,13 @@ class Ui_MainWindow(object):
 "}\n"
 "QComboBox[variant=\"filter\"], QLineEdit#searchInput {\n"
 "    color: #20232a; selection-background-color: #d9d3f2;\n"
-"    selection-color: #20232a;\n"
+"  "
+                        "  selection-color: #20232a;\n"
 "}\n"
 "QComboBox[variant=\"filter\"] { padding-right: 28px; }\n"
 "QComboBox[variant=\"filter\"]:hover { border-color: #b9b3dc; }\n"
 "QComboBox[variant=\"filter\"]:focus, QComboBox[variant=\"filter\"]:on,\n"
-"QLineEdit#searchInput:focus { "
-                        "border: 1px solid #6252b5; }\n"
+"QLineEdit#searchInput:focus { border: 1px solid #6252b5; }\n"
 "QComboBox[variant=\"filter\"]::drop-down {\n"
 "    subcontrol-origin: padding; subcontrol-position: center right;\n"
 "    width: 26px; border: 0; background: transparent;\n"
@@ -84,14 +90,14 @@ class Ui_MainWindow(object):
 "    color: #6b7380; background: #f3f4f7; border-color: #e4e5eb;\n"
 "}\n"
 "QComboBox#contextCombo:disabled { color: #ffffff; }\n"
-"QComboBox#contextCombo { padding-right: 28px; }\n"
+"QC"
+                        "omboBox#contextCombo { padding-right: 28px; }\n"
 "QComboBox#contextCombo::drop-down {\n"
 "    subcontrol-origin: padding; subcontrol-position: center right;\n"
 "    width: 26px; border: 0; background: transparent;\n"
 "}\n"
 "QComboBox#contextCombo::down-arrow {\n"
-"    "
-                        "image: url(CHEVRON_LIGHT); width: 10px; height: 6px; margin-right: 8px;\n"
+"    image: url(CHEVRON_LIGHT); width: 10px; height: 6px; margin-right: 8px;\n"
 "}\n"
 "QComboBox#contextCombo QAbstractItemView {\n"
 "    background: #0d315d; color: #ffffff; border: 1px solid #2d5077;\n"
@@ -106,13 +112,13 @@ class Ui_MainWindow(object):
 "QPushButton[variant=\"primary\"]:disabled { background: #6c5fc4; color: #ffffff; }\n"
 "QPushButton[variant=\"link\"] {\n"
 "  border: none; background: transparent; padding: 2px 0; text-align: left;\n"
-"  color: #3220a0; font-weight: 600; text-decoration: underline;\n"
+"  color: #3220a0; font-weight:"
+                        " 600; text-decoration: underline;\n"
 "}\n"
 "QPushButton[variant=\"link\"]:hover { color: #4030b8; }\n"
 "QPushButton[variant=\"link\"]:disabled { color: #4f5966; text-decoration: none; }\n"
 "QScrollArea { background: transparent; border: 0; }\n"
-"QWidget#settingsContent"
-                        " { background: transparent; }\n"
+"QWidget#settingsContent { background: transparent; }\n"
 "QPushButton[variant=\"secondary\"] {\n"
 "    background: #ffffff; color: #3220a0; border: 1px solid #d9dce4;\n"
 "    border-radius: 5px; min-height: 32px; padding: 0 10px;\n"
@@ -129,13 +135,13 @@ class Ui_MainWindow(object):
 "QTableWidget[variant=\"data\"] {\n"
 "    background: #ffffff; color: #242a33;\n"
 "    border: 1px solid #dfe2e9; border-radius: 5px;\n"
-"    gridline-color: #e8e9ee; selection-background-color: #f0edfa;\n"
+"   "
+                        " gridline-color: #e8e9ee; selection-background-color: #f0edfa;\n"
 "    selection-color: #28213f;\n"
 "}\n"
 "QHeaderView { background: #fbfbfc; }\n"
 "QHeaderView::up-arrow { image: url(SORT_UP); width: 9px; height: 6px; }\n"
-"QHeaderView::down-arrow { image: url(SORT_DOW"
-                        "N); width: 9px; height: 6px; }\n"
+"QHeaderView::down-arrow { image: url(SORT_DOWN); width: 9px; height: 6px; }\n"
 "QHeaderView::section {\n"
 "    background: #fbfbfc; color: #3c4149; border: 0;\n"
 "    border-bottom: 1px solid #dfe2e9; padding: 10px 8px;\n"
@@ -152,14 +158,14 @@ class Ui_MainWindow(object):
 "QPushButton[nav=\"true\"]:hover { background: #f6f6fa; }\n"
 "QPushButton[nav=\"true\"]:checked {\n"
 "    color: #3220a0; background: #f3f1f9; border-right: 3px solid #3220a0;\n"
-"    font-weight: 700;\n"
+"  "
+                        "  font-weight: 700;\n"
 "}\n"
 "QFrame[card=\"true\"] {\n"
 "    background: #ffffff; border: 1px solid #dfe2e9; border-radius: 8px;\n"
 "}\n"
 "QFrame[card=\"true\"] QLabel { background: transparent; border: 0; }\n"
-"QLabel[variant=\"cardTitle\"] { color: #535d69; font-siz"
-                        "e: 9px; font-weight: 700; }\n"
+"QLabel[variant=\"cardTitle\"] { color: #535d69; font-size: 9px; font-weight: 700; }\n"
 "QLabel[variant=\"cardValue\"] { color: #17191e; font-size: 20px; font-weight: 700; }\n"
 "QLabel[variant=\"cardCaption\"] { color: #4f5966; font-size: 10px; }\n"
 "QProgressBar {\n"
@@ -173,14 +179,14 @@ class Ui_MainWindow(object):
 "QLabel { color: #20232a; }\n"
 "QTabWidget::pane { border: 0; border-top: 1px solid #dfe2e9; top: -1px; }\n"
 "QTabBar::tab {\n"
-"    background: transparent; color: #4f5966; padding: 9px 14px;\n"
+"    background: transparent; color: #4f5966"
+                        "; padding: 9px 14px;\n"
 "    border: 0; border-bottom: 2px solid transparent; font-size: 11px;\n"
 "    font-weight: 600; max-width: 260px;\n"
 "}\n"
 "QTabBar::tab:hover { color: #3220a0; }\n"
 "QTabBar::tab:selected { color: #3220a0; border-bottom: 2px solid #3220a0; }\n"
-""
-                        "QTabBar::close-button {\n"
+"QTabBar::close-button {\n"
 "    image: url(CLOSE_ICON); subcontrol-position: right; margin-left: 6px;\n"
 "    width: 10px; height: 10px; padding: 3px; border-radius: 4px;\n"
 "}\n"
@@ -193,11 +199,11 @@ class Ui_MainWindow(object):
 "QFrame#noContextsBanner { background: #fff2de; border-bottom: 1px solid #985415; }\n"
 "QFrame#noContextsBanner QLabel { color: #985415; font-size: 11px; background: transparent; }\n"
 "QFrame#permissionBanner { background: #fce9ea; border-bottom: 1px solid #a33d45; }\n"
-"QFrame#permissionBanner QLabel { color: #a33d45; font-size: 11px; background: transparent; }\n"
+"QF"
+                        "rame#permissionBanner QLabel { color: #a33d45; font-size: 11px; background: transparent; }\n"
 "QFrame#permissionBanner QPushButton { color: #a33d45; font-size: 11px; padding: 0 0 0 12px; }\n"
 "QFrame#appFooter { background: #ffffff; border-top: 1px solid #e4e5eb; }\n"
-"QL"
-                        "abel#footerLicense, QLabel#footerDot, QLabel#footerVersion { color: #6b7380; font-size: 10px; }\n"
+"QLabel#footerLicense, QLabel#footerDot, QLabel#footerVersion { color: #6b7380; font-size: 10px; }\n"
 "QFrame#appFooter QPushButton[variant=\"link\"] { font-size: 10px; padding: 0 0 0 6px; }\n"
 "QPushButton#companyLink, QPushButton#licenseLink { padding: 0; }\n"
 "")
@@ -265,6 +271,16 @@ class Ui_MainWindow(object):
         self.loginButton.setProperty(u"variant", u"primary")
 
         self.topLayout.addWidget(self.loginButton)
+
+        self.settingsButton = QPushButton(self.topBar)
+        self.settingsButton.setObjectName(u"settingsButton")
+        self.settingsButton.setMinimumSize(QSize(32, 32))
+        self.settingsButton.setMaximumSize(QSize(32, 32))
+        self.settingsButton.setIconSize(QSize(18, 18))
+        self.settingsButton.setCheckable(True)
+        self.settingsButton.setFlat(True)
+
+        self.topLayout.addWidget(self.settingsButton)
 
 
         self.rootLayout.addWidget(self.topBar)
@@ -570,16 +586,6 @@ class Ui_MainWindow(object):
         self.sidebarScroll.setWidget(self.sidebarNav)
 
         self.sidebarLayout.addWidget(self.sidebarScroll)
-
-        self.settingsButton = QPushButton(self.sidebar)
-        self.settingsButton.setObjectName(u"settingsButton")
-        self.settingsButton.setCheckable(True)
-        self.settingsButton.setAutoExclusive(True)
-        self.settingsButton.setMinimumSize(QSize(0, 42))
-        self.settingsButton.setIconSize(QSize(16, 16))
-        self.settingsButton.setProperty(u"nav", u"true")
-
-        self.sidebarLayout.addWidget(self.settingsButton)
 
         self.sidebarRule = QFrame(self.sidebar)
         self.sidebarRule.setObjectName(u"sidebarRule")
@@ -1017,6 +1023,9 @@ class Ui_MainWindow(object):
         self.loginButton.setToolTip(QCoreApplication.translate("MainWindow", u"Sign in with the AWS CLI, then reload the cluster data", None))
 #endif // QT_CONFIG(tooltip)
         self.loginButton.setText(QCoreApplication.translate("MainWindow", u"Sign in to AWS", None))
+#if QT_CONFIG(tooltip)
+        self.settingsButton.setToolTip(QCoreApplication.translate("MainWindow", u"Settings", None))
+#endif // QT_CONFIG(tooltip)
         self.noContextsLabel.setText(QCoreApplication.translate("MainWindow", u"No cluster contexts were found in your kubeconfig. Add a cluster to your kubeconfig (for example with the AWS CLI: aws eks update-kubeconfig) and reload.", None))
         self.permissionDismiss.setText(QCoreApplication.translate("MainWindow", u"Dismiss", None))
         self.navSection.setText(QCoreApplication.translate("MainWindow", u"MONITORING", None))
@@ -1039,7 +1048,6 @@ class Ui_MainWindow(object):
         self.navIngressClasses.setText(QCoreApplication.translate("MainWindow", u"Ingress Classes", None))
         self.navNetworkPolicies.setText(QCoreApplication.translate("MainWindow", u"Network Policies", None))
         self.navViewer.setText(QCoreApplication.translate("MainWindow", u"Details && Logs", None))
-        self.settingsButton.setText(QCoreApplication.translate("MainWindow", u"Settings", None))
         self.sidebarNote.setText(QCoreApplication.translate("MainWindow", u"SECURE ACCESS\n"
 "Resources in read-only mode", None))
         self.pageTitle.setText(QCoreApplication.translate("MainWindow", u"Overview", None))
