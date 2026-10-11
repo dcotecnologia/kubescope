@@ -22,6 +22,7 @@ from kubescope.models import (
     ClusterOverview,
     EventInfo,
     KindSummary,
+    NetworkResource,
     NodeInfo,
     PodInfo,
     Workload,
@@ -1263,13 +1264,13 @@ def test_the_overview_links_open_the_lists_that_exist(monkeypatch) -> None:
         (page.podsLink, "pods"),
         (page.deploymentsLink, "deployments"),
         (page.statefulsetsLink, "statefulsets"),
-        (page.jobsLink, "jobs"),
         (page.daemonsetsLink, "daemonsets"),
         (page.replicasetsLink, "replicasets"),
+        (page.jobsLink, "jobs"),
         (page.cronjobsLink, "cronjobs"),
     ):
-        link.click()
         assert link.isEnabled()
+        link.click()
         assert window._view == view and window.pages.currentIndex() == 1
     window.close()
 
@@ -1539,4 +1540,151 @@ def test_clicking_through_the_lists_quickly_loads_only_the_last_one(
     _wait_until(lambda: started)
 
     assert started == ["jobs"]
+    window.close()
+
+
+def _network_window(monkeypatch):
+    window = _ready_window(monkeypatch)
+    window.context_combo.addItem("prod")
+    return window
+
+
+def test_each_network_list_opens_with_its_own_columns(monkeypatch) -> None:
+    window = _network_window(monkeypatch)
+    expected = {
+        "services": ("Services", "Service", 4),
+        "endpointslices": ("Endpoint Slices", "EndpointSlice", 3),
+        "endpoints": ("Endpoints", "Endpoints", 1),
+        "ingresses": ("Ingresses", "Ingress", 4),
+        "ingressclasses": ("Ingress Classes", "IngressClass", 2),
+        "networkpolicies": ("Network Policies", "NetworkPolicy", 2),
+    }
+    for view, (title, kind, extra) in expected.items():
+        window._open_list_view(view)
+        values = tuple(f"v{n}" for n in range(extra))
+        window._show_network(
+            ["ops"],
+            [
+                NetworkResource(
+                    "" if kind == "IngressClass" else "ops", kind, "x", values, "2d"
+                )
+            ],
+        )
+
+        assert window.ui.pageTitle.text() == title
+        assert window.table.columnCount() == extra + 4  # namespace, kind, name, age
+        assert window.table.item(0, 1).text() == kind
+        assert window.table.item(0, 3).text() == "v0"
+        assert window.table.item(0, extra + 3).text() == "2d"
+        assert window.summary_label.text() == f"1 of 1 {title}"
+        assert window.pods_button.isHidden() and window.logs_button.isHidden()
+        assert not window.details_button.isHidden()
+    assert window.table.item(0, 0).text() == "ops"
+    window._open_list_view("ingressclasses")
+    window._show_network(
+        ["ops"], [NetworkResource("", "IngressClass", "x", ("c", "p"), "1d")]
+    )
+    assert window.table.item(0, 0).text() == "—"  # cluster-wide: no namespace
+    window.close()
+
+
+def test_network_lists_sort_filter_and_show_details(monkeypatch) -> None:
+    window = _network_window(monkeypatch)
+    window._open_list_view("services")
+    window._show_network(
+        ["ops"],
+        [
+            NetworkResource(
+                "ops", "Service", "web", ("ClusterIP", "1", "—", "80/TCP"), "2d"
+            ),
+            NetworkResource(
+                "ops", "Service", "api", ("NodePort", "2", "—", "80/TCP"), "5h"
+            ),
+        ],
+    )
+    window._sort_rows(2)  # by name
+    assert [window.table.item(r, 2).text() for r in range(2)] == ["api", "web"]
+    window.search_input.setText("web")
+    assert window.summary_label.text() == "1 of 2 Services"
+    window.search_input.setText("")
+
+    window.table.selectRow(1)
+    assert window._selected_row().name == "web"
+    dispatched = []
+    monkeypatch.setattr(window, "_run_action", lambda *a, **k: dispatched.append(a))
+    window._view_details()
+    assert dispatched[0][0].__name__ == "get_resource_details"
+    assert dispatched[0][2:] == ("prod", "Service", "ops", "web")
+    window.close()
+
+
+def test_changing_network_kind_clears_rows_and_errors_empty_the_list(
+    monkeypatch,
+) -> None:
+    window = _network_window(monkeypatch)
+    window._open_list_view("services")
+    window._show_network(
+        ["ops"], [NetworkResource("ops", "Service", "web", ("a",) * 4, "1d")]
+    )
+    window._open_list_view("endpoints")  # other columns: the old rows go
+    assert window._network == [] and window.table.rowCount() == 0
+
+    window._show_network(
+        ["ops"], [NetworkResource("ops", "Endpoints", "web", ("x",), "1d")]
+    )
+    window._show_error("boom")
+    assert window._network == []
+    window.close()
+
+
+def test_the_network_worker_loads_the_kind_of_its_view(monkeypatch) -> None:
+    monkeypatch.setattr(
+        window_module,
+        "get_network",
+        lambda context, namespace, kind: (["ops"], [(context, namespace, kind)]),
+    )
+    done = []
+    worker = window_module.RefreshWorker("ctx", "ops", "ingresses")
+    worker.completed.connect(lambda namespaces, items: done.append((namespaces, items)))
+
+    worker.run()
+
+    assert done == [(["ops"], [("ctx", "ops", "Ingress")])]
+
+
+def test_the_two_menus_open_and_close_independently(monkeypatch) -> None:
+    window = _network_window(monkeypatch)
+    window.show()
+
+    def settle() -> None:
+        for animation in window._submenus.values():
+            animation.setCurrentTime(animation.duration())
+
+    window.nav_workloads.click()
+    settle()
+    window.nav_network.click()  # opening Network leaves Workloads open
+    settle()
+    assert window.submenu.maximumHeight() > 0
+    assert window.network_submenu.maximumHeight() > 0
+
+    window.nav_workloads.click()
+    settle()
+    assert window.submenu.maximumHeight() == 0
+    assert window.network_submenu.maximumHeight() > 0
+    window.close()
+
+
+def test_the_menu_scrolls_when_both_lists_do_not_fit(monkeypatch) -> None:
+    window = _network_window(monkeypatch)
+    window.resize(1100, 520)
+    window.show()
+    window.nav_workloads.click()
+    window.nav_network.click()
+    for animation in window._submenus.values():
+        animation.setCurrentTime(animation.duration())
+    application.processEvents()
+
+    scroll = window.ui.sidebarScroll
+    assert scroll.verticalScrollBar().maximum() > 0  # more menu than room
+    assert not window.ui.settingsButton.isHidden()  # Settings stays in view
     window.close()

@@ -17,9 +17,9 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QPalette, QPixmap, QRadialGradient, QTransform)
 from PySide6.QtWidgets import (QAbstractItemView, QApplication, QComboBox, QFrame,
     QHBoxLayout, QHeaderView, QLabel, QLineEdit,
-    QMainWindow, QPushButton, QSizePolicy, QSpacerItem,
-    QStackedWidget, QTableWidget, QTableWidgetItem, QVBoxLayout,
-    QWidget)
+    QMainWindow, QPushButton, QScrollArea, QSizePolicy,
+    QSpacerItem, QStackedWidget, QTableWidget, QTableWidgetItem,
+    QVBoxLayout, QWidget)
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
@@ -41,13 +41,14 @@ class Ui_MainWindow(object):
 "    border-radius: 4px; min-height: 30px; padding: 0 9px; font-size: 11px;\n"
 "}\n"
 "QWidget#sidebar { background: #ffffff; border-right: 1px solid #e1e3e9; }\n"
+"QScrollArea#sidebarScroll, QWidget#sidebarNav { background: transparent; border: 0; }\n"
 "QLabel#navSection, QLabel#filterLabel {\n"
 "    color: #535d69; font-size: 9px; font-weight: 700;\n"
 "}\n"
 "QFrame#sidebarRule { color: #e6e7ed; }\n"
-"QLabel#sidebarNote { color: #4d5866; font-size: 10px; line-height: 1.4; }\n"
-"QWidget#pageHeader { background: #ffffff; border-bottom:"
-                        " 1px solid #e4e5eb; }\n"
+"QLabel#sidebarNote { color: #4d5866; font-si"
+                        "ze: 10px; line-height: 1.4; }\n"
+"QWidget#pageHeader { background: #ffffff; border-bottom: 1px solid #e4e5eb; }\n"
 "QLabel#pageTitle { color: #17191e; font-size: 22px; font-weight: 700; }\n"
 "QLabel[variant=\"muted\"] { color: #4f5966; font-size: 11px; }\n"
 "QLabel#profileBadge {\n"
@@ -65,10 +66,10 @@ class Ui_MainWindow(object):
 "QComboBox[variant=\"filter\"] { padding-right: 28px; }\n"
 "QComboBox[variant=\"filter\"]:hover { border-color: #b9b3dc; }\n"
 "QComboBox[variant=\"filter\"]:focus, QComboBox[variant=\"filter\"]:on,\n"
-"QLineEdit#searchInput:focus { border: 1px solid #6252b5; }\n"
+"QLineEdit#searchInput:focus { "
+                        "border: 1px solid #6252b5; }\n"
 "QComboBox[variant=\"filter\"]::drop-down {\n"
-"    subcon"
-                        "trol-origin: padding; subcontrol-position: center right;\n"
+"    subcontrol-origin: padding; subcontrol-position: center right;\n"
 "    width: 26px; border: 0; background: transparent;\n"
 "}\n"
 "QComboBox[variant=\"filter\"]::down-arrow {\n"
@@ -89,10 +90,10 @@ class Ui_MainWindow(object):
 "    width: 26px; border: 0; background: transparent;\n"
 "}\n"
 "QComboBox#contextCombo::down-arrow {\n"
-"    image: url(CHEVRON_LIGHT); width: 10px; height: 6px; margin-right: 8px;\n"
+"    "
+                        "image: url(CHEVRON_LIGHT); width: 10px; height: 6px; margin-right: 8px;\n"
 "}\n"
-"QComboBo"
-                        "x#contextCombo QAbstractItemView {\n"
+"QComboBox#contextCombo QAbstractItemView {\n"
 "    background: #0d315d; color: #ffffff; border: 1px solid #2d5077;\n"
 "    selection-background-color: #1f4f87; selection-color: #ffffff;\n"
 "    outline: 0; padding: 2px;\n"
@@ -110,10 +111,10 @@ class Ui_MainWindow(object):
 "QPushButton[variant=\"link\"]:hover { color: #4030b8; }\n"
 "QPushButton[variant=\"link\"]:disabled { color: #4f5966; text-decoration: none; }\n"
 "QScrollArea { background: transparent; border: 0; }\n"
-"QWidget#settingsContent { background: transparent; }\n"
+"QWidget#settingsContent"
+                        " { background: transparent; }\n"
 "QPushButton[variant=\"secondary\"] {\n"
-"    background:"
-                        " #ffffff; color: #3220a0; border: 1px solid #d9dce4;\n"
+"    background: #ffffff; color: #3220a0; border: 1px solid #d9dce4;\n"
 "    border-radius: 5px; min-height: 32px; padding: 0 10px;\n"
 "    font-size: 11px; font-weight: 600;\n"
 "}\n"
@@ -133,10 +134,10 @@ class Ui_MainWindow(object):
 "}\n"
 "QHeaderView { background: #fbfbfc; }\n"
 "QHeaderView::up-arrow { image: url(SORT_UP); width: 9px; height: 6px; }\n"
-"QHeaderView::down-arrow { image: url(SORT_DOWN); width: 9px; height: 6px; }\n"
+"QHeaderView::down-arrow { image: url(SORT_DOW"
+                        "N); width: 9px; height: 6px; }\n"
 "QHeaderView::section {\n"
-"    background: #fbfbfc; col"
-                        "or: #3c4149; border: 0;\n"
+"    background: #fbfbfc; color: #3c4149; border: 0;\n"
 "    border-bottom: 1px solid #dfe2e9; padding: 10px 8px;\n"
 "    font-size: 9px; font-weight: 700;\n"
 "}\n"
@@ -157,9 +158,9 @@ class Ui_MainWindow(object):
 "    background: #ffffff; border: 1px solid #dfe2e9; border-radius: 8px;\n"
 "}\n"
 "QFrame[card=\"true\"] QLabel { background: transparent; border: 0; }\n"
-"QLabel[variant=\"cardTitle\"] { color: #535d69; font-size: 9px; font-weight: 700; }\n"
-"QLabel[variant=\"cardValue\"] { color: #17191e; font-size:"
-                        " 20px; font-weight: 700; }\n"
+"QLabel[variant=\"cardTitle\"] { color: #535d69; font-siz"
+                        "e: 9px; font-weight: 700; }\n"
+"QLabel[variant=\"cardValue\"] { color: #17191e; font-size: 20px; font-weight: 700; }\n"
 "QLabel[variant=\"cardCaption\"] { color: #4f5966; font-size: 10px; }\n"
 "QProgressBar {\n"
 "    background: #eceef3; border: 0; border-radius: 3px;\n"
@@ -178,9 +179,9 @@ class Ui_MainWindow(object):
 "}\n"
 "QTabBar::tab:hover { color: #3220a0; }\n"
 "QTabBar::tab:selected { color: #3220a0; border-bottom: 2px solid #3220a0; }\n"
-"QTabBar::close-button {\n"
-"    image: url(CLOSE_ICON); subcontrol-position: right; mar"
-                        "gin-left: 6px;\n"
+""
+                        "QTabBar::close-button {\n"
+"    image: url(CLOSE_ICON); subcontrol-position: right; margin-left: 6px;\n"
 "    width: 10px; height: 10px; padding: 3px; border-radius: 4px;\n"
 "}\n"
 "QTabBar::close-button:hover { image: url(CLOSE_ICON_HOVER); background: #eee9f7; }\n"
@@ -291,33 +292,44 @@ class Ui_MainWindow(object):
         self.sidebarLayout.setSpacing(8)
         self.sidebarLayout.setObjectName(u"sidebarLayout")
         self.sidebarLayout.setContentsMargins(24, 14, 18, 18)
-        self.navSection = QLabel(self.sidebar)
+        self.sidebarScroll = QScrollArea(self.sidebar)
+        self.sidebarScroll.setObjectName(u"sidebarScroll")
+        self.sidebarScroll.setFrameShape(QFrame.Shape.NoFrame)
+        self.sidebarScroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.sidebarScroll.setWidgetResizable(True)
+        self.sidebarNav = QWidget()
+        self.sidebarNav.setObjectName(u"sidebarNav")
+        self.sidebarNavLayout = QVBoxLayout(self.sidebarNav)
+        self.sidebarNavLayout.setSpacing(2)
+        self.sidebarNavLayout.setObjectName(u"sidebarNavLayout")
+        self.sidebarNavLayout.setContentsMargins(0, 0, 0, 0)
+        self.navSection = QLabel(self.sidebarNav)
         self.navSection.setObjectName(u"navSection")
 
-        self.sidebarLayout.addWidget(self.navSection)
+        self.sidebarNavLayout.addWidget(self.navSection)
 
-        self.navOverview = QPushButton(self.sidebar)
+        self.navOverview = QPushButton(self.sidebarNav)
         self.navOverview.setObjectName(u"navOverview")
-        self.navOverview.setMinimumSize(QSize(0, 42))
+        self.navOverview.setMinimumSize(QSize(0, 34))
         self.navOverview.setIconSize(QSize(16, 16))
         self.navOverview.setCheckable(True)
         self.navOverview.setChecked(True)
         self.navOverview.setAutoExclusive(True)
         self.navOverview.setProperty(u"nav", u"true")
 
-        self.sidebarLayout.addWidget(self.navOverview)
+        self.sidebarNavLayout.addWidget(self.navOverview)
 
-        self.navWorkloads = QPushButton(self.sidebar)
+        self.navWorkloads = QPushButton(self.sidebarNav)
         self.navWorkloads.setObjectName(u"navWorkloads")
-        self.navWorkloads.setMinimumSize(QSize(0, 42))
+        self.navWorkloads.setMinimumSize(QSize(0, 34))
         self.navWorkloads.setIconSize(QSize(16, 16))
         self.navWorkloads.setCheckable(True)
         self.navWorkloads.setChecked(False)
         self.navWorkloads.setProperty(u"nav", u"true")
 
-        self.sidebarLayout.addWidget(self.navWorkloads)
+        self.sidebarNavLayout.addWidget(self.navWorkloads)
 
-        self.workloadsSubmenu = QFrame(self.sidebar)
+        self.workloadsSubmenu = QFrame(self.sidebarNav)
         self.workloadsSubmenu.setObjectName(u"workloadsSubmenu")
         self.workloadsSubmenu.setMaximumSize(QSize(16777215, 0))
         self.workloadsSubmenuLayout = QVBoxLayout(self.workloadsSubmenu)
@@ -326,7 +338,7 @@ class Ui_MainWindow(object):
         self.workloadsSubmenuLayout.setContentsMargins(16, 0, 0, 0)
         self.navWorkloadsOverview = QPushButton(self.workloadsSubmenu)
         self.navWorkloadsOverview.setObjectName(u"navWorkloadsOverview")
-        self.navWorkloadsOverview.setMinimumSize(QSize(0, 42))
+        self.navWorkloadsOverview.setMinimumSize(QSize(0, 28))
         self.navWorkloadsOverview.setIconSize(QSize(16, 16))
         self.navWorkloadsOverview.setCheckable(True)
         self.navWorkloadsOverview.setChecked(False)
@@ -337,7 +349,7 @@ class Ui_MainWindow(object):
 
         self.navPods = QPushButton(self.workloadsSubmenu)
         self.navPods.setObjectName(u"navPods")
-        self.navPods.setMinimumSize(QSize(0, 42))
+        self.navPods.setMinimumSize(QSize(0, 28))
         self.navPods.setIconSize(QSize(16, 16))
         self.navPods.setCheckable(True)
         self.navPods.setChecked(False)
@@ -348,7 +360,7 @@ class Ui_MainWindow(object):
 
         self.navDeployments = QPushButton(self.workloadsSubmenu)
         self.navDeployments.setObjectName(u"navDeployments")
-        self.navDeployments.setMinimumSize(QSize(0, 42))
+        self.navDeployments.setMinimumSize(QSize(0, 28))
         self.navDeployments.setIconSize(QSize(16, 16))
         self.navDeployments.setCheckable(True)
         self.navDeployments.setChecked(False)
@@ -359,7 +371,7 @@ class Ui_MainWindow(object):
 
         self.navStatefulSets = QPushButton(self.workloadsSubmenu)
         self.navStatefulSets.setObjectName(u"navStatefulSets")
-        self.navStatefulSets.setMinimumSize(QSize(0, 42))
+        self.navStatefulSets.setMinimumSize(QSize(0, 28))
         self.navStatefulSets.setIconSize(QSize(16, 16))
         self.navStatefulSets.setCheckable(True)
         self.navStatefulSets.setChecked(False)
@@ -370,7 +382,7 @@ class Ui_MainWindow(object):
 
         self.navDaemonSets = QPushButton(self.workloadsSubmenu)
         self.navDaemonSets.setObjectName(u"navDaemonSets")
-        self.navDaemonSets.setMinimumSize(QSize(0, 42))
+        self.navDaemonSets.setMinimumSize(QSize(0, 28))
         self.navDaemonSets.setIconSize(QSize(16, 16))
         self.navDaemonSets.setCheckable(True)
         self.navDaemonSets.setChecked(False)
@@ -381,7 +393,7 @@ class Ui_MainWindow(object):
 
         self.navReplicaSets = QPushButton(self.workloadsSubmenu)
         self.navReplicaSets.setObjectName(u"navReplicaSets")
-        self.navReplicaSets.setMinimumSize(QSize(0, 42))
+        self.navReplicaSets.setMinimumSize(QSize(0, 28))
         self.navReplicaSets.setIconSize(QSize(16, 16))
         self.navReplicaSets.setCheckable(True)
         self.navReplicaSets.setChecked(False)
@@ -392,7 +404,7 @@ class Ui_MainWindow(object):
 
         self.navReplicationControllers = QPushButton(self.workloadsSubmenu)
         self.navReplicationControllers.setObjectName(u"navReplicationControllers")
-        self.navReplicationControllers.setMinimumSize(QSize(0, 42))
+        self.navReplicationControllers.setMinimumSize(QSize(0, 28))
         self.navReplicationControllers.setIconSize(QSize(16, 16))
         self.navReplicationControllers.setCheckable(True)
         self.navReplicationControllers.setChecked(False)
@@ -403,7 +415,7 @@ class Ui_MainWindow(object):
 
         self.navJobs = QPushButton(self.workloadsSubmenu)
         self.navJobs.setObjectName(u"navJobs")
-        self.navJobs.setMinimumSize(QSize(0, 42))
+        self.navJobs.setMinimumSize(QSize(0, 28))
         self.navJobs.setIconSize(QSize(16, 16))
         self.navJobs.setCheckable(True)
         self.navJobs.setChecked(False)
@@ -414,7 +426,7 @@ class Ui_MainWindow(object):
 
         self.navCronJobs = QPushButton(self.workloadsSubmenu)
         self.navCronJobs.setObjectName(u"navCronJobs")
-        self.navCronJobs.setMinimumSize(QSize(0, 42))
+        self.navCronJobs.setMinimumSize(QSize(0, 28))
         self.navCronJobs.setIconSize(QSize(16, 16))
         self.navCronJobs.setCheckable(True)
         self.navCronJobs.setChecked(False)
@@ -424,22 +436,112 @@ class Ui_MainWindow(object):
         self.workloadsSubmenuLayout.addWidget(self.navCronJobs)
 
 
-        self.sidebarLayout.addWidget(self.workloadsSubmenu)
+        self.sidebarNavLayout.addWidget(self.workloadsSubmenu)
 
-        self.navViewer = QPushButton(self.sidebar)
+        self.navNetwork = QPushButton(self.sidebarNav)
+        self.navNetwork.setObjectName(u"navNetwork")
+        self.navNetwork.setMinimumSize(QSize(0, 34))
+        self.navNetwork.setIconSize(QSize(16, 16))
+        self.navNetwork.setCheckable(True)
+        self.navNetwork.setChecked(False)
+        self.navNetwork.setProperty(u"nav", u"true")
+
+        self.sidebarNavLayout.addWidget(self.navNetwork)
+
+        self.networkSubmenu = QFrame(self.sidebarNav)
+        self.networkSubmenu.setObjectName(u"networkSubmenu")
+        self.networkSubmenu.setMaximumSize(QSize(16777215, 0))
+        self.networkSubmenuLayout = QVBoxLayout(self.networkSubmenu)
+        self.networkSubmenuLayout.setSpacing(0)
+        self.networkSubmenuLayout.setObjectName(u"networkSubmenuLayout")
+        self.networkSubmenuLayout.setContentsMargins(16, 0, 0, 0)
+        self.navServices = QPushButton(self.networkSubmenu)
+        self.navServices.setObjectName(u"navServices")
+        self.navServices.setMinimumSize(QSize(0, 28))
+        self.navServices.setIconSize(QSize(16, 16))
+        self.navServices.setCheckable(True)
+        self.navServices.setChecked(False)
+        self.navServices.setAutoExclusive(True)
+        self.navServices.setProperty(u"nav", u"true")
+
+        self.networkSubmenuLayout.addWidget(self.navServices)
+
+        self.navEndpointSlices = QPushButton(self.networkSubmenu)
+        self.navEndpointSlices.setObjectName(u"navEndpointSlices")
+        self.navEndpointSlices.setMinimumSize(QSize(0, 28))
+        self.navEndpointSlices.setIconSize(QSize(16, 16))
+        self.navEndpointSlices.setCheckable(True)
+        self.navEndpointSlices.setChecked(False)
+        self.navEndpointSlices.setAutoExclusive(True)
+        self.navEndpointSlices.setProperty(u"nav", u"true")
+
+        self.networkSubmenuLayout.addWidget(self.navEndpointSlices)
+
+        self.navEndpoints = QPushButton(self.networkSubmenu)
+        self.navEndpoints.setObjectName(u"navEndpoints")
+        self.navEndpoints.setMinimumSize(QSize(0, 28))
+        self.navEndpoints.setIconSize(QSize(16, 16))
+        self.navEndpoints.setCheckable(True)
+        self.navEndpoints.setChecked(False)
+        self.navEndpoints.setAutoExclusive(True)
+        self.navEndpoints.setProperty(u"nav", u"true")
+
+        self.networkSubmenuLayout.addWidget(self.navEndpoints)
+
+        self.navIngresses = QPushButton(self.networkSubmenu)
+        self.navIngresses.setObjectName(u"navIngresses")
+        self.navIngresses.setMinimumSize(QSize(0, 28))
+        self.navIngresses.setIconSize(QSize(16, 16))
+        self.navIngresses.setCheckable(True)
+        self.navIngresses.setChecked(False)
+        self.navIngresses.setAutoExclusive(True)
+        self.navIngresses.setProperty(u"nav", u"true")
+
+        self.networkSubmenuLayout.addWidget(self.navIngresses)
+
+        self.navIngressClasses = QPushButton(self.networkSubmenu)
+        self.navIngressClasses.setObjectName(u"navIngressClasses")
+        self.navIngressClasses.setMinimumSize(QSize(0, 28))
+        self.navIngressClasses.setIconSize(QSize(16, 16))
+        self.navIngressClasses.setCheckable(True)
+        self.navIngressClasses.setChecked(False)
+        self.navIngressClasses.setAutoExclusive(True)
+        self.navIngressClasses.setProperty(u"nav", u"true")
+
+        self.networkSubmenuLayout.addWidget(self.navIngressClasses)
+
+        self.navNetworkPolicies = QPushButton(self.networkSubmenu)
+        self.navNetworkPolicies.setObjectName(u"navNetworkPolicies")
+        self.navNetworkPolicies.setMinimumSize(QSize(0, 28))
+        self.navNetworkPolicies.setIconSize(QSize(16, 16))
+        self.navNetworkPolicies.setCheckable(True)
+        self.navNetworkPolicies.setChecked(False)
+        self.navNetworkPolicies.setAutoExclusive(True)
+        self.navNetworkPolicies.setProperty(u"nav", u"true")
+
+        self.networkSubmenuLayout.addWidget(self.navNetworkPolicies)
+
+
+        self.sidebarNavLayout.addWidget(self.networkSubmenu)
+
+        self.navViewer = QPushButton(self.sidebarNav)
         self.navViewer.setObjectName(u"navViewer")
         self.navViewer.setVisible(False)
-        self.navViewer.setMinimumSize(QSize(0, 42))
+        self.navViewer.setMinimumSize(QSize(0, 34))
         self.navViewer.setIconSize(QSize(16, 16))
         self.navViewer.setCheckable(True)
         self.navViewer.setAutoExclusive(True)
         self.navViewer.setProperty(u"nav", u"true")
 
-        self.sidebarLayout.addWidget(self.navViewer)
+        self.sidebarNavLayout.addWidget(self.navViewer)
 
-        self.sidebarSpacer = QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
+        self.sidebarNavSpacer = QSpacerItem(20, 0, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
 
-        self.sidebarLayout.addItem(self.sidebarSpacer)
+        self.sidebarNavLayout.addItem(self.sidebarNavSpacer)
+
+        self.sidebarScroll.setWidget(self.sidebarNav)
+
+        self.sidebarLayout.addWidget(self.sidebarScroll)
 
         self.settingsButton = QPushButton(self.sidebar)
         self.settingsButton.setObjectName(u"settingsButton")
@@ -900,6 +1002,13 @@ class Ui_MainWindow(object):
         self.navReplicationControllers.setText(QCoreApplication.translate("MainWindow", u"ReplicationControllers", None))
         self.navJobs.setText(QCoreApplication.translate("MainWindow", u"Jobs", None))
         self.navCronJobs.setText(QCoreApplication.translate("MainWindow", u"CronJobs", None))
+        self.navNetwork.setText(QCoreApplication.translate("MainWindow", u"Network", None))
+        self.navServices.setText(QCoreApplication.translate("MainWindow", u"Services", None))
+        self.navEndpointSlices.setText(QCoreApplication.translate("MainWindow", u"Endpoint Slices", None))
+        self.navEndpoints.setText(QCoreApplication.translate("MainWindow", u"Endpoints", None))
+        self.navIngresses.setText(QCoreApplication.translate("MainWindow", u"Ingresses", None))
+        self.navIngressClasses.setText(QCoreApplication.translate("MainWindow", u"Ingress Classes", None))
+        self.navNetworkPolicies.setText(QCoreApplication.translate("MainWindow", u"Network Policies", None))
         self.navViewer.setText(QCoreApplication.translate("MainWindow", u"Details && Logs", None))
         self.settingsButton.setText(QCoreApplication.translate("MainWindow", u"Settings", None))
         self.sidebarNote.setText(QCoreApplication.translate("MainWindow", u"SECURE ACCESS\n"

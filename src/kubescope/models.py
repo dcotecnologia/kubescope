@@ -29,6 +29,15 @@ class Workload:
 
 
 @dataclass(frozen=True, slots=True)
+class NetworkResource:
+    namespace: str  # empty for the kinds that belong to the whole cluster
+    kind: str
+    name: str
+    values: tuple[str, ...]  # what the kind shows between its name and its age
+    age: str
+
+
+@dataclass(frozen=True, slots=True)
 class PodInfo:
     namespace: str
     name: str
@@ -230,6 +239,15 @@ WORKLOAD_VIEWS = {
     "jobs": "Job",
     "cronjobs": "CronJob",
 }
+# The list views that show network resources, and the Kubernetes kind each lists.
+NETWORK_VIEWS = {
+    "services": "Service",
+    "endpointslices": "EndpointSlice",
+    "endpoints": "Endpoints",
+    "ingresses": "Ingress",
+    "ingressclasses": "IngressClass",
+    "networkpolicies": "NetworkPolicy",
+}
 STATUS_SEVERITY = {
     "Failed": 0,
     "Unavailable": 0,
@@ -291,6 +309,16 @@ def workload_sort_key(workload: Workload, column: int) -> tuple:
     else:
         primary = ()
     return (*primary, *by_name)
+
+
+def network_sort_key(resource: NetworkResource, column: int) -> tuple:
+    """Sort key for a network table column: namespace, kind, name, the values
+    of the kind, then age."""
+    by_name = (resource.namespace.casefold(), resource.kind, resource.name.casefold())
+    if column == len(resource.values) + 3:
+        return (age_seconds(resource.age), *by_name)
+    texts = (resource.namespace, resource.kind, resource.name, *resource.values)
+    return (texts[column].casefold(), *by_name)
 
 
 def pod_highlight(pod: PodInfo) -> str | None:

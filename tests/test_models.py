@@ -185,3 +185,14 @@ def test_job_and_cron_job_states_replace_the_replica_status() -> None:
     assert complete.status == "Complete" and cron.status == "Suspended"
     failed = Workload("ns", "Job", "k", 0, 1, "1h", state="Failed")
     assert workload_sort_key(failed, 4) < workload_sort_key(complete, 4)  # worst first
+
+
+def test_network_sort_key_orders_by_text_and_by_age() -> None:
+    from kubescope.models import NetworkResource, network_sort_key
+
+    web = NetworkResource("ns", "Service", "web", ("ClusterIP", "10.0.0.1"), "2d")
+    api = NetworkResource("ns", "Service", "api", ("NodePort", "10.0.0.2"), "5h")
+
+    assert network_sort_key(web, 2) > network_sort_key(api, 2)  # by name
+    assert network_sort_key(web, 3) < network_sort_key(api, 3)  # ClusterIP < NodePort
+    assert network_sort_key(web, 5) > network_sort_key(api, 5)  # 2d is older than 5h

@@ -23,6 +23,7 @@ from kubescope.models import (
     ClusterOverview,
     EventInfo,
     KindSummary,
+    NetworkResource,
     NodeInfo,
     PodInfo,
     Workload,
@@ -334,6 +335,20 @@ _RESOURCES = {
 _REPLICATED_KINDS = ("Deployment", "StatefulSet", "DaemonSet")
 
 
+# Network kind -> the plural name kubectl uses to list it.
+_NETWORK_RESOURCES = {
+    "Service": "services",
+    "EndpointSlice": "endpointslices",
+    "Endpoints": "endpoints",
+    "Ingress": "ingresses",
+    "IngressClass": "ingressclasses",
+    "NetworkPolicy": "networkpolicies",
+}
+_CLUSTER_WIDE = frozenset({"IngressClass"})
+_NO_VALUE = "—"
+_LISTED_VALUES = 3  # a long list of addresses shows its first ones and a count
+
+
 def _job_state(spec: dict[str, Any], status: dict[str, Any]) -> str:
     conditions = {
         condition.get("type")
@@ -438,10 +453,14 @@ def get_resource_details(
     namespace: str,
     name: str,
 ) -> dict[str, Any]:
-    resource_name = _RESOURCES.get(kind, "pods" if kind == "Pod" else "")[:-1]
+    if kind in _NETWORK_RESOURCES:
+        resource_name = kind.lower()
+    else:
+        resource_name = _RESOURCES.get(kind, "pods" if kind == "Pod" else "")[:-1]
     if not resource_name:
         raise KubectlError(f"Unsupported resource kind: {kind}")
-    return _get_json("get", resource_name, name, "-n", namespace, context=context)
+    scope = ("-n", namespace) if namespace else ()
+    return _get_json("get", resource_name, name, *scope, context=context)
 
 
 def _label_selector(resource: dict[str, Any]) -> str:
@@ -639,6 +658,165 @@ def get_workload_pods(context: str, workload: Workload) -> list[PodInfo]:
         if (pod := _parse_pod(item, now)) is not None
     ]
     return sorted(pods, key=lambda pod: pod.name)
+
+
+def _listed(values: list[str]) -> str:
+    """The first few values, then how many more there are."""
+    if not values:
+        return _NO_VALUE
+    shown = ", ".join(values[:_LISTED_VALUES])
+    hidden = len(values) - _LISTED_VALUES
+    return f"{shown} +{hidden} more" if hidden > 0 else shown
+
+
+def _port_names(ports: list[dict[str, Any]]) -> list[str]:
+    return [
+        f"{port.get('port')}/{port.get('protocol') or 'TCP'}"
+        for port in ports
+        if port.get("port") is not None
+    ]
+
+
+def _load_balancer_addresses(status: dict[str, Any]) -> list[str]:
+    ingress = (status.get("loadBalancer") or {}).get("ingress") or []
+    return [entry.get("hostname") or entry.get("ip") for entry in ingress if entry]
+
+
+def _label_terms(selector: dict[str, Any]) -> str:
+    labels = selector.get("matchLabels") or {}
+    terms = [f"{key}={value}" for key, value in sorted(labels.items())]
+    terms += [
+        f"{expression.get('key')} {str(expression.get('operator')).lower()}"
+        for expression in selector.get("matchExpressions") or []
+    ]
+    return ",".join(terms) or "*"  # an empty selector picks everything
+
+
+def _service_values(item: dict[str, Any]) -> tuple[str, ...]:
+    spec, status = item.get("spec") or {}, item.get("status") or {}
+    service_type = spec.get("type") or "ClusterIP"
+    external = _load_balancer_addresses(status) + (spec.get("externalIPs") or [])
+    if not external and service_type == "LoadBalancer":
+        external = ["pending"]
+    ports = [
+        f"{port['port']}:{port['nodePort']}/{port.get('protocol') or 'TCP'}"
+        if port.get("nodePort")
+        else f"{port['port']}/{port.get('protocol') or 'TCP'}"
+        for port in spec.get("ports") or []
+        if port.get("port") is not None
+    ]
+    return (
+        service_type,
+        spec.get("clusterIP") or _NO_VALUE,
+        _listed(external),
+        _listed(ports),
+    )
+
+
+def _endpoints_values(item: dict[str, Any]) -> tuple[str, ...]:
+    addresses = []
+    for subset in item.get("subsets") or []:
+        ports = [port.get("port") for port in subset.get("ports") or []]
+        for address in subset.get("addresses") or []:
+            ip = address.get("ip")
+            addresses += [f"{ip}:{port}" for port in ports] if ports else [ip]
+    return (_listed(addresses),)
+
+
+def _endpoint_slice_values(item: dict[str, Any]) -> tuple[str, ...]:
+    addresses = [
+        address
+        for endpoint in item.get("endpoints") or []
+        for address in (endpoint.get("addresses") or [])[:1]
+    ]
+    return (
+        item.get("addressType") or _NO_VALUE,
+        _listed(_port_names(item.get("ports") or [])),
+        _listed(addresses),
+    )
+
+
+def _ingress_values(item: dict[str, Any]) -> tuple[str, ...]:
+    metadata = item.get("metadata") or {}
+    spec, status = item.get("spec") or {}, item.get("status") or {}
+    ingress_class = spec.get("ingressClassName") or (
+        metadata.get("annotations") or {}
+    ).get("kubernetes.io/ingress.class")
+    hosts = [rule.get("host") or "*" for rule in spec.get("rules") or []]
+    ports = ["80", "443"] if spec.get("tls") else ["80"]
+    return (
+        ingress_class or _NO_VALUE,
+        _listed(hosts),
+        _listed(_load_balancer_addresses(status)),
+        ", ".join(ports),
+    )
+
+
+def _ingress_class_values(item: dict[str, Any]) -> tuple[str, ...]:
+    spec = item.get("spec") or {}
+    parameters = spec.get("parameters") or {}
+    reference = (
+        f"{parameters['kind']}/{parameters['name']}"
+        if parameters.get("kind") and parameters.get("name")
+        else _NO_VALUE
+    )
+    return (spec.get("controller") or _NO_VALUE, reference)
+
+
+def _network_policy_values(item: dict[str, Any]) -> tuple[str, ...]:
+    spec = item.get("spec") or {}
+    types = spec.get("policyTypes") or (
+        ["Ingress", "Egress"] if spec.get("egress") else ["Ingress"]
+    )
+    return (_label_terms(spec.get("podSelector") or {}), ", ".join(types))
+
+
+_NETWORK_VALUES = {
+    "Service": _service_values,
+    "EndpointSlice": _endpoint_slice_values,
+    "Endpoints": _endpoints_values,
+    "Ingress": _ingress_values,
+    "IngressClass": _ingress_class_values,
+    "NetworkPolicy": _network_policy_values,
+}
+
+
+def _parse_network(
+    kind: str, item: dict[str, Any], now: datetime
+) -> NetworkResource | None:
+    metadata = item.get("metadata") or {}
+    name = metadata.get("name")
+    if not name:
+        return None
+    return NetworkResource(
+        namespace=""
+        if kind in _CLUSTER_WIDE
+        else metadata.get("namespace") or "default",
+        kind=kind,
+        name=name,
+        values=_NETWORK_VALUES[kind](item),
+        age=_item_age(item, now),
+    )
+
+
+def get_network(
+    context: str, namespace: str | None, kind: str
+) -> tuple[list[str], list[NetworkResource]]:
+    arguments = ["get", _NETWORK_RESOURCES[kind]]
+    if kind not in _CLUSTER_WIDE:
+        arguments.extend(("-n", namespace) if namespace else ("-A",))
+    namespaces, document = _together(
+        partial(_get_namespaces, context),
+        partial(_get_json, *arguments, context=context),
+    )
+    now = datetime.now(UTC)
+    resources = [
+        resource
+        for item in document.get("items", [])
+        if (resource := _parse_network(kind, item, now)) is not None
+    ]
+    resources.sort(key=lambda row: (row.namespace, row.name))
+    return namespaces, resources
 
 
 def get_pods(

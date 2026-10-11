@@ -38,6 +38,7 @@ from PySide6.QtGui import (
 from PySide6.QtWidgets import (
     QApplication,
     QDialog,
+    QFrame,
     QHeaderView,
     QInputDialog,
     QMainWindow,
@@ -58,6 +59,7 @@ from kubescope.cluster import (
     cancel_running,
     check_login,
     get_cluster_overview,
+    get_network,
     get_pod_logs,
     get_pods,
     get_resource_details,
@@ -73,8 +75,10 @@ from kubescope.errors import ErrorInfo, describe_error, first_line, is_auth_erro
 from kubescope.i18n import apply_language
 from kubescope.log_tab import LOG_REFRESH_MS, LogTab
 from kubescope.models import (
+    NETWORK_VIEWS,
     WORKLOAD_VIEWS,
     ClusterOverview,
+    NetworkResource,
     PodInfo,
     Workload,
     WorkloadsOverview,
@@ -82,6 +86,7 @@ from kubescope.models import (
     format_cores,
     format_cpu,
     format_memory,
+    network_sort_key,
     pod_highlight,
     pod_sort_key,
     workload_sort_key,
@@ -217,6 +222,10 @@ class RefreshWorker(QThread):
         try:
             if self.view == "pods":
                 namespaces, items = get_pods(self.context, self.namespace)
+            elif self.view in NETWORK_VIEWS:
+                namespaces, items = get_network(
+                    self.context, self.namespace, NETWORK_VIEWS[self.view]
+                )
             else:
                 kind = WORKLOAD_VIEWS[self.view]
                 with ThreadPoolExecutor(max_workers=1) as pool:
@@ -304,6 +313,7 @@ class WorkloadWindow(QMainWindow):
         self._close_when_worker_stops = False
         self._workloads: list[Workload] = []
         self._pods: list[PodInfo] = []
+        self._network: list[NetworkResource] = []
         self._view = "deployments"  # which list the shared table shows
         self._build_ui()
         self._load_contexts()
@@ -338,6 +348,8 @@ class WorkloadWindow(QMainWindow):
         self.nav_replicationcontrollers = ui.navReplicationControllers
         self.nav_jobs = ui.navJobs
         self.nav_cronjobs = ui.navCronJobs
+        self.nav_network = ui.navNetwork
+        self.network_submenu = ui.networkSubmenu
         self._nav_views = {
             "pods": self.nav_pods,
             "deployments": self.nav_deployments,
@@ -347,6 +359,12 @@ class WorkloadWindow(QMainWindow):
             "replicationcontrollers": self.nav_replicationcontrollers,
             "jobs": self.nav_jobs,
             "cronjobs": self.nav_cronjobs,
+            "services": ui.navServices,
+            "endpointslices": ui.navEndpointSlices,
+            "endpoints": ui.navEndpoints,
+            "ingresses": ui.navIngresses,
+            "ingressclasses": ui.navIngressClasses,
+            "networkpolicies": ui.navNetworkPolicies,
         }
 
         self.overview_ui = Ui_OverviewPage()
@@ -395,6 +413,7 @@ class WorkloadWindow(QMainWindow):
         for button in (
             self.nav_overview,
             self.nav_workloads,
+            self.nav_network,
             self.nav_workloads_overview,
             *self._nav_views.values(),
             ui.navViewer,
@@ -402,11 +421,18 @@ class WorkloadWindow(QMainWindow):
         ):
             button.setAutoExclusive(False)  # _show_page keeps the checked state
         self.nav_workloads.setCheckable(False)
-        self._submenu_animation = QPropertyAnimation(self.submenu, b"maximumHeight")
-        self._submenu_animation.setDuration(180)
-        self._submenu_animation.setEasingCurve(QEasingCurve.Type.InOutCubic)
+        self.nav_network.setCheckable(False)
+        self._submenus = {}
+        for submenu in (self.submenu, self.network_submenu):
+            animation = QPropertyAnimation(submenu, b"maximumHeight")
+            animation.setDuration(180)
+            animation.setEasingCurve(QEasingCurve.Type.InOutCubic)
+            self._submenus[submenu] = animation
         self.nav_workloads.setIcon(
             style.standardIcon(QStyle.StandardPixmap.SP_FileDialogListView)
+        )
+        self.nav_network.setIcon(
+            style.standardIcon(QStyle.StandardPixmap.SP_DriveNetIcon)
         )
         self.workloads_refresh_button.setIcon(
             style.standardIcon(QStyle.StandardPixmap.SP_BrowserReload)
@@ -503,7 +529,10 @@ class WorkloadWindow(QMainWindow):
         )
         ui.settingsButton.clicked.connect(lambda: self._show_page(2))
         self.nav_overview.clicked.connect(lambda: self._show_page(0))
-        self.nav_workloads.clicked.connect(self._toggle_submenu)
+        self.nav_workloads.clicked.connect(lambda: self._toggle_submenu(self.submenu))
+        self.nav_network.clicked.connect(
+            lambda: self._toggle_submenu(self.network_submenu)
+        )
         for view, button in self._nav_views.items():
             button.clicked.connect(
                 lambda _checked=False, view=view: self._open_list_view(view)
@@ -661,6 +690,27 @@ class WorkloadWindow(QMainWindow):
                 ),
                 "jobs": (self.tr("Jobs"), self.tr("Jobs of the cluster")),
                 "cronjobs": (self.tr("CronJobs"), self.tr("CronJobs of the cluster")),
+                "services": (self.tr("Services"), self.tr("Services of the cluster")),
+                "endpointslices": (
+                    self.tr("Endpoint Slices"),
+                    self.tr("Endpoint Slices of the cluster"),
+                ),
+                "endpoints": (
+                    self.tr("Endpoints"),
+                    self.tr("Endpoints of the cluster"),
+                ),
+                "ingresses": (
+                    self.tr("Ingresses"),
+                    self.tr("Ingresses of the cluster"),
+                ),
+                "ingressclasses": (
+                    self.tr("Ingress Classes"),
+                    self.tr("Ingress Classes of the cluster"),
+                ),
+                "networkpolicies": (
+                    self.tr("Network Policies"),
+                    self.tr("Network Policies of the cluster"),
+                ),
             }[self._view]
             self.ui.pageTitle.setText(title)
             self.ui.pageSubtitle.setText(subtitle)
@@ -707,16 +757,17 @@ class WorkloadWindow(QMainWindow):
         if self._workloads_overview is not None:
             self._render_workloads_overview(self._workloads_overview)
 
-    def _toggle_submenu(self) -> None:
-        """Slide the Pods and workload entries open or closed."""
-        animation = self._submenu_animation
-        expand = self.submenu.maximumHeight() == 0 or (
+    def _toggle_submenu(self, submenu: QFrame) -> None:
+        """Slide a menu's entries open or closed, whatever the other one
+        does."""
+        animation = self._submenus[submenu]
+        expand = submenu.maximumHeight() == 0 or (
             animation.state() == QPropertyAnimation.State.Running
             and animation.endValue() == 0
         )
         animation.stop()
-        animation.setStartValue(self.submenu.maximumHeight())
-        animation.setEndValue(self.submenu.sizeHint().height() if expand else 0)
+        animation.setStartValue(submenu.maximumHeight())
+        animation.setEndValue(submenu.sizeHint().height() if expand else 0)
         animation.start()
 
     def _open_list_view(self, view: str) -> None:
@@ -724,6 +775,8 @@ class WorkloadWindow(QMainWindow):
         changed = view != self._view
         if changed and view in WORKLOAD_VIEWS and self._view in WORKLOAD_VIEWS:
             self._workloads = []  # another kind: do not show these rows meanwhile
+        if changed and view in NETWORK_VIEWS and self._view in NETWORK_VIEWS:
+            self._network = []  # other columns: do not show these rows meanwhile
         logger.debug("Opening the %s list", view)
         self._view = view
         if changed:
@@ -743,7 +796,42 @@ class WorkloadWindow(QMainWindow):
             self._sync_loading()
             self._list_timer.start()
 
+    def _network_headers(self) -> list[str]:
+        """The columns a network kind shows between its name and its age."""
+        translate = QCoreApplication.translate
+        return {
+            "services": [
+                translate("MainWindow", "TYPE"),
+                translate("MainWindow", "CLUSTER IP"),
+                translate("MainWindow", "EXTERNAL IP"),
+                translate("MainWindow", "PORTS"),
+            ],
+            "endpointslices": [
+                translate("MainWindow", "ADDRESS TYPE"),
+                translate("MainWindow", "PORTS"),
+                translate("MainWindow", "ENDPOINTS"),
+            ],
+            "endpoints": [translate("MainWindow", "ENDPOINTS")],
+            "ingresses": [
+                translate("MainWindow", "CLASS"),
+                translate("MainWindow", "HOSTS"),
+                translate("MainWindow", "ADDRESS"),
+                translate("MainWindow", "PORTS"),
+            ],
+            "ingressclasses": [
+                translate("MainWindow", "CONTROLLER"),
+                translate("MainWindow", "PARAMETERS"),
+            ],
+            "networkpolicies": [
+                translate("MainWindow", "POD SELECTOR"),
+                translate("MainWindow", "POLICY TYPES"),
+            ],
+        }[self._view]
+
     def _apply_view_columns(self) -> None:
+        if self._view in NETWORK_VIEWS:
+            self._apply_network_columns()
+            return
         second = "CONTAINERS" if self._view == "pods" else "KIND"
         ready_header = {
             "jobs": QCoreApplication.translate("MainWindow", "COMPLETIONS"),
@@ -764,7 +852,26 @@ class WorkloadWindow(QMainWindow):
                 QCoreApplication.translate("MainWindow", "AGE"),
             ]
         )
+        self._apply_view_buttons()
+
+    def _apply_network_columns(self) -> None:
+        translate = QCoreApplication.translate
+        headers = [
+            translate("MainWindow", "NAMESPACE"),
+            translate("MainWindow", "KIND"),
+            translate("MainWindow", "NAME"),
+            *self._network_headers(),
+            translate("MainWindow", "AGE"),
+        ]
+        self.table.setColumnCount(len(headers))
+        self.table.setHorizontalHeaderLabels(headers)
+        self._apply_view_buttons()
+
+    def _apply_view_buttons(self) -> None:
+        """Pods and logs belong to workloads; a network resource has details
+        only."""
         self.pods_button.setVisible(self._view in WORKLOAD_VIEWS)
+        self.logs_button.setVisible(self._view not in NETWORK_VIEWS)
         hidden = self.settings.hidden_columns(self._view)
         for column in range(self.table.columnCount()):
             self.table.setColumnHidden(column, column in hidden)
@@ -1276,8 +1383,22 @@ class WorkloadWindow(QMainWindow):
     def _show_answer(self, view: str, namespaces: list, items: list) -> None:
         if view == "pods":
             self._show_pods(namespaces, items)
+        elif view in NETWORK_VIEWS:
+            self._show_network(namespaces, items)
         else:
             self._show_workloads(namespaces, items)
+
+    def _show_network(self, namespaces: list, resources: list) -> None:
+        logger.info(
+            "Loaded %d network resource(s) in %d namespace(s)",
+            len(resources),
+            len(namespaces),
+        )
+        self._network = resources
+        self._apply_sort()
+        self._fill_namespaces(namespaces)
+        if self._view in NETWORK_VIEWS:
+            self._render_network()
 
     def _show_workloads(self, namespaces: list, workloads: list) -> None:
         logger.info(
@@ -1320,6 +1441,11 @@ class WorkloadWindow(QMainWindow):
             self._pods.sort(
                 key=lambda pod: pod_sort_key(pod, column), reverse=descending
             )
+        elif self._view in NETWORK_VIEWS:
+            self._network.sort(
+                key=lambda resource: network_sort_key(resource, column),
+                reverse=descending,
+            )
         else:
             self._workloads.sort(
                 key=lambda workload: workload_sort_key(workload, column),
@@ -1348,18 +1474,63 @@ class WorkloadWindow(QMainWindow):
         self._update_workload_actions()
 
     def _current_rows(self) -> list:
-        return self._pods if self._view == "pods" else self._workloads
+        if self._view == "pods":
+            return self._pods
+        return self._network if self._view in NETWORK_VIEWS else self._workloads
 
-    def _selected_row(self) -> Workload | PodInfo | None:
-        return (
-            self._selected_pod() if self._view == "pods" else self._selected_workload()
-        )
+    def _selected_row(self) -> Workload | PodInfo | NetworkResource | None:
+        if self._view == "pods":
+            return self._selected_pod()
+        if self._view in NETWORK_VIEWS:
+            return self._selected_network()
+        return self._selected_workload()
 
     def _render_rows(self) -> None:
         if self._view == "pods":
             self._render_pods()
+        elif self._view in NETWORK_VIEWS:
+            self._render_network()
         else:
             self._render_workloads()
+
+    def _render_network(self) -> None:
+        resources = self._network
+        self.table.setRowCount(len(resources))
+        for row_index, resource in enumerate(resources):
+            values = (
+                resource.namespace or "—",
+                resource.kind,
+                resource.name,
+                *resource.values,
+                resource.age,
+            )
+            for column, value in enumerate(values):
+                item = QTableWidgetItem(value)
+                item.setForeground(QColor(themed("#242a33")))
+                self.table.setItem(row_index, column, item)
+        self._filter_rows()
+        summaries = {
+            "services": lambda: self.tr("{count} Services in {namespaces} namespaces"),
+            "endpointslices": lambda: self.tr(
+                "{count} Endpoint Slices in {namespaces} namespaces"
+            ),
+            "endpoints": lambda: self.tr(
+                "{count} Endpoints in {namespaces} namespaces"
+            ),
+            "ingresses": lambda: self.tr(
+                "{count} Ingresses in {namespaces} namespaces"
+            ),
+            "ingressclasses": lambda: self.tr("{count} Ingress Classes in the cluster"),
+            "networkpolicies": lambda: self.tr(
+                "{count} Network Policies in {namespaces} namespaces"
+            ),
+        }
+        summary = summaries[self._view]
+        self._set_status(
+            lambda: summary().format(
+                count=len(resources), namespaces=len(self._namespaces)
+            )
+        )
 
     def _phase_label(self, phase: str) -> str:
         labels = {
@@ -1502,7 +1673,7 @@ class WorkloadWindow(QMainWindow):
         visible_rows = 0
         rows = self._current_rows()
         for row_index, row in enumerate(rows):
-            kind = row.kind if isinstance(row, Workload) else "Pod"
+            kind = "Pod" if isinstance(row, PodInfo) else row.kind
             matches = query in f"{row.namespace} {kind} {row.name}".casefold()
             self.table.setRowHidden(row_index, not matches)
             visible_rows += matches
@@ -1518,6 +1689,12 @@ class WorkloadWindow(QMainWindow):
             ),
             "jobs": self.tr("{visible} of {total} Jobs"),
             "cronjobs": self.tr("{visible} of {total} CronJobs"),
+            "services": self.tr("{visible} of {total} Services"),
+            "endpointslices": self.tr("{visible} of {total} Endpoint Slices"),
+            "endpoints": self.tr("{visible} of {total} Endpoints"),
+            "ingresses": self.tr("{visible} of {total} Ingresses"),
+            "ingressclasses": self.tr("{visible} of {total} Ingress Classes"),
+            "networkpolicies": self.tr("{visible} of {total} Network Policies"),
         }[self._view]
         self.summary_label.setText(
             template.format(visible=visible_rows, total=len(rows))
@@ -1527,6 +1704,12 @@ class WorkloadWindow(QMainWindow):
         row = self.table.currentRow()
         if 0 <= row < len(self._workloads) and not self.table.isRowHidden(row):
             return self._workloads[row]
+        return None
+
+    def _selected_network(self) -> NetworkResource | None:
+        row = self.table.currentRow()
+        if 0 <= row < len(self._network) and not self.table.isRowHidden(row):
+            return self._network[row]
         return None
 
     def _selected_pod(self) -> PodInfo | None:
@@ -1619,7 +1802,7 @@ class WorkloadWindow(QMainWindow):
             self._choose_container_for_logs(self._context(), pod)
 
     def _view_workload_details(self) -> None:
-        workload = self._selected_workload()
+        workload = self._selected_row()
         if workload is None:
             return
         self._run_action(
@@ -2044,6 +2227,7 @@ class WorkloadWindow(QMainWindow):
             self._check_login()
         self._workloads = []
         self._pods = []
+        self._network = []
         self._set_status(lambda: self._error_line(message))
         self.status_label.setToolTip(describe_error(message).details)
         self.table.setRowCount(0)
