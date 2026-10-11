@@ -2,7 +2,7 @@
 
 UV ?= uv
 
-.PHONY: help setup run dev debug preview language screenshot designer ui i18n appimage deb flatpak windows windows-remote lint format test kubectl qt-libs build clean
+.PHONY: help setup run dev debug preview language screenshot store-screenshots designer ui i18n appimage deb flatpak windows windows-remote lint format test kubectl qt-libs build clean
 
 help: ## List the available commands
 	@awk 'BEGIN { FS = ":.*##" } /^[a-zA-Z_-]+:.*##/ { printf "  %-12s %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
@@ -39,6 +39,9 @@ $(UI_DIR)/ui_%.py: $(UI_DIR)/%.ui
 screenshot: $(UI_PY) $(QM_FILES) ## Regenerate docs/screenshots/overview.png from the fake data
 	mkdir -p docs/screenshots
 	QT_QPA_PLATFORM=offscreen $(UV) run python tools/preview.py docs/screenshots/overview.png overview
+
+store-screenshots: $(UI_PY) $(QM_FILES) ## Render docs/screenshots/store/ (every theme) for the app stores
+	QT_QPA_PLATFORM=offscreen $(UV) run python tools/store_screenshots.py
 
 designer: qt-libs ## Open the .ui files in Qt Designer
 	$(RUN_ENV) $(UV) run pyside6-designer -style fusion $(UI_FILES)
