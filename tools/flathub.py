@@ -1,0 +1,179 @@
+"""Check the Flatpak files and gather what a Flathub submission needs.
+
+Flathub has no deploy command: an app is added by a pull request to
+github.com/flathub/flathub, reviewers read it, and Flathub builds it.
+This tool does what can be done here, and sends nothing anywhere:
+
+python tools/flathub.py lint      validate the metainfo, desktop file
+and manifest python tools/flathub.py package   write dist/flathub/<app
+id>/ and print the steps
+"""
+
+import re
+import shutil
+import subprocess
+import sys
+import tomllib
+from datetime import date
+from pathlib import Path
+
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QImage
+
+ROOT = Path(__file__).resolve().parents[1]
+SOURCE = ROOT / "packaging" / "flatpak"
+APP_ID = "com.dcotecnologia.KubeScope"
+MANIFEST = f"{APP_ID}.yml"
+METAINFO = f"{APP_ID}.metainfo.xml"
+DESKTOP = f"{APP_ID}.desktop"
+ICON = ROOT / "src" / "kubescope" / "assets" / "icon.png"
+
+
+def project_version() -> str:
+    with (ROOT / "pyproject.toml").open("rb") as handle:
+        return tomllib.load(handle)["project"]["version"]
+
+
+def render_sources(destination: Path, version: str) -> None:
+    """Copy the packaging files, filling in the version and today's date."""
+    destination.mkdir(parents=True, exist_ok=True)
+    for path in SOURCE.iterdir():
+        text = path.read_text(encoding="utf-8")
+        text = text.replace("@VERSION@", version).replace("@DATE@", str(date.today()))
+        (destination / path.name).write_text(text, encoding="utf-8")
+
+
+def render_icons(destination: Path) -> None:
+    """The two icon sizes the manifest installs."""
+    source = QImage(str(ICON))
+    for size in (256, 512):
+        source.scaled(
+            size,
+            size,
+            Qt.AspectRatioMode.KeepAspectRatio,
+            Qt.TransformationMode.SmoothTransformation,
+        ).save(str(destination / f"icon-{size}.png"), "PNG")
+
+
+def blockers(manifest: str) -> list[str]:
+    """What Flathub reviewers will not accept in this manifest as it is: it
+    must build from public sources, not from files that only exist on this
+    machine."""
+    found = []
+    if re.search(r"type:\s*dir\b", manifest):
+        found.append(
+            "a `type: dir` source: the app is built from a local PyInstaller bundle "
+            "(`make build`); Flathub builds from a public source (a git tag or an "
+            "archive with its sha256), through Python modules, not a prebuilt bundle"
+        )
+    if "awscli.amazonaws.com" in manifest:
+        found.append(
+            "the AWS CLI is downloaded already built; Flathub asks for open source "
+            "software to be built from its source, or the dependency to be left out"
+        )
+    if "--filesystem=~/.aws" in manifest:
+        found.append(
+            "`--filesystem=~/.aws` is a broad permission; be ready to justify it, "
+            "or narrow it, in the review"
+        )
+    return found
+
+
+def run(command: list[str], label: str) -> bool:
+    print(f"$ {' '.join(command)}", flush=True)
+    result = subprocess.run(command, check=False)
+    if result.returncode != 0:
+        print(f"  -> {label} found problems", file=sys.stderr)
+    return result.returncode == 0
+
+
+def builder_lint() -> list[str] | None:
+    """The command for flatpak-builder-lint, installed or through Flatpak."""
+    if shutil.which("flatpak-builder-lint"):
+        return ["flatpak-builder-lint"]
+    if (
+        shutil.which("flatpak")
+        and subprocess.run(
+            ["flatpak", "info", "org.flatpak.Builder"],
+            capture_output=True,
+            check=False,
+        ).returncode
+        == 0
+    ):
+        return [
+            "flatpak",
+            "run",
+            "--command=flatpak-builder-lint",
+            "org.flatpak.Builder",
+        ]
+    return None
+
+
+def lint() -> int:
+    staging = ROOT / "build" / "flatpak-lint"
+    shutil.rmtree(staging, ignore_errors=True)
+    render_sources(staging, project_version())
+    ok = True
+    if shutil.which("appstreamcli"):
+        ok &= run(
+            ["appstreamcli", "validate", "--no-net", str(staging / METAINFO)],
+            "the metainfo",
+        )
+    else:
+        print("appstreamcli is missing: install appstream to validate the metainfo")
+    if shutil.which("desktop-file-validate"):
+        ok &= run(["desktop-file-validate", str(staging / DESKTOP)], "the desktop file")
+    else:
+        print("desktop-file-validate is missing: install desktop-file-utils")
+    linter = builder_lint()
+    if linter is None:
+        print(
+            "flatpak-builder-lint is missing, and it is what Flathub runs. Install it "
+            "with `flatpak install flathub org.flatpak.Builder`."
+        )
+    else:
+        ok &= run([*linter, "manifest", str(staging / MANIFEST)], "the manifest")
+        ok &= run([*linter, "appstream", str(staging / METAINFO)], "the metainfo")
+    for item in blockers((staging / MANIFEST).read_text(encoding="utf-8")):
+        print(f"Flathub will not accept as it is: {item}")
+    return 0 if ok else 1
+
+
+def package() -> int:
+    output = ROOT / "dist" / "flathub" / APP_ID
+    shutil.rmtree(output, ignore_errors=True)
+    render_sources(output, project_version())
+    render_icons(output)
+    manifest = (output / MANIFEST).read_text(encoding="utf-8")
+    print(f"Wrote {output.relative_to(ROOT)}/")
+    print(
+        """To submit it (nothing is sent from here):
+
+        1. Fork https://github.com/flathub/flathub and clone your fork on its `new-pr`
+           branch: git clone --branch=new-pr git@github.com:<you>/flathub.git
+        2. Create a branch and copy the files of that folder into a new directory named
+           after the app id.
+        3. Open a pull request against the `new-pr` branch of flathub/flathub, titled
+           "Add com.dcotecnologia.KubeScope". Reviewers answer on the pull request, and
+           Flathub creates github.com/flathub/com.dcotecnologia.KubeScope when it is
+           accepted; later updates are changes to that repository.
+        See https://docs.flathub.org/docs/for-app-authors/submission for the rules.
+        """
+    )
+    found = blockers(manifest)
+    if found:
+        print("\nBefore it can be accepted, the manifest needs work:")
+        for item in found:
+            print(f"  - {item}")
+    return 0
+
+
+def main() -> int:
+    commands = {"lint": lint, "package": package}
+    if len(sys.argv) != 2 or sys.argv[1] not in commands:
+        raise SystemExit(__doc__)
+    return commands[sys.argv[1]]()
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

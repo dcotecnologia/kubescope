@@ -2,7 +2,7 @@
 
 UV ?= uv
 
-.PHONY: help setup run dev debug preview language screenshot store-screenshots designer ui i18n appimage deb flatpak windows windows-remote lint format test kubectl qt-libs build clean
+.PHONY: help setup run dev debug preview language screenshot store-screenshots designer ui i18n appimage deb flatpak flatpak-lint flathub-submission windows windows-remote lint format test kubectl qt-libs build clean
 
 help: ## List the available commands
 	@awk 'BEGIN { FS = ":.*##" } /^[a-zA-Z_-]+:.*##/ { printf "  %-12s %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
@@ -73,6 +73,12 @@ deb: build ## Package the bundle as a .deb in dist/ (Debian/Ubuntu)
 
 flatpak: build ## Package the bundle as a Flatpak in dist/ (needs flatpak-builder)
 	$(UV) run python tools/build_flatpak.py
+
+flatpak-lint: ## Validate the Flatpak metainfo, desktop file and manifest like Flathub does
+	$(UV) run python tools/flathub.py lint
+
+flathub-submission: ## Gather the files for a Flathub pull request in dist/flathub/ and print the steps
+	$(UV) run python tools/flathub.py package
 
 windows: $(UI_PY) $(QM_FILES) ## Build the Windows installer and zip (on Linux it runs in Wine)
 ifeq ($(shell uname -s),Linux)

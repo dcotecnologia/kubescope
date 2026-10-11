@@ -170,7 +170,9 @@ Requirements:
 - Building for another platform replaces `dist/KubeScope`, so run the Linux
   packages and the Windows build one after the other, not at the same time.
 - The Flatpak app ID is `com.dcotecnologia.KubeScope`; keep it consistent across the
-  manifest, desktop file, metainfo, and `tools/build_flatpak.py`.
+  manifest, desktop file, metainfo, `tools/build_flatpak.py` and `tools/flathub.py`.
+- `make flatpak-lint` and `make flathub-submission` prepare a Flathub submission and
+  send nothing; the pull request to flathub/flathub is opened by a person.
 
 ## 7) Security
 

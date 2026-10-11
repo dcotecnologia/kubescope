@@ -34,5 +34,24 @@ make windows    # installer and zip; on Linux it builds inside Wine
 ```
 
 All packages use the bundle in `dist/KubeScope`, so build one platform at a time.
+
+## Flathub
+
+Flathub has no deploy command: an app is added by a pull request to
+[flathub/flathub](https://github.com/flathub/flathub), reviewers read it, and Flathub
+builds it. Two commands prepare that, and neither sends anything:
+
+```bash
+make flatpak-lint         # validate the metainfo, the desktop file and the manifest
+make flathub-submission   # gather the files in dist/flathub/ and print the steps
+```
+
+`make flatpak-lint` runs `appstreamcli` and `desktop-file-validate`, and
+`flatpak-builder-lint` (what Flathub runs) when it is installed:
+`flatpak install flathub org.flatpak.Builder`.
+
+The manifest here packages the PyInstaller bundle and the AWS CLI already built.
+Flathub builds from public sources, so both commands list what has to change before
+the pull request can be accepted.
 Commit messages follow
 [COMMITING.md](https://github.com/dcotecnologia/kubescope/blob/main/COMMITING.md).
