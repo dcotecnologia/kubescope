@@ -1,36 +1,63 @@
-"""Package dist/KubeScope (from `make build`) as a Flatpak bundle.
+"""Build the Flatpak from the manifest, as a bundle in dist/.
 
-Needs flatpak-builder and the org.freedesktop.Platform and Sdk 25.08
-runtimes (`flatpak install flathub org.freedesktop.Platform//25.08
-org.freedesktop.Sdk//25.08`).
+The manifest builds from public sources, like Flathub does. Here the app
+itself comes from this working tree instead of its git tag, so a change
+that is not committed yet can be tried. Needs flatpak-builder and the
+runtimes the manifest names (`flatpak install flathub
+org.kde.Platform//6.11 org.kde.Sdk//6.11 io.qt.PySide.BaseApp//6.11
+org.freedesktop.Sdk.Extension.golang//25.08`).
+
+FLATPAK_BUILDER_ARGS adds options to flatpak-builder, for example
+`--user`.
 """
 
+import os
+import re
+import shlex
 import shutil
 import subprocess
 import sys
-from pathlib import Path
 
-from flathub import project_version, render_icons, render_sources
+from flathub import (
+    APP_ID,
+    MANIFEST,
+    ROOT,
+    project_version,
+    render_icons,
+    render_sources,
+)
 
-ROOT = Path(__file__).resolve().parents[1]
-BUNDLE = ROOT / "dist" / "KubeScope"
 STAGING = ROOT / "build" / "flatpak"
-APP_ID = "com.dcotecnologia.KubeScope"
-MANIFEST = f"{APP_ID}.yml"
+# what a local build leaves out of the copy of the working tree
+SKIP = (".git", ".venv", "build", "dist", "vendor", "coverage.xml", "__pycache__")
+GIT_SOURCE = re.compile(
+    r"      - type: git\n        url: https://github.com/dcotecnologia/kubescope.git\n"
+    r"        tag: \S+\n        commit: \w+\n"
+)
+
+
+def use_working_tree(manifest: str) -> str:
+    """Point the app's source at this checkout instead of its git tag."""
+    skipped = "".join(f"          - {name}\n" for name in SKIP)
+    local = f"      - type: dir\n        path: {ROOT}\n        skip:\n{skipped}"
+    result, count = GIT_SOURCE.subn(local, manifest)
+    if count != 1:
+        raise SystemExit("The manifest has no git source for KubeScope to replace")
+    return result
 
 
 def main() -> int:
     if sys.platform != "linux" or not shutil.which("flatpak-builder"):
         raise SystemExit("Building a Flatpak needs Linux with flatpak-builder")
-    if not (BUNDLE / "KubeScope").is_file():
-        raise SystemExit("Run `make build` before packaging the Flatpak")
     version = project_version()
 
     if STAGING.exists():
         shutil.rmtree(STAGING)
     render_sources(STAGING, version)
-    (STAGING / "bundle").symlink_to(BUNDLE)
-
+    manifest = STAGING / MANIFEST
+    manifest.write_text(
+        use_working_tree(manifest.read_text(encoding="utf-8")), encoding="utf-8"
+    )
     render_icons(STAGING)
 
     repository = STAGING / "repo"
@@ -39,9 +66,10 @@ def main() -> int:
             "flatpak-builder",
             "--force-clean",
             "--disable-rofiles-fuse",
+            *shlex.split(os.environ.get("FLATPAK_BUILDER_ARGS", "")),
             f"--repo={repository}",
             str(STAGING / "build-dir"),
-            str(STAGING / MANIFEST),
+            str(manifest),
         ],
         check=True,
         cwd=STAGING,

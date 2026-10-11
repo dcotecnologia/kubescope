@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+### Changed
+
+- The Flatpak manifest builds from public sources, as Flathub requires: the app from its git tag, PySide6 from the `io.qt.PySide.BaseApp` base app, `kubectl` from the Kubernetes source release and the AWS CLI v1 from PyPI. It no longer packages the PyInstaller bundle.
+
 ## [0.1.0] - 2026-10-11
 
 The first release.

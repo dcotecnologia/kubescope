@@ -79,6 +79,30 @@ def blockers(manifest: str) -> list[str]:
     return found
 
 
+def check_tag(manifest: str) -> bool:
+    """The git source must name a tag that exists and the commit it points at,
+    or Flathub cannot build what the manifest says."""
+    found = re.search(r"type: git\s+url: (\S+)\s+tag: (\S+)\s+commit: (\w+)", manifest)
+    if not found:
+        print("No git source with a tag and a commit in the manifest")
+        return False
+    url, tag, commit = found.groups()
+    result = subprocess.run(
+        ["git", "ls-remote", url, f"refs/tags/{tag}", f"refs/tags/{tag}^{{}}"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    commits = {line.split()[0] for line in result.stdout.splitlines()}
+    if commit in commits:
+        print(f"The tag {tag} of {url} points at {commit[:7]}")
+        return True
+    print(
+        f"The tag {tag} of {url} is not at {commit[:7]}: {sorted(commits) or 'no tag'}"
+    )
+    return False
+
+
 def run(command: list[str], label: str) -> bool:
     print(f"$ {' '.join(command)}", flush=True)
     result = subprocess.run(command, check=False)
@@ -134,7 +158,9 @@ def lint() -> int:
     else:
         ok &= run([*linter, "manifest", str(staging / MANIFEST)], "the manifest")
         ok &= run([*linter, "appstream", str(staging / METAINFO)], "the metainfo")
-    for item in blockers((staging / MANIFEST).read_text(encoding="utf-8")):
+    manifest = (staging / MANIFEST).read_text(encoding="utf-8")
+    ok &= check_tag(manifest)
+    for item in blockers(manifest):
         print(f"Flathub will not accept as it is: {item}")
     return 0 if ok else 1
 

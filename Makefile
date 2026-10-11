@@ -71,7 +71,7 @@ appimage: build ## Package the bundle as an AppImage in dist/ (Linux x86_64)
 deb: build ## Package the bundle as a .deb in dist/ (Debian/Ubuntu)
 	$(UV) run python tools/build_deb.py
 
-flatpak: build ## Package the bundle as a Flatpak in dist/ (needs flatpak-builder)
+flatpak: ## Build the Flatpak from this working tree into dist/ (needs flatpak-builder)
 	$(UV) run python tools/build_flatpak.py
 
 flatpak-lint: ## Validate the Flatpak metainfo, desktop file and manifest like Flathub does

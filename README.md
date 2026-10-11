@@ -202,7 +202,7 @@ New texts in the code are wrapped in `self.tr(...)`; after adding or changing so
 make build      # PyInstaller bundle in dist/KubeScope
 make deb        # dist/kubescope_<version>_amd64.deb (Debian/Ubuntu)
 make appimage   # dist/KubeScope-<version>-x86_64.AppImage (any Linux with glibc)
-make flatpak    # dist/KubeScope-<version>.flatpak (needs flatpak-builder)
+make flatpak    # dist/KubeScope-<version>.flatpak, built from source (needs flatpak-builder)
 make flatpak-lint         # validate the Flatpak files like Flathub does
 make flathub-submission   # gather the files for a Flathub pull request
 make windows    # installer and portable zip; on Linux it builds inside Wine

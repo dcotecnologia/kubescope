@@ -29,7 +29,7 @@ uv run pre-commit run --all-files
 make build      # PyInstaller bundle in dist/KubeScope
 make deb        # Debian and Ubuntu
 make appimage   # any Linux
-make flatpak    # needs flatpak-builder
+make flatpak    # builds from source; needs flatpak-builder and its runtimes
 make windows    # installer and zip; on Linux it builds inside Wine
 ```
 
@@ -50,8 +50,16 @@ make flathub-submission   # gather the files in dist/flathub/ and print the step
 `flatpak-builder-lint` (what Flathub runs) when it is installed:
 `flatpak install flathub org.flatpak.Builder`.
 
-The manifest here packages the PyInstaller bundle and the AWS CLI already built.
-Flathub builds from public sources, so both commands list what has to change before
-the pull request can be accepted.
+The manifest builds everything from public sources, as Flathub requires: the app
+from its git tag, PySide6 from the `io.qt.PySide.BaseApp` base app, `kubectl` from the
+Kubernetes source release with Go, and the AWS CLI v1 from PyPI. `make flatpak`
+builds it with the app taken from your working tree instead of the tag, so a change
+that is not committed can be tried; it needs the runtimes, installed with
+`flatpak install flathub org.kde.Platform//6.11 org.kde.Sdk//6.11
+io.qt.PySide.BaseApp//6.11 org.freedesktop.Sdk.Extension.golang//25.08`.
+
+To move to a new release, change the `tag` and `commit` of the `kubescope` module,
+the version of `kubectl` if you want it newer, and run `make flatpak-lint`, which
+checks that the tag exists and points at that commit.
 Commit messages follow
 [COMMITING.md](https://github.com/dcotecnologia/kubescope/blob/main/COMMITING.md).

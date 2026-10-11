@@ -1,49 +1,81 @@
 app-id: com.dcotecnologia.KubeScope
-runtime: org.freedesktop.Platform
-runtime-version: "25.08"
-sdk: org.freedesktop.Sdk
+runtime: org.kde.Platform
+runtime-version: "6.11"
+sdk: org.kde.Sdk
+base: io.qt.PySide.BaseApp
+base-version: "6.11"
+sdk-extensions:
+  - org.freedesktop.Sdk.Extension.golang
 command: kubescope
+cleanup-commands:
+  - /app/cleanup-BaseApp.sh
 
 finish-args:
   - --share=network
   - --share=ipc
-  - --socket=x11
+  - --socket=wayland
   - --socket=fallback-x11
   - --device=dri
-  # read-only access to the user's kubeconfig; kubectl is bundled with the app
+  # read-only access to the user's kubeconfig
   - --filesystem=~/.kube:ro
-  # EKS kubeconfigs call `aws eks get-token`; the CLI is bundled below and needs the
-  # profiles, and write access for the SSO and token caches under ~/.aws
+  # EKS kubeconfigs call `aws eks get-token`; the AWS CLI below needs the profiles,
+  # and write access for the SSO and token caches under ~/.aws
   - --filesystem=~/.aws
 
 modules:
-  - name: awscli
+  # the AWS CLI v1 and what it needs, from PyPI (made by flatpak-pip-generator)
+  - python3-awscli.json
+
+  # kubectl, built from the Kubernetes source release; it ships its vendored
+  # dependencies, so the build needs no network
+  - name: kubectl
     buildsystem: simple
+    build-options:
+      append-path: /usr/lib/sdk/golang/bin
+      env:
+        CGO_ENABLED: "0"
+        GOFLAGS: -mod=vendor
+        GOTOOLCHAIN: local
     build-commands:
-      - ./aws/install --install-dir /app/aws-cli --bin-dir /app/bin
+      - >-
+        go build -trimpath -buildvcs=false
+        -ldflags "-s -w
+        -X k8s.io/client-go/pkg/version.gitVersion=v1.37.1
+        -X k8s.io/component-base/version.gitVersion=v1.37.1
+        -X k8s.io/client-go/pkg/version.gitMajor=1
+        -X k8s.io/client-go/pkg/version.gitMinor=37
+        -X k8s.io/component-base/version.gitMajor=1
+        -X k8s.io/component-base/version.gitMinor=37"
+        -o kubectl ./cmd/kubectl
+      - install -Dm755 kubectl /app/bin/kubectl
     sources:
       - type: archive
-        archive-type: zip
+        url: https://dl.k8s.io/v1.37.1/kubernetes-src.tar.gz
+        sha256: d58492a058ac7cb1db0829a9e12317024f48d4bcbf56344b32b11276f9bdc2cf
         strip-components: 0
-        url: https://awscli.amazonaws.com/awscli-exe-linux-x86_64-2.37.11.zip
-        sha256: 41e1cf5e301ed04ece2ca3c2d8bdf6c3584e8b67292269689cc3e80f97de71ea
-        only-arches: [x86_64]
 
   - name: kubescope
     buildsystem: simple
     build-commands:
-      - mkdir -p /app/lib /app/bin
-      - cp -a bundle /app/lib/kubescope
-      - ln -s ../lib/kubescope/KubeScope /app/bin/kubescope
+      # PySide6 comes with the base app, so its pin in pyproject is left to it
+      - >-
+        pip3 install --verbose --exists-action=i --no-index --no-deps
+        --no-build-isolation --prefix=${FLATPAK_DEST} .
+      # the app looks for kubectl in vendor/kubectl, next to the Python library folder
+      - >-
+        PYLIB=$(python3 -c "import sysconfig; print(sysconfig.get_path('purelib',
+        vars={'base': '/app', 'platbase': '/app'}))")/.. &&
+        install -d "$PYLIB/vendor/kubectl" &&
+        ln -s /app/bin/kubectl "$PYLIB/vendor/kubectl/kubectl"
       - install -Dm644 com.dcotecnologia.KubeScope.desktop -t /app/share/applications
       - install -Dm644 com.dcotecnologia.KubeScope.metainfo.xml -t /app/share/metainfo
       - install -Dm644 icon-256.png /app/share/icons/hicolor/256x256/apps/com.dcotecnologia.KubeScope.png
       - install -Dm644 icon-512.png /app/share/icons/hicolor/512x512/apps/com.dcotecnologia.KubeScope.png
     sources:
-      # staged by tools/build_flatpak.py from `make build`
-      - type: dir
-        path: bundle
-        dest: bundle
+      - type: git
+        url: https://github.com/dcotecnologia/kubescope.git
+        tag: v0.1.0
+        commit: 890aa685fdb29337f9d27b0c67abd078cfd1c661
       - type: file
         path: com.dcotecnologia.KubeScope.desktop
       - type: file
