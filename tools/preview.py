@@ -13,18 +13,17 @@ import tempfile
 import time
 from pathlib import Path
 
+from PySide6.QtCore import QFileSystemWatcher
+from PySide6.QtWidgets import QApplication
+
+from kubescope import window
+from kubescope.models import ClusterOverview, NodeInfo, PodInfo, Workload
+from kubescope.theme import apply_theme
+
 # The preview must never read or overwrite the real user settings.
 os.environ.setdefault(
     "KUBESCOPE_CONFIG_DIR", tempfile.mkdtemp(prefix="kubescope-preview-")
 )
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
-
-from PySide6.QtCore import QFileSystemWatcher  # noqa: E402
-from PySide6.QtWidgets import QApplication  # noqa: E402
-
-from kubescope import window  # noqa: E402
-from kubescope.models import ClusterOverview, NodeInfo, PodInfo, Workload  # noqa: E402
-from kubescope.theme import apply_light_theme  # noqa: E402
 
 WORKLOADS = [
     Workload("default", "Deployment", "api", 3, 3, "12d"),
@@ -89,9 +88,22 @@ def fake_overview(_context: str) -> ClusterOverview:
 
 window.get_cluster_overview = fake_overview
 window.list_contexts = lambda: (["prod-eks", "staging-eks"], "prod-eks")
-window.get_workloads = lambda _context, namespace=None: (
+window.get_workloads = lambda _context, namespace=None, kinds=(): (
     sorted({item.namespace for item in WORKLOADS}),
-    [item for item in WORKLOADS if namespace in (None, item.namespace)],
+    [
+        item
+        for item in WORKLOADS
+        if namespace in (None, item.namespace) and (not kinds or item.kind in kinds)
+    ],
+)
+window.get_pods = lambda context, namespace=None: (
+    sorted({item.namespace for item in WORKLOADS}),
+    [
+        pod
+        for item in WORKLOADS
+        if namespace in (None, item.namespace)
+        for pod in fake_pods(context, item)
+    ],
 )
 window.get_usage = lambda _context, namespace=None: {
     (item.namespace, item.kind, item.name): (
@@ -148,7 +160,7 @@ def wait_until_idle(application: QApplication, main_window) -> None:
 
 def main() -> int:
     application = QApplication(sys.argv[:1])
-    apply_light_theme(application)
+    apply_theme(application)
     main_window = window.WorkloadWindow()
     main_window.resize(1280, 800)
     main_window.show()
