@@ -117,6 +117,8 @@ WORKLOAD_LINKS = {
     "pods": "pods",
     "deployments": "deployments",
     "statefulsets": "statefulsets",
+    "daemonsets": "daemonsets",
+    "replicasets": "replicasets",
     "jobs": "jobs",
     "cronjobs": "cronjobs",
 }
@@ -331,12 +333,18 @@ class WorkloadWindow(QMainWindow):
         self.nav_pods = ui.navPods
         self.nav_deployments = ui.navDeployments
         self.nav_statefulsets = ui.navStatefulSets
+        self.nav_daemonsets = ui.navDaemonSets
+        self.nav_replicasets = ui.navReplicaSets
+        self.nav_replicationcontrollers = ui.navReplicationControllers
         self.nav_jobs = ui.navJobs
         self.nav_cronjobs = ui.navCronJobs
         self._nav_views = {
             "pods": self.nav_pods,
             "deployments": self.nav_deployments,
             "statefulsets": self.nav_statefulsets,
+            "daemonsets": self.nav_daemonsets,
+            "replicasets": self.nav_replicasets,
+            "replicationcontrollers": self.nav_replicationcontrollers,
             "jobs": self.nav_jobs,
             "cronjobs": self.nav_cronjobs,
         }
@@ -641,6 +649,18 @@ class WorkloadWindow(QMainWindow):
                     self.tr("StatefulSets"),
                     self.tr("StatefulSets of the cluster"),
                 ),
+                "daemonsets": (
+                    self.tr("DaemonSets"),
+                    self.tr("DaemonSets of the cluster"),
+                ),
+                "replicasets": (
+                    self.tr("ReplicaSets"),
+                    self.tr("ReplicaSets of the cluster"),
+                ),
+                "replicationcontrollers": (
+                    self.tr("ReplicationControllers"),
+                    self.tr("ReplicationControllers of the cluster"),
+                ),
                 "jobs": (self.tr("Jobs"), self.tr("Jobs of the cluster")),
                 "cronjobs": (self.tr("CronJobs"), self.tr("CronJobs of the cluster")),
             }[self._view]
@@ -690,8 +710,7 @@ class WorkloadWindow(QMainWindow):
             self._render_workloads_overview(self._workloads_overview)
 
     def _toggle_submenu(self) -> None:
-        """Slide the Pods, Deployments, StatefulSets, Jobs and CronJobs entries
-        open or closed."""
+        """Slide the Pods and workload entries open or closed."""
         animation = self._submenu_animation
         expand = self.submenu.maximumHeight() == 0 or (
             animation.state() == QPropertyAnimation.State.Running
@@ -1461,6 +1480,15 @@ class WorkloadWindow(QMainWindow):
             "statefulsets": lambda: self.tr(
                 "{count} StatefulSets in {namespaces} namespaces"
             ),
+            "daemonsets": lambda: self.tr(
+                "{count} DaemonSets in {namespaces} namespaces"
+            ),
+            "replicasets": lambda: self.tr(
+                "{count} ReplicaSets in {namespaces} namespaces"
+            ),
+            "replicationcontrollers": lambda: self.tr(
+                "{count} ReplicationControllers in {namespaces} namespaces"
+            ),
             "jobs": lambda: self.tr("{count} Jobs in {namespaces} namespaces"),
             "cronjobs": lambda: self.tr("{count} CronJobs in {namespaces} namespaces"),
         }
@@ -1485,6 +1513,11 @@ class WorkloadWindow(QMainWindow):
             "pods": self.tr("{visible} of {total} Pods"),
             "deployments": self.tr("{visible} of {total} Deployments"),
             "statefulsets": self.tr("{visible} of {total} StatefulSets"),
+            "daemonsets": self.tr("{visible} of {total} DaemonSets"),
+            "replicasets": self.tr("{visible} of {total} ReplicaSets"),
+            "replicationcontrollers": self.tr(
+                "{visible} of {total} ReplicationControllers"
+            ),
             "jobs": self.tr("{visible} of {total} Jobs"),
             "cronjobs": self.tr("{visible} of {total} CronJobs"),
         }[self._view]

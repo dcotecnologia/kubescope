@@ -634,6 +634,99 @@ QPushButton#companyLink, QPushButton#licenseLink { padding: 0; }
                </widget>
               </item>
               <item>
+               <widget class="QPushButton" name="navDaemonSets">
+                <property name="text">
+                 <string>DaemonSets</string>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>42</height>
+                 </size>
+                </property>
+                <property name="iconSize">
+                 <size>
+                  <width>16</width>
+                  <height>16</height>
+                 </size>
+                </property>
+                <property name="checkable">
+                 <bool>true</bool>
+                </property>
+                <property name="checked">
+                 <bool>false</bool>
+                </property>
+                <property name="autoExclusive">
+                 <bool>true</bool>
+                </property>
+                <property name="nav" stdset="0">
+                 <string notr="true">true</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="navReplicaSets">
+                <property name="text">
+                 <string>ReplicaSets</string>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>42</height>
+                 </size>
+                </property>
+                <property name="iconSize">
+                 <size>
+                  <width>16</width>
+                  <height>16</height>
+                 </size>
+                </property>
+                <property name="checkable">
+                 <bool>true</bool>
+                </property>
+                <property name="checked">
+                 <bool>false</bool>
+                </property>
+                <property name="autoExclusive">
+                 <bool>true</bool>
+                </property>
+                <property name="nav" stdset="0">
+                 <string notr="true">true</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="navReplicationControllers">
+                <property name="text">
+                 <string>ReplicationControllers</string>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>42</height>
+                 </size>
+                </property>
+                <property name="iconSize">
+                 <size>
+                  <width>16</width>
+                  <height>16</height>
+                 </size>
+                </property>
+                <property name="checkable">
+                 <bool>true</bool>
+                </property>
+                <property name="checked">
+                 <bool>false</bool>
+                </property>
+                <property name="autoExclusive">
+                 <bool>true</bool>
+                </property>
+                <property name="nav" stdset="0">
+                 <string notr="true">true</string>
+                </property>
+               </widget>
+              </item>
+              <item>
                <widget class="QPushButton" name="navJobs">
                 <property name="text">
                  <string>Jobs</string>

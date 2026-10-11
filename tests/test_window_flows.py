@@ -1127,6 +1127,24 @@ def test_jobs_and_cron_jobs_render_their_own_states(monkeypatch) -> None:
     window.close()
 
 
+def test_daemon_set_replica_set_and_controller_lists_open(monkeypatch) -> None:
+    window = _ready_window(monkeypatch)
+    for view, kind, title in (
+        ("daemonsets", "DaemonSet", "DaemonSets"),
+        ("replicasets", "ReplicaSet", "ReplicaSets"),
+        ("replicationcontrollers", "ReplicationController", "ReplicationControllers"),
+    ):
+        window._open_list_view(view)
+        window._show_workloads(["ops"], [Workload("ops", kind, "x", 1, 2, "2d")])
+
+        assert window.ui.pageTitle.text() == title
+        assert f"1 {title} in 1 namespaces" in window.status_label.text()
+        assert window.summary_label.text() == f"1 of 1 {title}"
+        assert window.table.item(0, 1).text() == kind
+        assert window.table.item(0, 4).text() == "Degraded"
+    window.close()
+
+
 def test_cron_job_lists_skip_the_pod_usage_lookup(monkeypatch) -> None:
     cron = Workload("ops", "CronJob", "nightly", 0, 0, "1d", state="Scheduled")
     monkeypatch.setattr(window_module, "get_workloads", lambda *_a: (["ops"], [cron]))

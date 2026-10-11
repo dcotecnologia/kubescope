@@ -327,6 +327,7 @@ _RESOURCES = {
     "StatefulSet": "statefulsets",
     "DaemonSet": "daemonsets",
     "ReplicaSet": "replicasets",
+    "ReplicationController": "replicationcontrollers",
     "Job": "jobs",
     "CronJob": "cronjobs",
 }
@@ -445,6 +446,8 @@ def get_resource_details(
 
 def _label_selector(resource: dict[str, Any]) -> str:
     selector = (resource.get("spec") or {}).get("selector") or {}
+    if "matchLabels" not in selector and "matchExpressions" not in selector:
+        selector = {"matchLabels": selector}  # a ReplicationController's plain map
     terms = [
         f"{key}={value}"
         for key, value in sorted((selector.get("matchLabels") or {}).items())
@@ -585,6 +588,13 @@ def get_usage(
             cpu = (cpu or 0.0) + pod.cpu
             memory = (memory or 0.0) + pod.memory
         totals[key] = (restarts + pod.restarts, cpu, memory)
+        if pod.owner[0] == "Deployment":  # the ReplicaSet in between has its own row
+            key = (pod.namespace, "ReplicaSet", pod.name.rsplit("-", 1)[0])
+            restarts, cpu, memory = totals.get(key, (0, None, None))
+            if pod.cpu is not None and pod.memory is not None:
+                cpu = (cpu or 0.0) + pod.cpu
+                memory = (memory or 0.0) + pod.memory
+            totals[key] = (restarts + pod.restarts, cpu, memory)
     return totals
 
 

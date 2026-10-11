@@ -30,6 +30,8 @@ WORKLOADS = [
     Workload("default", "Deployment", "worker", 1, 2, "12d"),
     Workload("default", "StatefulSet", "postgres", 0, 1, "40d"),
     Workload("monitoring", "DaemonSet", "node-exporter", 4, 4, "90d"),
+    Workload("default", "ReplicaSet", "api-5f7d9c", 3, 3, "12d"),
+    Workload("default", "ReplicationController", "legacy-web", 1, 2, "200d"),
     Workload("monitoring", "Deployment", "grafana", 0, 0, "90d"),
     Workload("kube-system", "Deployment", "coredns", 2, 2, "120d"),
 ]

@@ -458,6 +458,34 @@ def test_parse_workload_skips_unknown_kinds_and_handles_daemon_sets() -> None:
     assert (daemon.ready, daemon.desired, daemon.age) == (3, 4, "unknown")
 
 
+def test_parse_workload_reads_replication_controllers_like_replica_sets() -> None:
+    now = datetime(2025, 1, 1, tzinfo=UTC)
+
+    controller = cluster._parse_workload(
+        {
+            "kind": "ReplicationController",
+            "metadata": {"name": "legacy", "namespace": "ns"},
+            "spec": {"replicas": 3},
+            "status": {"readyReplicas": 2},
+        },
+        now,
+    )
+
+    assert controller is not None
+    assert (controller.kind, controller.ready, controller.desired) == (
+        "ReplicationController",
+        2,
+        3,
+    )
+    assert cluster._RESOURCES["ReplicationController"] == "replicationcontrollers"
+
+
+def test_label_selector_reads_a_replication_controllers_plain_map() -> None:
+    resource = {"spec": {"selector": {"tier": "web", "app": "legacy"}}}
+
+    assert cluster._label_selector(resource) == "app=legacy,tier=web"
+
+
 def test_get_resource_details_rejects_unsupported_kinds() -> None:
     with pytest.raises(cluster.KubectlError, match="Unsupported resource kind"):
         cluster.get_resource_details("c", "Ingress", "ns", "x")
@@ -578,7 +606,22 @@ def test_get_usage_skips_pods_without_a_controlling_workload(monkeypatch) -> Non
     orphan = PodInfo("ns", "solo", "Running", 1, 1, "1h", ("c",))
     monkeypatch.setattr(cluster, "_pods_with_usage", lambda *_a: [owned, orphan])
 
-    assert cluster.get_usage("ctx") == {("ns", "Deployment", "api"): (2, 0.5, 100.0)}
+    assert cluster.get_usage("ctx") == {
+        ("ns", "Deployment", "api"): (2, 0.5, 100.0),
+        ("ns", "ReplicaSet", "api"): (2, 0.5, 100.0),  # the ReplicaSet row too
+    }
+
+
+def test_get_usage_adds_up_a_replica_sets_pods_without_metrics(monkeypatch) -> None:
+    pods = [
+        PodInfo("ns", f"api-6d4cf-{n}", "Running", 1, 1, "1h", ("c",), 1, owner=owner)
+        for n, owner in (("a", ("Deployment", "api")), ("b", ("Deployment", "api")))
+    ]
+    monkeypatch.setattr(cluster, "_pods_with_usage", lambda *_a: pods)
+
+    usage = cluster.get_usage("ctx")
+
+    assert usage[("ns", "ReplicaSet", "api-6d4cf")] == (2, None, None)
 
 
 def _aws_kubeconfig(arguments=None, env=None, command="/usr/local/bin/aws") -> dict:

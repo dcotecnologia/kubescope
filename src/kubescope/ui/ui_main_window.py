@@ -368,6 +368,39 @@ class Ui_MainWindow(object):
 
         self.workloadsSubmenuLayout.addWidget(self.navStatefulSets)
 
+        self.navDaemonSets = QPushButton(self.workloadsSubmenu)
+        self.navDaemonSets.setObjectName(u"navDaemonSets")
+        self.navDaemonSets.setMinimumSize(QSize(0, 42))
+        self.navDaemonSets.setIconSize(QSize(16, 16))
+        self.navDaemonSets.setCheckable(True)
+        self.navDaemonSets.setChecked(False)
+        self.navDaemonSets.setAutoExclusive(True)
+        self.navDaemonSets.setProperty(u"nav", u"true")
+
+        self.workloadsSubmenuLayout.addWidget(self.navDaemonSets)
+
+        self.navReplicaSets = QPushButton(self.workloadsSubmenu)
+        self.navReplicaSets.setObjectName(u"navReplicaSets")
+        self.navReplicaSets.setMinimumSize(QSize(0, 42))
+        self.navReplicaSets.setIconSize(QSize(16, 16))
+        self.navReplicaSets.setCheckable(True)
+        self.navReplicaSets.setChecked(False)
+        self.navReplicaSets.setAutoExclusive(True)
+        self.navReplicaSets.setProperty(u"nav", u"true")
+
+        self.workloadsSubmenuLayout.addWidget(self.navReplicaSets)
+
+        self.navReplicationControllers = QPushButton(self.workloadsSubmenu)
+        self.navReplicationControllers.setObjectName(u"navReplicationControllers")
+        self.navReplicationControllers.setMinimumSize(QSize(0, 42))
+        self.navReplicationControllers.setIconSize(QSize(16, 16))
+        self.navReplicationControllers.setCheckable(True)
+        self.navReplicationControllers.setChecked(False)
+        self.navReplicationControllers.setAutoExclusive(True)
+        self.navReplicationControllers.setProperty(u"nav", u"true")
+
+        self.workloadsSubmenuLayout.addWidget(self.navReplicationControllers)
+
         self.navJobs = QPushButton(self.workloadsSubmenu)
         self.navJobs.setObjectName(u"navJobs")
         self.navJobs.setMinimumSize(QSize(0, 42))
@@ -862,6 +895,9 @@ class Ui_MainWindow(object):
         self.navPods.setText(QCoreApplication.translate("MainWindow", u"Pods", None))
         self.navDeployments.setText(QCoreApplication.translate("MainWindow", u"Deployments", None))
         self.navStatefulSets.setText(QCoreApplication.translate("MainWindow", u"StatefulSets", None))
+        self.navDaemonSets.setText(QCoreApplication.translate("MainWindow", u"DaemonSets", None))
+        self.navReplicaSets.setText(QCoreApplication.translate("MainWindow", u"ReplicaSets", None))
+        self.navReplicationControllers.setText(QCoreApplication.translate("MainWindow", u"ReplicationControllers", None))
         self.navJobs.setText(QCoreApplication.translate("MainWindow", u"Jobs", None))
         self.navCronJobs.setText(QCoreApplication.translate("MainWindow", u"CronJobs", None))
         self.navViewer.setText(QCoreApplication.translate("MainWindow", u"Details && Logs", None))
