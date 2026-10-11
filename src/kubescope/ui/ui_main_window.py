@@ -190,6 +190,8 @@ class Ui_MainWindow(object):
 "    border-radius: 5px; padding: 8px; selection-background-color: #d9d3f2;\n"
 "    selection-color: #20232a;\n"
 "}\n"
+"QFrame#noContextsBanner { background: #fff2de; border-bottom: 1px solid #985415; }\n"
+"QFrame#noContextsBanner QLabel { color: #985415; font-size: 11px; background: transparent; }\n"
 "QFrame#appFooter { background: #ffffff; border-top: 1px solid #e4e5eb; }\n"
 "QLabel#footerLicense, QLabel#footerVersion { color: #6b7380; font-size: 10px; }\n"
 "QFrame#appFooter QPushButton[variant=\"link\"] { font-size: 10px; padding: 0 0 0 6px; }\n"
@@ -239,6 +241,21 @@ class Ui_MainWindow(object):
 
 
         self.rootLayout.addWidget(self.topBar)
+
+        self.noContextsBanner = QFrame(self.centralwidget)
+        self.noContextsBanner.setObjectName(u"noContextsBanner")
+        self.noContextsBanner.setVisible(False)
+        self.noContextsLayout = QHBoxLayout(self.noContextsBanner)
+        self.noContextsLayout.setObjectName(u"noContextsLayout")
+        self.noContextsLayout.setContentsMargins(18, 8, 18, 8)
+        self.noContextsLabel = QLabel(self.noContextsBanner)
+        self.noContextsLabel.setObjectName(u"noContextsLabel")
+        self.noContextsLabel.setWordWrap(True)
+
+        self.noContextsLayout.addWidget(self.noContextsLabel)
+
+
+        self.rootLayout.addWidget(self.noContextsBanner)
 
         self.shell = QHBoxLayout()
         self.shell.setSpacing(0)
@@ -786,7 +803,7 @@ class Ui_MainWindow(object):
 
         self.rootLayout.addWidget(self.appFooter)
 
-        self.rootLayout.setStretch(1, 1)
+        self.rootLayout.setStretch(2, 1)
         MainWindow.setCentralWidget(self.centralwidget)
 
         self.retranslateUi(MainWindow)
@@ -806,6 +823,7 @@ class Ui_MainWindow(object):
 #endif // QT_CONFIG(tooltip)
         self.loginButton.setText(QCoreApplication.translate("MainWindow", u"Sign in to AWS", None))
         self.topAccess.setText(QCoreApplication.translate("MainWindow", u"READ ONLY", None))
+        self.noContextsLabel.setText(QCoreApplication.translate("MainWindow", u"No cluster contexts were found in your kubeconfig. Add a cluster to your kubeconfig (for example with the AWS CLI: aws eks update-kubeconfig) and reload.", None))
         self.sidebarBrand.setText(QCoreApplication.translate("MainWindow", u"KubeScope", None))
         self.sidebarSubtitle.setText(QCoreApplication.translate("MainWindow", u"Kubernetes console", None))
         self.navSection.setText(QCoreApplication.translate("MainWindow", u"MONITORING", None))

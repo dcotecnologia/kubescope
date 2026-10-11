@@ -176,13 +176,15 @@ QPlainTextEdit {
     border-radius: 5px; padding: 8px; selection-background-color: #d9d3f2;
     selection-color: #20232a;
 }
+QFrame#noContextsBanner { background: #fff2de; border-bottom: 1px solid #985415; }
+QFrame#noContextsBanner QLabel { color: #985415; font-size: 11px; background: transparent; }
 QFrame#appFooter { background: #ffffff; border-top: 1px solid #e4e5eb; }
 QLabel#footerLicense, QLabel#footerVersion { color: #6b7380; font-size: 10px; }
 QFrame#appFooter QPushButton[variant="link"] { font-size: 10px; padding: 0 0 0 6px; }
 </string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QVBoxLayout" name="rootLayout" stretch="0,1,0">
+   <layout class="QVBoxLayout" name="rootLayout" stretch="0,0,1,0">
     <property name="spacing">
      <number>0</number>
     </property>
@@ -291,6 +293,37 @@ QFrame#appFooter QPushButton[variant="link"] { font-size: 10px; padding: 0 0 0 6
         <widget class="QLabel" name="topAccess">
          <property name="text">
           <string>READ ONLY</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
+    <item>
+     <widget class="QFrame" name="noContextsBanner">
+      <property name="visible">
+       <bool>false</bool>
+      </property>
+      <layout class="QHBoxLayout" name="noContextsLayout">
+       <property name="leftMargin">
+        <number>18</number>
+       </property>
+       <property name="topMargin">
+        <number>8</number>
+       </property>
+       <property name="rightMargin">
+        <number>18</number>
+       </property>
+       <property name="bottomMargin">
+        <number>8</number>
+       </property>
+       <item>
+        <widget class="QLabel" name="noContextsLabel">
+         <property name="text">
+          <string>No cluster contexts were found in your kubeconfig. Add a cluster to your kubeconfig (for example with the AWS CLI: aws eks update-kubeconfig) and reload.</string>
+         </property>
+         <property name="wordWrap">
+          <bool>true</bool>
          </property>
         </widget>
        </item>

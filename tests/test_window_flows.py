@@ -671,6 +671,8 @@ def test_no_contexts_in_the_kubeconfig_is_reported(monkeypatch) -> None:
 
     assert "No contexts found" in window.status_label.text()
     assert not window.refresh_button.isEnabled()
+    assert not window.no_contexts_banner.isHidden()
+    assert "No cluster contexts" in window.ui.noContextsLabel.text()
     window.close()
 
 

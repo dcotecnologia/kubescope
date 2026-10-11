@@ -301,6 +301,7 @@ class WorkloadWindow(QMainWindow):
         self.table = ui.workloadTable
         self.status_label = ui.statusLabel
         self.login_button = ui.loginButton
+        self.no_contexts_banner = ui.noContextsBanner
         self.pages = ui.pages
         self.nav_overview = ui.navOverview
         self.nav_workloads = ui.navWorkloads
@@ -520,6 +521,7 @@ class WorkloadWindow(QMainWindow):
             selected = active_context
         logger.info("Loaded %d context(s); selected %s", len(contexts), selected)
         self._fill_contexts(selected)
+        self.no_contexts_banner.setVisible(not contexts)
         if not contexts:
             self._set_status(lambda: self.tr("No contexts found in kubeconfig"))
             self.refresh_button.setEnabled(False)
