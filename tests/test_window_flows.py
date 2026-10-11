@@ -16,6 +16,7 @@ from PySide6.QtWidgets import (
     QTableWidget,
 )
 
+from kubescope import json_view
 from kubescope import window as window_module
 from kubescope.cluster import KubectlError, LoginAction
 from kubescope.models import (
@@ -1739,4 +1740,16 @@ def test_the_permission_banner_goes_away_once_a_list_loads(monkeypatch) -> None:
     window._show_error(FORBIDDEN)
     window._context_changed()  # another cluster: the old refusal no longer applies
     assert window.permission_banner.isHidden()
+    window.close()
+
+
+def test_details_open_as_colored_json(monkeypatch) -> None:
+    window = _ready_window(monkeypatch)
+
+    window._show_json_dialog("Pod: api", {"kind": "Pod", "replicas": 2})
+
+    editor = window.viewer_tabs.currentWidget()
+    assert '"kind": "Pod"' in editor.toPlainText()
+    assert isinstance(editor.highlighter, json_view.JsonHighlighter)
+    assert "#272822" in editor.styleSheet()
     window.close()
