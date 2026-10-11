@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+### Added
+
+- `install.sh` (Linux) and `install.ps1` (Windows) install or update KubeScope from the files of the latest GitHub release, after checking each download against the sha256 that GitHub publishes. The README and the wiki recommend them.
+
 ### Changed
 
 - The Flatpak manifest builds from public sources, as Flathub requires: the app from its git tag, PySide6 from the `io.qt.PySide.BaseApp` base app, `kubectl` from the Kubernetes source release and the AWS CLI v1 from PyPI. It no longer packages the PyInstaller bundle.

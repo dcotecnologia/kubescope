@@ -77,7 +77,11 @@ prefer otherwise.
 - Use a read-only Kubernetes role for the contexts you open in KubeScope.
 - Keep `~/.kube/config` private (`chmod 600`) and prefer short-lived credentials
   such as `aws sso login`.
-- Install packages only from the project's releases.
+- Install packages only from the project's releases. The install scripts
+  (`install.sh` and `install.ps1`) do that: they download only from this project's
+  GitHub releases over HTTPS and check each file against the sha256 that GitHub
+  publishes before installing it. That catches a damaged or swapped download, and it
+  trusts GitHub and this repository.
 - The Flatpak can read `~/.kube` (read-only) and `~/.aws`, and has network
   access. It bundles the AWS CLI so EKS contexts can sign in. Review these
   permissions with `flatpak info --show-permissions com.dcotecnologia.KubeScope`.

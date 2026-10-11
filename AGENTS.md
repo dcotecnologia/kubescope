@@ -166,6 +166,11 @@ Requirements:
 - `make build` creates the PyInstaller bundle in `dist/KubeScope`; `make deb` and
   `make appimage` package that bundle. `make flatpak` does not: its manifest builds
   from public sources, as Flathub does, and uses this working tree for the app.
+- `install.sh` and `install.ps1` install the files of a GitHub release. The names of
+  those files (in `release.yml`, `tools/build_deb.py`, `tools/build_appimage.py` and
+  `packaging/windows/kubescope.iss`) are what the scripts look for, so change them
+  together; `tests/test_install_script.py` checks the Linux script against a fake
+  GitHub API.
 - `make windows` builds the Windows zip and installer (in Wine on Linux);
   `make windows-remote` builds them on GitHub Actions.
 - Building for another platform replaces `dist/KubeScope`, so run the Linux
