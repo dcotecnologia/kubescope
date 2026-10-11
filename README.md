@@ -37,6 +37,10 @@ resources but does not change the cluster.
     a Complete, Running, Failed or Suspended status; CronJobs show their schedule.
   - In the Pods list, young Pods (under an hour) get a soft green row and Pods
     that are restarting, failing or not ready get a soft red one.
+- **Network:** a second menu lists **Services**, **Endpoint Slices**, **Endpoints**,
+  **Ingresses**, **Ingress Classes** and **Network Policies**, each with its own
+  columns, and **Details** for the JSON of a row. The two menus open on their own,
+  and the navigation scrolls when they do not fit.
 - **Details and logs:** JSON details of a Pod or workload, and live Pod logs,
   each in its own closable tab.
 - **Your table, your way:** drag any column border to resize it, and right-click
@@ -60,7 +64,9 @@ resources but does not change the cluster.
 - AWS CLI and valid AWS credentials for EKS contexts whose kubeconfig uses the
   AWS `exec` credential plugin
 - Read access to namespaces, pods, events, deployments, statefulsets, daemonsets,
-  replicasets, replicationcontrollers, jobs, and cronjobs
+  replicasets, replicationcontrollers, jobs, and cronjobs; for the Network menu,
+  also services, endpoints, endpointslices, ingresses, ingressclasses, and
+  networkpolicies
 - Optional, for the cluster overview page: read access to nodes and pods across
   namespaces. Optional, for CPU and memory in the Pods and Deployments lists and
   on the overview: `metrics-server` for real usage. Sections the role
