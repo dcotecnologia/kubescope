@@ -532,7 +532,7 @@ def test_workloads_menu_slides_open_the_pods_and_deployments_entries(
     assert window.submenu.maximumHeight() == 0
 
     window.nav_workloads.click()
-    animation = window._submenu_animation
+    animation = window._submenus[window.submenu]
     assert animation.endValue() > 0
     animation.setCurrentTime(animation.duration())
     assert window.submenu.maximumHeight() == animation.endValue()

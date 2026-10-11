@@ -488,7 +488,7 @@ def test_label_selector_reads_a_replication_controllers_plain_map() -> None:
 
 def test_get_resource_details_rejects_unsupported_kinds() -> None:
     with pytest.raises(cluster.KubectlError, match="Unsupported resource kind"):
-        cluster.get_resource_details("c", "Ingress", "ns", "x")
+        cluster.get_resource_details("c", "Secret", "ns", "x")
 
 
 def test_label_selector_supports_every_expression_operator() -> None:
@@ -1314,3 +1314,202 @@ def test_together_runs_calls_at_the_same_time_and_raises_the_first_failure() -> 
 
     with pytest.raises(cluster.KubectlError, match="first"):
         cluster._together(fail, fail_later)
+
+
+NETWORK_NOW = datetime(2025, 1, 10, tzinfo=UTC)
+CREATED = {"creationTimestamp": "2025-01-08T00:00:00Z"}
+
+
+def _network(kind: str, item: dict) -> cluster.NetworkResource:
+    item = {**item, "metadata": {**CREATED, **item.get("metadata", {})}}
+    resource = cluster._parse_network(kind, item, NETWORK_NOW)
+    assert resource is not None
+    return resource
+
+
+def test_parse_network_reads_a_service() -> None:
+    resource = _network(
+        "Service",
+        {
+            "metadata": {"name": "web", "namespace": "shop"},
+            "spec": {
+                "type": "LoadBalancer",
+                "clusterIP": "10.0.0.1",
+                "ports": [
+                    {"port": 80, "nodePort": 30080, "protocol": "TCP"},
+                    {"port": 53, "protocol": "UDP"},
+                ],
+            },
+            "status": {"loadBalancer": {"ingress": [{"hostname": "lb.example"}]}},
+        },
+    )
+
+    assert (resource.namespace, resource.kind, resource.name) == (
+        "shop",
+        "Service",
+        "web",
+    )
+    assert resource.values == (
+        "LoadBalancer",
+        "10.0.0.1",
+        "lb.example",
+        "80:30080/TCP, 53/UDP",
+    )
+    assert resource.age == "2d"
+
+
+def test_parse_network_shows_a_pending_load_balancer_and_plain_services() -> None:
+    pending = _network(
+        "Service", {"metadata": {"name": "a"}, "spec": {"type": "LoadBalancer"}}
+    )
+    plain = _network(
+        "Service",
+        {"metadata": {"name": "b"}, "spec": {"externalIPs": ["1.2.3.4"]}},
+    )
+
+    assert pending.values == ("LoadBalancer", "—", "pending", "—")
+    assert plain.values == ("ClusterIP", "—", "1.2.3.4", "—")
+    assert plain.namespace == "default"
+
+
+def test_parse_network_reads_endpoints_and_slices() -> None:
+    endpoints = _network(
+        "Endpoints",
+        {
+            "metadata": {"name": "web"},
+            "subsets": [
+                {
+                    "addresses": [{"ip": "10.0.0.1"}, {"ip": "10.0.0.2"}],
+                    "ports": [{"port": 80}, {"port": 443}],
+                },
+                {"addresses": [{"ip": "10.0.0.3"}]},
+            ],
+        },
+    )
+    empty = _network("Endpoints", {"metadata": {"name": "none"}})
+    slice_ = _network(
+        "EndpointSlice",
+        {
+            "metadata": {"name": "web-abc"},
+            "addressType": "IPv4",
+            "ports": [{"port": 80, "protocol": "TCP"}, {"name": "x"}],
+            "endpoints": [{"addresses": ["10.0.0.1", "10.0.0.9"]}, {"addresses": []}],
+        },
+    )
+
+    assert endpoints.values == ("10.0.0.1:80, 10.0.0.1:443, 10.0.0.2:80 +2 more",)
+    assert empty.values == ("—",)
+    assert slice_.values == ("IPv4", "80/TCP", "10.0.0.1")
+
+
+def test_parse_network_reads_ingresses_and_ingress_classes() -> None:
+    ingress = _network(
+        "Ingress",
+        {
+            "metadata": {"name": "site"},
+            "spec": {
+                "ingressClassName": "nginx",
+                "rules": [{"host": "a.example"}, {}],
+                "tls": [{}],
+            },
+            "status": {"loadBalancer": {"ingress": [{"ip": "5.6.7.8"}]}},
+        },
+    )
+    annotated = _network(
+        "Ingress",
+        {
+            "metadata": {
+                "name": "old",
+                "annotations": {"kubernetes.io/ingress.class": "alb"},
+            }
+        },
+    )
+    bare = _network("Ingress", {"metadata": {"name": "bare"}})
+    ingress_class = _network(
+        "IngressClass",
+        {
+            "metadata": {"name": "nginx", "namespace": "ignored"},
+            "spec": {
+                "controller": "k8s.io/ingress-nginx",
+                "parameters": {"kind": "IngressParameters", "name": "p"},
+            },
+        },
+    )
+    plain_class = _network("IngressClass", {"metadata": {"name": "x"}})
+
+    assert ingress.values == ("nginx", "a.example, *", "5.6.7.8", "80, 443")
+    assert annotated.values[0] == "alb"
+    assert bare.values == ("—", "—", "—", "80")
+    assert ingress_class.namespace == ""  # it belongs to the whole cluster
+    assert ingress_class.values == ("k8s.io/ingress-nginx", "IngressParameters/p")
+    assert plain_class.values == ("—", "—")
+
+
+def test_parse_network_reads_network_policies() -> None:
+    selected = _network(
+        "NetworkPolicy",
+        {
+            "metadata": {"name": "db"},
+            "spec": {
+                "podSelector": {
+                    "matchLabels": {"tier": "db", "app": "x"},
+                    "matchExpressions": [{"key": "env", "operator": "In"}],
+                },
+                "policyTypes": ["Ingress"],
+            },
+        },
+    )
+    everything = _network(
+        "NetworkPolicy", {"metadata": {"name": "all"}, "spec": {"egress": [{}]}}
+    )
+    default = _network("NetworkPolicy", {"metadata": {"name": "d"}})
+
+    assert selected.values == ("app=x,tier=db,env in", "Ingress")
+    assert everything.values == ("*", "Ingress, Egress")
+    assert default.values == ("*", "Ingress")
+    assert cluster._parse_network("Service", {"metadata": {}}, NETWORK_NOW) is None
+
+
+def test_get_network_lists_by_namespace_or_for_the_whole_cluster(monkeypatch) -> None:
+    calls = []
+
+    def fake_get_json(*arguments: str, context: str) -> dict:
+        calls.append(arguments)
+        if arguments[1] == "namespaces":
+            return {"items": [{"metadata": {"name": "ops"}}]}
+        return {
+            "items": [
+                {"metadata": {**CREATED, "name": "b", "namespace": "ops"}},
+                {"metadata": {**CREATED, "name": "a", "namespace": "ops"}},
+            ]
+        }
+
+    monkeypatch.setattr(cluster, "_get_json", fake_get_json)
+
+    namespaces, services = cluster.get_network("ctx", "ops", "Service")
+    assert namespaces == ["ops"] and [s.name for s in services] == ["a", "b"]
+    assert ("get", "services", "-n", "ops") in calls
+    cluster.get_network("ctx", None, "Ingress")
+    assert ("get", "ingresses", "-A") in calls
+    cluster.get_network("ctx", "ops", "IngressClass")  # not namespaced
+    assert ("get", "ingressclasses") in calls
+
+
+@pytest.mark.parametrize(
+    ("kind", "namespace", "arguments"),
+    [
+        ("Service", "ns", ("get", "service", "x", "-n", "ns")),
+        ("Endpoints", "ns", ("get", "endpoints", "x", "-n", "ns")),
+        ("NetworkPolicy", "ns", ("get", "networkpolicy", "x", "-n", "ns")),
+        ("IngressClass", "", ("get", "ingressclass", "x")),
+    ],
+)
+def test_get_resource_details_knows_the_network_kinds(
+    monkeypatch, kind, namespace, arguments
+) -> None:
+    seen = []
+    monkeypatch.setattr(cluster, "_get_json", lambda *a, context: seen.append(a) or {})
+
+    cluster.get_resource_details("ctx", kind, namespace, "x")
+
+    assert seen == [arguments]
