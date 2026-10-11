@@ -403,13 +403,13 @@ def test_footer_names_the_company_and_the_license(monkeypatch) -> None:
     monkeypatch.setattr(window_module, "list_contexts", lambda: ([], None))
     window = window_module.WorkloadWindow()
     try:
-        assert "DCO Tecnologia" in window.ui.footerLicense.text()
-        assert "MIT License" in window.ui.footerLicense.text()
+        assert window.ui.companyLink.text() == "DCO Tecnologia"
+        assert window.ui.licenseLink.text() == "MIT License"
 
         i18n.apply_language("pt")
         application.processEvents()
-        assert "DCO Tecnologia" in window.ui.footerLicense.text()
-        assert "Licença MIT" in window.ui.footerLicense.text()
+        assert window.ui.companyLink.text() == "DCO Tecnologia"
+        assert window.ui.licenseLink.text() == "Licença MIT"
     finally:
         i18n.apply_language("en")
         window.close()

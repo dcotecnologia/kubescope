@@ -26,15 +26,14 @@ QLabel#topBrand {
     color: #ffffff; font-size: 13px; font-weight: 700;
     padding: 0 12px; background: #123764; min-height: 46px;
 }
+QLabel#topTitle { color: #ffffff; font-size: 14px; font-weight: 700; }
+QLabel#topSubtitle { color: #b8c7dc; font-size: 9px; }
 QLabel#topCaption { color: #b8c7dc; font-size: 9px; font-weight: 700; }
-QLabel#topAccess { color: #d2deec; font-size: 9px; font-weight: 700; }
 QComboBox#contextCombo {
     background: #0d315d; color: #ffffff; border: 1px solid #2d5077;
     border-radius: 4px; min-height: 30px; padding: 0 9px; font-size: 11px;
 }
 QWidget#sidebar { background: #ffffff; border-right: 1px solid #e1e3e9; }
-QLabel#sidebarBrand { color: #16375f; font-size: 19px; font-weight: 700; }
-QLabel#sidebarSubtitle { color: #4f5966; font-size: 11px; }
 QLabel#navSection, QLabel#filterLabel {
     color: #535d69; font-size: 9px; font-weight: 700;
 }
@@ -179,8 +178,9 @@ QPlainTextEdit {
 QFrame#noContextsBanner { background: #fff2de; border-bottom: 1px solid #985415; }
 QFrame#noContextsBanner QLabel { color: #985415; font-size: 11px; background: transparent; }
 QFrame#appFooter { background: #ffffff; border-top: 1px solid #e4e5eb; }
-QLabel#footerLicense, QLabel#footerVersion { color: #6b7380; font-size: 10px; }
+QLabel#footerLicense, QLabel#footerDot, QLabel#footerVersion { color: #6b7380; font-size: 10px; }
 QFrame#appFooter QPushButton[variant="link"] { font-size: 10px; padding: 0 0 0 6px; }
+QPushButton#companyLink, QPushButton#licenseLink { padding: 0; }
 </string>
   </property>
   <widget class="QWidget" name="centralwidget">
@@ -216,7 +216,7 @@ QFrame#appFooter QPushButton[variant="link"] { font-size: 10px; padding: 0 0 0 6
       </property>
       <layout class="QHBoxLayout" name="topLayout">
        <property name="spacing">
-        <number>12</number>
+        <number>10</number>
        </property>
        <property name="leftMargin">
         <number>18</number>
@@ -230,6 +230,55 @@ QFrame#appFooter QPushButton[variant="link"] { font-size: 10px; padding: 0 0 0 6
        <property name="bottomMargin">
         <number>0</number>
        </property>
+       <item>
+        <widget class="QLabel" name="topLogo">
+         <property name="minimumSize">
+          <size>
+           <width>30</width>
+           <height>30</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>30</width>
+           <height>30</height>
+          </size>
+         </property>
+         <property name="scaledContents">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <layout class="QVBoxLayout" name="topBrandLayout">
+         <property name="spacing">
+          <number>0</number>
+         </property>
+         <property name="topMargin">
+          <number>5</number>
+         </property>
+         <item>
+          <widget class="QLabel" name="topTitle">
+           <property name="alignment">
+            <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignBottom</set>
+           </property>
+           <property name="text">
+            <string>KubeScope</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="topSubtitle">
+           <property name="alignment">
+            <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignTop</set>
+           </property>
+           <property name="text">
+            <string>Kubernetes console</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
        <item>
         <spacer name="topSpacer">
          <property name="orientation">
@@ -286,13 +335,6 @@ QFrame#appFooter QPushButton[variant="link"] { font-size: 10px; padding: 0 0 0 6
          </property>
          <property name="variant" stdset="0">
           <string notr="true">primary</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QLabel" name="topAccess">
-         <property name="text">
-          <string>READ ONLY</string>
          </property>
         </widget>
        </item>
@@ -369,7 +411,7 @@ QFrame#appFooter QPushButton[variant="link"] { font-size: 10px; padding: 0 0 0 6
           <number>24</number>
          </property>
          <property name="topMargin">
-          <number>22</number>
+          <number>14</number>
          </property>
          <property name="rightMargin">
           <number>18</number>
@@ -377,36 +419,6 @@ QFrame#appFooter QPushButton[variant="link"] { font-size: 10px; padding: 0 0 0 6
          <property name="bottomMargin">
           <number>18</number>
          </property>
-         <item>
-          <widget class="QLabel" name="sidebarBrand">
-           <property name="text">
-            <string>KubeScope</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QLabel" name="sidebarSubtitle">
-           <property name="text">
-            <string>Kubernetes console</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <spacer name="sidebarGap">
-           <property name="orientation">
-            <enum>Qt::Orientation::Vertical</enum>
-           </property>
-           <property name="sizeType">
-            <enum>QSizePolicy::Policy::Fixed</enum>
-           </property>
-           <property name="sizeHint" stdset="0">
-            <size>
-             <width>20</width>
-             <height>28</height>
-            </size>
-           </property>
-          </spacer>
-         </item>
          <item>
           <widget class="QLabel" name="navSection">
            <property name="text">
@@ -1665,10 +1677,46 @@ Resources in read-only mode</string>
        <item>
         <widget class="QLabel" name="footerLicense">
          <property name="text">
-          <string>© 2026 DCO Tecnologia · MIT License</string>
+          <string notr="true">© 2026</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="companyLink">
+         <property name="text">
+          <string notr="true">DCO Tecnologia</string>
+         </property>
+         <property name="toolTip">
+          <string>Open the DCO Tecnologia website</string>
+         </property>
+         <property name="flat">
+          <bool>true</bool>
+         </property>
+         <property name="variant" stdset="0">
+          <string notr="true">link</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="footerDot">
+         <property name="text">
+          <string notr="true">·</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="licenseLink">
+         <property name="text">
+          <string>MIT License</string>
          </property>
          <property name="toolTip">
           <string>KubeScope is open source software released under the MIT License</string>
+         </property>
+         <property name="flat">
+          <bool>true</bool>
+         </property>
+         <property name="variant" stdset="0">
+          <string notr="true">link</string>
          </property>
         </widget>
        </item>

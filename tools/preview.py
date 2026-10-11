@@ -150,8 +150,8 @@ def wait_until_idle(application: QApplication, main_window) -> None:
     deadline = time.monotonic() + 10
     while time.monotonic() < deadline:
         application.processEvents()
-        workers = [main_window._worker, *main_window._action_workers]
-        if not any(worker is not None and worker.isRunning() for worker in workers):
+        workers = [*main_window._workers.values(), *main_window._action_workers]
+        if not any(worker.isRunning() for worker in workers):
             break
         time.sleep(0.05)
     for _ in range(5):

@@ -33,22 +33,21 @@ class Ui_MainWindow(object):
 "    color: #ffffff; font-size: 13px; font-weight: 700;\n"
 "    padding: 0 12px; background: #123764; min-height: 46px;\n"
 "}\n"
+"QLabel#topTitle { color: #ffffff; font-size: 14px; font-weight: 700; }\n"
+"QLabel#topSubtitle { color: #b8c7dc; font-size: 9px; }\n"
 "QLabel#topCaption { color: #b8c7dc; font-size: 9px; font-weight: 700; }\n"
-"QLabel#topAccess { color: #d2deec; font-size: 9px; font-weight: 700; }\n"
 "QComboBox#contextCombo {\n"
 "    background: #0d315d; color: #ffffff; border: 1px solid #2d5077;\n"
 "    border-radius: 4px; min-height: 30px; padding: 0 9px; font-size: 11px;\n"
 "}\n"
 "QWidget#sidebar { background: #ffffff; border-right: 1px solid #e1e3e9; }\n"
-"QLabel#sidebarBrand { color: #16375f; font-size: 19px; font-weight: 700; }\n"
-"QLabel#sidebarSubtitle { color: #4f5966; font-size: 11px; }\n"
 "QLabel#navSection, QLabel#filterLabel {\n"
 "    color: #535d69; font-size: 9px; font-weight: 700;\n"
 "}\n"
 "QFrame#sidebarRule { color: #e6e7ed; }\n"
-"QLabel#sidebarNote { color: #4d5866; font-size: 10"
-                        "px; line-height: 1.4; }\n"
-"QWidget#pageHeader { background: #ffffff; border-bottom: 1px solid #e4e5eb; }\n"
+"QLabel#sidebarNote { color: #4d5866; font-size: 10px; line-height: 1.4; }\n"
+"QWidget#pageHeader { background: #ffffff; border-bottom:"
+                        " 1px solid #e4e5eb; }\n"
 "QLabel#pageTitle { color: #17191e; font-size: 22px; font-weight: 700; }\n"
 "QLabel[variant=\"muted\"] { color: #4f5966; font-size: 11px; }\n"
 "QLabel#profileBadge {\n"
@@ -66,10 +65,10 @@ class Ui_MainWindow(object):
 "QComboBox[variant=\"filter\"] { padding-right: 28px; }\n"
 "QComboBox[variant=\"filter\"]:hover { border-color: #b9b3dc; }\n"
 "QComboBox[variant=\"filter\"]:focus, QComboBox[variant=\"filter\"]:on,\n"
-"QLineEdit#searchInput:focus { border"
-                        ": 1px solid #6252b5; }\n"
+"QLineEdit#searchInput:focus { border: 1px solid #6252b5; }\n"
 "QComboBox[variant=\"filter\"]::drop-down {\n"
-"    subcontrol-origin: padding; subcontrol-position: center right;\n"
+"    subcon"
+                        "trol-origin: padding; subcontrol-position: center right;\n"
 "    width: 26px; border: 0; background: transparent;\n"
 "}\n"
 "QComboBox[variant=\"filter\"]::down-arrow {\n"
@@ -90,10 +89,10 @@ class Ui_MainWindow(object):
 "    width: 26px; border: 0; background: transparent;\n"
 "}\n"
 "QComboBox#contextCombo::down-arrow {\n"
-"    image:"
-                        " url(CHEVRON_LIGHT); width: 10px; height: 6px; margin-right: 8px;\n"
+"    image: url(CHEVRON_LIGHT); width: 10px; height: 6px; margin-right: 8px;\n"
 "}\n"
-"QComboBox#contextCombo QAbstractItemView {\n"
+"QComboBo"
+                        "x#contextCombo QAbstractItemView {\n"
 "    background: #0d315d; color: #ffffff; border: 1px solid #2d5077;\n"
 "    selection-background-color: #1f4f87; selection-color: #ffffff;\n"
 "    outline: 0; padding: 2px;\n"
@@ -111,10 +110,10 @@ class Ui_MainWindow(object):
 "QPushButton[variant=\"link\"]:hover { color: #4030b8; }\n"
 "QPushButton[variant=\"link\"]:disabled { color: #4f5966; text-decoration: none; }\n"
 "QScrollArea { background: transparent; border: 0; }\n"
-"QWidget#settingsContent { bac"
-                        "kground: transparent; }\n"
+"QWidget#settingsContent { background: transparent; }\n"
 "QPushButton[variant=\"secondary\"] {\n"
-"    background: #ffffff; color: #3220a0; border: 1px solid #d9dce4;\n"
+"    background:"
+                        " #ffffff; color: #3220a0; border: 1px solid #d9dce4;\n"
 "    border-radius: 5px; min-height: 32px; padding: 0 10px;\n"
 "    font-size: 11px; font-weight: 600;\n"
 "}\n"
@@ -134,10 +133,10 @@ class Ui_MainWindow(object):
 "}\n"
 "QHeaderView { background: #fbfbfc; }\n"
 "QHeaderView::up-arrow { image: url(SORT_UP); width: 9px; height: 6px; }\n"
-"QHeaderView::down-arrow { image: url(SORT_DOWN); wi"
-                        "dth: 9px; height: 6px; }\n"
+"QHeaderView::down-arrow { image: url(SORT_DOWN); width: 9px; height: 6px; }\n"
 "QHeaderView::section {\n"
-"    background: #fbfbfc; color: #3c4149; border: 0;\n"
+"    background: #fbfbfc; col"
+                        "or: #3c4149; border: 0;\n"
 "    border-bottom: 1px solid #dfe2e9; padding: 10px 8px;\n"
 "    font-size: 9px; font-weight: 700;\n"
 "}\n"
@@ -158,9 +157,9 @@ class Ui_MainWindow(object):
 "    background: #ffffff; border: 1px solid #dfe2e9; border-radius: 8px;\n"
 "}\n"
 "QFrame[card=\"true\"] QLabel { background: transparent; border: 0; }\n"
-"QLabel[variant=\"cardTitle\"] { color: #535d69; font-size: 9px"
-                        "; font-weight: 700; }\n"
-"QLabel[variant=\"cardValue\"] { color: #17191e; font-size: 20px; font-weight: 700; }\n"
+"QLabel[variant=\"cardTitle\"] { color: #535d69; font-size: 9px; font-weight: 700; }\n"
+"QLabel[variant=\"cardValue\"] { color: #17191e; font-size:"
+                        " 20px; font-weight: 700; }\n"
 "QLabel[variant=\"cardCaption\"] { color: #4f5966; font-size: 10px; }\n"
 "QProgressBar {\n"
 "    background: #eceef3; border: 0; border-radius: 3px;\n"
@@ -179,9 +178,9 @@ class Ui_MainWindow(object):
 "}\n"
 "QTabBar::tab:hover { color: #3220a0; }\n"
 "QTabBar::tab:selected { color: #3220a0; border-bottom: 2px solid #3220a0; }\n"
-"QTa"
-                        "bBar::close-button {\n"
-"    image: url(CLOSE_ICON); subcontrol-position: right; margin-left: 6px;\n"
+"QTabBar::close-button {\n"
+"    image: url(CLOSE_ICON); subcontrol-position: right; mar"
+                        "gin-left: 6px;\n"
 "    width: 10px; height: 10px; padding: 3px; border-radius: 4px;\n"
 "}\n"
 "QTabBar::close-button:hover { image: url(CLOSE_ICON_HOVER); background: #eee9f7; }\n"
@@ -193,8 +192,9 @@ class Ui_MainWindow(object):
 "QFrame#noContextsBanner { background: #fff2de; border-bottom: 1px solid #985415; }\n"
 "QFrame#noContextsBanner QLabel { color: #985415; font-size: 11px; background: transparent; }\n"
 "QFrame#appFooter { background: #ffffff; border-top: 1px solid #e4e5eb; }\n"
-"QLabel#footerLicense, QLabel#footerVersion { color: #6b7380; font-size: 10px; }\n"
+"QLabel#footerLicense, QLabel#footerDot, QLabel#footerVersion { color: #6b7380; font-size: 10px; }\n"
 "QFrame#appFooter QPushButton[variant=\"link\"] { font-size: 10px; padding: 0 0 0 6px; }\n"
+"QPushButton#companyLink, QPushButton#licenseLink { padding: 0; }\n"
 "")
         self.centralwidget = QWidget(MainWindow)
         self.centralwidget.setObjectName(u"centralwidget")
@@ -207,9 +207,36 @@ class Ui_MainWindow(object):
         self.topBar.setMinimumSize(QSize(0, 46))
         self.topBar.setMaximumSize(QSize(16777215, 46))
         self.topLayout = QHBoxLayout(self.topBar)
-        self.topLayout.setSpacing(12)
+        self.topLayout.setSpacing(10)
         self.topLayout.setObjectName(u"topLayout")
         self.topLayout.setContentsMargins(18, 0, 22, 0)
+        self.topLogo = QLabel(self.topBar)
+        self.topLogo.setObjectName(u"topLogo")
+        self.topLogo.setMinimumSize(QSize(30, 30))
+        self.topLogo.setMaximumSize(QSize(30, 30))
+        self.topLogo.setScaledContents(True)
+
+        self.topLayout.addWidget(self.topLogo)
+
+        self.topBrandLayout = QVBoxLayout()
+        self.topBrandLayout.setSpacing(0)
+        self.topBrandLayout.setObjectName(u"topBrandLayout")
+        self.topBrandLayout.setContentsMargins(-1, 5, -1, -1)
+        self.topTitle = QLabel(self.topBar)
+        self.topTitle.setObjectName(u"topTitle")
+        self.topTitle.setAlignment(Qt.AlignmentFlag.AlignLeading|Qt.AlignmentFlag.AlignBottom)
+
+        self.topBrandLayout.addWidget(self.topTitle)
+
+        self.topSubtitle = QLabel(self.topBar)
+        self.topSubtitle.setObjectName(u"topSubtitle")
+        self.topSubtitle.setAlignment(Qt.AlignmentFlag.AlignLeading|Qt.AlignmentFlag.AlignTop)
+
+        self.topBrandLayout.addWidget(self.topSubtitle)
+
+
+        self.topLayout.addLayout(self.topBrandLayout)
+
         self.topSpacer = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
 
         self.topLayout.addItem(self.topSpacer)
@@ -233,11 +260,6 @@ class Ui_MainWindow(object):
         self.loginButton.setProperty(u"variant", u"primary")
 
         self.topLayout.addWidget(self.loginButton)
-
-        self.topAccess = QLabel(self.topBar)
-        self.topAccess.setObjectName(u"topAccess")
-
-        self.topLayout.addWidget(self.topAccess)
 
 
         self.rootLayout.addWidget(self.topBar)
@@ -268,21 +290,7 @@ class Ui_MainWindow(object):
         self.sidebarLayout = QVBoxLayout(self.sidebar)
         self.sidebarLayout.setSpacing(8)
         self.sidebarLayout.setObjectName(u"sidebarLayout")
-        self.sidebarLayout.setContentsMargins(24, 22, 18, 18)
-        self.sidebarBrand = QLabel(self.sidebar)
-        self.sidebarBrand.setObjectName(u"sidebarBrand")
-
-        self.sidebarLayout.addWidget(self.sidebarBrand)
-
-        self.sidebarSubtitle = QLabel(self.sidebar)
-        self.sidebarSubtitle.setObjectName(u"sidebarSubtitle")
-
-        self.sidebarLayout.addWidget(self.sidebarSubtitle)
-
-        self.sidebarGap = QSpacerItem(20, 28, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed)
-
-        self.sidebarLayout.addItem(self.sidebarGap)
-
+        self.sidebarLayout.setContentsMargins(24, 14, 18, 18)
         self.navSection = QLabel(self.sidebar)
         self.navSection.setObjectName(u"navSection")
 
@@ -779,8 +787,30 @@ class Ui_MainWindow(object):
         self.appFooterLayout.setContentsMargins(18, 0, 22, 0)
         self.footerLicense = QLabel(self.appFooter)
         self.footerLicense.setObjectName(u"footerLicense")
+        self.footerLicense.setText(u"\u00a9 2026")
 
         self.appFooterLayout.addWidget(self.footerLicense)
+
+        self.companyLink = QPushButton(self.appFooter)
+        self.companyLink.setObjectName(u"companyLink")
+        self.companyLink.setText(u"DCO Tecnologia")
+        self.companyLink.setFlat(True)
+        self.companyLink.setProperty(u"variant", u"link")
+
+        self.appFooterLayout.addWidget(self.companyLink)
+
+        self.footerDot = QLabel(self.appFooter)
+        self.footerDot.setObjectName(u"footerDot")
+        self.footerDot.setText(u"\u00b7")
+
+        self.appFooterLayout.addWidget(self.footerDot)
+
+        self.licenseLink = QPushButton(self.appFooter)
+        self.licenseLink.setObjectName(u"licenseLink")
+        self.licenseLink.setFlat(True)
+        self.licenseLink.setProperty(u"variant", u"link")
+
+        self.appFooterLayout.addWidget(self.licenseLink)
 
         self.appFooterSpacer = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
 
@@ -813,6 +843,8 @@ class Ui_MainWindow(object):
 
     def retranslateUi(self, MainWindow):
         MainWindow.setWindowTitle(QCoreApplication.translate("MainWindow", u"KubeScope", None))
+        self.topTitle.setText(QCoreApplication.translate("MainWindow", u"KubeScope", None))
+        self.topSubtitle.setText(QCoreApplication.translate("MainWindow", u"Kubernetes console", None))
         self.topCaption.setText(QCoreApplication.translate("MainWindow", u"CONTEXT", None))
 
 #if QT_CONFIG(tooltip)
@@ -822,10 +854,7 @@ class Ui_MainWindow(object):
         self.loginButton.setToolTip(QCoreApplication.translate("MainWindow", u"Sign in with the AWS CLI, then reload the cluster data", None))
 #endif // QT_CONFIG(tooltip)
         self.loginButton.setText(QCoreApplication.translate("MainWindow", u"Sign in to AWS", None))
-        self.topAccess.setText(QCoreApplication.translate("MainWindow", u"READ ONLY", None))
         self.noContextsLabel.setText(QCoreApplication.translate("MainWindow", u"No cluster contexts were found in your kubeconfig. Add a cluster to your kubeconfig (for example with the AWS CLI: aws eks update-kubeconfig) and reload.", None))
-        self.sidebarBrand.setText(QCoreApplication.translate("MainWindow", u"KubeScope", None))
-        self.sidebarSubtitle.setText(QCoreApplication.translate("MainWindow", u"Kubernetes console", None))
         self.navSection.setText(QCoreApplication.translate("MainWindow", u"MONITORING", None))
         self.navOverview.setText(QCoreApplication.translate("MainWindow", u"Overview", None))
         self.navWorkloads.setText(QCoreApplication.translate("MainWindow", u"Workloads", None))
@@ -878,9 +907,12 @@ class Ui_MainWindow(object):
 
         self.statusLabel.setText(QCoreApplication.translate("MainWindow", u"Select a context to load workloads", None))
         self.footerNote.setText(QCoreApplication.translate("MainWindow", u"Data fetched via kubectl", None))
-        self.footerLicense.setText(QCoreApplication.translate("MainWindow", u"\u00a9 2026 DCO Tecnologia \u00b7 MIT License", None))
 #if QT_CONFIG(tooltip)
-        self.footerLicense.setToolTip(QCoreApplication.translate("MainWindow", u"KubeScope is open source software released under the MIT License", None))
+        self.companyLink.setToolTip(QCoreApplication.translate("MainWindow", u"Open the DCO Tecnologia website", None))
+#endif // QT_CONFIG(tooltip)
+        self.licenseLink.setText(QCoreApplication.translate("MainWindow", u"MIT License", None))
+#if QT_CONFIG(tooltip)
+        self.licenseLink.setToolTip(QCoreApplication.translate("MainWindow", u"KubeScope is open source software released under the MIT License", None))
 #endif // QT_CONFIG(tooltip)
 #if QT_CONFIG(tooltip)
         self.githubLink.setToolTip(QCoreApplication.translate("MainWindow", u"Open the project on GitHub", None))

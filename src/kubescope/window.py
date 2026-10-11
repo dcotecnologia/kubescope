@@ -4,6 +4,7 @@ import json
 import logging
 import tempfile
 from collections.abc import Callable
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Any
 
@@ -50,7 +51,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from kubescope import PROJECT_URL, __version__
+from kubescope import COMPANY_URL, LICENSE_URL, PROJECT_URL, __version__
 from kubescope.cluster import (
     KubectlError,
     LoginAction,
@@ -106,6 +107,10 @@ from kubescope.ui.ui_viewer_page import Ui_ViewerPage
 from kubescope.ui.ui_workloads_overview_page import Ui_WorkloadsOverviewPage
 
 logger = logging.getLogger(__name__)
+
+LIST_DEBOUNCE_MS = 150
+
+LOGO_PATH = Path(__file__).resolve().parent / "assets" / "icon.png"
 
 # Overview rows that open a list when clicked, and the list each opens.
 WORKLOAD_LINKS = {
@@ -193,25 +198,32 @@ class RefreshWorker(QThread):
         self.namespace = namespace
         self.view = view
 
+    def _usage(self, kind: str) -> dict:
+        try:
+            return (
+                {}  # a CronJob's Pods belong to the Jobs it creates
+                if kind == "CronJob"
+                else get_usage(self.context, self.namespace)
+            )
+        except KubectlError as error:  # metrics-server is optional
+            logger.debug("No Pod usage for %s: %s", self.context, error)
+        except Exception:
+            logger.exception("Could not load Pod usage for %s", self.context)
+        return {}
+
     def run(self) -> None:
         try:
             if self.view == "pods":
                 namespaces, items = get_pods(self.context, self.namespace)
             else:
                 kind = WORKLOAD_VIEWS[self.view]
-                namespaces, items = get_workloads(self.context, self.namespace, (kind,))
-                try:
-                    usage = (
-                        {}  # a CronJob's Pods belong to the Jobs it creates
-                        if kind == "CronJob"
-                        else get_usage(self.context, self.namespace)
+                with ThreadPoolExecutor(max_workers=1) as pool:
+                    # the Pods are read while the workloads are
+                    usage_call = pool.submit(self._usage, kind)
+                    namespaces, items = get_workloads(
+                        self.context, self.namespace, (kind,)
                     )
-                except KubectlError as error:  # metrics-server is optional
-                    logger.debug("No Pod usage for %s: %s", self.context, error)
-                    usage = {}
-                except Exception:
-                    logger.exception("Could not load Pod usage for %s", self.context)
-                    usage = {}
+                    usage = usage_call.result()
                 items = [
                     dataclasses.replace(
                         item,
@@ -277,7 +289,15 @@ class WorkloadWindow(QMainWindow):
         self._sort: tuple[int, Qt.SortOrder] | None = None
         self._overview: ClusterOverview | None = None
         self._status_message: Callable[[], str] | None = None
-        self._worker: RefreshWorker | None = None
+        self._workers: dict[str, RefreshWorker] = {}  # one request per list
+        # the last answer per (context, namespace, list), shown at once while the
+        # list is requested again
+        self._answers: dict[tuple[str, str | None, str], tuple[list, list]] = {}
+        # clicking through the lists quickly asks for the last one only
+        self._list_timer = QTimer(self)
+        self._list_timer.setSingleShot(True)
+        self._list_timer.setInterval(LIST_DEBOUNCE_MS)
+        self._list_timer.timeout.connect(self.refresh)
         self._action_workers: list[ActionWorker] = []
         self._close_when_worker_stops = False
         self._workloads: list[Workload] = []
@@ -301,6 +321,7 @@ class WorkloadWindow(QMainWindow):
         self.table = ui.workloadTable
         self.status_label = ui.statusLabel
         self.login_button = ui.loginButton
+        ui.topLogo.setPixmap(QPixmap(str(LOGO_PATH)))
         self.no_contexts_banner = ui.noContextsBanner
         self.pages = ui.pages
         self.nav_overview = ui.navOverview
@@ -436,10 +457,14 @@ class WorkloadWindow(QMainWindow):
             self.table.setColumnWidth(column, width)
         header.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         header.customContextMenuRequested.connect(self._show_column_menu)
+        self.table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.table.customContextMenuRequested.connect(self._show_row_menu)
         self._style_template = self.styleSheet()
         self._apply_style()
         self._show_version()
         self.ui.githubLink.clicked.connect(self._open_project)
+        self.ui.licenseLink.clicked.connect(self._open_license)
+        self.ui.companyLink.clicked.connect(self._open_company)
 
         self._spinner_angle = 0
         self._spinner_button: QPushButton | None = None
@@ -634,6 +659,12 @@ class WorkloadWindow(QMainWindow):
     def _open_project(self) -> None:
         QDesktopServices.openUrl(QUrl(PROJECT_URL))
 
+    def _open_company(self) -> None:
+        QDesktopServices.openUrl(QUrl(COMPANY_URL))
+
+    def _open_license(self) -> None:
+        QDesktopServices.openUrl(QUrl(LICENSE_URL))
+
     def _apply_style(self) -> None:
         """Style the window for the active theme; the icons Qt style sheets
         cannot draw are rendered in the theme's colors."""
@@ -684,9 +715,16 @@ class WorkloadWindow(QMainWindow):
             header.setSortIndicatorShown(False)
             self._apply_view_columns()
             self._render_rows()
+            known = self._answers.get(
+                (self._context(), self.namespace_combo.currentData() or None, view)
+            )
+            if known:  # the last answer, until the fresh one arrives
+                self._show_answer(view, *known)
         self._show_page(1)
         if changed:
-            self.refresh()
+            self._set_status(lambda: self.tr("Loading resources..."))
+            self._sync_loading()
+            self._list_timer.start()
 
     def _apply_view_columns(self) -> None:
         second = "CONTAINERS" if self._view == "pods" else "KIND"
@@ -713,6 +751,21 @@ class WorkloadWindow(QMainWindow):
         hidden = self.settings.hidden_columns(self._view)
         for column in range(self.table.columnCount()):
             self.table.setColumnHidden(column, column in hidden)
+
+    def _show_row_menu(self, position: QPoint) -> None:
+        """Row right-click: select the row and offer what the buttons above the
+        table do for it."""
+        row = self.table.rowAt(position.y())
+        if row < 0:
+            return
+        self.table.selectRow(row)
+        menu = QMenu(self)
+        for button in (self.pods_button, self.details_button, self.logs_button):
+            if not button.isHidden():
+                action = menu.addAction(button.icon(), button.text())
+                action.setEnabled(button.isEnabled())
+                action.triggered.connect(button.click)
+        menu.exec(self.table.viewport().mapToGlobal(position))
 
     def _show_column_menu(self, position: QPoint) -> None:
         """Header right-click: tick the columns to show; the choice is
@@ -1147,7 +1200,7 @@ class WorkloadWindow(QMainWindow):
 
     def refresh(self, *_args: object) -> None:
         context = self._context()
-        if not context or (self._worker is not None and self._worker.isRunning()):
+        if not context or self._loading(self._view):
             return
         namespace = self.namespace_combo.currentData() or None
         logger.info(
@@ -1156,27 +1209,58 @@ class WorkloadWindow(QMainWindow):
             context,
             namespace or "all",
         )
-        self.refresh_button.setEnabled(False)
-        self.context_combo.setEnabled(False)
-        self.namespace_combo.setEnabled(False)
-        self._set_status(lambda: self.tr("Loading resources..."))
         view = self._view
-        self._worker = RefreshWorker(context, namespace, view)
-        end_loading = self._begin_loading(self.refresh_button, self.tr("Refreshing..."))
-        self._worker.completed.connect(end_loading)
-        self._worker.failed.connect(end_loading)
-        self._worker.finished.connect(end_loading)
-        show = self._show_pods if view == "pods" else self._show_workloads
-        # an answer for a view the person has left is dropped; the list is
-        # requested again for the new one when this request finishes
-        self._worker.completed.connect(
-            lambda namespaces, items: (
-                show(namespaces, items) if view == self._view else None
+        worker = RefreshWorker(context, namespace, view)
+        self._workers[view] = worker
+        # An answer for a list the person has left is kept, not shown: it appears
+        # at once when they come back.
+        worker.completed.connect(
+            lambda namespaces, items: self._answered(
+                context, namespace, view, namespaces, items
             )
         )
-        self._worker.failed.connect(self._show_error)
-        self._worker.finished.connect(self._refresh_finished)
-        self._worker.start()
+        worker.failed.connect(
+            lambda message: self._show_error(message) if view == self._view else None
+        )
+        worker.finished.connect(self._refresh_finished)
+        self._set_status(lambda: self.tr("Loading resources..."))
+        worker.start()
+        self._sync_loading()
+
+    def _loading(self, view: str) -> bool:
+        worker = self._workers.get(view)
+        return worker is not None and worker.isRunning()
+
+    def _sync_loading(self) -> None:
+        """Spin the refresh button while the list on screen loads; the context
+        and namespace stay fixed while any list is loading."""
+        loading = self._loading(self._view)
+        self.refresh_button.setEnabled(not loading)
+        busy = any(self._loading(view) for view in self._workers)
+        self.context_combo.setEnabled(not busy)
+        self.namespace_combo.setEnabled(not busy)
+        if loading:
+            self._begin_loading(self.refresh_button, self.tr("Refreshing..."))
+        else:
+            self._end_loading(self.refresh_button)
+
+    def _answered(
+        self,
+        context: str,
+        namespace: str | None,
+        view: str,
+        namespaces: list,
+        items: list,
+    ) -> None:
+        self._answers[(context, namespace, view)] = (namespaces, items)
+        if view == self._view:
+            self._show_answer(view, namespaces, items)
+
+    def _show_answer(self, view: str, namespaces: list, items: list) -> None:
+        if view == "pods":
+            self._show_pods(namespaces, items)
+        else:
+            self._show_workloads(namespaces, items)
 
     def _show_workloads(self, namespaces: list, workloads: list) -> None:
         logger.info(
@@ -1458,7 +1542,7 @@ class WorkloadWindow(QMainWindow):
         self._finish_deferred_close()
 
     def _finish_deferred_close(self) -> None:
-        refresh_running = self._worker is not None and self._worker.isRunning()
+        refresh_running = any(self._loading(view) for view in self._workers)
         actions_running = any(worker.isRunning() for worker in self._action_workers)
         if (
             self._close_when_worker_stops
@@ -1935,15 +2019,11 @@ class WorkloadWindow(QMainWindow):
         self._filter_rows()
 
     def _refresh_finished(self) -> None:
-        self.refresh_button.setEnabled(True)
-        self.context_combo.setEnabled(True)
-        self.namespace_combo.setEnabled(True)
+        self._sync_loading()
         self._finish_deferred_close()
-        if self._worker is not None and self._worker.view != self._view:
-            QTimer.singleShot(0, self.refresh)  # the view changed mid-request
 
     def closeEvent(self, event: QCloseEvent) -> None:
-        refresh_running = self._worker is not None and self._worker.isRunning()
+        refresh_running = any(self._loading(view) for view in self._workers)
         actions_running = any(worker.isRunning() for worker in self._action_workers)
         if refresh_running or actions_running:
             logger.info("Closing while requests are running; stopping them")
