@@ -36,8 +36,8 @@ irm https://raw.githubusercontent.com/dcotecnologia/kubescope/main/install.ps1 |
 ## Install by hand
 
 Download the package for your system from the
-[releases page](https://github.com/dcotecnologia/kubescope/releases). Every
-package already contains `kubectl`.
+[releases page](https://github.com/dcotecnologia/kubescope/releases). You do
+not need `kubectl`.
 
 ## Debian and Ubuntu (.deb)
 
@@ -74,8 +74,7 @@ AppImage if your kubeconfig needs them.
 ## macOS and other systems
 
 There is no package yet. Run it from source with Python 3.12 or newer; the steps
-are in [Building from source](Building-from-source). Its `kubectl` is fetched by
-`python tools/fetch_kubectl.py`.
+are in [Building from source](Building-from-source).
 
 ## Uninstall
 

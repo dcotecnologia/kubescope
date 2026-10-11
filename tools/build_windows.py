@@ -43,8 +43,6 @@ def main() -> int:
     with (ROOT / "pyproject.toml").open("rb") as handle:
         version = tomllib.load(handle)["project"]["version"]
 
-    if not (ROOT / "vendor" / "kubectl" / "kubectl.exe").is_file():
-        run(sys.executable, "tools/fetch_kubectl.py")
     run(sys.executable, "-m", "PyInstaller", "--noconfirm", "KubeScope.spec")
 
     archive = shutil.make_archive(

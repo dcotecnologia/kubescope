@@ -185,9 +185,11 @@ QFrame#permissionBanner { background: #fce9ea; border-bottom: 1px solid #a33d45;
 QFrame#permissionBanner QLabel { color: #a33d45; font-size: 11px; background: transparent; }
 QFrame#permissionBanner QPushButton { color: #a33d45; font-size: 11px; padding: 0 0 0 12px; }
 QFrame#appFooter { background: #ffffff; border-top: 1px solid #e4e5eb; }
-QLabel#footerLicense, QLabel#footerDot, QLabel#footerVersion { color: #6b7380; font-size: 10px; }
+QLabel#footerLicense, QLabel#footerDot, QLabel#footerVersion, QLabel#updateNotice { color: #6b7380; font-size: 10px; }
 QFrame#appFooter QPushButton[variant="link"] { font-size: 10px; padding: 0 0 0 6px; }
 QPushButton#companyLink, QPushButton#licenseLink { padding: 0; }
+QPushButton#updateButton { border: none; background: transparent; padding: 0; border-radius: 4px; }
+QPushButton#updateButton:hover { background: #f6f6fa; }
 </string>
   </property>
   <widget class="QWidget" name="centralwidget">
@@ -335,10 +337,10 @@ QPushButton#companyLink, QPushButton#licenseLink { padding: 0; }
           <bool>false</bool>
          </property>
          <property name="toolTip">
-          <string>Sign in with the AWS CLI, then reload the cluster data</string>
+          <string>Sign in with the cloud CLI, then reload the cluster data</string>
          </property>
          <property name="text">
-          <string>Sign in to AWS</string>
+          <string>Sign in</string>
          </property>
          <property name="variant" stdset="0">
           <string notr="true">primary</string>
@@ -2025,7 +2027,7 @@ Resources in read-only mode</string>
                <item>
                 <widget class="QLabel" name="footerNote">
                  <property name="text">
-                  <string>Data fetched via kubectl</string>
+                  <string>Data fetched from the cluster API</string>
                  </property>
                  <property name="variant" stdset="0">
                   <string notr="true">muted</string>
@@ -2131,6 +2133,57 @@ Resources in read-only mode</string>
           </size>
          </property>
         </spacer>
+       </item>
+       <item>
+        <widget class="QLabel" name="updateNotice">
+         <property name="visible">
+          <bool>false</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="updateLink">
+         <property name="visible">
+          <bool>false</bool>
+         </property>
+         <property name="text">
+          <string>Update available</string>
+         </property>
+         <property name="toolTip">
+          <string>Open the download page of the new version</string>
+         </property>
+         <property name="flat">
+          <bool>true</bool>
+         </property>
+         <property name="variant" stdset="0">
+          <string notr="true">link</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="updateButton">
+         <property name="minimumSize">
+          <size>
+           <width>20</width>
+           <height>20</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>20</width>
+           <height>20</height>
+          </size>
+         </property>
+         <property name="cursor">
+          <cursorShape>PointingHandCursor</cursorShape>
+         </property>
+         <property name="toolTip">
+          <string>Check for updates</string>
+         </property>
+         <property name="flat">
+          <bool>true</bool>
+         </property>
+        </widget>
        </item>
        <item>
         <widget class="QLabel" name="footerVersion">

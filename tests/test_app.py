@@ -55,6 +55,9 @@ def test_main_builds_the_window_and_runs_the_event_loop(monkeypatch) -> None:
         def show(self) -> None:
             events.append("show")
 
+        def start_update_check(self) -> None:
+            events.append("update check")
+
     monkeypatch.delenv(app.DEBUG_ENV, raising=False)
     _capture_logging(monkeypatch)
     monkeypatch.setattr(app, "QApplication", FakeApplication)
@@ -77,4 +80,4 @@ def test_main_builds_the_window_and_runs_the_event_loop(monkeypatch) -> None:
     assert events.index("fonts") < events.index(("theme", "dark"))  # before widgets
     assert ("name", "KubeScope") in events
     assert ("lang", "auto") in events
-    assert events[-2:] == ["show", "exec"]
+    assert events[-3:] == ["show", "update check", "exec"]

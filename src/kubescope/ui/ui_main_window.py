@@ -200,9 +200,11 @@ class Ui_MainWindow(object):
 "QFrame"
                         "#permissionBanner QPushButton { color: #a33d45; font-size: 11px; padding: 0 0 0 12px; }\n"
 "QFrame#appFooter { background: #ffffff; border-top: 1px solid #e4e5eb; }\n"
-"QLabel#footerLicense, QLabel#footerDot, QLabel#footerVersion { color: #6b7380; font-size: 10px; }\n"
+"QLabel#footerLicense, QLabel#footerDot, QLabel#footerVersion, QLabel#updateNotice { color: #6b7380; font-size: 10px; }\n"
 "QFrame#appFooter QPushButton[variant=\"link\"] { font-size: 10px; padding: 0 0 0 6px; }\n"
 "QPushButton#companyLink, QPushButton#licenseLink { padding: 0; }\n"
+"QPushButton#updateButton { border: none; background: transparent; padding: 0; border-radius: 4px; }\n"
+"QPushButton#updateButton:hover { background: #f6f6fa; }\n"
 "")
         self.centralwidget = QWidget(MainWindow)
         self.centralwidget.setObjectName(u"centralwidget")
@@ -973,6 +975,29 @@ class Ui_MainWindow(object):
 
         self.appFooterLayout.addItem(self.appFooterSpacer)
 
+        self.updateNotice = QLabel(self.appFooter)
+        self.updateNotice.setObjectName(u"updateNotice")
+        self.updateNotice.setVisible(False)
+
+        self.appFooterLayout.addWidget(self.updateNotice)
+
+        self.updateLink = QPushButton(self.appFooter)
+        self.updateLink.setObjectName(u"updateLink")
+        self.updateLink.setVisible(False)
+        self.updateLink.setFlat(True)
+        self.updateLink.setProperty(u"variant", u"link")
+
+        self.appFooterLayout.addWidget(self.updateLink)
+
+        self.updateButton = QPushButton(self.appFooter)
+        self.updateButton.setObjectName(u"updateButton")
+        self.updateButton.setMinimumSize(QSize(20, 20))
+        self.updateButton.setMaximumSize(QSize(20, 20))
+        self.updateButton.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+        self.updateButton.setFlat(True)
+
+        self.appFooterLayout.addWidget(self.updateButton)
+
         self.footerVersion = QLabel(self.appFooter)
         self.footerVersion.setObjectName(u"footerVersion")
         self.footerVersion.setText(u"v0.0.0")
@@ -1008,9 +1033,9 @@ class Ui_MainWindow(object):
         self.contextCombo.setToolTip(QCoreApplication.translate("MainWindow", u"Kubernetes context from your kubeconfig", None))
 #endif // QT_CONFIG(tooltip)
 #if QT_CONFIG(tooltip)
-        self.loginButton.setToolTip(QCoreApplication.translate("MainWindow", u"Sign in with the AWS CLI, then reload the cluster data", None))
+        self.loginButton.setToolTip(QCoreApplication.translate("MainWindow", u"Sign in with the cloud CLI, then reload the cluster data", None))
 #endif // QT_CONFIG(tooltip)
-        self.loginButton.setText(QCoreApplication.translate("MainWindow", u"Sign in to AWS", None))
+        self.loginButton.setText(QCoreApplication.translate("MainWindow", u"Sign in", None))
 #if QT_CONFIG(tooltip)
         self.settingsButton.setToolTip(QCoreApplication.translate("MainWindow", u"Settings", None))
 #endif // QT_CONFIG(tooltip)
@@ -1076,13 +1101,20 @@ class Ui_MainWindow(object):
         self.workloadTable.setSortingEnabled(__sortingEnabled)
 
         self.statusLabel.setText(QCoreApplication.translate("MainWindow", u"Select a context to load workloads", None))
-        self.footerNote.setText(QCoreApplication.translate("MainWindow", u"Data fetched via kubectl", None))
+        self.footerNote.setText(QCoreApplication.translate("MainWindow", u"Data fetched from the cluster API", None))
 #if QT_CONFIG(tooltip)
         self.companyLink.setToolTip(QCoreApplication.translate("MainWindow", u"Open the DCO Tecnologia website", None))
 #endif // QT_CONFIG(tooltip)
         self.licenseLink.setText(QCoreApplication.translate("MainWindow", u"MIT License", None))
 #if QT_CONFIG(tooltip)
         self.licenseLink.setToolTip(QCoreApplication.translate("MainWindow", u"KubeScope is open source software released under the MIT License", None))
+#endif // QT_CONFIG(tooltip)
+        self.updateLink.setText(QCoreApplication.translate("MainWindow", u"Update available", None))
+#if QT_CONFIG(tooltip)
+        self.updateLink.setToolTip(QCoreApplication.translate("MainWindow", u"Open the download page of the new version", None))
+#endif // QT_CONFIG(tooltip)
+#if QT_CONFIG(tooltip)
+        self.updateButton.setToolTip(QCoreApplication.translate("MainWindow", u"Check for updates", None))
 #endif // QT_CONFIG(tooltip)
 #if QT_CONFIG(tooltip)
         self.githubLink.setToolTip(QCoreApplication.translate("MainWindow", u"Open the project on GitHub", None))

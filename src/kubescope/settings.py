@@ -23,6 +23,10 @@ DEFAULTS: dict[str, Any] = {
     "context_aliases": {},
     "hidden_columns": {},
     "debug_logging": False,
+    "check_updates": True,
+    "window_geometry": "",
+    "kubeconfig_files": [],
+    "sign_in_commands": {},
 }
 
 
@@ -86,6 +90,23 @@ class Settings:
             if isinstance(columns, list)
             and all(isinstance(column, int) and column >= 0 for column in columns)
         }
+        files = self._data["kubeconfig_files"]
+        self._data["kubeconfig_files"] = (
+            [path.strip() for path in files if isinstance(path, str) and path.strip()]
+            if isinstance(files, list)
+            else []
+        )
+        commands = self._data["sign_in_commands"]
+        self._data["sign_in_commands"] = {
+            program.strip(): command.strip()
+            for program, command in (
+                commands.items() if isinstance(commands, dict) else []
+            )
+            if isinstance(program, str)
+            and isinstance(command, str)
+            and program.strip()
+            and command.strip()
+        }
         namespace = self._data["default_namespace"]
         if not (isinstance(namespace, str) and is_namespace_name(namespace)):
             self._data["default_namespace"] = ""  # empty means all namespaces
@@ -136,6 +157,51 @@ class Settings:
     @debug_logging.setter
     def debug_logging(self, value: bool) -> None:
         self._data["debug_logging"] = bool(value)
+
+    @property
+    def kubeconfig_files(self) -> list[str]:
+        """Kubeconfig files to read instead of KUBECONFIG; empty means the
+        default ones."""
+        return list(self._data["kubeconfig_files"])
+
+    @kubeconfig_files.setter
+    def kubeconfig_files(self, value: list[str]) -> None:
+        self._data["kubeconfig_files"] = [
+            path.strip() for path in value if path.strip()
+        ]
+
+    @property
+    def sign_in_commands(self) -> dict[str, str]:
+        """Sign-in program of a kubeconfig (like `oci`) -> the command that
+        signs in (like `oci session authenticate`)."""
+        return dict(self._data["sign_in_commands"])
+
+    @sign_in_commands.setter
+    def sign_in_commands(self, value: dict[str, str]) -> None:
+        self._data["sign_in_commands"] = {
+            program.strip(): command.strip()
+            for program, command in value.items()
+            if program.strip() and command.strip()
+        }
+
+    @property
+    def window_geometry(self) -> str:
+        """The size, position and maximized state of the window, as the base64
+        text Qt saved it; empty until the window has been closed once."""
+        value = self._data["window_geometry"]
+        return value if isinstance(value, str) else ""
+
+    @window_geometry.setter
+    def window_geometry(self, value: str) -> None:
+        self._data["window_geometry"] = str(value)
+
+    @property
+    def check_updates(self) -> bool:
+        return self._data["check_updates"] is not False
+
+    @check_updates.setter
+    def check_updates(self, value: bool) -> None:
+        self._data["check_updates"] = bool(value)
 
     @property
     def last_context(self) -> str | None:

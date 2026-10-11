@@ -10,7 +10,6 @@ git clone https://github.com/dcotecnologia/kubescope.git
 cd kubescope
 make setup                       # install dependencies with uv
 uv run pre-commit install        # run the checks on every commit
-python tools/fetch_kubectl.py    # download the verified kubectl
 make run                         # start the app
 make preview                     # start it with fake data, no cluster needed
 ```
@@ -28,14 +27,13 @@ list is short.
 | `make` | the commands above |
 | [`uv`](https://docs.astral.sh/uv/) | it makes the virtual environment, installs the dependencies and finds Python |
 | Python 3.12 or newer | `uv` fetches it for you; CI tests 3.12, 3.13 and 3.14, and the pre-commit hooks are set to 3.14 (`uv python install 3.14`) |
-| A network connection | the first `make setup`, `uv run pre-commit run` and `python tools/fetch_kubectl.py` download things; pre-commit installs its own Go and Node for `gitleaks` and `markdownlint` |
+| A network connection | the first `make setup`, and `uv run pre-commit run` download things; pre-commit installs its own Go and Node for `gitleaks` and `markdownlint` |
 | `libxcb-cursor.so.0` on Linux | Qt needs it to open a window. On Debian and Ubuntu `make run` fetches it for you with `apt-get download libxcb-cursor0`; on other distributions install the package that provides it |
 
 PySide6 (with `pyside6-uic`, `pyside6-lupdate` and `pyside6-lrelease`), `pytest`,
 `ruff`, `pre-commit` and `pyinstaller` are installed by `make setup` in `.venv`; do
 not install them yourself. The tests and the screenshots run without a display, with
-`QT_QPA_PLATFORM=offscreen`. `kubectl` is downloaded and its sha256 is checked, so you
-do not need one on your machine, and you need no cluster: `make preview` uses fake
+`QT_QPA_PLATFORM=offscreen`. You do not need `kubectl` or a cluster: `make preview` uses fake
 data.
 
 ### Only for some tasks
@@ -45,7 +43,7 @@ data.
 | Try it on a real cluster | a kubeconfig; for EKS, the AWS CLI and a profile that can sign in |
 | `make deb` | `dpkg-deb`, from the `dpkg` package |
 | `make appimage` | nothing: `appimagetool` is downloaded and checked, and it runs without FUSE (Linux x86_64 only) |
-| `make flatpak` | `flatpak` and `flatpak-builder`, with the runtimes `org.kde.Platform//6.11`, `org.kde.Sdk//6.11`, `io.qt.PySide.BaseApp//6.11` and `org.freedesktop.Sdk.Extension.golang//25.08` (`flatpak install flathub ...`) |
+| `make flatpak` | `flatpak` and `flatpak-builder`, with the runtimes `org.kde.Platform//6.11`, `org.kde.Sdk//6.11` and `io.qt.PySide.BaseApp//6.11` (`flatpak install flathub ...`) |
 | `make flatpak-lint` | `appstreamcli` (package `appstream`), `desktop-file-validate` (package `desktop-file-utils`) and `flatpak install flathub org.flatpak.Builder` for the Flathub linter |
 | `make windows` on Linux | Wine (`sudo apt install wine64`); Python and Inno Setup are downloaded into `.wine/` |
 | `make windows` on Windows | Inno Setup with `iscc` on the `PATH` |
@@ -92,22 +90,16 @@ make flathub-submission   # gather the files in dist/flathub/ and print the step
 `flatpak install flathub org.flatpak.Builder`.
 
 The manifest builds everything from public sources, as Flathub requires: the app
-from its git tag, PySide6 from the `io.qt.PySide.BaseApp` base app, `kubectl` from the
-Kubernetes source release with Go, and the AWS CLI v1 from PyPI. `make flatpak`
+from its git tag, PySide6 from the `io.qt.PySide.BaseApp` base app, the Kubernetes
+client (`python3-kubernetes.json`, made by `python tools/flatpak_python_deps.py`
+from `uv.lock`) and the AWS CLI v1 from PyPI. `make flatpak`
 builds it with the app taken from your working tree instead of the tag, so a change
 that is not committed can be tried; it needs the runtimes, installed with
 `flatpak install flathub org.kde.Platform//6.11 org.kde.Sdk//6.11
-io.qt.PySide.BaseApp//6.11 org.freedesktop.Sdk.Extension.golang//25.08`.
-
-Flathub's [Generative AI policy](https://docs.flathub.org/docs/for-app-authors/requirements#generative-ai-policy)
-applies to a submission: the manifest it reviews must not contain AI-generated or
-AI-assisted content, the pull request has to be opened and written by a person, and
-AI-generated code or packaging in the app has to be disclosed. Treat the manifest in
-`packaging/flatpak/` as what builds the local Flatpak, and write the one you submit
-yourself.
+io.qt.PySide.BaseApp//6.11`.
 
 To move to a new release, change the `tag` and `commit` of the `kubescope` module,
-the version of `kubectl` if you want it newer, and run `make flatpak-lint`, which
+regenerate `python3-kubernetes.json` if `uv.lock` changed, and run `make flatpak-lint`, which
 checks that the tag exists and points at that commit.
 Commit messages follow
 [COMMITING.md](https://github.com/dcotecnologia/kubescope/blob/main/COMMITING.md).

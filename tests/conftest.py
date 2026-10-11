@@ -30,3 +30,25 @@ def light_theme():
     theme.set_theme("light")
     yield
     theme.set_theme("light")
+
+
+@pytest.fixture(autouse=True)
+def no_update_check_network(monkeypatch):
+    """Tests never ask GitHub for a release; they fake the answer when they
+    need it."""
+
+    def offline(*_args, **_kwargs):
+        raise OSError("the network is off in tests")
+
+    monkeypatch.setattr("kubescope.updates._get", offline)
+    monkeypatch.setattr("kubescope.window.UPDATE_SEARCH_MS", 0)
+
+
+@pytest.fixture(autouse=True)
+def default_cluster_settings():
+    """The kubeconfig files and sign-in commands are process-wide state."""
+    from kubescope import cluster
+
+    cluster.configure()
+    yield
+    cluster.configure()

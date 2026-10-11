@@ -9,10 +9,11 @@
 [![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-D7FF64.svg?logo=ruff&logoColor=black)](https://docs.astral.sh/ruff/)
 [![Kubernetes](https://img.shields.io/badge/Kubernetes-EKS%20ready-326CE5.svg?logo=kubernetes&logoColor=white)](https://kubernetes.io/)
 
-Desktop viewer for Kubernetes workloads, including Amazon EKS clusters available
-through the local Kubernetes configuration. The packaged application includes
-its own `kubectl` executable. It is read-only for now: it lists and inspects
-resources but does not change the cluster.
+Desktop viewer for Kubernetes workloads, including Amazon EKS, Google GKE and
+Azure AKS clusters available
+through the local Kubernetes configuration. It talks to the cluster with the
+official Kubernetes Python client, so it needs no `kubectl`. It is read-only for
+now: it lists and inspects resources but does not change the cluster.
 
 ## Install
 
@@ -46,8 +47,8 @@ There is no macOS package yet; see [run it from source](#run-from-source).
 ### Install by hand
 
 Download the package for your system from the
-[latest release](https://github.com/dcotecnologia/kubescope/releases/latest). Every
-package already includes `kubectl`.
+[latest release](https://github.com/dcotecnologia/kubescope/releases/latest). You do
+not need `kubectl`.
 
 | System | Package | How to install |
 | ------ | ------- | -------------- |
@@ -91,26 +92,34 @@ on the wiki. To connect to your clusters, see
 - **Details and logs:** JSON details of a Pod or workload, and live Pod logs,
   each in its own closable tab, colored like Monokai. **Save...** writes the open
   tab to a file you choose.
+- **Update check:** when it starts, KubeScope asks GitHub for the latest release
+  and shows **Update available**, linked to the download page, next to an icon in
+  the footer. The icon spins while it looks, and clicking it checks again. It sends
+  only the app version and installs nothing; **Settings** turns the startup check
+  off.
 - **Your table, your way:** drag any column border to resize it, and right-click
   a table header to hide or show columns. The choice is remembered.
 - **Readable errors:** a missing login tool, an unreachable cluster, expired
   credentials or denied access appear as a short message with a hint; the
-  original `kubectl` text stays one click away as details.
+  original error text stays one click away as details.
 - **Sign-in check:** when you open an AWS context, KubeScope checks that you are
   signed in (SSO session or access keys). If not, a **Sign in to AWS** button
   runs `aws sso login` for the profile your kubeconfig uses and reloads the data.
   Access-key profiles get a **Configure AWS credentials** button that opens a
-  terminal with `aws configure` for that profile.
+  terminal with `aws configure` for that profile. Google GKE and Azure AKS
+  contexts get a **Sign in to Google Cloud** button (`gcloud auth login`) or a
+  **Sign in to Azure** button (`az login`) when their credentials have expired.
 - **Always responsive:** every cluster call runs in the background, so the window
-  never freezes while `kubectl` or the AWS CLI work.
+  never freezes while the cluster or the cloud CLIs work.
 - **English and Portuguese**, selectable in Settings.
 
 ## Requirements
 
 - Python 3.12 or newer to run from source
 - Linux Mint/Ubuntu: `apt-get` and `dpkg-deb` to stage the Qt XCB runtime library
-- AWS CLI and valid AWS credentials for EKS contexts whose kubeconfig uses the
-  AWS `exec` credential plugin
+- For contexts whose kubeconfig signs in with an `exec` credential plugin: the
+  AWS CLI (EKS), `gke-gcloud-auth-plugin` and the Google Cloud CLI (GKE), or
+  `kubelogin` and the Azure CLI (AKS), and valid credentials for them
 - Read access to namespaces, pods, events, deployments, statefulsets, daemonsets,
   replicasets, replicationcontrollers, jobs, and cronjobs; for the Network menu,
   also services, endpoints, endpointslices, ingresses, ingressclasses, and
@@ -125,7 +134,6 @@ on the wiki. To connect to your clusters, see
 ```bash
 make setup                      # uv sync with the dev and build extras
 uv run pre-commit install       # run the checks on every commit
-python tools/fetch_kubectl.py
 make run
 ```
 
@@ -142,13 +150,11 @@ Kubernetes role for the contexts used by the app.
 
 ## Build a bundled application
 
-Build on each target operating system and architecture. The fetch script obtains
-the official stable `kubectl` release and verifies its published SHA-256 before
-PyInstaller includes it in the application bundle.
+Build on each target operating system and architecture. PyInstaller includes the
+Python dependencies, among them the Kubernetes client, in the application bundle.
 
 ```bash
 python -m pip install -e '.[build]'
-python tools/fetch_kubectl.py
 python tools/fetch_linux_qt_libs.py  # Linux only
 pyinstaller --noconfirm KubeScope.spec
 ```
@@ -260,7 +266,7 @@ time. `make windows` keeps its Wine prefix in `.wine/` and downloads Python and
 Inno Setup on the first run.
 
 The Flatpak (`com.dcotecnologia.KubeScope`) bundles the AWS CLI so EKS contexts
-can sign in from the sandbox, and can read `~/.kube` (read-only) and `~/.aws`.
+can sign in from the sandbox (GKE and AKS need the `.deb` or the AppImage), and can read `~/.kube` (read-only) and `~/.aws`.
 Other credential plugins, such as `gcloud` or `kubelogin`, are not available
 inside it.
 

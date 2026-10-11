@@ -144,8 +144,7 @@ def main() -> int:
         "Homepage: https://github.com/dcotecnologia/kubescope\n"
         f"Description: {metadata['description']}\n"
         " KubeScope is a read-only desktop console for Kubernetes and Amazon EKS:\n"
-        " cluster overview, workloads, Pod details and live logs. It bundles its\n"
-        " own kubectl.\n"
+        " cluster overview, workloads, Pod details and live logs.\n"
     )
     write(package / "DEBIAN" / "control", control)
     write(package / "DEBIAN" / "md5sums", md5sums(package))

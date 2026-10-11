@@ -39,9 +39,8 @@ jobs:
       - name: Install dependencies
         run: uv sync --extra dev --extra build --frozen
 
-      - name: Fetch kubectl and the Qt XCB library
+      - name: Fetch the Qt XCB library
         run: |
-          uv run python tools/fetch_kubectl.py
           uv run python tools/fetch_linux_qt_libs.py
 
       - name: Build the bundle

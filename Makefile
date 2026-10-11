@@ -2,7 +2,7 @@
 
 UV ?= uv
 
-.PHONY: help setup run dev debug preview language screenshot store-screenshots designer ui i18n appimage deb flatpak flatpak-lint flathub-submission windows windows-remote lint format test kubectl qt-libs build clean
+.PHONY: help setup run dev debug preview language screenshot store-screenshots designer ui i18n appimage deb flatpak flatpak-lint flathub-submission windows windows-remote lint format test qt-libs build clean
 
 help: ## List the available commands
 	@awk 'BEGIN { FS = ":.*##" } /^[a-zA-Z_-]+:.*##/ { printf "  %-12s %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
@@ -101,9 +101,6 @@ format: ## Fix lint issues and format the code with ruff
 test: $(UI_PY) $(QM_FILES) ## Run the tests
 	$(UV) run --extra dev pytest -q
 
-kubectl: ## Download and verify the official kubectl
-	$(UV) run --extra dev python tools/fetch_kubectl.py
-
 qt-libs: ## Download and extract the Qt/XCB libraries for Linux
 ifeq ($(shell uname -s),Linux)
 	$(UV) run --extra dev python tools/fetch_linux_qt_libs.py
@@ -111,7 +108,7 @@ else
 	@echo "Skipping Linux Qt libraries on $(shell uname -s)"
 endif
 
-build: qt-libs $(UI_PY) $(QM_FILES) ## Build the desktop bundle with kubectl and the XCB library
+build: qt-libs $(UI_PY) $(QM_FILES) ## Build the desktop bundle with the XCB library
 	$(UV) run --extra build pyinstaller --noconfirm KubeScope.spec
 
 clean: ## Remove build artifacts and the test cache

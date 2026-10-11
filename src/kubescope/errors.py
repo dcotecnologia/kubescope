@@ -1,4 +1,4 @@
-"""Turn raw kubectl failures into a short title and a hint a person can act
+"""Turn raw cluster failures into a short title and a hint a person can act
 on."""
 
 import re
@@ -11,7 +11,7 @@ from PySide6.QtCore import QCoreApplication
 class ErrorInfo:
     title: str
     hint: str
-    details: str  # the original kubectl text, kept for the "Show details" view
+    details: str  # the original error text, kept for the "Show details" view
 
 
 _AUTH_WORDS = (
@@ -25,6 +25,13 @@ _AUTH_WORDS = (
     "security token included in the request",
     "signaturedoesnotmatch",
     "expiredtoken",
+    "gcloud auth login",  # Google Cloud
+    "reauthentication",
+    "invalid_grant",
+    "could not automatically determine credentials",
+    "aadsts",  # Azure AD error codes
+    "az login",
+    "interactive authentication is needed",
 )
 
 
@@ -42,7 +49,7 @@ def is_forbidden(message: str) -> bool:
 
 
 def forbidden_action(message: str) -> str | None:
-    """What the user may not do, like "list services", when kubectl names
+    """What the user may not do, like "list services", when the cluster names
     it."""
     found = re.search(r'cannot (\w+) resource "([^"]+)"', message)
     return f"{found.group(1)} {found.group(2)}" if found else None
@@ -54,7 +61,7 @@ def first_line(text: str) -> str:
 
 
 def describe_error(message: str) -> ErrorInfo:
-    """Classify a kubectl error message; unknown ones keep their first line."""
+    """Classify a cluster error message; unknown ones keep their first line."""
     details = message.strip()
     lowered = details.lower()
 
@@ -67,15 +74,6 @@ def describe_error(message: str) -> ErrorInfo:
                 "Your kubeconfig runs “{tool}” to sign in, but it is not installed "
                 "or not on the PATH. Install it and refresh.",
             ).format(tool=plugin.group(1)),
-            details,
-        )
-    if "bundled kubectl is missing" in lowered:
-        return ErrorInfo(
-            QCoreApplication.translate("Errors", "kubectl is missing"),
-            QCoreApplication.translate(
-                "Errors",
-                "The kubectl bundled with the app was not found. Reinstall it.",
-            ),
             details,
         )
     if "context was not found" in lowered or "error in configuration" in lowered:
@@ -93,7 +91,7 @@ def describe_error(message: str) -> ErrorInfo:
             QCoreApplication.translate(
                 "Errors",
                 "Your credentials may have expired. Sign in again (for example "
-                "“aws sso login”) and refresh.",
+                "“aws sso login”, “gcloud auth login” or “az login”) and refresh.",
             ),
             details,
         )
@@ -114,6 +112,10 @@ def describe_error(message: str) -> ErrorInfo:
             "no such host",
             "unable to connect",
             "deadline exceeded",
+            "failed to establish a new connection",
+            "name or service not known",
+            "temporary failure in name resolution",
+            "getaddrinfo failed",
         )
     ):
         return ErrorInfo(

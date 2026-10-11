@@ -1,8 +1,10 @@
 import json
+import os
 import sys
 import threading
 import time
 from datetime import UTC, datetime
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from types import SimpleNamespace
 
 import pytest
@@ -40,40 +42,30 @@ def test_parse_deployment_workload() -> None:
     )
 
 
-def test_get_workloads_uses_kubectl_json(monkeypatch) -> None:
-    responses = iter(
-        [
-            {"items": [{"metadata": {"name": "default"}}]},
-            {
-                "items": [
-                    {
-                        "kind": "DaemonSet",
-                        "metadata": {"name": "agent", "namespace": "default"},
-                        "status": {
-                            "desiredNumberScheduled": 2,
-                            "numberReady": 2,
-                        },
-                    }
-                ]
-            },
-        ]
-    )
-    commands = []
+def test_get_workloads_lists_namespaces_and_every_default_kind(monkeypatch) -> None:
+    daemon_set = {
+        "metadata": {"name": "agent", "namespace": "default"},
+        "status": {"desiredNumberScheduled": 2, "numberReady": 2},
+    }
+    documents = {
+        "/api/v1/namespaces": {"items": [{"metadata": {"name": "default"}}]},
+        "/apis/apps/v1/deployments": {"items": []},
+        "/apis/apps/v1/statefulsets": {"items": []},
+        "/apis/apps/v1/daemonsets": {"items": [daemon_set]},
+    }
+    paths = []
 
-    def fake_get_json(*arguments: str, context: str) -> dict:
-        commands.append((arguments, context))
-        return next(responses)
+    def fake_get_json(path: str, context: str, query=None) -> dict:
+        paths.append((path, context, query))
+        return documents[path]
 
     monkeypatch.setattr(cluster, "_get_json", fake_get_json)
 
     namespaces, workloads = cluster.get_workloads("dev")
 
     assert namespaces == ["default"]
-    assert [workload.name for workload in workloads] == ["agent"]
-    assert commands == [
-        (("get", "namespaces"), "dev"),
-        (("get", "deployments,statefulsets,daemonsets", "-A"), "dev"),
-    ]
+    assert [(w.kind, w.name) for w in workloads] == [("DaemonSet", "agent")]
+    assert sorted(paths) == sorted((path, "dev", []) for path in documents)
 
 
 def test_get_workload_pods_uses_workload_label_selector(monkeypatch) -> None:
@@ -110,8 +102,8 @@ def test_get_workload_pods_uses_workload_label_selector(monkeypatch) -> None:
     )
     commands = []
 
-    def fake_get_json(*arguments: str, context: str) -> dict:
-        commands.append((arguments, context))
+    def fake_get_json(path: str, context: str, query=None) -> dict:
+        commands.append((path, context, query))
         return next(responses)
 
     monkeypatch.setattr(cluster, "_get_json", fake_get_json)
@@ -123,17 +115,11 @@ def test_get_workload_pods_uses_workload_label_selector(monkeypatch) -> None:
         (pod.name, pod.phase, pod.ready, pod.total, pod.containers) for pod in pods
     ] == [("api-abc", "Running", 1, 1, ("api",))]
     assert commands == [
-        (("get", "deployment", "api", "-n", "production"), "dev"),
+        ("/apis/apps/v1/namespaces/production/deployments/api", "dev", None),
         (
-            (
-                "get",
-                "pods",
-                "-n",
-                "production",
-                "-l",
-                "app=api,tier in (backend,worker)",
-            ),
+            "/api/v1/namespaces/production/pods",
             "dev",
+            [("labelSelector", "app=api,tier in (backend,worker)")],
         ),
     ]
 
@@ -142,8 +128,8 @@ def test_get_resource_details_returns_json_document(monkeypatch) -> None:
     expected = {"kind": "Deployment", "metadata": {"name": "api"}}
     commands = []
 
-    def fake_get_json(*arguments: str, context: str) -> dict:
-        commands.append((arguments, context))
+    def fake_get_json(path: str, context: str, query=None) -> dict:
+        commands.append((path, context))
         return expected
 
     monkeypatch.setattr(cluster, "_get_json", fake_get_json)
@@ -151,34 +137,27 @@ def test_get_resource_details_returns_json_document(monkeypatch) -> None:
     result = cluster.get_resource_details("dev", "Deployment", "production", "api")
 
     assert result == expected
-    assert commands == [(("get", "deployment", "api", "-n", "production"), "dev")]
+    assert commands == [("/apis/apps/v1/namespaces/production/deployments/api", "dev")]
 
 
 def test_get_pod_logs_selects_container_and_caps_lines(monkeypatch) -> None:
-    commands = []
+    requests = []
 
-    def fake_run_kubectl(*arguments: str, context: str | None = None) -> str:
-        commands.append((arguments, context))
-        return "2026-10-08T00:00:00Z started"
+    def fake_request(path, context, query=None, accept="application/json"):
+        requests.append((path, context, query, accept))
+        return "2026-10-08T00:00:00Z started ✓".encode()
 
-    monkeypatch.setattr(cluster, "_run_kubectl", fake_run_kubectl)
+    monkeypatch.setattr(cluster, "_request", fake_request)
 
-    logs = cluster.get_pod_logs("dev", "production", "api-abc", "api")
+    logs = cluster.get_pod_logs("dev", "production", "api-abc", "api", tail_lines=900)
 
-    assert logs == "2026-10-08T00:00:00Z started"
-    assert commands == [
+    assert logs == "2026-10-08T00:00:00Z started ✓"
+    assert requests == [
         (
-            (
-                "logs",
-                "api-abc",
-                "-n",
-                "production",
-                "-c",
-                "api",
-                "--tail=500",
-                "--timestamps",
-            ),
+            "/api/v1/namespaces/production/pods/api-abc/log",
             "dev",
+            [("container", "api"), ("tailLines", "500"), ("timestamps", "true")],
+            "application/json, */*",
         )
     ]
 
@@ -260,16 +239,14 @@ def test_build_overview_aggregates_nodes_pods_and_usage() -> None:
 
 
 def test_get_cluster_overview_reports_unreadable_sections(monkeypatch) -> None:
-    def fake_get_json(*arguments: str, context: str) -> dict:
-        if arguments[1] == "nodes":
-            raise cluster.KubectlError("forbidden")
+    def fake_get_json(path: str, context: str, query=None) -> dict:
+        if path == "/api/v1/nodes":
+            raise cluster.ClusterError("forbidden")
+        if "metrics" in path:
+            raise cluster.ClusterError("no metrics")
         return {"items": []}
 
-    def no_metrics(*_args: object, **_kwargs: object) -> str:
-        raise cluster.KubectlError("no metrics")
-
     monkeypatch.setattr(cluster, "_get_json", fake_get_json)
-    monkeypatch.setattr(cluster, "_run_kubectl", no_metrics)
 
     overview = cluster.get_cluster_overview("ctx")
 
@@ -281,17 +258,16 @@ def test_get_cluster_overview_reports_unreadable_sections(monkeypatch) -> None:
 
 def test_get_cluster_overview_fails_when_nothing_is_readable(monkeypatch) -> None:
     def fail(*_args: object, **_kwargs: object) -> dict:
-        raise cluster.KubectlError("unreachable")
+        raise cluster.ClusterError("unreachable")
 
     monkeypatch.setattr(cluster, "_get_json", fail)
-    monkeypatch.setattr(cluster, "_run_kubectl", fail)
 
     try:
         cluster.get_cluster_overview("ctx")
-    except cluster.KubectlError as error:
+    except cluster.ClusterError as error:
         assert "unreachable" in str(error)
     else:
-        raise AssertionError("expected KubectlError")
+        raise AssertionError("expected ClusterError")
 
 
 def test_get_pods_and_usage_include_metrics_restarts_and_owner(monkeypatch) -> None:
@@ -315,14 +291,13 @@ def test_get_pods_and_usage_include_metrics_restarts_and_owner(monkeypatch) -> N
             }
         ]
     }
-    monkeypatch.setattr(
-        cluster,
-        "_get_json",
-        lambda *a, context: {"items": [pod]} if "pods" in a else {"items": []},
-    )
-    monkeypatch.setattr(
-        cluster, "_run_kubectl", lambda *a, context: json.dumps(metrics)
-    )
+
+    def fake_get_json(path: str, context: str, query=None) -> dict:
+        if "metrics" in path:
+            return metrics
+        return {"items": [pod]} if path.endswith("/pods") else {"items": []}
+
+    monkeypatch.setattr(cluster, "_get_json", fake_get_json)
 
     _, pods = cluster.get_pods("dev")
     assert (pods[0].restarts, pods[0].cpu, pods[0].memory) == (3, 0.25, 128 * 2**20)
@@ -330,112 +305,325 @@ def test_get_pods_and_usage_include_metrics_restarts_and_owner(monkeypatch) -> N
     usage = cluster.get_usage("dev")
     assert usage[("default", "Deployment", "api")] == (3, 0.25, 128 * 2**20)
 
-    def no_metrics(*_a, context):
-        raise cluster.KubectlError("no metrics")
+    def no_metrics(path: str, context: str, query=None) -> dict:
+        if "metrics" in path:
+            raise cluster.ClusterError("no metrics")
+        return {"items": [pod]} if path.endswith("/pods") else {"items": []}
 
-    monkeypatch.setattr(cluster, "_run_kubectl", no_metrics)
+    monkeypatch.setattr(cluster, "_get_json", no_metrics)
     assert cluster.get_pods("dev")[1][0].cpu is None
 
 
-def test_kubectl_executable_in_the_source_tree_and_in_a_bundle(
-    monkeypatch, tmp_path
-) -> None:
-    source = cluster.kubectl_executable()
-    assert source.parts[-3:] == ("vendor", "kubectl", "kubectl")
+class FakeCluster:
+    """A local HTTP server standing in for a cluster, and a kubeconfig that
+    points at it."""
 
-    monkeypatch.setattr(cluster, "os", SimpleNamespace(name="nt"))
-    monkeypatch.setattr(cluster.sys, "frozen", True, raising=False)
-    monkeypatch.setattr(cluster.sys, "_MEIPASS", str(tmp_path), raising=False)
-    assert cluster.kubectl_executable() == tmp_path / "kubectl" / "kubectl.exe"
+    def __init__(self, monkeypatch, tmp_path) -> None:
+        self.routes: dict[str, tuple[int, bytes]] = {}
+        self.requests: list[tuple[str, str | None]] = []
+        self.accept_token: str | None = None  # refuse any other token with a 401
+        outer = self
+
+        class Handler(BaseHTTPRequestHandler):
+            def do_GET(self) -> None:
+                outer.requests.append((self.path, self.headers.get("Authorization")))
+                status, body = outer.routes.get(self.path, (404, b"{}"))
+                token = self.headers.get("Authorization")
+                if outer.accept_token and token != outer.accept_token:
+                    status, body = 401, b'{"message": "Unauthorized"}'
+                self.send_response(status)
+                self.end_headers()
+                self.wfile.write(body)
+
+            def log_message(self, *_args: object) -> None:
+                pass
+
+        self.server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+        threading.Thread(target=self.server.serve_forever, daemon=True).start()
+        self.url = f"http://127.0.0.1:{self.server.server_port}"
+        self.kubeconfig = tmp_path / "kubeconfig"
+        self.write_kubeconfig()
+        monkeypatch.setenv("KUBECONFIG", str(self.kubeconfig))
+        monkeypatch.setenv("NO_PROXY", "127.0.0.1")
+
+    def write_kubeconfig(self, server: str | None = None, user: dict | None = None):
+        document = {
+            "current-context": "dev",
+            "contexts": [{"name": "dev", "context": {"cluster": "c", "user": "u"}}],
+            "clusters": [{"name": "c", "cluster": {"server": server or self.url}}],
+            "users": [{"name": "u", "user": user or {"token": "fake-token"}}],
+        }
+        self.kubeconfig.write_text(json.dumps(document))  # JSON is valid YAML
+
+    def serve(self, path: str, body: dict | str, status: int = 200) -> None:
+        raw = body if isinstance(body, str) else json.dumps(body)
+        self.routes[path] = (status, raw.encode())
 
 
-def _fake_kubectl(monkeypatch, tmp_path, run):
-    executable = tmp_path / "kubectl"
-    executable.write_text("")
-    monkeypatch.setattr(cluster, "kubectl_executable", lambda: executable)
-    monkeypatch.setattr(cluster, "_run_process", run)
-    return executable
+@pytest.fixture
+def fake_cluster(monkeypatch, tmp_path):
+    fake = FakeCluster(monkeypatch, tmp_path)
+    yield fake
+    fake.server.shutdown()
+    fake.server.server_close()
 
 
-def test_run_kubectl_builds_the_command_and_returns_stdout(
-    monkeypatch, tmp_path
-) -> None:
-    calls = []
+def test_request_sends_the_token_and_returns_the_body(fake_cluster) -> None:
+    fake_cluster.serve("/version", {"gitVersion": "v1.30.0"})
+    fake_cluster.serve("/api/v1/namespaces/ops/pods?labelSelector=app%3Dapi", "ok")
 
-    def run(command, **kwargs):
-        calls.append((command, kwargs))
-        return cluster.subprocess.CompletedProcess(command, 0, "out\n", "")
+    assert json.loads(cluster._request("/version", "dev")) == {"gitVersion": "v1.30.0"}
+    body = cluster._request(
+        "/api/v1/namespaces/ops/pods", "dev", [("labelSelector", "app=api")]
+    )
 
-    executable = _fake_kubectl(monkeypatch, tmp_path, run)
-
-    assert cluster._run_kubectl("get", "pods", context="prod") == "out\n"
-    assert calls[0][0] == [str(executable), "--context", "prod", "get", "pods"]
-    assert calls[0][1]["timeout"] == 45
-    cluster._run_kubectl("version")
-    assert calls[1][0] == [str(executable), "version"]
+    assert body == b"ok"
+    assert fake_cluster.requests == [
+        ("/version", "Bearer fake-token"),
+        ("/api/v1/namespaces/ops/pods?labelSelector=app%3Dapi", "Bearer fake-token"),
+    ]
 
 
-def test_run_kubectl_reports_every_failure(monkeypatch, tmp_path) -> None:
-    monkeypatch.setattr(cluster, "kubectl_executable", lambda: tmp_path / "missing")
-    with pytest.raises(cluster.KubectlError, match="missing"):
-        cluster._run_kubectl("get")
+def test_request_never_writes_the_kubeconfig_back(monkeypatch, fake_cluster) -> None:
+    seen = {}
+    real = cluster.config.new_client_from_config
 
-    def failing(returncode, stdout, stderr):
-        def run(command, **_kwargs):
-            return cluster.subprocess.CompletedProcess(
-                command, returncode, stdout, stderr
-            )
+    def spy(**kwargs):
+        seen.update(kwargs)
+        return real(**kwargs)
 
-        return run
+    monkeypatch.setattr(cluster.config, "new_client_from_config", spy)
+    fake_cluster.serve("/version", {})
+    before = fake_cluster.kubeconfig.read_bytes()
 
-    for run, message in (
-        (failing(1, "", " denied \n"), "denied"),
-        (failing(1, "from stdout", ""), "from stdout"),
-        (failing(3, "", ""), "exited with 3"),
-    ):
-        _fake_kubectl(monkeypatch, tmp_path, run)
-        with pytest.raises(cluster.KubectlError, match=message):
-            cluster._run_kubectl("get")
+    cluster._request("/version", "dev")
 
-    def timeout(command, **_kwargs):
-        raise cluster.subprocess.TimeoutExpired(command, 45)
+    assert seen["persist_config"] is False and seen["context"] == "dev"
+    assert fake_cluster.kubeconfig.read_bytes() == before
 
-    def broken(_command, **_kwargs):
-        raise OSError("exec format error")
 
-    _fake_kubectl(monkeypatch, tmp_path, timeout)
-    with pytest.raises(cluster.KubectlError, match="timed out"):
-        cluster._run_kubectl("get")
-    _fake_kubectl(monkeypatch, tmp_path, broken)
-    with pytest.raises(cluster.KubectlError, match="Could not start"):
-        cluster._run_kubectl("get")
+def test_request_explains_a_refusal_like_kubectl_does(fake_cluster) -> None:
+    message = 'pods is forbidden: User "me" cannot list resource "pods"'
+    fake_cluster.serve("/forbidden", {"kind": "Status", "message": message}, 403)
+    fake_cluster.serve("/plain", "oops", 500)
+    fake_cluster.serve("/list", [1], 502)
+
+    with pytest.raises(cluster.ClusterError) as refused:
+        cluster._request("/forbidden", "dev")
+    assert str(refused.value) == message
+    with pytest.raises(cluster.ClusterError, match="500 Internal Server Error"):
+        cluster._request("/plain", "dev")
+    with pytest.raises(cluster.ClusterError, match="502 Bad Gateway"):
+        cluster._request("/list", "dev")
+    with pytest.raises(cluster.ClusterError, match="404 Not Found"):
+        cluster._request("/missing", "dev")
+
+
+def test_request_reports_a_cluster_that_cannot_be_reached(fake_cluster) -> None:
+    fake_cluster.server.shutdown()
+    fake_cluster.server.server_close()
+
+    with pytest.raises(cluster.ClusterError, match="(?i)refused|failed to establish"):
+        cluster._request("/version", "dev")
+
+
+def test_request_reports_a_failed_tls_handshake(fake_cluster) -> None:
+    fake_cluster.write_kubeconfig(server=fake_cluster.url.replace("http", "https"))
+
+    with pytest.raises(cluster.ClusterError, match="(?i)ssl|tls|certificate"):
+        cluster._request("/version", "dev")
+
+
+def test_request_reports_a_tls_error_raised_by_the_client(monkeypatch) -> None:
+    def failing(_api, *_a, **_k):
+        raise cluster.ApiException(status=0, reason="SSLError handshake")
+
+    monkeypatch.setattr(cluster.client.ApiClient, "call_api", failing)
+    monkeypatch.setattr(cluster, "_api_client", lambda _c: cluster.client.ApiClient())
+
+    with pytest.raises(cluster.ClusterError, match="SSLError handshake"):
+        cluster._request("/version", "dev")
+
+
+def test_request_gives_up_when_the_cluster_does_not_answer(monkeypatch) -> None:
+    release = threading.Event()
+    monkeypatch.setattr(cluster, "REQUEST_TIMEOUT", 0.1)
+    monkeypatch.setattr(cluster, "_fetch", lambda *_a: release.wait(5))
+
+    with pytest.raises(cluster.ClusterError, match="timed out"):
+        cluster._request("/version", "dev")
+    release.set()
+
+
+def test_cancel_running_stops_a_request_at_once(monkeypatch) -> None:
+    started, release = threading.Event(), threading.Event()
+
+    def slow(*_a):
+        started.set()
+        release.wait(5)
+        return b"late"
+
+    monkeypatch.setattr(cluster, "_fetch", slow)
+    outcome: list[BaseException] = []
+
+    def call() -> None:
+        try:
+            cluster._request("/version", "dev")
+        except cluster.ClusterError as error:
+            outcome.append(error)
+
+    thread = threading.Thread(target=call)
+    thread.start()
+    assert started.wait(5)
+
+    cluster.cancel_running()
+    thread.join(5)
+    release.set()  # the late answer is dropped without a trace
+
+    assert [str(error) for error in outcome] == ["The request was cancelled"]
+    assert not cluster._pending
 
 
 def test_get_json_rejects_documents_that_are_not_objects(monkeypatch) -> None:
-    monkeypatch.setattr(cluster, "_run_kubectl", lambda *_a, **_k: '{"a": 1}')
-    assert cluster._get_json("get", "x", context="c") == {"a": 1}
+    monkeypatch.setattr(cluster, "_request", lambda *_a, **_k: b'{"a": 1}')
+    assert cluster._get_json("/x", "c") == {"a": 1}
 
-    monkeypatch.setattr(cluster, "_run_kubectl", lambda *_a, **_k: "[1]")
-    with pytest.raises(cluster.KubectlError, match="unexpected JSON"):
-        cluster._get_json("get", "x", context="c")
+    monkeypatch.setattr(cluster, "_request", lambda *_a, **_k: b"[1]")
+    with pytest.raises(cluster.ClusterError, match="unexpected JSON"):
+        cluster._get_json("/x", "c")
+
+    monkeypatch.setattr(cluster, "_request", lambda *_a, **_k: b"<html>")
+    with pytest.raises(cluster.ClusterError, match="unexpected response"):
+        cluster._get_json("/x", "c")
 
 
-def test_list_contexts_returns_names_and_the_active_one(monkeypatch) -> None:
-    outputs = {"get-contexts": "a\n\n b \n", "current-context": " b \n"}
+def test_list_adds_the_kind_the_cluster_leaves_out_of_a_list(monkeypatch) -> None:
     monkeypatch.setattr(
-        cluster, "_run_kubectl", lambda *arguments, **_k: outputs[arguments[1]]
+        cluster, "_get_json", lambda *_a: {"items": [{"metadata": {"name": "a"}}, {}]}
     )
-    assert cluster.list_contexts() == (["a", "b"], "b")
 
-    monkeypatch.setattr(cluster, "_run_kubectl", lambda *_a, **_k: "\n")
+    items = cluster._list("deployments", "dev")["items"]
+
+    assert [item["kind"] for item in items] == ["Deployment", "Deployment"]
+    monkeypatch.setattr(cluster, "_get_json", lambda *_a: {})  # a list without items
+    assert cluster._list("pods", "dev") == {}
+
+
+def test_resource_paths_encode_the_names_that_come_from_the_cluster() -> None:
+    assert cluster._resource_path("nodes") == "/api/v1/nodes"
+    assert (
+        cluster._resource_path("deployments", "a/b", "x?y")
+        == "/apis/apps/v1/namespaces/a%2Fb/deployments/x%3Fy"
+    )
+
+
+def test_a_context_that_is_not_in_the_kubeconfig_is_named(fake_cluster) -> None:
+    with pytest.raises(cluster.ClusterError, match="context was not found.*nope"):
+        cluster._request("/version", "nope")
+
+
+def test_a_sign_in_program_that_is_not_installed_is_named(fake_cluster) -> None:
+    exec_block = {
+        "apiVersion": "client.authentication.k8s.io/v1",
+        "command": "kubescope-no-such-login-tool",
+    }
+    fake_cluster.write_kubeconfig(user={"exec": exec_block})
+
+    with pytest.raises(
+        cluster.ClusterError, match="executable kubescope-no-such-login-tool not found"
+    ):
+        cluster._request("/version", "dev")
+
+
+def test_a_sign_in_program_that_fails_reports_what_it_printed(fake_cluster) -> None:
+    exec_block = {
+        "apiVersion": "client.authentication.k8s.io/v1",
+        "command": sys.executable,
+        "args": [
+            "-c",
+            "import sys; sys.stderr.write('Token has expired'); sys.exit(3)",
+        ],
+    }
+    fake_cluster.write_kubeconfig(user={"exec": exec_block})
+
+    with pytest.raises(cluster.ClusterError, match="returned 3.*Token has expired"):
+        cluster._request("/version", "dev")
+
+
+def test_sign_in_failures_are_worded_for_the_error_dialog() -> None:
+    posix = "[Errno 2] No such file or directory: 'aws'"
+    windows = "exec: process returned 1. 'aws' is not recognized as a command"
+
+    assert cluster._sign_in_failure(posix) == "exec: executable aws not found"
+    assert cluster._sign_in_failure(windows) == "exec: executable aws not found"
+    terminal = cluster._sign_in_failure("'NoneType' object has no attribute 'strip'")
+    assert "credentials may have expired" in terminal
+    assert cluster.is_auth_error(terminal)
+    assert cluster._sign_in_failure("exec: process returned 3.") == (
+        "exec: process returned 3."
+    )
+
+
+def test_a_sign_in_that_returns_no_credentials_is_reported(fake_cluster) -> None:
+    document = {"apiVersion": "v1", "kind": "X", "status": {}}
+    script = f"print({json.dumps(document)!r})"
+    exec_block = {"apiVersion": "v1", "command": sys.executable, "args": ["-c", script]}
+    fake_cluster.write_kubeconfig(user={"exec": exec_block})
+
+    with pytest.raises(cluster.ClusterError, match="missing token"):
+        cluster._request("/version", "dev")
+
+
+def test_a_kubeconfig_that_cannot_be_read_is_reported(monkeypatch, tmp_path) -> None:
+    monkeypatch.setenv("KUBECONFIG", str(tmp_path))  # a folder, not a file
+
+    with pytest.raises(cluster.ClusterError, match="Could not read the kubeconfig"):
+        cluster._request("/version", "dev")
+    with pytest.raises(cluster.ClusterError, match="Could not read the kubeconfig"):
+        cluster.list_contexts()
+
+    nameless = tmp_path / "nameless"
+    nameless.write_text(json.dumps({"contexts": [{"context": {}}, {"name": "x"}]}))
+    monkeypatch.setenv("KUBECONFIG", str(nameless))
+    with pytest.raises(cluster.ClusterError, match="Could not read the kubeconfig"):
+        cluster.list_contexts()
+
+    empty = tmp_path / "empty"
+    empty.write_text("")
+    monkeypatch.setenv("KUBECONFIG", str(empty))
+    with pytest.raises(cluster.ClusterError, match="empty"):
+        cluster.list_contexts()
+    with pytest.raises(cluster.ClusterError, match="empty"):
+        cluster._request("/version", "dev")
+
+
+def test_list_contexts_merges_the_kubeconfig_files(monkeypatch, tmp_path) -> None:
+    first, second = tmp_path / "first", tmp_path / "second"
+    first.write_text(
+        json.dumps(
+            {
+                "current-context": "b",
+                "contexts": [{"name": "b", "context": {}}, {"name": "a"}],
+            }
+        )
+    )
+    second.write_text(json.dumps({"contexts": [{"name": "c"}, {"name": "b"}]}))
+    monkeypatch.setenv("KUBECONFIG", f"{first}{os.pathsep}{second}")
+
+    assert cluster.list_contexts() == (["a", "b", "c"], "b")
+
+    first.write_text(json.dumps({"current-context": "gone", "contexts": []}))
+    assert cluster.list_contexts() == (["c", "b"][::-1], None)
+
+
+def test_list_contexts_without_a_kubeconfig_finds_nothing(
+    monkeypatch, tmp_path
+) -> None:
+    monkeypatch.setenv("KUBECONFIG", str(tmp_path / "missing"))
     assert cluster.list_contexts() == ([], None)
 
-    monkeypatch.setattr(
-        cluster,
-        "_run_kubectl",
-        lambda *arguments, **_k: "a\n" if arguments[1] == "get-contexts" else "\n",
-    )
-    assert cluster.list_contexts() == (["a"], None)
+    monkeypatch.delenv("KUBECONFIG")
+    assert cluster._kubeconfig_paths() == "~/.kube/config"
 
 
 def test_parse_workload_skips_unknown_kinds_and_handles_daemon_sets() -> None:
@@ -487,7 +675,7 @@ def test_label_selector_reads_a_replication_controllers_plain_map() -> None:
 
 
 def test_get_resource_details_rejects_unsupported_kinds() -> None:
-    with pytest.raises(cluster.KubectlError, match="Unsupported resource kind"):
+    with pytest.raises(cluster.ClusterError, match="Unsupported resource kind"):
         cluster.get_resource_details("c", "Secret", "ns", "x")
 
 
@@ -527,7 +715,7 @@ def test_label_selector_supports_every_expression_operator() -> None:
     ],
 )
 def test_label_selector_rejects_unusable_selectors(selector, message) -> None:
-    with pytest.raises(cluster.KubectlError, match=message):
+    with pytest.raises(cluster.ClusterError, match=message):
         cluster._label_selector({"spec": {"selector": selector}})
 
 
@@ -626,7 +814,13 @@ def test_get_usage_adds_up_a_replica_sets_pods_without_metrics(monkeypatch) -> N
 
 def _aws_kubeconfig(arguments=None, env=None, command="/usr/local/bin/aws") -> dict:
     exec_block = {"command": command, "args": arguments or [], "env": env}
-    return {"users": [{"user": {"exec": exec_block}}]}
+    return {
+        "contexts": [
+            {"name": "other", "context": {"user": "nobody"}},
+            {"name": "ctx", "context": {"user": "me"}},
+        ],
+        "users": [{"name": "me", "user": {"exec": exec_block}}],
+    }
 
 
 def test_run_command_returns_output_and_reports_failures(monkeypatch) -> None:
@@ -644,7 +838,7 @@ def test_run_command_returns_output_and_reports_failures(monkeypatch) -> None:
         (completed(2), "exited with 2"),
     ):
         monkeypatch.setattr(cluster, "_run_process", run)
-        with pytest.raises(cluster.KubectlError, match=message):
+        with pytest.raises(cluster.ClusterError, match=message):
             cluster._run_command(["aws", "x"], 5)
 
     def timeout(command, **_kwargs):
@@ -654,16 +848,16 @@ def test_run_command_returns_output_and_reports_failures(monkeypatch) -> None:
         raise OSError("not found")
 
     monkeypatch.setattr(cluster, "_run_process", timeout)
-    with pytest.raises(cluster.KubectlError, match="timed out"):
+    with pytest.raises(cluster.ClusterError, match="timed out"):
         cluster._run_command(["aws"], 5)
     monkeypatch.setattr(cluster, "_run_process", missing)
-    with pytest.raises(cluster.KubectlError, match="Could not start aws"):
+    with pytest.raises(cluster.ClusterError, match="Could not start aws"):
         cluster._run_command(["aws"], 5)
 
 
 def test_aws_profile_is_read_from_the_kubeconfig_exec_entry(monkeypatch) -> None:
     def config(document):
-        monkeypatch.setattr(cluster, "_get_json", lambda *_a, **_k: document)
+        monkeypatch.setattr(cluster, "_kubeconfig", lambda: document)
 
     config(_aws_kubeconfig(["eks", "get-token", "--profile", "work"]))
     assert cluster._aws_profile("ctx") == (True, "work")
@@ -682,6 +876,8 @@ def test_aws_profile_is_read_from_the_kubeconfig_exec_entry(monkeypatch) -> None
     config(_aws_kubeconfig(command="kubelogin"))
     assert cluster._aws_profile("ctx") == (False, None)
     config({})
+    assert cluster._aws_profile("ctx") == (False, None)
+    config({"contexts": [{"name": "ctx", "context": {}}]})  # no user
     assert cluster._aws_profile("ctx") == (False, None)
 
 
@@ -703,7 +899,64 @@ def test_login_action_picks_sso_or_access_keys_by_profile(monkeypatch) -> None:
     )
 
     monkeypatch.setattr(cluster, "_aws_profile", lambda _c: (False, None))
+    monkeypatch.setattr(cluster, "_sign_in_program", lambda _c: {})
     assert cluster.login_action("ctx") is None
+
+
+@pytest.mark.parametrize(
+    ("program", "provider", "command"),
+    [
+        (
+            "/usr/bin/gke-gcloud-auth-plugin",
+            "Google Cloud",
+            ["gcloud", "auth", "login"],
+        ),
+        ("gcloud", "Google Cloud", ["gcloud", "auth", "login"]),
+        ("kubelogin", "Azure", ["az", "login"]),
+        ("/opt/bin/kubelogin.exe", "Azure", ["az", "login"]),
+        ("az", "Azure", ["az", "login"]),
+    ],
+)
+def test_login_action_signs_in_to_google_cloud_and_azure(
+    monkeypatch, program, provider, command
+) -> None:
+    monkeypatch.setattr(cluster, "_sign_in_program", lambda _c: {"command": program})
+
+    assert cluster.login_action("ctx") == cluster.LoginAction(
+        command, None, False, provider
+    )
+
+
+def test_login_action_ignores_sign_in_programs_it_does_not_know(monkeypatch) -> None:
+    monkeypatch.setattr(cluster, "_sign_in_program", lambda _c: {"command": "okta"})
+    assert cluster.login_action("ctx") is None
+
+
+def test_programs_are_found_on_the_path_on_windows(monkeypatch) -> None:
+    started = []
+
+    class Fake:
+        pid = 1
+        returncode = 0
+
+        def __init__(self, command, **_kwargs):
+            started.append(command)
+
+        def communicate(self, timeout=None):
+            return "", ""
+
+    monkeypatch.setattr(cluster.sys, "platform", "win32")
+    monkeypatch.setattr(cluster.subprocess, "Popen", Fake)
+    monkeypatch.setattr(
+        cluster.shutil,
+        "which",
+        lambda name: "C:\\cli\\az.CMD" if name == "az" else None,
+    )
+
+    cluster._run_process(["az", "login"], 5)
+    cluster._run_process(["other", "x"], 5)
+
+    assert started == [["C:\\cli\\az.CMD", "login"], ["other", "x"]]
 
 
 def test_sso_profiles_are_told_apart_from_access_key_profiles(monkeypatch) -> None:
@@ -714,7 +967,7 @@ def test_sso_profiles_are_told_apart_from_access_key_profiles(monkeypatch) -> No
         assert command[4:] == ["--profile", "work"]
         value = answers[command[3]]
         if value is None:
-            raise cluster.KubectlError("not set")
+            raise cluster.ClusterError("not set")
         return value + "\n"
 
     monkeypatch.setattr(cluster, "_run_command", configure)
@@ -732,7 +985,7 @@ def test_sso_profiles_are_told_apart_from_access_key_profiles(monkeypatch) -> No
 
 def test_check_login_reports_signed_in_when_everything_answers(monkeypatch) -> None:
     calls = []
-    monkeypatch.setattr(cluster, "_run_kubectl", lambda *a, **_k: calls.append(a) or "")
+    monkeypatch.setattr(cluster, "_request", lambda *a, **_k: calls.append(a) or "")
     monkeypatch.setattr(cluster, "_run_command", lambda c, _t: calls.append(c) or "")
 
     monkeypatch.setattr(cluster, "_aws_profile", lambda _c: (False, None))
@@ -746,17 +999,17 @@ def test_check_login_reports_signed_in_when_everything_answers(monkeypatch) -> N
 def test_check_login_detects_expired_sso_and_bad_access_keys(monkeypatch) -> None:
     monkeypatch.setattr(cluster, "login_action", lambda _c: SSO)
 
-    def kubectl_fails(*_a, **_k):
-        raise cluster.KubectlError("Error: the SSO session has expired")
+    def request_fails(*_a, **_k):
+        raise cluster.ClusterError("Error: the SSO session has expired")
 
-    monkeypatch.setattr(cluster, "_run_kubectl", kubectl_fails)
+    monkeypatch.setattr(cluster, "_request", request_fails)
     assert cluster.check_login("ctx") == (True, SSO)
 
-    monkeypatch.setattr(cluster, "_run_kubectl", lambda *_a, **_k: "")
+    monkeypatch.setattr(cluster, "_request", lambda *_a, **_k: "")
     monkeypatch.setattr(cluster, "_aws_profile", lambda _c: (True, None))
 
     def sts_fails(*_a):
-        raise cluster.KubectlError("InvalidClientTokenId: the token is invalid")
+        raise cluster.ClusterError("InvalidClientTokenId: the token is invalid")
 
     monkeypatch.setattr(cluster, "_run_command", sts_fails)
     monkeypatch.setattr(cluster, "login_action", lambda _c: KEYS)
@@ -766,7 +1019,7 @@ def test_check_login_detects_expired_sso_and_bad_access_keys(monkeypatch) -> Non
     assert cluster.check_login("ctx") == (True, None)
 
     def unreadable(_context):
-        raise cluster.KubectlError("config view failed")
+        raise cluster.ClusterError("config view failed")
 
     monkeypatch.setattr(cluster, "login_action", unreadable)
     assert cluster.check_login("ctx") == (True, None)
@@ -776,22 +1029,22 @@ def test_check_login_ignores_failures_that_are_not_about_credentials(
     monkeypatch,
 ) -> None:
     def unreachable(*_a, **_k):
-        raise cluster.KubectlError("Unable to connect: i/o timeout")
+        raise cluster.ClusterError("Unable to connect: i/o timeout")
 
-    monkeypatch.setattr(cluster, "_run_kubectl", unreachable)
+    monkeypatch.setattr(cluster, "_request", unreachable)
     assert cluster.check_login("ctx") == (False, None)
 
-    monkeypatch.setattr(cluster, "_run_kubectl", lambda *_a, **_k: "")
+    monkeypatch.setattr(cluster, "_request", lambda *_a, **_k: "")
     monkeypatch.setattr(cluster, "_aws_profile", lambda _c: (True, None))
 
     def no_cli(*_a):
-        raise cluster.KubectlError("Could not start aws: not found")
+        raise cluster.ClusterError("Could not start aws: not found")
 
     monkeypatch.setattr(cluster, "_run_command", no_cli)
     assert cluster.check_login("ctx") == (False, None)
 
     def broken_json(*_a, **_k):
-        raise ValueError("expired token in a bad document")
+        raise cluster.ClusterError("expired token in a bad document")
 
     monkeypatch.setattr(cluster, "_aws_profile", broken_json)
     monkeypatch.setattr(cluster, "login_action", broken_json)
@@ -826,7 +1079,7 @@ def test_open_terminal_uses_the_first_terminal_found(monkeypatch) -> None:
     assert launched == [["/usr/bin/konsole", "-e", "aws", "configure"]]
 
     monkeypatch.setattr(cluster.shutil, "which", lambda _name: None)
-    with pytest.raises(cluster.KubectlError, match="aws configure"):
+    with pytest.raises(cluster.ClusterError, match="aws configure"):
         cluster._open_terminal(["aws", "configure"])
 
 
@@ -842,7 +1095,7 @@ def test_open_terminal_on_windows_and_when_it_cannot_start(monkeypatch) -> None:
         raise OSError("no cmd")
 
     monkeypatch.setattr(cluster.subprocess, "Popen", broken)
-    with pytest.raises(cluster.KubectlError, match="Could not open a terminal"):
+    with pytest.raises(cluster.ClusterError, match="Could not open a terminal"):
         cluster._open_terminal(["aws", "configure"])
 
 
@@ -939,7 +1192,7 @@ def test_timeouts_and_cancellations_are_logged(caplog) -> None:
 
 def test_login_steps_are_logged(monkeypatch, caplog) -> None:
     caplog.set_level("INFO", logger="kubescope.cluster")
-    monkeypatch.setattr(cluster, "_run_kubectl", lambda *_a, **_k: "")
+    monkeypatch.setattr(cluster, "_request", lambda *_a, **_k: "")
     monkeypatch.setattr(cluster, "_run_command", lambda *_a: "")
     monkeypatch.setattr(cluster, "_aws_profile", lambda _c: (True, "work"))
     cluster.check_login("ctx")
@@ -958,9 +1211,9 @@ def test_login_steps_are_logged(monkeypatch, caplog) -> None:
     caplog.clear()
 
     def fail(*_a, **_k):
-        raise cluster.KubectlError("Unable to connect: i/o timeout")
+        raise cluster.ClusterError("Unable to connect: i/o timeout")
 
-    monkeypatch.setattr(cluster, "_run_kubectl", fail)
+    monkeypatch.setattr(cluster, "_request", fail)
     cluster.check_login("ctx")
     assert "not a credentials problem" in caplog.text
 
@@ -1022,40 +1275,45 @@ def test_parse_cron_job_shows_schedule_and_activity() -> None:
 def test_get_workloads_lists_only_the_requested_kinds(monkeypatch) -> None:
     calls = []
 
-    def fake_get_json(*arguments, context):
-        calls.append(arguments)
-        if arguments[1] == "namespaces":
+    def fake_get_json(path, context, query=None):
+        calls.append(path)
+        if path == "/api/v1/namespaces":
             return {"items": [{"metadata": {"name": "ops"}}]}
-        return {"items": [_job(succeeded=1)]}
+        return {"items": [_job(succeeded=1)] if path.endswith("/jobs") else []}
 
     monkeypatch.setattr(cluster, "_get_json", fake_get_json)
 
     namespaces, workloads = cluster.get_workloads("ctx", "ops", ("Job", "CronJob"))
 
     assert namespaces == ["ops"] and [w.name for w in workloads] == ["backup"]
-    assert calls[1] == ("get", "jobs,cronjobs", "-n", "ops")
+    assert "/apis/batch/v1/namespaces/ops/jobs" in calls
+    assert "/apis/batch/v1/namespaces/ops/cronjobs" in calls
+    calls.clear()
     cluster.get_workloads("ctx")
-    assert calls[-1] == ("get", "deployments,statefulsets,daemonsets", "-A")
+    assert "/apis/apps/v1/deployments" in calls
 
 
 @pytest.mark.parametrize(
-    ("kind", "resource"),
+    ("kind", "path"),
     [
-        ("Job", "job"),
-        ("CronJob", "cronjob"),
-        ("StatefulSet", "statefulset"),
-        ("Pod", "pod"),
+        ("Job", "/apis/batch/v1/namespaces/ns/jobs/x"),
+        ("CronJob", "/apis/batch/v1/namespaces/ns/cronjobs/x"),
+        ("StatefulSet", "/apis/apps/v1/namespaces/ns/statefulsets/x"),
+        ("Pod", "/api/v1/namespaces/ns/pods/x"),
     ],
 )
-def test_get_resource_details_knows_every_listed_kind(
-    monkeypatch, kind, resource
-) -> None:
+def test_get_resource_details_knows_every_listed_kind(monkeypatch, kind, path) -> None:
     seen = []
-    monkeypatch.setattr(cluster, "_get_json", lambda *a, context: seen.append(a) or {})
+    monkeypatch.setattr(cluster, "_get_json", lambda *a: seen.append(a[0]) or {})
 
     cluster.get_resource_details("ctx", kind, "ns", "x")
 
-    assert seen == [("get", resource, "x", "-n", "ns")]
+    assert seen == [path]
+
+
+def test_get_resource_details_rejects_unknown_kinds() -> None:
+    with pytest.raises(cluster.ClusterError, match="Unsupported resource kind: Secret"):
+        cluster.get_resource_details("ctx", "Secret", "ns", "x")
 
 
 def test_cron_job_pods_come_from_the_jobs_it_created(monkeypatch) -> None:
@@ -1076,9 +1334,9 @@ def test_cron_job_pods_come_from_the_jobs_it_created(monkeypatch) -> None:
     pod = {"metadata": {"name": "nightly-1-abc", "namespace": "ops"}, "status": {}}
     seen = []
 
-    def fake_get_json(*arguments, context):
-        seen.append(arguments)
-        if arguments[1] == "jobs":
+    def fake_get_json(path, context, query=None):
+        seen.append((path, query))
+        if path.endswith("/jobs"):
             return {"items": [owned, other, standalone]}
         return {"items": [pod]}
 
@@ -1087,10 +1345,13 @@ def test_cron_job_pods_come_from_the_jobs_it_created(monkeypatch) -> None:
     pods = cluster.get_workload_pods("ctx", cron)
 
     assert [p.name for p in pods] == ["nightly-1-abc"]
-    assert seen[-1] == ("get", "pods", "-n", "ops", "-l", "job-name in (nightly-1)")
+    assert seen[-1] == (
+        "/api/v1/namespaces/ops/pods",
+        [("labelSelector", "job-name in (nightly-1)")],
+    )
 
     monkeypatch.setattr(
-        cluster, "_get_json", lambda *a, context: {"items": [other, standalone]}
+        cluster, "_get_json", lambda *_a: {"items": [other, standalone]}
     )
     assert cluster.get_workload_pods("ctx", cron) == []  # no Jobs, no Pods
 
@@ -1251,7 +1512,11 @@ def test_workloads_overview_counts_every_kind_and_lists_recent_events(
     monkeypatch,
 ) -> None:
     documents = _overview_documents()
-    monkeypatch.setattr(cluster, "_get_json", lambda *a, context: documents[a[1]])
+    monkeypatch.setattr(
+        cluster,
+        "_get_json",
+        lambda path, _c, _q=None: documents[path.rsplit("/", 1)[1]],
+    )
 
     overview = cluster.get_workloads_overview("ctx")
 
@@ -1273,10 +1538,11 @@ def test_workloads_overview_reports_unreadable_sections_and_caps_events(
 ) -> None:
     documents = _overview_documents(extra_events=cluster.EVENT_LIMIT + 10)
 
-    def fake(*arguments, context):
-        if arguments[1] in {"daemonsets", "replicasets"}:
-            raise cluster.KubectlError("forbidden: cannot list")
-        return documents[arguments[1]]
+    def fake(path, context, query=None):
+        resource = path.rsplit("/", 1)[1]
+        if resource in {"daemonsets", "replicasets"}:
+            raise cluster.ClusterError("forbidden: cannot list")
+        return documents[resource]
 
     monkeypatch.setattr(cluster, "_get_json", fake)
 
@@ -1288,12 +1554,12 @@ def test_workloads_overview_reports_unreadable_sections_and_caps_events(
 
 
 def test_workloads_overview_fails_when_nothing_is_readable(monkeypatch) -> None:
-    def forbidden(*_a, context):
-        raise cluster.KubectlError("Unable to connect to the server")
+    def forbidden(*_a):
+        raise cluster.ClusterError("Unable to connect to the server")
 
     monkeypatch.setattr(cluster, "_get_json", forbidden)
 
-    with pytest.raises(cluster.KubectlError, match="Unable to connect"):
+    with pytest.raises(cluster.ClusterError, match="Unable to connect"):
         cluster.get_workloads_overview("ctx")
 
 
@@ -1307,12 +1573,12 @@ def test_together_runs_calls_at_the_same_time_and_raises_the_first_failure() -> 
     assert cluster._together(lambda: meet("a"), lambda: meet("b")) == ["a", "b"]
 
     def fail() -> None:
-        raise cluster.KubectlError("first")
+        raise cluster.ClusterError("first")
 
     def fail_later() -> None:
-        raise cluster.KubectlError("second")
+        raise cluster.ClusterError("second")
 
-    with pytest.raises(cluster.KubectlError, match="first"):
+    with pytest.raises(cluster.ClusterError, match="first"):
         cluster._together(fail, fail_later)
 
 
@@ -1473,9 +1739,9 @@ def test_parse_network_reads_network_policies() -> None:
 def test_get_network_lists_by_namespace_or_for_the_whole_cluster(monkeypatch) -> None:
     calls = []
 
-    def fake_get_json(*arguments: str, context: str) -> dict:
-        calls.append(arguments)
-        if arguments[1] == "namespaces":
+    def fake_get_json(path: str, context: str, query=None) -> dict:
+        calls.append(path)
+        if path == "/api/v1/namespaces":
             return {"items": [{"metadata": {"name": "ops"}}]}
         return {
             "items": [
@@ -1488,28 +1754,226 @@ def test_get_network_lists_by_namespace_or_for_the_whole_cluster(monkeypatch) ->
 
     namespaces, services = cluster.get_network("ctx", "ops", "Service")
     assert namespaces == ["ops"] and [s.name for s in services] == ["a", "b"]
-    assert ("get", "services", "-n", "ops") in calls
+    assert "/api/v1/namespaces/ops/services" in calls
     cluster.get_network("ctx", None, "Ingress")
-    assert ("get", "ingresses", "-A") in calls
+    assert "/apis/networking.k8s.io/v1/ingresses" in calls
     cluster.get_network("ctx", "ops", "IngressClass")  # not namespaced
-    assert ("get", "ingressclasses") in calls
+    assert "/apis/networking.k8s.io/v1/ingressclasses" in calls
 
 
 @pytest.mark.parametrize(
-    ("kind", "namespace", "arguments"),
+    ("kind", "namespace", "path"),
     [
-        ("Service", "ns", ("get", "service", "x", "-n", "ns")),
-        ("Endpoints", "ns", ("get", "endpoints", "x", "-n", "ns")),
-        ("NetworkPolicy", "ns", ("get", "networkpolicy", "x", "-n", "ns")),
-        ("IngressClass", "", ("get", "ingressclass", "x")),
+        ("Service", "ns", "/api/v1/namespaces/ns/services/x"),
+        ("Endpoints", "ns", "/api/v1/namespaces/ns/endpoints/x"),
+        (
+            "NetworkPolicy",
+            "ns",
+            "/apis/networking.k8s.io/v1/namespaces/ns/networkpolicies/x",
+        ),
+        ("IngressClass", "", "/apis/networking.k8s.io/v1/ingressclasses/x"),
     ],
 )
 def test_get_resource_details_knows_the_network_kinds(
-    monkeypatch, kind, namespace, arguments
+    monkeypatch, kind, namespace, path
 ) -> None:
     seen = []
-    monkeypatch.setattr(cluster, "_get_json", lambda *a, context: seen.append(a) or {})
+    monkeypatch.setattr(cluster, "_get_json", lambda *a: seen.append(a[0]) or {})
 
     cluster.get_resource_details("ctx", kind, namespace, "x")
 
-    assert seen == [arguments]
+    assert seen == [path]
+
+
+def test_configured_kubeconfig_files_replace_the_environment(
+    monkeypatch, tmp_path
+) -> None:
+    monkeypatch.setenv("KUBECONFIG", "/from/the/environment")
+    assert cluster._kubeconfig_paths() == "/from/the/environment"
+
+    first, second = tmp_path / "first", tmp_path / "second"
+    first.write_text(json.dumps({"contexts": [{"name": "a"}]}))
+    second.write_text(json.dumps({"contexts": [{"name": "b"}]}))
+    cluster.configure([str(first), str(second)])
+
+    assert cluster._kubeconfig_paths() == f"{first}{os.pathsep}{second}"
+    assert cluster.list_contexts() == (["a", "b"], None)
+    cluster.configure()
+    assert cluster._kubeconfig_paths() == "/from/the/environment"
+
+
+@pytest.mark.parametrize(
+    ("text", "arguments"),
+    [
+        ("oci session authenticate", ["oci", "session", "authenticate"]),
+        (
+            'doctl auth init --label "my team"',
+            ["doctl", "auth", "init", "--label", "my team"],
+        ),
+    ],
+)
+def test_parse_command_splits_without_a_shell(text, arguments) -> None:
+    assert cluster.parse_command(text) == arguments
+
+
+@pytest.mark.parametrize("text", ["", "   ", 'oci "unclosed'])
+def test_parse_command_rejects_what_cannot_run(text) -> None:
+    with pytest.raises(ValueError):
+        cluster.parse_command(text)
+
+
+def test_parse_command_follows_windows_quoting(monkeypatch) -> None:
+    monkeypatch.setattr(cluster.sys, "platform", "win32")
+
+    assert cluster.parse_command('"C:\\Tools\\oci.exe" session authenticate') == [
+        "C:\\Tools\\oci.exe",
+        "session",
+        "authenticate",
+    ]
+
+
+def test_login_action_uses_the_command_set_for_the_program(monkeypatch) -> None:
+    monkeypatch.setattr(cluster, "_sign_in_program", lambda _c: {"command": "/bin/oci"})
+    cluster.configure(sign_in_commands={"oci": "oci session authenticate"})
+
+    assert cluster.login_action("ctx") == cluster.LoginAction(
+        ["oci", "session", "authenticate"], None, False, "oci"
+    )
+
+    cluster.configure(sign_in_commands={"oci": 'oci "broken'})
+    assert cluster.login_action("ctx") is None  # an unreadable command is no sign-in
+
+    cluster.configure(sign_in_commands={"other": "other login"})
+    monkeypatch.setattr(cluster, "_aws_profile", lambda _c: (False, None))
+    assert cluster.login_action("ctx") is None  # not the program of this context
+
+
+def test_a_failing_custom_sign_in_program_offers_the_sign_in(monkeypatch) -> None:
+    login = cluster.LoginAction(["oci", "session", "authenticate"], None, False, "oci")
+    monkeypatch.setattr(cluster, "login_action", lambda _c: login)
+    monkeypatch.setattr(cluster, "_sign_in_program", lambda _c: {"command": "oci"})
+
+    def fails(*_a, **_k):
+        raise cluster.ClusterError("exec: process returned 1. something odd")
+
+    monkeypatch.setattr(cluster, "_request", fails)
+    assert cluster.check_login("ctx") == (False, None)  # no command set: not a login
+
+    cluster.configure(sign_in_commands={"oci": "oci session authenticate"})
+    assert cluster.check_login("ctx") == (True, login)
+
+
+def test_only_a_sign_in_program_with_a_command_counts_as_a_login_problem(
+    monkeypatch,
+) -> None:
+    exec_error = cluster.ClusterError("exec: process returned 1")
+    cluster.configure(sign_in_commands={"oci": "oci login"})
+    monkeypatch.setattr(cluster, "_sign_in_program", lambda _c: {"command": "oci"})
+
+    assert cluster._custom_sign_in_failed(exec_error, "ctx") is True
+    assert cluster._custom_sign_in_failed(cluster.ClusterError("503"), "ctx") is False
+
+    monkeypatch.setattr(cluster, "_sign_in_program", lambda _c: {"command": "doctl"})
+    assert cluster._custom_sign_in_failed(exec_error, "ctx") is False
+
+    def unreadable(_context):
+        raise cluster.ClusterError("kubeconfig is damaged")
+
+    monkeypatch.setattr(cluster, "_sign_in_program", unreadable)
+    assert cluster._custom_sign_in_failed(exec_error, "ctx") is False
+
+
+def _counting_sign_in(tmp_path, tokens: list[str]) -> dict:
+    """A sign-in program that counts how often it runs and hands out `tokens`
+    one after the other."""
+    counter = tmp_path / "runs"
+    script = tmp_path / "login.py"
+    script.write_text(
+        "import json, pathlib\n"
+        f"counter = pathlib.Path({str(counter)!r})\n"
+        "runs = int(counter.read_text()) if counter.exists() else 0\n"
+        "counter.write_text(str(runs + 1))\n"
+        f"tokens = {tokens!r}\n"
+        "print(json.dumps({'apiVersion': 'v1', 'kind': 'ExecCredential',"
+        " 'status': {'token': tokens[min(runs, len(tokens) - 1)]}}))\n"
+    )
+    return {
+        "apiVersion": "v1",
+        "command": sys.executable,
+        "args": [str(script)],
+        "counter": counter,
+    }
+
+
+def _sign_in_runs(exec_block: dict) -> int:
+    counter = exec_block["counter"]
+    return int(counter.read_text()) if counter.exists() else 0
+
+
+def _use_sign_in(fake_cluster, exec_block: dict) -> None:
+    program = {key: value for key, value in exec_block.items() if key != "counter"}
+    fake_cluster.write_kubeconfig(user={"exec": program})
+
+
+def test_the_sign_in_runs_once_however_many_requests_follow(
+    fake_cluster, tmp_path
+) -> None:
+    block = _counting_sign_in(tmp_path, ["t1"])
+    _use_sign_in(fake_cluster, block)
+    fake_cluster.serve("/version", {})
+
+    for _ in range(3):
+        cluster._request("/version", "dev")
+    cluster._together(*[lambda: cluster._request("/version", "dev")] * 4)
+
+    assert _sign_in_runs(block) == 1
+    assert {token for _path, token in fake_cluster.requests} == {"Bearer t1"}
+
+
+def test_a_refused_token_signs_in_again_once(fake_cluster, tmp_path) -> None:
+    block = _counting_sign_in(tmp_path, ["old", "new"])
+    _use_sign_in(fake_cluster, block)
+    fake_cluster.accept_token = "Bearer new"
+    fake_cluster.serve("/version", {"ok": True})
+
+    assert json.loads(cluster._request("/version", "dev")) == {"ok": True}
+    assert _sign_in_runs(block) == 2
+    cluster._request("/version", "dev")  # the new token is kept
+    assert _sign_in_runs(block) == 2
+
+
+def test_a_token_that_stays_refused_is_reported_after_one_retry(
+    fake_cluster, tmp_path
+) -> None:
+    block = _counting_sign_in(tmp_path, ["bad"])
+    _use_sign_in(fake_cluster, block)
+    fake_cluster.accept_token = "Bearer never"
+    fake_cluster.serve("/version", {})
+
+    with pytest.raises(cluster.ClusterError, match="Unauthorized"):
+        cluster._request("/version", "dev")
+
+    assert _sign_in_runs(block) == 2  # not a loop
+
+
+def test_each_context_has_its_own_client_and_new_files_reset_them(
+    fake_cluster,
+) -> None:
+    first = cluster._cached_client("dev")
+    assert cluster._cached_client("dev") is first
+    assert cluster._cached_client("dev", fresh=True) is not first
+
+    cluster.configure(["/another/file"])  # other files: other credentials
+    assert cluster._clients == {}
+
+
+def test_a_finished_sign_in_makes_the_next_request_use_its_credentials(
+    monkeypatch, fake_cluster
+) -> None:
+    first = cluster._cached_client("dev")
+    monkeypatch.setattr(cluster, "_run_command", lambda *_a: "")
+
+    cluster.run_login(cluster.LoginAction(["aws", "sso", "login"], None, False))
+
+    assert cluster._clients == {}
+    assert cluster._cached_client("dev") is not first
