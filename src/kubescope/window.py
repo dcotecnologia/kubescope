@@ -182,6 +182,31 @@ def _close_icon_path(color: str, name: str) -> str:
     return _icon_path(name, draw, QSize(10, 10))
 
 
+def _gear_icon() -> QIcon:
+    """A white gear for the top bar, which is dark in every theme."""
+    pixmap = QPixmap(36, 36)  # drawn at twice the size so it stays sharp
+    pixmap.fill(Qt.GlobalColor.transparent)
+    painter = QPainter(pixmap)
+    painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+    painter.translate(18, 18)
+    painter.setPen(Qt.PenStyle.NoPen)
+    painter.setBrush(QColor(themed("#ffffff", text=True)))
+    for tooth in range(8):
+        painter.save()
+        painter.rotate(tooth * 45)
+        painter.drawRoundedRect(QRectF(-3, -16, 6, 8), 1.5, 1.5)
+        painter.restore()
+    painter.drawEllipse(QPointF(0, 0), 11, 11)
+    painter.setCompositionMode(QPainter.CompositionMode.CompositionMode_Clear)
+    painter.drawEllipse(QPointF(0, 0), 4.5, 4.5)
+    painter.end()
+    pixmap.setDevicePixelRatio(2)
+    icon = QIcon()
+    icon.addPixmap(pixmap, QIcon.Mode.Normal)
+    icon.addPixmap(pixmap, QIcon.Mode.Disabled)
+    return icon
+
+
 def _spinner_icon(angle: int, color: str) -> QIcon:
     """Draw one frame of the loading spinner; the disabled state keeps its
     color."""
@@ -533,9 +558,7 @@ class WorkloadWindow(QMainWindow):
             style.standardIcon(QStyle.StandardPixmap.SP_FileDialogContentsView)
         )
         self.nav_viewer.clicked.connect(lambda: self._show_page(3))
-        ui.settingsButton.setIcon(
-            style.standardIcon(QStyle.StandardPixmap.SP_FileDialogDetailedView)
-        )
+        ui.settingsButton.setIcon(_gear_icon())
         ui.settingsButton.clicked.connect(lambda: self._show_page(2))
         self.nav_overview.clicked.connect(lambda: self._show_page(0))
         self.nav_workloads.clicked.connect(lambda: self._toggle_submenu(self.submenu))
