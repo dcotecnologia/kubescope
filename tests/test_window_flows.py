@@ -1753,3 +1753,80 @@ def test_details_open_as_colored_json(monkeypatch) -> None:
     assert isinstance(editor.highlighter, json_view.JsonHighlighter)
     assert "#272822" in editor.styleSheet()
     window.close()
+
+
+def _two_context_window(monkeypatch):
+    window = _ready_window(monkeypatch)
+    monkeypatch.setattr(window, "_check_login", lambda *_a: None)
+    monkeypatch.setattr(window, "refresh", lambda *_a: None)
+    window.context_combo.clear()
+    for name in ("a", "b"):
+        window.context_combo.addItem(name, name)
+    window.context_combo.setCurrentIndex(0)
+    return window
+
+
+def test_each_context_keeps_its_last_overviews(monkeypatch) -> None:
+    window = _two_context_window(monkeypatch)
+    window._show_overview("a", ClusterOverview(namespaces=7))
+    window._show_workloads_overview("a", _workloads_overview())
+    assert window.overview_ui.namespacesValue.text() == "7"
+
+    window.context_combo.setCurrentIndex(1)  # nothing known about b: no old numbers
+    assert window.overview_ui.namespacesValue.text() == "—"
+    assert window.workloads_ui.podsLink.text() == "Pods (—)"
+    assert window.workloads_table.rowCount() == 0
+    assert window._overview is None and window._workloads_overview is None
+
+    window.context_combo.setCurrentIndex(0)  # a again: its last answer is back
+    assert window.overview_ui.namespacesValue.text() == "7"
+    assert window.workloads_ui.podsLink.text() == "Pods (18)"
+    assert window.workloads_table.rowCount() == 2
+    assert window._overview_context is None  # fresh data is still requested
+    window.close()
+
+
+def test_an_overview_for_another_context_is_kept_for_later(monkeypatch) -> None:
+    window = _two_context_window(monkeypatch)
+    monkeypatch.setattr(window, "refresh_overview", lambda: None)
+    monkeypatch.setattr(window, "refresh_workloads_overview", lambda: None)
+
+    window._show_overview("b", ClusterOverview(namespaces=3))
+    window._show_workloads_overview("b", _workloads_overview())
+
+    assert window._overviews["b"].namespaces == 3 and "b" in window._workloads_overviews
+    assert window.overview_ui.namespacesValue.text() == "—"  # a is on screen
+    window.close()
+
+
+def test_lists_show_the_last_answer_for_the_context_and_namespace(monkeypatch) -> None:
+    window = _ready_window(monkeypatch)
+    monkeypatch.setattr(window, "_check_login", lambda *_a: None)
+    window.context_combo.clear()
+    for name in ("a", "b"):
+        window.context_combo.addItem(name, name)
+    api = Workload("ns", "Deployment", "api", 1, 1, "1d")
+    web = Workload("ns", "Deployment", "web", 1, 1, "1d")
+    window._answers[("a", None, "deployments")] = (["ns"], [api])
+    window._answers[("b", None, "deployments")] = (["ns"], [web])
+    FakeRefreshWorker.outcome = ("ok", (["ns"], [api]))  # never answers for b
+
+    window.context_combo.setCurrentIndex(0)
+    window.refresh()  # a, all namespaces
+    assert window.table.item(0, 2).text() == "api"
+
+    window._workers.clear()
+    FakeRefreshWorker.outcome = ("fail", "boom")  # b's fresh answer is slow
+    monkeypatch.setattr(window, "_show_error", lambda *_a: None)
+    window.context_combo.setCurrentIndex(1)
+    window.refresh()
+    assert window.table.item(0, 2).text() == "web"  # b's own answer, not a's
+
+    window._workers.clear()
+    window.context_combo.setCurrentIndex(0)
+    window._answers.pop(("a", None, "deployments"))
+    window._shown_key = None
+    window.refresh()  # nothing kept for a now: an empty table, not b's rows
+    assert window.table.rowCount() == 0
+    FakeRefreshWorker.outcome = ("ok", ([], []))
+    window.close()
