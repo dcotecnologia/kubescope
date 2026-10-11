@@ -4,13 +4,26 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-11
+
 ### Added
 
+- The window opens at the size, position and maximized state it had when it was closed.
+- Google GKE and Azure AKS contexts: when their credentials expire (`gke-gcloud-auth-plugin`, `kubelogin`), a **Sign in to Google Cloud** or **Sign in to Azure** button runs `gcloud auth login` or `az login` and reloads the data, as the AWS button does. Their sign-in errors show as "Authentication failed".
+- An update check against GitHub's public API: an icon in the footer spins while it looks, shows "Up to date" for a moment, or an **Update available** link to the download page, and a click checks again. It runs when the app starts, sends only the app version, and **Settings** can turn the startup check off.
 - `install.sh` (Linux) and `install.ps1` (Windows) install or update KubeScope from the files of the latest GitHub release, after checking each download against the sha256 that GitHub publishes. The README and the wiki recommend them.
+- **Clear the cache** in Settings: forgets the lists and overviews already loaded and the sign-in of every cluster; your settings are kept.
+- **Kubeconfig files** in Settings: read the files you choose instead of the `KUBECONFIG` variable or `~/.kube/config`. The list only shows once it has files.
+- **Sign-in commands** in Settings: for a cloud KubeScope does not know, map the sign-in program of your kubeconfig (such as `oci`) to the command that signs you in. The **Sign in** button runs it, without a shell, and offers it when that program fails. The table only shows once it has rows.
 
 ### Changed
 
-- The Flatpak manifest builds from public sources, as Flathub requires: the app from its git tag, PySide6 from the `io.qt.PySide.BaseApp` base app, `kubectl` from the Kubernetes source release and the AWS CLI v1 from PyPI. It no longer packages the PyInstaller bundle.
+- The sign-in button reads **Sign in to {cloud}** and the Authentication failed hint names the three login commands.
+- KubeScope talks to the cluster with the official `kubernetes` Python client instead of a bundled `kubectl`, with the same features: it reads the kubeconfig and runs its sign-in plugins (such as `aws eks get-token`), and only sends `GET` requests. The packages no longer ship a `kubectl` binary, `make kubectl` and `tools/fetch_kubectl.py` are gone, and the "kubectl is missing" error no longer exists.
+- Each context keeps one client, with its token and connections, so lists load faster: the sign-in program of the kubeconfig (such as `aws eks get-token`) runs once, not once per request, and runs again only when the cluster refuses the token or after you sign in.
+- Closing the window gives up on the requests in flight at once, as it did with the `kubectl` commands.
+- The Flatpak installs the Kubernetes Python client from PyPI (`python3-kubernetes.json`, made by `tools/flatpak_python_deps.py` from `uv.lock`) instead of building `kubectl`. It still bundles only the AWS CLI, so GKE and AKS sign-in need the `.deb` or the AppImage.
+- The Flatpak manifest builds from public sources: the app from its git tag, PySide6 from the `io.qt.PySide.BaseApp` base app, and the Kubernetes Python client and the AWS CLI v1 from PyPI. It no longer packages the PyInstaller bundle.
 
 ## [0.1.0] - 2026-10-11
 
@@ -52,5 +65,6 @@ The first release.
 
 - Pod logs and resource details are still never written to disk by the app on its own. **Save** is the only exception, and it writes only to the file the user chooses. SECURITY.md says so.
 
-[Unreleased]: https://github.com/dcotecnologia/kubescope/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/dcotecnologia/kubescope/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/dcotecnologia/kubescope/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/dcotecnologia/kubescope/releases/tag/v0.1.0
