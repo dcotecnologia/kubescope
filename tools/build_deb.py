@@ -138,7 +138,7 @@ def main() -> int:
         "Priority: optional\n"
         f"Architecture: {architecture}\n"
         f"Depends: libc6 (>= {glibc}), {', '.join(DEPENDS)}\n"
-        "Recommends: fonts-dejavu-core | fonts-noto-core\n"
+        "Recommends: fonts-dejavu-core | fonts-noto-core, fonts-noto-cjk\n"
         f"Installed-Size: {size_kib}\n"
         f"Maintainer: DCO Tecnologia <{metadata['authors'][0]['email']}>\n"
         "Homepage: https://github.com/dcotecnologia/kubescope\n"

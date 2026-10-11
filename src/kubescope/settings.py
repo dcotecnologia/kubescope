@@ -11,7 +11,15 @@ CONFIG_DIR_ENV = "KUBESCOPE_CONFIG_DIR"
 # The languages the app speaks, by code, each named in itself. To add one, add it
 # here and ship src/kubescope/translations/kubescope_<code>.ts
 # (`make language CODE=<code>` starts it).
-LANGUAGES = {"en": "English", "pt": "Português"}
+LANGUAGES = {
+    "en": "English",
+    "pt": "Português",
+    "es": "Español",
+    "it": "Italiano",
+    "fr": "Français",
+    "zh": "中文",
+    "ja": "日本語",
+}
 LANGUAGE_CHOICES = ("auto", *LANGUAGES)
 
 DEFAULTS: dict[str, Any] = {
