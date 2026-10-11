@@ -1687,4 +1687,56 @@ def test_the_menu_scrolls_when_both_lists_do_not_fit(monkeypatch) -> None:
     scroll = window.ui.sidebarScroll
     assert scroll.verticalScrollBar().maximum() > 0  # more menu than room
     assert not window.ui.settingsButton.isHidden()  # Settings stays in view
+
+
+FORBIDDEN = (
+    'Error from server (Forbidden): pods is forbidden: User "x" cannot list '
+    'resource "pods" in API group "" at the cluster scope'
+)
+
+
+def test_a_forbidden_list_shows_the_permission_banner(monkeypatch) -> None:
+    window = _ready_window(monkeypatch)
+    window.show()
+    assert window.permission_banner.isHidden()
+
+    window._show_error(FORBIDDEN)
+
+    assert not window.permission_banner.isHidden()
+    assert "not allowed to list pods" in window.ui.permissionLabel.text()
+    window.ui.permissionDismiss.click()
+    assert window.permission_banner.isHidden()
+
+    window._show_error("connection refused")  # not a permission problem
+    assert window.permission_banner.isHidden()
+    window.close()
+
+
+def test_a_forbidden_action_shows_the_banner_instead_of_a_dialog(monkeypatch) -> None:
+    window = _ready_window(monkeypatch)
+    window.show()
+    boxes = []
+    monkeypatch.setattr(QMessageBox, "exec", lambda box: boxes.append(box.text()))
+
+    window._show_action_error("pods is forbidden")  # kubectl names no action
+
+    assert boxes == []
+    assert "not allowed to do this" in window.ui.permissionLabel.text()
+    window._show_action_error("connection refused")
+    assert boxes  # other failures still get their dialog
+    window.close()
+
+
+def test_the_permission_banner_goes_away_once_a_list_loads(monkeypatch) -> None:
+    window = _ready_window(monkeypatch)
+    window.show()
+    window._show_error(FORBIDDEN)
+    assert not window.permission_banner.isHidden()
+
+    window._answered("prod", None, window._view, ["ns"], [])
+    assert window.permission_banner.isHidden()
+
+    window._show_error(FORBIDDEN)
+    window._context_changed()  # another cluster: the old refusal no longer applies
+    assert window.permission_banner.isHidden()
     window.close()

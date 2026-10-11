@@ -36,6 +36,18 @@ def is_auth_error(message: str) -> bool:
     )
 
 
+def is_forbidden(message: str) -> bool:
+    """Whether the cluster refused the action for lack of permission."""
+    return not is_auth_error(message) and "forbidden" in message.lower()
+
+
+def forbidden_action(message: str) -> str | None:
+    """What the user may not do, like "list services", when kubectl names
+    it."""
+    found = re.search(r'cannot (\w+) resource "([^"]+)"', message)
+    return f"{found.group(1)} {found.group(2)}" if found else None
+
+
 def first_line(text: str) -> str:
     """The first non-empty line, for one-line summaries and logs."""
     return next((line.strip() for line in text.splitlines() if line.strip()), "")

@@ -71,7 +71,14 @@ from kubescope.cluster import (
     run_login,
 )
 from kubescope.diagnostics import configure_logging, log_file
-from kubescope.errors import ErrorInfo, describe_error, first_line, is_auth_error
+from kubescope.errors import (
+    ErrorInfo,
+    describe_error,
+    first_line,
+    forbidden_action,
+    is_auth_error,
+    is_forbidden,
+)
 from kubescope.i18n import apply_language
 from kubescope.log_tab import LOG_REFRESH_MS, LogTab
 from kubescope.models import (
@@ -335,6 +342,8 @@ class WorkloadWindow(QMainWindow):
         self.login_button = ui.loginButton
         ui.topLogo.setPixmap(QPixmap(str(LOGO_PATH)))
         self.no_contexts_banner = ui.noContextsBanner
+        self.permission_banner = ui.permissionBanner
+        ui.permissionDismiss.clicked.connect(self._hide_permission_banner)
         self.pages = ui.pages
         self.nav_overview = ui.navOverview
         self.nav_workloads = ui.navWorkloads
@@ -916,6 +925,7 @@ class WorkloadWindow(QMainWindow):
 
     def _context_changed(self, *_args: object) -> None:
         logger.info("Context changed to %s", self._context())
+        self._hide_permission_banner()
         self._overview_context = None
         self._workloads_overview_context = None
         self._hide_login()
@@ -1378,6 +1388,7 @@ class WorkloadWindow(QMainWindow):
     ) -> None:
         self._answers[(context, namespace, view)] = (namespaces, items)
         if view == self._view:
+            self._hide_permission_banner()  # this list loaded: access is fine
             self._show_answer(view, namespaces, items)
 
     def _show_answer(self, view: str, namespaces: list, items: list) -> None:
@@ -2209,9 +2220,31 @@ class WorkloadWindow(QMainWindow):
         if self._status_message is not None:
             self.status_label.setText(self._status_message())
 
+    def _show_permission_banner(self, message: str) -> None:
+        action = forbidden_action(message)
+        text = (
+            self.tr(
+                "Your user is not allowed to {action}. "
+                "Ask your cluster admin for access."
+            ).format(action=action)
+            if action
+            else self.tr(
+                "Your user is not allowed to do this. "
+                "Ask your cluster admin for access."
+            )
+        )
+        self.ui.permissionLabel.setText(text)
+        self.permission_banner.show()
+
+    def _hide_permission_banner(self) -> None:
+        self.permission_banner.hide()
+
     def _show_action_error(self, message: str) -> None:
         if self._close_when_worker_stops:
             return  # the window is closing; the cancelled request is no news
+        if is_forbidden(message):
+            self._show_permission_banner(message)
+            return
         info = describe_error(message)
         box = QMessageBox(self)
         box.setIcon(QMessageBox.Icon.Warning)
@@ -2225,6 +2258,8 @@ class WorkloadWindow(QMainWindow):
         logger.info("Refresh failed: %s", first_line(message))
         if is_auth_error(message):
             self._check_login()
+        if is_forbidden(message):
+            self._show_permission_banner(message)
         self._workloads = []
         self._pods = []
         self._network = []

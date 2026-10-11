@@ -178,6 +178,9 @@ QPlainTextEdit {
 }
 QFrame#noContextsBanner { background: #fff2de; border-bottom: 1px solid #985415; }
 QFrame#noContextsBanner QLabel { color: #985415; font-size: 11px; background: transparent; }
+QFrame#permissionBanner { background: #fce9ea; border-bottom: 1px solid #a33d45; }
+QFrame#permissionBanner QLabel { color: #a33d45; font-size: 11px; background: transparent; }
+QFrame#permissionBanner QPushButton { color: #a33d45; font-size: 11px; padding: 0 0 0 12px; }
 QFrame#appFooter { background: #ffffff; border-top: 1px solid #e4e5eb; }
 QLabel#footerLicense, QLabel#footerDot, QLabel#footerVersion { color: #6b7380; font-size: 10px; }
 QFrame#appFooter QPushButton[variant="link"] { font-size: 10px; padding: 0 0 0 6px; }
@@ -185,7 +188,7 @@ QPushButton#companyLink, QPushButton#licenseLink { padding: 0; }
 </string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QVBoxLayout" name="rootLayout" stretch="0,0,1,0">
+   <layout class="QVBoxLayout" name="rootLayout" stretch="0,0,0,1,0">
     <property name="spacing">
      <number>0</number>
     </property>
@@ -367,6 +370,50 @@ QPushButton#companyLink, QPushButton#licenseLink { padding: 0; }
          </property>
          <property name="wordWrap">
           <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
+    <item>
+     <widget class="QFrame" name="permissionBanner">
+      <property name="visible">
+       <bool>false</bool>
+      </property>
+      <layout class="QHBoxLayout" name="permissionLayout" stretch="1,0">
+       <property name="leftMargin">
+        <number>18</number>
+       </property>
+       <property name="topMargin">
+        <number>8</number>
+       </property>
+       <property name="rightMargin">
+        <number>18</number>
+       </property>
+       <property name="bottomMargin">
+        <number>8</number>
+       </property>
+       <item>
+        <widget class="QLabel" name="permissionLabel">
+         <property name="text">
+          <string notr="true">permission</string>
+         </property>
+         <property name="wordWrap">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="permissionDismiss">
+         <property name="text">
+          <string>Dismiss</string>
+         </property>
+         <property name="flat">
+          <bool>true</bool>
+         </property>
+         <property name="variant" stdset="0">
+          <string notr="true">link</string>
          </property>
         </widget>
        </item>

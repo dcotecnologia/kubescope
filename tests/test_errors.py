@@ -62,3 +62,18 @@ def test_first_line_skips_blank_lines() -> None:
 
     assert first_line("\n  \n  boom  \nsecond") == "boom"
     assert first_line("") == ""
+
+
+def test_forbidden_is_told_apart_from_a_sign_in_problem() -> None:
+    from kubescope.errors import forbidden_action, is_forbidden
+
+    message = (
+        'Error from server (Forbidden): services is forbidden: User "x" cannot '
+        'list resource "services" in API group "" in the namespace "ops"'
+    )
+
+    assert is_forbidden(message)
+    assert not is_forbidden("Unauthorized: token has expired, forbidden")
+    assert not is_forbidden("connection refused")
+    assert forbidden_action(message) == "list services"
+    assert forbidden_action("pods is forbidden") is None
