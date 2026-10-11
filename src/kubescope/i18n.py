@@ -3,13 +3,14 @@
 
 from pathlib import Path
 
-from PySide6.QtCore import QCoreApplication, QLibraryInfo, QLocale, QTranslator
+from PySide6.QtCore import QCoreApplication, QLibraryInfo, QLocale, Qt, QTranslator
 
 from kubescope.settings import LANGUAGES
 
 TRANSLATIONS_DIR = Path(__file__).resolve().parent / "translations"
 
 _installed: list[QTranslator] = []
+RIGHT_TO_LEFT = frozenset({"ar"})  # written from right to left: the layout mirrors
 
 
 def resolve_language(choice: str) -> str:
@@ -42,4 +43,9 @@ def apply_language(choice: str) -> str:
             if translator.load(name, directory):
                 application.installTranslator(translator)
                 _installed.append(translator)
+    application.setLayoutDirection(
+        Qt.LayoutDirection.RightToLeft
+        if code in RIGHT_TO_LEFT
+        else Qt.LayoutDirection.LeftToRight
+    )
     return code
