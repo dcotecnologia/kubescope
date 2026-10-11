@@ -29,6 +29,28 @@ DESKTOP = f"{APP_ID}.desktop"
 ICON = ROOT / "src" / "kubescope" / "assets" / "icon.png"
 
 
+SUBMISSION_STEPS = """
+Read Flathub's Generative AI policy first (the requirements page of
+https://docs.flathub.org/docs/for-app-authors/requirements): a manifest must not
+contain AI-generated or AI-assisted content, an AI tool must not open the pull
+request or write its text, and AI-generated code or packaging in the app must be
+disclosed. The files here are a starting point to check and to rewrite by hand,
+not text to send.
+
+To submit it (nothing is sent from here):
+  1. Fork https://github.com/flathub/flathub with "Copy the master branch only"
+     unchecked, and clone your fork on its `new-pr` branch:
+     git clone --branch=new-pr git@github.com:<you>/flathub.git
+  2. Create a branch from `new-pr` and add your manifest and its files at the root
+     of the repository.
+  3. Open a pull request against the `new-pr` base branch of flathub/flathub, titled
+     "Add com.dcotecnologia.KubeScope", and keep its template. Reviewers answer on
+     the pull request. When it is accepted, Flathub creates the repository
+     github.com/flathub/com.dcotecnologia.KubeScope; later updates are changes to it.
+  See https://docs.flathub.org/docs/for-app-authors/submission for the rules.
+"""
+
+
 def project_version() -> str:
     with (ROOT / "pyproject.toml").open("rb") as handle:
         return tomllib.load(handle)["project"]["version"]
@@ -172,20 +194,7 @@ def package() -> int:
     render_icons(output)
     manifest = (output / MANIFEST).read_text(encoding="utf-8")
     print(f"Wrote {output.relative_to(ROOT)}/")
-    print(
-        """To submit it (nothing is sent from here):
-
-        1. Fork https://github.com/flathub/flathub and clone your fork on its `new-pr`
-           branch: git clone --branch=new-pr git@github.com:<you>/flathub.git
-        2. Create a branch and copy the files of that folder into a new directory named
-           after the app id.
-        3. Open a pull request against the `new-pr` branch of flathub/flathub, titled
-           "Add com.dcotecnologia.KubeScope". Reviewers answer on the pull request, and
-           Flathub creates github.com/flathub/com.dcotecnologia.KubeScope when it is
-           accepted; later updates are changes to that repository.
-        See https://docs.flathub.org/docs/for-app-authors/submission for the rules.
-        """
-    )
+    print(SUBMISSION_STEPS)
     found = blockers(manifest)
     if found:
         print("\nBefore it can be accepted, the manifest needs work:")

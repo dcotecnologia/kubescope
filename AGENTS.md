@@ -173,7 +173,10 @@ Requirements:
 - The Flatpak app ID is `com.dcotecnologia.KubeScope`; keep it consistent across the
   manifest, desktop file, metainfo, `tools/build_flatpak.py` and `tools/flathub.py`.
 - `make flatpak-lint` and `make flathub-submission` prepare a Flathub submission and
-  send nothing; the pull request to flathub/flathub is opened by a person.
+  send nothing; the pull request to flathub/flathub is opened by a person. Flathub's
+  Generative AI policy forbids AI tools from opening it or writing its text, and
+  forbids AI-generated or AI-assisted content in the manifest it reviews, so an AI
+  agent must not submit it or write the manifest that goes there.
 
 ## 7) Security
 

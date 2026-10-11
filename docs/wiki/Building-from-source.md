@@ -58,6 +58,13 @@ that is not committed can be tried; it needs the runtimes, installed with
 `flatpak install flathub org.kde.Platform//6.11 org.kde.Sdk//6.11
 io.qt.PySide.BaseApp//6.11 org.freedesktop.Sdk.Extension.golang//25.08`.
 
+Flathub's [Generative AI policy](https://docs.flathub.org/docs/for-app-authors/requirements#generative-ai-policy)
+applies to a submission: the manifest it reviews must not contain AI-generated or
+AI-assisted content, the pull request has to be opened and written by a person, and
+AI-generated code or packaging in the app has to be disclosed. Treat the manifest in
+`packaging/flatpak/` as what builds the local Flatpak, and write the one you submit
+yourself.
+
 To move to a new release, change the `tag` and `commit` of the `kubescope` module,
 the version of `kubectl` if you want it newer, and run `make flatpak-lint`, which
 checks that the tag exists and points at that commit.
