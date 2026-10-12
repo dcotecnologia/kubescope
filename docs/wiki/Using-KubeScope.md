@@ -8,9 +8,9 @@ context box, the namespace filter, a search box and **Refresh**.
 
 ## Overview
 
-Nodes (ready or not, roles, version, requested against allocatable CPU and
-memory), Pod counts by state, and the number of namespaces, Deployments,
-StatefulSets and DaemonSets. Real CPU and memory usage appears when the cluster
+Totals of nodes ready, Pod counts by state, requested against allocatable CPU and
+memory, and the number of namespaces, Deployments, StatefulSets and DaemonSets.
+The nodes themselves are listed under **Node Groups** on Amazon EKS. Real CPU and memory usage appears when the cluster
 has `metrics-server`.
 
 ## Workloads overview
@@ -57,6 +57,70 @@ Click **Network** to slide out **Services**, **Endpoint Slices**, **Endpoints**,
 Long lists of addresses show the first three and a count. Select a row and use
 **Details** for its JSON. Port forwarding is not part of KubeScope yet.
 
+## Pinned lists
+
+Double-click an entry of **Workloads**, **Network** or **Config**, or right-click it
+and choose **Pin to the top**. It appears as a tab in the top bar, next to the KubeScope name, in
+the order you pinned it; the open list's tab is highlighted. Click a tab to open
+the list; middle-click a tab, click its × or right-click it to unpin. A
+pinned list that does not apply to the open context, such as Node Groups outside
+Amazon EKS, is left out until it does.
+
+## Config
+
+Click **Config** to slide out the configuration of the cluster. It opens next to
+**Workloads** and **Network**; none closes the others.
+
+- **Config Maps:** how many keys each holds.
+- **Secrets:** type and how many keys. **Details** shows the keys with every value
+  replaced by `<redacted>`; KubeScope never shows a Secret's data.
+- **Resource Quotas:** used and hard amount of each resource, as `used/hard`.
+- **Limit Ranges:** the types they limit (Container, Pod, ...).
+- **Horizontal Pod Autoscalers:** the target, minimum and maximum Pods, and the
+  current replicas.
+- **Pod Disruption Budgets:** minimum available, maximum unavailable and the
+  disruptions allowed now.
+- **Priority Classes:** value and whether it is the global default.
+- **Runtime Classes:** the handler.
+- **Leases:** the current holder.
+- **Mutating** and **Validating Webhook Configurations:** how many webhooks each
+  declares.
+
+- **Add-ons:** the Helm releases of the cluster (status and revision, one row per
+  release) and, on Amazon EKS, the EKS add-ons (status and version). The Source
+  column tells them apart. Helm releases are read from the labels of the Secrets
+  where Helm 3 stores them, so no `helm` program is needed; the contents of those
+  Secrets are never requested. Releases kept by Helm 2 or by another storage
+  driver are not listed.
+
+Priority Classes, Runtime Classes and the two webhook configurations belong to the
+whole cluster, so the namespace filter does not apply to them.
+
+## Cluster info (EKS only)
+
+On an Amazon EKS context the **Overview** starts with a **Cluster info** card:
+status, Kubernetes version, platform version, creation time, provider, API server
+endpoint, cluster ARN, cluster IAM role ARN and the OpenID Connect provider URL.
+The text can be selected and copied. It comes from `aws eks describe-cluster`; if
+that call is denied the card is simply not shown. Support period, upgrade insights
+and health are not shown yet.
+
+A **Networking** card follows it: VPC, cluster security group, additional security
+groups, API server endpoint access (public, private or both), IP address family,
+service IPv4 range, the public access allowlist and the subnets, one per line.
+It comes from the same `describe-cluster` call.
+
+## Node Groups
+
+On an Amazon EKS context, **Node Groups** appears under **Overview**; other
+contexts do not show it. The
+list shows each managed node group's status, instance types, nodes (`desired
+(min–max)`), AMI type and AMI version. It has no namespace filter and no
+Namespace or Kind column, as these are not Kubernetes objects. KubeScope reads
+them with `aws eks list-nodegroups` and `aws eks describe-nodegroup` (and the
+`addon` equivalents) using the profile and region of your kubeconfig. **Details**
+shows the JSON that `describe-nodegroup` returns.
+
 Select a row, then use **Details** (the JSON of the resource) or **Logs**. From a
 workload you can also open **Pods** to list its Pods. Double-click a row for
 details.
@@ -84,7 +148,7 @@ contain secrets printed by an application, so keep the file somewhere safe.
 ## Settings
 
 Language (automatic, English, Portuguese, Spanish, Italian, French, Chinese,
-Japanese or Arabic), the theme, remembering the last
+Japanese, Arabic, Hindi or Russian), the theme, remembering the last
 context, display names for contexts, and the debug log.
 
 ### Updates

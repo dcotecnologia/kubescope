@@ -48,13 +48,21 @@ Use a read-only role. KubeScope needs:
 
 | What | Used for |
 | ---- | -------- |
+| `get` on the non-resource URL `/version` | Checking that the cluster answers (most clusters allow it to every signed-in user) |
 | `get`, `list` on `namespaces` | Namespace filter |
 | `get`, `list` on `pods`, `services`, `endpoints`, `replicationcontrollers`, `deployments`, `statefulsets`, `daemonsets`, `replicasets`, `jobs`, `cronjobs` | Lists, details, overview |
 | `get`, `list` on `endpointslices`, `ingresses`, `ingressclasses`, `networkpolicies` | The Network menu |
+| `get`, `list` on `configmaps`, `secrets` (values are never shown), `resourcequotas`, `limitranges`, `horizontalpodautoscalers`, `poddisruptionbudgets`, `priorityclasses`, `runtimeclasses`, `leases`, `mutatingwebhookconfigurations`, `validatingwebhookconfigurations` | The Config menu |
 | `get` on `pods/log` | Logs |
 | `get`, `list` on `events` | Events in the workloads overview (optional) |
 | `get`, `list` on `nodes` | Overview (optional) |
 | `get`, `list` on `pods` and `nodes` in `metrics.k8s.io` | CPU and memory usage (optional) |
+
+Leave `secrets` out of the role if you do not want the Secrets list; the other
+lists keep working, but **Add-ons** then shows no Helm releases, because Helm stores
+them as Secrets (KubeScope reads only their labels). On EKS, the IAM identity you sign in with must also be mapped
+to the cluster (an access entry or the `aws-auth` ConfigMap) and bound to this
+role; KubeScope itself asks AWS for nothing beyond `sts:GetCallerIdentity`.
 
 A sample role:
 
@@ -65,7 +73,25 @@ metadata:
   name: kubescope-viewer
 rules:
   - apiGroups: [""]
-    resources: [namespaces, nodes, pods, pods/log, replicationcontrollers, services, endpoints]
+    resources: [namespaces, nodes, pods, pods/log, replicationcontrollers, services, endpoints, configmaps, secrets, resourcequotas, limitranges]
+    verbs: [get, list]
+  - apiGroups: [autoscaling]
+    resources: [horizontalpodautoscalers]
+    verbs: [get, list]
+  - apiGroups: [policy]
+    resources: [poddisruptionbudgets]
+    verbs: [get, list]
+  - apiGroups: [scheduling.k8s.io]
+    resources: [priorityclasses]
+    verbs: [get, list]
+  - apiGroups: [node.k8s.io]
+    resources: [runtimeclasses]
+    verbs: [get, list]
+  - apiGroups: [coordination.k8s.io]
+    resources: [leases]
+    verbs: [get, list]
+  - apiGroups: [admissionregistration.k8s.io]
+    resources: [mutatingwebhookconfigurations, validatingwebhookconfigurations]
     verbs: [get, list]
   - apiGroups: [apps]
     resources: [deployments, statefulsets, daemonsets, replicasets]
@@ -85,9 +111,26 @@ rules:
   - apiGroups: [metrics.k8s.io]
     resources: [nodes, pods]
     verbs: [get, list]
+  - nonResourceURLs: [/version]
+    verbs: [get]
 ```
 
 Sections you cannot read are reported on the page instead of failing it.
+
+## Cluster info, Node Groups and EKS add-ons (EKS only)
+
+These come from the AWS API, not from the cluster, so they need IAM
+permissions on the identity you sign in with, besides the Kubernetes role:
+
+| What | Used for |
+| ---- | -------- |
+| `eks:DescribeCluster` | The Cluster info card on the Overview |
+| `eks:ListNodegroups`, `eks:DescribeNodegroup` | The Node Groups entry |
+| `eks:ListAddons`, `eks:DescribeAddon` | The EKS add-ons in **Add-ons** (Config menu) |
+
+The cluster name, region and profile are read from the `aws eks get-token`
+command in your kubeconfig. Contexts that are not EKS do not show these entries,
+and without the permissions the list reports the access error.
 
 ## Metrics
 
