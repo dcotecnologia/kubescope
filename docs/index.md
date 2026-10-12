@@ -19,8 +19,8 @@ cluster.
 - **Details and logs:** JSON details and live Pod logs, each in its own tab.
 - **Readable errors:** short messages with a hint, with the original error
   text one click away.
-- **English, Portuguese, Spanish, Italian, French, Chinese, Japanese and Arabic**,
-  selectable in Settings.
+- **English, Portuguese, Spanish, Italian, French, Chinese, Japanese, Arabic, Hindi
+  and Russian**, selectable in Settings.
 
 ## Get it
 

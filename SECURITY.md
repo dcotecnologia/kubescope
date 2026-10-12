@@ -37,6 +37,23 @@ prefer otherwise.
 - **It is read-only for now.** The app only sends `GET` requests to the cluster
   (lists, single objects, Pod logs, `/version`, and metrics). Write actions are
   planned, and they will be explicit and confirmed by the user.
+- **Cluster info, Node Groups and Add-ons use the AWS CLI.** On an Amazon EKS
+  context the app also runs `aws eks describe-cluster` (the Cluster info and
+  Networking cards of the Overview), `list-nodegroups`, `describe-nodegroup`,
+  `list-addons` and `describe-addon`. They only read. The cluster name, region and
+  profile come from the sign-in command of your kubeconfig; no credentials are
+  read or stored.
+- **Helm releases are read from Secret metadata only.** **Add-ons** lists the
+  Secrets that carry the label `owner=helm`, asking the API for their metadata
+  alone (`PartialObjectMetadataList`), so the data of a Secret, which holds the
+  release and its values, is not even sent to the app. Only the labels name,
+  status and version are used. It needs `list` on `secrets`.
+- **Secret values are never shown.** The Secrets list shows only the type and the
+  number of keys. **Details** of a Secret replaces every value in `data` and
+  `stringData` with `<redacted>` before it reaches the screen, and drops the
+  `last-applied-configuration` annotation, which repeats them. The role you give
+  KubeScope still needs `get` and `list` on `secrets`; leave it out if you do not
+  want the Secrets list.
 - **The sign-in check and button run the cloud CLIs, not the app.** To tell whether
   you are signed in, the app runs `aws sts get-caller-identity` and `aws configure
   get` for the profile your kubeconfig names, and reads that profile from the
@@ -56,7 +73,7 @@ prefer otherwise.
   anything; the link opens the release page in your browser. Turn the startup
   check off in Settings.
 - **Local settings hold no secrets.** `settings.json` keeps the language, the
-  last context, context display names, hidden table columns, and the size
+  last context, context display names, hidden table columns, the pinned lists, and the size
   and position of the window. It lives in your
   user configuration directory (`~/.config/kubescope` on Linux).
 - **Logs and resource details are shown on screen.** The app does not write them

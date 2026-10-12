@@ -69,8 +69,8 @@ on the wiki. To connect to your clusters, see
 
 ## Features
 
-- **Overview:** nodes, Pod counts, CPU and memory requests against capacity, and
-  the number of namespaces, Deployments, StatefulSets and DaemonSets.
+- **Overview:** nodes ready, Pod counts, CPU and memory requests against capacity,
+  and the number of namespaces, Deployments, StatefulSets and DaemonSets.
 - **Workloads overview:** the first entry of the **Workloads** menu counts Pods,
   Deployments, DaemonSets, StatefulSets, ReplicaSets, Jobs and CronJobs with a
   health bar each (green healthy, orange coming up or degraded, red failing, grey
@@ -89,6 +89,26 @@ on the wiki. To connect to your clusters, see
   **Ingresses**, **Ingress Classes** and **Network Policies**, each with its own
   columns, and **Details** for the JSON of a row. The two menus open on their own,
   and the navigation scrolls when they do not fit.
+- **Pinned lists:** double-click any entry of the Workloads, Network or Config
+  menus (or right-click it and choose **Pin to the top**) to keep it as a tab in
+  the top bar, like Lens, for quick access; middle-click the tab, or click its ×,
+  to unpin. The choice is kept in
+  `settings.json`.
+- **Config:** a third menu lists **Config Maps**, **Secrets**, **Resource Quotas**,
+  **Limit Ranges**, **Horizontal Pod Autoscalers**, **Pod Disruption Budgets**,
+  **Priority Classes**, **Runtime Classes**, **Leases** and the **Mutating** and
+  **Validating Webhook Configurations**. **Details** of a Secret shows its keys,
+  never its values. **Add-ons** lists the Helm releases of the cluster and, on Amazon
+  EKS, its EKS add-ons.
+- **Cluster info (EKS only):** the Overview shows status, Kubernetes and platform
+  versions, creation time, API server endpoint and the cluster and IAM role ARNs,
+  and a **Networking** card with the VPC, subnets, security groups, endpoint access
+  and service range.
+- **Node Groups (EKS only):** a main-menu entry under Overview, shown only for
+  Amazon EKS contexts. It lists the managed node groups with status, instance
+  types, nodes (desired, min and max), AMI type and AMI version, read through the
+  AWS CLI, with the cluster's nodes (status, role, version, CPU, memory, Pods) in
+  the same view. It has no namespace filter, since node groups are not namespaced.
 - **Details and logs:** JSON details of a Pod or workload, and live Pod logs,
   each in its own closable tab, colored like Monokai. **Save...** writes the open
   tab to a file you choose.
@@ -111,8 +131,8 @@ on the wiki. To connect to your clusters, see
   **Sign in to Azure** button (`az login`) when their credentials have expired.
 - **Always responsive:** every cluster call runs in the background, so the window
   never freezes while the cluster or the cloud CLIs work.
-- **English, Portuguese, Spanish, Italian, French, Chinese, Japanese and Arabic**,
-  selectable in Settings.
+- **English, Portuguese, Spanish, Italian, French, Chinese, Japanese, Arabic, Hindi
+  and Russian**, selectable in Settings.
 
 ## Requirements
 
@@ -124,7 +144,9 @@ on the wiki. To connect to your clusters, see
 - Read access to namespaces, pods, events, deployments, statefulsets, daemonsets,
   replicasets, replicationcontrollers, jobs, and cronjobs; for the Network menu,
   also services, endpoints, endpointslices, ingresses, ingressclasses, and
-  networkpolicies
+  networkpolicies; for the Config menu, also configmaps, secrets, resourcequotas,
+  limitranges, horizontalpodautoscalers, poddisruptionbudgets, priorityclasses,
+  runtimeclasses, leases, and the mutating and validating webhook configurations
 - Optional, for the cluster overview page: read access to nodes and pods across
   namespaces. Optional, for CPU and memory in the Pods and Deployments lists and
   on the overview: `metrics-server` for real usage. Sections the role
@@ -213,8 +235,8 @@ and open a pull request (the folder's README has the steps).
 ### Languages
 
 KubeScope speaks **English**, **Portuguese** (`pt`), **Spanish** (`es`), **Italian** (`it`),
-**French** (`fr`), **Chinese** (`zh`, simplified), **Japanese** (`ja`) and **Arabic** (`ar`,
-written right to left: the whole layout mirrors). **Automatic** (the default) follows
+**French** (`fr`), **Chinese** (`zh`, simplified), **Japanese** (`ja`), **Arabic** (`ar`,
+written right to left: the whole layout mirrors), **Hindi** (`hi`) and **Russian** (`ru`). **Automatic** (the default) follows
 your system language and falls back to English. The texts in the code are English;
 each other language is a Qt translation file, `src/kubescope/translations/kubescope_<code>.ts`,
 that `make i18n` compiles into the `.qm` the app loads.

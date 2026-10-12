@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+### Added
+
+- Hindi and Russian translations, selectable in Settings; **Automatic** follows the system language by @danilogco
+- A Config menu with Config Maps, Secrets, Resource Quotas, Limit Ranges, Horizontal Pod Autoscalers, Pod Disruption Budgets, Priority Classes, Runtime Classes, Leases and the Mutating and Validating Webhook Configurations, read only and with Details. The Details of a Secret never show its values by @danilogco
+- A Cluster info card and a Networking card on the Overview of Amazon EKS contexts, read with `aws eks describe-cluster` by @danilogco
+- Node Groups (a main-menu entry under Overview) for Amazon EKS contexts, and Add-ons (in Config) with the Helm releases of any cluster and the EKS add-ons, read through the AWS CLI and the Kubernetes API, without the data of any Secret, with the AMI version of each node group, the cluster's nodes in the same view and no namespace filter by @danilogco
+- Pin any list as a tab in the top bar with a double-click (or a right-click), and unpin it with the middle button, for quick access by @danilogco
+
+### Changed
+
+- The Nodes table moved from the Overview to the Node Groups view, and the Namespace and Kind columns are no longer shown in any list by @danilogco
+
 ## [0.3.0] - 2026-10-11
 
 ### Added
