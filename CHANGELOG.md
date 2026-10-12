@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-10-12
+
 ### Added
 
 - Hindi and Russian translations, selectable in Settings; **Automatic** follows the system language by @danilogco
@@ -88,7 +90,8 @@ The first release.
 
 - Pod logs and resource details are still never written to disk by the app on its own. **Save** is the only exception, and it writes only to the file the user chooses. SECURITY.md says so by @danilogco
 
-[Unreleased]: https://github.com/dcotecnologia/kubescope/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/dcotecnologia/kubescope/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/dcotecnologia/kubescope/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/dcotecnologia/kubescope/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/dcotecnologia/kubescope/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/dcotecnologia/kubescope/releases/tag/v0.1.0
