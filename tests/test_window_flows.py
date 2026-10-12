@@ -7,8 +7,9 @@ import pytest
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
-from PySide6.QtCore import QObject, QPoint, Signal
+from PySide6.QtCore import QObject, QPoint, Qt, Signal
 from PySide6.QtGui import QCloseEvent, QPalette, QShortcut
+from PySide6.QtTest import QTest
 from PySide6.QtWidgets import (
     QApplication,
     QDialog,
@@ -24,10 +25,12 @@ from kubescope import json_view, theme
 from kubescope import window as window_module
 from kubescope.cluster import ClusterError, LoginAction
 from kubescope.models import (
+    CONFIG_VIEWS,
+    ClusterInfo,
     ClusterOverview,
+    ClusterResource,
     EventInfo,
     KindSummary,
-    NetworkResource,
     NodeInfo,
     PodInfo,
     Workload,
@@ -610,15 +613,15 @@ def test_header_menu_toggles_columns_and_keeps_the_name(monkeypatch) -> None:
 
     class FakeMenu(QMenu):
         def exec(self, *_args) -> None:
-            actions = self.actions()
-            assert actions[2].isEnabled() is False
-            actions[0].toggle()
+            actions = self.actions()  # no namespace and no kind: never shown
+            assert actions[0].text() == "NAME" and actions[0].isEnabled() is False
+            actions[1].toggle()
 
     monkeypatch.setattr(window_module, "QMenu", FakeMenu)
 
     window._show_column_menu(QPoint(0, 0))
 
-    assert window.table.isColumnHidden(0)
+    assert window.table.isColumnHidden(3)
     window.close()
 
 
@@ -1212,8 +1215,23 @@ def test_workloads_overview_is_the_first_entry_of_the_workloads_menu(
     layout = window.ui.workloadsSubmenuLayout
 
     assert layout.indexOf(window.nav_workloads_overview) == 0
-    assert layout.indexOf(window.nav_pods) == 1
     assert window.nav_workloads_overview.text() == "Overview"
+    window.close()
+
+
+def test_menu_entries_are_in_alphabetical_order(monkeypatch) -> None:
+    window = _ready_window(monkeypatch)
+    ui = window.ui
+    for layout, skipped in (
+        (ui.workloadsSubmenuLayout, 1),  # the Overview stays first
+        (ui.networkSubmenuLayout, 0),
+        (ui.configSubmenuLayout, 0),
+    ):
+        names = [
+            layout.itemAt(index).widget().text().casefold()
+            for index in range(skipped, layout.count())
+        ]
+        assert names == sorted(names)
     window.close()
 
 
@@ -1570,14 +1588,14 @@ def test_clicking_through_the_lists_quickly_loads_only_the_last_one(
     window.close()
 
 
-def _network_window(monkeypatch):
+def _resource_window(monkeypatch):
     window = _ready_window(monkeypatch)
     window.context_combo.addItem("prod")
     return window
 
 
 def test_each_network_list_opens_with_its_own_columns(monkeypatch) -> None:
-    window = _network_window(monkeypatch)
+    window = _resource_window(monkeypatch)
     expected = {
         "services": ("Services", "Service", 4),
         "endpointslices": ("Endpoint Slices", "EndpointSlice", 3),
@@ -1589,10 +1607,10 @@ def test_each_network_list_opens_with_its_own_columns(monkeypatch) -> None:
     for view, (title, kind, extra) in expected.items():
         window._open_list_view(view)
         values = tuple(f"v{n}" for n in range(extra))
-        window._show_network(
+        window._show_resources(
             ["ops"],
             [
-                NetworkResource(
+                ClusterResource(
                     "" if kind == "IngressClass" else "ops", kind, "x", values, "2d"
                 )
             ],
@@ -1608,23 +1626,210 @@ def test_each_network_list_opens_with_its_own_columns(monkeypatch) -> None:
         assert not window.details_button.isHidden()
     assert window.table.item(0, 0).text() == "ops"
     window._open_list_view("ingressclasses")
-    window._show_network(
-        ["ops"], [NetworkResource("", "IngressClass", "x", ("c", "p"), "1d")]
+    window._show_resources(
+        ["ops"], [ClusterResource("", "IngressClass", "x", ("c", "p"), "1d")]
     )
     assert window.table.item(0, 0).text() == "—"  # cluster-wide: no namespace
     window.close()
 
 
-def test_network_lists_sort_filter_and_show_details(monkeypatch) -> None:
-    window = _network_window(monkeypatch)
+def test_each_config_list_opens_with_its_own_columns(monkeypatch) -> None:
+    window = _resource_window(monkeypatch)
+    expected = {
+        "configmaps": ("Config Maps", "ConfigMap", 1),
+        "secrets": ("Secrets", "Secret", 2),
+        "resourcequotas": ("Resource Quotas", "ResourceQuota", 1),
+        "limitranges": ("Limit Ranges", "LimitRange", 1),
+        "horizontalpodautoscalers": (
+            "Horizontal Pod Autoscalers",
+            "HorizontalPodAutoscaler",
+            4,
+        ),
+        "poddisruptionbudgets": ("Pod Disruption Budgets", "PodDisruptionBudget", 3),
+        "priorityclasses": ("Priority Classes", "PriorityClass", 2),
+        "runtimeclasses": ("Runtime Classes", "RuntimeClass", 1),
+        "leases": ("Leases", "Lease", 1),
+        "mutatingwebhooks": (
+            "Mutating Webhook Configurations",
+            "MutatingWebhookConfiguration",
+            1,
+        ),
+        "validatingwebhooks": (
+            "Validating Webhook Configurations",
+            "ValidatingWebhookConfiguration",
+            1,
+        ),
+        "nodegroups": ("Node Groups", "NodeGroup", 5),
+        "addons": ("Add-ons", "Addon", 3),
+    }
+    assert set(expected) == set(CONFIG_VIEWS)
+    for view, (title, kind, extra) in expected.items():
+        window._open_list_view(view)
+        values = tuple(f"v{n}" for n in range(extra))
+        window._show_resources(
+            ["ops"], [ClusterResource("ops", kind, "x", values, "2d")]
+        )
+
+        assert window.ui.pageTitle.text() == title
+        assert window.table.columnCount() == extra + 4  # namespace, kind, name, age
+        assert window.table.item(0, 1).text() == kind
+        assert window.table.item(0, 3).text() == "v0"
+        assert window.summary_label.text() == f"1 of 1 {title}"
+        assert window.pods_button.isHidden() and window.logs_button.isHidden()
+        assert not window.details_button.isHidden()
+        assert "1" in window.status_label.text()
+    window.close()
+
+
+def test_namespace_and_kind_columns_are_never_shown(monkeypatch) -> None:
+    window = _resource_window(monkeypatch)
+    window._fill_namespaces(["ops"])
+    menu_columns = []
+
+    class FakeMenu(QMenu):
+        def exec(self, *_args) -> None:
+            menu_columns.extend(action.text() for action in self.actions())
+
+    monkeypatch.setattr(window_module, "QMenu", FakeMenu)
+    rows = {
+        "nodegroups": ClusterResource("", "NodeGroup", "x", ("A", "v"), "1d"),
+        "services": ClusterResource("ops", "Service", "x", ("a", "b", "c", "d"), "1d"),
+    }
+    for view, row in rows.items():
+        window._open_list_view(view)
+        window._show_resources([], [row])
+        assert window.table.isColumnHidden(0) and window.table.isColumnHidden(1)
+        assert not window.table.isColumnHidden(2)
+        menu_columns.clear()
+        window._show_column_menu(QPoint(0, 0))
+        assert "NAMESPACE" not in menu_columns and "KIND" not in menu_columns
+        assert "NAME" in menu_columns
+    window._open_list_view("deployments")
+    assert window.table.isColumnHidden(0) and window.table.isColumnHidden(1)
+    window._open_list_view("pods")
+    assert window.table.isColumnHidden(0) and not window.table.isColumnHidden(1)
+    window._fill_namespaces(["ops"])
+    window._open_list_view("nodegroups")
+    window._show_resources([], [rows["nodegroups"]])
+    assert window.ui.filtersBar.isHidden() and window._namespaces == ["ops"]
+    assert window.ui.filtersBar.isHidden()
+    window.search_input.setText("zzz")  # stale text must not hide the rows
+    window._filter_rows()
+    assert not window.table.isRowHidden(0)
+    window.search_input.setText("")
     window._open_list_view("services")
-    window._show_network(
+    assert not window.ui.filtersBar.isHidden()
+    window.close()
+
+
+def test_the_overview_shows_the_cluster_info_of_an_eks_context(monkeypatch) -> None:
+    window = _resource_window(monkeypatch)
+    ran = []
+    monkeypatch.setattr(window, "_run_action", lambda *a, **k: ran.append((a, k)))
+    info = ClusterInfo(
+        "Active",
+        "1.37",
+        "eks.4",
+        "2026-02-11 13:16",
+        "EKS",
+        "https://api",
+        "<arn>",
+        "r",
+        "o",
+        vpc_id="vpc-1",
+        subnets=("subnet-a", "subnet-b"),
+        endpoint_access="Public",
+    )
+
+    window._show_eks_entries("prod", True)
+    (operation, on_success, context), options = ran[-1]
+    assert operation.__name__ == "get_cluster_info" and context == "prod"
+    on_success(info)
+
+    card = window.overview_ui.clusterInfoCard
+    grid = window.overview_ui.clusterInfoGrid
+    assert not card.isHidden() and grid.count() == 9
+    texts = [grid.itemAt(i).widget().text() for i in range(grid.count())]
+    assert "Kubernetes version" in texts[1] and "1.37" in texts[1]
+    assert "&lt;arn&gt;" in texts[6]  # values are escaped
+    networking = window.overview_ui.networkingGrid
+    cells = [networking.itemAt(i).widget().text() for i in range(networking.count())]
+    assert not window.overview_ui.networkingCard.isHidden() and len(cells) == 8
+    assert "vpc-1" in cells[0] and "None" in cells[2] and "Public" in cells[3]
+    assert "subnet-a<br>subnet-b" in cells[7]  # one subnet per line
+
+    window._show_cluster_info("other", None)  # a stale answer is ignored
+    assert not card.isHidden()
+    window._retranslate()  # a language change redraws the labels
+    assert grid.count() == 9
+
+    options["on_error"]("denied")  # not readable: the card goes away
+    assert card.isHidden() and grid.count() == 0
+    assert window.overview_ui.networkingCard.isHidden()
+    on_success(info)
+    window._show_eks_entries("prod", False)  # not EKS (any more)
+    assert card.isHidden()
+    window.close()
+
+
+def test_the_node_groups_entry_follows_the_context(monkeypatch) -> None:
+    window = _resource_window(monkeypatch)
+    ran = []
+    monkeypatch.setattr(window, "_run_action", lambda *a, **k: ran.append((a, k)))
+    window.show()
+    window._update_eks_entries()
+    (operation, on_success, context), options = ran[0]
+    assert operation.__name__ == "is_eks_context" and context == "prod"
+    assert window.ui.navNodeGroups.isHidden()
+
+    on_success(True)
+    assert not window.ui.navNodeGroups.isHidden()
+    window._show_eks_entries("other", False)  # a stale answer is ignored
+    assert not window.ui.navNodeGroups.isHidden()
+
+    window._open_list_view("nodegroups")
+    window._context_changed()  # until the new context answers, nothing from AWS
+    assert window.ui.navNodeGroups.isHidden()
+    assert not window.ui.navAddons.isHidden()  # Helm releases need no AWS
+    assert (
+        window.overview_ui.clusterInfoCard.isHidden() and window._view == "deployments"
+    )
+    on_success(True)
+    window._open_list_view("nodegroups")
+    options["on_error"]("boom")  # not EKS (or unreadable): the entry goes away
+    assert window.ui.navNodeGroups.isHidden() and window._view == "deployments"
+
+    window.context_combo.clear()
+    window.ui.navNodeGroups.setVisible(True)
+    window._update_eks_entries()  # no context: nothing to ask
+    assert window.ui.navNodeGroups.isHidden() and len(ran) >= 1
+    window.close()
+
+
+def test_the_config_menu_opens_and_lists_every_entry(monkeypatch) -> None:
+    window = _resource_window(monkeypatch)
+    assert not window.nav_config.isCheckable()
+
+    window._toggle_submenu(window.config_submenu)
+    window._submenus[window.config_submenu].stop()
+
+    assert window._submenus[window.config_submenu].endValue() > 0
+    for view in set(CONFIG_VIEWS) - {"nodegroups"}:
+        assert window._nav_views[view].parent() is window.config_submenu
+    assert window._nav_views["nodegroups"].parent() is not window.config_submenu
+    window.close()
+
+
+def test_network_lists_sort_filter_and_show_details(monkeypatch) -> None:
+    window = _resource_window(monkeypatch)
+    window._open_list_view("services")
+    window._show_resources(
         ["ops"],
         [
-            NetworkResource(
+            ClusterResource(
                 "ops", "Service", "web", ("ClusterIP", "1", "—", "80/TCP"), "2d"
             ),
-            NetworkResource(
+            ClusterResource(
                 "ops", "Service", "api", ("NodePort", "2", "—", "80/TCP"), "5h"
             ),
         ],
@@ -1648,26 +1853,26 @@ def test_network_lists_sort_filter_and_show_details(monkeypatch) -> None:
 def test_changing_network_kind_clears_rows_and_errors_empty_the_list(
     monkeypatch,
 ) -> None:
-    window = _network_window(monkeypatch)
+    window = _resource_window(monkeypatch)
     window._open_list_view("services")
-    window._show_network(
-        ["ops"], [NetworkResource("ops", "Service", "web", ("a",) * 4, "1d")]
+    window._show_resources(
+        ["ops"], [ClusterResource("ops", "Service", "web", ("a",) * 4, "1d")]
     )
     window._open_list_view("endpoints")  # other columns: the old rows go
-    assert window._network == [] and window.table.rowCount() == 0
+    assert window._resources == [] and window.table.rowCount() == 0
 
-    window._show_network(
-        ["ops"], [NetworkResource("ops", "Endpoints", "web", ("x",), "1d")]
+    window._show_resources(
+        ["ops"], [ClusterResource("ops", "Endpoints", "web", ("x",), "1d")]
     )
     window._show_error("boom")
-    assert window._network == []
+    assert window._resources == []
     window.close()
 
 
 def test_the_network_worker_loads_the_kind_of_its_view(monkeypatch) -> None:
     monkeypatch.setattr(
         window_module,
-        "get_network",
+        "get_resources",
         lambda context, namespace, kind: (["ops"], [(context, namespace, kind)]),
     )
     done = []
@@ -1680,7 +1885,7 @@ def test_the_network_worker_loads_the_kind_of_its_view(monkeypatch) -> None:
 
 
 def test_the_two_menus_open_and_close_independently(monkeypatch) -> None:
-    window = _network_window(monkeypatch)
+    window = _resource_window(monkeypatch)
     window.show()
 
     def settle() -> None:
@@ -1702,7 +1907,7 @@ def test_the_two_menus_open_and_close_independently(monkeypatch) -> None:
 
 
 def test_the_menu_scrolls_when_both_lists_do_not_fit(monkeypatch) -> None:
-    window = _network_window(monkeypatch)
+    window = _resource_window(monkeypatch)
     window.resize(1100, 520)
     window.show()
     window.nav_workloads.click()
@@ -2440,4 +2645,111 @@ def test_clearing_the_cache_forgets_answers_overviews_and_sign_ins(monkeypatch) 
     assert window._overview_context is None
     assert window._workloads_overview_context is None
     assert "Cache cleared" in window.settings_ui.noticeLabel.text()
+    window.close()
+
+
+def test_a_list_can_be_pinned_to_the_top_of_the_menu(monkeypatch) -> None:
+    window = _resource_window(monkeypatch)
+    assert window.ui.pinnedBar.isHidden()
+
+    window._toggle_pin("secrets")
+    window._toggle_pin("pods")
+
+    texts = [button.text() for button in window._pinned_buttons]
+    assert texts == ["Secrets", "Pods"] and not window.ui.pinnedBar.isHidden()
+    assert window.settings.pinned_views() == ["secrets", "pods"]
+    window._pinned_buttons[0].click()
+    assert window._view == "secrets"
+    assert window._pinned_buttons[0].isChecked()
+    assert not window._pinned_buttons[1].isChecked()
+
+    tab = window._pinned_buttons[0].parentWidget()
+    assert tab.property("active") == "true"
+    assert window._pinned_buttons[1].parentWidget().property("active") == "false"
+    tab.findChildren(QPushButton)[1].click()  # the × takes it back
+    assert [b.text() for b in window._pinned_buttons] == ["Pods"]
+    window._toggle_pin("pods")
+    assert window.ui.pinnedBar.isHidden()
+    window.close()
+
+
+def test_the_pin_menu_offers_pin_or_unpin(monkeypatch) -> None:
+    window = _resource_window(monkeypatch)
+    offered = []
+
+    class FakeMenu(QMenu):
+        def exec(self, *_args) -> None:
+            action = self.actions()[0]
+            offered.append(action.text())
+            action.trigger()
+
+    monkeypatch.setattr(window_module, "QMenu", FakeMenu)
+    window._nav_views["leases"].customContextMenuRequested.emit(QPoint(1, 1))
+    assert window.settings.pinned_views() == ["leases"]
+    window._pinned_buttons[0].customContextMenuRequested.emit(QPoint(1, 1))
+
+    assert offered == ["Pin to the top", "Unpin from the top"]
+    assert window.settings.pinned_views() == [] and window.ui.pinnedBar.isHidden()
+    window.close()
+
+
+def test_pinned_lists_that_are_not_available_stay_out_of_the_menu(monkeypatch) -> None:
+    window = _resource_window(monkeypatch)
+    window.settings.set_pinned_views(["nodegroups", "unknown", "pods"])
+    window._render_pinned()
+    assert [b.text() for b in window._pinned_buttons] == ["Pods"]
+
+    window._show_eks_entries("prod", True)  # an EKS context: Node Groups is there
+    assert [b.text() for b in window._pinned_buttons] == ["Node Groups", "Pods"]
+    window._retranslate()  # a language change keeps them
+    assert len(window._pinned_buttons) == 2
+    window._show_eks_entries("prod", False)
+    assert [b.text() for b in window._pinned_buttons] == ["Pods"]
+    window.close()
+
+
+def test_two_quick_clicks_pin_a_list_and_the_middle_button_unpins_it(
+    monkeypatch,
+) -> None:
+    window = _resource_window(monkeypatch)
+    entry = window._nav_views["leases"]
+
+    QTest.mouseDClick(entry, Qt.MouseButton.LeftButton)
+    assert window.settings.pinned_views() == ["leases"]
+    QTest.mouseDClick(entry, Qt.MouseButton.LeftButton)  # already there: it stays
+    assert window.settings.pinned_views() == ["leases"]
+    QTest.mouseClick(entry, Qt.MouseButton.RightButton)  # other buttons do nothing
+    assert window.settings.pinned_views() == ["leases"]
+
+    tab_button = window._pinned_buttons[0]
+    QTest.mouseClick(tab_button, Qt.MouseButton.LeftButton)  # a plain click opens it
+    assert window._view == "leases" and window.settings.pinned_views() == ["leases"]
+    tab_button = window._pinned_buttons[0]  # the bar was redrawn by that click
+    QTest.mouseClick(tab_button, Qt.MouseButton.MiddleButton)
+    assert window.settings.pinned_views() == [] and window._pinned_buttons == []
+
+    window._toggle_pin("pods")
+    tab = window._pinned_buttons[0].parentWidget()
+    QTest.mouseClick(tab, Qt.MouseButton.MiddleButton)  # anywhere on the tab
+    assert window.settings.pinned_views() == []
+    window.close()
+
+
+def test_aws_words_are_shown_in_the_interface_language(monkeypatch) -> None:
+    window = _resource_window(monkeypatch)
+    assert window._aws_value("ACTIVE") == "Active"
+    assert window._aws_value("CREATE_FAILED") == "Creation failed"
+    assert window._aws_value("Public and private") == "Public and private"
+    assert window._aws_value("SOMETHING_NEW") == "SOMETHING_NEW"  # unknown: as it came
+
+    window._open_list_view("nodegroups")
+    window._show_resources(
+        [],
+        [
+            ClusterResource(
+                "", "NodeGroup", "ng", ("DELETE_FAILED", "m5", "1", "A", "v"), "1d"
+            )
+        ],
+    )
+    assert window.table.item(0, 3).text() == "Deletion failed"
     window.close()

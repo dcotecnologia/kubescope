@@ -26,6 +26,14 @@ QLabel#topBrand {
     color: #ffffff; font-size: 13px; font-weight: 700;
     padding: 0 12px; background: #123764; min-height: 46px;
 }
+QFrame[pinTab="true"] { background: transparent; border: 0; border-top: 2px solid transparent; }
+QFrame[pinTab="true"][active="true"] { background: #123764; border-top: 2px solid #6252b5; }
+QFrame[pinTab="true"] QPushButton {
+    color: #b8c7dc; background: transparent; border: 0; padding: 6px 4px;
+    font-size: 12px; font-weight: 600;
+}
+QFrame[pinTab="true"] QPushButton:hover, QFrame[pinTab="true"][active="true"] QPushButton { color: #ffffff; }
+QFrame[pinTab="true"] QPushButton[closeTab="true"] { font-size: 16px; padding: 2px 6px; }
 QLabel#topTitle { color: #ffffff; font-size: 14px; font-weight: 700; }
 QLabel#topSubtitle { color: #b8c7dc; font-size: 9px; }
 QLabel#topCaption { color: #b8c7dc; font-size: 9px; font-weight: 700; }
@@ -103,7 +111,7 @@ QPushButton[variant="link"] {
 QPushButton[variant="link"]:hover { color: #4030b8; }
 QPushButton[variant="link"]:disabled { color: #4f5966; text-decoration: none; }
 QScrollArea { background: transparent; border: 0; }
-QWidget#settingsContent { background: transparent; }
+QWidget#settingsContent, QWidget#overviewContent { background: transparent; }
 QPushButton[variant="secondary"] {
     background: #ffffff; color: #3220a0; border: 1px solid #d9dce4;
     border-radius: 5px; min-height: 32px; padding: 0 10px;
@@ -287,6 +295,30 @@ QPushButton#updateButton:hover { background: #f6f6fa; }
           </widget>
          </item>
         </layout>
+       </item>
+       <item>
+        <widget class="QWidget" name="pinnedBar">
+         <property name="visible">
+          <bool>false</bool>
+         </property>
+         <layout class="QHBoxLayout" name="pinnedLayout">
+          <property name="spacing">
+           <number>6</number>
+          </property>
+          <property name="leftMargin">
+           <number>16</number>
+          </property>
+          <property name="topMargin">
+           <number>0</number>
+          </property>
+          <property name="rightMargin">
+           <number>0</number>
+          </property>
+          <property name="bottomMargin">
+           <number>0</number>
+          </property>
+         </layout>
+        </widget>
        </item>
        <item>
         <spacer name="topSpacer">
@@ -477,13 +509,13 @@ QPushButton#updateButton:hover { background: #f6f6fa; }
        <widget class="QFrame" name="sidebar">
         <property name="minimumSize">
          <size>
-          <width>252</width>
+          <width>320</width>
           <height>0</height>
          </size>
         </property>
         <property name="maximumSize">
          <size>
-          <width>252</width>
+          <width>320</width>
           <height>16777215</height>
          </size>
         </property>
@@ -560,6 +592,37 @@ QPushButton#updateButton:hover { background: #f6f6fa; }
                </property>
                <property name="checked">
                 <bool>true</bool>
+               </property>
+               <property name="autoExclusive">
+                <bool>true</bool>
+               </property>
+               <property name="nav" stdset="0">
+                <string notr="true">true</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="navNodeGroups">
+               <property name="text">
+                <string>Node Groups</string>
+               </property>
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>34</height>
+                </size>
+               </property>
+               <property name="iconSize">
+                <size>
+                 <width>16</width>
+                 <height>16</height>
+                </size>
+               </property>
+               <property name="checkable">
+                <bool>true</bool>
+               </property>
+               <property name="checked">
+                <bool>false</bool>
                </property>
                <property name="autoExclusive">
                 <bool>true</bool>
@@ -653,9 +716,40 @@ QPushButton#updateButton:hover { background: #f6f6fa; }
                    </widget>
                   </item>
                   <item>
-                   <widget class="QPushButton" name="navPods">
+                   <widget class="QPushButton" name="navCronJobs">
                     <property name="text">
-                     <string>Pods</string>
+                     <string>CronJobs</string>
+                    </property>
+                    <property name="minimumSize">
+                     <size>
+                      <width>0</width>
+                      <height>28</height>
+                     </size>
+                    </property>
+                    <property name="iconSize">
+                     <size>
+                      <width>16</width>
+                      <height>16</height>
+                     </size>
+                    </property>
+                    <property name="checkable">
+                     <bool>true</bool>
+                    </property>
+                    <property name="checked">
+                     <bool>false</bool>
+                    </property>
+                    <property name="autoExclusive">
+                     <bool>true</bool>
+                    </property>
+                    <property name="nav" stdset="0">
+                     <string notr="true">true</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QPushButton" name="navDaemonSets">
+                    <property name="text">
+                     <string>DaemonSets</string>
                     </property>
                     <property name="minimumSize">
                      <size>
@@ -715,9 +809,9 @@ QPushButton#updateButton:hover { background: #f6f6fa; }
                    </widget>
                   </item>
                   <item>
-                   <widget class="QPushButton" name="navStatefulSets">
+                   <widget class="QPushButton" name="navJobs">
                     <property name="text">
-                     <string>StatefulSets</string>
+                     <string>Jobs</string>
                     </property>
                     <property name="minimumSize">
                      <size>
@@ -746,9 +840,9 @@ QPushButton#updateButton:hover { background: #f6f6fa; }
                    </widget>
                   </item>
                   <item>
-                   <widget class="QPushButton" name="navDaemonSets">
+                   <widget class="QPushButton" name="navPods">
                     <property name="text">
-                     <string>DaemonSets</string>
+                     <string>Pods</string>
                     </property>
                     <property name="minimumSize">
                      <size>
@@ -839,40 +933,9 @@ QPushButton#updateButton:hover { background: #f6f6fa; }
                    </widget>
                   </item>
                   <item>
-                   <widget class="QPushButton" name="navJobs">
+                   <widget class="QPushButton" name="navStatefulSets">
                     <property name="text">
-                     <string>Jobs</string>
-                    </property>
-                    <property name="minimumSize">
-                     <size>
-                      <width>0</width>
-                      <height>28</height>
-                     </size>
-                    </property>
-                    <property name="iconSize">
-                     <size>
-                      <width>16</width>
-                      <height>16</height>
-                     </size>
-                    </property>
-                    <property name="checkable">
-                     <bool>true</bool>
-                    </property>
-                    <property name="checked">
-                     <bool>false</bool>
-                    </property>
-                    <property name="autoExclusive">
-                     <bool>true</bool>
-                    </property>
-                    <property name="nav" stdset="0">
-                     <string notr="true">true</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QPushButton" name="navCronJobs">
-                    <property name="text">
-                     <string>CronJobs</string>
+                     <string>StatefulSets</string>
                     </property>
                     <property name="minimumSize">
                      <size>
@@ -956,37 +1019,6 @@ QPushButton#updateButton:hover { background: #f6f6fa; }
                  <number>0</number>
                 </property>
                   <item>
-                   <widget class="QPushButton" name="navServices">
-                    <property name="text">
-                     <string>Services</string>
-                    </property>
-                    <property name="minimumSize">
-                     <size>
-                      <width>0</width>
-                      <height>28</height>
-                     </size>
-                    </property>
-                    <property name="iconSize">
-                     <size>
-                      <width>16</width>
-                      <height>16</height>
-                     </size>
-                    </property>
-                    <property name="checkable">
-                     <bool>true</bool>
-                    </property>
-                    <property name="checked">
-                     <bool>false</bool>
-                    </property>
-                    <property name="autoExclusive">
-                     <bool>true</bool>
-                    </property>
-                    <property name="nav" stdset="0">
-                     <string notr="true">true</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
                    <widget class="QPushButton" name="navEndpointSlices">
                     <property name="text">
                      <string>Endpoint Slices</string>
@@ -1049,37 +1081,6 @@ QPushButton#updateButton:hover { background: #f6f6fa; }
                    </widget>
                   </item>
                   <item>
-                   <widget class="QPushButton" name="navIngresses">
-                    <property name="text">
-                     <string>Ingresses</string>
-                    </property>
-                    <property name="minimumSize">
-                     <size>
-                      <width>0</width>
-                      <height>28</height>
-                     </size>
-                    </property>
-                    <property name="iconSize">
-                     <size>
-                      <width>16</width>
-                      <height>16</height>
-                     </size>
-                    </property>
-                    <property name="checkable">
-                     <bool>true</bool>
-                    </property>
-                    <property name="checked">
-                     <bool>false</bool>
-                    </property>
-                    <property name="autoExclusive">
-                     <bool>true</bool>
-                    </property>
-                    <property name="nav" stdset="0">
-                     <string notr="true">true</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
                    <widget class="QPushButton" name="navIngressClasses">
                     <property name="text">
                      <string>Ingress Classes</string>
@@ -1111,9 +1112,498 @@ QPushButton#updateButton:hover { background: #f6f6fa; }
                    </widget>
                   </item>
                   <item>
+                   <widget class="QPushButton" name="navIngresses">
+                    <property name="text">
+                     <string>Ingresses</string>
+                    </property>
+                    <property name="minimumSize">
+                     <size>
+                      <width>0</width>
+                      <height>28</height>
+                     </size>
+                    </property>
+                    <property name="iconSize">
+                     <size>
+                      <width>16</width>
+                      <height>16</height>
+                     </size>
+                    </property>
+                    <property name="checkable">
+                     <bool>true</bool>
+                    </property>
+                    <property name="checked">
+                     <bool>false</bool>
+                    </property>
+                    <property name="autoExclusive">
+                     <bool>true</bool>
+                    </property>
+                    <property name="nav" stdset="0">
+                     <string notr="true">true</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
                    <widget class="QPushButton" name="navNetworkPolicies">
                     <property name="text">
                      <string>Network Policies</string>
+                    </property>
+                    <property name="minimumSize">
+                     <size>
+                      <width>0</width>
+                      <height>28</height>
+                     </size>
+                    </property>
+                    <property name="iconSize">
+                     <size>
+                      <width>16</width>
+                      <height>16</height>
+                     </size>
+                    </property>
+                    <property name="checkable">
+                     <bool>true</bool>
+                    </property>
+                    <property name="checked">
+                     <bool>false</bool>
+                    </property>
+                    <property name="autoExclusive">
+                     <bool>true</bool>
+                    </property>
+                    <property name="nav" stdset="0">
+                     <string notr="true">true</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QPushButton" name="navServices">
+                    <property name="text">
+                     <string>Services</string>
+                    </property>
+                    <property name="minimumSize">
+                     <size>
+                      <width>0</width>
+                      <height>28</height>
+                     </size>
+                    </property>
+                    <property name="iconSize">
+                     <size>
+                      <width>16</width>
+                      <height>16</height>
+                     </size>
+                    </property>
+                    <property name="checkable">
+                     <bool>true</bool>
+                    </property>
+                    <property name="checked">
+                     <bool>false</bool>
+                    </property>
+                    <property name="autoExclusive">
+                     <bool>true</bool>
+                    </property>
+                    <property name="nav" stdset="0">
+                     <string notr="true">true</string>
+                    </property>
+                   </widget>
+                  </item>
+               </layout>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="navConfig">
+               <property name="text">
+                <string>Config</string>
+               </property>
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>34</height>
+                </size>
+               </property>
+               <property name="iconSize">
+                <size>
+                 <width>16</width>
+                 <height>16</height>
+                </size>
+               </property>
+               <property name="checkable">
+                <bool>true</bool>
+               </property>
+               <property name="checked">
+                <bool>false</bool>
+               </property>
+               <property name="nav" stdset="0">
+                <string notr="true">true</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QFrame" name="configSubmenu">
+               <property name="maximumSize">
+                <size>
+                 <width>16777215</width>
+                 <height>0</height>
+                </size>
+               </property>
+               <layout class="QVBoxLayout" name="configSubmenuLayout">
+                <property name="spacing">
+                 <number>0</number>
+                </property>
+                <property name="leftMargin">
+                 <number>16</number>
+                </property>
+                <property name="topMargin">
+                 <number>0</number>
+                </property>
+                <property name="rightMargin">
+                 <number>0</number>
+                </property>
+                <property name="bottomMargin">
+                 <number>0</number>
+                </property>
+                  <item>
+                   <widget class="QPushButton" name="navAddons">
+                    <property name="text">
+                     <string>Add-ons</string>
+                    </property>
+                    <property name="minimumSize">
+                     <size>
+                      <width>0</width>
+                      <height>28</height>
+                     </size>
+                    </property>
+                    <property name="iconSize">
+                     <size>
+                      <width>16</width>
+                      <height>16</height>
+                     </size>
+                    </property>
+                    <property name="checkable">
+                     <bool>true</bool>
+                    </property>
+                    <property name="checked">
+                     <bool>false</bool>
+                    </property>
+                    <property name="autoExclusive">
+                     <bool>true</bool>
+                    </property>
+                    <property name="nav" stdset="0">
+                     <string notr="true">true</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QPushButton" name="navConfigMaps">
+                    <property name="text">
+                     <string>Config Maps</string>
+                    </property>
+                    <property name="minimumSize">
+                     <size>
+                      <width>0</width>
+                      <height>28</height>
+                     </size>
+                    </property>
+                    <property name="iconSize">
+                     <size>
+                      <width>16</width>
+                      <height>16</height>
+                     </size>
+                    </property>
+                    <property name="checkable">
+                     <bool>true</bool>
+                    </property>
+                    <property name="checked">
+                     <bool>false</bool>
+                    </property>
+                    <property name="autoExclusive">
+                     <bool>true</bool>
+                    </property>
+                    <property name="nav" stdset="0">
+                     <string notr="true">true</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QPushButton" name="navHorizontalPodAutoscalers">
+                    <property name="text">
+                     <string>Horizontal Pod Autoscalers</string>
+                    </property>
+                    <property name="minimumSize">
+                     <size>
+                      <width>0</width>
+                      <height>28</height>
+                     </size>
+                    </property>
+                    <property name="iconSize">
+                     <size>
+                      <width>16</width>
+                      <height>16</height>
+                     </size>
+                    </property>
+                    <property name="checkable">
+                     <bool>true</bool>
+                    </property>
+                    <property name="checked">
+                     <bool>false</bool>
+                    </property>
+                    <property name="autoExclusive">
+                     <bool>true</bool>
+                    </property>
+                    <property name="nav" stdset="0">
+                     <string notr="true">true</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QPushButton" name="navLeases">
+                    <property name="text">
+                     <string>Leases</string>
+                    </property>
+                    <property name="minimumSize">
+                     <size>
+                      <width>0</width>
+                      <height>28</height>
+                     </size>
+                    </property>
+                    <property name="iconSize">
+                     <size>
+                      <width>16</width>
+                      <height>16</height>
+                     </size>
+                    </property>
+                    <property name="checkable">
+                     <bool>true</bool>
+                    </property>
+                    <property name="checked">
+                     <bool>false</bool>
+                    </property>
+                    <property name="autoExclusive">
+                     <bool>true</bool>
+                    </property>
+                    <property name="nav" stdset="0">
+                     <string notr="true">true</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QPushButton" name="navLimitRanges">
+                    <property name="text">
+                     <string>Limit Ranges</string>
+                    </property>
+                    <property name="minimumSize">
+                     <size>
+                      <width>0</width>
+                      <height>28</height>
+                     </size>
+                    </property>
+                    <property name="iconSize">
+                     <size>
+                      <width>16</width>
+                      <height>16</height>
+                     </size>
+                    </property>
+                    <property name="checkable">
+                     <bool>true</bool>
+                    </property>
+                    <property name="checked">
+                     <bool>false</bool>
+                    </property>
+                    <property name="autoExclusive">
+                     <bool>true</bool>
+                    </property>
+                    <property name="nav" stdset="0">
+                     <string notr="true">true</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QPushButton" name="navMutatingWebhooks">
+                    <property name="text">
+                     <string>Mutating Webhook Configurations</string>
+                    </property>
+                    <property name="minimumSize">
+                     <size>
+                      <width>0</width>
+                      <height>28</height>
+                     </size>
+                    </property>
+                    <property name="iconSize">
+                     <size>
+                      <width>16</width>
+                      <height>16</height>
+                     </size>
+                    </property>
+                    <property name="checkable">
+                     <bool>true</bool>
+                    </property>
+                    <property name="checked">
+                     <bool>false</bool>
+                    </property>
+                    <property name="autoExclusive">
+                     <bool>true</bool>
+                    </property>
+                    <property name="nav" stdset="0">
+                     <string notr="true">true</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QPushButton" name="navPodDisruptionBudgets">
+                    <property name="text">
+                     <string>Pod Disruption Budgets</string>
+                    </property>
+                    <property name="minimumSize">
+                     <size>
+                      <width>0</width>
+                      <height>28</height>
+                     </size>
+                    </property>
+                    <property name="iconSize">
+                     <size>
+                      <width>16</width>
+                      <height>16</height>
+                     </size>
+                    </property>
+                    <property name="checkable">
+                     <bool>true</bool>
+                    </property>
+                    <property name="checked">
+                     <bool>false</bool>
+                    </property>
+                    <property name="autoExclusive">
+                     <bool>true</bool>
+                    </property>
+                    <property name="nav" stdset="0">
+                     <string notr="true">true</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QPushButton" name="navPriorityClasses">
+                    <property name="text">
+                     <string>Priority Classes</string>
+                    </property>
+                    <property name="minimumSize">
+                     <size>
+                      <width>0</width>
+                      <height>28</height>
+                     </size>
+                    </property>
+                    <property name="iconSize">
+                     <size>
+                      <width>16</width>
+                      <height>16</height>
+                     </size>
+                    </property>
+                    <property name="checkable">
+                     <bool>true</bool>
+                    </property>
+                    <property name="checked">
+                     <bool>false</bool>
+                    </property>
+                    <property name="autoExclusive">
+                     <bool>true</bool>
+                    </property>
+                    <property name="nav" stdset="0">
+                     <string notr="true">true</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QPushButton" name="navResourceQuotas">
+                    <property name="text">
+                     <string>Resource Quotas</string>
+                    </property>
+                    <property name="minimumSize">
+                     <size>
+                      <width>0</width>
+                      <height>28</height>
+                     </size>
+                    </property>
+                    <property name="iconSize">
+                     <size>
+                      <width>16</width>
+                      <height>16</height>
+                     </size>
+                    </property>
+                    <property name="checkable">
+                     <bool>true</bool>
+                    </property>
+                    <property name="checked">
+                     <bool>false</bool>
+                    </property>
+                    <property name="autoExclusive">
+                     <bool>true</bool>
+                    </property>
+                    <property name="nav" stdset="0">
+                     <string notr="true">true</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QPushButton" name="navRuntimeClasses">
+                    <property name="text">
+                     <string>Runtime Classes</string>
+                    </property>
+                    <property name="minimumSize">
+                     <size>
+                      <width>0</width>
+                      <height>28</height>
+                     </size>
+                    </property>
+                    <property name="iconSize">
+                     <size>
+                      <width>16</width>
+                      <height>16</height>
+                     </size>
+                    </property>
+                    <property name="checkable">
+                     <bool>true</bool>
+                    </property>
+                    <property name="checked">
+                     <bool>false</bool>
+                    </property>
+                    <property name="autoExclusive">
+                     <bool>true</bool>
+                    </property>
+                    <property name="nav" stdset="0">
+                     <string notr="true">true</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QPushButton" name="navSecrets">
+                    <property name="text">
+                     <string>Secrets</string>
+                    </property>
+                    <property name="minimumSize">
+                     <size>
+                      <width>0</width>
+                      <height>28</height>
+                     </size>
+                    </property>
+                    <property name="iconSize">
+                     <size>
+                      <width>16</width>
+                      <height>16</height>
+                     </size>
+                    </property>
+                    <property name="checkable">
+                     <bool>true</bool>
+                    </property>
+                    <property name="checked">
+                     <bool>false</bool>
+                    </property>
+                    <property name="autoExclusive">
+                     <bool>true</bool>
+                    </property>
+                    <property name="nav" stdset="0">
+                     <string notr="true">true</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QPushButton" name="navValidatingWebhooks">
+                    <property name="text">
+                     <string>Validating Webhook Configurations</string>
                     </property>
                     <property name="minimumSize">
                      <size>
@@ -1281,6 +1771,45 @@ Resources in read-only mode</string>
               </property>
              </spacer>
             </item>
+            <item>
+             <widget class="QPushButton" name="overviewRefreshButton">
+              <property name="toolTip">
+               <string>Refresh</string>
+              </property>
+              <property name="iconOnly" stdset="0">
+               <string notr="true">true</string>
+              </property>
+              <property name="variant" stdset="0">
+               <string notr="true">primary</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="workloadsRefreshButton">
+              <property name="toolTip">
+               <string>Refresh</string>
+              </property>
+              <property name="iconOnly" stdset="0">
+               <string notr="true">true</string>
+              </property>
+              <property name="variant" stdset="0">
+               <string notr="true">primary</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="refreshButton">
+              <property name="toolTip">
+               <string>Refresh</string>
+              </property>
+              <property name="iconOnly" stdset="0">
+               <string notr="true">true</string>
+              </property>
+              <property name="variant" stdset="0">
+               <string notr="true">primary</string>
+              </property>
+             </widget>
+            </item>
            </layout>
           </widget>
          </item>
@@ -1305,99 +1834,100 @@ Resources in read-only mode</string>
               <number>22</number>
              </property>
              <item>
-              <layout class="QHBoxLayout" name="filtersLayout">
-               <property name="spacing">
-                <number>12</number>
-               </property>
-               <item>
-                <widget class="QLabel" name="filterLabel">
-                 <property name="text">
-                  <string>NAMESPACE</string>
+              <widget class="QWidget" name="filtersBar">
+               <layout class="QHBoxLayout" name="filtersLayout">
+                 <property name="leftMargin">
+                  <number>0</number>
                  </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QComboBox" name="namespaceCombo">
-                 <property name="minimumSize">
-                  <size>
-                   <width>170</width>
-                   <height>38</height>
-                  </size>
+                 <property name="topMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="rightMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="bottomMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="spacing">
+                  <number>12</number>
                  </property>
                  <item>
-                  <property name="text">
-                   <string notr="true">All namespaces</string>
-                  </property>
+                  <widget class="QLabel" name="filterLabel">
+                   <property name="text">
+                    <string>NAMESPACE</string>
+                   </property>
+                  </widget>
                  </item>
                  <item>
-                  <property name="text">
-                   <string notr="true">default</string>
-                  </property>
+                  <widget class="QComboBox" name="namespaceCombo">
+                   <property name="minimumSize">
+                    <size>
+                     <width>170</width>
+                     <height>38</height>
+                    </size>
+                   </property>
+                   <item>
+                    <property name="text">
+                     <string notr="true">All namespaces</string>
+                    </property>
+                   </item>
+                   <item>
+                    <property name="text">
+                     <string notr="true">default</string>
+                    </property>
+                   </item>
+                   <item>
+                    <property name="text">
+                     <string notr="true">monitoring</string>
+                    </property>
+                   </item>
+                   <item>
+                    <property name="text">
+                     <string notr="true">kube-system</string>
+                    </property>
+                   </item>
+                   <property name="variant" stdset="0">
+                    <string notr="true">filter</string>
+                   </property>
+                  </widget>
                  </item>
                  <item>
-                  <property name="text">
-                   <string notr="true">monitoring</string>
-                  </property>
+                  <widget class="QLineEdit" name="searchInput">
+                   <property name="minimumSize">
+                    <size>
+                     <width>240</width>
+                     <height>38</height>
+                    </size>
+                   </property>
+                   <property name="maximumSize">
+                    <size>
+                     <width>300</width>
+                     <height>16777215</height>
+                    </size>
+                   </property>
+                   <property name="placeholderText">
+                    <string>Search by name or namespace...</string>
+                   </property>
+                   <property name="clearButtonEnabled">
+                    <bool>true</bool>
+                   </property>
+                  </widget>
                  </item>
                  <item>
-                  <property name="text">
-                   <string notr="true">kube-system</string>
-                  </property>
+                  <spacer name="filtersSpacer">
+                   <property name="orientation">
+                    <enum>Qt::Orientation::Horizontal</enum>
+                   </property>
+                   <property name="sizeHint" stdset="0">
+                    <size>
+                     <width>40</width>
+                     <height>20</height>
+                    </size>
+                   </property>
+                  </spacer>
                  </item>
-                 <property name="variant" stdset="0">
-                  <string notr="true">filter</string>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QLineEdit" name="searchInput">
-                 <property name="minimumSize">
-                  <size>
-                   <width>240</width>
-                   <height>38</height>
-                  </size>
-                 </property>
-                 <property name="maximumSize">
-                  <size>
-                   <width>300</width>
-                   <height>16777215</height>
-                  </size>
-                 </property>
-                 <property name="placeholderText">
-                  <string>Search by name or namespace...</string>
-                 </property>
-                 <property name="clearButtonEnabled">
-                  <bool>true</bool>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <spacer name="filtersSpacer">
-                 <property name="orientation">
-                  <enum>Qt::Orientation::Horizontal</enum>
-                 </property>
-                 <property name="sizeHint" stdset="0">
-                  <size>
-                   <width>40</width>
-                   <height>20</height>
-                  </size>
-                 </property>
-                </spacer>
-               </item>
-               <item>
-                <widget class="QPushButton" name="refreshButton">
-                 <property name="toolTip">
-                  <string>Refresh</string>
-                 </property>
-                 <property name="iconOnly" stdset="0">
-                  <string notr="true">true</string>
-                 </property>
-                 <property name="variant" stdset="0">
-                  <string notr="true">primary</string>
-                 </property>
-                </widget>
-               </item>
-              </layout>
+               </layout>
+              </widget>
              </item>
              <item>
               <layout class="QHBoxLayout" name="summaryRow">
@@ -1994,6 +2524,90 @@ Resources in read-only mode</string>
                  </brush>
                 </property>
                </item>
+               <property name="variant" stdset="0">
+                <string notr="true">data</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="nodesHeading">
+               <property name="visible">
+                <bool>false</bool>
+               </property>
+               <property name="text">
+                <string>Nodes</string>
+               </property>
+               <property name="variant" stdset="0">
+                <string notr="true">cardTitle</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QTableWidget" name="nodesTable">
+               <property name="visible">
+                <bool>false</bool>
+               </property>
+               <property name="editTriggers">
+                <set>QAbstractItemView::NoEditTriggers</set>
+               </property>
+               <property name="selectionMode">
+                <enum>QAbstractItemView::SingleSelection</enum>
+               </property>
+               <property name="selectionBehavior">
+                <enum>QAbstractItemView::SelectRows</enum>
+               </property>
+               <property name="alternatingRowColors">
+                <bool>false</bool>
+               </property>
+               <attribute name="verticalHeaderVisible">
+                <bool>false</bool>
+               </attribute>
+               <attribute name="verticalHeaderDefaultSectionSize">
+                <number>44</number>
+               </attribute>
+               <attribute name="horizontalHeaderStretchLastSection">
+                <bool>false</bool>
+               </attribute>
+               <column>
+                <property name="text">
+                 <string>NODE</string>
+                </property>
+               </column>
+               <column>
+                <property name="text">
+                 <string>STATUS</string>
+                </property>
+               </column>
+               <column>
+                <property name="text">
+                 <string>ROLE</string>
+                </property>
+               </column>
+               <column>
+                <property name="text">
+                 <string>VERSION</string>
+                </property>
+               </column>
+               <column>
+                <property name="text">
+                 <string>CPU</string>
+                </property>
+               </column>
+               <column>
+                <property name="text">
+                 <string>MEMORY</string>
+                </property>
+               </column>
+               <column>
+                <property name="text">
+                 <string>PODS</string>
+                </property>
+               </column>
+               <column>
+                <property name="text">
+                 <string>AGE</string>
+                </property>
+               </column>
                <property name="variant" stdset="0">
                 <string notr="true">data</string>
                </property>

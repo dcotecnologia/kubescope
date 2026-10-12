@@ -51,6 +51,20 @@ from kubescope.errors import describe_error
             "Error in configuration: context was not found for specified context: x",
             "Context not found",
         ),
+        (
+            "This list is only available for Amazon EKS contexts",
+            "Not an Amazon EKS cluster",
+        ),
+        (
+            "The AWS CLI answered with something unexpected",
+            "Unexpected answer from AWS",
+        ),
+        (
+            "An error occurred (AccessDeniedException) when calling the "
+            "ListNodegroups operation: User is not authorized to perform: "
+            "eks:ListNodegroups",
+            "Access denied",
+        ),
         ("something odd\nsecond line", "Something went wrong"),
     ],
 )

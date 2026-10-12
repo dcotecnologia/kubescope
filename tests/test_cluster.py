@@ -676,7 +676,7 @@ def test_label_selector_reads_a_replication_controllers_plain_map() -> None:
 
 def test_get_resource_details_rejects_unsupported_kinds() -> None:
     with pytest.raises(cluster.ClusterError, match="Unsupported resource kind"):
-        cluster.get_resource_details("c", "Secret", "ns", "x")
+        cluster.get_resource_details("c", "CustomResourceDefinition", "ns", "x")
 
 
 def test_label_selector_supports_every_expression_operator() -> None:
@@ -1312,8 +1312,8 @@ def test_get_resource_details_knows_every_listed_kind(monkeypatch, kind, path) -
 
 
 def test_get_resource_details_rejects_unknown_kinds() -> None:
-    with pytest.raises(cluster.ClusterError, match="Unsupported resource kind: Secret"):
-        cluster.get_resource_details("ctx", "Secret", "ns", "x")
+    with pytest.raises(cluster.ClusterError, match="Unsupported resource kind: Gizmo"):
+        cluster.get_resource_details("ctx", "Gizmo", "ns", "x")
 
 
 def test_cron_job_pods_come_from_the_jobs_it_created(monkeypatch) -> None:
@@ -1586,9 +1586,11 @@ NETWORK_NOW = datetime(2025, 1, 10, tzinfo=UTC)
 CREATED = {"creationTimestamp": "2025-01-08T00:00:00Z"}
 
 
-def _network(kind: str, item: dict) -> cluster.NetworkResource:
-    item = {**item, "metadata": {**CREATED, **item.get("metadata", {})}}
-    resource = cluster._parse_network(kind, item, NETWORK_NOW)
+def _network(kind: str, item: dict) -> cluster.ClusterResource:
+    metadata = {**CREATED, "name": "x", **item.get("metadata", {})}
+    resource = cluster._parse_resource(
+        kind, {**item, "metadata": metadata}, NETWORK_NOW
+    )
     assert resource is not None
     return resource
 
@@ -1733,7 +1735,7 @@ def test_parse_network_reads_network_policies() -> None:
     assert selected.values == ("app=x,tier=db,env in", "Ingress")
     assert everything.values == ("*", "Ingress, Egress")
     assert default.values == ("*", "Ingress")
-    assert cluster._parse_network("Service", {"metadata": {}}, NETWORK_NOW) is None
+    assert cluster._parse_resource("Service", {"metadata": {}}, NETWORK_NOW) is None
 
 
 def test_get_network_lists_by_namespace_or_for_the_whole_cluster(monkeypatch) -> None:
@@ -1752,12 +1754,12 @@ def test_get_network_lists_by_namespace_or_for_the_whole_cluster(monkeypatch) ->
 
     monkeypatch.setattr(cluster, "_get_json", fake_get_json)
 
-    namespaces, services = cluster.get_network("ctx", "ops", "Service")
+    namespaces, services = cluster.get_resources("ctx", "ops", "Service")
     assert namespaces == ["ops"] and [s.name for s in services] == ["a", "b"]
     assert "/api/v1/namespaces/ops/services" in calls
-    cluster.get_network("ctx", None, "Ingress")
+    cluster.get_resources("ctx", None, "Ingress")
     assert "/apis/networking.k8s.io/v1/ingresses" in calls
-    cluster.get_network("ctx", "ops", "IngressClass")  # not namespaced
+    cluster.get_resources("ctx", "ops", "IngressClass")  # not namespaced
     assert "/apis/networking.k8s.io/v1/ingressclasses" in calls
 
 
@@ -1977,3 +1979,481 @@ def test_a_finished_sign_in_makes_the_next_request_use_its_credentials(
 
     assert cluster._clients == {}
     assert cluster._cached_client("dev") is not first
+
+
+def test_parse_config_reads_config_maps_and_secrets() -> None:
+    config_map = _network(
+        "ConfigMap",
+        {
+            "metadata": {"name": "c"},
+            "data": {"a": "1", "b": "2"},
+            "binaryData": {"c": ""},
+        },
+    )
+    empty = _network("ConfigMap", {"metadata": {"name": "e"}})
+    secret = _network(
+        "Secret", {"metadata": {"name": "s"}, "type": "Opaque", "data": {"k": "dg=="}}
+    )
+    untyped = _network("Secret", {"metadata": {"name": "u"}})
+
+    assert config_map.values == ("3",) and empty.values == ("0",)
+    assert secret.values == ("Opaque", "1") and untyped.values == ("—", "0")
+
+
+def test_parse_config_reads_quotas_and_limit_ranges() -> None:
+    quota = _network(
+        "ResourceQuota",
+        {"status": {"hard": {"pods": "10", "cpu": "4"}, "used": {"pods": "3"}}},
+    )
+    declared = _network("ResourceQuota", {"spec": {"hard": {"pods": "5"}}})
+    bare = _network("ResourceQuota", {"metadata": {"name": "n"}})
+    ranges = _network(
+        "LimitRange", {"spec": {"limits": [{"type": "Container"}, {"type": "Pod"}, {}]}}
+    )
+    no_limits = _network("LimitRange", {"metadata": {"name": "n"}})
+
+    assert quota.values == ("pods: 3/10, cpu: 0/4",)
+    assert declared.values == ("pods: 0/5",) and bare.values == ("—",)
+    assert ranges.values == ("Container, Pod",) and no_limits.values == ("—",)
+
+
+def test_parse_config_reads_autoscalers_and_disruption_budgets() -> None:
+    autoscaler = _network(
+        "HorizontalPodAutoscaler",
+        {
+            "spec": {
+                "scaleTargetRef": {"kind": "Deployment", "name": "web"},
+                "minReplicas": 2,
+                "maxReplicas": 8,
+            },
+            "status": {"currentReplicas": 3},
+        },
+    )
+    bare = _network("HorizontalPodAutoscaler", {"metadata": {"name": "n"}})
+    budget = _network(
+        "PodDisruptionBudget",
+        {"spec": {"minAvailable": "50%"}, "status": {"disruptionsAllowed": 0}},
+    )
+    unbounded = _network("PodDisruptionBudget", {"spec": {"maxUnavailable": 1}})
+
+    assert autoscaler.values == ("Deployment/web", "2", "8", "3")
+    assert bare.values == ("—", "1", "—", "—")
+    assert budget.values == ("50%", "—", "0")
+    assert unbounded.values == ("—", "1", "—")
+
+
+def test_parse_config_reads_cluster_scoped_kinds_and_leases() -> None:
+    priority = _network("PriorityClass", {"value": 1000, "globalDefault": True})
+    plain = _network("PriorityClass", {"metadata": {"name": "n"}})
+    runtime = _network("RuntimeClass", {"handler": "runc"})
+    no_handler = _network("RuntimeClass", {"metadata": {"name": "n"}})
+    lease = _network("Lease", {"spec": {"holderIdentity": "node-a"}})
+    free = _network("Lease", {"metadata": {"name": "n"}})
+    webhooks = _network("MutatingWebhookConfiguration", {"webhooks": [{}, {}]})
+    none = _network("ValidatingWebhookConfiguration", {"metadata": {"name": "n"}})
+
+    assert priority.values == ("1000", "true") and plain.values == ("—", "false")
+    assert runtime.values == ("runc",) and no_handler.values == ("—",)
+    assert lease.values == ("node-a",) and free.values == ("—",)
+    assert webhooks.values == ("2",) and none.values == ("0",)
+    assert priority.namespace == "" and runtime.namespace == ""
+    assert webhooks.namespace == "" and lease.namespace == "default"
+
+
+@pytest.mark.parametrize(
+    ("kind", "path"),
+    [
+        ("ConfigMap", "/api/v1/namespaces/ns/configmaps/x"),
+        ("Secret", "/api/v1/namespaces/ns/secrets/x"),
+        ("ResourceQuota", "/api/v1/namespaces/ns/resourcequotas/x"),
+        ("LimitRange", "/api/v1/namespaces/ns/limitranges/x"),
+        (
+            "HorizontalPodAutoscaler",
+            "/apis/autoscaling/v2/namespaces/ns/horizontalpodautoscalers/x",
+        ),
+        (
+            "PodDisruptionBudget",
+            "/apis/policy/v1/namespaces/ns/poddisruptionbudgets/x",
+        ),
+        ("Lease", "/apis/coordination.k8s.io/v1/namespaces/ns/leases/x"),
+        ("PriorityClass", "/apis/scheduling.k8s.io/v1/priorityclasses/x"),
+        ("RuntimeClass", "/apis/node.k8s.io/v1/runtimeclasses/x"),
+        (
+            "MutatingWebhookConfiguration",
+            "/apis/admissionregistration.k8s.io/v1/mutatingwebhookconfigurations/x",
+        ),
+        (
+            "ValidatingWebhookConfiguration",
+            "/apis/admissionregistration.k8s.io/v1/validatingwebhookconfigurations/x",
+        ),
+    ],
+)
+def test_config_kinds_are_listed_and_described_at_their_paths(
+    monkeypatch, kind, path
+) -> None:
+    seen = []
+    monkeypatch.setattr(cluster, "_get_json", lambda *a: seen.append(a[0]) or {})
+
+    namespace = "" if kind in cluster._CLUSTER_WIDE else "ns"
+    cluster.get_resource_details("ctx", kind, namespace, "x")
+    cluster.get_resources("ctx", "ns", kind)
+
+    assert seen[0] == path
+    assert path.rsplit("/", 1)[0] in seen  # the list, in its namespace or not
+
+
+def test_secret_details_keep_the_keys_but_never_the_values(monkeypatch) -> None:
+    document = {
+        "kind": "Secret",
+        "metadata": {
+            "name": "s",
+            "annotations": {cluster._LAST_APPLIED: '{"data":{"k":"dg=="}}', "a": "b"},
+        },
+        "data": {"password": "aHVudGVyMg==", "user": "YWRtaW4="},
+        "stringData": {"token": "plain"},
+    }
+    monkeypatch.setattr(cluster, "_get_json", lambda *a: document)
+
+    result = cluster.get_resource_details("ctx", "Secret", "ns", "s")
+
+    assert result["data"] == {"password": "<redacted>", "user": "<redacted>"}
+    assert result["stringData"] == {"token": "<redacted>"}
+    assert result["metadata"]["annotations"] == {"a": "b"}
+    assert "aHVudGVyMg" not in json.dumps(result)
+
+
+def test_secret_details_tolerate_a_secret_without_data(monkeypatch) -> None:
+    for document in ({"kind": "Secret"}, {"metadata": {"name": "s"}, "data": None}):
+        monkeypatch.setattr(cluster, "_get_json", lambda *a, d=document: dict(d))
+        assert cluster.get_resource_details("ctx", "Secret", "ns", "s") == document
+
+
+def _eks(monkeypatch, arguments=None, **kwargs) -> None:
+    document = _aws_kubeconfig(
+        arguments
+        or ["eks", "get-token", "--cluster-name", "main", "--region", "us-east-1"],
+        **kwargs,
+    )
+    monkeypatch.setattr(cluster, "_kubeconfig", lambda: document)
+
+
+def test_eks_target_names_the_cluster_region_and_profile(monkeypatch) -> None:
+    _eks(monkeypatch, ["eks", "get-token", "--cluster-name", "main", "--profile", "w"])
+    assert cluster._eks_target("ctx") == ["--cluster-name", "main", "--profile", "w"]
+
+    _eks(monkeypatch)
+    assert cluster._eks_target("ctx") == [
+        "--cluster-name",
+        "main",
+        "--region",
+        "us-east-1",
+    ]
+    assert cluster.is_eks_context("ctx")
+
+
+def test_only_eks_contexts_have_node_groups(monkeypatch) -> None:
+    monkeypatch.setattr(cluster, "_kubeconfig", lambda: _aws_kubeconfig(["eks"]))
+    assert not cluster.is_eks_context("ctx")  # aws, but no cluster name
+    monkeypatch.setattr(
+        cluster, "_kubeconfig", lambda: _aws_kubeconfig(command="kubelogin")
+    )
+    assert not cluster.is_eks_context("ctx")
+    with pytest.raises(cluster.ClusterError, match="only available for Amazon EKS"):
+        cluster.get_resource_details("ctx", "NodeGroup", "", "ng")
+
+
+def _fake_aws(monkeypatch, answers: dict[str, str]) -> list[list[str]]:
+    commands = []
+
+    def run(command: list[str], timeout: float) -> str:
+        commands.append(command)
+        return answers[command[2]]
+
+    monkeypatch.setattr(cluster, "_run_command", run)
+    return commands
+
+
+def test_get_resources_lists_the_node_groups_of_the_cluster(monkeypatch) -> None:
+    _eks(monkeypatch)
+    group = {
+        "nodegroupName": "b",
+        "status": "ACTIVE",
+        "instanceTypes": ["m5.large"],
+        "scalingConfig": {"minSize": 1, "maxSize": 4, "desiredSize": 2},
+        "amiType": "AL2023_x86_64_STANDARD",
+        "releaseVersion": "1.29.3-20240531",
+        "createdAt": "2020-01-01T00:00:00+00:00",
+    }
+    commands = _fake_aws(
+        monkeypatch,
+        {
+            "list-nodegroups": json.dumps({"nodegroups": ["b", "a"]}),
+            "describe-nodegroup": json.dumps({"nodegroup": group}),
+        },
+    )
+
+    namespaces, groups = cluster.get_resources("ctx", "ops", "NodeGroup")
+
+    assert namespaces == []  # not namespaced, and no cluster request for them
+    assert groups[0].values == (
+        "ACTIVE",
+        "m5.large",
+        "2 (1–4)",
+        "AL2023_x86_64_STANDARD",
+        "1.29.3-20240531",
+    )
+    assert groups[0].namespace == "" and groups[0].kind == "NodeGroup"
+    assert commands[0][:3] == ["aws", "eks", "list-nodegroups"]
+    assert "--region" in commands[0] and commands[0][-2:] == ["--output", "json"]
+
+
+def test_parse_nodegroup_tolerates_missing_fields() -> None:
+    now = datetime(2025, 1, 10, tzinfo=UTC)
+    bare = cluster._parse_eks("NodeGroup", {"nodegroupName": "x"}, now)
+    naive = cluster._parse_eks(
+        "NodeGroup", {"nodegroupName": "y", "createdAt": "2025-01-08T00:00:00"}, now
+    )
+    no_max = cluster._parse_eks(
+        "NodeGroup", {"nodegroupName": "z", "scalingConfig": {"desiredSize": 3}}, now
+    )
+
+    assert bare.values == ("—",) * 5 and bare.age == "unknown"
+    assert naive.age == "2d"
+    assert no_max.values[2] == "3 (0–3)"
+    assert cluster._parse_eks("NodeGroup", {}, now) is None
+
+
+def test_node_groups_without_any_group_and_details(monkeypatch) -> None:
+    _eks(monkeypatch)
+    _fake_aws(
+        monkeypatch,
+        {
+            "list-nodegroups": json.dumps({}),
+            "describe-nodegroup": json.dumps({"nodegroup": {"nodegroupName": "ng"}}),
+        },
+    )
+    assert cluster.get_resources("ctx", None, "NodeGroup") == ([], [])
+    assert cluster.get_resource_details("ctx", "NodeGroup", "", "ng") == {
+        "nodegroupName": "ng"
+    }
+
+
+@pytest.mark.parametrize("output", ["not json", "[1]"])
+def test_unexpected_aws_answers_are_reported(monkeypatch, output) -> None:
+    _eks(monkeypatch)
+    monkeypatch.setattr(cluster, "_run_command", lambda *a: output)
+
+    with pytest.raises(cluster.ClusterError, match="something unexpected"):
+        cluster.get_resources("ctx", None, "NodeGroup")
+
+
+def _helm_secret(
+    name, revision, status, namespace="ops", created="2020-01-01T00:00:00Z"
+):
+    return {
+        "metadata": {
+            "name": f"sh.helm.release.v1.{name}.v{revision}",
+            "namespace": namespace,
+            "creationTimestamp": created,
+            "labels": {
+                "owner": "helm",
+                "name": name,
+                "status": status,
+                "version": str(revision),
+            },
+        }
+    }
+
+
+def _fake_cluster_api(monkeypatch, secrets, calls=None):
+    def fake_get_json(path, context, query=None, accept="application/json"):
+        if calls is not None:
+            calls.append((path, query, accept))
+        if path == "/api/v1/namespaces":
+            return {"items": [{"metadata": {"name": "ops"}}]}
+        return {"items": secrets}
+
+    monkeypatch.setattr(cluster, "_get_json", fake_get_json)
+
+
+def test_get_resources_lists_the_add_ons_of_eks_and_the_helm_releases(
+    monkeypatch,
+) -> None:
+    _eks(monkeypatch)
+    commands = _fake_aws(
+        monkeypatch,
+        {
+            "list-addons": json.dumps({"addons": ["vpc-cni"]}),
+            "describe-addon": json.dumps(
+                {
+                    "addon": {
+                        "addonName": "vpc-cni",
+                        "status": "ACTIVE",
+                        "addonVersion": "v1.18.1-eksbuild.3",
+                        "createdAt": "2020-01-01T00:00:00+00:00",
+                    }
+                }
+            ),
+        },
+    )
+    calls = []
+    _fake_cluster_api(
+        monkeypatch,
+        [
+            _helm_secret("web", 1, "superseded", created="2020-01-01T00:00:00Z"),
+            _helm_secret("web", 2, "deployed", created="2020-02-01T00:00:00Z"),
+            _helm_secret("agent", 1, "failed", namespace="monitoring"),
+            {"metadata": {"labels": {"owner": "helm", "name": "odd"}}},  # no revision
+        ],
+        calls,
+    )
+
+    namespaces, addons = cluster.get_resources("ctx", None, "Addon")
+
+    assert namespaces == ["ops"]
+    assert [(a.kind, a.name, a.namespace) for a in addons] == [
+        ("HelmRelease", "agent", "monitoring"),
+        ("Addon", "vpc-cni", ""),
+        ("HelmRelease", "web", "ops"),
+    ]
+    assert addons[0].values == ("failed", "rev 1", "Helm")
+    assert addons[1].values == ("ACTIVE", "v1.18.1-eksbuild.3", "EKS")
+    assert addons[2].values == ("deployed", "rev 2", "Helm")  # the latest revision
+    secrets = next(call for call in calls if call[0].endswith("/secrets"))
+    assert secrets[1] == [("labelSelector", "owner=helm")]
+    assert "PartialObjectMetadataList" in secrets[2]  # never the data of a Secret
+    assert commands[1][:3] == ["aws", "eks", "describe-addon"]
+    assert "--addon-name" in commands[1]
+    bare = cluster._parse_eks("Addon", {"addonName": "x"}, NETWORK_NOW)
+    assert bare.values == ("—", "—", "EKS")
+    assert cluster.get_resource_details("ctx", "Addon", "", "vpc-cni")["addonName"]
+
+
+def test_outside_eks_the_add_ons_are_the_helm_releases(monkeypatch) -> None:
+    monkeypatch.setattr(
+        cluster, "_kubeconfig", lambda: _aws_kubeconfig(command="kubelogin")
+    )
+    _fake_cluster_api(monkeypatch, [_helm_secret("web", 3, "deployed")])
+
+    _, addons = cluster.get_resources("ctx", "ops", "Addon")
+
+    assert [(a.kind, a.values) for a in addons] == [
+        ("HelmRelease", ("deployed", "rev 3", "Helm"))
+    ]
+
+
+def test_add_ons_report_an_error_only_when_nothing_can_be_listed(monkeypatch) -> None:
+    monkeypatch.setattr(
+        cluster, "_kubeconfig", lambda: _aws_kubeconfig(command="kubelogin")
+    )
+
+    def forbidden(path, context, query=None, accept="application/json"):
+        if path == "/api/v1/namespaces":
+            return {"items": []}
+        raise cluster.ClusterError("secrets is forbidden: cannot list resource")
+
+    monkeypatch.setattr(cluster, "_get_json", forbidden)
+    with pytest.raises(cluster.ClusterError, match="forbidden"):
+        cluster.get_resources("ctx", None, "Addon")
+
+    _eks(monkeypatch)  # EKS still lists its own when Helm cannot be read
+    _fake_aws(
+        monkeypatch,
+        {
+            "list-addons": json.dumps({"addons": ["a"]}),
+            "describe-addon": json.dumps({"addon": {"addonName": "a"}}),
+        },
+    )
+    _, addons = cluster.get_resources("ctx", None, "Addon")
+    assert [a.name for a in addons] == ["a"]
+
+
+def test_a_helm_release_shows_its_revisions_without_any_secret_data(
+    monkeypatch,
+) -> None:
+    calls = []
+    _fake_cluster_api(
+        monkeypatch,
+        [_helm_secret("web", 2, "deployed"), _helm_secret("web", 1, "superseded")],
+        calls,
+    )
+
+    details = cluster.get_resource_details("ctx", "HelmRelease", "ops", "web")
+
+    assert details["status"] == "deployed" and details["revision"] == 2
+    assert [r["revision"] for r in details["revisions"]] == [1, 2]
+    assert calls[0][1] == [("labelSelector", "owner=helm,name=web")]
+    assert "PartialObjectMetadataList" in calls[0][2]
+    _fake_cluster_api(monkeypatch, [])
+    with pytest.raises(cluster.ClusterError, match="not found"):
+        cluster.get_resource_details("ctx", "HelmRelease", "ops", "gone")
+
+
+def test_get_cluster_info_reads_the_describe_cluster_answer(monkeypatch) -> None:
+    _eks(monkeypatch)
+    answer = {
+        "cluster": {
+            "status": "ACTIVE",
+            "version": "1.37",
+            "platformVersion": "eks.4",
+            "createdAt": "2026-02-11T13:16:00-03:00",
+            "endpoint": "https://api.example",
+            "arn": "arn:aws:eks:region:000000000000:cluster/main",
+            "roleArn": "arn:aws:iam::000000000000:role/main",
+            "identity": {"oidc": {"issuer": "https://oidc.example/id/1"}},
+            "resourcesVpcConfig": {
+                "vpcId": "vpc-1",
+                "subnetIds": ["subnet-a", "subnet-b"],
+                "clusterSecurityGroupId": "sg-1",
+                "securityGroupIds": ["sg-2"],
+                "endpointPublicAccess": True,
+                "endpointPrivateAccess": False,
+                "publicAccessCidrs": ["0.0.0.0/0"],
+            },
+            "kubernetesNetworkConfig": {
+                "ipFamily": "ipv4",
+                "serviceIpv4Cidr": "172.20.0.0/16",
+            },
+        }
+    }
+    commands = _fake_aws(monkeypatch, {"describe-cluster": json.dumps(answer)})
+
+    info = cluster.get_cluster_info("ctx")
+
+    assert commands[0][:5] == ["aws", "eks", "describe-cluster", "--name", "main"]
+    assert (info.status, info.version, info.platform_version) == (
+        "Active",
+        "1.37",
+        "eks.4",
+    )
+    assert info.created.startswith("2026-02-1") and info.provider == "EKS"
+    assert info.endpoint == "https://api.example"
+    assert info.arn.endswith("cluster/main") and info.role_arn.endswith("role/main")
+    assert info.oidc_issuer == "https://oidc.example/id/1"
+    assert (info.vpc_id, info.subnets) == ("vpc-1", ("subnet-a", "subnet-b"))
+    assert (info.security_group, info.additional_security_groups) == ("sg-1", ("sg-2",))
+    assert (info.ip_family, info.service_cidr) == ("IPv4", "172.20.0.0/16")
+    assert info.endpoint_access == "Public"
+    assert info.public_access_cidrs == ("0.0.0.0/0",)
+
+
+@pytest.mark.parametrize(
+    ("public", "private", "expected"),
+    [(False, True, "Private"), (True, True, "Public and private"), (None, None, "—")],
+)
+def test_cluster_info_names_the_endpoint_access(monkeypatch, public, private, expected):
+    _eks(monkeypatch)
+    vpc = {"endpointPublicAccess": public, "endpointPrivateAccess": private}
+    answer = {"cluster": {"resourcesVpcConfig": vpc}}
+    _fake_aws(monkeypatch, {"describe-cluster": json.dumps(answer)})
+
+    assert cluster.get_cluster_info("ctx").endpoint_access == expected
+
+
+def test_get_cluster_info_tolerates_a_bare_answer(monkeypatch) -> None:
+    _eks(monkeypatch)
+    _fake_aws(monkeypatch, {"describe-cluster": json.dumps({})})
+
+    info = cluster.get_cluster_info("ctx")
+
+    assert (info.status, info.version, info.created, info.oidc_issuer) == ("—",) * 4

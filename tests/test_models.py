@@ -188,14 +188,14 @@ def test_job_and_cron_job_states_replace_the_replica_status() -> None:
 
 
 def test_network_sort_key_orders_by_text_and_by_age() -> None:
-    from kubescope.models import NetworkResource, network_sort_key
+    from kubescope.models import ClusterResource, resource_sort_key
 
-    web = NetworkResource("ns", "Service", "web", ("ClusterIP", "10.0.0.1"), "2d")
-    api = NetworkResource("ns", "Service", "api", ("NodePort", "10.0.0.2"), "5h")
+    web = ClusterResource("ns", "Service", "web", ("ClusterIP", "10.0.0.1"), "2d")
+    api = ClusterResource("ns", "Service", "api", ("NodePort", "10.0.0.2"), "5h")
 
-    assert network_sort_key(web, 2) > network_sort_key(api, 2)  # by name
-    assert network_sort_key(web, 3) < network_sort_key(api, 3)  # ClusterIP < NodePort
-    assert network_sort_key(web, 5) > network_sort_key(api, 5)  # 2d is older than 5h
+    assert resource_sort_key(web, 2) > resource_sort_key(api, 2)  # by name
+    assert resource_sort_key(web, 3) < resource_sort_key(api, 3)  # ClusterIP < NodePort
+    assert resource_sort_key(web, 5) > resource_sort_key(api, 5)  # 2d is older than 5h
 
 
 def test_safe_file_name_keeps_letters_digits_dots_and_dashes() -> None:

@@ -105,9 +105,42 @@ def test_overview_page_shows_cluster_totals(monkeypatch) -> None:
     assert page.cpuBar.value() == 75
     assert page.cpuBar.property("level") == "warn"
     assert page.deploymentsValue.text() == "7"
+    assert window.nodes_table.rowCount() == 0  # the nodes live under Node Groups
+    assert "metrics-server" in page.noticeLabel.text()
+    window.close()
+
+
+def test_node_groups_view_shows_the_nodes_too(monkeypatch) -> None:
+    monkeypatch.setattr(window_module, "list_contexts", lambda: ([], None))
+    monkeypatch.setattr(window_module.WorkloadWindow, "refresh", lambda *_a: None)
+    ran: list = []
+    monkeypatch.setattr(
+        window_module.WorkloadWindow,
+        "_run_action",
+        lambda _self, operation, ok, *args, **kw: ran.append((operation, ok, kw)),
+    )
+    window = window_module.WorkloadWindow()
+    window.context_combo.addItem("prod")
+    window._open_list_view("nodegroups")
+    assert not window.nodes_table.isHidden() and not window.nodes_heading.isHidden()
+
+    window._show_resources([], [])
+    operation, show, options = ran[-1]
+    assert operation.__name__ == "get_cluster_overview"
+    show(_overview())
     assert window.nodes_table.rowCount() == 1
     assert window.nodes_table.item(0, 0).text() == "node-a"
-    assert "metrics-server" in page.noticeLabel.text()
+    assert window.nodes_table.item(0, 1).text() == "Ready"
+
+    window._show_nodes("other", ClusterOverview())  # a stale answer is ignored
+    assert window.nodes_table.rowCount() == 1
+    options["on_error"]("denied")  # unreadable: the table stays as it was
+    assert window.nodes_table.rowCount() == 1
+
+    window._open_list_view("services")
+    assert window.nodes_table.isHidden() and window.nodes_heading.isHidden()
+    window._show_nodes("prod", ClusterOverview())  # the list was closed meanwhile
+    assert window.nodes_table.rowCount() == 1
     window.close()
 
 

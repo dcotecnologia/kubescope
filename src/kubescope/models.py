@@ -30,12 +30,35 @@ class Workload:
 
 
 @dataclass(frozen=True, slots=True)
-class NetworkResource:
+class ClusterResource:
     namespace: str  # empty for the kinds that belong to the whole cluster
     kind: str
     name: str
     values: tuple[str, ...]  # what the kind shows between its name and its age
     age: str
+
+
+@dataclass(frozen=True, slots=True)
+class ClusterInfo:
+    """What the cloud provider says about the cluster itself."""
+
+    status: str
+    version: str
+    platform_version: str
+    created: str
+    provider: str
+    endpoint: str
+    arn: str
+    role_arn: str
+    oidc_issuer: str
+    vpc_id: str = "—"
+    subnets: tuple[str, ...] = ()
+    security_group: str = "—"
+    additional_security_groups: tuple[str, ...] = ()
+    ip_family: str = "—"
+    service_cidr: str = "—"
+    endpoint_access: str = "—"
+    public_access_cidrs: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True, slots=True)
@@ -255,6 +278,27 @@ NETWORK_VIEWS = {
     "ingressclasses": "IngressClass",
     "networkpolicies": "NetworkPolicy",
 }
+# The list views that show configuration resources, and the kind each lists.
+CONFIG_VIEWS = {
+    "configmaps": "ConfigMap",
+    "secrets": "Secret",
+    "resourcequotas": "ResourceQuota",
+    "limitranges": "LimitRange",
+    "horizontalpodautoscalers": "HorizontalPodAutoscaler",
+    "poddisruptionbudgets": "PodDisruptionBudget",
+    "priorityclasses": "PriorityClass",
+    "runtimeclasses": "RuntimeClass",
+    "leases": "Lease",
+    "mutatingwebhooks": "MutatingWebhookConfiguration",
+    "validatingwebhooks": "ValidatingWebhookConfiguration",
+    "nodegroups": "NodeGroup",
+    "addons": "Addon",
+}
+# The views that list Amazon EKS objects: not namespaced, so the namespace and
+# the filters do not apply.
+EKS_VIEWS = frozenset({"nodegroups"})
+# Every view that lists plain resources in the shared table.
+RESOURCE_VIEWS = {**NETWORK_VIEWS, **CONFIG_VIEWS}
 STATUS_SEVERITY = {
     "Failed": 0,
     "Unavailable": 0,
@@ -318,7 +362,7 @@ def workload_sort_key(workload: Workload, column: int) -> tuple:
     return (*primary, *by_name)
 
 
-def network_sort_key(resource: NetworkResource, column: int) -> tuple:
+def resource_sort_key(resource: ClusterResource, column: int) -> tuple:
     """Sort key for a network table column: namespace, kind, name, the values
     of the kind, then age."""
     by_name = (resource.namespace.casefold(), resource.kind, resource.name.casefold())

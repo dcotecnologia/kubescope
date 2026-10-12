@@ -35,26 +35,52 @@
     </message>
     <message>
         <location filename="../errors.py" line="100"/>
+        <source>Not an Amazon EKS cluster</source>
+        <translation>Ce n&apos;est pas un cluster Amazon EKS</translation>
+    </message>
+    <message>
+        <location filename="../errors.py" line="101"/>
+        <source>Node Groups, Add-ons and the AWS cards of the Overview exist only on Amazon EKS contexts.</source>
+        <translation>Les Node Groups, les Add-ons et les cartes AWS de la Vue d&apos;ensemble n&apos;existent que sur les contextes Amazon EKS.</translation>
+    </message>
+    <message>
+        <location filename="../errors.py" line="110"/>
+        <source>Unexpected answer from AWS</source>
+        <translation>Réponse inattendue d&apos;AWS</translation>
+    </message>
+    <message>
+        <location filename="../errors.py" line="111"/>
+        <source>Update the AWS CLI to its latest version and refresh.</source>
+        <translation>Mettez à jour l&apos;AWS CLI vers la dernière version puis actualisez.</translation>
+    </message>
+    <message>
+        <location filename="../errors.py" line="118"/>
+        <location filename="../errors.py" line="128"/>
         <source>Access denied</source>
         <translation>Accès refusé</translation>
     </message>
     <message>
-        <location filename="../errors.py" line="101"/>
+        <location filename="../errors.py" line="119"/>
+        <source>Your AWS identity is not allowed to read this. The wiki lists the eks: permissions KubeScope needs.</source>
+        <translation>Votre identité AWS n&apos;est pas autorisée à lire ceci. Le wiki liste les autorisations eks: dont KubeScope a besoin.</translation>
+    </message>
+    <message>
+        <location filename="../errors.py" line="129"/>
         <source>Your user is not allowed to read this resource.</source>
         <translation>Votre utilisateur n&apos;est pas autorisé à lire cette ressource.</translation>
     </message>
     <message>
-        <location filename="../errors.py" line="122"/>
+        <location filename="../errors.py" line="150"/>
         <source>Cluster unreachable</source>
         <translation>Cluster inaccessible</translation>
     </message>
     <message>
-        <location filename="../errors.py" line="123"/>
+        <location filename="../errors.py" line="151"/>
         <source>Check your network or VPN and that the cluster is running.</source>
         <translation>Vérifiez votre réseau ou votre VPN, et que le cluster est en cours d&apos;exécution.</translation>
     </message>
     <message>
-        <location filename="../errors.py" line="129"/>
+        <location filename="../errors.py" line="157"/>
         <source>Something went wrong</source>
         <translation>Une erreur est survenue</translation>
     </message>
@@ -95,371 +121,578 @@
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../window.py" line="1141"/>
+        <location filename="../window.py" line="1508"/>
+        <location filename="../window.py" line="1537"/>
         <source>TYPE</source>
         <translation>TYPE</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1142"/>
+        <location filename="../window.py" line="1509"/>
         <source>CLUSTER IP</source>
         <translation>IP DU CLUSTER</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1143"/>
+        <location filename="../window.py" line="1510"/>
         <source>EXTERNAL IP</source>
         <translation>IP EXTERNE</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1144"/>
-        <location filename="../window.py" line="1148"/>
-        <location filename="../window.py" line="1156"/>
+        <location filename="../window.py" line="1511"/>
+        <location filename="../window.py" line="1515"/>
+        <location filename="../window.py" line="1523"/>
         <source>PORTS</source>
         <translation>PORTS</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1147"/>
+        <location filename="../window.py" line="1514"/>
         <source>ADDRESS TYPE</source>
         <translation>TYPE D&apos;ADRESSE</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1149"/>
-        <location filename="../window.py" line="1151"/>
+        <location filename="../window.py" line="1516"/>
+        <location filename="../window.py" line="1518"/>
         <source>ENDPOINTS</source>
         <translation>ENDPOINTS</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1153"/>
+        <location filename="../window.py" line="1520"/>
         <source>CLASS</source>
         <translation>CLASSE</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1154"/>
+        <location filename="../window.py" line="1521"/>
         <source>HOSTS</source>
         <translation>HÔTES</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1155"/>
+        <location filename="../window.py" line="1522"/>
         <source>ADDRESS</source>
         <translation>ADRESSE</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1159"/>
+        <location filename="../window.py" line="1526"/>
         <source>CONTROLLER</source>
         <translation>CONTRÔLEUR</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1160"/>
+        <location filename="../window.py" line="1527"/>
         <source>PARAMETERS</source>
         <translation>PARAMÈTRES</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1163"/>
+        <location filename="../window.py" line="1530"/>
         <source>POD SELECTOR</source>
         <translation>SÉLECTEUR DE PODS</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1164"/>
+        <location filename="../window.py" line="1531"/>
         <source>POLICY TYPES</source>
         <translation>TYPES DE POLITIQUE</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1174"/>
+        <location filename="../window.py" line="1534"/>
+        <location filename="../window.py" line="1538"/>
+        <source>DATA</source>
+        <translation>DONNÉES</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="1541"/>
+        <source>USAGE</source>
+        <translation>UTILISATION</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="1544"/>
+        <source>TYPES</source>
+        <translation>TYPES</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="1547"/>
+        <source>REFERENCE</source>
+        <translation>RÉFÉRENCE</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="1548"/>
+        <source>MIN PODS</source>
+        <translation>MIN PODS</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="1549"/>
+        <source>MAX PODS</source>
+        <translation>MAX PODS</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="1550"/>
+        <source>REPLICAS</source>
+        <translation>RÉPLIQUES</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="1553"/>
+        <source>MIN AVAILABLE</source>
+        <translation>MIN DISPONIBLE</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="1554"/>
+        <source>MAX UNAVAILABLE</source>
+        <translation>MAX INDISPONIBLE</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="1555"/>
+        <source>ALLOWED DISRUPTIONS</source>
+        <translation>INTERRUPTIONS AUTORISÉES</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="1558"/>
+        <source>VALUE</source>
+        <translation>VALEUR</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="1559"/>
+        <source>GLOBAL DEFAULT</source>
+        <translation>DÉFAUT GLOBAL</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="1562"/>
+        <source>HANDLER</source>
+        <translation>HANDLER</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="1565"/>
+        <source>HOLDER</source>
+        <translation>DÉTENTEUR</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="1568"/>
+        <location filename="../window.py" line="1571"/>
+        <source>WEBHOOKS</source>
+        <translation>WEBHOOKS</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="1575"/>
+        <source>INSTANCE TYPES</source>
+        <translation>TYPES D&apos;INSTANCE</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="1576"/>
+        <source>NODES</source>
+        <translation>NŒUDS</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="1577"/>
+        <source>AMI TYPE</source>
+        <translation>TYPE D&apos;AMI</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="1578"/>
+        <source>AMI VERSION</source>
+        <translation>VERSION DE L&apos;AMI</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="1582"/>
+        <location filename="../ui/main_window.ui" line="2588"/>
+        <source>VERSION</source>
+        <translation>VERSION</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="1583"/>
+        <source>SOURCE</source>
+        <translation>SOURCE</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="1593"/>
         <source>COMPLETIONS</source>
         <translation>TERMINÉS</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1175"/>
+        <location filename="../window.py" line="1594"/>
         <source>SCHEDULE</source>
         <translation>PLANIFICATION</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1176"/>
-        <location filename="../ui/main_window.ui" line="1519"/>
+        <location filename="../window.py" line="1595"/>
+        <location filename="../ui/main_window.ui" line="2049"/>
         <source>READY</source>
         <translation>PRÊTS</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1181"/>
-        <location filename="../window.py" line="1197"/>
-        <location filename="../ui/main_window.ui" line="1315"/>
-        <location filename="../ui/main_window.ui" line="1504"/>
+        <location filename="../window.py" line="1600"/>
+        <location filename="../window.py" line="1616"/>
+        <location filename="../ui/main_window.ui" line="1857"/>
+        <location filename="../ui/main_window.ui" line="2034"/>
         <source>NAMESPACE</source>
         <translation>NAMESPACE</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1183"/>
-        <location filename="../window.py" line="1199"/>
-        <location filename="../ui/main_window.ui" line="1514"/>
+        <location filename="../window.py" line="1602"/>
+        <location filename="../window.py" line="1618"/>
+        <location filename="../ui/main_window.ui" line="2044"/>
         <source>NAME</source>
         <translation>NOM</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1185"/>
-        <location filename="../ui/main_window.ui" line="1524"/>
+        <location filename="../window.py" line="1574"/>
+        <location filename="../window.py" line="1581"/>
+        <location filename="../window.py" line="1604"/>
+        <location filename="../ui/main_window.ui" line="2054"/>
+        <location filename="../ui/main_window.ui" line="2578"/>
         <source>STATUS</source>
         <translation>STATUT</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1186"/>
+        <location filename="../window.py" line="1605"/>
+        <location filename="../ui/main_window.ui" line="2593"/>
         <source>CPU</source>
         <translation>CPU</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1187"/>
+        <location filename="../window.py" line="1606"/>
+        <location filename="../ui/main_window.ui" line="2598"/>
         <source>MEMORY</source>
         <translation>MÉMOIRE</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1188"/>
+        <location filename="../window.py" line="1607"/>
         <source>RESTARTS</source>
         <translation>REDÉMARRAGES</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1189"/>
-        <location filename="../window.py" line="1201"/>
-        <location filename="../ui/main_window.ui" line="1529"/>
+        <location filename="../window.py" line="1608"/>
+        <location filename="../window.py" line="1620"/>
+        <location filename="../ui/main_window.ui" line="2059"/>
+        <location filename="../ui/main_window.ui" line="2608"/>
         <source>AGE</source>
         <translation>ÂGE</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1198"/>
-        <location filename="../ui/main_window.ui" line="1509"/>
+        <location filename="../window.py" line="1617"/>
+        <location filename="../ui/main_window.ui" line="2039"/>
         <source>KIND</source>
         <translation>KIND</translation>
     </message>
     <message>
         <location filename="../ui/main_window.ui" line="20"/>
-        <location filename="../ui/main_window.ui" line="275"/>
+        <location filename="../ui/main_window.ui" line="283"/>
         <source>KubeScope</source>
         <translation>KubeScope</translation>
     </message>
     <message>
-        <location filename="../ui/main_window.ui" line="285"/>
+        <location filename="../ui/main_window.ui" line="293"/>
         <source>Kubernetes console</source>
         <translation>Console Kubernetes</translation>
     </message>
     <message>
-        <location filename="../ui/main_window.ui" line="307"/>
+        <location filename="../ui/main_window.ui" line="339"/>
         <source>CONTEXT</source>
         <translation>CONTEXTE</translation>
     </message>
     <message>
-        <location filename="../ui/main_window.ui" line="320"/>
+        <location filename="../ui/main_window.ui" line="352"/>
         <source>Kubernetes context from your kubeconfig</source>
         <translation>Contexte Kubernetes de votre kubeconfig</translation>
     </message>
     <message>
-        <location filename="../ui/main_window.ui" line="340"/>
+        <location filename="../ui/main_window.ui" line="372"/>
         <source>Sign in with the cloud CLI, then reload the cluster data</source>
         <translation>Connectez-vous avec la CLI du cloud, puis rechargez les données du cluster</translation>
     </message>
     <message>
-        <location filename="../ui/main_window.ui" line="343"/>
+        <location filename="../ui/main_window.ui" line="375"/>
         <source>Sign in</source>
         <translation>Se connecter</translation>
     </message>
     <message>
-        <location filename="../ui/main_window.ui" line="365"/>
+        <location filename="../ui/main_window.ui" line="397"/>
         <source>Settings</source>
         <translation>Paramètres</translation>
     </message>
     <message>
-        <location filename="../ui/main_window.ui" line="405"/>
+        <location filename="../ui/main_window.ui" line="437"/>
         <source>No cluster contexts were found in your kubeconfig. Add a cluster to your kubeconfig (for example with the AWS CLI: aws eks update-kubeconfig) and reload.</source>
         <translation>Aucun contexte de cluster trouvé dans votre kubeconfig. Ajoutez un cluster à votre kubeconfig (par exemple avec la CLI AWS : aws eks update-kubeconfig) puis rechargez.</translation>
     </message>
     <message>
-        <location filename="../ui/main_window.ui" line="446"/>
+        <location filename="../ui/main_window.ui" line="478"/>
         <source>Dismiss</source>
         <translation>Fermer</translation>
     </message>
     <message>
-        <location filename="../ui/main_window.ui" line="537"/>
+        <location filename="../ui/main_window.ui" line="569"/>
         <source>MONITORING</source>
         <translation>SUPERVISION</translation>
     </message>
     <message>
-        <location filename="../ui/main_window.ui" line="544"/>
-        <location filename="../ui/main_window.ui" line="627"/>
-        <location filename="../ui/main_window.ui" line="1255"/>
+        <location filename="../ui/main_window.ui" line="576"/>
+        <location filename="../ui/main_window.ui" line="690"/>
+        <location filename="../ui/main_window.ui" line="1745"/>
         <source>Overview</source>
         <translation>Vue d&apos;ensemble</translation>
     </message>
     <message>
-        <location filename="../ui/main_window.ui" line="575"/>
+        <location filename="../ui/main_window.ui" line="607"/>
+        <source>Node Groups</source>
+        <translation>Node Groups</translation>
+    </message>
+    <message>
+        <location filename="../ui/main_window.ui" line="638"/>
         <source>Workloads</source>
         <translation>Workloads</translation>
     </message>
     <message>
-        <location filename="../ui/main_window.ui" line="658"/>
-        <location filename="../ui/main_window.ui" line="1433"/>
+        <location filename="../ui/main_window.ui" line="845"/>
+        <location filename="../ui/main_window.ui" line="1963"/>
         <source>Pods</source>
         <translation>Pods</translation>
     </message>
     <message>
-        <location filename="../ui/main_window.ui" line="689"/>
+        <location filename="../ui/main_window.ui" line="783"/>
         <source>Deployments</source>
         <translation>Deployments</translation>
     </message>
     <message>
-        <location filename="../ui/main_window.ui" line="720"/>
+        <location filename="../ui/main_window.ui" line="938"/>
         <source>StatefulSets</source>
         <translation>StatefulSets</translation>
     </message>
     <message>
-        <location filename="../ui/main_window.ui" line="751"/>
+        <location filename="../ui/main_window.ui" line="752"/>
         <source>DaemonSets</source>
         <translation>DaemonSets</translation>
     </message>
     <message>
-        <location filename="../ui/main_window.ui" line="782"/>
+        <location filename="../ui/main_window.ui" line="876"/>
         <source>ReplicaSets</source>
         <translation>ReplicaSets</translation>
     </message>
     <message>
-        <location filename="../ui/main_window.ui" line="813"/>
+        <location filename="../ui/main_window.ui" line="907"/>
         <source>ReplicationControllers</source>
         <translation>ReplicationControllers</translation>
     </message>
     <message>
-        <location filename="../ui/main_window.ui" line="844"/>
+        <location filename="../ui/main_window.ui" line="814"/>
         <source>Jobs</source>
         <translation>Jobs</translation>
     </message>
     <message>
-        <location filename="../ui/main_window.ui" line="875"/>
+        <location filename="../ui/main_window.ui" line="721"/>
         <source>CronJobs</source>
         <translation>CronJobs</translation>
     </message>
     <message>
-        <location filename="../ui/main_window.ui" line="909"/>
+        <location filename="../ui/main_window.ui" line="972"/>
         <source>Network</source>
         <translation>Réseau</translation>
     </message>
     <message>
-        <location filename="../ui/main_window.ui" line="961"/>
+        <location filename="../ui/main_window.ui" line="1179"/>
         <source>Services</source>
         <translation>Services</translation>
     </message>
     <message>
-        <location filename="../ui/main_window.ui" line="992"/>
+        <location filename="../ui/main_window.ui" line="1024"/>
         <source>Endpoint Slices</source>
         <translation>Endpoint Slices</translation>
     </message>
     <message>
-        <location filename="../ui/main_window.ui" line="1023"/>
+        <location filename="../ui/main_window.ui" line="1055"/>
         <source>Endpoints</source>
         <translation>Endpoints</translation>
     </message>
     <message>
-        <location filename="../ui/main_window.ui" line="1054"/>
+        <location filename="../ui/main_window.ui" line="1117"/>
         <source>Ingresses</source>
         <translation>Ingresses</translation>
     </message>
     <message>
-        <location filename="../ui/main_window.ui" line="1085"/>
+        <location filename="../ui/main_window.ui" line="1086"/>
         <source>Ingress Classes</source>
         <translation>Ingress Classes</translation>
     </message>
     <message>
-        <location filename="../ui/main_window.ui" line="1116"/>
+        <location filename="../ui/main_window.ui" line="1148"/>
         <source>Network Policies</source>
         <translation>Network Policies</translation>
     </message>
     <message>
-        <location filename="../ui/main_window.ui" line="1150"/>
+        <location filename="../ui/main_window.ui" line="1213"/>
+        <source>Config</source>
+        <translation>Configuration</translation>
+    </message>
+    <message>
+        <location filename="../ui/main_window.ui" line="1296"/>
+        <source>Config Maps</source>
+        <translation>Config Maps</translation>
+    </message>
+    <message>
+        <location filename="../ui/main_window.ui" line="1575"/>
+        <source>Secrets</source>
+        <translation>Secrets</translation>
+    </message>
+    <message>
+        <location filename="../ui/main_window.ui" line="1513"/>
+        <source>Resource Quotas</source>
+        <translation>Resource Quotas</translation>
+    </message>
+    <message>
+        <location filename="../ui/main_window.ui" line="1389"/>
+        <source>Limit Ranges</source>
+        <translation>Limit Ranges</translation>
+    </message>
+    <message>
+        <location filename="../ui/main_window.ui" line="1327"/>
+        <source>Horizontal Pod Autoscalers</source>
+        <translation>Horizontal Pod Autoscalers</translation>
+    </message>
+    <message>
+        <location filename="../ui/main_window.ui" line="1451"/>
+        <source>Pod Disruption Budgets</source>
+        <translation>Pod Disruption Budgets</translation>
+    </message>
+    <message>
+        <location filename="../ui/main_window.ui" line="1482"/>
+        <source>Priority Classes</source>
+        <translation>Priority Classes</translation>
+    </message>
+    <message>
+        <location filename="../ui/main_window.ui" line="1544"/>
+        <source>Runtime Classes</source>
+        <translation>Runtime Classes</translation>
+    </message>
+    <message>
+        <location filename="../ui/main_window.ui" line="1358"/>
+        <source>Leases</source>
+        <translation>Leases</translation>
+    </message>
+    <message>
+        <location filename="../ui/main_window.ui" line="1420"/>
+        <source>Mutating Webhook Configurations</source>
+        <translation>Mutating Webhook Configurations</translation>
+    </message>
+    <message>
+        <location filename="../ui/main_window.ui" line="1606"/>
+        <source>Validating Webhook Configurations</source>
+        <translation>Validating Webhook Configurations</translation>
+    </message>
+    <message>
+        <location filename="../ui/main_window.ui" line="1265"/>
+        <source>Add-ons</source>
+        <translation>Add-ons</translation>
+    </message>
+    <message>
+        <location filename="../ui/main_window.ui" line="1640"/>
         <source>Details &amp;&amp; Logs</source>
         <translation>Détails et journaux</translation>
     </message>
     <message>
-        <location filename="../ui/main_window.ui" line="1206"/>
+        <location filename="../ui/main_window.ui" line="1696"/>
         <source>SECURE ACCESS
 Resources in read-only mode</source>
         <translation>ACCÈS SÉCURISÉ
 Ressources en mode lecture seule</translation>
     </message>
     <message>
-        <location filename="../ui/main_window.ui" line="1262"/>
+        <location filename="../ui/main_window.ui" line="1752"/>
         <source>Cluster resources and capacity</source>
         <translation>Ressources et capacité du cluster</translation>
     </message>
     <message>
-        <location filename="../ui/main_window.ui" line="1367"/>
+        <location filename="../ui/main_window.ui" line="1909"/>
         <source>Search by name or namespace...</source>
         <translation>Rechercher par nom ou namespace...</translation>
     </message>
     <message>
-        <location filename="../ui/main_window.ui" line="1390"/>
+        <location filename="../ui/main_window.ui" line="1777"/>
+        <location filename="../ui/main_window.ui" line="1790"/>
+        <location filename="../ui/main_window.ui" line="1803"/>
         <source>Refresh</source>
         <translation>Actualiser</translation>
     </message>
     <message>
-        <location filename="../ui/main_window.ui" line="1430"/>
+        <location filename="../ui/main_window.ui" line="1960"/>
         <source>View Pods of the selected workload</source>
         <translation>Afficher les Pods du workload sélectionné</translation>
     </message>
     <message>
-        <location filename="../ui/main_window.ui" line="1446"/>
+        <location filename="../ui/main_window.ui" line="1976"/>
         <source>View JSON details of the selected workload</source>
         <translation>Afficher les détails JSON du workload sélectionné</translation>
     </message>
     <message>
-        <location filename="../ui/main_window.ui" line="1449"/>
+        <location filename="../ui/main_window.ui" line="1979"/>
         <source>Details</source>
         <translation>Détails</translation>
     </message>
     <message>
-        <location filename="../ui/main_window.ui" line="1462"/>
+        <location filename="../ui/main_window.ui" line="1992"/>
         <source>View logs of a Pod of the selected workload</source>
         <translation>Afficher les journaux d&apos;un Pod du workload sélectionné</translation>
     </message>
     <message>
-        <location filename="../ui/main_window.ui" line="1465"/>
+        <location filename="../ui/main_window.ui" line="1995"/>
         <source>Logs</source>
         <translation>Journaux</translation>
     </message>
     <message>
-        <location filename="../ui/main_window.ui" line="2007"/>
+        <location filename="../ui/main_window.ui" line="2538"/>
+        <source>Nodes</source>
+        <translation>Nœuds</translation>
+    </message>
+    <message>
+        <location filename="../ui/main_window.ui" line="2573"/>
+        <source>NODE</source>
+        <translation>NŒUD</translation>
+    </message>
+    <message>
+        <location filename="../ui/main_window.ui" line="2583"/>
+        <source>ROLE</source>
+        <translation>RÔLE</translation>
+    </message>
+    <message>
+        <location filename="../ui/main_window.ui" line="2603"/>
+        <source>PODS</source>
+        <translation>PODS</translation>
+    </message>
+    <message>
+        <location filename="../ui/main_window.ui" line="2621"/>
         <source>Select a context to load workloads</source>
         <translation>Sélectionnez un contexte pour charger les workloads</translation>
     </message>
     <message>
-        <location filename="../ui/main_window.ui" line="2030"/>
+        <location filename="../ui/main_window.ui" line="2644"/>
         <source>Data fetched from the cluster API</source>
         <translation>Données obtenues depuis l&apos;API du cluster</translation>
     </message>
     <message>
-        <location filename="../ui/main_window.ui" line="2091"/>
+        <location filename="../ui/main_window.ui" line="2705"/>
         <source>Open the DCO Tecnologia website</source>
         <translation>Ouvrir le site web de DCO Tecnologia</translation>
     </message>
     <message>
-        <location filename="../ui/main_window.ui" line="2111"/>
+        <location filename="../ui/main_window.ui" line="2725"/>
         <source>MIT License</source>
         <translation>Licence MIT</translation>
     </message>
     <message>
-        <location filename="../ui/main_window.ui" line="2114"/>
+        <location filename="../ui/main_window.ui" line="2728"/>
         <source>KubeScope is open source software released under the MIT License</source>
         <translation>KubeScope est un logiciel libre publié sous licence MIT</translation>
     </message>
     <message>
-        <location filename="../ui/main_window.ui" line="2150"/>
+        <location filename="../ui/main_window.ui" line="2764"/>
         <source>Update available</source>
         <translation>Mise à jour disponible</translation>
     </message>
     <message>
-        <location filename="../ui/main_window.ui" line="2153"/>
+        <location filename="../ui/main_window.ui" line="2767"/>
         <source>Open the download page of the new version</source>
         <translation>Ouvrir la page de téléchargement de la nouvelle version</translation>
     </message>
     <message>
-        <location filename="../ui/main_window.ui" line="2181"/>
+        <location filename="../ui/main_window.ui" line="2795"/>
         <source>Check for updates</source>
         <translation>Rechercher des mises à jour</translation>
     </message>
     <message>
-        <location filename="../ui/main_window.ui" line="2201"/>
+        <location filename="../ui/main_window.ui" line="2815"/>
         <source>Open the project on GitHub</source>
         <translation>Ouvrir le projet sur GitHub</translation>
     </message>
@@ -467,34 +700,34 @@ Ressources en mode lecture seule</translation>
 <context>
     <name>OverviewPage</name>
     <message>
-        <location filename="../window.py" line="1564"/>
-        <location filename="../ui/overview_page.ui" line="113"/>
+        <location filename="../window.py" line="1998"/>
+        <location filename="../ui/overview_page.ui" line="194"/>
         <source>nodes ready</source>
         <translation>nœuds prêts</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1580"/>
-        <location filename="../ui/overview_page.ui" line="234"/>
+        <location filename="../window.py" line="2014"/>
+        <location filename="../ui/overview_page.ui" line="315"/>
         <source>cores requested / allocatable</source>
         <translation>cœurs demandés / allouables</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1594"/>
-        <location filename="../ui/overview_page.ui" line="301"/>
+        <location filename="../window.py" line="2028"/>
+        <location filename="../ui/overview_page.ui" line="382"/>
         <source>requested / allocatable</source>
         <translation>demandé / allouable</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1613"/>
-        <location filename="../ui/overview_page.ui" line="375"/>
+        <location filename="../window.py" line="2047"/>
+        <location filename="../ui/overview_page.ui" line="456"/>
         <source>in the cluster</source>
         <translation>dans le cluster</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1615"/>
-        <location filename="../ui/overview_page.ui" line="429"/>
-        <location filename="../ui/overview_page.ui" line="483"/>
-        <location filename="../ui/overview_page.ui" line="537"/>
+        <location filename="../window.py" line="2049"/>
+        <location filename="../ui/overview_page.ui" line="510"/>
+        <location filename="../ui/overview_page.ui" line="564"/>
+        <location filename="../ui/overview_page.ui" line="618"/>
         <source>workloads</source>
         <translation>workloads</translation>
     </message>
@@ -504,87 +737,59 @@ Ressources en mode lecture seule</translation>
         <translation>Ressources du cluster</translation>
     </message>
     <message>
-        <location filename="../ui/overview_page.ui" line="52"/>
-        <source>Refresh</source>
-        <translation>Actualiser</translation>
+        <location filename="../ui/overview_page.ui" line="78"/>
+        <source>CLUSTER INFO</source>
+        <translation>INFORMATIONS SUR LE CLUSTER</translation>
     </message>
     <message>
-        <location filename="../ui/overview_page.ui" line="93"/>
+        <location filename="../ui/overview_page.ui" line="125"/>
+        <source>NETWORKING</source>
+        <translation>RÉSEAU</translation>
+    </message>
+    <message>
+        <location filename="../ui/overview_page.ui" line="174"/>
         <source>NODES</source>
         <translation>NŒUDS</translation>
     </message>
     <message>
-        <location filename="../ui/overview_page.ui" line="147"/>
-        <location filename="../ui/overview_page.ui" line="614"/>
+        <location filename="../ui/overview_page.ui" line="228"/>
         <source>PODS</source>
         <translation>PODS</translation>
     </message>
     <message>
-        <location filename="../ui/overview_page.ui" line="167"/>
+        <location filename="../ui/overview_page.ui" line="248"/>
         <source>running / capacity</source>
         <translation>en cours d&apos;exécution / capacité</translation>
     </message>
     <message>
-        <location filename="../ui/overview_page.ui" line="214"/>
-        <location filename="../ui/overview_page.ui" line="604"/>
+        <location filename="../ui/overview_page.ui" line="295"/>
         <source>CPU</source>
         <translation>CPU</translation>
     </message>
     <message>
-        <location filename="../ui/overview_page.ui" line="281"/>
-        <location filename="../ui/overview_page.ui" line="609"/>
+        <location filename="../ui/overview_page.ui" line="362"/>
         <source>MEMORY</source>
         <translation>MÉMOIRE</translation>
     </message>
     <message>
-        <location filename="../ui/overview_page.ui" line="355"/>
+        <location filename="../ui/overview_page.ui" line="436"/>
         <source>NAMESPACES</source>
         <translation>NAMESPACES</translation>
     </message>
     <message>
-        <location filename="../ui/overview_page.ui" line="409"/>
+        <location filename="../ui/overview_page.ui" line="490"/>
         <source>DEPLOYMENTS</source>
         <translation>DEPLOYMENTS</translation>
     </message>
     <message>
-        <location filename="../ui/overview_page.ui" line="463"/>
+        <location filename="../ui/overview_page.ui" line="544"/>
         <source>STATEFULSETS</source>
         <translation>STATEFULSETS</translation>
     </message>
     <message>
-        <location filename="../ui/overview_page.ui" line="517"/>
+        <location filename="../ui/overview_page.ui" line="598"/>
         <source>DAEMONSETS</source>
         <translation>DAEMONSETS</translation>
-    </message>
-    <message>
-        <location filename="../ui/overview_page.ui" line="552"/>
-        <source>Nodes</source>
-        <translation>Nœuds</translation>
-    </message>
-    <message>
-        <location filename="../ui/overview_page.ui" line="584"/>
-        <source>NODE</source>
-        <translation>NŒUD</translation>
-    </message>
-    <message>
-        <location filename="../ui/overview_page.ui" line="589"/>
-        <source>STATUS</source>
-        <translation>STATUT</translation>
-    </message>
-    <message>
-        <location filename="../ui/overview_page.ui" line="594"/>
-        <source>ROLE</source>
-        <translation>RÔLE</translation>
-    </message>
-    <message>
-        <location filename="../ui/overview_page.ui" line="599"/>
-        <source>VERSION</source>
-        <translation>VERSION</translation>
-    </message>
-    <message>
-        <location filename="../ui/overview_page.ui" line="619"/>
-        <source>AGE</source>
-        <translation>ÂGE</translation>
     </message>
 </context>
 <context>
@@ -638,7 +843,7 @@ Ressources en mode lecture seule</translation>
 <context>
     <name>SettingsPage</name>
     <message>
-        <location filename="../window.py" line="2528"/>
+        <location filename="../window.py" line="3038"/>
         <location filename="../ui/settings_page.ui" line="514"/>
         <source>Give your contexts friendlier names. Leave a name empty to keep the original one.</source>
         <translation>Donnez des noms plus simples à vos contextes. Laissez un nom vide pour conserver l&apos;original.</translation>
@@ -1039,715 +1244,1160 @@ Ressources en mode lecture seule</translation>
 <context>
     <name>WorkloadWindow</name>
     <message>
-        <location filename="../window.py" line="650"/>
+        <location filename="../window.py" line="707"/>
         <source>0 Deployments</source>
         <translation>0 Deployments</translation>
     </message>
     <message>
-        <location filename="../window.py" line="666"/>
-        <location filename="../window.py" line="1814"/>
-        <location filename="../window.py" line="1837"/>
-        <location filename="../window.py" line="2764"/>
+        <location filename="../window.py" line="723"/>
+        <location filename="../window.py" line="2267"/>
+        <location filename="../window.py" line="2290"/>
+        <location filename="../window.py" line="3276"/>
         <source>All namespaces</source>
         <translation>Tous les namespaces</translation>
     </message>
     <message>
-        <location filename="../window.py" line="766"/>
+        <location filename="../window.py" line="834"/>
         <source>Loading contexts...</source>
         <translation>Chargement des contextes...</translation>
     </message>
     <message>
-        <location filename="../window.py" line="775"/>
+        <location filename="../window.py" line="843"/>
         <source>Could not load kubeconfig: {error}</source>
         <translation>Impossible de charger le kubeconfig : {error}</translation>
     </message>
     <message>
-        <location filename="../window.py" line="797"/>
+        <location filename="../window.py" line="865"/>
         <source>No contexts found in kubeconfig</source>
         <translation>Aucun contexte trouvé dans le kubeconfig</translation>
     </message>
     <message>
-        <location filename="../window.py" line="864"/>
+        <location filename="../window.py" line="894"/>
+        <location filename="../window.py" line="972"/>
+        <source>Unpin from the top</source>
+        <translation>Retirer du haut</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="894"/>
+        <source>Pin to the top</source>
+        <translation>Épingler en haut</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="1021"/>
+        <source>Status</source>
+        <translation>Statut</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="1022"/>
+        <source>Kubernetes version</source>
+        <translation>Version de Kubernetes</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="1023"/>
+        <source>Platform version</source>
+        <translation>Version de la plateforme</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="1024"/>
+        <source>Created</source>
+        <translation>Créé</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="1025"/>
+        <source>Provider</source>
+        <translation>Fournisseur</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="1028"/>
+        <source>API server endpoint</source>
+        <translation>Point de terminaison du serveur d&apos;API</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="1029"/>
+        <source>Cluster ARN</source>
+        <translation>ARN du cluster</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="1030"/>
+        <source>Cluster IAM role ARN</source>
+        <translation>ARN du rôle IAM du cluster</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="1031"/>
+        <source>OpenID Connect provider URL</source>
+        <translation>URL du fournisseur OpenID Connect</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="1039"/>
+        <source>VPC</source>
+        <translation>VPC</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="1040"/>
+        <source>Cluster security group</source>
+        <translation>Security group du cluster</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="1042"/>
+        <source>Additional security groups</source>
+        <translation>Security groups supplémentaires</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="1043"/>
+        <source>None</source>
+        <translation>Aucun</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="1046"/>
+        <source>API server endpoint access</source>
+        <translation>Accès au endpoint du serveur d&apos;API</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="1049"/>
+        <source>Cluster IP address family</source>
+        <translation>Famille d&apos;adresses IP du cluster</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="1050"/>
+        <source>Service IPv4 range</source>
+        <translation>Plage IPv4 des services</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="1052"/>
+        <source>Public access source allowlist</source>
+        <translation>Liste d&apos;origines autorisées en accès public</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="1055"/>
+        <source>Subnets</source>
+        <translation>Subnets</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="1066"/>
+        <source>Creating</source>
+        <translation>Création</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="1067"/>
+        <source>Updating</source>
+        <translation>Mise à jour</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="1068"/>
+        <source>Deleting</source>
+        <translation>Suppression</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="1071"/>
+        <source>Creation failed</source>
+        <translation>Échec de la création</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="1072"/>
+        <source>Update failed</source>
+        <translation>Échec de la mise à jour</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="1073"/>
+        <source>Deletion failed</source>
+        <translation>Échec de la suppression</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="1075"/>
+        <source>Deployed</source>
+        <translation>Déployé</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="1076"/>
+        <source>Superseded</source>
+        <translation>Remplacé</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="1077"/>
+        <source>Uninstalled</source>
+        <translation>Désinstallé</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="1078"/>
+        <source>Uninstalling</source>
+        <translation>Désinstallation</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="1079"/>
+        <source>Pending install</source>
+        <translation>Installation en attente</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="1080"/>
+        <source>Pending upgrade</source>
+        <translation>Mise à jour en attente</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="1081"/>
+        <source>Pending rollback</source>
+        <translation>Retour arrière en attente</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="1082"/>
+        <source>Public</source>
+        <translation>Public</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="1083"/>
+        <source>Private</source>
+        <translation>Privé</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="1084"/>
+        <source>Public and private</source>
+        <translation>Public et privé</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="1177"/>
         <source>Overview</source>
         <translation>Vue d&apos;ensemble</translation>
     </message>
     <message>
-        <location filename="../window.py" line="865"/>
+        <location filename="../window.py" line="1178"/>
         <source>Cluster resources and capacity</source>
         <translation>Ressources et capacité du cluster</translation>
     </message>
     <message>
-        <location filename="../window.py" line="867"/>
+        <location filename="../window.py" line="1180"/>
         <source>Details &amp; Logs</source>
         <translation>Détails et journaux</translation>
     </message>
     <message>
-        <location filename="../window.py" line="869"/>
+        <location filename="../window.py" line="1182"/>
         <source>Resource details and Pod logs, one tab each</source>
         <translation>Détails de la ressource et journaux du Pod, un onglet chacun</translation>
     </message>
     <message>
-        <location filename="../window.py" line="872"/>
+        <location filename="../window.py" line="1185"/>
         <source>Settings</source>
         <translation>Paramètres</translation>
     </message>
     <message>
-        <location filename="../window.py" line="873"/>
+        <location filename="../window.py" line="1186"/>
         <source>Preferences and context names</source>
         <translation>Préférences et noms des contextes</translation>
     </message>
     <message>
-        <location filename="../window.py" line="875"/>
+        <location filename="../window.py" line="1188"/>
         <source>Workloads overview</source>
         <translation>Vue d&apos;ensemble des workloads</translation>
     </message>
     <message>
-        <location filename="../window.py" line="877"/>
+        <location filename="../window.py" line="1190"/>
         <source>Health of every workload kind and the latest events</source>
         <translation>Santé de chaque type de workload et derniers événements</translation>
     </message>
     <message>
-        <location filename="../window.py" line="881"/>
-        <location filename="../window.py" line="1411"/>
+        <location filename="../window.py" line="1194"/>
+        <location filename="../window.py" line="1845"/>
         <source>Pods</source>
         <translation>Pods</translation>
     </message>
     <message>
-        <location filename="../window.py" line="881"/>
+        <location filename="../window.py" line="1194"/>
         <source>Pods of the cluster</source>
         <translation>Pods du cluster</translation>
     </message>
     <message>
-        <location filename="../window.py" line="883"/>
-        <location filename="../window.py" line="1412"/>
+        <location filename="../window.py" line="1196"/>
+        <location filename="../window.py" line="1846"/>
         <source>Deployments</source>
         <translation>Deployments</translation>
     </message>
     <message>
-        <location filename="../window.py" line="884"/>
+        <location filename="../window.py" line="1197"/>
         <source>Deployments of the cluster</source>
         <translation>Deployments du cluster</translation>
     </message>
     <message>
-        <location filename="../window.py" line="887"/>
-        <location filename="../window.py" line="1414"/>
+        <location filename="../window.py" line="1200"/>
+        <location filename="../window.py" line="1848"/>
         <source>StatefulSets</source>
         <translation>StatefulSets</translation>
     </message>
     <message>
-        <location filename="../window.py" line="888"/>
+        <location filename="../window.py" line="1201"/>
         <source>StatefulSets of the cluster</source>
         <translation>StatefulSets du cluster</translation>
     </message>
     <message>
-        <location filename="../window.py" line="891"/>
-        <location filename="../window.py" line="1413"/>
+        <location filename="../window.py" line="1204"/>
+        <location filename="../window.py" line="1847"/>
         <source>DaemonSets</source>
         <translation>DaemonSets</translation>
     </message>
     <message>
-        <location filename="../window.py" line="892"/>
+        <location filename="../window.py" line="1205"/>
         <source>DaemonSets of the cluster</source>
         <translation>DaemonSets du cluster</translation>
     </message>
     <message>
-        <location filename="../window.py" line="895"/>
-        <location filename="../window.py" line="1415"/>
+        <location filename="../window.py" line="1208"/>
+        <location filename="../window.py" line="1849"/>
         <source>ReplicaSets</source>
         <translation>ReplicaSets</translation>
     </message>
     <message>
-        <location filename="../window.py" line="896"/>
+        <location filename="../window.py" line="1209"/>
         <source>ReplicaSets of the cluster</source>
         <translation>ReplicaSets du cluster</translation>
     </message>
     <message>
-        <location filename="../window.py" line="899"/>
+        <location filename="../window.py" line="1212"/>
         <source>ReplicationControllers</source>
         <translation>ReplicationControllers</translation>
     </message>
     <message>
-        <location filename="../window.py" line="900"/>
+        <location filename="../window.py" line="1213"/>
         <source>ReplicationControllers of the cluster</source>
         <translation>ReplicationControllers du cluster</translation>
     </message>
     <message>
-        <location filename="../window.py" line="902"/>
-        <location filename="../window.py" line="1416"/>
+        <location filename="../window.py" line="1215"/>
+        <location filename="../window.py" line="1850"/>
         <source>Jobs</source>
         <translation>Jobs</translation>
     </message>
     <message>
-        <location filename="../window.py" line="902"/>
+        <location filename="../window.py" line="1215"/>
         <source>Jobs of the cluster</source>
         <translation>Jobs du cluster</translation>
     </message>
     <message>
-        <location filename="../window.py" line="903"/>
-        <location filename="../window.py" line="1417"/>
+        <location filename="../window.py" line="1216"/>
+        <location filename="../window.py" line="1851"/>
         <source>CronJobs</source>
         <translation>CronJobs</translation>
     </message>
     <message>
-        <location filename="../window.py" line="903"/>
+        <location filename="../window.py" line="1216"/>
         <source>CronJobs of the cluster</source>
         <translation>CronJobs du cluster</translation>
     </message>
     <message>
-        <location filename="../window.py" line="904"/>
+        <location filename="../window.py" line="1217"/>
         <source>Services</source>
         <translation>Services</translation>
     </message>
     <message>
-        <location filename="../window.py" line="904"/>
+        <location filename="../window.py" line="1217"/>
         <source>Services of the cluster</source>
         <translation>Services du cluster</translation>
     </message>
     <message>
-        <location filename="../window.py" line="906"/>
+        <location filename="../window.py" line="1219"/>
         <source>Endpoint Slices</source>
         <translation>Endpoint Slices</translation>
     </message>
     <message>
-        <location filename="../window.py" line="907"/>
+        <location filename="../window.py" line="1220"/>
         <source>Endpoint Slices of the cluster</source>
         <translation>Endpoint Slices du cluster</translation>
     </message>
     <message>
-        <location filename="../window.py" line="910"/>
+        <location filename="../window.py" line="1223"/>
         <source>Endpoints</source>
         <translation>Endpoints</translation>
     </message>
     <message>
-        <location filename="../window.py" line="911"/>
+        <location filename="../window.py" line="1224"/>
         <source>Endpoints of the cluster</source>
         <translation>Endpoints du cluster</translation>
     </message>
     <message>
-        <location filename="../window.py" line="914"/>
+        <location filename="../window.py" line="1227"/>
         <source>Ingresses</source>
         <translation>Ingresses</translation>
     </message>
     <message>
-        <location filename="../window.py" line="915"/>
+        <location filename="../window.py" line="1228"/>
         <source>Ingresses of the cluster</source>
         <translation>Ingresses du cluster</translation>
     </message>
     <message>
-        <location filename="../window.py" line="918"/>
+        <location filename="../window.py" line="1231"/>
         <source>Ingress Classes</source>
         <translation>Ingress Classes</translation>
     </message>
     <message>
-        <location filename="../window.py" line="919"/>
+        <location filename="../window.py" line="1232"/>
         <source>Ingress Classes of the cluster</source>
         <translation>Ingress Classes du cluster</translation>
     </message>
     <message>
-        <location filename="../window.py" line="922"/>
+        <location filename="../window.py" line="1235"/>
         <source>Network Policies</source>
         <translation>Network Policies</translation>
     </message>
     <message>
-        <location filename="../window.py" line="923"/>
+        <location filename="../window.py" line="1236"/>
         <source>Network Policies of the cluster</source>
         <translation>Network Policies du cluster</translation>
     </message>
     <message>
-        <location filename="../window.py" line="932"/>
+        <location filename="../window.py" line="1239"/>
+        <source>Config Maps</source>
+        <translation>Config Maps</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="1240"/>
+        <source>Config Maps of the cluster</source>
+        <translation>Config Maps du cluster</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="1243"/>
+        <source>Secrets</source>
+        <translation>Secrets</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="1244"/>
+        <source>Secrets of the cluster</source>
+        <translation>Secrets du cluster</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="1247"/>
+        <source>Resource Quotas</source>
+        <translation>Resource Quotas</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="1248"/>
+        <source>Resource Quotas of the cluster</source>
+        <translation>Resource Quotas du cluster</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="1251"/>
+        <source>Limit Ranges</source>
+        <translation>Limit Ranges</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="1252"/>
+        <source>Limit Ranges of the cluster</source>
+        <translation>Limit Ranges du cluster</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="1255"/>
+        <source>Horizontal Pod Autoscalers</source>
+        <translation>Horizontal Pod Autoscalers</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="1256"/>
+        <source>Horizontal Pod Autoscalers of the cluster</source>
+        <translation>Horizontal Pod Autoscalers du cluster</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="1259"/>
+        <source>Pod Disruption Budgets</source>
+        <translation>Pod Disruption Budgets</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="1260"/>
+        <source>Pod Disruption Budgets of the cluster</source>
+        <translation>Pod Disruption Budgets du cluster</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="1263"/>
+        <source>Priority Classes</source>
+        <translation>Priority Classes</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="1264"/>
+        <source>Priority Classes of the cluster</source>
+        <translation>Priority Classes du cluster</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="1267"/>
+        <source>Runtime Classes</source>
+        <translation>Runtime Classes</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="1268"/>
+        <source>Runtime Classes of the cluster</source>
+        <translation>Runtime Classes du cluster</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="1271"/>
+        <source>Leases</source>
+        <translation>Leases</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="1272"/>
+        <source>Leases of the cluster</source>
+        <translation>Leases du cluster</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="1275"/>
+        <source>Mutating Webhook Configurations</source>
+        <translation>Mutating Webhook Configurations</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="1276"/>
+        <source>Mutating Webhook Configurations of the cluster</source>
+        <translation>Mutating Webhook Configurations du cluster</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="1279"/>
+        <source>Validating Webhook Configurations</source>
+        <translation>Validating Webhook Configurations</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="1280"/>
+        <source>Validating Webhook Configurations of the cluster</source>
+        <translation>Validating Webhook Configurations du cluster</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="1283"/>
+        <source>Node Groups</source>
+        <translation>Node Groups</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="1284"/>
+        <source>Node Groups of the cluster</source>
+        <translation>Node Groups du cluster</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="1287"/>
+        <source>Add-ons</source>
+        <translation>Add-ons</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="1288"/>
+        <source>Add-ons of the cluster</source>
+        <translation>Add-ons du cluster</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="1297"/>
         <source>Version {version}</source>
         <translation>Version {version}</translation>
     </message>
     <message>
-        <location filename="../window.py" line="935"/>
+        <location filename="../window.py" line="1300"/>
         <source>Open the project on GitHub</source>
         <translation>Ouvrir le projet sur GitHub</translation>
     </message>
     <message>
-        <location filename="../window.py" line="969"/>
+        <location filename="../window.py" line="1334"/>
         <source>Up to date</source>
         <translation>À jour</translation>
     </message>
     <message>
-        <location filename="../window.py" line="970"/>
+        <location filename="../window.py" line="1335"/>
         <source>Could not check</source>
         <translation>Vérification impossible</translation>
     </message>
     <message>
-        <location filename="../window.py" line="981"/>
+        <location filename="../window.py" line="1346"/>
         <source>Check for updates</source>
         <translation>Rechercher des mises à jour</translation>
     </message>
     <message>
-        <location filename="../window.py" line="982"/>
+        <location filename="../window.py" line="1347"/>
         <source>Checking for updates...</source>
         <translation>Recherche de mises à jour...</translation>
     </message>
     <message>
-        <location filename="../window.py" line="983"/>
+        <location filename="../window.py" line="1348"/>
         <source>KubeScope is up to date. Click to check again.</source>
         <translation>KubeScope est à jour. Cliquez pour vérifier à nouveau.</translation>
     </message>
     <message>
-        <location filename="../window.py" line="984"/>
+        <location filename="../window.py" line="1349"/>
         <source>Could not check for updates. Click to try again.</source>
         <translation>Impossible de rechercher des mises à jour. Cliquez pour réessayer.</translation>
     </message>
     <message>
-        <location filename="../window.py" line="990"/>
+        <location filename="../window.py" line="1355"/>
         <source>Update available: {version}. Click to open the download page; right-click to check again.</source>
         <translation>Mise à jour disponible : {version}. Cliquez pour ouvrir la page de téléchargement ; clic droit pour vérifier à nouveau.</translation>
     </message>
     <message>
-        <location filename="../window.py" line="998"/>
+        <location filename="../window.py" line="1363"/>
         <source>Update available</source>
         <translation>Mise à jour disponible</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1000"/>
+        <location filename="../window.py" line="1365"/>
         <source>Download KubeScope {version}</source>
         <translation>Télécharger KubeScope {version}</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1036"/>
+        <location filename="../window.py" line="1401"/>
         <source>Check for updates again</source>
         <translation>Rechercher à nouveau des mises à jour</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1132"/>
-        <location filename="../window.py" line="1724"/>
+        <location filename="../window.py" line="1499"/>
+        <location filename="../window.py" line="2174"/>
         <source>Loading resources...</source>
         <translation>Chargement des ressources...</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1309"/>
+        <location filename="../window.py" line="1743"/>
         <source>Configure AWS credentials ({profile})</source>
         <translation>Configurer les identifiants AWS ({profile})</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1313"/>
+        <location filename="../window.py" line="1747"/>
         <source>AWS credentials for profile {profile} are missing or invalid</source>
         <translation>Les identifiants AWS du profil {profile} sont manquants ou invalides</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1318"/>
+        <location filename="../window.py" line="1752"/>
         <source>Sign in to {provider}</source>
         <translation>Se connecter à {provider}</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1321"/>
+        <location filename="../window.py" line="1755"/>
         <source>Not signed in to {provider}</source>
         <translation>Non connecté à {provider}</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1325"/>
+        <location filename="../window.py" line="1759"/>
         <source>Sign in to {provider} ({profile})</source>
         <translation>Se connecter à {provider} ({profile})</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1331"/>
+        <location filename="../window.py" line="1765"/>
         <source>Not signed in to {provider} (profile {profile})</source>
         <translation>Non connecté à {provider} (profil {profile})</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1352"/>
+        <location filename="../window.py" line="1786"/>
         <source>Finish in the terminal that opened, then press Refresh.</source>
         <translation>Terminez dans le terminal qui s&apos;est ouvert, puis cliquez sur Actualiser.</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1371"/>
+        <location filename="../window.py" line="1805"/>
         <source>Loading workloads...</source>
         <translation>Chargement des workloads...</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1432"/>
+        <location filename="../window.py" line="1866"/>
         <source>Could not read: {names}</source>
         <translation>Lecture impossible : {names}</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1492"/>
+        <location filename="../window.py" line="1926"/>
         <source>Loading cluster data...</source>
         <translation>Chargement des données du cluster...</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1573"/>
+        <location filename="../window.py" line="2007"/>
         <source>running · {pending} pending · {failed} failed</source>
         <translation>en cours d&apos;exécution · {pending} en attente · {failed} en échec</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1582"/>
-        <location filename="../window.py" line="1596"/>
+        <location filename="../window.py" line="2016"/>
+        <location filename="../window.py" line="2030"/>
         <source> · usage {value}</source>
         <translation> · utilisation {value}</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1622"/>
+        <location filename="../window.py" line="2079"/>
         <source>Ready</source>
         <translation>Prêt</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1622"/>
+        <location filename="../window.py" line="2079"/>
         <source>Not ready</source>
         <translation>Non prêt</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1647"/>
+        <location filename="../window.py" line="2054"/>
         <source>Real usage unavailable: metrics-server not found.</source>
         <translation>Utilisation réelle indisponible : metrics-server introuvable.</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1741"/>
+        <location filename="../window.py" line="2191"/>
         <source>Refreshing...</source>
         <translation>Actualisation...</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1926"/>
+        <location filename="../window.py" line="2382"/>
         <source>{count} Services in {namespaces} namespaces</source>
         <translation>{count} Services dans {namespaces} namespaces</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1928"/>
+        <location filename="../window.py" line="2384"/>
         <source>{count} Endpoint Slices in {namespaces} namespaces</source>
         <translation>{count} Endpoint Slices dans {namespaces} namespaces</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1931"/>
+        <location filename="../window.py" line="2387"/>
         <source>{count} Endpoints in {namespaces} namespaces</source>
         <translation>{count} Endpoints dans {namespaces} namespaces</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1934"/>
+        <location filename="../window.py" line="2390"/>
         <source>{count} Ingresses in {namespaces} namespaces</source>
         <translation>{count} Ingresses dans {namespaces} namespaces</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1936"/>
+        <location filename="../window.py" line="2392"/>
         <source>{count} Ingress Classes in the cluster</source>
         <translation>{count} Ingress Classes dans le cluster</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1938"/>
+        <location filename="../window.py" line="2394"/>
         <source>{count} Network Policies in {namespaces} namespaces</source>
         <translation>{count} Network Policies dans {namespaces} namespaces</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1950"/>
-        <location filename="../window.py" line="2016"/>
+        <location filename="../window.py" line="2397"/>
+        <source>{count} Config Maps in {namespaces} namespaces</source>
+        <translation>{count} Config Maps dans {namespaces} namespaces</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="2399"/>
+        <source>{count} Secrets in {namespaces} namespaces</source>
+        <translation>{count} Secrets dans {namespaces} namespaces</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="2401"/>
+        <source>{count} Resource Quotas in {namespaces} namespaces</source>
+        <translation>{count} Resource Quotas dans {namespaces} namespaces</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="2404"/>
+        <source>{count} Limit Ranges in {namespaces} namespaces</source>
+        <translation>{count} Limit Ranges dans {namespaces} namespaces</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="2407"/>
+        <source>{count} Horizontal Pod Autoscalers in {namespaces} namespaces</source>
+        <translation>{count} Horizontal Pod Autoscalers dans {namespaces} namespaces</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="2410"/>
+        <source>{count} Pod Disruption Budgets in {namespaces} namespaces</source>
+        <translation>{count} Pod Disruption Budgets dans {namespaces} namespaces</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="2412"/>
+        <source>{count} Leases in {namespaces} namespaces</source>
+        <translation>{count} Leases dans {namespaces} namespaces</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="2414"/>
+        <source>{count} Priority Classes in the cluster</source>
+        <translation>{count} Priority Classes dans le cluster</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="2416"/>
+        <source>{count} Runtime Classes in the cluster</source>
+        <translation>{count} Runtime Classes dans le cluster</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="2418"/>
+        <source>{count} Mutating Webhook Configurations in the cluster</source>
+        <translation>{count} Mutating Webhook Configurations dans le cluster</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="2421"/>
+        <source>{count} Validating Webhook Configurations in the cluster</source>
+        <translation>{count} Validating Webhook Configurations dans le cluster</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="2423"/>
+        <source>{count} Node Groups in the cluster</source>
+        <translation>{count} Node Groups dans le cluster</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="2424"/>
+        <source>{count} Add-ons in the cluster</source>
+        <translation>{count} Add-ons dans le cluster</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="2435"/>
+        <location filename="../window.py" line="2501"/>
         <source>Running</source>
         <translation>En cours d&apos;exécution</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1951"/>
-        <location filename="../window.py" line="2012"/>
+        <location filename="../window.py" line="1074"/>
+        <location filename="../window.py" line="2436"/>
+        <location filename="../window.py" line="2497"/>
         <source>Pending</source>
         <translation>En attente</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1952"/>
+        <location filename="../window.py" line="2437"/>
         <source>Succeeded</source>
         <translation>Réussi</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1953"/>
-        <location filename="../window.py" line="2011"/>
+        <location filename="../window.py" line="1070"/>
+        <location filename="../window.py" line="2438"/>
+        <location filename="../window.py" line="2496"/>
         <source>Failed</source>
         <translation>Échoué</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1954"/>
+        <location filename="../window.py" line="2439"/>
         <source>Unknown</source>
         <translation>Inconnu</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1998"/>
+        <location filename="../window.py" line="2483"/>
         <source>{count} Pods in {namespaces} namespaces</source>
         <translation>{count} Pods dans {namespaces} namespaces</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2006"/>
+        <location filename="../window.py" line="2491"/>
         <source>Healthy</source>
         <translation>Sain</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2007"/>
+        <location filename="../window.py" line="1069"/>
+        <location filename="../window.py" line="2492"/>
         <source>Degraded</source>
         <translation>Dégradé</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2008"/>
+        <location filename="../window.py" line="2493"/>
         <source>Unavailable</source>
         <translation>Indisponible</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2009"/>
+        <location filename="../window.py" line="2494"/>
         <source>Scaled to zero</source>
         <translation>Réduit à zéro</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2010"/>
+        <location filename="../window.py" line="2495"/>
         <source>Complete</source>
         <translation>Terminé</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2013"/>
+        <location filename="../window.py" line="2498"/>
         <source>Suspended</source>
         <translation>Suspendu</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2014"/>
+        <location filename="../window.py" line="1065"/>
+        <location filename="../window.py" line="2499"/>
         <source>Active</source>
         <translation>Actif</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2015"/>
+        <location filename="../window.py" line="2500"/>
         <source>Scheduled</source>
         <translation>Planifié</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2060"/>
+        <location filename="../window.py" line="2545"/>
         <source>{count} Deployments in {namespaces} namespaces</source>
         <translation>{count} Deployments dans {namespaces} namespaces</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2063"/>
+        <location filename="../window.py" line="2548"/>
         <source>{count} StatefulSets in {namespaces} namespaces</source>
         <translation>{count} StatefulSets dans {namespaces} namespaces</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2066"/>
+        <location filename="../window.py" line="2551"/>
         <source>{count} DaemonSets in {namespaces} namespaces</source>
         <translation>{count} DaemonSets dans {namespaces} namespaces</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2069"/>
+        <location filename="../window.py" line="2554"/>
         <source>{count} ReplicaSets in {namespaces} namespaces</source>
         <translation>{count} ReplicaSets dans {namespaces} namespaces</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2072"/>
+        <location filename="../window.py" line="2557"/>
         <source>{count} ReplicationControllers in {namespaces} namespaces</source>
         <translation>{count} ReplicationControllers dans {namespaces} namespaces</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2074"/>
+        <location filename="../window.py" line="2559"/>
         <source>{count} Jobs in {namespaces} namespaces</source>
         <translation>{count} Jobs dans {namespaces} namespaces</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2075"/>
+        <location filename="../window.py" line="2560"/>
         <source>{count} CronJobs in {namespaces} namespaces</source>
         <translation>{count} CronJobs dans {namespaces} namespaces</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2095"/>
+        <location filename="../window.py" line="2584"/>
         <source>{visible} of {total} Pods</source>
         <translation>{visible} sur {total} Pods</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2096"/>
+        <location filename="../window.py" line="2585"/>
         <source>{visible} of {total} Deployments</source>
         <translation>{visible} sur {total} Deployments</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2097"/>
+        <location filename="../window.py" line="2586"/>
         <source>{visible} of {total} StatefulSets</source>
         <translation>{visible} sur {total} StatefulSets</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2098"/>
+        <location filename="../window.py" line="2587"/>
         <source>{visible} of {total} DaemonSets</source>
         <translation>{visible} sur {total} DaemonSets</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2099"/>
+        <location filename="../window.py" line="2588"/>
         <source>{visible} of {total} ReplicaSets</source>
         <translation>{visible} sur {total} ReplicaSets</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2101"/>
+        <location filename="../window.py" line="2590"/>
         <source>{visible} of {total} ReplicationControllers</source>
         <translation>{visible} sur {total} ReplicationControllers</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2103"/>
+        <location filename="../window.py" line="2592"/>
         <source>{visible} of {total} Jobs</source>
         <translation>{visible} sur {total} Jobs</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2104"/>
+        <location filename="../window.py" line="2593"/>
         <source>{visible} of {total} CronJobs</source>
         <translation>{visible} sur {total} CronJobs</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2105"/>
+        <location filename="../window.py" line="2594"/>
         <source>{visible} of {total} Services</source>
         <translation>{visible} sur {total} Services</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2106"/>
+        <location filename="../window.py" line="2595"/>
         <source>{visible} of {total} Endpoint Slices</source>
         <translation>{visible} sur {total} Endpoint Slices</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2107"/>
+        <location filename="../window.py" line="2596"/>
         <source>{visible} of {total} Endpoints</source>
         <translation>{visible} sur {total} Endpoints</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2108"/>
+        <location filename="../window.py" line="2597"/>
         <source>{visible} of {total} Ingresses</source>
         <translation>{visible} sur {total} Ingresses</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2109"/>
+        <location filename="../window.py" line="2598"/>
         <source>{visible} of {total} Ingress Classes</source>
         <translation>{visible} sur {total} Ingress Classes</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2110"/>
+        <location filename="../window.py" line="2599"/>
         <source>{visible} of {total} Network Policies</source>
         <translation>{visible} sur {total} Network Policies</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2156"/>
+        <location filename="../window.py" line="2600"/>
+        <source>{visible} of {total} Config Maps</source>
+        <translation>{visible} sur {total} Config Maps</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="2601"/>
+        <source>{visible} of {total} Secrets</source>
+        <translation>{visible} sur {total} Secrets</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="2602"/>
+        <source>{visible} of {total} Resource Quotas</source>
+        <translation>{visible} sur {total} Resource Quotas</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="2603"/>
+        <source>{visible} of {total} Limit Ranges</source>
+        <translation>{visible} sur {total} Limit Ranges</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="2605"/>
+        <source>{visible} of {total} Horizontal Pod Autoscalers</source>
+        <translation>{visible} sur {total} Horizontal Pod Autoscalers</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="2608"/>
+        <source>{visible} of {total} Pod Disruption Budgets</source>
+        <translation>{visible} sur {total} Pod Disruption Budgets</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="2610"/>
+        <source>{visible} of {total} Priority Classes</source>
+        <translation>{visible} sur {total} Priority Classes</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="2611"/>
+        <source>{visible} of {total} Runtime Classes</source>
+        <translation>{visible} sur {total} Runtime Classes</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="2612"/>
+        <source>{visible} of {total} Leases</source>
+        <translation>{visible} sur {total} Leases</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="2614"/>
+        <source>{visible} of {total} Mutating Webhook Configurations</source>
+        <translation>{visible} sur {total} Mutating Webhook Configurations</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="2617"/>
+        <source>{visible} of {total} Validating Webhook Configurations</source>
+        <translation>{visible} sur {total} Validating Webhook Configurations</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="2619"/>
+        <source>{visible} of {total} Node Groups</source>
+        <translation>{visible} sur {total} Node Groups</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="2620"/>
+        <source>{visible} of {total} Add-ons</source>
+        <translation>{visible} sur {total} Add-ons</translation>
+    </message>
+    <message>
+        <location filename="../window.py" line="2666"/>
         <source>Loading...</source>
         <translation>Chargement...</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2202"/>
-        <location filename="../window.py" line="2294"/>
+        <location filename="../window.py" line="2712"/>
+        <location filename="../window.py" line="2804"/>
         <source>Pod: {name}</source>
         <translation>Pod : {name}</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2248"/>
+        <location filename="../window.py" line="2758"/>
         <source>Pods of {name}</source>
         <translation>Pods de {name}</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2250"/>
+        <location filename="../window.py" line="2760"/>
         <source>{count} Pods in {namespace} / {name}</source>
         <translation>{count} Pods dans {namespace} / {name}</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2315"/>
+        <location filename="../window.py" line="2825"/>
         <source>No Pods are associated with this workload</source>
         <translation>Aucun Pod n&apos;est associé à ce workload</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2322"/>
-        <location filename="../window.py" line="2345"/>
+        <location filename="../window.py" line="2832"/>
+        <location filename="../window.py" line="2855"/>
         <source>Logs</source>
         <translation>Journaux</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2322"/>
+        <location filename="../window.py" line="2832"/>
         <source>This workload has no Pods.</source>
         <translation>Ce workload n&apos;a aucun Pod.</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2331"/>
-        <location filename="../window.py" line="2354"/>
+        <location filename="../window.py" line="2841"/>
+        <location filename="../window.py" line="2864"/>
         <source>View logs</source>
         <translation>Afficher les journaux</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2332"/>
+        <location filename="../window.py" line="2842"/>
         <source>Select the Pod:</source>
         <translation>Sélectionnez le Pod :</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2346"/>
+        <location filename="../window.py" line="2856"/>
         <source>Pod {name} has no containers.</source>
         <translation>Le Pod {name} n&apos;a aucun conteneur.</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2355"/>
+        <location filename="../window.py" line="2865"/>
         <source>Select the container of {name}:</source>
         <translation>Sélectionnez le conteneur de {name} :</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2381"/>
+        <location filename="../window.py" line="2891"/>
         <source>Save to a file</source>
         <translation>Enregistrer dans un fichier</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2392"/>
+        <location filename="../window.py" line="2902"/>
         <source>Could not save</source>
         <translation>Enregistrement impossible</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2393"/>
+        <location filename="../window.py" line="2903"/>
         <source>The file could not be written: {reason}</source>
         <translation>Le fichier n&apos;a pas pu être écrit : {reason}</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2441"/>
+        <location filename="../window.py" line="2951"/>
         <source>Logs: {pod} / {container}</source>
         <translation>Journaux : {pod} / {container}</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2491"/>
+        <location filename="../window.py" line="3001"/>
         <source>Automatic</source>
         <translation>Automatique</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2504"/>
+        <location filename="../window.py" line="3014"/>
         <source>Off by default. When on, KubeScope writes what it does, never Pod logs or resource contents, to {path}. Read it before sharing: it includes context names.</source>
         <translation>Désactivé par défaut. Lorsqu&apos;il est activé, KubeScope écrit ce qu&apos;il fait, jamais les journaux des Pods ni le contenu des ressources, dans {path}. Relisez-le avant de le partager : il contient les noms des contextes.</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2535"/>
+        <location filename="../window.py" line="3045"/>
         <source>No contexts were found in kubeconfig.</source>
         <translation>Aucun contexte trouvé dans le kubeconfig.</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2564"/>
+        <location filename="../window.py" line="3074"/>
         <source>Choose a kubeconfig file</source>
         <translation>Choisissez un fichier kubeconfig</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2610"/>
+        <location filename="../window.py" line="3120"/>
         <source>The sign-in command in row {row} is not valid.</source>
         <translation>La commande de connexion de la ligne {row} n&apos;est pas valide.</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2623"/>
+        <location filename="../window.py" line="3133"/>
         <source>Light</source>
         <translation>Clair</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2623"/>
+        <location filename="../window.py" line="3133"/>
         <source>Dark</source>
         <translation>Sombre</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2642"/>
+        <location filename="../window.py" line="3152"/>
         <source>My theme</source>
         <translation>Mon thème</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2686"/>
+        <location filename="../window.py" line="3196"/>
         <source>Cache cleared. Everything loads again the next time it is needed.</source>
         <translation>Cache vidé. Tout est rechargé la prochaine fois que c&apos;est nécessaire.</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2741"/>
+        <location filename="../window.py" line="3251"/>
         <source>Settings saved.</source>
         <translation>Paramètres enregistrés.</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2778"/>
+        <location filename="../window.py" line="3290"/>
         <source>Your user is not allowed to {action}. Ask your cluster admin for access.</source>
         <translation>Votre utilisateur n&apos;est pas autorisé à effectuer cette action ({action}). Demandez l&apos;accès à l&apos;administrateur de votre cluster.</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2783"/>
+        <location filename="../window.py" line="3295"/>
         <source>Your user is not allowed to do this. Ask your cluster admin for access.</source>
         <translation>Votre utilisateur n&apos;est pas autorisé à faire cela. Demandez l&apos;accès à l&apos;administrateur de votre cluster.</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2802"/>
+        <location filename="../window.py" line="3314"/>
         <source>Query failed</source>
         <translation>Échec de la requête</translation>
     </message>
@@ -1760,87 +2410,82 @@ Ressources en mode lecture seule</translation>
         <translation>Workloads</translation>
     </message>
     <message>
-        <location filename="../ui/workloads_overview_page.ui" line="52"/>
-        <source>Refresh</source>
-        <translation>Actualiser</translation>
-    </message>
-    <message>
-        <location filename="../ui/workloads_overview_page.ui" line="91"/>
+        <location filename="../ui/workloads_overview_page.ui" line="78"/>
         <source>Pods</source>
         <translation>Pods</translation>
     </message>
     <message>
-        <location filename="../ui/workloads_overview_page.ui" line="113"/>
+        <location filename="../ui/workloads_overview_page.ui" line="100"/>
         <source>Deployments</source>
         <translation>Deployments</translation>
     </message>
     <message>
-        <location filename="../ui/workloads_overview_page.ui" line="135"/>
+        <location filename="../ui/workloads_overview_page.ui" line="122"/>
         <source>DaemonSets</source>
         <translation>DaemonSets</translation>
     </message>
     <message>
-        <location filename="../ui/workloads_overview_page.ui" line="157"/>
+        <location filename="../ui/workloads_overview_page.ui" line="144"/>
         <source>StatefulSets</source>
         <translation>StatefulSets</translation>
     </message>
     <message>
-        <location filename="../ui/workloads_overview_page.ui" line="179"/>
+        <location filename="../ui/workloads_overview_page.ui" line="166"/>
         <source>ReplicaSets</source>
         <translation>ReplicaSets</translation>
     </message>
     <message>
-        <location filename="../ui/workloads_overview_page.ui" line="201"/>
+        <location filename="../ui/workloads_overview_page.ui" line="188"/>
         <source>Jobs</source>
         <translation>Jobs</translation>
     </message>
     <message>
-        <location filename="../ui/workloads_overview_page.ui" line="223"/>
+        <location filename="../ui/workloads_overview_page.ui" line="210"/>
         <source>CronJobs</source>
         <translation>CronJobs</translation>
     </message>
     <message>
-        <location filename="../ui/workloads_overview_page.ui" line="271"/>
+        <location filename="../ui/workloads_overview_page.ui" line="258"/>
         <source>Events</source>
         <translation>Événements</translation>
     </message>
     <message>
-        <location filename="../ui/workloads_overview_page.ui" line="306"/>
+        <location filename="../ui/workloads_overview_page.ui" line="293"/>
         <source>TYPE</source>
         <translation>TYPE</translation>
     </message>
     <message>
-        <location filename="../ui/workloads_overview_page.ui" line="311"/>
+        <location filename="../ui/workloads_overview_page.ui" line="298"/>
         <source>SOURCE</source>
         <translation>SOURCE</translation>
     </message>
     <message>
-        <location filename="../ui/workloads_overview_page.ui" line="316"/>
+        <location filename="../ui/workloads_overview_page.ui" line="303"/>
         <source>NAMESPACE</source>
         <translation>NAMESPACE</translation>
     </message>
     <message>
-        <location filename="../ui/workloads_overview_page.ui" line="321"/>
+        <location filename="../ui/workloads_overview_page.ui" line="308"/>
         <source>INVOLVED OBJECT</source>
         <translation>OBJET CONCERNÉ</translation>
     </message>
     <message>
-        <location filename="../ui/workloads_overview_page.ui" line="326"/>
+        <location filename="../ui/workloads_overview_page.ui" line="313"/>
         <source>MESSAGE</source>
         <translation>MESSAGE</translation>
     </message>
     <message>
-        <location filename="../ui/workloads_overview_page.ui" line="331"/>
+        <location filename="../ui/workloads_overview_page.ui" line="318"/>
         <source>COUNT</source>
         <translation>NOMBRE</translation>
     </message>
     <message>
-        <location filename="../ui/workloads_overview_page.ui" line="336"/>
+        <location filename="../ui/workloads_overview_page.ui" line="323"/>
         <source>AGE</source>
         <translation>ÂGE</translation>
     </message>
     <message>
-        <location filename="../ui/workloads_overview_page.ui" line="341"/>
+        <location filename="../ui/workloads_overview_page.ui" line="328"/>
         <source>LAST SEEN</source>
         <translation>DERNIÈRE FOIS</translation>
     </message>
