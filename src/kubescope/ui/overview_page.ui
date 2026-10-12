@@ -2,7 +2,7 @@
 <ui version="4.0">
  <class>OverviewPage</class>
  <widget class="QWidget" name="OverviewPage">
-  <layout class="QVBoxLayout" name="overviewLayout" stretch="0,0,0,0,1,0">
+  <layout class="QVBoxLayout" name="overviewLayout" stretch="0,0,0,0,0,1,0">
    <property name="spacing">
     <number>14</number>
    </property>
@@ -46,20 +46,101 @@
        </property>
       </spacer>
      </item>
-     <item>
-      <widget class="QPushButton" name="overviewRefreshButton">
-       <property name="toolTip">
-        <string>Refresh</string>
-       </property>
-       <property name="iconOnly" stdset="0">
-        <string notr="true">true</string>
-       </property>
-       <property name="variant" stdset="0">
-        <string notr="true">primary</string>
-       </property>
-      </widget>
-     </item>
     </layout>
+   </item>
+   <item>
+    <widget class="QFrame" name="clusterInfoCard">
+     <property name="visible">
+      <bool>false</bool>
+     </property>
+     <property name="card" stdset="0">
+      <string notr="true">true</string>
+     </property>
+     <layout class="QVBoxLayout" name="clusterInfoLayout">
+      <property name="spacing">
+       <number>10</number>
+      </property>
+      <property name="leftMargin">
+       <number>16</number>
+      </property>
+      <property name="topMargin">
+       <number>14</number>
+      </property>
+      <property name="rightMargin">
+       <number>16</number>
+      </property>
+      <property name="bottomMargin">
+       <number>14</number>
+      </property>
+      <item>
+       <widget class="QLabel" name="clusterInfoTitle">
+        <property name="text">
+         <string>CLUSTER INFO</string>
+        </property>
+        <property name="variant" stdset="0">
+         <string notr="true">cardTitle</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <layout class="QGridLayout" name="clusterInfoGrid">
+        <property name="horizontalSpacing">
+         <number>24</number>
+        </property>
+        <property name="verticalSpacing">
+         <number>10</number>
+        </property>
+       </layout>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QFrame" name="networkingCard">
+     <property name="visible">
+      <bool>false</bool>
+     </property>
+     <property name="card" stdset="0">
+      <string notr="true">true</string>
+     </property>
+     <layout class="QVBoxLayout" name="networkingLayout">
+      <property name="spacing">
+       <number>10</number>
+      </property>
+      <property name="leftMargin">
+       <number>16</number>
+      </property>
+      <property name="topMargin">
+       <number>14</number>
+      </property>
+      <property name="rightMargin">
+       <number>16</number>
+      </property>
+      <property name="bottomMargin">
+       <number>14</number>
+      </property>
+      <item>
+       <widget class="QLabel" name="networkingTitle">
+        <property name="text">
+         <string>NETWORKING</string>
+        </property>
+        <property name="variant" stdset="0">
+         <string notr="true">cardTitle</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <layout class="QGridLayout" name="networkingGrid">
+        <property name="horizontalSpacing">
+         <number>24</number>
+        </property>
+        <property name="verticalSpacing">
+         <number>10</number>
+        </property>
+       </layout>
+      </item>
+     </layout>
+    </widget>
    </item>
    <item>
     <layout class="QHBoxLayout" name="mainCards">
@@ -547,82 +628,17 @@
     </layout>
    </item>
    <item>
-    <widget class="QLabel" name="nodesHeading">
-     <property name="text">
-      <string>Nodes</string>
+    <spacer name="overviewSpacer">
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
      </property>
-     <property name="variant" stdset="0">
-      <string notr="true">cardTitle</string>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>0</width>
+       <height>0</height>
+      </size>
      </property>
-    </widget>
-   </item>
-   <item>
-    <widget class="QTableWidget" name="nodesTable">
-     <property name="editTriggers">
-      <set>QAbstractItemView::NoEditTriggers</set>
-     </property>
-     <property name="selectionMode">
-      <enum>QAbstractItemView::SingleSelection</enum>
-     </property>
-     <property name="selectionBehavior">
-      <enum>QAbstractItemView::SelectRows</enum>
-     </property>
-     <property name="alternatingRowColors">
-      <bool>false</bool>
-     </property>
-     <attribute name="verticalHeaderVisible">
-      <bool>false</bool>
-     </attribute>
-     <attribute name="verticalHeaderDefaultSectionSize">
-      <number>44</number>
-     </attribute>
-     <attribute name="horizontalHeaderStretchLastSection">
-      <bool>false</bool>
-     </attribute>
-     <column>
-      <property name="text">
-       <string>NODE</string>
-      </property>
-     </column>
-     <column>
-      <property name="text">
-       <string>STATUS</string>
-      </property>
-     </column>
-     <column>
-      <property name="text">
-       <string>ROLE</string>
-      </property>
-     </column>
-     <column>
-      <property name="text">
-       <string>VERSION</string>
-      </property>
-     </column>
-     <column>
-      <property name="text">
-       <string>CPU</string>
-      </property>
-     </column>
-     <column>
-      <property name="text">
-       <string>MEMORY</string>
-      </property>
-     </column>
-     <column>
-      <property name="text">
-       <string>PODS</string>
-      </property>
-     </column>
-     <column>
-      <property name="text">
-       <string>AGE</string>
-      </property>
-     </column>
-     <property name="variant" stdset="0">
-      <string notr="true">data</string>
-     </property>
-    </widget>
+    </spacer>
    </item>
    <item>
     <widget class="QLabel" name="noticeLabel">

@@ -33,9 +33,18 @@ class Ui_MainWindow(object):
 "    color: #ffffff; font-size: 13px; font-weight: 700;\n"
 "    padding: 0 12px; background: #123764; min-height: 46px;\n"
 "}\n"
+"QFrame[pinTab=\"true\"] { background: transparent; border: 0; border-top: 2px solid transparent; }\n"
+"QFrame[pinTab=\"true\"][active=\"true\"] { background: #123764; border-top: 2px solid #6252b5; }\n"
+"QFrame[pinTab=\"true\"] QPushButton {\n"
+"    color: #b8c7dc; background: transparent; border: 0; padding: 6px 4px;\n"
+"    font-size: 12px; font-weight: 600;\n"
+"}\n"
+"QFrame[pinTab=\"true\"] QPushButton:hover, QFrame[pinTab=\"true\"][active=\"true\"] QPushButton { color: #ffffff; }\n"
+"QFrame[pinTab=\"true\"] QPushButton[closeTab=\"true\"] { font-size: 16px; padding: 2px 6px; }\n"
 "QLabel#topTitle { color: #ffffff; font-size: 14px; font-weight: 700; }\n"
 "QLabel#topSubtitle { color: #b8c7dc; font-size: 9px; }\n"
-"QLabel#topCaption { color: #b8c7dc; font-size: 9px; font-weight: 700; }\n"
+"QLabel#topCaption { color: #b8c7dc"
+                        "; font-size: 9px; font-weight: 700; }\n"
 "QPushButton#settingsButton {\n"
 "    background: transparent; border: 1px solid transparent; border-radius: 4px;\n"
 "    padding: 0;\n"
@@ -47,15 +56,15 @@ class Ui_MainWindow(object):
 "    border-radius: 4px; min-height: 30px; padding: 0 9px; font-size: 11px;\n"
 "}\n"
 "QWidget#sidebar { background: #ffffff; border-right: 1px solid #e1e3e9; }\n"
-"QScrollArea#side"
-                        "barScroll, QWidget#sidebarNav { background: transparent; border: 0; }\n"
+"QScrollArea#sidebarScroll, QWidget#sidebarNav { background: transparent; border: 0; }\n"
 "QLabel#navSection, QLabel#filterLabel {\n"
 "    color: #535d69; font-size: 9px; font-weight: 700;\n"
 "}\n"
 "QFrame#sidebarRule { color: #e6e7ed; }\n"
 "QLabel#sidebarNote { color: #4d5866; font-size: 10px; line-height: 1.4; }\n"
 "QWidget#pageHeader { background: #ffffff; border-bottom: 1px solid #e4e5eb; }\n"
-"QLabel#pageTitle { color: #17191e; font-size: 16px; font-weight: 700; }\n"
+"QLabel#pageTitle { color: #17191e; font-size: 16p"
+                        "x; font-weight: 700; }\n"
 "QLabel[variant=\"muted\"] { color: #4f5966; font-size: 11px; }\n"
 "QComboBox[variant=\"filter\"], QLineEdit#searchInput, QPushButton[variant=\"primary\"] {\n"
 "    background: #ffffff; border: 1px solid #d9dce4; border-radius: 5px;\n"
@@ -66,8 +75,7 @@ class Ui_MainWindow(object):
 "    selection-color: #20232a;\n"
 "}\n"
 "QComboBox[variant=\"filter\"] { padding-right: 28px; }\n"
-"QComboBox[variant=\"filter\"]:hover { borde"
-                        "r-color: #b9b3dc; }\n"
+"QComboBox[variant=\"filter\"]:hover { border-color: #b9b3dc; }\n"
 "QComboBox[variant=\"filter\"]:focus, QComboBox[variant=\"filter\"]:on,\n"
 "QLineEdit#searchInput:focus { border: 1px solid #6252b5; }\n"
 "QComboBox[variant=\"filter\"]::drop-down {\n"
@@ -75,7 +83,8 @@ class Ui_MainWindow(object):
 "    width: 26px; border: 0; background: transparent;\n"
 "}\n"
 "QComboBox[variant=\"filter\"]::down-arrow {\n"
-"    image: url(CHEVRON); width: 10px; height: 6px; margin-right: 8px;\n"
+"    image: url(CHEVRON); width: 10px; heigh"
+                        "t: 6px; margin-right: 8px;\n"
 "}\n"
 "QComboBox[variant=\"filter\"] QAbstractItemView {\n"
 "    background: #ffffff; color: #20232a; border: 1px solid #d9dce4;\n"
@@ -88,8 +97,7 @@ class Ui_MainWindow(object):
 "QComboBox#contextCombo:disabled { color: #ffffff; }\n"
 "QComboBox#contextCombo { padding-right: 28px; }\n"
 "QComboBox#contextCombo::drop-down {\n"
-"    subcontrol-origin: padding; subcontrol-positio"
-                        "n: center right;\n"
+"    subcontrol-origin: padding; subcontrol-position: center right;\n"
 "    width: 26px; border: 0; background: transparent;\n"
 "}\n"
 "QComboBox#contextCombo::down-arrow {\n"
@@ -99,7 +107,8 @@ class Ui_MainWindow(object):
 "    background: #0d315d; color: #ffffff; border: 1px solid #2d5077;\n"
 "    selection-background-color: #1f4f87; selection-color: #ffffff;\n"
 "    outline: 0; padding: 2px;\n"
-"}\n"
+""
+                        "}\n"
 "QPushButton[variant=\"primary\"] {\n"
 "    background: #3020a5; color: #ffffff; border: 0;\n"
 "    font-weight: 700; padding: 0 16px;\n"
@@ -111,16 +120,16 @@ class Ui_MainWindow(object):
 "  color: #3220a0; font-weight: 600; text-decoration: underline;\n"
 "}\n"
 "QPushButton[variant=\"link\"]:hover { color: #4030b8; }\n"
-"QPushButton[variant=\"link\"]:disabl"
-                        "ed { color: #4f5966; text-decoration: none; }\n"
+"QPushButton[variant=\"link\"]:disabled { color: #4f5966; text-decoration: none; }\n"
 "QScrollArea { background: transparent; border: 0; }\n"
-"QWidget#settingsContent { background: transparent; }\n"
+"QWidget#settingsContent, QWidget#overviewContent { background: transparent; }\n"
 "QPushButton[variant=\"secondary\"] {\n"
 "    background: #ffffff; color: #3220a0; border: 1px solid #d9dce4;\n"
 "    border-radius: 5px; min-height: 32px; padding: 0 10px;\n"
 "    font-size: 11px; font-weight: 600;\n"
 "}\n"
-"QPushButton[variant=\"secondary\"]:hover:enabled {\n"
+"QPushButton[variant=\""
+                        "secondary\"]:hover:enabled {\n"
 "    background: #f3f1f9; border-color: #a9a0d6;\n"
 "}\n"
 "QPushButton[variant=\"secondary\"]:disabled { color: #7b8089; }\n"
@@ -134,8 +143,7 @@ class Ui_MainWindow(object):
 "    gridline-color: #e8e9ee; selection-background-color: #f0edfa;\n"
 "    selection-color: #28213f;\n"
 "}\n"
-"QHeaderView { background: #fbfbfc"
-                        "; }\n"
+"QHeaderView { background: #fbfbfc; }\n"
 "QHeaderView::up-arrow { image: url(SORT_UP); width: 9px; height: 6px; }\n"
 "QHeaderView::down-arrow { image: url(SORT_DOWN); width: 9px; height: 6px; }\n"
 "QHeaderView::section {\n"
@@ -144,7 +152,8 @@ class Ui_MainWindow(object):
 "    font-size: 9px; font-weight: 700;\n"
 "}\n"
 "QTableWidget[variant=\"data\"]::item {\n"
-"    padding: 6px 8px; border-bottom: 1px solid #e8e9ee;\n"
+"    padding"
+                        ": 6px 8px; border-bottom: 1px solid #e8e9ee;\n"
 "}\n"
 "QPushButton[nav=\"true\"] {\n"
 "    text-align: left; color: #4f5966; background: transparent;\n"
@@ -159,14 +168,14 @@ class Ui_MainWindow(object):
 "QFrame[card=\"true\"] {\n"
 "    background: #ffffff; border: 1px solid #dfe2e9; border-radius: 8px;\n"
 "}\n"
-""
-                        "QFrame[card=\"true\"] QLabel { background: transparent; border: 0; }\n"
+"QFrame[card=\"true\"] QLabel { background: transparent; border: 0; }\n"
 "QLabel[variant=\"cardTitle\"] { color: #535d69; font-size: 9px; font-weight: 700; }\n"
 "QLabel[variant=\"cardValue\"] { color: #17191e; font-size: 20px; font-weight: 700; }\n"
 "QLabel[variant=\"cardCaption\"] { color: #4f5966; font-size: 10px; }\n"
 "QProgressBar {\n"
 "    background: #eceef3; border: 0; border-radius: 3px;\n"
-"    min-height: 6px; max-height: 6px;\n"
+"    min-"
+                        "height: 6px; max-height: 6px;\n"
 "}\n"
 "QProgressBar::chunk { background: #6252b5; border-radius: 3px; }\n"
 "QProgressBar[level=\"warn\"]::chunk { background: #d58a2b; }\n"
@@ -178,8 +187,7 @@ class Ui_MainWindow(object):
 "QTabBar::tab {\n"
 "    background: transparent; color: #4f5966; padding: 9px 14px;\n"
 "    border: 0; border-bottom: 2px solid transparent; font-size: 11px;\n"
-"  "
-                        "  font-weight: 600; max-width: 260px;\n"
+"    font-weight: 600; max-width: 260px;\n"
 "}\n"
 "QTabBar::tab:hover { color: #3220a0; }\n"
 "QTabBar::tab:selected { color: #3220a0; border-bottom: 2px solid #3220a0; }\n"
@@ -187,7 +195,8 @@ class Ui_MainWindow(object):
 "    image: url(CLOSE_ICON); subcontrol-position: right; margin-left: 6px;\n"
 "    width: 10px; height: 10px; padding: 3px; border-radius: 4px;\n"
 "}\n"
-"QTabBar::close-button:hover { image: url(CLOSE_ICON_HOVER); background: #eee9f7; }\n"
+"QTabBar::close-button:hover { image: url(CLOSE_ICON_HOVER)"
+                        "; background: #eee9f7; }\n"
 "QPlainTextEdit {\n"
 "    background: #ffffff; color: #242a33; border: 1px solid #dfe2e9;\n"
 "    border-radius: 5px; padding: 8px; selection-background-color: #d9d3f2;\n"
@@ -197,12 +206,12 @@ class Ui_MainWindow(object):
 "QFrame#noContextsBanner QLabel { color: #985415; font-size: 11px; background: transparent; }\n"
 "QFrame#permissionBanner { background: #fce9ea; border-bottom: 1px solid #a33d45; }\n"
 "QFrame#permissionBanner QLabel { color: #a33d45; font-size: 11px; background: transparent; }\n"
-"QFrame"
-                        "#permissionBanner QPushButton { color: #a33d45; font-size: 11px; padding: 0 0 0 12px; }\n"
+"QFrame#permissionBanner QPushButton { color: #a33d45; font-size: 11px; padding: 0 0 0 12px; }\n"
 "QFrame#appFooter { background: #ffffff; border-top: 1px solid #e4e5eb; }\n"
 "QLabel#footerLicense, QLabel#footerDot, QLabel#footerVersion, QLabel#updateNotice { color: #6b7380; font-size: 10px; }\n"
 "QFrame#appFooter QPushButton[variant=\"link\"] { font-size: 10px; padding: 0 0 0 6px; }\n"
-"QPushButton#companyLink, QPushButton#licenseLink { padding: 0; }\n"
+"QPushButton#companyLink, Q"
+                        "PushButton#licenseLink { padding: 0; }\n"
 "QPushButton#updateButton { border: none; background: transparent; padding: 0; border-radius: 4px; }\n"
 "QPushButton#updateButton:hover { background: #f6f6fa; }\n"
 "")
@@ -246,6 +255,16 @@ class Ui_MainWindow(object):
 
 
         self.topLayout.addLayout(self.topBrandLayout)
+
+        self.pinnedBar = QWidget(self.topBar)
+        self.pinnedBar.setObjectName(u"pinnedBar")
+        self.pinnedBar.setVisible(False)
+        self.pinnedLayout = QHBoxLayout(self.pinnedBar)
+        self.pinnedLayout.setSpacing(6)
+        self.pinnedLayout.setObjectName(u"pinnedLayout")
+        self.pinnedLayout.setContentsMargins(16, 0, 0, 0)
+
+        self.topLayout.addWidget(self.pinnedBar)
 
         self.topSpacer = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
 
@@ -329,8 +348,8 @@ class Ui_MainWindow(object):
         self.shell.setContentsMargins(0, 0, 0, 0)
         self.sidebar = QFrame(self.centralwidget)
         self.sidebar.setObjectName(u"sidebar")
-        self.sidebar.setMinimumSize(QSize(252, 0))
-        self.sidebar.setMaximumSize(QSize(252, 16777215))
+        self.sidebar.setMinimumSize(QSize(320, 0))
+        self.sidebar.setMaximumSize(QSize(320, 16777215))
         self.sidebarLayout = QVBoxLayout(self.sidebar)
         self.sidebarLayout.setSpacing(8)
         self.sidebarLayout.setObjectName(u"sidebarLayout")
@@ -362,6 +381,17 @@ class Ui_MainWindow(object):
 
         self.sidebarNavLayout.addWidget(self.navOverview)
 
+        self.navNodeGroups = QPushButton(self.sidebarNav)
+        self.navNodeGroups.setObjectName(u"navNodeGroups")
+        self.navNodeGroups.setMinimumSize(QSize(0, 34))
+        self.navNodeGroups.setIconSize(QSize(16, 16))
+        self.navNodeGroups.setCheckable(True)
+        self.navNodeGroups.setChecked(False)
+        self.navNodeGroups.setAutoExclusive(True)
+        self.navNodeGroups.setProperty(u"nav", u"true")
+
+        self.sidebarNavLayout.addWidget(self.navNodeGroups)
+
         self.navWorkloads = QPushButton(self.sidebarNav)
         self.navWorkloads.setObjectName(u"navWorkloads")
         self.navWorkloads.setMinimumSize(QSize(0, 34))
@@ -390,16 +420,27 @@ class Ui_MainWindow(object):
 
         self.workloadsSubmenuLayout.addWidget(self.navWorkloadsOverview)
 
-        self.navPods = QPushButton(self.workloadsSubmenu)
-        self.navPods.setObjectName(u"navPods")
-        self.navPods.setMinimumSize(QSize(0, 28))
-        self.navPods.setIconSize(QSize(16, 16))
-        self.navPods.setCheckable(True)
-        self.navPods.setChecked(False)
-        self.navPods.setAutoExclusive(True)
-        self.navPods.setProperty(u"nav", u"true")
+        self.navCronJobs = QPushButton(self.workloadsSubmenu)
+        self.navCronJobs.setObjectName(u"navCronJobs")
+        self.navCronJobs.setMinimumSize(QSize(0, 28))
+        self.navCronJobs.setIconSize(QSize(16, 16))
+        self.navCronJobs.setCheckable(True)
+        self.navCronJobs.setChecked(False)
+        self.navCronJobs.setAutoExclusive(True)
+        self.navCronJobs.setProperty(u"nav", u"true")
 
-        self.workloadsSubmenuLayout.addWidget(self.navPods)
+        self.workloadsSubmenuLayout.addWidget(self.navCronJobs)
+
+        self.navDaemonSets = QPushButton(self.workloadsSubmenu)
+        self.navDaemonSets.setObjectName(u"navDaemonSets")
+        self.navDaemonSets.setMinimumSize(QSize(0, 28))
+        self.navDaemonSets.setIconSize(QSize(16, 16))
+        self.navDaemonSets.setCheckable(True)
+        self.navDaemonSets.setChecked(False)
+        self.navDaemonSets.setAutoExclusive(True)
+        self.navDaemonSets.setProperty(u"nav", u"true")
+
+        self.workloadsSubmenuLayout.addWidget(self.navDaemonSets)
 
         self.navDeployments = QPushButton(self.workloadsSubmenu)
         self.navDeployments.setObjectName(u"navDeployments")
@@ -412,27 +453,27 @@ class Ui_MainWindow(object):
 
         self.workloadsSubmenuLayout.addWidget(self.navDeployments)
 
-        self.navStatefulSets = QPushButton(self.workloadsSubmenu)
-        self.navStatefulSets.setObjectName(u"navStatefulSets")
-        self.navStatefulSets.setMinimumSize(QSize(0, 28))
-        self.navStatefulSets.setIconSize(QSize(16, 16))
-        self.navStatefulSets.setCheckable(True)
-        self.navStatefulSets.setChecked(False)
-        self.navStatefulSets.setAutoExclusive(True)
-        self.navStatefulSets.setProperty(u"nav", u"true")
+        self.navJobs = QPushButton(self.workloadsSubmenu)
+        self.navJobs.setObjectName(u"navJobs")
+        self.navJobs.setMinimumSize(QSize(0, 28))
+        self.navJobs.setIconSize(QSize(16, 16))
+        self.navJobs.setCheckable(True)
+        self.navJobs.setChecked(False)
+        self.navJobs.setAutoExclusive(True)
+        self.navJobs.setProperty(u"nav", u"true")
 
-        self.workloadsSubmenuLayout.addWidget(self.navStatefulSets)
+        self.workloadsSubmenuLayout.addWidget(self.navJobs)
 
-        self.navDaemonSets = QPushButton(self.workloadsSubmenu)
-        self.navDaemonSets.setObjectName(u"navDaemonSets")
-        self.navDaemonSets.setMinimumSize(QSize(0, 28))
-        self.navDaemonSets.setIconSize(QSize(16, 16))
-        self.navDaemonSets.setCheckable(True)
-        self.navDaemonSets.setChecked(False)
-        self.navDaemonSets.setAutoExclusive(True)
-        self.navDaemonSets.setProperty(u"nav", u"true")
+        self.navPods = QPushButton(self.workloadsSubmenu)
+        self.navPods.setObjectName(u"navPods")
+        self.navPods.setMinimumSize(QSize(0, 28))
+        self.navPods.setIconSize(QSize(16, 16))
+        self.navPods.setCheckable(True)
+        self.navPods.setChecked(False)
+        self.navPods.setAutoExclusive(True)
+        self.navPods.setProperty(u"nav", u"true")
 
-        self.workloadsSubmenuLayout.addWidget(self.navDaemonSets)
+        self.workloadsSubmenuLayout.addWidget(self.navPods)
 
         self.navReplicaSets = QPushButton(self.workloadsSubmenu)
         self.navReplicaSets.setObjectName(u"navReplicaSets")
@@ -456,27 +497,16 @@ class Ui_MainWindow(object):
 
         self.workloadsSubmenuLayout.addWidget(self.navReplicationControllers)
 
-        self.navJobs = QPushButton(self.workloadsSubmenu)
-        self.navJobs.setObjectName(u"navJobs")
-        self.navJobs.setMinimumSize(QSize(0, 28))
-        self.navJobs.setIconSize(QSize(16, 16))
-        self.navJobs.setCheckable(True)
-        self.navJobs.setChecked(False)
-        self.navJobs.setAutoExclusive(True)
-        self.navJobs.setProperty(u"nav", u"true")
+        self.navStatefulSets = QPushButton(self.workloadsSubmenu)
+        self.navStatefulSets.setObjectName(u"navStatefulSets")
+        self.navStatefulSets.setMinimumSize(QSize(0, 28))
+        self.navStatefulSets.setIconSize(QSize(16, 16))
+        self.navStatefulSets.setCheckable(True)
+        self.navStatefulSets.setChecked(False)
+        self.navStatefulSets.setAutoExclusive(True)
+        self.navStatefulSets.setProperty(u"nav", u"true")
 
-        self.workloadsSubmenuLayout.addWidget(self.navJobs)
-
-        self.navCronJobs = QPushButton(self.workloadsSubmenu)
-        self.navCronJobs.setObjectName(u"navCronJobs")
-        self.navCronJobs.setMinimumSize(QSize(0, 28))
-        self.navCronJobs.setIconSize(QSize(16, 16))
-        self.navCronJobs.setCheckable(True)
-        self.navCronJobs.setChecked(False)
-        self.navCronJobs.setAutoExclusive(True)
-        self.navCronJobs.setProperty(u"nav", u"true")
-
-        self.workloadsSubmenuLayout.addWidget(self.navCronJobs)
+        self.workloadsSubmenuLayout.addWidget(self.navStatefulSets)
 
 
         self.sidebarNavLayout.addWidget(self.workloadsSubmenu)
@@ -498,17 +528,6 @@ class Ui_MainWindow(object):
         self.networkSubmenuLayout.setSpacing(0)
         self.networkSubmenuLayout.setObjectName(u"networkSubmenuLayout")
         self.networkSubmenuLayout.setContentsMargins(16, 0, 0, 0)
-        self.navServices = QPushButton(self.networkSubmenu)
-        self.navServices.setObjectName(u"navServices")
-        self.navServices.setMinimumSize(QSize(0, 28))
-        self.navServices.setIconSize(QSize(16, 16))
-        self.navServices.setCheckable(True)
-        self.navServices.setChecked(False)
-        self.navServices.setAutoExclusive(True)
-        self.navServices.setProperty(u"nav", u"true")
-
-        self.networkSubmenuLayout.addWidget(self.navServices)
-
         self.navEndpointSlices = QPushButton(self.networkSubmenu)
         self.navEndpointSlices.setObjectName(u"navEndpointSlices")
         self.navEndpointSlices.setMinimumSize(QSize(0, 28))
@@ -531,17 +550,6 @@ class Ui_MainWindow(object):
 
         self.networkSubmenuLayout.addWidget(self.navEndpoints)
 
-        self.navIngresses = QPushButton(self.networkSubmenu)
-        self.navIngresses.setObjectName(u"navIngresses")
-        self.navIngresses.setMinimumSize(QSize(0, 28))
-        self.navIngresses.setIconSize(QSize(16, 16))
-        self.navIngresses.setCheckable(True)
-        self.navIngresses.setChecked(False)
-        self.navIngresses.setAutoExclusive(True)
-        self.navIngresses.setProperty(u"nav", u"true")
-
-        self.networkSubmenuLayout.addWidget(self.navIngresses)
-
         self.navIngressClasses = QPushButton(self.networkSubmenu)
         self.navIngressClasses.setObjectName(u"navIngressClasses")
         self.navIngressClasses.setMinimumSize(QSize(0, 28))
@@ -552,6 +560,17 @@ class Ui_MainWindow(object):
         self.navIngressClasses.setProperty(u"nav", u"true")
 
         self.networkSubmenuLayout.addWidget(self.navIngressClasses)
+
+        self.navIngresses = QPushButton(self.networkSubmenu)
+        self.navIngresses.setObjectName(u"navIngresses")
+        self.navIngresses.setMinimumSize(QSize(0, 28))
+        self.navIngresses.setIconSize(QSize(16, 16))
+        self.navIngresses.setCheckable(True)
+        self.navIngresses.setChecked(False)
+        self.navIngresses.setAutoExclusive(True)
+        self.navIngresses.setProperty(u"nav", u"true")
+
+        self.networkSubmenuLayout.addWidget(self.navIngresses)
 
         self.navNetworkPolicies = QPushButton(self.networkSubmenu)
         self.navNetworkPolicies.setObjectName(u"navNetworkPolicies")
@@ -564,8 +583,171 @@ class Ui_MainWindow(object):
 
         self.networkSubmenuLayout.addWidget(self.navNetworkPolicies)
 
+        self.navServices = QPushButton(self.networkSubmenu)
+        self.navServices.setObjectName(u"navServices")
+        self.navServices.setMinimumSize(QSize(0, 28))
+        self.navServices.setIconSize(QSize(16, 16))
+        self.navServices.setCheckable(True)
+        self.navServices.setChecked(False)
+        self.navServices.setAutoExclusive(True)
+        self.navServices.setProperty(u"nav", u"true")
+
+        self.networkSubmenuLayout.addWidget(self.navServices)
+
 
         self.sidebarNavLayout.addWidget(self.networkSubmenu)
+
+        self.navConfig = QPushButton(self.sidebarNav)
+        self.navConfig.setObjectName(u"navConfig")
+        self.navConfig.setMinimumSize(QSize(0, 34))
+        self.navConfig.setIconSize(QSize(16, 16))
+        self.navConfig.setCheckable(True)
+        self.navConfig.setChecked(False)
+        self.navConfig.setProperty(u"nav", u"true")
+
+        self.sidebarNavLayout.addWidget(self.navConfig)
+
+        self.configSubmenu = QFrame(self.sidebarNav)
+        self.configSubmenu.setObjectName(u"configSubmenu")
+        self.configSubmenu.setMaximumSize(QSize(16777215, 0))
+        self.configSubmenuLayout = QVBoxLayout(self.configSubmenu)
+        self.configSubmenuLayout.setSpacing(0)
+        self.configSubmenuLayout.setObjectName(u"configSubmenuLayout")
+        self.configSubmenuLayout.setContentsMargins(16, 0, 0, 0)
+        self.navAddons = QPushButton(self.configSubmenu)
+        self.navAddons.setObjectName(u"navAddons")
+        self.navAddons.setMinimumSize(QSize(0, 28))
+        self.navAddons.setIconSize(QSize(16, 16))
+        self.navAddons.setCheckable(True)
+        self.navAddons.setChecked(False)
+        self.navAddons.setAutoExclusive(True)
+        self.navAddons.setProperty(u"nav", u"true")
+
+        self.configSubmenuLayout.addWidget(self.navAddons)
+
+        self.navConfigMaps = QPushButton(self.configSubmenu)
+        self.navConfigMaps.setObjectName(u"navConfigMaps")
+        self.navConfigMaps.setMinimumSize(QSize(0, 28))
+        self.navConfigMaps.setIconSize(QSize(16, 16))
+        self.navConfigMaps.setCheckable(True)
+        self.navConfigMaps.setChecked(False)
+        self.navConfigMaps.setAutoExclusive(True)
+        self.navConfigMaps.setProperty(u"nav", u"true")
+
+        self.configSubmenuLayout.addWidget(self.navConfigMaps)
+
+        self.navHorizontalPodAutoscalers = QPushButton(self.configSubmenu)
+        self.navHorizontalPodAutoscalers.setObjectName(u"navHorizontalPodAutoscalers")
+        self.navHorizontalPodAutoscalers.setMinimumSize(QSize(0, 28))
+        self.navHorizontalPodAutoscalers.setIconSize(QSize(16, 16))
+        self.navHorizontalPodAutoscalers.setCheckable(True)
+        self.navHorizontalPodAutoscalers.setChecked(False)
+        self.navHorizontalPodAutoscalers.setAutoExclusive(True)
+        self.navHorizontalPodAutoscalers.setProperty(u"nav", u"true")
+
+        self.configSubmenuLayout.addWidget(self.navHorizontalPodAutoscalers)
+
+        self.navLeases = QPushButton(self.configSubmenu)
+        self.navLeases.setObjectName(u"navLeases")
+        self.navLeases.setMinimumSize(QSize(0, 28))
+        self.navLeases.setIconSize(QSize(16, 16))
+        self.navLeases.setCheckable(True)
+        self.navLeases.setChecked(False)
+        self.navLeases.setAutoExclusive(True)
+        self.navLeases.setProperty(u"nav", u"true")
+
+        self.configSubmenuLayout.addWidget(self.navLeases)
+
+        self.navLimitRanges = QPushButton(self.configSubmenu)
+        self.navLimitRanges.setObjectName(u"navLimitRanges")
+        self.navLimitRanges.setMinimumSize(QSize(0, 28))
+        self.navLimitRanges.setIconSize(QSize(16, 16))
+        self.navLimitRanges.setCheckable(True)
+        self.navLimitRanges.setChecked(False)
+        self.navLimitRanges.setAutoExclusive(True)
+        self.navLimitRanges.setProperty(u"nav", u"true")
+
+        self.configSubmenuLayout.addWidget(self.navLimitRanges)
+
+        self.navMutatingWebhooks = QPushButton(self.configSubmenu)
+        self.navMutatingWebhooks.setObjectName(u"navMutatingWebhooks")
+        self.navMutatingWebhooks.setMinimumSize(QSize(0, 28))
+        self.navMutatingWebhooks.setIconSize(QSize(16, 16))
+        self.navMutatingWebhooks.setCheckable(True)
+        self.navMutatingWebhooks.setChecked(False)
+        self.navMutatingWebhooks.setAutoExclusive(True)
+        self.navMutatingWebhooks.setProperty(u"nav", u"true")
+
+        self.configSubmenuLayout.addWidget(self.navMutatingWebhooks)
+
+        self.navPodDisruptionBudgets = QPushButton(self.configSubmenu)
+        self.navPodDisruptionBudgets.setObjectName(u"navPodDisruptionBudgets")
+        self.navPodDisruptionBudgets.setMinimumSize(QSize(0, 28))
+        self.navPodDisruptionBudgets.setIconSize(QSize(16, 16))
+        self.navPodDisruptionBudgets.setCheckable(True)
+        self.navPodDisruptionBudgets.setChecked(False)
+        self.navPodDisruptionBudgets.setAutoExclusive(True)
+        self.navPodDisruptionBudgets.setProperty(u"nav", u"true")
+
+        self.configSubmenuLayout.addWidget(self.navPodDisruptionBudgets)
+
+        self.navPriorityClasses = QPushButton(self.configSubmenu)
+        self.navPriorityClasses.setObjectName(u"navPriorityClasses")
+        self.navPriorityClasses.setMinimumSize(QSize(0, 28))
+        self.navPriorityClasses.setIconSize(QSize(16, 16))
+        self.navPriorityClasses.setCheckable(True)
+        self.navPriorityClasses.setChecked(False)
+        self.navPriorityClasses.setAutoExclusive(True)
+        self.navPriorityClasses.setProperty(u"nav", u"true")
+
+        self.configSubmenuLayout.addWidget(self.navPriorityClasses)
+
+        self.navResourceQuotas = QPushButton(self.configSubmenu)
+        self.navResourceQuotas.setObjectName(u"navResourceQuotas")
+        self.navResourceQuotas.setMinimumSize(QSize(0, 28))
+        self.navResourceQuotas.setIconSize(QSize(16, 16))
+        self.navResourceQuotas.setCheckable(True)
+        self.navResourceQuotas.setChecked(False)
+        self.navResourceQuotas.setAutoExclusive(True)
+        self.navResourceQuotas.setProperty(u"nav", u"true")
+
+        self.configSubmenuLayout.addWidget(self.navResourceQuotas)
+
+        self.navRuntimeClasses = QPushButton(self.configSubmenu)
+        self.navRuntimeClasses.setObjectName(u"navRuntimeClasses")
+        self.navRuntimeClasses.setMinimumSize(QSize(0, 28))
+        self.navRuntimeClasses.setIconSize(QSize(16, 16))
+        self.navRuntimeClasses.setCheckable(True)
+        self.navRuntimeClasses.setChecked(False)
+        self.navRuntimeClasses.setAutoExclusive(True)
+        self.navRuntimeClasses.setProperty(u"nav", u"true")
+
+        self.configSubmenuLayout.addWidget(self.navRuntimeClasses)
+
+        self.navSecrets = QPushButton(self.configSubmenu)
+        self.navSecrets.setObjectName(u"navSecrets")
+        self.navSecrets.setMinimumSize(QSize(0, 28))
+        self.navSecrets.setIconSize(QSize(16, 16))
+        self.navSecrets.setCheckable(True)
+        self.navSecrets.setChecked(False)
+        self.navSecrets.setAutoExclusive(True)
+        self.navSecrets.setProperty(u"nav", u"true")
+
+        self.configSubmenuLayout.addWidget(self.navSecrets)
+
+        self.navValidatingWebhooks = QPushButton(self.configSubmenu)
+        self.navValidatingWebhooks.setObjectName(u"navValidatingWebhooks")
+        self.navValidatingWebhooks.setMinimumSize(QSize(0, 28))
+        self.navValidatingWebhooks.setIconSize(QSize(16, 16))
+        self.navValidatingWebhooks.setCheckable(True)
+        self.navValidatingWebhooks.setChecked(False)
+        self.navValidatingWebhooks.setAutoExclusive(True)
+        self.navValidatingWebhooks.setProperty(u"nav", u"true")
+
+        self.configSubmenuLayout.addWidget(self.navValidatingWebhooks)
+
+
+        self.sidebarNavLayout.addWidget(self.configSubmenu)
 
         self.navViewer = QPushButton(self.sidebarNav)
         self.navViewer.setObjectName(u"navViewer")
@@ -632,6 +814,27 @@ class Ui_MainWindow(object):
 
         self.pageHeaderLayout.addItem(self.pageHeaderSpacer)
 
+        self.overviewRefreshButton = QPushButton(self.pageHeader)
+        self.overviewRefreshButton.setObjectName(u"overviewRefreshButton")
+        self.overviewRefreshButton.setProperty(u"iconOnly", u"true")
+        self.overviewRefreshButton.setProperty(u"variant", u"primary")
+
+        self.pageHeaderLayout.addWidget(self.overviewRefreshButton)
+
+        self.workloadsRefreshButton = QPushButton(self.pageHeader)
+        self.workloadsRefreshButton.setObjectName(u"workloadsRefreshButton")
+        self.workloadsRefreshButton.setProperty(u"iconOnly", u"true")
+        self.workloadsRefreshButton.setProperty(u"variant", u"primary")
+
+        self.pageHeaderLayout.addWidget(self.workloadsRefreshButton)
+
+        self.refreshButton = QPushButton(self.pageHeader)
+        self.refreshButton.setObjectName(u"refreshButton")
+        self.refreshButton.setProperty(u"iconOnly", u"true")
+        self.refreshButton.setProperty(u"variant", u"primary")
+
+        self.pageHeaderLayout.addWidget(self.refreshButton)
+
 
         self.pageLayout.addWidget(self.pageHeader)
 
@@ -646,15 +849,18 @@ class Ui_MainWindow(object):
         self.workLayout.setSpacing(14)
         self.workLayout.setObjectName(u"workLayout")
         self.workLayout.setContentsMargins(32, 24, 32, 22)
-        self.filtersLayout = QHBoxLayout()
+        self.filtersBar = QWidget(self.workArea)
+        self.filtersBar.setObjectName(u"filtersBar")
+        self.filtersLayout = QHBoxLayout(self.filtersBar)
         self.filtersLayout.setSpacing(12)
         self.filtersLayout.setObjectName(u"filtersLayout")
-        self.filterLabel = QLabel(self.workArea)
+        self.filtersLayout.setContentsMargins(0, 0, 0, 0)
+        self.filterLabel = QLabel(self.filtersBar)
         self.filterLabel.setObjectName(u"filterLabel")
 
         self.filtersLayout.addWidget(self.filterLabel)
 
-        self.namespaceCombo = QComboBox(self.workArea)
+        self.namespaceCombo = QComboBox(self.filtersBar)
         self.namespaceCombo.addItem(u"All namespaces")
         self.namespaceCombo.addItem(u"default")
         self.namespaceCombo.addItem(u"monitoring")
@@ -665,7 +871,7 @@ class Ui_MainWindow(object):
 
         self.filtersLayout.addWidget(self.namespaceCombo)
 
-        self.searchInput = QLineEdit(self.workArea)
+        self.searchInput = QLineEdit(self.filtersBar)
         self.searchInput.setObjectName(u"searchInput")
         self.searchInput.setMinimumSize(QSize(240, 38))
         self.searchInput.setMaximumSize(QSize(300, 16777215))
@@ -677,15 +883,8 @@ class Ui_MainWindow(object):
 
         self.filtersLayout.addItem(self.filtersSpacer)
 
-        self.refreshButton = QPushButton(self.workArea)
-        self.refreshButton.setObjectName(u"refreshButton")
-        self.refreshButton.setProperty(u"iconOnly", u"true")
-        self.refreshButton.setProperty(u"variant", u"primary")
 
-        self.filtersLayout.addWidget(self.refreshButton)
-
-
-        self.workLayout.addLayout(self.filtersLayout)
+        self.workLayout.addWidget(self.filtersBar)
 
         self.summaryRow = QHBoxLayout()
         self.summaryRow.setObjectName(u"summaryRow")
@@ -895,6 +1094,45 @@ class Ui_MainWindow(object):
 
         self.workLayout.addWidget(self.workloadTable)
 
+        self.nodesHeading = QLabel(self.workArea)
+        self.nodesHeading.setObjectName(u"nodesHeading")
+        self.nodesHeading.setVisible(False)
+        self.nodesHeading.setProperty(u"variant", u"cardTitle")
+
+        self.workLayout.addWidget(self.nodesHeading)
+
+        self.nodesTable = QTableWidget(self.workArea)
+        if (self.nodesTable.columnCount() < 8):
+            self.nodesTable.setColumnCount(8)
+        __qtablewidgetitem36 = QTableWidgetItem()
+        self.nodesTable.setHorizontalHeaderItem(0, __qtablewidgetitem36)
+        __qtablewidgetitem37 = QTableWidgetItem()
+        self.nodesTable.setHorizontalHeaderItem(1, __qtablewidgetitem37)
+        __qtablewidgetitem38 = QTableWidgetItem()
+        self.nodesTable.setHorizontalHeaderItem(2, __qtablewidgetitem38)
+        __qtablewidgetitem39 = QTableWidgetItem()
+        self.nodesTable.setHorizontalHeaderItem(3, __qtablewidgetitem39)
+        __qtablewidgetitem40 = QTableWidgetItem()
+        self.nodesTable.setHorizontalHeaderItem(4, __qtablewidgetitem40)
+        __qtablewidgetitem41 = QTableWidgetItem()
+        self.nodesTable.setHorizontalHeaderItem(5, __qtablewidgetitem41)
+        __qtablewidgetitem42 = QTableWidgetItem()
+        self.nodesTable.setHorizontalHeaderItem(6, __qtablewidgetitem42)
+        __qtablewidgetitem43 = QTableWidgetItem()
+        self.nodesTable.setHorizontalHeaderItem(7, __qtablewidgetitem43)
+        self.nodesTable.setObjectName(u"nodesTable")
+        self.nodesTable.setVisible(False)
+        self.nodesTable.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        self.nodesTable.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.nodesTable.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.nodesTable.setAlternatingRowColors(False)
+        self.nodesTable.setProperty(u"variant", u"data")
+        self.nodesTable.horizontalHeader().setStretchLastSection(False)
+        self.nodesTable.verticalHeader().setVisible(False)
+        self.nodesTable.verticalHeader().setDefaultSectionSize(44)
+
+        self.workLayout.addWidget(self.nodesTable)
+
         self.footerRow = QHBoxLayout()
         self.footerRow.setObjectName(u"footerRow")
         self.statusLabel = QLabel(self.workArea)
@@ -1043,34 +1281,54 @@ class Ui_MainWindow(object):
         self.permissionDismiss.setText(QCoreApplication.translate("MainWindow", u"Dismiss", None))
         self.navSection.setText(QCoreApplication.translate("MainWindow", u"MONITORING", None))
         self.navOverview.setText(QCoreApplication.translate("MainWindow", u"Overview", None))
+        self.navNodeGroups.setText(QCoreApplication.translate("MainWindow", u"Node Groups", None))
         self.navWorkloads.setText(QCoreApplication.translate("MainWindow", u"Workloads", None))
         self.navWorkloadsOverview.setText(QCoreApplication.translate("MainWindow", u"Overview", None))
-        self.navPods.setText(QCoreApplication.translate("MainWindow", u"Pods", None))
-        self.navDeployments.setText(QCoreApplication.translate("MainWindow", u"Deployments", None))
-        self.navStatefulSets.setText(QCoreApplication.translate("MainWindow", u"StatefulSets", None))
+        self.navCronJobs.setText(QCoreApplication.translate("MainWindow", u"CronJobs", None))
         self.navDaemonSets.setText(QCoreApplication.translate("MainWindow", u"DaemonSets", None))
+        self.navDeployments.setText(QCoreApplication.translate("MainWindow", u"Deployments", None))
+        self.navJobs.setText(QCoreApplication.translate("MainWindow", u"Jobs", None))
+        self.navPods.setText(QCoreApplication.translate("MainWindow", u"Pods", None))
         self.navReplicaSets.setText(QCoreApplication.translate("MainWindow", u"ReplicaSets", None))
         self.navReplicationControllers.setText(QCoreApplication.translate("MainWindow", u"ReplicationControllers", None))
-        self.navJobs.setText(QCoreApplication.translate("MainWindow", u"Jobs", None))
-        self.navCronJobs.setText(QCoreApplication.translate("MainWindow", u"CronJobs", None))
+        self.navStatefulSets.setText(QCoreApplication.translate("MainWindow", u"StatefulSets", None))
         self.navNetwork.setText(QCoreApplication.translate("MainWindow", u"Network", None))
-        self.navServices.setText(QCoreApplication.translate("MainWindow", u"Services", None))
         self.navEndpointSlices.setText(QCoreApplication.translate("MainWindow", u"Endpoint Slices", None))
         self.navEndpoints.setText(QCoreApplication.translate("MainWindow", u"Endpoints", None))
-        self.navIngresses.setText(QCoreApplication.translate("MainWindow", u"Ingresses", None))
         self.navIngressClasses.setText(QCoreApplication.translate("MainWindow", u"Ingress Classes", None))
+        self.navIngresses.setText(QCoreApplication.translate("MainWindow", u"Ingresses", None))
         self.navNetworkPolicies.setText(QCoreApplication.translate("MainWindow", u"Network Policies", None))
+        self.navServices.setText(QCoreApplication.translate("MainWindow", u"Services", None))
+        self.navConfig.setText(QCoreApplication.translate("MainWindow", u"Config", None))
+        self.navAddons.setText(QCoreApplication.translate("MainWindow", u"Add-ons", None))
+        self.navConfigMaps.setText(QCoreApplication.translate("MainWindow", u"Config Maps", None))
+        self.navHorizontalPodAutoscalers.setText(QCoreApplication.translate("MainWindow", u"Horizontal Pod Autoscalers", None))
+        self.navLeases.setText(QCoreApplication.translate("MainWindow", u"Leases", None))
+        self.navLimitRanges.setText(QCoreApplication.translate("MainWindow", u"Limit Ranges", None))
+        self.navMutatingWebhooks.setText(QCoreApplication.translate("MainWindow", u"Mutating Webhook Configurations", None))
+        self.navPodDisruptionBudgets.setText(QCoreApplication.translate("MainWindow", u"Pod Disruption Budgets", None))
+        self.navPriorityClasses.setText(QCoreApplication.translate("MainWindow", u"Priority Classes", None))
+        self.navResourceQuotas.setText(QCoreApplication.translate("MainWindow", u"Resource Quotas", None))
+        self.navRuntimeClasses.setText(QCoreApplication.translate("MainWindow", u"Runtime Classes", None))
+        self.navSecrets.setText(QCoreApplication.translate("MainWindow", u"Secrets", None))
+        self.navValidatingWebhooks.setText(QCoreApplication.translate("MainWindow", u"Validating Webhook Configurations", None))
         self.navViewer.setText(QCoreApplication.translate("MainWindow", u"Details && Logs", None))
         self.sidebarNote.setText(QCoreApplication.translate("MainWindow", u"SECURE ACCESS\n"
 "Resources in read-only mode", None))
         self.pageTitle.setText(QCoreApplication.translate("MainWindow", u"Overview", None))
         self.pageSubtitle.setText(QCoreApplication.translate("MainWindow", u"Cluster resources and capacity", None))
-        self.filterLabel.setText(QCoreApplication.translate("MainWindow", u"NAMESPACE", None))
-
-        self.searchInput.setPlaceholderText(QCoreApplication.translate("MainWindow", u"Search by name or namespace...", None))
+#if QT_CONFIG(tooltip)
+        self.overviewRefreshButton.setToolTip(QCoreApplication.translate("MainWindow", u"Refresh", None))
+#endif // QT_CONFIG(tooltip)
+#if QT_CONFIG(tooltip)
+        self.workloadsRefreshButton.setToolTip(QCoreApplication.translate("MainWindow", u"Refresh", None))
+#endif // QT_CONFIG(tooltip)
 #if QT_CONFIG(tooltip)
         self.refreshButton.setToolTip(QCoreApplication.translate("MainWindow", u"Refresh", None))
 #endif // QT_CONFIG(tooltip)
+        self.filterLabel.setText(QCoreApplication.translate("MainWindow", u"NAMESPACE", None))
+
+        self.searchInput.setPlaceholderText(QCoreApplication.translate("MainWindow", u"Search by name or namespace...", None))
 #if QT_CONFIG(tooltip)
         self.podsButton.setToolTip(QCoreApplication.translate("MainWindow", u"View Pods of the selected workload", None))
 #endif // QT_CONFIG(tooltip)
@@ -1100,6 +1358,23 @@ class Ui_MainWindow(object):
         self.workloadTable.setSortingEnabled(False)
         self.workloadTable.setSortingEnabled(__sortingEnabled)
 
+        self.nodesHeading.setText(QCoreApplication.translate("MainWindow", u"Nodes", None))
+        ___qtablewidgetitem6 = self.nodesTable.horizontalHeaderItem(0)
+        ___qtablewidgetitem6.setText(QCoreApplication.translate("MainWindow", u"NODE", None))
+        ___qtablewidgetitem7 = self.nodesTable.horizontalHeaderItem(1)
+        ___qtablewidgetitem7.setText(QCoreApplication.translate("MainWindow", u"STATUS", None))
+        ___qtablewidgetitem8 = self.nodesTable.horizontalHeaderItem(2)
+        ___qtablewidgetitem8.setText(QCoreApplication.translate("MainWindow", u"ROLE", None))
+        ___qtablewidgetitem9 = self.nodesTable.horizontalHeaderItem(3)
+        ___qtablewidgetitem9.setText(QCoreApplication.translate("MainWindow", u"VERSION", None))
+        ___qtablewidgetitem10 = self.nodesTable.horizontalHeaderItem(4)
+        ___qtablewidgetitem10.setText(QCoreApplication.translate("MainWindow", u"CPU", None))
+        ___qtablewidgetitem11 = self.nodesTable.horizontalHeaderItem(5)
+        ___qtablewidgetitem11.setText(QCoreApplication.translate("MainWindow", u"MEMORY", None))
+        ___qtablewidgetitem12 = self.nodesTable.horizontalHeaderItem(6)
+        ___qtablewidgetitem12.setText(QCoreApplication.translate("MainWindow", u"PODS", None))
+        ___qtablewidgetitem13 = self.nodesTable.horizontalHeaderItem(7)
+        ___qtablewidgetitem13.setText(QCoreApplication.translate("MainWindow", u"AGE", None))
         self.statusLabel.setText(QCoreApplication.translate("MainWindow", u"Select a context to load workloads", None))
         self.footerNote.setText(QCoreApplication.translate("MainWindow", u"Data fetched from the cluster API", None))
 #if QT_CONFIG(tooltip)

@@ -95,6 +95,34 @@ def describe_error(message: str) -> ErrorInfo:
             ),
             details,
         )
+    if "only available for amazon eks" in lowered:
+        return ErrorInfo(
+            QCoreApplication.translate("Errors", "Not an Amazon EKS cluster"),
+            QCoreApplication.translate(
+                "Errors",
+                "Node Groups, Add-ons and the AWS cards of the Overview exist only "
+                "on Amazon EKS contexts.",
+            ),
+            details,
+        )
+    if "answered with something unexpected" in lowered:
+        return ErrorInfo(
+            QCoreApplication.translate("Errors", "Unexpected answer from AWS"),
+            QCoreApplication.translate(
+                "Errors", "Update the AWS CLI to its latest version and refresh."
+            ),
+            details,
+        )
+    if "accessdenied" in lowered or "not authorized to perform" in lowered:
+        return ErrorInfo(
+            QCoreApplication.translate("Errors", "Access denied"),
+            QCoreApplication.translate(
+                "Errors",
+                "Your AWS identity is not allowed to read this. The wiki lists the "
+                "eks: permissions KubeScope needs.",
+            ),
+            details,
+        )
     if "forbidden" in lowered:
         return ErrorInfo(
             QCoreApplication.translate("Errors", "Access denied"),

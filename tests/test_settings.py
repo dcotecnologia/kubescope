@@ -217,3 +217,19 @@ def test_kubeconfig_files_and_sign_in_commands_persist_and_are_validated(
     )
     assert Settings(path).kubeconfig_files == []
     assert Settings(path).sign_in_commands == {}
+
+
+def test_pinned_views_persist_without_duplicates_and_ignore_damaged_values(
+    tmp_path,
+) -> None:
+    path = tmp_path / "settings.json"
+    settings = Settings(path)
+    assert settings.pinned_views() == []
+    settings.set_pinned_views(["secrets", "pods", "secrets"])
+    settings.save()
+
+    assert Settings(path).pinned_views() == ["secrets", "pods"]
+    path.write_text('{"pinned_views": ["pods", 3, "", "pods", "leases"]}')
+    assert Settings(path).pinned_views() == ["pods", "leases"]
+    path.write_text('{"pinned_views": "pods"}')
+    assert Settings(path).pinned_views() == []

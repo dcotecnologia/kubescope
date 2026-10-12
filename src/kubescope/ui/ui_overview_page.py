@@ -15,9 +15,8 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QFont, QFontDatabase, QGradient, QIcon,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
-from PySide6.QtWidgets import (QAbstractItemView, QApplication, QFrame, QHBoxLayout,
-    QHeaderView, QLabel, QProgressBar, QPushButton,
-    QSizePolicy, QSpacerItem, QTableWidget, QTableWidgetItem,
+from PySide6.QtWidgets import (QApplication, QFrame, QGridLayout, QHBoxLayout,
+    QLabel, QProgressBar, QSizePolicy, QSpacerItem,
     QVBoxLayout, QWidget)
 
 class Ui_OverviewPage(object):
@@ -41,15 +40,56 @@ class Ui_OverviewPage(object):
 
         self.headerRow.addItem(self.headerSpacer)
 
-        self.overviewRefreshButton = QPushButton(OverviewPage)
-        self.overviewRefreshButton.setObjectName(u"overviewRefreshButton")
-        self.overviewRefreshButton.setProperty(u"iconOnly", u"true")
-        self.overviewRefreshButton.setProperty(u"variant", u"primary")
-
-        self.headerRow.addWidget(self.overviewRefreshButton)
-
 
         self.overviewLayout.addLayout(self.headerRow)
+
+        self.clusterInfoCard = QFrame(OverviewPage)
+        self.clusterInfoCard.setObjectName(u"clusterInfoCard")
+        self.clusterInfoCard.setVisible(False)
+        self.clusterInfoCard.setProperty(u"card", u"true")
+        self.clusterInfoLayout = QVBoxLayout(self.clusterInfoCard)
+        self.clusterInfoLayout.setSpacing(10)
+        self.clusterInfoLayout.setObjectName(u"clusterInfoLayout")
+        self.clusterInfoLayout.setContentsMargins(16, 14, 16, 14)
+        self.clusterInfoTitle = QLabel(self.clusterInfoCard)
+        self.clusterInfoTitle.setObjectName(u"clusterInfoTitle")
+        self.clusterInfoTitle.setProperty(u"variant", u"cardTitle")
+
+        self.clusterInfoLayout.addWidget(self.clusterInfoTitle)
+
+        self.clusterInfoGrid = QGridLayout()
+        self.clusterInfoGrid.setObjectName(u"clusterInfoGrid")
+        self.clusterInfoGrid.setHorizontalSpacing(24)
+        self.clusterInfoGrid.setVerticalSpacing(10)
+
+        self.clusterInfoLayout.addLayout(self.clusterInfoGrid)
+
+
+        self.overviewLayout.addWidget(self.clusterInfoCard)
+
+        self.networkingCard = QFrame(OverviewPage)
+        self.networkingCard.setObjectName(u"networkingCard")
+        self.networkingCard.setVisible(False)
+        self.networkingCard.setProperty(u"card", u"true")
+        self.networkingLayout = QVBoxLayout(self.networkingCard)
+        self.networkingLayout.setSpacing(10)
+        self.networkingLayout.setObjectName(u"networkingLayout")
+        self.networkingLayout.setContentsMargins(16, 14, 16, 14)
+        self.networkingTitle = QLabel(self.networkingCard)
+        self.networkingTitle.setObjectName(u"networkingTitle")
+        self.networkingTitle.setProperty(u"variant", u"cardTitle")
+
+        self.networkingLayout.addWidget(self.networkingTitle)
+
+        self.networkingGrid = QGridLayout()
+        self.networkingGrid.setObjectName(u"networkingGrid")
+        self.networkingGrid.setHorizontalSpacing(24)
+        self.networkingGrid.setVerticalSpacing(10)
+
+        self.networkingLayout.addLayout(self.networkingGrid)
+
+
+        self.overviewLayout.addWidget(self.networkingCard)
 
         self.mainCards = QHBoxLayout()
         self.mainCards.setSpacing(14)
@@ -319,42 +359,9 @@ class Ui_OverviewPage(object):
 
         self.overviewLayout.addLayout(self.countCards)
 
-        self.nodesHeading = QLabel(OverviewPage)
-        self.nodesHeading.setObjectName(u"nodesHeading")
-        self.nodesHeading.setProperty(u"variant", u"cardTitle")
+        self.overviewSpacer = QSpacerItem(0, 0, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
 
-        self.overviewLayout.addWidget(self.nodesHeading)
-
-        self.nodesTable = QTableWidget(OverviewPage)
-        if (self.nodesTable.columnCount() < 8):
-            self.nodesTable.setColumnCount(8)
-        __qtablewidgetitem = QTableWidgetItem()
-        self.nodesTable.setHorizontalHeaderItem(0, __qtablewidgetitem)
-        __qtablewidgetitem1 = QTableWidgetItem()
-        self.nodesTable.setHorizontalHeaderItem(1, __qtablewidgetitem1)
-        __qtablewidgetitem2 = QTableWidgetItem()
-        self.nodesTable.setHorizontalHeaderItem(2, __qtablewidgetitem2)
-        __qtablewidgetitem3 = QTableWidgetItem()
-        self.nodesTable.setHorizontalHeaderItem(3, __qtablewidgetitem3)
-        __qtablewidgetitem4 = QTableWidgetItem()
-        self.nodesTable.setHorizontalHeaderItem(4, __qtablewidgetitem4)
-        __qtablewidgetitem5 = QTableWidgetItem()
-        self.nodesTable.setHorizontalHeaderItem(5, __qtablewidgetitem5)
-        __qtablewidgetitem6 = QTableWidgetItem()
-        self.nodesTable.setHorizontalHeaderItem(6, __qtablewidgetitem6)
-        __qtablewidgetitem7 = QTableWidgetItem()
-        self.nodesTable.setHorizontalHeaderItem(7, __qtablewidgetitem7)
-        self.nodesTable.setObjectName(u"nodesTable")
-        self.nodesTable.setEditTriggers(QAbstractItemView.NoEditTriggers)
-        self.nodesTable.setSelectionMode(QAbstractItemView.SingleSelection)
-        self.nodesTable.setSelectionBehavior(QAbstractItemView.SelectRows)
-        self.nodesTable.setAlternatingRowColors(False)
-        self.nodesTable.setProperty(u"variant", u"data")
-        self.nodesTable.horizontalHeader().setStretchLastSection(False)
-        self.nodesTable.verticalHeader().setVisible(False)
-        self.nodesTable.verticalHeader().setDefaultSectionSize(44)
-
-        self.overviewLayout.addWidget(self.nodesTable)
+        self.overviewLayout.addItem(self.overviewSpacer)
 
         self.noticeLabel = QLabel(OverviewPage)
         self.noticeLabel.setObjectName(u"noticeLabel")
@@ -363,7 +370,7 @@ class Ui_OverviewPage(object):
 
         self.overviewLayout.addWidget(self.noticeLabel)
 
-        self.overviewLayout.setStretch(4, 1)
+        self.overviewLayout.setStretch(5, 1)
 
         self.retranslateUi(OverviewPage)
 
@@ -372,9 +379,8 @@ class Ui_OverviewPage(object):
 
     def retranslateUi(self, OverviewPage):
         self.overviewHeading.setText(QCoreApplication.translate("OverviewPage", u"Cluster resources", None))
-#if QT_CONFIG(tooltip)
-        self.overviewRefreshButton.setToolTip(QCoreApplication.translate("OverviewPage", u"Refresh", None))
-#endif // QT_CONFIG(tooltip)
+        self.clusterInfoTitle.setText(QCoreApplication.translate("OverviewPage", u"CLUSTER INFO", None))
+        self.networkingTitle.setText(QCoreApplication.translate("OverviewPage", u"NETWORKING", None))
         self.nodesTitle.setText(QCoreApplication.translate("OverviewPage", u"NODES", None))
         self.nodesCaption.setText(QCoreApplication.translate("OverviewPage", u"nodes ready", None))
         self.podsTitle.setText(QCoreApplication.translate("OverviewPage", u"PODS", None))
@@ -391,23 +397,6 @@ class Ui_OverviewPage(object):
         self.statefulsetsCaption.setText(QCoreApplication.translate("OverviewPage", u"workloads", None))
         self.daemonsetsTitle.setText(QCoreApplication.translate("OverviewPage", u"DAEMONSETS", None))
         self.daemonsetsCaption.setText(QCoreApplication.translate("OverviewPage", u"workloads", None))
-        self.nodesHeading.setText(QCoreApplication.translate("OverviewPage", u"Nodes", None))
-        ___qtablewidgetitem = self.nodesTable.horizontalHeaderItem(0)
-        ___qtablewidgetitem.setText(QCoreApplication.translate("OverviewPage", u"NODE", None))
-        ___qtablewidgetitem1 = self.nodesTable.horizontalHeaderItem(1)
-        ___qtablewidgetitem1.setText(QCoreApplication.translate("OverviewPage", u"STATUS", None))
-        ___qtablewidgetitem2 = self.nodesTable.horizontalHeaderItem(2)
-        ___qtablewidgetitem2.setText(QCoreApplication.translate("OverviewPage", u"ROLE", None))
-        ___qtablewidgetitem3 = self.nodesTable.horizontalHeaderItem(3)
-        ___qtablewidgetitem3.setText(QCoreApplication.translate("OverviewPage", u"VERSION", None))
-        ___qtablewidgetitem4 = self.nodesTable.horizontalHeaderItem(4)
-        ___qtablewidgetitem4.setText(QCoreApplication.translate("OverviewPage", u"CPU", None))
-        ___qtablewidgetitem5 = self.nodesTable.horizontalHeaderItem(5)
-        ___qtablewidgetitem5.setText(QCoreApplication.translate("OverviewPage", u"MEMORY", None))
-        ___qtablewidgetitem6 = self.nodesTable.horizontalHeaderItem(6)
-        ___qtablewidgetitem6.setText(QCoreApplication.translate("OverviewPage", u"PODS", None))
-        ___qtablewidgetitem7 = self.nodesTable.horizontalHeaderItem(7)
-        ___qtablewidgetitem7.setText(QCoreApplication.translate("OverviewPage", u"AGE", None))
         pass
     # retranslateUi
 

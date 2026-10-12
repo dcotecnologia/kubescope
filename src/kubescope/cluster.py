@@ -30,10 +30,11 @@ from kubescope.models import (
     BAD_STATUSES,
     OK_STATUSES,
     WARNING_STATUSES,
+    ClusterInfo,
     ClusterOverview,
+    ClusterResource,
     EventInfo,
     KindSummary,
-    NetworkResource,
     NodeInfo,
     PodInfo,
     Workload,
@@ -359,10 +360,13 @@ def _request(
 
 
 def _get_json(
-    path: str, context: str, query: list[tuple[str, str]] | None = None
+    path: str,
+    context: str,
+    query: list[tuple[str, str]] | None = None,
+    accept: str = "application/json",
 ) -> dict[str, Any]:
     try:
-        payload = json.loads(_request(path, context, query))
+        payload = json.loads(_request(path, context, query, accept))
     except ValueError as error:
         raise ClusterError("The cluster returned an unexpected response") from error
     if not isinstance(payload, dict):
@@ -379,6 +383,10 @@ _API_PATHS = {
     "services": "/api/v1",
     "endpoints": "/api/v1",
     "replicationcontrollers": "/api/v1",
+    "configmaps": "/api/v1",
+    "secrets": "/api/v1",
+    "resourcequotas": "/api/v1",
+    "limitranges": "/api/v1",
     "deployments": "/apis/apps/v1",
     "statefulsets": "/apis/apps/v1",
     "daemonsets": "/apis/apps/v1",
@@ -389,6 +397,13 @@ _API_PATHS = {
     "ingresses": "/apis/networking.k8s.io/v1",
     "ingressclasses": "/apis/networking.k8s.io/v1",
     "networkpolicies": "/apis/networking.k8s.io/v1",
+    "horizontalpodautoscalers": "/apis/autoscaling/v2",
+    "poddisruptionbudgets": "/apis/policy/v1",
+    "priorityclasses": "/apis/scheduling.k8s.io/v1",
+    "runtimeclasses": "/apis/node.k8s.io/v1",
+    "leases": "/apis/coordination.k8s.io/v1",
+    "mutatingwebhookconfigurations": "/apis/admissionregistration.k8s.io/v1",
+    "validatingwebhookconfigurations": "/apis/admissionregistration.k8s.io/v1",
 }
 _METRICS_PATH = "/apis/metrics.k8s.io/v1beta1"
 
@@ -482,21 +497,25 @@ def _sign_in_program(context: str) -> dict[str, Any]:
     return (_named(document.get("users"), user).get("user") or {}).get("exec") or {}
 
 
+def _flag(arguments: list[str], flag: str) -> str | None:
+    """The value after a command-line flag, if the flag is there."""
+    return next(
+        (
+            arguments[index + 1]
+            for index, argument in enumerate(arguments[:-1])
+            if argument == flag
+        ),
+        None,
+    )
+
+
 def _aws_profile(context: str) -> tuple[bool, str | None]:
     """Whether the context signs in through the AWS CLI, and with which
     profile."""
     login = _sign_in_program(context)
     if Path(login.get("command") or "").stem != "aws":
         return False, None
-    arguments = login.get("args") or []
-    profile = next(
-        (
-            arguments[index + 1]
-            for index, argument in enumerate(arguments[:-1])
-            if argument == "--profile"
-        ),
-        None,
-    )
+    profile = _flag(login.get("args") or [], "--profile")
     for variable in login.get("env") or []:
         if variable.get("name") == "AWS_PROFILE":
             profile = profile or variable.get("value")
@@ -505,6 +524,162 @@ def _aws_profile(context: str) -> tuple[bool, str | None]:
 
 def _profile_arguments(profile: str | None) -> list[str]:
     return ["--profile", profile] if profile else []
+
+
+def _eks_target(context: str, name_flag: str = "--cluster-name") -> list[str]:
+    """The AWS CLI arguments that name the EKS cluster of a context: its name
+    and region come from the sign-in command, as `aws eks update-kubeconfig`
+    writes them."""
+    uses_aws, profile = _aws_profile(context)
+    arguments = _sign_in_program(context).get("args") or []
+    name, region = _flag(arguments, "--cluster-name"), _flag(arguments, "--region")
+    if not uses_aws or not name:
+        raise ClusterError("This list is only available for Amazon EKS contexts")
+    return [
+        name_flag,
+        name,
+        *(["--region", region] if region else []),
+        *_profile_arguments(profile),
+    ]
+
+
+def get_cluster_info(context: str) -> ClusterInfo:
+    """What `aws eks describe-cluster` says about the context's EKS cluster."""
+    cluster = _eks_json("describe-cluster", _eks_target(context, "--name")).get(
+        "cluster"
+    )
+    cluster = cluster or {}
+    try:
+        created = datetime.fromisoformat(str(cluster.get("createdAt")))
+        created_text = created.astimezone().strftime("%Y-%m-%d %H:%M")
+    except ValueError:
+        created_text = _NO_VALUE
+    oidc = (cluster.get("identity") or {}).get("oidc") or {}
+    vpc = cluster.get("resourcesVpcConfig") or {}
+    network = cluster.get("kubernetesNetworkConfig") or {}
+    public, private = vpc.get("endpointPublicAccess"), vpc.get("endpointPrivateAccess")
+    access = {(True, False): "Public", (False, True): "Private"}.get(
+        (public, private), "Public and private" if public and private else _NO_VALUE
+    )
+    return ClusterInfo(
+        status=str(cluster.get("status") or _NO_VALUE).capitalize(),
+        version=cluster.get("version") or _NO_VALUE,
+        platform_version=cluster.get("platformVersion") or _NO_VALUE,
+        created=created_text,
+        provider="EKS",
+        endpoint=cluster.get("endpoint") or _NO_VALUE,
+        arn=cluster.get("arn") or _NO_VALUE,
+        role_arn=cluster.get("roleArn") or _NO_VALUE,
+        oidc_issuer=oidc.get("issuer") or _NO_VALUE,
+        vpc_id=vpc.get("vpcId") or _NO_VALUE,
+        subnets=tuple(vpc.get("subnetIds") or ()),
+        security_group=vpc.get("clusterSecurityGroupId") or _NO_VALUE,
+        additional_security_groups=tuple(vpc.get("securityGroupIds") or ()),
+        ip_family=str(network.get("ipFamily") or _NO_VALUE).replace("ipv", "IPv"),
+        service_cidr=network.get("serviceIpv4Cidr") or _NO_VALUE,
+        endpoint_access=access,
+        public_access_cidrs=tuple(vpc.get("publicAccessCidrs") or ()),
+    )
+
+
+def is_eks_context(context: str) -> bool:
+    """Whether the context is an Amazon EKS cluster, the only kind with Node
+    Groups."""
+    try:
+        _eks_target(context)
+    except ClusterError:
+        return False
+    return True
+
+
+def _eks_json(subcommand: str, target: list[str], *extra: str) -> dict[str, Any]:
+    output = _run_command(
+        ["aws", "eks", subcommand, *target, *extra, "--output", "json"], AWS_TIMEOUT
+    )
+    try:
+        document = json.loads(output)
+    except ValueError as error:
+        raise ClusterError("The AWS CLI answered with something unexpected") from error
+    if not isinstance(document, dict):
+        raise ClusterError("The AWS CLI answered with something unexpected")
+    return document
+
+
+# EKS kind -> what the AWS CLI calls one (`describe-<one>`, `--<one>-name`), the
+# plural (`list-<many>`) and the key that holds its name.
+_EKS_KINDS = {
+    "NodeGroup": ("nodegroup", "nodegroups", "nodegroupName"),
+    "Addon": ("addon", "addons", "addonName"),
+}
+
+
+def _describe_eks(kind: str, target: list[str], name: str) -> dict[str, Any]:
+    one = _EKS_KINDS[kind][0]
+    return _eks_json(f"describe-{one}", target, f"--{one}-name", name).get(one) or {}
+
+
+def _list_eks(kind: str, context: str) -> list[dict[str, Any]]:
+    """Every Node Group or Add-on of the context's EKS cluster, described at
+    the same time."""
+    target = _eks_target(context)
+    many = _EKS_KINDS[kind][1]
+    names = _eks_json(f"list-{many}", target).get(many) or []
+    if not names:
+        return []
+    return _together(*(partial(_describe_eks, kind, target, name) for name in names))
+
+
+def _eks_age(item: dict[str, Any], now: datetime) -> str:
+    try:
+        created = datetime.fromisoformat(str(item.get("createdAt")))
+    except ValueError:
+        return "unknown"
+    if created.tzinfo is None:
+        created = created.replace(tzinfo=UTC)
+    return format_age((now - created).total_seconds())
+
+
+def _nodegroup_values(group: dict[str, Any]) -> tuple[str, ...]:
+    scaling = group.get("scalingConfig") or {}
+    nodes = (
+        f"{scaling['desiredSize']} ({scaling.get('minSize', 0)}–"
+        f"{scaling.get('maxSize', scaling['desiredSize'])})"
+        if scaling.get("desiredSize") is not None
+        else _NO_VALUE
+    )
+    return (
+        group.get("status") or _NO_VALUE,
+        _listed(group.get("instanceTypes") or []),
+        nodes,
+        group.get("amiType") or _NO_VALUE,
+        group.get("releaseVersion") or _NO_VALUE,
+    )
+
+
+def _addon_values(addon: dict[str, Any]) -> tuple[str, ...]:
+    return (
+        addon.get("status") or _NO_VALUE,
+        addon.get("addonVersion") or _NO_VALUE,
+        "EKS",
+    )
+
+
+_EKS_VALUES = {"NodeGroup": _nodegroup_values, "Addon": _addon_values}
+
+
+def _parse_eks(
+    kind: str, item: dict[str, Any], now: datetime
+) -> ClusterResource | None:
+    name = item.get(_EKS_KINDS[kind][2])
+    if not name:
+        return None
+    return ClusterResource(
+        namespace="",
+        kind=kind,
+        name=name,
+        values=_EKS_VALUES[kind](item),
+        age=_eks_age(item, now),
+    )
 
 
 def _is_sso_profile(profile: str | None) -> bool:
@@ -688,12 +863,35 @@ _NETWORK_RESOURCES = {
     "IngressClass": "ingressclasses",
     "NetworkPolicy": "networkpolicies",
 }
-_CLUSTER_WIDE = frozenset({"IngressClass"})
+# Config kind -> the plural name of its resource.
+_CONFIG_RESOURCES = {
+    "ConfigMap": "configmaps",
+    "Secret": "secrets",
+    "ResourceQuota": "resourcequotas",
+    "LimitRange": "limitranges",
+    "HorizontalPodAutoscaler": "horizontalpodautoscalers",
+    "PodDisruptionBudget": "poddisruptionbudgets",
+    "PriorityClass": "priorityclasses",
+    "RuntimeClass": "runtimeclasses",
+    "Lease": "leases",
+    "MutatingWebhookConfiguration": "mutatingwebhookconfigurations",
+    "ValidatingWebhookConfiguration": "validatingwebhookconfigurations",
+}
+_LISTED_RESOURCES = {**_NETWORK_RESOURCES, **_CONFIG_RESOURCES}
+_CLUSTER_WIDE = frozenset(
+    {
+        "IngressClass",
+        "PriorityClass",
+        "RuntimeClass",
+        "MutatingWebhookConfiguration",
+        "ValidatingWebhookConfiguration",
+    }
+)
 _KINDS = {
     resource: kind
     for kind, resource in {
         **_RESOURCES,
-        **_NETWORK_RESOURCES,
+        **_LISTED_RESOURCES,
         "Pod": "pods",
         "Node": "nodes",
         "Namespace": "namespaces",
@@ -806,10 +1004,35 @@ def get_resource_details(
     namespace: str,
     name: str,
 ) -> dict[str, Any]:
-    resource = {**_RESOURCES, **_NETWORK_RESOURCES, "Pod": "pods"}.get(kind)
+    if kind == "HelmRelease":
+        return _helm_release_details(context, namespace, name)
+    if kind in _EKS_KINDS:
+        return _describe_eks(kind, _eks_target(context), name)
+    resource = {**_RESOURCES, **_LISTED_RESOURCES, "Pod": "pods"}.get(kind)
     if resource is None:
         raise ClusterError(f"Unsupported resource kind: {kind}")
-    return _get_json(_resource_path(resource, namespace, name), context)
+    document = _get_json(_resource_path(resource, namespace, name), context)
+    return _redact_secret(document) if kind == "Secret" else document
+
+
+_REDACTED = "<redacted>"
+_LAST_APPLIED = "kubectl.kubernetes.io/last-applied-configuration"
+
+
+def _redact_secret(document: dict[str, Any]) -> dict[str, Any]:
+    """A Secret without its values: the keys stay, so you can see what it
+    holds.
+
+    The last-applied annotation is dropped too, as it repeats the
+    values.
+    """
+    for field in ("data", "stringData"):
+        if isinstance(document.get(field), dict):
+            document[field] = dict.fromkeys(document[field], _REDACTED)
+    annotations = (document.get("metadata") or {}).get("annotations")
+    if isinstance(annotations, dict):
+        annotations.pop(_LAST_APPLIED, None)
+    return document
 
 
 def _label_selector(resource: dict[str, Any]) -> str:
@@ -1103,7 +1326,89 @@ def _network_policy_values(item: dict[str, Any]) -> tuple[str, ...]:
     return (_label_terms(spec.get("podSelector") or {}), ", ".join(types))
 
 
-_NETWORK_VALUES = {
+def _data_values(item: dict[str, Any]) -> tuple[str, ...]:
+    return (str(len(item.get("data") or {}) + len(item.get("binaryData") or {})),)
+
+
+def _secret_values(item: dict[str, Any]) -> tuple[str, ...]:
+    return (item.get("type") or _NO_VALUE, *_data_values(item))
+
+
+def _quantities(hard: dict[str, Any], used: dict[str, Any]) -> list[str]:
+    return [f"{name}: {used.get(name, 0)}/{limit}" for name, limit in hard.items()]
+
+
+def _resource_quota_values(item: dict[str, Any]) -> tuple[str, ...]:
+    status = item.get("status") or {}
+    hard = status.get("hard") or (item.get("spec") or {}).get("hard") or {}
+    return (_listed(_quantities(hard, status.get("used") or {})),)
+
+
+def _limit_range_values(item: dict[str, Any]) -> tuple[str, ...]:
+    limits = (item.get("spec") or {}).get("limits") or []
+    return (_listed([limit["type"] for limit in limits if limit.get("type")]),)
+
+
+def _optional(value: Any) -> str:
+    return _NO_VALUE if value is None else str(value)
+
+
+def _autoscaler_values(item: dict[str, Any]) -> tuple[str, ...]:
+    spec, status = item.get("spec") or {}, item.get("status") or {}
+    target = spec.get("scaleTargetRef") or {}
+    reference = (
+        f"{target['kind']}/{target['name']}"
+        if target.get("kind") and target.get("name")
+        else _NO_VALUE
+    )
+    return (
+        reference,
+        str(spec.get("minReplicas") or 1),
+        _optional(spec.get("maxReplicas")),
+        _optional(status.get("currentReplicas")),
+    )
+
+
+def _disruption_budget_values(item: dict[str, Any]) -> tuple[str, ...]:
+    spec, status = item.get("spec") or {}, item.get("status") or {}
+    return (
+        _optional(spec.get("minAvailable")),
+        _optional(spec.get("maxUnavailable")),
+        _optional(status.get("disruptionsAllowed")),
+    )
+
+
+def _priority_class_values(item: dict[str, Any]) -> tuple[str, ...]:
+    return (
+        _optional(item.get("value")),
+        "true" if item.get("globalDefault") else "false",
+    )
+
+
+def _runtime_class_values(item: dict[str, Any]) -> tuple[str, ...]:
+    return (item.get("handler") or _NO_VALUE,)
+
+
+def _lease_values(item: dict[str, Any]) -> tuple[str, ...]:
+    return ((item.get("spec") or {}).get("holderIdentity") or _NO_VALUE,)
+
+
+def _webhook_values(item: dict[str, Any]) -> tuple[str, ...]:
+    return (str(len(item.get("webhooks") or [])),)
+
+
+_RESOURCE_VALUES = {
+    "ConfigMap": _data_values,
+    "Secret": _secret_values,
+    "ResourceQuota": _resource_quota_values,
+    "LimitRange": _limit_range_values,
+    "HorizontalPodAutoscaler": _autoscaler_values,
+    "PodDisruptionBudget": _disruption_budget_values,
+    "PriorityClass": _priority_class_values,
+    "RuntimeClass": _runtime_class_values,
+    "Lease": _lease_values,
+    "MutatingWebhookConfiguration": _webhook_values,
+    "ValidatingWebhookConfiguration": _webhook_values,
     "Service": _service_values,
     "EndpointSlice": _endpoint_slice_values,
     "Endpoints": _endpoints_values,
@@ -1113,37 +1418,177 @@ _NETWORK_VALUES = {
 }
 
 
-def _parse_network(
+def _parse_resource(
     kind: str, item: dict[str, Any], now: datetime
-) -> NetworkResource | None:
+) -> ClusterResource | None:
     metadata = item.get("metadata") or {}
     name = metadata.get("name")
     if not name:
         return None
-    return NetworkResource(
+    return ClusterResource(
         namespace=""
         if kind in _CLUSTER_WIDE
         else metadata.get("namespace") or "default",
         kind=kind,
         name=name,
-        values=_NETWORK_VALUES[kind](item),
+        values=_RESOURCE_VALUES[kind](item),
         age=_item_age(item, now),
     )
 
 
-def get_network(
+# Ask for the metadata of a list only: the answer has the labels and nothing of
+# the data of the objects.
+_METADATA_ONLY = "application/json;as=PartialObjectMetadataList;g=meta.k8s.io;v=v1"
+_HELM_SELECTOR = "owner=helm"
+
+
+def _helm_revisions(
+    context: str, namespace: str | None, name: str | None = None
+) -> list[dict[str, Any]]:
+    """The revisions of Helm releases, from the labels of the Secrets where
+    Helm keeps them.
+
+    Their contents are neither asked for nor read.
+    """
+    selector = _HELM_SELECTOR + (f",name={name}" if name else "")
+    document = _get_json(
+        _resource_path("secrets", namespace),
+        context,
+        [("labelSelector", selector)],
+        _METADATA_ONLY,
+    )
+    revisions = []
+    for item in document.get("items") or []:
+        metadata = item.get("metadata") or {}
+        labels = metadata.get("labels") or {}
+        revision = str(labels.get("version") or "")
+        if labels.get("name") and revision.isdigit():
+            revisions.append(
+                {
+                    "name": labels["name"],
+                    "namespace": metadata.get("namespace") or "default",
+                    "revision": int(revision),
+                    "status": labels.get("status") or _NO_VALUE,
+                    "created": metadata.get("creationTimestamp"),
+                }
+            )
+    return revisions
+
+
+def _helm_releases(
+    context: str, namespace: str | None, now: datetime
+) -> list[ClusterResource]:
+    """Each Helm release once, as its latest revision says."""
+    releases: dict[tuple[str, str], list[dict[str, Any]]] = {}
+    for revision in _helm_revisions(context, namespace):
+        releases.setdefault((revision["namespace"], revision["name"]), []).append(
+            revision
+        )
+    rows = []
+    for (release_namespace, name), revisions in releases.items():
+        latest = max(revisions, key=lambda revision: revision["revision"])
+        first = min(revisions, key=lambda revision: revision["revision"])
+        rows.append(
+            ClusterResource(
+                namespace=release_namespace,
+                kind="HelmRelease",
+                name=name,
+                values=(latest["status"], f"rev {latest['revision']}", "Helm"),
+                age=_item_age(
+                    {"metadata": {"creationTimestamp": first["created"]}}, now
+                ),
+            )
+        )
+    return rows
+
+
+def _helm_release_details(context: str, namespace: str, name: str) -> dict[str, Any]:
+    revisions = sorted(
+        _helm_revisions(context, namespace, name), key=lambda r: r["revision"]
+    )
+    if not revisions:
+        raise ClusterError(f"Helm release {name} was not found in {namespace}")
+    latest = revisions[-1]
+    return {
+        "name": name,
+        "namespace": namespace,
+        "status": latest["status"],
+        "revision": latest["revision"],
+        "revisions": [
+            {"revision": r["revision"], "status": r["status"], "created": r["created"]}
+            for r in revisions
+        ],
+    }
+
+
+def _eks_addons(context: str, now: datetime) -> list[ClusterResource]:
+    if not is_eks_context(context):
+        return []
+    return [
+        resource
+        for item in _list_eks("Addon", context)
+        if (resource := _parse_eks("Addon", item, now))
+    ]
+
+
+def _attempt(call: Any) -> tuple[list[ClusterResource], ClusterError | None]:
+    try:
+        return call(), None
+    except ClusterError as error:
+        return [], error
+
+
+def _get_addons(
+    context: str, namespace: str | None
+) -> tuple[list[str], list[ClusterResource]]:
+    """The add-ons of EKS and the Helm releases, in one list.
+
+    One source failing does not hide the other; its error shows only
+    when nothing else is listed.
+    """
+    now = datetime.now(UTC)
+    namespaces, (eks, eks_error), (helm, helm_error) = _together(
+        partial(_get_namespaces, context),
+        partial(_attempt, partial(_eks_addons, context, now)),
+        partial(_attempt, partial(_helm_releases, context, namespace, now)),
+    )
+    resources = [*eks, *helm]
+    if not resources and (error := helm_error or eks_error):
+        raise error
+    resources.sort(key=lambda row: (row.name.casefold(), row.namespace))
+    return namespaces, resources
+
+
+def _get_eks(context: str, kind: str) -> tuple[list[str], list[ClusterResource]]:
+    """Node Groups and Add-ons are not namespaced, so the answer has no
+    namespaces."""
+    now = datetime.now(UTC)
+    resources = [
+        resource
+        for item in _list_eks(kind, context)
+        if (resource := _parse_eks(kind, item, now))
+    ]
+    resources.sort(key=lambda row: row.name)
+    return [], resources
+
+
+def get_resources(
     context: str, namespace: str | None, kind: str
-) -> tuple[list[str], list[NetworkResource]]:
+) -> tuple[list[str], list[ClusterResource]]:
+    if kind == "Addon":
+        return _get_addons(context, namespace)
+    if kind in _EKS_KINDS:
+        return _get_eks(context, kind)
     scope = None if kind in _CLUSTER_WIDE else namespace
     namespaces, document = _together(
         partial(_get_namespaces, context),
-        partial(_list, _NETWORK_RESOURCES[kind], context, scope),
+        partial(_list, _LISTED_RESOURCES[kind], context, scope),
     )
     now = datetime.now(UTC)
     resources = [
         resource
         for item in document.get("items", [])
-        if (resource := _parse_network(kind, item, now)) is not None
+        if (resource := _parse_resource(kind, item, now)) is not None
     ]
     resources.sort(key=lambda row: (row.namespace, row.name))
     return namespaces, resources

@@ -43,13 +43,6 @@ class Ui_WorkloadsOverviewPage(object):
 
         self.workloadsHeaderRow.addItem(self.workloadsHeaderSpacer)
 
-        self.workloadsRefreshButton = QPushButton(WorkloadsOverviewPage)
-        self.workloadsRefreshButton.setObjectName(u"workloadsRefreshButton")
-        self.workloadsRefreshButton.setProperty(u"iconOnly", u"true")
-        self.workloadsRefreshButton.setProperty(u"variant", u"primary")
-
-        self.workloadsHeaderRow.addWidget(self.workloadsRefreshButton)
-
 
         self.workloadsOverviewLayout.addLayout(self.workloadsHeaderRow)
 
@@ -215,9 +208,6 @@ class Ui_WorkloadsOverviewPage(object):
 
     def retranslateUi(self, WorkloadsOverviewPage):
         self.workloadsHeading.setText(QCoreApplication.translate("WorkloadsOverviewPage", u"Workloads", None))
-#if QT_CONFIG(tooltip)
-        self.workloadsRefreshButton.setToolTip(QCoreApplication.translate("WorkloadsOverviewPage", u"Refresh", None))
-#endif // QT_CONFIG(tooltip)
         self.podsLink.setText(QCoreApplication.translate("WorkloadsOverviewPage", u"Pods", None))
         self.deploymentsLink.setText(QCoreApplication.translate("WorkloadsOverviewPage", u"Deployments", None))
         self.daemonsetsLink.setText(QCoreApplication.translate("WorkloadsOverviewPage", u"DaemonSets", None))

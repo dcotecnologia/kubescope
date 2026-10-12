@@ -20,6 +20,8 @@ LANGUAGES = {
     "zh": "中文",
     "ja": "日本語",
     "ar": "العربية",
+    "hi": "हिन्दी",
+    "ru": "Русский",
 }
 LANGUAGE_CHOICES = ("auto", *LANGUAGES)
 
@@ -31,6 +33,7 @@ DEFAULTS: dict[str, Any] = {
     "default_namespace": "",
     "context_aliases": {},
     "hidden_columns": {},
+    "pinned_views": [],
     "debug_logging": False,
     "check_updates": True,
     "window_geometry": "",
@@ -99,6 +102,14 @@ class Settings:
             if isinstance(columns, list)
             and all(isinstance(column, int) and column >= 0 for column in columns)
         }
+        pinned = self._data["pinned_views"]
+        self._data["pinned_views"] = list(
+            dict.fromkeys(
+                view for view in pinned if isinstance(view, str) and view.strip()
+            )
+            if isinstance(pinned, list)
+            else []
+        )
         files = self._data["kubeconfig_files"]
         self._data["kubeconfig_files"] = (
             [path.strip() for path in files if isinstance(path, str) and path.strip()]
@@ -245,6 +256,12 @@ class Settings:
 
     def set_hidden_columns(self, view: str, columns: set[int]) -> None:
         self._data["hidden_columns"][view] = sorted(columns)
+
+    def pinned_views(self) -> list[str]:
+        return list(self._data["pinned_views"])
+
+    def set_pinned_views(self, views: list[str]) -> None:
+        self._data["pinned_views"] = list(dict.fromkeys(views))
 
     def display_name(self, context: str) -> str:
         return self._data["context_aliases"].get(context) or context
