@@ -18,7 +18,14 @@ from PySide6.QtWidgets import QApplication
 
 from kubescope import window
 from kubescope.fonts import apply_fonts
-from kubescope.models import ClusterOverview, NodeInfo, PodInfo, Workload
+from kubescope.models import (
+    ClusterInfo,
+    ClusterOverview,
+    ClusterResource,
+    NodeInfo,
+    PodInfo,
+    Workload,
+)
 from kubescope.theme import apply_theme
 
 # The preview must never read or overwrite the real user settings.
@@ -89,7 +96,55 @@ def fake_overview(_context: str) -> ClusterOverview:
     )
 
 
+FAKE_INFO = ClusterInfo(
+    status="Active",
+    version="1.30",
+    platform_version="eks.7",
+    created="2026-02-11 13:16",
+    provider="EKS",
+    endpoint="https://0000000000000000.gr7.us-east-1.eks.amazonaws.com",
+    arn="arn:aws:eks:us-east-1:000000000000:cluster/prod-eks",
+    role_arn="arn:aws:iam::000000000000:role/prod-eks-cluster",
+    oidc_issuer="https://oidc.eks.us-east-1.amazonaws.com/id/0000000000000000",
+    vpc_id="vpc-0000000000000000",
+    subnets=("subnet-0000000000000001", "subnet-0000000000000002"),
+    security_group="sg-0000000000000000",
+    ip_family="IPv4",
+    service_cidr="172.20.0.0/16",
+    endpoint_access="Public",
+    public_access_cidrs=("0.0.0.0/0",),
+)
+FAKE_RESOURCES = {
+    "NodeGroup": [
+        ClusterResource(
+            "",
+            "NodeGroup",
+            "apps",
+            (
+                "ACTIVE",
+                "m5.large",
+                "3 (1–4)",
+                "AL2023_x86_64_STANDARD",
+                "1.30.4-20260901",
+            ),
+            "42d",
+        )
+    ],
+    "Addon": [
+        ClusterResource("", "Addon", "vpc-cni", ("ACTIVE", "v1.18.3", "EKS"), "42d"),
+        ClusterResource(
+            "monitoring", "HelmRelease", "grafana", ("deployed", "rev 4", "Helm"), "90d"
+        ),
+    ],
+}
+
 window.get_cluster_overview = fake_overview
+window.is_eks_context = lambda _context: True
+window.get_cluster_info = lambda _context: FAKE_INFO
+window.get_resources = lambda _context, _namespace, kind: (
+    [],
+    FAKE_RESOURCES.get(kind, []),
+)
 window.list_contexts = lambda: (["prod-eks", "staging-eks"], "prod-eks")
 window.get_workloads = lambda _context, namespace=None, kinds=(): (
     sorted({item.namespace for item in WORKLOADS}),
@@ -177,12 +232,15 @@ def main() -> int:
     apply_fonts(application)
     apply_theme(application)
     main_window = window.WorkloadWindow()
-    main_window.resize(1280, 800)
+    main_window.resize(1280, 1000)
     main_window.show()
     if len(sys.argv) > 1:
         page = sys.argv[2] if len(sys.argv) > 2 else "overview"
         wait_until_idle(application, main_window)
         open_menus(application, main_window)
+        for view in ("deployments", "pods"):  # tabs in the top bar
+            main_window._toggle_pin(view)
+        wait_until_idle(application, main_window)
         if page in ("workloads", "deployments"):
             main_window.nav_deployments.click()
             wait_until_idle(application, main_window)
