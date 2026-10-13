@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-10-13
+
 ### Added
 
 - Languages are JSON files, replacing the Qt `.ts` and `.qm` files; a file in the `languages` folder of the settings adds a language or replaces a shipped one by @danilogco
@@ -109,7 +111,8 @@ The first release.
 
 - Pod logs and resource details are still never written to disk by the app on its own. **Save** is the only exception, and it writes only to the file the user chooses. SECURITY.md says so by @danilogco
 
-[Unreleased]: https://github.com/dcotecnologia/kubescope/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/dcotecnologia/kubescope/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/dcotecnologia/kubescope/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/dcotecnologia/kubescope/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/dcotecnologia/kubescope/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/dcotecnologia/kubescope/compare/v0.1.0...v0.2.0

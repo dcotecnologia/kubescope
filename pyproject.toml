@@ -1,6 +1,6 @@
 [project]
 name = "kubescope"
-version = "0.4.0"
+version = "0.5.0"
 description = "Desktop viewer for Kubernetes and Amazon EKS workloads"
 readme = "README.md"
 license = "MIT"
@@ -17,7 +17,7 @@ build-backend = "setuptools.build_meta"
 
 [project.optional-dependencies]
 dev = [
-    "pre-commit>=4.6.2",
+    "pre-commit>=4.7.0",
     "pytest>=9.1.1",
     "pytest-cov>=7.1.0",
     "ruff>=0.17.0",
@@ -67,7 +67,7 @@ select = ["E", "F", "W", "I", "B", "UP", "SIM"]
 
 [dependency-groups]
 development = [
-    "pre-commit>=4.6.2",
+    "pre-commit>=4.7.0",
 ]
 
 [tool.ruff.format]
