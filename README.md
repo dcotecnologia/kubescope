@@ -238,12 +238,12 @@ KubeScope speaks **English**, **Portuguese** (`pt`), **Spanish** (`es`), **Itali
 **French** (`fr`), **Chinese** (`zh`, simplified), **Japanese** (`ja`), **Arabic** (`ar`,
 written right to left: the whole layout mirrors), **Hindi** (`hi`), **Russian** (`ru`) and **Korean** (`ko`). **Automatic** (the default) follows
 your system language and falls back to English. The texts in the code are English;
-each other language is a JSON file in the `languages` folder of your settings
-(`~/.config/kubescope/languages` on Linux). The ones that ship with the app are copied
-there and refreshed on update until you edit them; a file you add there, named by the
-language code (`de.json`), becomes a choice in Settings after a restart. The ones that
-ship are `src/kubescope/languages/<code>.json`: a name, whether it is written right to
-left, and each English text with its translation.
+each other language is a JSON file, `src/kubescope/languages/<code>.json`: a name, whether
+it is written right to left, and each English text with its translation. To add a
+language without changing the app, or to change a shipped one, put a file of the same
+format, named by the language code (`de.json`), in the `languages` folder of your
+settings (`~/.config/kubescope/languages` on Linux); it becomes a choice in Settings
+after a restart, and a file there wins over the shipped one of the same code.
 
 ## Contribute a theme or a language
 

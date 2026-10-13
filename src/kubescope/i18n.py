@@ -1,16 +1,13 @@
 """Language handling: source strings are English, the other languages are JSON
-files in the `languages` folder of the settings.
+files: the ones that ship with the app (`src/kubescope/languages/`), and any in
+the `languages` folder of the settings, which add a language or replace a
+shipped one by its code.
 
-The ones that ship with the app are copied there, like the community
-themes, and refreshed while the person has not edited them; any other
-file placed there adds a language. Qt's own texts (standard dialogs)
-still come from its translation files.
+Qt's own texts (standard dialogs) still come from its translation files.
 """
 
-import hashlib
 import json
 import logging
-import shutil
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -22,7 +19,6 @@ from kubescope.settings import config_directory
 logger = logging.getLogger(__name__)
 
 BUNDLED_DIRECTORY = Path(__file__).resolve().parent / "languages"
-INSTALLED_FILE = "installed-languages.json"
 ENGLISH = "en"
 
 _installed: list[QTranslator] = []
@@ -59,67 +55,6 @@ class JsonTranslator(QTranslator):
 
 def languages_directory() -> Path:
     return config_directory() / "languages"
-
-
-def _digest(path: Path) -> str:
-    return hashlib.sha256(path.read_bytes()).hexdigest()
-
-
-def _installed_digests() -> dict[str, str]:
-    """What the app last wrote for each language, to tell an untouched copy
-    from one the person edited."""
-    try:
-        document = json.loads(
-            (config_directory() / INSTALLED_FILE).read_text(encoding="utf-8")
-        )
-    except (OSError, ValueError):
-        return {}
-    return (
-        {k: v for k, v in document.items() if isinstance(v, str)}
-        if isinstance(document, dict)
-        else {}
-    )
-
-
-def install_bundled_languages(source: Path = BUNDLED_DIRECTORY) -> list[str]:
-    """Copy the languages that came with the app into the languages folder.
-
-    A language is installed once and kept up to date while its copy is
-    the one the app wrote; one the person edited is never overwritten,
-    and one they deleted does not come back. Returns the codes written
-    now.
-    """
-    global _languages
-    recorded = _installed_digests()
-    written: list[str] = []
-    for path in sorted(source.glob("*.json")) if source.is_dir() else []:
-        target = languages_directory() / path.name
-        try:
-            fresh = _digest(path)
-            if target.exists():
-                if recorded.get(path.stem) != _digest(target) or fresh == _digest(
-                    target
-                ):
-                    continue  # edited by the person, or already current
-            elif path.stem in recorded:
-                continue  # deleted by the person
-            languages_directory().mkdir(parents=True, exist_ok=True)
-            shutil.copyfile(path, target)
-        except OSError as error:
-            logger.warning("Could not install the language %s: %s", path.stem, error)
-            continue
-        recorded[path.stem] = fresh
-        written.append(path.stem)
-    if written:
-        logger.info("Installed languages: %s", ", ".join(written))
-        _languages = None
-        try:
-            (config_directory() / INSTALLED_FILE).write_text(
-                json.dumps(recorded, indent=2, sort_keys=True) + "\n", encoding="utf-8"
-            )
-        except OSError as error:
-            logger.warning("Could not record the installed languages: %s", error)
-    return written
 
 
 def parse_language(document: object) -> Language:

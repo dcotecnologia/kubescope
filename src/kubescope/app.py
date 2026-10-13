@@ -16,7 +16,7 @@ from kubescope.diagnostics import (
     purge_old_logs,
 )
 from kubescope.fonts import apply_fonts
-from kubescope.i18n import apply_language, install_bundled_languages
+from kubescope.i18n import apply_language
 from kubescope.settings import Settings
 from kubescope.theme import apply_theme, install_community_themes
 from kubescope.window import WorkloadWindow
@@ -78,7 +78,6 @@ def main() -> int:
     apply_fonts(application)
     install_community_themes()
     apply_theme(application, settings.theme)
-    install_bundled_languages()
     apply_language(settings.language)
     window = WorkloadWindow(settings)
     window.show()
