@@ -58,3 +58,20 @@ def test_an_empty_translator_reports_it() -> None:
     assert not i18n.JsonTranslator(
         i18n.Language("X", False, {"A": {"b": "c"}})
     ).isEmpty()
+
+
+def test_the_language_list_is_english_first_then_by_english_name() -> None:
+    directory = i18n.languages_directory()
+    _write(directory / "xx.json", _language("Mine"))  # a code Qt does not know
+    i18n.reload_languages()
+    try:
+        choices = i18n.language_choices()
+    finally:
+        i18n.reload_languages()
+
+    codes = [code for code, _ in choices]
+    labels = dict(choices)
+    assert codes[0] == "en" and labels["en"] == "English"
+    assert labels["ko"] == "한국어 · Korean" and labels["xx"] == "Mine"
+    named = [label.split(" · ")[-1] for code, label in choices[1:] if code != "xx"]
+    assert named == sorted(named, key=str.casefold)

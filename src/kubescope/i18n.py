@@ -119,6 +119,23 @@ def available_languages() -> dict[str, str]:
     }
 
 
+def language_choices() -> list[tuple[str, str]]:
+    """The languages for a list: English first, then the others by their
+    English name, each shown as its own name followed by the English one, so a
+    language can be found without reading its script."""
+    named = []
+    for code, name in available_languages().items():
+        if code == ENGLISH:
+            continue
+        english = QLocale.languageToString(QLocale(code).language())
+        known = english not in ("C", name)
+        named.append(
+            (english if known else name, code, f"{name} · {english}" if known else name)
+        )
+    named.sort(key=lambda item: item[0].casefold())
+    return [(ENGLISH, "English"), *((code, label) for _, code, label in named)]
+
+
 def resolve_language(choice: str) -> str:
     """Map a stored choice ("auto", "en", "pt") to a supported language
     code."""

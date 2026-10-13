@@ -96,7 +96,7 @@ from kubescope.errors import (
     is_forbidden,
 )
 from kubescope.fonts import code_font
-from kubescope.i18n import apply_language, available_languages
+from kubescope.i18n import apply_language, language_choices
 from kubescope.json_view import restyle, style_json_view
 from kubescope.log_tab import LOG_REFRESH_MS, LogTab
 from kubescope.models import (
@@ -3051,8 +3051,8 @@ class WorkloadWindow(QMainWindow):
         form = self.settings_ui
         form.languageCombo.clear()
         form.languageCombo.addItem(self.tr("Automatic"), "auto")
-        for code, name in available_languages().items():
-            form.languageCombo.addItem(name, code)
+        for code, label in language_choices():
+            form.languageCombo.addItem(label, code)
         form.languageCombo.setCurrentIndex(
             max(form.languageCombo.findData(self.settings.language), 0)
         )
