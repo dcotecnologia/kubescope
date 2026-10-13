@@ -47,7 +47,9 @@ prefer otherwise.
   Secrets that carry the label `owner=helm`, asking the API for their metadata
   alone (`PartialObjectMetadataList`), so the data of a Secret, which holds the
   release and its values, is not even sent to the app. Only the labels name,
-  status and version are used. It needs `list` on `secrets`.
+  status and version are used. The chart and app version of a release come from
+  the labels of the Deployments, StatefulSets and DaemonSets it installed, also
+  metadata only. It needs `list` on `secrets`.
 - **Secret values are never shown.** The Secrets list shows only the type and the
   number of keys. **Details** of a Secret replaces every value in `data` and
   `stringData` with `<redacted>` before it reaches the screen, and drops the

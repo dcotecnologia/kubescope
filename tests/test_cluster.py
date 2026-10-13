@@ -2316,9 +2316,9 @@ def test_get_resources_lists_the_add_ons_of_eks_and_the_helm_releases(
         ("Addon", "vpc-cni", ""),
         ("HelmRelease", "web", "ops"),
     ]
-    assert addons[0].values == ("failed", "rev 1", "Helm")
+    assert addons[0].values == ("failed", "—", "Helm")
     assert addons[1].values == ("ACTIVE", "v1.18.1-eksbuild.3", "EKS")
-    assert addons[2].values == ("deployed", "rev 2", "Helm")  # the latest revision
+    assert addons[2].values == ("deployed", "—", "Helm")  # the latest revision
     secrets = next(call for call in calls if call[0].endswith("/secrets"))
     assert secrets[1] == [("labelSelector", "owner=helm")]
     assert "PartialObjectMetadataList" in secrets[2]  # never the data of a Secret
@@ -2327,6 +2327,55 @@ def test_get_resources_lists_the_add_ons_of_eks_and_the_helm_releases(
     bare = cluster._parse_eks("Addon", {"addonName": "x"}, NETWORK_NOW)
     assert bare.values == ("—", "—", "EKS")
     assert cluster.get_resource_details("ctx", "Addon", "", "vpc-cni")["addonName"]
+
+
+def test_helm_releases_show_the_chart_and_app_version_of_their_workloads(
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(
+        cluster, "_kubeconfig", lambda: _aws_kubeconfig(command="kubelogin")
+    )
+    calls = []
+    workload = {
+        "metadata": {
+            "namespace": "ops",
+            "annotations": {
+                "meta.helm.sh/release-name": "web",
+                "meta.helm.sh/release-namespace": "ops",
+            },
+            "labels": {
+                "helm.sh/chart": "cert-manager-v1.14.0",
+                "app.kubernetes.io/version": "v1.14.0",
+            },
+        }
+    }
+
+    def fake_get_json(path, context, query=None, accept="application/json"):
+        calls.append((path, accept))
+        if path == "/api/v1/namespaces":
+            return {"items": []}
+        if path.endswith("/deployments"):
+            return {"items": [workload]}
+        if path.endswith("/statefulsets"):
+            raise cluster.ClusterError("forbidden")
+        if path.endswith("/secrets"):
+            return {
+                "items": [
+                    _helm_secret("web", 2, "deployed"),
+                    _helm_secret("bare", 1, "deployed"),
+                ]
+            }
+        return {"items": []}
+
+    monkeypatch.setattr(cluster, "_get_json", fake_get_json)
+
+    _, addons = cluster.get_resources("ctx", None, "Addon")
+
+    assert {a.name: a.values[1] for a in addons} == {
+        "web": "chart v1.14.0 · app v1.14.0",
+        "bare": "—",
+    }
+    assert all("PartialObjectMetadataList" in accept for _, accept in calls[1:])
 
 
 def test_outside_eks_the_add_ons_are_the_helm_releases(monkeypatch) -> None:
@@ -2338,7 +2387,7 @@ def test_outside_eks_the_add_ons_are_the_helm_releases(monkeypatch) -> None:
     _, addons = cluster.get_resources("ctx", "ops", "Addon")
 
     assert [(a.kind, a.values) for a in addons] == [
-        ("HelmRelease", ("deployed", "rev 3", "Helm"))
+        ("HelmRelease", ("deployed", "—", "Helm"))
     ]
 
 

@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file. The format 
 
 ### Changed
 
+- Helm releases in Add-ons show the chart and app version, read from the labels of the workloads they installed, instead of only the revision by @danilogco
 - Details and Logs no longer have an entry in the side menu: each one opens as a tab in the top bar, next to the pinned lists, with a × to close it by @danilogco
 
 ### Fixed

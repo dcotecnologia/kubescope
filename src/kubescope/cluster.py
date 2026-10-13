@@ -1475,12 +1475,66 @@ def _helm_revisions(
     return revisions
 
 
+_CHART_LABEL = re.compile(r"^.*?-(v?\d[^\s]*)$")
+
+
+def _helm_versions(
+    context: str, namespace: str | None
+) -> dict[tuple[str, str], tuple[str, str]]:
+    """The chart and app version of each Helm release, from the labels of the
+    workloads it installed.
+
+    The Secret of a release holds them too, but with its values, so it
+    is not read. A kind that cannot be listed adds nothing.
+    """
+    versions: dict[tuple[str, str], tuple[str, str]] = {}
+    for resource in ("deployments", "statefulsets", "daemonsets"):
+        try:
+            document = _get_json(
+                _resource_path(resource, namespace), context, None, _METADATA_ONLY
+            )
+        except ClusterError:
+            continue
+        for item in document.get("items") or []:
+            metadata = item.get("metadata") or {}
+            annotations = metadata.get("annotations") or {}
+            labels = metadata.get("labels") or {}
+            release = annotations.get("meta.helm.sh/release-name")
+            if not release:
+                continue
+            match = _CHART_LABEL.match(labels.get("helm.sh/chart") or "")
+            chart = match.group(1) if match else ""
+            app = labels.get("app.kubernetes.io/version") or ""
+            key = (
+                annotations.get("meta.helm.sh/release-namespace")
+                or metadata.get("namespace")
+                or "default",
+                release,
+            )
+            if (chart or app) and key not in versions:
+                versions[key] = (chart, app)
+    return versions
+
+
+def _helm_version_text(versions: tuple[str, str] | None) -> str:
+    """Always the chart and the app, the missing one as a dash, like the other
+    columns."""
+    if not versions:
+        return _NO_VALUE
+    chart, app = versions
+    return f"chart {chart or _NO_VALUE} · app {app or _NO_VALUE}"
+
+
 def _helm_releases(
     context: str, namespace: str | None, now: datetime
 ) -> list[ClusterResource]:
     """Each Helm release once, as its latest revision says."""
+    revisions_list, versions = _together(
+        partial(_helm_revisions, context, namespace),
+        partial(_helm_versions, context, namespace),
+    )
     releases: dict[tuple[str, str], list[dict[str, Any]]] = {}
-    for revision in _helm_revisions(context, namespace):
+    for revision in revisions_list:
         releases.setdefault((revision["namespace"], revision["name"]), []).append(
             revision
         )
@@ -1493,7 +1547,11 @@ def _helm_releases(
                 namespace=release_namespace,
                 kind="HelmRelease",
                 name=name,
-                values=(latest["status"], f"rev {latest['revision']}", "Helm"),
+                values=(
+                    latest["status"],
+                    _helm_version_text(versions.get((release_namespace, name))),
+                    "Helm",
+                ),
                 age=_item_age(
                     {"metadata": {"creationTimestamp": first["created"]}}, now
                 ),
