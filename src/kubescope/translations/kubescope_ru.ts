@@ -70,17 +70,27 @@
         <translation>Вашему пользователю не разрешено читать этот ресурс.</translation>
     </message>
     <message>
-        <location filename="../errors.py" line="150"/>
+        <location filename="../errors.py" line="143"/>
+        <source>No network connection</source>
+        <translation>Нет подключения к сети</translation>
+    </message>
+    <message>
+        <location filename="../errors.py" line="144"/>
+        <source>Check your internet connection or VPN and refresh.</source>
+        <translation>Проверьте подключение к интернету или VPN и обновите.</translation>
+    </message>
+    <message>
+        <location filename="../errors.py" line="165"/>
         <source>Cluster unreachable</source>
         <translation>Кластер недоступен</translation>
     </message>
     <message>
-        <location filename="../errors.py" line="151"/>
+        <location filename="../errors.py" line="166"/>
         <source>Check your network or VPN and that the cluster is running.</source>
         <translation>Проверьте сеть или VPN и убедитесь, что кластер запущен.</translation>
     </message>
     <message>
-        <location filename="../errors.py" line="157"/>
+        <location filename="../errors.py" line="172"/>
         <source>Something went wrong</source>
         <translation>Что-то пошло не так</translation>
     </message>

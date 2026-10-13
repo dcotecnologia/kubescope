@@ -70,17 +70,27 @@
         <translation>आपके उपयोगकर्ता को यह संसाधन पढ़ने की अनुमति नहीं है।</translation>
     </message>
     <message>
-        <location filename="../errors.py" line="150"/>
+        <location filename="../errors.py" line="143"/>
+        <source>No network connection</source>
+        <translation>नेटवर्क कनेक्शन नहीं है</translation>
+    </message>
+    <message>
+        <location filename="../errors.py" line="144"/>
+        <source>Check your internet connection or VPN and refresh.</source>
+        <translation>अपना इंटरनेट कनेक्शन या VPN जाँचें और रीफ़्रेश करें।</translation>
+    </message>
+    <message>
+        <location filename="../errors.py" line="165"/>
         <source>Cluster unreachable</source>
         <translation>क्लस्टर तक पहुँच नहीं हो पा रही</translation>
     </message>
     <message>
-        <location filename="../errors.py" line="151"/>
+        <location filename="../errors.py" line="166"/>
         <source>Check your network or VPN and that the cluster is running.</source>
         <translation>अपना नेटवर्क या VPN जाँचें और देखें कि क्लस्टर चल रहा है।</translation>
     </message>
     <message>
-        <location filename="../errors.py" line="157"/>
+        <location filename="../errors.py" line="172"/>
         <source>Something went wrong</source>
         <translation>कुछ गड़बड़ हो गई</translation>
     </message>

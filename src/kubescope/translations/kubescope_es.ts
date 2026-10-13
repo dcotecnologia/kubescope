@@ -70,17 +70,27 @@
         <translation>Su usuario no tiene permiso para leer este recurso.</translation>
     </message>
     <message>
-        <location filename="../errors.py" line="150"/>
+        <location filename="../errors.py" line="143"/>
+        <source>No network connection</source>
+        <translation>Sin conexión de red</translation>
+    </message>
+    <message>
+        <location filename="../errors.py" line="144"/>
+        <source>Check your internet connection or VPN and refresh.</source>
+        <translation>Comprueba tu conexión a internet o VPN y actualiza.</translation>
+    </message>
+    <message>
+        <location filename="../errors.py" line="165"/>
         <source>Cluster unreachable</source>
         <translation>Clúster inaccesible</translation>
     </message>
     <message>
-        <location filename="../errors.py" line="151"/>
+        <location filename="../errors.py" line="166"/>
         <source>Check your network or VPN and that the cluster is running.</source>
         <translation>Revise su red o VPN y que el clúster esté en ejecución.</translation>
     </message>
     <message>
-        <location filename="../errors.py" line="157"/>
+        <location filename="../errors.py" line="172"/>
         <source>Something went wrong</source>
         <translation>Algo salió mal</translation>
     </message>
