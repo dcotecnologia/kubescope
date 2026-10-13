@@ -22,6 +22,7 @@ LANGUAGES = {
     "ar": "العربية",
     "hi": "हिन्दी",
     "ru": "Русский",
+    "ko": "한국어",
 }
 LANGUAGE_CHOICES = ("auto", *LANGUAGES)
 

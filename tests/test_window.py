@@ -284,6 +284,7 @@ def test_every_new_language_is_bundled_and_arabic_mirrors_the_layout() -> None:
         "zh": "刷新",
         "ja": "更新",
         "ar": "تحديث",
+        "ko": "새로 고침",
     }
     try:
         for code, text in expected.items():

@@ -131,249 +131,249 @@
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../window.py" line="1540"/>
-        <location filename="../window.py" line="1569"/>
+        <location filename="../window.py" line="1562"/>
+        <location filename="../window.py" line="1591"/>
         <source>TYPE</source>
         <translation>类型</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1541"/>
+        <location filename="../window.py" line="1563"/>
         <source>CLUSTER IP</source>
         <translation>集群 IP</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1542"/>
+        <location filename="../window.py" line="1564"/>
         <source>EXTERNAL IP</source>
         <translation>外部 IP</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1543"/>
-        <location filename="../window.py" line="1547"/>
-        <location filename="../window.py" line="1555"/>
+        <location filename="../window.py" line="1565"/>
+        <location filename="../window.py" line="1569"/>
+        <location filename="../window.py" line="1577"/>
         <source>PORTS</source>
         <translation>端口</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1546"/>
+        <location filename="../window.py" line="1568"/>
         <source>ADDRESS TYPE</source>
         <translation>地址类型</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1548"/>
-        <location filename="../window.py" line="1550"/>
+        <location filename="../window.py" line="1570"/>
+        <location filename="../window.py" line="1572"/>
         <source>ENDPOINTS</source>
         <translation>ENDPOINTS</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1552"/>
+        <location filename="../window.py" line="1574"/>
         <source>CLASS</source>
         <translation>类</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1553"/>
+        <location filename="../window.py" line="1575"/>
         <source>HOSTS</source>
         <translation>主机</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1554"/>
+        <location filename="../window.py" line="1576"/>
         <source>ADDRESS</source>
         <translation>地址</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1558"/>
+        <location filename="../window.py" line="1580"/>
         <source>CONTROLLER</source>
         <translation>控制器</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1559"/>
+        <location filename="../window.py" line="1581"/>
         <source>PARAMETERS</source>
         <translation>参数</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1562"/>
+        <location filename="../window.py" line="1584"/>
         <source>POD SELECTOR</source>
         <translation>POD 选择器</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1563"/>
+        <location filename="../window.py" line="1585"/>
         <source>POLICY TYPES</source>
         <translation>策略类型</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1566"/>
-        <location filename="../window.py" line="1570"/>
+        <location filename="../window.py" line="1588"/>
+        <location filename="../window.py" line="1592"/>
         <source>DATA</source>
         <translation>数据</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1573"/>
+        <location filename="../window.py" line="1595"/>
         <source>USAGE</source>
         <translation>用量</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1576"/>
+        <location filename="../window.py" line="1598"/>
         <source>TYPES</source>
         <translation>类型</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1579"/>
+        <location filename="../window.py" line="1601"/>
         <source>REFERENCE</source>
         <translation>引用</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1580"/>
+        <location filename="../window.py" line="1602"/>
         <source>MIN PODS</source>
         <translation>最小 POD 数</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1581"/>
+        <location filename="../window.py" line="1603"/>
         <source>MAX PODS</source>
         <translation>最大 POD 数</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1582"/>
+        <location filename="../window.py" line="1604"/>
         <source>REPLICAS</source>
         <translation>副本</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1585"/>
+        <location filename="../window.py" line="1607"/>
         <source>MIN AVAILABLE</source>
         <translation>最小可用</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1586"/>
+        <location filename="../window.py" line="1608"/>
         <source>MAX UNAVAILABLE</source>
         <translation>最大不可用</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1587"/>
+        <location filename="../window.py" line="1609"/>
         <source>ALLOWED DISRUPTIONS</source>
         <translation>允许的中断</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1590"/>
+        <location filename="../window.py" line="1612"/>
         <source>VALUE</source>
         <translation>值</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1591"/>
+        <location filename="../window.py" line="1613"/>
         <source>GLOBAL DEFAULT</source>
         <translation>全局默认</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1594"/>
+        <location filename="../window.py" line="1616"/>
         <source>HANDLER</source>
         <translation>处理程序</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1597"/>
+        <location filename="../window.py" line="1619"/>
         <source>HOLDER</source>
         <translation>持有者</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1600"/>
-        <location filename="../window.py" line="1603"/>
+        <location filename="../window.py" line="1622"/>
+        <location filename="../window.py" line="1625"/>
         <source>WEBHOOKS</source>
         <translation>WEBHOOKS</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1607"/>
+        <location filename="../window.py" line="1629"/>
         <source>INSTANCE TYPES</source>
         <translation>实例类型</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1608"/>
+        <location filename="../window.py" line="1630"/>
         <source>NODES</source>
         <translation>节点数</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1609"/>
+        <location filename="../window.py" line="1631"/>
         <source>AMI TYPE</source>
         <translation>AMI 类型</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1610"/>
+        <location filename="../window.py" line="1632"/>
         <source>AMI VERSION</source>
         <translation>AMI 版本</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1614"/>
+        <location filename="../window.py" line="1636"/>
         <location filename="../ui/main_window.ui" line="2557"/>
         <source>VERSION</source>
         <translation>版本</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1615"/>
+        <location filename="../window.py" line="1637"/>
         <source>SOURCE</source>
         <translation>来源</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1625"/>
+        <location filename="../window.py" line="1647"/>
         <source>COMPLETIONS</source>
         <translation>完成数</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1626"/>
+        <location filename="../window.py" line="1648"/>
         <source>SCHEDULE</source>
         <translation>计划</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1627"/>
+        <location filename="../window.py" line="1649"/>
         <location filename="../ui/main_window.ui" line="2018"/>
         <source>READY</source>
         <translation>就绪</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1632"/>
-        <location filename="../window.py" line="1648"/>
+        <location filename="../window.py" line="1654"/>
+        <location filename="../window.py" line="1670"/>
         <location filename="../ui/main_window.ui" line="1826"/>
         <location filename="../ui/main_window.ui" line="2003"/>
         <source>NAMESPACE</source>
         <translation>NAMESPACE</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1634"/>
-        <location filename="../window.py" line="1650"/>
+        <location filename="../window.py" line="1656"/>
+        <location filename="../window.py" line="1672"/>
         <location filename="../ui/main_window.ui" line="2013"/>
         <source>NAME</source>
         <translation>名称</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1606"/>
-        <location filename="../window.py" line="1613"/>
-        <location filename="../window.py" line="1636"/>
+        <location filename="../window.py" line="1628"/>
+        <location filename="../window.py" line="1635"/>
+        <location filename="../window.py" line="1658"/>
         <location filename="../ui/main_window.ui" line="2023"/>
         <location filename="../ui/main_window.ui" line="2547"/>
         <source>STATUS</source>
         <translation>状态</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1637"/>
+        <location filename="../window.py" line="1659"/>
         <location filename="../ui/main_window.ui" line="2562"/>
         <source>CPU</source>
         <translation>CPU</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1638"/>
+        <location filename="../window.py" line="1660"/>
         <location filename="../ui/main_window.ui" line="2567"/>
         <source>MEMORY</source>
         <translation>内存</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1639"/>
+        <location filename="../window.py" line="1661"/>
         <source>RESTARTS</source>
         <translation>重启次数</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1640"/>
-        <location filename="../window.py" line="1652"/>
+        <location filename="../window.py" line="1662"/>
+        <location filename="../window.py" line="1674"/>
         <location filename="../ui/main_window.ui" line="2028"/>
         <location filename="../ui/main_window.ui" line="2577"/>
         <source>AGE</source>
         <translation>存在时间</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1649"/>
+        <location filename="../window.py" line="1671"/>
         <location filename="../ui/main_window.ui" line="2008"/>
         <source>KIND</source>
         <translation>KIND</translation>
@@ -709,31 +709,31 @@ Resources in read-only mode</source>
 <context>
     <name>OverviewPage</name>
     <message>
-        <location filename="../window.py" line="2030"/>
+        <location filename="../window.py" line="2052"/>
         <location filename="../ui/overview_page.ui" line="194"/>
         <source>nodes ready</source>
         <translation>个节点就绪</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2046"/>
+        <location filename="../window.py" line="2068"/>
         <location filename="../ui/overview_page.ui" line="315"/>
         <source>cores requested / allocatable</source>
         <translation>已请求 / 可分配核心数</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2060"/>
+        <location filename="../window.py" line="2082"/>
         <location filename="../ui/overview_page.ui" line="382"/>
         <source>requested / allocatable</source>
         <translation>已请求 / 可分配</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2079"/>
+        <location filename="../window.py" line="2101"/>
         <location filename="../ui/overview_page.ui" line="456"/>
         <source>in the cluster</source>
         <translation>在集群中</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2081"/>
+        <location filename="../window.py" line="2103"/>
         <location filename="../ui/overview_page.ui" line="510"/>
         <location filename="../ui/overview_page.ui" line="564"/>
         <location filename="../ui/overview_page.ui" line="618"/>
@@ -852,7 +852,7 @@ Resources in read-only mode</source>
 <context>
     <name>SettingsPage</name>
     <message>
-        <location filename="../window.py" line="3068"/>
+        <location filename="../window.py" line="3090"/>
         <location filename="../ui/settings_page.ui" line="514"/>
         <source>Give your contexts friendlier names. Leave a name empty to keep the original one.</source>
         <translation>为您的上下文起更易读的名称。名称留空则保留原名。</translation>
@@ -1259,9 +1259,9 @@ Resources in read-only mode</source>
     </message>
     <message>
         <location filename="../window.py" line="722"/>
-        <location filename="../window.py" line="2299"/>
-        <location filename="../window.py" line="2322"/>
-        <location filename="../window.py" line="3306"/>
+        <location filename="../window.py" line="2321"/>
+        <location filename="../window.py" line="2344"/>
+        <location filename="../window.py" line="3328"/>
         <source>All namespaces</source>
         <translation>所有 namespaces</translation>
     </message>
@@ -1281,1137 +1281,1137 @@ Resources in read-only mode</source>
         <translation>在 kubeconfig 中未找到上下文</translation>
     </message>
     <message>
-        <location filename="../window.py" line="892"/>
-        <location filename="../window.py" line="970"/>
+        <location filename="../window.py" line="913"/>
+        <location filename="../window.py" line="991"/>
         <source>Unpin from the top</source>
         <translation>从顶部取消固定</translation>
     </message>
     <message>
-        <location filename="../window.py" line="892"/>
+        <location filename="../window.py" line="913"/>
         <source>Pin to the top</source>
         <translation>固定到顶部</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1008"/>
+        <location filename="../window.py" line="1029"/>
         <source>Close</source>
         <translation>关闭</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1055"/>
+        <location filename="../window.py" line="1076"/>
         <source>Status</source>
         <translation>状态</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1056"/>
+        <location filename="../window.py" line="1077"/>
         <source>Kubernetes version</source>
         <translation>Kubernetes 版本</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1057"/>
+        <location filename="../window.py" line="1078"/>
         <source>Platform version</source>
         <translation>平台版本</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1058"/>
+        <location filename="../window.py" line="1079"/>
         <source>Created</source>
         <translation>创建时间</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1059"/>
+        <location filename="../window.py" line="1080"/>
         <source>Provider</source>
         <translation>提供商</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1062"/>
+        <location filename="../window.py" line="1083"/>
         <source>API server endpoint</source>
         <translation>API 服务器端点</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1063"/>
+        <location filename="../window.py" line="1084"/>
         <source>Cluster ARN</source>
         <translation>集群 ARN</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1064"/>
+        <location filename="../window.py" line="1085"/>
         <source>Cluster IAM role ARN</source>
         <translation>集群 IAM 角色 ARN</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1065"/>
+        <location filename="../window.py" line="1086"/>
         <source>OpenID Connect provider URL</source>
         <translation>OpenID Connect 提供商 URL</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1073"/>
+        <location filename="../window.py" line="1094"/>
         <source>VPC</source>
         <translation>VPC</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1074"/>
+        <location filename="../window.py" line="1095"/>
         <source>Cluster security group</source>
         <translation>集群安全组</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1076"/>
+        <location filename="../window.py" line="1097"/>
         <source>Additional security groups</source>
         <translation>附加安全组</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1077"/>
+        <location filename="../window.py" line="1098"/>
         <source>None</source>
         <translation>无</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1080"/>
+        <location filename="../window.py" line="1101"/>
         <source>API server endpoint access</source>
         <translation>API 服务器端点访问</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1083"/>
+        <location filename="../window.py" line="1104"/>
         <source>Cluster IP address family</source>
         <translation>集群 IP 地址族</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1084"/>
+        <location filename="../window.py" line="1105"/>
         <source>Service IPv4 range</source>
         <translation>服务 IPv4 范围</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1086"/>
+        <location filename="../window.py" line="1107"/>
         <source>Public access source allowlist</source>
         <translation>公共访问来源允许列表</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1089"/>
+        <location filename="../window.py" line="1110"/>
         <source>Subnets</source>
         <translation>子网</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1100"/>
+        <location filename="../window.py" line="1121"/>
         <source>Creating</source>
         <translation>创建中</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1101"/>
+        <location filename="../window.py" line="1122"/>
         <source>Updating</source>
         <translation>更新中</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1102"/>
+        <location filename="../window.py" line="1123"/>
         <source>Deleting</source>
         <translation>删除中</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1105"/>
+        <location filename="../window.py" line="1126"/>
         <source>Creation failed</source>
         <translation>创建失败</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1106"/>
+        <location filename="../window.py" line="1127"/>
         <source>Update failed</source>
         <translation>更新失败</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1107"/>
+        <location filename="../window.py" line="1128"/>
         <source>Deletion failed</source>
         <translation>删除失败</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1109"/>
+        <location filename="../window.py" line="1130"/>
         <source>Deployed</source>
         <translation>已部署</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1110"/>
+        <location filename="../window.py" line="1131"/>
         <source>Superseded</source>
         <translation>已被取代</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1111"/>
+        <location filename="../window.py" line="1132"/>
         <source>Uninstalled</source>
         <translation>已卸载</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1112"/>
+        <location filename="../window.py" line="1133"/>
         <source>Uninstalling</source>
         <translation>卸载中</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1113"/>
+        <location filename="../window.py" line="1134"/>
         <source>Pending install</source>
         <translation>等待安装</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1114"/>
+        <location filename="../window.py" line="1135"/>
         <source>Pending upgrade</source>
         <translation>等待升级</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1115"/>
+        <location filename="../window.py" line="1136"/>
         <source>Pending rollback</source>
         <translation>等待回滚</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1116"/>
+        <location filename="../window.py" line="1137"/>
         <source>Public</source>
         <translation>公开</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1117"/>
+        <location filename="../window.py" line="1138"/>
         <source>Private</source>
         <translation>私有</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1118"/>
+        <location filename="../window.py" line="1139"/>
         <source>Public and private</source>
         <translation>公开和私有</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1210"/>
+        <location filename="../window.py" line="1232"/>
         <source>Overview</source>
         <translation>概览</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1211"/>
+        <location filename="../window.py" line="1233"/>
         <source>Cluster resources and capacity</source>
         <translation>集群资源与容量</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1213"/>
+        <location filename="../window.py" line="1235"/>
         <source>Details &amp; Logs</source>
         <translation>详情与日志</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1215"/>
+        <location filename="../window.py" line="1237"/>
         <source>Resource details and Pod logs, one tab each</source>
         <translation>资源详情和 Pod 日志，各占一个标签页</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1218"/>
+        <location filename="../window.py" line="1240"/>
         <source>Settings</source>
         <translation>设置</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1219"/>
+        <location filename="../window.py" line="1241"/>
         <source>Preferences and context names</source>
         <translation>偏好设置和上下文名称</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1221"/>
+        <location filename="../window.py" line="1243"/>
         <source>Workloads overview</source>
         <translation>Workloads 概览</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1223"/>
+        <location filename="../window.py" line="1245"/>
         <source>Health of every workload kind and the latest events</source>
         <translation>每种 workload 的健康状况和最新事件</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1227"/>
-        <location filename="../window.py" line="1877"/>
+        <location filename="../window.py" line="1249"/>
+        <location filename="../window.py" line="1899"/>
         <source>Pods</source>
         <translation>Pods</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1227"/>
+        <location filename="../window.py" line="1249"/>
         <source>Pods of the cluster</source>
         <translation>集群的 Pods</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1229"/>
-        <location filename="../window.py" line="1878"/>
+        <location filename="../window.py" line="1251"/>
+        <location filename="../window.py" line="1900"/>
         <source>Deployments</source>
         <translation>Deployments</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1230"/>
+        <location filename="../window.py" line="1252"/>
         <source>Deployments of the cluster</source>
         <translation>集群的 Deployments</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1233"/>
-        <location filename="../window.py" line="1880"/>
+        <location filename="../window.py" line="1255"/>
+        <location filename="../window.py" line="1902"/>
         <source>StatefulSets</source>
         <translation>StatefulSets</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1234"/>
+        <location filename="../window.py" line="1256"/>
         <source>StatefulSets of the cluster</source>
         <translation>集群的 StatefulSets</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1237"/>
-        <location filename="../window.py" line="1879"/>
+        <location filename="../window.py" line="1259"/>
+        <location filename="../window.py" line="1901"/>
         <source>DaemonSets</source>
         <translation>DaemonSets</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1238"/>
+        <location filename="../window.py" line="1260"/>
         <source>DaemonSets of the cluster</source>
         <translation>集群的 DaemonSets</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1241"/>
-        <location filename="../window.py" line="1881"/>
+        <location filename="../window.py" line="1263"/>
+        <location filename="../window.py" line="1903"/>
         <source>ReplicaSets</source>
         <translation>ReplicaSets</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1242"/>
+        <location filename="../window.py" line="1264"/>
         <source>ReplicaSets of the cluster</source>
         <translation>集群的 ReplicaSets</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1245"/>
+        <location filename="../window.py" line="1267"/>
         <source>ReplicationControllers</source>
         <translation>ReplicationControllers</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1246"/>
+        <location filename="../window.py" line="1268"/>
         <source>ReplicationControllers of the cluster</source>
         <translation>集群的 ReplicationControllers</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1248"/>
-        <location filename="../window.py" line="1882"/>
+        <location filename="../window.py" line="1270"/>
+        <location filename="../window.py" line="1904"/>
         <source>Jobs</source>
         <translation>Jobs</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1248"/>
+        <location filename="../window.py" line="1270"/>
         <source>Jobs of the cluster</source>
         <translation>集群的 Jobs</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1249"/>
-        <location filename="../window.py" line="1883"/>
+        <location filename="../window.py" line="1271"/>
+        <location filename="../window.py" line="1905"/>
         <source>CronJobs</source>
         <translation>CronJobs</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1249"/>
+        <location filename="../window.py" line="1271"/>
         <source>CronJobs of the cluster</source>
         <translation>集群的 CronJobs</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1250"/>
+        <location filename="../window.py" line="1272"/>
         <source>Services</source>
         <translation>Services</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1250"/>
+        <location filename="../window.py" line="1272"/>
         <source>Services of the cluster</source>
         <translation>集群的 Services</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1252"/>
+        <location filename="../window.py" line="1274"/>
         <source>Endpoint Slices</source>
         <translation>Endpoint Slices</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1253"/>
+        <location filename="../window.py" line="1275"/>
         <source>Endpoint Slices of the cluster</source>
         <translation>集群的 Endpoint Slices</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1256"/>
+        <location filename="../window.py" line="1278"/>
         <source>Endpoints</source>
         <translation>Endpoints</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1257"/>
+        <location filename="../window.py" line="1279"/>
         <source>Endpoints of the cluster</source>
         <translation>集群的 Endpoints</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1260"/>
+        <location filename="../window.py" line="1282"/>
         <source>Ingresses</source>
         <translation>Ingresses</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1261"/>
+        <location filename="../window.py" line="1283"/>
         <source>Ingresses of the cluster</source>
         <translation>集群的 Ingresses</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1264"/>
+        <location filename="../window.py" line="1286"/>
         <source>Ingress Classes</source>
         <translation>Ingress Classes</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1265"/>
+        <location filename="../window.py" line="1287"/>
         <source>Ingress Classes of the cluster</source>
         <translation>集群的 Ingress Classes</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1268"/>
+        <location filename="../window.py" line="1290"/>
         <source>Network Policies</source>
         <translation>Network Policies</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1269"/>
+        <location filename="../window.py" line="1291"/>
         <source>Network Policies of the cluster</source>
         <translation>集群的 Network Policies</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1272"/>
+        <location filename="../window.py" line="1294"/>
         <source>Config Maps</source>
         <translation>Config Maps</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1273"/>
+        <location filename="../window.py" line="1295"/>
         <source>Config Maps of the cluster</source>
         <translation>集群的 Config Maps</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1276"/>
+        <location filename="../window.py" line="1298"/>
         <source>Secrets</source>
         <translation>Secrets</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1277"/>
+        <location filename="../window.py" line="1299"/>
         <source>Secrets of the cluster</source>
         <translation>集群的 Secrets</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1280"/>
+        <location filename="../window.py" line="1302"/>
         <source>Resource Quotas</source>
         <translation>Resource Quotas</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1281"/>
+        <location filename="../window.py" line="1303"/>
         <source>Resource Quotas of the cluster</source>
         <translation>集群的 Resource Quotas</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1284"/>
+        <location filename="../window.py" line="1306"/>
         <source>Limit Ranges</source>
         <translation>Limit Ranges</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1285"/>
+        <location filename="../window.py" line="1307"/>
         <source>Limit Ranges of the cluster</source>
         <translation>集群的 Limit Ranges</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1288"/>
+        <location filename="../window.py" line="1310"/>
         <source>Horizontal Pod Autoscalers</source>
         <translation>Horizontal Pod Autoscalers</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1289"/>
+        <location filename="../window.py" line="1311"/>
         <source>Horizontal Pod Autoscalers of the cluster</source>
         <translation>集群的 Horizontal Pod Autoscalers</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1292"/>
+        <location filename="../window.py" line="1314"/>
         <source>Pod Disruption Budgets</source>
         <translation>Pod Disruption Budgets</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1293"/>
+        <location filename="../window.py" line="1315"/>
         <source>Pod Disruption Budgets of the cluster</source>
         <translation>集群的 Pod Disruption Budgets</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1296"/>
+        <location filename="../window.py" line="1318"/>
         <source>Priority Classes</source>
         <translation>Priority Classes</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1297"/>
+        <location filename="../window.py" line="1319"/>
         <source>Priority Classes of the cluster</source>
         <translation>集群的 Priority Classes</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1300"/>
+        <location filename="../window.py" line="1322"/>
         <source>Runtime Classes</source>
         <translation>Runtime Classes</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1301"/>
+        <location filename="../window.py" line="1323"/>
         <source>Runtime Classes of the cluster</source>
         <translation>集群的 Runtime Classes</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1304"/>
+        <location filename="../window.py" line="1326"/>
         <source>Leases</source>
         <translation>Leases</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1305"/>
+        <location filename="../window.py" line="1327"/>
         <source>Leases of the cluster</source>
         <translation>集群的 Leases</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1308"/>
+        <location filename="../window.py" line="1330"/>
         <source>Mutating Webhook Configurations</source>
         <translation>Mutating Webhook Configurations</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1309"/>
+        <location filename="../window.py" line="1331"/>
         <source>Mutating Webhook Configurations of the cluster</source>
         <translation>集群的 Mutating Webhook Configurations</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1312"/>
+        <location filename="../window.py" line="1334"/>
         <source>Validating Webhook Configurations</source>
         <translation>Validating Webhook Configurations</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1313"/>
+        <location filename="../window.py" line="1335"/>
         <source>Validating Webhook Configurations of the cluster</source>
         <translation>集群的 Validating Webhook Configurations</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1316"/>
+        <location filename="../window.py" line="1338"/>
         <source>Node Groups</source>
         <translation>Node Groups</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1317"/>
+        <location filename="../window.py" line="1339"/>
         <source>Node Groups of the cluster</source>
         <translation>集群的 Node Groups</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1320"/>
+        <location filename="../window.py" line="1342"/>
         <source>Add-ons</source>
         <translation>Add-ons</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1321"/>
+        <location filename="../window.py" line="1343"/>
         <source>Add-ons of the cluster</source>
         <translation>集群的 Add-ons</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1330"/>
+        <location filename="../window.py" line="1352"/>
         <source>Version {version}</source>
         <translation>版本 {version}</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1333"/>
+        <location filename="../window.py" line="1355"/>
         <source>Open the project on GitHub</source>
         <translation>在 GitHub 上打开项目</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1367"/>
+        <location filename="../window.py" line="1389"/>
         <source>Up to date</source>
         <translation>已是最新</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1368"/>
+        <location filename="../window.py" line="1390"/>
         <source>Could not check</source>
         <translation>无法检查</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1379"/>
+        <location filename="../window.py" line="1401"/>
         <source>Check for updates</source>
         <translation>检查更新</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1380"/>
+        <location filename="../window.py" line="1402"/>
         <source>Checking for updates...</source>
         <translation>正在检查更新...</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1381"/>
+        <location filename="../window.py" line="1403"/>
         <source>KubeScope is up to date. Click to check again.</source>
         <translation>KubeScope 已是最新版本。点击可再次检查。</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1382"/>
+        <location filename="../window.py" line="1404"/>
         <source>Could not check for updates. Click to try again.</source>
         <translation>无法检查更新。点击重试。</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1388"/>
+        <location filename="../window.py" line="1410"/>
         <source>Update available: {version}. Click to open the download page; right-click to check again.</source>
         <translation>有可用更新：{version}。点击打开下载页面；右键再次检查。</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1396"/>
+        <location filename="../window.py" line="1418"/>
         <source>Update available</source>
         <translation>有可用更新</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1398"/>
+        <location filename="../window.py" line="1420"/>
         <source>Download KubeScope {version}</source>
         <translation>下载 KubeScope {version}</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1434"/>
+        <location filename="../window.py" line="1456"/>
         <source>Check for updates again</source>
         <translation>再次检查更新</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1531"/>
-        <location filename="../window.py" line="2206"/>
+        <location filename="../window.py" line="1553"/>
+        <location filename="../window.py" line="2228"/>
         <source>Loading resources...</source>
         <translation>正在加载资源...</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1775"/>
+        <location filename="../window.py" line="1797"/>
         <source>Configure AWS credentials ({profile})</source>
         <translation>配置 AWS 凭据（{profile}）</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1779"/>
+        <location filename="../window.py" line="1801"/>
         <source>AWS credentials for profile {profile} are missing or invalid</source>
         <translation>配置文件 {profile} 的 AWS 凭据缺失或无效</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1784"/>
+        <location filename="../window.py" line="1806"/>
         <source>Sign in to {provider}</source>
         <translation>登录 {provider}</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1787"/>
+        <location filename="../window.py" line="1809"/>
         <source>Not signed in to {provider}</source>
         <translation>未登录 {provider}</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1791"/>
+        <location filename="../window.py" line="1813"/>
         <source>Sign in to {provider} ({profile})</source>
         <translation>登录 {provider}（{profile}）</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1797"/>
+        <location filename="../window.py" line="1819"/>
         <source>Not signed in to {provider} (profile {profile})</source>
         <translation>未登录 {provider}（配置文件 {profile}）</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1818"/>
+        <location filename="../window.py" line="1840"/>
         <source>Finish in the terminal that opened, then press Refresh.</source>
         <translation>请在打开的终端中完成，然后点击“刷新”。</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1837"/>
+        <location filename="../window.py" line="1859"/>
         <source>Loading workloads...</source>
         <translation>正在加载 workloads...</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1898"/>
+        <location filename="../window.py" line="1920"/>
         <source>Could not read: {names}</source>
         <translation>无法读取：{names}</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1958"/>
+        <location filename="../window.py" line="1980"/>
         <source>Loading cluster data...</source>
         <translation>正在加载集群数据...</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2039"/>
+        <location filename="../window.py" line="2061"/>
         <source>running · {pending} pending · {failed} failed</source>
         <translation>运行中 · {pending} 个等待中 · {failed} 个失败</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2048"/>
-        <location filename="../window.py" line="2062"/>
+        <location filename="../window.py" line="2070"/>
+        <location filename="../window.py" line="2084"/>
         <source> · usage {value}</source>
         <translation> · 用量 {value}</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2111"/>
+        <location filename="../window.py" line="2133"/>
         <source>Ready</source>
         <translation>就绪</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2111"/>
+        <location filename="../window.py" line="2133"/>
         <source>Not ready</source>
         <translation>未就绪</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2086"/>
+        <location filename="../window.py" line="2108"/>
         <source>Real usage unavailable: metrics-server not found.</source>
         <translation>无法获取实际用量：未找到 metrics-server。</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2223"/>
+        <location filename="../window.py" line="2245"/>
         <source>Refreshing...</source>
         <translation>正在刷新...</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2414"/>
+        <location filename="../window.py" line="2436"/>
         <source>{count} Services in {namespaces} namespaces</source>
         <translation>{namespaces} 个 namespaces 中共 {count} 个 Services</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2416"/>
+        <location filename="../window.py" line="2438"/>
         <source>{count} Endpoint Slices in {namespaces} namespaces</source>
         <translation>{namespaces} 个 namespaces 中共 {count} 个 Endpoint Slices</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2419"/>
+        <location filename="../window.py" line="2441"/>
         <source>{count} Endpoints in {namespaces} namespaces</source>
         <translation>{namespaces} 个 namespaces 中共 {count} 个 Endpoints</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2422"/>
+        <location filename="../window.py" line="2444"/>
         <source>{count} Ingresses in {namespaces} namespaces</source>
         <translation>{namespaces} 个 namespaces 中共 {count} 个 Ingresses</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2424"/>
+        <location filename="../window.py" line="2446"/>
         <source>{count} Ingress Classes in the cluster</source>
         <translation>集群中共 {count} 个 Ingress Classes</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2426"/>
+        <location filename="../window.py" line="2448"/>
         <source>{count} Network Policies in {namespaces} namespaces</source>
         <translation>{namespaces} 个 namespaces 中共 {count} 个 Network Policies</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2429"/>
+        <location filename="../window.py" line="2451"/>
         <source>{count} Config Maps in {namespaces} namespaces</source>
         <translation>{namespaces} 个 namespaces 中共 {count} 个 Config Maps</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2431"/>
+        <location filename="../window.py" line="2453"/>
         <source>{count} Secrets in {namespaces} namespaces</source>
         <translation>{namespaces} 个 namespaces 中共 {count} 个 Secrets</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2433"/>
+        <location filename="../window.py" line="2455"/>
         <source>{count} Resource Quotas in {namespaces} namespaces</source>
         <translation>{namespaces} 个 namespaces 中共 {count} 个 Resource Quotas</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2436"/>
+        <location filename="../window.py" line="2458"/>
         <source>{count} Limit Ranges in {namespaces} namespaces</source>
         <translation>{namespaces} 个 namespaces 中共 {count} 个 Limit Ranges</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2439"/>
+        <location filename="../window.py" line="2461"/>
         <source>{count} Horizontal Pod Autoscalers in {namespaces} namespaces</source>
         <translation>{namespaces} 个 namespaces 中共 {count} 个 Horizontal Pod Autoscalers</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2442"/>
+        <location filename="../window.py" line="2464"/>
         <source>{count} Pod Disruption Budgets in {namespaces} namespaces</source>
         <translation>{namespaces} 个 namespaces 中共 {count} 个 Pod Disruption Budgets</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2444"/>
+        <location filename="../window.py" line="2466"/>
         <source>{count} Leases in {namespaces} namespaces</source>
         <translation>{namespaces} 个 namespaces 中共 {count} 个 Leases</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2446"/>
+        <location filename="../window.py" line="2468"/>
         <source>{count} Priority Classes in the cluster</source>
         <translation>集群中共 {count} 个 Priority Classes</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2448"/>
+        <location filename="../window.py" line="2470"/>
         <source>{count} Runtime Classes in the cluster</source>
         <translation>集群中共 {count} 个 Runtime Classes</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2450"/>
+        <location filename="../window.py" line="2472"/>
         <source>{count} Mutating Webhook Configurations in the cluster</source>
         <translation>集群中共 {count} 个 Mutating Webhook Configurations</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2453"/>
+        <location filename="../window.py" line="2475"/>
         <source>{count} Validating Webhook Configurations in the cluster</source>
         <translation>集群中共 {count} 个 Validating Webhook Configurations</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2455"/>
+        <location filename="../window.py" line="2477"/>
         <source>{count} Node Groups in the cluster</source>
         <translation>集群中共 {count} 个 Node Groups</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2456"/>
+        <location filename="../window.py" line="2478"/>
         <source>{count} Add-ons in the cluster</source>
         <translation>集群中共 {count} 个 Add-ons</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2467"/>
-        <location filename="../window.py" line="2533"/>
+        <location filename="../window.py" line="2489"/>
+        <location filename="../window.py" line="2555"/>
         <source>Running</source>
         <translation>运行中</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1108"/>
-        <location filename="../window.py" line="2468"/>
-        <location filename="../window.py" line="2529"/>
+        <location filename="../window.py" line="1129"/>
+        <location filename="../window.py" line="2490"/>
+        <location filename="../window.py" line="2551"/>
         <source>Pending</source>
         <translation>等待中</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2469"/>
+        <location filename="../window.py" line="2491"/>
         <source>Succeeded</source>
         <translation>已成功</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1104"/>
-        <location filename="../window.py" line="2470"/>
-        <location filename="../window.py" line="2528"/>
+        <location filename="../window.py" line="1125"/>
+        <location filename="../window.py" line="2492"/>
+        <location filename="../window.py" line="2550"/>
         <source>Failed</source>
         <translation>已失败</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2471"/>
+        <location filename="../window.py" line="2493"/>
         <source>Unknown</source>
         <translation>未知</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2515"/>
+        <location filename="../window.py" line="2537"/>
         <source>{count} Pods in {namespaces} namespaces</source>
         <translation>{namespaces} 个 namespaces 中共 {count} 个 Pods</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2523"/>
+        <location filename="../window.py" line="2545"/>
         <source>Healthy</source>
         <translation>正常</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1103"/>
-        <location filename="../window.py" line="2524"/>
+        <location filename="../window.py" line="1124"/>
+        <location filename="../window.py" line="2546"/>
         <source>Degraded</source>
         <translation>降级</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2525"/>
+        <location filename="../window.py" line="2547"/>
         <source>Unavailable</source>
         <translation>不可用</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2526"/>
+        <location filename="../window.py" line="2548"/>
         <source>Scaled to zero</source>
         <translation>已缩容至零</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2527"/>
+        <location filename="../window.py" line="2549"/>
         <source>Complete</source>
         <translation>已完成</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2530"/>
+        <location filename="../window.py" line="2552"/>
         <source>Suspended</source>
         <translation>已暂停</translation>
     </message>
     <message>
-        <location filename="../window.py" line="1099"/>
-        <location filename="../window.py" line="2531"/>
+        <location filename="../window.py" line="1120"/>
+        <location filename="../window.py" line="2553"/>
         <source>Active</source>
         <translation>活动</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2532"/>
+        <location filename="../window.py" line="2554"/>
         <source>Scheduled</source>
         <translation>已计划</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2577"/>
+        <location filename="../window.py" line="2599"/>
         <source>{count} Deployments in {namespaces} namespaces</source>
         <translation>{namespaces} 个 namespaces 中共 {count} 个 Deployments</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2580"/>
+        <location filename="../window.py" line="2602"/>
         <source>{count} StatefulSets in {namespaces} namespaces</source>
         <translation>{namespaces} 个 namespaces 中共 {count} 个 StatefulSets</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2583"/>
+        <location filename="../window.py" line="2605"/>
         <source>{count} DaemonSets in {namespaces} namespaces</source>
         <translation>{namespaces} 个 namespaces 中共 {count} 个 DaemonSets</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2586"/>
+        <location filename="../window.py" line="2608"/>
         <source>{count} ReplicaSets in {namespaces} namespaces</source>
         <translation>{namespaces} 个 namespaces 中共 {count} 个 ReplicaSets</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2589"/>
+        <location filename="../window.py" line="2611"/>
         <source>{count} ReplicationControllers in {namespaces} namespaces</source>
         <translation>{namespaces} 个 namespaces 中共 {count} 个 ReplicationControllers</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2591"/>
+        <location filename="../window.py" line="2613"/>
         <source>{count} Jobs in {namespaces} namespaces</source>
         <translation>{namespaces} 个 namespaces 中共 {count} 个 Jobs</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2592"/>
+        <location filename="../window.py" line="2614"/>
         <source>{count} CronJobs in {namespaces} namespaces</source>
         <translation>{namespaces} 个 namespaces 中共 {count} 个 CronJobs</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2616"/>
+        <location filename="../window.py" line="2638"/>
         <source>{visible} of {total} Pods</source>
         <translation>{total} 个 Pods 中的 {visible} 个</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2617"/>
+        <location filename="../window.py" line="2639"/>
         <source>{visible} of {total} Deployments</source>
         <translation>{total} 个 Deployments 中的 {visible} 个</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2618"/>
+        <location filename="../window.py" line="2640"/>
         <source>{visible} of {total} StatefulSets</source>
         <translation>{total} 个 StatefulSets 中的 {visible} 个</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2619"/>
+        <location filename="../window.py" line="2641"/>
         <source>{visible} of {total} DaemonSets</source>
         <translation>{total} 个 DaemonSets 中的 {visible} 个</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2620"/>
+        <location filename="../window.py" line="2642"/>
         <source>{visible} of {total} ReplicaSets</source>
         <translation>{total} 个 ReplicaSets 中的 {visible} 个</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2622"/>
+        <location filename="../window.py" line="2644"/>
         <source>{visible} of {total} ReplicationControllers</source>
         <translation>{total} 个 ReplicationControllers 中的 {visible} 个</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2624"/>
+        <location filename="../window.py" line="2646"/>
         <source>{visible} of {total} Jobs</source>
         <translation>{total} 个 Jobs 中的 {visible} 个</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2625"/>
+        <location filename="../window.py" line="2647"/>
         <source>{visible} of {total} CronJobs</source>
         <translation>{total} 个 CronJobs 中的 {visible} 个</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2626"/>
+        <location filename="../window.py" line="2648"/>
         <source>{visible} of {total} Services</source>
         <translation>{total} 个 Services 中的 {visible} 个</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2627"/>
+        <location filename="../window.py" line="2649"/>
         <source>{visible} of {total} Endpoint Slices</source>
         <translation>{total} 个 Endpoint Slices 中的 {visible} 个</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2628"/>
+        <location filename="../window.py" line="2650"/>
         <source>{visible} of {total} Endpoints</source>
         <translation>{total} 个 Endpoints 中的 {visible} 个</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2629"/>
+        <location filename="../window.py" line="2651"/>
         <source>{visible} of {total} Ingresses</source>
         <translation>{total} 个 Ingresses 中的 {visible} 个</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2630"/>
+        <location filename="../window.py" line="2652"/>
         <source>{visible} of {total} Ingress Classes</source>
         <translation>{total} 个 Ingress Classes 中的 {visible} 个</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2631"/>
+        <location filename="../window.py" line="2653"/>
         <source>{visible} of {total} Network Policies</source>
         <translation>{total} 个 Network Policies 中的 {visible} 个</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2632"/>
+        <location filename="../window.py" line="2654"/>
         <source>{visible} of {total} Config Maps</source>
         <translation>{total} 个 Config Maps 中的 {visible} 个</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2633"/>
+        <location filename="../window.py" line="2655"/>
         <source>{visible} of {total} Secrets</source>
         <translation>{total} 个 Secrets 中的 {visible} 个</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2634"/>
+        <location filename="../window.py" line="2656"/>
         <source>{visible} of {total} Resource Quotas</source>
         <translation>{total} 个 Resource Quotas 中的 {visible} 个</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2635"/>
+        <location filename="../window.py" line="2657"/>
         <source>{visible} of {total} Limit Ranges</source>
         <translation>{total} 个 Limit Ranges 中的 {visible} 个</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2637"/>
+        <location filename="../window.py" line="2659"/>
         <source>{visible} of {total} Horizontal Pod Autoscalers</source>
         <translation>{total} 个 Horizontal Pod Autoscalers 中的 {visible} 个</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2640"/>
+        <location filename="../window.py" line="2662"/>
         <source>{visible} of {total} Pod Disruption Budgets</source>
         <translation>{total} 个 Pod Disruption Budgets 中的 {visible} 个</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2642"/>
+        <location filename="../window.py" line="2664"/>
         <source>{visible} of {total} Priority Classes</source>
         <translation>{total} 个 Priority Classes 中的 {visible} 个</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2643"/>
+        <location filename="../window.py" line="2665"/>
         <source>{visible} of {total} Runtime Classes</source>
         <translation>{total} 个 Runtime Classes 中的 {visible} 个</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2644"/>
+        <location filename="../window.py" line="2666"/>
         <source>{visible} of {total} Leases</source>
         <translation>{total} 个 Leases 中的 {visible} 个</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2646"/>
+        <location filename="../window.py" line="2668"/>
         <source>{visible} of {total} Mutating Webhook Configurations</source>
         <translation>{total} 个 Mutating Webhook Configurations 中的 {visible} 个</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2649"/>
+        <location filename="../window.py" line="2671"/>
         <source>{visible} of {total} Validating Webhook Configurations</source>
         <translation>{total} 个 Validating Webhook Configurations 中的 {visible} 个</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2651"/>
+        <location filename="../window.py" line="2673"/>
         <source>{visible} of {total} Node Groups</source>
         <translation>{total} 个 Node Groups 中的 {visible} 个</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2652"/>
+        <location filename="../window.py" line="2674"/>
         <source>{visible} of {total} Add-ons</source>
         <translation>{total} 个 Add-ons 中的 {visible} 个</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2698"/>
+        <location filename="../window.py" line="2720"/>
         <source>Loading...</source>
         <translation>正在加载...</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2744"/>
-        <location filename="../window.py" line="2836"/>
+        <location filename="../window.py" line="2766"/>
+        <location filename="../window.py" line="2858"/>
         <source>Pod: {name}</source>
         <translation>Pod：{name}</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2790"/>
+        <location filename="../window.py" line="2812"/>
         <source>Pods of {name}</source>
         <translation>{name} 的 Pods</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2792"/>
+        <location filename="../window.py" line="2814"/>
         <source>{count} Pods in {namespace} / {name}</source>
         <translation>{namespace} / {name} 中共 {count} 个 Pods</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2857"/>
+        <location filename="../window.py" line="2879"/>
         <source>No Pods are associated with this workload</source>
         <translation>此 workload 没有关联的 Pod</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2864"/>
-        <location filename="../window.py" line="2887"/>
+        <location filename="../window.py" line="2886"/>
+        <location filename="../window.py" line="2909"/>
         <source>Logs</source>
         <translation>日志</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2864"/>
+        <location filename="../window.py" line="2886"/>
         <source>This workload has no Pods.</source>
         <translation>此 workload 没有 Pod。</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2873"/>
-        <location filename="../window.py" line="2896"/>
+        <location filename="../window.py" line="2895"/>
+        <location filename="../window.py" line="2918"/>
         <source>View logs</source>
         <translation>查看日志</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2874"/>
+        <location filename="../window.py" line="2896"/>
         <source>Select the Pod:</source>
         <translation>选择 Pod：</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2888"/>
+        <location filename="../window.py" line="2910"/>
         <source>Pod {name} has no containers.</source>
         <translation>Pod {name} 没有容器。</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2897"/>
+        <location filename="../window.py" line="2919"/>
         <source>Select the container of {name}:</source>
         <translation>选择 {name} 的容器：</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2923"/>
+        <location filename="../window.py" line="2945"/>
         <source>Save to a file</source>
         <translation>保存到文件</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2934"/>
+        <location filename="../window.py" line="2956"/>
         <source>Could not save</source>
         <translation>无法保存</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2935"/>
+        <location filename="../window.py" line="2957"/>
         <source>The file could not be written: {reason}</source>
         <translation>无法写入文件：{reason}</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2981"/>
+        <location filename="../window.py" line="3003"/>
         <source>Logs: {pod} / {container}</source>
         <translation>日志：{pod} / {container}</translation>
     </message>
     <message>
-        <location filename="../window.py" line="3031"/>
+        <location filename="../window.py" line="3053"/>
         <source>Automatic</source>
         <translation>自动</translation>
     </message>
     <message>
-        <location filename="../window.py" line="3044"/>
+        <location filename="../window.py" line="3066"/>
         <source>Off by default. When on, KubeScope writes what it does, never Pod logs or resource contents, to {path}. Read it before sharing: it includes context names.</source>
         <translation>默认关闭。开启后，KubeScope 会将其操作记录写入 {path}，但绝不包含 Pod 日志或资源内容。分享前请先阅读：其中包含上下文名称。</translation>
     </message>
     <message>
-        <location filename="../window.py" line="3075"/>
+        <location filename="../window.py" line="3097"/>
         <source>No contexts were found in kubeconfig.</source>
         <translation>在 kubeconfig 中未找到上下文。</translation>
     </message>
     <message>
-        <location filename="../window.py" line="3104"/>
+        <location filename="../window.py" line="3126"/>
         <source>Choose a kubeconfig file</source>
         <translation>选择 kubeconfig 文件</translation>
     </message>
     <message>
-        <location filename="../window.py" line="3150"/>
+        <location filename="../window.py" line="3172"/>
         <source>The sign-in command in row {row} is not valid.</source>
         <translation>第 {row} 行的登录命令无效。</translation>
     </message>
     <message>
-        <location filename="../window.py" line="3163"/>
+        <location filename="../window.py" line="3185"/>
         <source>Light</source>
         <translation>浅色</translation>
     </message>
     <message>
-        <location filename="../window.py" line="3163"/>
+        <location filename="../window.py" line="3185"/>
         <source>Dark</source>
         <translation>深色</translation>
     </message>
     <message>
-        <location filename="../window.py" line="3182"/>
+        <location filename="../window.py" line="3204"/>
         <source>My theme</source>
         <translation>我的主题</translation>
     </message>
     <message>
-        <location filename="../window.py" line="3226"/>
+        <location filename="../window.py" line="3248"/>
         <source>Cache cleared. Everything loads again the next time it is needed.</source>
         <translation>缓存已清除。下次需要时会重新加载所有内容。</translation>
     </message>
     <message>
-        <location filename="../window.py" line="3281"/>
+        <location filename="../window.py" line="3303"/>
         <source>Settings saved.</source>
         <translation>设置已保存。</translation>
     </message>
     <message>
-        <location filename="../window.py" line="3320"/>
+        <location filename="../window.py" line="3342"/>
         <source>Your user is not allowed to {action}. Ask your cluster admin for access.</source>
         <translation>您的用户无权执行此操作（{action}）。请向集群管理员申请访问权限。</translation>
     </message>
     <message>
-        <location filename="../window.py" line="3325"/>
+        <location filename="../window.py" line="3347"/>
         <source>Your user is not allowed to do this. Ask your cluster admin for access.</source>
         <translation>您的用户无权执行此操作。请向集群管理员申请访问权限。</translation>
     </message>
     <message>
-        <location filename="../window.py" line="3344"/>
+        <location filename="../window.py" line="3366"/>
         <source>Query failed</source>
         <translation>查询失败</translation>
     </message>
