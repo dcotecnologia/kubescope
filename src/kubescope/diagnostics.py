@@ -14,6 +14,7 @@ import platform
 import re
 import subprocess
 import sys
+import time
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import IO
@@ -25,6 +26,7 @@ LOG_FILE = "kubescope.log"
 CRASH_FILE = "crash.log"
 MAX_BYTES = 1_000_000
 BACKUPS = 3
+MAX_AGE_DAYS = 30
 _FORMAT = "%(asctime)s %(levelname)-7s %(threadName)s %(name)s: %(message)s"
 
 _SECRETS = (
@@ -64,6 +66,32 @@ class _RedactingFormatter(logging.Formatter):
 
 def log_file() -> Path:
     return log_directory() / LOG_FILE
+
+
+def purge_old_logs(
+    max_age_days: int = MAX_AGE_DAYS,
+    now: float | None = None,
+    keep: tuple[str, ...] = (),
+) -> None:
+    """Delete the debug log, its backups and the crash log not written for
+    longer than `max_age_days`; nothing else in the folder is touched.
+
+    `keep` names files that are open for writing right now.
+    """
+    limit = (time.time() if now is None else now) - max_age_days * 86400
+    for pattern in (f"{LOG_FILE}*", f"{CRASH_FILE}*"):
+        for path in log_directory().glob(pattern):
+            try:
+                if (
+                    path.name not in keep
+                    and path.is_file()
+                    and path.stat().st_mtime < limit
+                ):
+                    path.unlink(missing_ok=True)
+            except OSError as error:
+                logging.getLogger(__name__).warning(
+                    "Could not delete %s: %s", path.name, error
+                )
 
 
 def commit() -> str:

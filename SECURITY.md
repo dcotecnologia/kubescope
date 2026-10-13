@@ -91,7 +91,8 @@ prefer otherwise.
 
 - **Off by default.** Turn it on in Settings (Debug mode) to write a log file you
   can attach to a bug report. It lives in the `logs` folder next to
-  `settings.json` and rotates, so it stays small (about 1 MB, 3 backups).
+  `settings.json` and rotates, so it stays small (about 1 MB, 3 backups). At startup, a background thread deletes the log and crash
+  files not written for 30 days.
 - **What it records:** which cluster requests and cloud CLI commands ran, how long they
   took and how they ended, the first line of an error, and the app and Qt versions.
   Command lines include context names (often an EKS ARN with the account id) and

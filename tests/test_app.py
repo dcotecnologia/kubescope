@@ -81,3 +81,19 @@ def test_main_builds_the_window_and_runs_the_event_loop(monkeypatch) -> None:
     assert ("name", "KubeScope") in events
     assert ("lang", "auto") in events
     assert events[-3:] == ["show", "update check", "exec"]
+
+
+def test_old_logs_are_purged_on_a_thread_that_spares_the_open_files(
+    monkeypatch, tmp_path
+) -> None:
+    calls = []
+    monkeypatch.setattr(app, "purge_old_logs", lambda **kw: calls.append(kw))
+    settings = Settings(tmp_path / "s.json")
+
+    app.start_log_purge(settings).join()
+    settings.debug_logging = True
+    thread = app.start_log_purge(settings)
+    thread.join()
+
+    assert calls == [{"keep": ()}, {"keep": ("kubescope.log", "crash.log")}]
+    assert thread.daemon and thread.name == "log-purge"

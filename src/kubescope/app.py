@@ -1,6 +1,7 @@
 import logging
 import os
 import sys
+import threading
 from pathlib import Path
 
 from PySide6.QtCore import Qt
@@ -8,7 +9,12 @@ from PySide6.QtGui import QIcon, QPixmap
 from PySide6.QtWidgets import QApplication
 
 import kubescope
-from kubescope.diagnostics import configure_logging
+from kubescope.diagnostics import (
+    CRASH_FILE,
+    LOG_FILE,
+    configure_logging,
+    purge_old_logs,
+)
 from kubescope.fonts import apply_fonts
 from kubescope.i18n import apply_language
 from kubescope.settings import Settings
@@ -50,9 +56,21 @@ def configure_debug(settings: Settings) -> bool:
     return console or settings.debug_logging
 
 
+def start_log_purge(settings: Settings) -> threading.Thread:
+    """Delete old logs on a thread of its own, so starting never waits for the
+    disk; the files being written now are left alone."""
+    keep = (LOG_FILE, CRASH_FILE) if settings.debug_logging else ()
+    thread = threading.Thread(
+        target=purge_old_logs, kwargs={"keep": keep}, name="log-purge", daemon=True
+    )
+    thread.start()
+    return thread
+
+
 def main() -> int:
     settings = Settings()
     configure_debug(settings)
+    start_log_purge(settings)
     logger.info("Starting KubeScope")
     application = QApplication(sys.argv)
     application.setApplicationName("KubeScope")

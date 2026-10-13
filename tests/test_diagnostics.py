@@ -159,3 +159,46 @@ def test_commit_asks_git_in_a_source_checkout(monkeypatch, tmp_path) -> None:
 
     monkeypatch.setattr(diagnostics.subprocess, "run", missing)
     assert diagnostics.commit() == "unknown"
+
+
+def test_logs_older_than_thirty_days_are_deleted(tmp_path, monkeypatch) -> None:
+    import os
+    import time
+
+    directory = log_directory()
+    directory.mkdir(parents=True)
+    old = time.time() - 31 * 86400
+    names = ("kubescope.log", "kubescope.log.1", "crash.log", "other.txt")
+    for name in names:
+        (directory / name).write_text("x")
+        os.utime(directory / name, (old, old))
+    (directory / "kubescope.log.2").write_text("x")  # recent
+    (directory / "crash.log.old").mkdir()  # a folder is left alone
+    os.utime(directory / "crash.log.old", (old, old))
+
+    diagnostics.purge_old_logs(keep=("crash.log",))
+
+    assert sorted(path.name for path in directory.iterdir()) == [
+        "crash.log",
+        "crash.log.old",
+        "kubescope.log.2",
+        "other.txt",
+    ]
+
+
+def test_a_log_that_cannot_be_deleted_is_reported(monkeypatch, caplog) -> None:
+    from pathlib import Path
+
+    directory = log_directory()
+    directory.mkdir(parents=True)
+    (directory / "kubescope.log").write_text("x")
+
+    def refuse(self, **_kwargs):
+        raise OSError("busy")
+
+    monkeypatch.setattr(Path, "unlink", refuse)
+
+    with caplog.at_level(logging.WARNING):
+        diagnostics.purge_old_logs(max_age_days=-1)
+
+    assert "Could not delete kubescope.log" in caplog.text
