@@ -137,6 +137,7 @@ class Ui_SettingsPage(object):
         self.defaultNamespaceCombo = QComboBox(self.settingsContent)
         self.defaultNamespaceCombo.setObjectName(u"defaultNamespaceCombo")
         self.defaultNamespaceCombo.setMinimumSize(QSize(200, 0))
+        self.defaultNamespaceCombo.setProperty(u"variant", u"filter")
 
         self.generalForm.setWidget(3, QFormLayout.ItemRole.FieldRole, self.defaultNamespaceCombo)
 
