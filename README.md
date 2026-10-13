@@ -131,8 +131,10 @@ on the wiki. To connect to your clusters, see
   **Sign in to Azure** button (`az login`) when their credentials have expired.
 - **Always responsive:** every cluster call runs in the background, so the window
   never freezes while the cluster or the cloud CLIs work.
-- **English, Portuguese, Spanish, Italian, French, Chinese, Japanese, Korean, Arabic,
-  Hindi and Russian**, selectable in Settings.
+- **English, Portuguese, Spanish, Italian, French, German, Dutch, Polish, Turkish,
+  Indonesian, Vietnamese, Chinese, Japanese, Korean, Arabic, Hindi and Russian**,
+  selectable in Settings, where each language is listed by its own name and its English
+  name, in alphabetical order.
 
 ## Requirements
 
@@ -236,7 +238,8 @@ and open a pull request (the folder's README has the steps).
 
 KubeScope speaks **English**, **Portuguese** (`pt`), **Spanish** (`es`), **Italian** (`it`),
 **French** (`fr`), **Chinese** (`zh`, simplified), **Japanese** (`ja`), **Arabic** (`ar`,
-written right to left: the whole layout mirrors), **Hindi** (`hi`), **Russian** (`ru`) and **Korean** (`ko`). **Automatic** (the default) follows
+written right to left: the whole layout mirrors), **Hindi** (`hi`), **Russian** (`ru`), **Korean** (`ko`), **German** (`de`), **Turkish**
+(`tr`), **Indonesian** (`id`), **Polish** (`pl`), **Vietnamese** (`vi`) and **Dutch** (`nl`). **Automatic** (the default) follows
 your system language and falls back to English. The texts in the code are English;
 each other language is a JSON file, `src/kubescope/languages/<code>.json`: a name, whether
 it is written right to left, and each English text with its translation. To add a

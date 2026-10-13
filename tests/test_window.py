@@ -285,6 +285,12 @@ def test_every_new_language_is_bundled_and_arabic_mirrors_the_layout() -> None:
         "ja": "更新",
         "ar": "تحديث",
         "ko": "새로 고침",
+        "de": "Aktualisieren",
+        "tr": "Yenile",
+        "id": "Segarkan",
+        "pl": "Odśwież",
+        "vi": "Làm mới",
+        "nl": "Verversen",
     }
     try:
         for code, text in expected.items():
@@ -645,7 +651,7 @@ def test_every_language_ships_a_complete_translation() -> None:
     from kubescope import i18n
 
     codes = [code for code in i18n.available_languages() if code != "en"]
-    assert len(codes) >= 10
+    assert len(codes) >= 16
     for code in codes:
         document = json.loads(
             (i18n.BUNDLED_DIRECTORY / f"{code}.json").read_text(encoding="utf-8")
