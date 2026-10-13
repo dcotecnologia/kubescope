@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+### Added
+
+- Pod logs color a JSON object (or a Python dict) written in a line: keys, strings, numbers and literals each get their own color by @danilogco
+
 ### Fixed
 
 - Working offline now shows **No network connection**, with a hint to check the internet or VPN, instead of a generic error when the AWS CLI cannot reach its endpoint by @danilogco
