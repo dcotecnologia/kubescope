@@ -75,3 +75,32 @@ def test_the_language_list_is_english_first_then_by_english_name() -> None:
     assert labels["ko"] == "한국어 · Korean" and labels["xx"] == "Mine"
     named = [label.split(" · ")[-1] for code, label in choices[1:] if code != "xx"]
     assert named == sorted(named, key=str.casefold)
+
+
+def test_a_system_locale_picks_the_language_of_its_territory(monkeypatch) -> None:
+    from PySide6.QtCore import QLocale
+
+    def system(name):
+        class Locale(QLocale):
+            @staticmethod
+            def system():
+                return QLocale(name)
+
+        monkeypatch.setattr(i18n, "QLocale", Locale)
+
+    for name, expected in (
+        ("zh_TW", "zh_TW"),
+        ("zh_HK", "zh_TW"),  # Hong Kong reads the traditional characters too
+        ("zh_CN", "zh"),
+        ("pt_BR", "pt"),
+        ("xx_YY", "en"),
+    ):
+        system(name)
+        assert i18n.resolve_language("auto") == expected
+
+
+def test_traditional_chinese_is_listed_apart_from_simplified() -> None:
+    labels = dict(i18n.language_choices())
+
+    assert labels["zh_TW"] == "繁體中文 · Chinese (Taiwan)"
+    assert labels["zh"].endswith("· Chinese")

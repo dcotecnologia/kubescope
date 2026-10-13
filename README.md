@@ -132,7 +132,8 @@ on the wiki. To connect to your clusters, see
 - **Always responsive:** every cluster call runs in the background, so the window
   never freezes while the cluster or the cloud CLIs work.
 - **English, Portuguese, Spanish, Italian, French, German, Dutch, Polish, Turkish,
-  Indonesian, Vietnamese, Chinese, Japanese, Korean, Arabic, Hindi and Russian**,
+  Indonesian, Vietnamese, Ukrainian, Russian, Chinese (simplified and traditional),
+  Japanese, Korean, Thai, Hebrew, Persian, Arabic and Hindi**,
   selectable in Settings, where each language is listed by its own name and its English
   name, in alphabetical order.
 
@@ -239,7 +240,10 @@ and open a pull request (the folder's README has the steps).
 KubeScope speaks **English**, **Portuguese** (`pt`), **Spanish** (`es`), **Italian** (`it`),
 **French** (`fr`), **Chinese** (`zh`, simplified), **Japanese** (`ja`), **Arabic** (`ar`,
 written right to left: the whole layout mirrors), **Hindi** (`hi`), **Russian** (`ru`), **Korean** (`ko`), **German** (`de`), **Turkish**
-(`tr`), **Indonesian** (`id`), **Polish** (`pl`), **Vietnamese** (`vi`) and **Dutch** (`nl`). **Automatic** (the default) follows
+(`tr`), **Indonesian** (`id`), **Polish** (`pl`), **Vietnamese** (`vi`), **Dutch** (`nl`),
+**Ukrainian** (`uk`), **Thai** (`th`), **Chinese (traditional)** (`zh_TW`, also used for
+Hong Kong and Macau) and **Hebrew** (`he`) and **Persian** (`fa`), which are written right
+to left like Arabic. **Automatic** (the default) follows
 your system language and falls back to English. The texts in the code are English;
 each other language is a JSON file, `src/kubescope/languages/<code>.json`: a name, whether
 it is written right to left, and each English text with its translation. To add a

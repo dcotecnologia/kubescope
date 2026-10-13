@@ -291,13 +291,20 @@ def test_every_new_language_is_bundled_and_arabic_mirrors_the_layout() -> None:
         "pl": "Odśwież",
         "vi": "Làm mới",
         "nl": "Verversen",
+        "zh_TW": "重新整理",
+        "uk": "Оновити",
+        "he": "רענן",
+        "fa": "تازه‌سازی",
+        "th": "รีเฟรช",
     }
     try:
         for code, text in expected.items():
             assert i18n.apply_language(code) == code
             assert QCoreApplication.translate("MainWindow", "Refresh") == text
             direction = QApplication.layoutDirection()
-            assert (direction == Qt.LayoutDirection.RightToLeft) == (code == "ar")
+            assert (direction == Qt.LayoutDirection.RightToLeft) == (
+                code in ("ar", "he", "fa")
+            )
     finally:
         i18n.apply_language("en")
     assert QApplication.layoutDirection() == Qt.LayoutDirection.LeftToRight
@@ -651,7 +658,7 @@ def test_every_language_ships_a_complete_translation() -> None:
     from kubescope import i18n
 
     codes = [code for code in i18n.available_languages() if code != "en"]
-    assert len(codes) >= 16
+    assert len(codes) >= 21
     for code in codes:
         document = json.loads(
             (i18n.BUNDLED_DIRECTORY / f"{code}.json").read_text(encoding="utf-8")

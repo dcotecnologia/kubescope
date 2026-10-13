@@ -10,7 +10,7 @@ from typing import Any
 CONFIG_DIR_ENV = "KUBESCOPE_CONFIG_DIR"
 # A language is a JSON file named by its code (see kubescope.i18n); "auto" follows
 # the system. The choice is checked when it is applied, so a file can add one.
-_LANGUAGE_CODE = re.compile(r"[a-z]{2,3}(_[a-z0-9]+)?")
+_LANGUAGE_CODE = re.compile(r"[a-z]{2,3}(_[A-Za-z0-9]+)?")
 
 DEFAULTS: dict[str, Any] = {
     "language": "auto",

@@ -119,6 +119,22 @@ def available_languages() -> dict[str, str]:
     }
 
 
+# System locales that use a language file of another territory.
+_LOCALE_ALIASES = {"zh_HK": "zh_TW", "zh_MO": "zh_TW"}
+
+
+def _english_name(code: str) -> str:
+    """The English name of a language, with the territory for a code such as
+    zh_TW; empty when Qt does not know it."""
+    locale = QLocale(code)
+    name = QLocale.languageToString(locale.language())
+    if name == "C":
+        return ""
+    if "_" in code:
+        name += f" ({QLocale.territoryToString(locale.territory())})"
+    return name
+
+
 def language_choices() -> list[tuple[str, str]]:
     """The languages for a list: English first, then the others by their
     English name, each shown as its own name followed by the English one, so a
@@ -127,8 +143,8 @@ def language_choices() -> list[tuple[str, str]]:
     for code, name in available_languages().items():
         if code == ENGLISH:
             continue
-        english = QLocale.languageToString(QLocale(code).language())
-        known = english not in ("C", name)
+        english = _english_name(code)
+        known = english not in ("", name)
         named.append(
             (english if known else name, code, f"{name} · {english}" if known else name)
         )
@@ -142,8 +158,15 @@ def resolve_language(choice: str) -> str:
     available = available_languages()
     if choice in available:
         return choice
-    system = QLocale.system().name().split("_")[0].lower()
-    return system if system in available else ENGLISH
+    system = QLocale.system().name()  # such as pt_BR
+    for candidate in (
+        system,
+        _LOCALE_ALIASES.get(system, ""),
+        system.split("_")[0].lower(),
+    ):
+        if candidate in available:
+            return candidate
+    return ENGLISH
 
 
 def apply_language(choice: str) -> str:
