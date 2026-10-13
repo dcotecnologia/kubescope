@@ -1,0 +1,81 @@
+name: Bug report
+description: Something in KubeScope does not work as expected.
+title: "bug: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report this. Please do not paste tokens,
+        kubeconfig contents, Pod logs or Secret values. If you attach the debug log
+        (Settings > Debug mode), read it first.
+  - type: textarea
+    id: summary
+    attributes:
+      label: What happened?
+      description: A clear and concise description of the problem.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open the context ...
+        2. Go to ...
+        3. See the error
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: KubeScope version
+      description: Shown in the footer of the window.
+      placeholder: "0.1.0"
+    validations:
+      required: true
+  - type: dropdown
+    id: install
+    attributes:
+      label: How did you install it?
+      options:
+        - Debian package (.deb)
+        - AppImage
+        - Flatpak
+        - Windows installer
+        - From source
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: system
+    attributes:
+      label: Operating system
+      placeholder: Ubuntu 24.04, Windows 11, ...
+    validations:
+      required: true
+  - type: dropdown
+    id: cluster
+    attributes:
+      label: Cluster type
+      options:
+        - Amazon EKS
+        - Other managed Kubernetes (GKE, AKS, ...)
+        - Self-managed Kubernetes
+        - Local (kind, minikube, k3s, ...)
+    validations:
+      required: false
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs and screenshots
+      description: Redact anything private before pasting.
+      render: shell
+    validations:
+      required: false
