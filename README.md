@@ -241,8 +241,9 @@ your system language and falls back to English. The texts in the code are Englis
 each other language is a JSON file in the `languages` folder of your settings
 (`~/.config/kubescope/languages` on Linux). The ones that ship with the app are copied
 there and refreshed on update until you edit them; a file you add there, named by the
-language code (`de.json`), becomes a choice in Settings after a restart. They are written
-from `src/kubescope/translations/kubescope_<code>.ts` by `make i18n`.
+language code (`de.json`), becomes a choice in Settings after a restart. The ones that
+ship are `src/kubescope/languages/<code>.json`: a name, whether it is written right to
+left, and each English text with its translation.
 
 ## Contribute a theme or a language
 
@@ -262,20 +263,17 @@ Both are welcome as pull requests; `make test` checks them, and
 
 ### Add a language
 
-1. `make language CODE=es NAME=Español` creates `src/kubescope/translations/kubescope_es.ts`
-   with every text to translate, and `src/kubescope/languages/es.json`. Use the
-   two-letter language code and name the language in itself (add `RTL=1` for one written
-   right to left).
-2. Translate the texts in Qt Linguist (`uv run pyside6-linguist
-   src/kubescope/translations/kubescope_es.ts`) or in any text editor. Keep the
-   `{placeholders}` as they are.
-3. `make i18n` writes `languages/es.json`. `make test` fails while any text is
-   unfinished.
-4. Open a pull request. To fix or improve an existing translation, edit its `.ts`
-   and run `make i18n`.
+1. `make language CODE=es NAME=Español` creates `src/kubescope/languages/es.json` with
+   every text to translate, each with an empty translation. Use the two-letter
+   language code and name the language in itself (add `RTL=1` for one written right
+   to left).
+2. Fill in the translations in any text editor. Keep the `{placeholders}` as they are.
+3. `make test` fails while any text is untranslated (empty).
+4. Open a pull request. To fix or improve an existing translation, edit its JSON.
 
 New texts in the code are wrapped in `self.tr(...)`; after adding or changing some, run
-`make i18n` to extract them into every `.ts` and complete the translations.
+`make i18n` to add them to every language file, untranslated, and complete the
+translations.
 
 ## Packaging
 

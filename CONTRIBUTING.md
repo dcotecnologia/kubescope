@@ -19,7 +19,7 @@ uv run pre-commit install
 
 Run the app against a cluster with `make run`, or without any cluster using fake
 data with `make preview`. `make dev` runs the app and restarts it every time you
-save a source, `.ui` or `.ts` file.
+save a source, `.ui` or language file.
 
 ## Workflow
 
@@ -36,7 +36,7 @@ make lint     # ruff
 make test     # pytest, must stay at 100% coverage (headless: QT_QPA_PLATFORM=offscreen)
 uv run pre-commit run --all-files
 make ui       # leaves no diff in src/kubescope/ui
-make i18n     # leaves no unfinished translations
+make i18n     # leaves no untranslated texts in src/kubescope/languages
 ```
 
 CI runs the same pre-commit hooks, the generated-UI check, and the tests on
@@ -79,8 +79,8 @@ The release workflow publishes the section of the tag as the release notes.
 | A theme to share with everyone | `src/kubescope/community_themes/` (see its README) |
 
 Edit layouts in the `.ui` files and run `make ui`; never edit `ui_*.py` by hand.
-Wrap user-visible text in `self.tr(...)` and complete the translations of every
-language with `make i18n`.
+Wrap user-visible text in `self.tr(...)` and run `make i18n` to add
+the new text to every language file, then translate it there.
 
 ## Themes and languages
 
@@ -88,8 +88,8 @@ language with `make i18n`.
   `src/kubescope/community_themes/` and run `make test`. The folder's README has the
   rules.
 - **A language:** `make language CODE=<code> NAME=<name in that language>`, translate
-  the `.ts` and run `make i18n`. `make test`
-  fails while any text is unfinished.
+  `src/kubescope/languages/<code>.json`. `make test` fails while any text is
+  untranslated.
 
 The steps are in the "Contribute a theme or a language" section of the README.
 

@@ -6,7 +6,7 @@ All notable changes to this project will be documented in this file. The format 
 
 ### Added
 
-- Languages are JSON files in the `languages` folder of the settings: the ones that ship with the app are copied there and refreshed while you have not edited them, and a file you add becomes a new choice in Settings by @danilogco
+- Languages are JSON files in the `languages` folder of the settings: the ones that ship with the app are copied there and refreshed while you have not edited them, and a file you add becomes a new choice in Settings; they replace the Qt `.ts` and `.qm` files by @danilogco
 - Korean translation, selectable in Settings by @danilogco
 - The app reopens on the page and list you left it on, together with the last context (the same Settings option) by @danilogco
 - Pod logs color a JSON object (or a Python dict) written in a line: keys, strings, numbers and literals each get their own color by @danilogco

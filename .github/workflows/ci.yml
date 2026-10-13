@@ -44,6 +44,12 @@ jobs:
           git diff --exit-code -- src/kubescope/ui \
             || (echo "Run 'make ui' and commit the regenerated ui_*.py" && exit 1)
 
+      - name: Language files list the texts of the code
+        run: |
+          uv run python tools/i18n.py
+          git diff --exit-code -- src/kubescope/languages \
+            || (echo "Run 'make i18n' and commit the language files" && exit 1)
+
   test:
     name: Test (Python ${{ matrix.python-version }})
     runs-on: ubuntu-latest

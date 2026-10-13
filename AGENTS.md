@@ -39,8 +39,8 @@ Keep the layers separate and the dependency direction one-way
   - The update check against GitHub's public API. No Qt; it never raises.
 - `src/kubescope/settings.py`
   - User preferences stored as JSON; tolerant of missing or damaged files.
-- `src/kubescope/i18n.py` and `src/kubescope/translations/`
-  - Language selection, the JSON languages (`src/kubescope/languages/`) and the Qt `.ts` files they are written from.
+- `src/kubescope/i18n.py` and `src/kubescope/languages/`
+  - Language selection and the JSON languages: one file per language, with a name, its direction and each English text with its translation.
 - `src/kubescope/ui/*.ui`
   - Qt Designer layouts. `ui_*.py` next to them are generated, never edit them by
     hand.
@@ -96,8 +96,7 @@ Golden rule:
   `QCoreApplication.translate(...)` for strings that belong to a `.ui` context), with
   a literal string so Qt can extract it.
 - After adding or changing texts, run `make i18n`, fill the translations of every
-  language in `kubescope_<code>.ts` (no `unfinished` entries), and commit the `.ts` and the
-  JSON that `make i18n` writes.
+  language in `languages/<code>.json` (no empty ones), and commit them.
 - Kubernetes terms that read the same in the other languages (Pods, Deployments,
   Logs, NAMESPACE) may stay as they are; states such as Pod phases must be
   translated.
@@ -120,7 +119,7 @@ flow, follow [CONTRIBUTING.md](./CONTRIBUTING.md).
 - Use the body to explain why, and the footer for `BREAKING CHANGE:` or `Refs:`.
 - One objective per commit. Do not mix refactor, feature, and fix.
 - Behavior changes ship with their tests in the same commit.
-- Regenerated files (`ui_*.py`, `languages/*.json`) are committed with the source that produced
+- Regenerated files (`ui_*.py`) are committed with the source that produced
   them.
 - Documentation-only changes use `docs`, never `feat`.
 - A version bump also updates `uv.lock` in the same commit.
@@ -144,7 +143,7 @@ Run locally and make all of it pass:
 - `make lint` (`ruff check` and `ruff format --check`)
 - `make test` (pytest, `QT_QPA_PLATFORM=offscreen` on a headless machine)
 - `make ui` leaves no diff in `src/kubescope/ui/`
-- `make i18n` leaves no `unfinished` translations
+- `make i18n` leaves no empty (untranslated) text in the language files
 
 Requirements:
 
@@ -160,7 +159,7 @@ Requirements:
   filters without a documented reason.
 - Keep dependencies on their latest stable versions; pin an older one only with a
   documented reason.
-- Do not edit generated or vendored output: `ui_*.py`, `languages/*.json`, `vendor/`, `dist/`,
+- Do not edit generated or vendored output: `ui_*.py`, `vendor/`, `dist/`,
   `build/`, `.wine/`.
 
 ## 6) Packaging

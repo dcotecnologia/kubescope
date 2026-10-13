@@ -23,7 +23,7 @@ repos:
       - id: fix-byte-order-marker
       - id: check-docstring-first
       - id: pretty-format-json
-        args: [--autofix, --indent=4]
+        args: [--autofix, --indent=4, --no-ensure-ascii]
       - id: check-json
       - id: check-merge-conflict
       - id: check-symlinks

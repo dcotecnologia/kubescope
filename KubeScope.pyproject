@@ -16,7 +16,7 @@
         "src/kubescope/settings.py",
         "src/kubescope/theme.py",
         "src/kubescope/theme_editor.py",
-        "src/kubescope/translations/kubescope_pt.ts",
+        "src/kubescope/languages/pt.json",
         "src/kubescope/ui/log_tab.ui",
         "src/kubescope/ui/main_window.ui",
         "src/kubescope/ui/overview_page.ui",

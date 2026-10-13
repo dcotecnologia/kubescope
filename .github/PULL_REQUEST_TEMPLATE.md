@@ -20,7 +20,7 @@
 
 - [ ] The title and commits follow [COMMITING.md](../COMMITING.md)
 - [ ] `make lint` and `make test` pass, at 100% coverage
-- [ ] `make ui` and `make i18n` leave no diff and no unfinished translations
+- [ ] `make ui` and `make i18n` leave no diff and no untranslated texts
 - [ ] User-visible changes are in the `[Unreleased]` section of `CHANGELOG.md`
 - [ ] Docs are updated (`README.md`, `SECURITY.md`) when behavior or access changes
 - [ ] No secrets, tokens or Secret values were added to code, tests or logs

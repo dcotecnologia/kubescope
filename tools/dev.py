@@ -1,7 +1,7 @@
 """Run KubeScope and restart it whenever its source changes.
 
 Saving a .py file restarts the app; saving a .ui file regenerates its
-ui_*.py first, and saving a .ts file rewrites the JSON languages. It
+ui_*.py first, and saving a language .json file restarts it too. It
 polls file times, so it needs no extra dependency. Stop it with Ctrl+C.
 """
 
@@ -23,7 +23,7 @@ def watched() -> dict[Path, float]:
     """
     files = [
         path
-        for pattern in ("*.py", "*.ui", "*.ts", "*.json")
+        for pattern in ("*.py", "*.ui", "*.json")
         for path in SOURCE.rglob(pattern)
         if not path.name.startswith("ui_")
     ]
@@ -35,8 +35,6 @@ def rebuild(path: Path) -> bool:
     if path.suffix == ".ui":
         target = path.with_name(f"ui_{path.stem}.py")
         command = [str(BIN / "pyside6-uic"), str(path), "-o", str(target)]
-    elif path.suffix == ".ts":
-        command = [sys.executable, str(ROOT / "tools" / "ts_to_json.py")]
     else:
         return True
     return subprocess.run(command, check=False).returncode == 0
