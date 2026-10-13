@@ -77,7 +77,9 @@ prefer otherwise.
 - **Local settings hold no secrets.** `settings.json` keeps the language, the
   last context, the page and list you were on, context display names, hidden table columns, the pinned lists, and the size
   and position of the window. It lives in your
-  user configuration directory (`~/.config/kubescope` on Linux).
+  user configuration directory (`~/.config/kubescope` on Linux). Next to it, the
+  `languages` folder holds the translation files, plain text that the app only
+  reads as a dictionary of texts.
 - **Logs and resource details are shown on screen.** The app does not write them
   to disk or send them anywhere, not even in the debug log below. The one
   exception is **Save...** in the Details & Logs page: it writes the text of the

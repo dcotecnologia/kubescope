@@ -55,7 +55,7 @@ def test_damaged_or_foreign_files_fall_back_to_defaults(tmp_path) -> None:
 
 def test_unknown_language_is_ignored_on_assignment(tmp_path) -> None:
     settings = Settings(tmp_path / "settings.json")
-    settings.language = "xx"
+    settings.language = "Klingon!"
     assert settings.language == "auto"
 
 

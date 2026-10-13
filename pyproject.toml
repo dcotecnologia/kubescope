@@ -34,7 +34,7 @@ where = ["src"]
 
 [tool.setuptools.package-data]
 kubescope = [
-    "translations/*.qm",
+    "languages/*.json",
     "assets/*.png",
     "assets/*.ico",
     "assets/fonts/*",

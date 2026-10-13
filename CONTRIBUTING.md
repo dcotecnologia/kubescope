@@ -87,8 +87,8 @@ language with `make i18n`.
 - **A theme:** build it in Settings > New theme..., copy its JSON file into
   `src/kubescope/community_themes/` and run `make test`. The folder's README has the
   rules.
-- **A language:** `make language CODE=<code>`, add the code to `LANGUAGES` in
-  `src/kubescope/settings.py`, translate the `.ts` and run `make i18n`. `make test`
+- **A language:** `make language CODE=<code> NAME=<name in that language>`, translate
+  the `.ts` and run `make i18n`. `make test`
   fails while any text is unfinished.
 
 The steps are in the "Contribute a theme or a language" section of the README.

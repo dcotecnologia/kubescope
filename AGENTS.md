@@ -40,7 +40,7 @@ Keep the layers separate and the dependency direction one-way
 - `src/kubescope/settings.py`
   - User preferences stored as JSON; tolerant of missing or damaged files.
 - `src/kubescope/i18n.py` and `src/kubescope/translations/`
-  - Language selection and the Qt `.ts` / `.qm` files.
+  - Language selection, the JSON languages (`src/kubescope/languages/`) and the Qt `.ts` files they are written from.
 - `src/kubescope/ui/*.ui`
   - Qt Designer layouts. `ui_*.py` next to them are generated, never edit them by
     hand.
@@ -96,8 +96,8 @@ Golden rule:
   `QCoreApplication.translate(...)` for strings that belong to a `.ui` context), with
   a literal string so Qt can extract it.
 - After adding or changing texts, run `make i18n`, fill the translations of every
-  language in `kubescope_<code>.ts` (`LANGUAGES` in `settings.py` lists them; no
-  `unfinished` entries), and commit the `.ts` and the compiled `.qm`.
+  language in `kubescope_<code>.ts` (no `unfinished` entries), and commit the `.ts` and the
+  JSON that `make i18n` writes.
 - Kubernetes terms that read the same in the other languages (Pods, Deployments,
   Logs, NAMESPACE) may stay as they are; states such as Pod phases must be
   translated.
@@ -120,7 +120,7 @@ flow, follow [CONTRIBUTING.md](./CONTRIBUTING.md).
 - Use the body to explain why, and the footer for `BREAKING CHANGE:` or `Refs:`.
 - One objective per commit. Do not mix refactor, feature, and fix.
 - Behavior changes ship with their tests in the same commit.
-- Regenerated files (`ui_*.py`, `.qm`) are committed with the source that produced
+- Regenerated files (`ui_*.py`, `languages/*.json`) are committed with the source that produced
   them.
 - Documentation-only changes use `docs`, never `feat`.
 - A version bump also updates `uv.lock` in the same commit.
@@ -160,7 +160,7 @@ Requirements:
   filters without a documented reason.
 - Keep dependencies on their latest stable versions; pin an older one only with a
   documented reason.
-- Do not edit generated or vendored output: `ui_*.py`, `.qm`, `vendor/`, `dist/`,
+- Do not edit generated or vendored output: `ui_*.py`, `languages/*.json`, `vendor/`, `dist/`,
   `build/`, `.wine/`.
 
 ## 6) Packaging

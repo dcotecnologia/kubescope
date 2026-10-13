@@ -262,7 +262,7 @@ def test_portuguese_translation_is_bundled() -> None:
     from kubescope import i18n
 
     assert i18n.resolve_language("pt") == "pt"
-    assert i18n.resolve_language("xx") in i18n.LANGUAGES
+    assert i18n.resolve_language("xx") in i18n.available_languages()
     try:
         assert i18n.apply_language("pt") == "pt"
         assert QCoreApplication.translate("MainWindow", "Refresh") == "Atualizar"
@@ -638,31 +638,34 @@ def test_hidden_columns_are_applied_and_saved(monkeypatch, tmp_path) -> None:
 
 
 def test_every_language_ships_a_complete_translation() -> None:
-    """A language listed in Settings must have all its texts translated."""
+    """A language that ships must have all its texts translated, and its JSON
+    must be the one `make i18n` writes from the .ts."""
+    import json
     from xml.etree import ElementTree
 
     from kubescope import i18n
 
-    for code in i18n.LANGUAGES:
-        if code == "en":  # the source strings
-            continue
-        source = i18n.TRANSLATIONS_DIR / f"kubescope_{code}.ts"
-        compiled = i18n.TRANSLATIONS_DIR / f"kubescope_{code}.qm"
+    translations = i18n.BUNDLED_DIRECTORY.parent / "translations"
+    codes = [code for code in i18n.available_languages() if code != "en"]
+    assert len(codes) >= 10
+    for code in codes:
+        source = translations / f"kubescope_{code}.ts"
+        compiled = i18n.BUNDLED_DIRECTORY / f"{code}.json"
         assert source.is_file() and compiled.is_file(), f"run make i18n for {code}"
+        messages = ElementTree.parse(source).iter("message")
         unfinished = [
             message.findtext("source")
-            for message in ElementTree.parse(source).iter("message")
+            for message in messages
             if message.find("translation").get("type") == "unfinished"
         ]
         assert unfinished == [], f"{code} has untranslated texts: {unfinished[:3]}"
-
-
-def test_the_language_choices_follow_the_languages_list() -> None:
-    from kubescope import i18n
-    from kubescope.settings import LANGUAGE_CHOICES, LANGUAGES
-
-    assert ("auto", *LANGUAGES) == LANGUAGE_CHOICES
-    assert i18n.LANGUAGES is LANGUAGES
+        strings = json.loads(compiled.read_text(encoding="utf-8"))["strings"]
+        assert all(
+            strings[context.findtext("name")][message.findtext("source")]
+            == message.findtext("translation")
+            for context in ElementTree.parse(source).iter("context")
+            for message in context.iter("message")
+        ), f"run make i18n: {code}.json is out of date"
 
 
 def test_log_tab_colors_the_logs_with_the_monokai_view(monkeypatch) -> None:

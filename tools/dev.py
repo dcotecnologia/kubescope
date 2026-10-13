@@ -1,8 +1,8 @@
 """Run KubeScope and restart it whenever its source changes.
 
 Saving a .py file restarts the app; saving a .ui file regenerates its
-ui_*.py first, and saving a .ts file recompiles its .qm. It polls file
-times, so it needs no extra dependency. Stop it with Ctrl+C.
+ui_*.py first, and saving a .ts file rewrites the JSON languages. It
+polls file times, so it needs no extra dependency. Stop it with Ctrl+C.
 """
 
 import subprocess
@@ -36,12 +36,7 @@ def rebuild(path: Path) -> bool:
         target = path.with_name(f"ui_{path.stem}.py")
         command = [str(BIN / "pyside6-uic"), str(path), "-o", str(target)]
     elif path.suffix == ".ts":
-        command = [
-            str(BIN / "pyside6-lrelease"),
-            str(path),
-            "-qm",
-            str(path.with_suffix(".qm")),
-        ]
+        command = [sys.executable, str(ROOT / "tools" / "ts_to_json.py")]
     else:
         return True
     return subprocess.run(command, check=False).returncode == 0

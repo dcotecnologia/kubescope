@@ -238,8 +238,11 @@ KubeScope speaks **English**, **Portuguese** (`pt`), **Spanish** (`es`), **Itali
 **French** (`fr`), **Chinese** (`zh`, simplified), **Japanese** (`ja`), **Arabic** (`ar`,
 written right to left: the whole layout mirrors), **Hindi** (`hi`), **Russian** (`ru`) and **Korean** (`ko`). **Automatic** (the default) follows
 your system language and falls back to English. The texts in the code are English;
-each other language is a Qt translation file, `src/kubescope/translations/kubescope_<code>.ts`,
-that `make i18n` compiles into the `.qm` the app loads.
+each other language is a JSON file in the `languages` folder of your settings
+(`~/.config/kubescope/languages` on Linux). The ones that ship with the app are copied
+there and refreshed on update until you edit them; a file you add there, named by the
+language code (`de.json`), becomes a choice in Settings after a restart. They are written
+from `src/kubescope/translations/kubescope_<code>.ts` by `make i18n`.
 
 ## Contribute a theme or a language
 
@@ -259,16 +262,16 @@ Both are welcome as pull requests; `make test` checks them, and
 
 ### Add a language
 
-1. `make language CODE=es` creates `src/kubescope/translations/kubescope_es.ts` with
-   every text to translate. Use the two-letter language code.
-2. Add the language to `LANGUAGES` in `src/kubescope/settings.py`, named in itself
-   (`"es": "Español"`).
-3. Translate the texts in Qt Linguist (`uv run pyside6-linguist
+1. `make language CODE=es NAME=Español` creates `src/kubescope/translations/kubescope_es.ts`
+   with every text to translate, and `src/kubescope/languages/es.json`. Use the
+   two-letter language code and name the language in itself (add `RTL=1` for one written
+   right to left).
+2. Translate the texts in Qt Linguist (`uv run pyside6-linguist
    src/kubescope/translations/kubescope_es.ts`) or in any text editor. Keep the
    `{placeholders}` as they are.
-4. `make i18n` compiles the `.qm` file. `make test` fails while any text is
+3. `make i18n` writes `languages/es.json`. `make test` fails while any text is
    unfinished.
-5. Open a pull request. To fix or improve an existing translation, edit its `.ts`
+4. Open a pull request. To fix or improve an existing translation, edit its `.ts`
    and run `make i18n`.
 
 New texts in the code are wrapped in `self.tr(...)`; after adding or changing some, run

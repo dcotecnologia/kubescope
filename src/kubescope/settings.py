@@ -8,23 +8,9 @@ from pathlib import Path
 from typing import Any
 
 CONFIG_DIR_ENV = "KUBESCOPE_CONFIG_DIR"
-# The languages the app speaks, by code, each named in itself. To add one, add it
-# here and ship src/kubescope/translations/kubescope_<code>.ts
-# (`make language CODE=<code>` starts it).
-LANGUAGES = {
-    "en": "English",
-    "pt": "Português",
-    "es": "Español",
-    "it": "Italiano",
-    "fr": "Français",
-    "zh": "中文",
-    "ja": "日本語",
-    "ar": "العربية",
-    "hi": "हिन्दी",
-    "ru": "Русский",
-    "ko": "한국어",
-}
-LANGUAGE_CHOICES = ("auto", *LANGUAGES)
+# A language is a JSON file named by its code (see kubescope.i18n); "auto" follows
+# the system. The choice is checked when it is applied, so a file can add one.
+_LANGUAGE_CODE = re.compile(r"[a-z]{2,3}(_[a-z0-9]+)?")
 
 DEFAULTS: dict[str, Any] = {
     "language": "auto",
@@ -132,8 +118,7 @@ class Settings:
         namespace = self._data["default_namespace"]
         if not (isinstance(namespace, str) and is_namespace_name(namespace)):
             self._data["default_namespace"] = ""  # empty means all namespaces
-        if self._data["language"] not in LANGUAGE_CHOICES:
-            self._data["language"] = DEFAULTS["language"]
+        self.language = self._data["language"]
         self.theme = self._data["theme"]
 
     def save(self) -> None:
@@ -151,7 +136,8 @@ class Settings:
 
     @language.setter
     def language(self, value: str) -> None:
-        self._data["language"] = value if value in LANGUAGE_CHOICES else "auto"
+        valid = isinstance(value, str) and _LANGUAGE_CODE.fullmatch(value)
+        self._data["language"] = value if valid or value == "auto" else "auto"
 
     @property
     def theme(self) -> str:
