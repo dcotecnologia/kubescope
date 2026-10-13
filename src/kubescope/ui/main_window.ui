@@ -1634,37 +1634,6 @@ QPushButton#updateButton:hover { background: #f6f6fa; }
                </layout>
               </widget>
              </item>
-             <item>
-              <widget class="QPushButton" name="navViewer">
-               <property name="text">
-                <string>Details &amp;&amp; Logs</string>
-               </property>
-               <property name="visible">
-                <bool>false</bool>
-               </property>
-               <property name="minimumSize">
-                <size>
-                 <width>0</width>
-                 <height>34</height>
-                </size>
-               </property>
-               <property name="iconSize">
-                <size>
-                 <width>16</width>
-                 <height>16</height>
-                </size>
-               </property>
-               <property name="checkable">
-                <bool>true</bool>
-               </property>
-               <property name="autoExclusive">
-                <bool>true</bool>
-               </property>
-               <property name="nav" stdset="0">
-                <string notr="true">true</string>
-               </property>
-              </widget>
-             </item>
 
              <item>
               <spacer name="sidebarNavSpacer">

@@ -654,7 +654,7 @@ class WorkloadWindow(QMainWindow):
             self.viewer_tabs.removeTab(0)
             sample.deleteLater()
         self.viewer_tabs.tabCloseRequested.connect(self._close_viewer_tab)
-        self.nav_viewer = ui.navViewer
+        self.viewer_tabs.tabBar().hide()  # the top bar shows them
         self.settings_ui = Ui_SettingsPage()
         self.settings_ui.setupUi(ui.settingsHost)
         self.settings_ui.contextsTable.setRowCount(0)
@@ -683,7 +683,6 @@ class WorkloadWindow(QMainWindow):
             self.nav_config,
             self.nav_workloads_overview,
             *self._nav_views.values(),
-            ui.navViewer,
             ui.settingsButton,
         ):
             button.setAutoExclusive(False)  # _show_page keeps the checked state
@@ -776,7 +775,6 @@ class WorkloadWindow(QMainWindow):
         self.logs_button.clicked.connect(self._view_logs)
         self.table.itemSelectionChanged.connect(self._update_workload_actions)
         self.table.cellDoubleClicked.connect(lambda _row, _column: self._view_details())
-        self.nav_viewer.clicked.connect(lambda: self._show_page(3))
         ui.settingsButton.setIcon(_gear_icon())
         ui.settingsButton.clicked.connect(lambda: self._show_page(2))
         for keys in ("Ctrl+R", "F5"):
@@ -981,7 +979,43 @@ class WorkloadWindow(QMainWindow):
             row.addWidget(close)
             layout.addWidget(tab)
             self._pinned_buttons.append(button)
+        for index in range(self.viewer_tabs.count()):
+            self._add_viewer_top_tab(index)
         self.ui.pinnedBar.setVisible(bool(self._pinned_buttons))
+
+    def _add_viewer_top_tab(self, index: int) -> None:
+        """A tab of the top bar for an open Details or Logs, with a × to close
+        it."""
+        title = self.viewer_tabs.tabText(index)
+        active = self.pages.currentIndex() == 3 and (
+            self.viewer_tabs.currentIndex() == index
+        )
+        tab = QFrame()
+        tab.setProperty("pinTab", "true")
+        tab.setProperty("active", "true" if active else "false")
+        row = QHBoxLayout(tab)
+        row.setContentsMargins(10, 0, 4, 0)
+        row.setSpacing(0)
+        short = title if len(title) <= 32 else f"{title[:31]}…"
+        button = QPushButton(short.replace("&", "&&"))
+        button.setToolTip(title)
+        button.setCheckable(True)
+        button.setChecked(active)
+        button.setCursor(Qt.CursorShape.PointingHandCursor)
+        button.clicked.connect(lambda _checked=False, i=index: self._open_viewer_tab(i))
+        close = QPushButton("×")
+        close.setProperty("closeTab", "true")
+        close.setToolTip(self.tr("Close"))
+        close.setCursor(Qt.CursorShape.PointingHandCursor)
+        close.clicked.connect(lambda _checked=False, i=index: self._close_viewer_tab(i))
+        row.addWidget(button)
+        row.addWidget(close)
+        self.ui.pinnedLayout.addWidget(tab)
+        self._pinned_buttons.append(button)
+
+    def _open_viewer_tab(self, index: int) -> None:
+        self.viewer_tabs.setCurrentIndex(index)
+        self._show_page(3)
 
     def _load_cluster_info(self, context: str) -> None:
         """What AWS says about an EKS cluster, for the card on the overview;
@@ -1155,7 +1189,6 @@ class WorkloadWindow(QMainWindow):
         for view, button in self._nav_views.items():
             button.setChecked(index == 1 and self._view == view)
         self.ui.settingsButton.setChecked(index == 2)
-        self.nav_viewer.setChecked(index == 3)
         self.nav_workloads_overview.setChecked(index == 4)
         self._apply_page_titles()
         self._render_pinned()
@@ -1428,7 +1461,6 @@ class WorkloadWindow(QMainWindow):
         self.nav_network.setIcon(_nav_icon("network"))
         self.nav_config.setIcon(_nav_icon("config"))
         self.save_button.setIcon(_nav_icon("save"))
-        self.nav_viewer.setIcon(_nav_icon("document"))
         self._set_update_state(self._update_state)  # redraw its icon in this theme
         light = (themed("#ffffff", text=True),) * 2  # on the filled buttons
         for button in (
@@ -2922,7 +2954,6 @@ class WorkloadWindow(QMainWindow):
         index = self.viewer_tabs.addTab(widget, title)
         self.viewer_tabs.setTabToolTip(index, title)
         self.viewer_tabs.setCurrentIndex(index)
-        self.nav_viewer.show()
         self._show_page(3)
 
     def _close_viewer_tab(self, index: int) -> None:
@@ -2931,10 +2962,9 @@ class WorkloadWindow(QMainWindow):
         if isinstance(editor, LogTab):
             editor.closed = True
         editor.deleteLater()
-        if self.viewer_tabs.count() == 0:
-            self.nav_viewer.hide()
-            if self.pages.currentIndex() == 3:
-                self._show_page(1)
+        if self.viewer_tabs.count() == 0 and self.pages.currentIndex() == 3:
+            self._show_page(1)
+        self._render_pinned()
 
     def _show_json_dialog(self, title: str, document: dict[str, Any]) -> None:
         self._open_text_tab(title, json.dumps(document, ensure_ascii=False, indent=2))

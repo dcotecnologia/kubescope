@@ -749,17 +749,6 @@ class Ui_MainWindow(object):
 
         self.sidebarNavLayout.addWidget(self.configSubmenu)
 
-        self.navViewer = QPushButton(self.sidebarNav)
-        self.navViewer.setObjectName(u"navViewer")
-        self.navViewer.setVisible(False)
-        self.navViewer.setMinimumSize(QSize(0, 34))
-        self.navViewer.setIconSize(QSize(16, 16))
-        self.navViewer.setCheckable(True)
-        self.navViewer.setAutoExclusive(True)
-        self.navViewer.setProperty(u"nav", u"true")
-
-        self.sidebarNavLayout.addWidget(self.navViewer)
-
         self.sidebarNavSpacer = QSpacerItem(20, 0, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
 
         self.sidebarNavLayout.addItem(self.sidebarNavSpacer)
@@ -1312,7 +1301,6 @@ class Ui_MainWindow(object):
         self.navRuntimeClasses.setText(QCoreApplication.translate("MainWindow", u"Runtime Classes", None))
         self.navSecrets.setText(QCoreApplication.translate("MainWindow", u"Secrets", None))
         self.navValidatingWebhooks.setText(QCoreApplication.translate("MainWindow", u"Validating Webhook Configurations", None))
-        self.navViewer.setText(QCoreApplication.translate("MainWindow", u"Details && Logs", None))
         self.sidebarNote.setText(QCoreApplication.translate("MainWindow", u"SECURE ACCESS\n"
 "Resources in read-only mode", None))
         self.pageTitle.setText(QCoreApplication.translate("MainWindow", u"Overview", None))

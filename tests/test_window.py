@@ -309,7 +309,7 @@ def test_log_tab_drops_ansi_color_codes() -> None:
 def test_details_and_logs_open_as_closable_tabs(monkeypatch) -> None:
     monkeypatch.setattr(window_module, "list_contexts", lambda: ([], None))
     window = window_module.WorkloadWindow()
-    assert not window.nav_viewer.isVisibleTo(window)
+    assert not window.ui.pinnedBar.isVisibleTo(window)
     assert window.viewer_tabs.count() == 0
 
     window._show_json_dialog("Deployment: api", {"kind": "Deployment"})
@@ -317,7 +317,12 @@ def test_details_and_logs_open_as_closable_tabs(monkeypatch) -> None:
     window._show_logs_dialog(pod, "app", "line 1\nline 2")
 
     assert window.pages.currentIndex() == 3
-    assert window.nav_viewer.isVisibleTo(window)
+    assert window.ui.pinnedBar.isVisibleTo(window)
+    assert len(window._pinned_buttons) == 2
+    assert window._pinned_buttons[1].text() == "Logs: api-1 / app"
+    assert window._pinned_buttons[1].isChecked()
+    window._pinned_buttons[0].click()  # a tab of the top bar shows its page
+    assert window.viewer_tabs.currentIndex() == 0
     assert window.viewer_tabs.count() == 2
     assert window.viewer_tabs.tabText(0) == "Deployment: api"
     assert window.viewer_tabs.tabText(1) == "Logs: api-1 / app"
@@ -329,7 +334,7 @@ def test_details_and_logs_open_as_closable_tabs(monkeypatch) -> None:
     assert window.pages.currentIndex() == 3
     window.viewer_tabs.tabCloseRequested.emit(0)
     assert window.viewer_tabs.count() == 0
-    assert not window.nav_viewer.isVisibleTo(window)
+    assert not window.ui.pinnedBar.isVisibleTo(window)
     assert window.pages.currentIndex() == 1  # back to the workloads list
     window.close()
 
