@@ -8,6 +8,10 @@ All notable changes to this project will be documented in this file. The format 
 
 - Pod logs color a JSON object (or a Python dict) written in a line: keys, strings, numbers and literals each get their own color by @danilogco
 
+### Changed
+
+- Details and Logs no longer have an entry in the side menu: each one opens as a tab in the top bar, next to the pinned lists, with a × to close it by @danilogco
+
 ### Fixed
 
 - Pod logs no longer show the color codes of loggers such as coloredlogs as boxes by @danilogco
