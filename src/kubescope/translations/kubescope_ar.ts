@@ -98,17 +98,17 @@
 <context>
     <name>LogTab</name>
     <message>
-        <location filename="../log_tab.py" line="42"/>
+        <location filename="../log_tab.py" line="46"/>
         <source>No log lines returned.</source>
         <translation>لم يتم إرجاع أي أسطر من السجل.</translation>
     </message>
     <message>
-        <location filename="../log_tab.py" line="47"/>
+        <location filename="../log_tab.py" line="51"/>
         <source>Updated at {time}</source>
         <translation>تم التحديث في {time}</translation>
     </message>
     <message>
-        <location filename="../log_tab.py" line="54"/>
+        <location filename="../log_tab.py" line="58"/>
         <source>Could not refresh logs: {message}</source>
         <translation>تعذّر تحديث السجلات: {message}</translation>
     </message>
@@ -430,7 +430,6 @@
         <translation>المراقبة</translation>
     </message>
     <message>
-        <location filename="../ui/main_window.ui" line="576"/>
         <location filename="../ui/main_window.ui" line="690"/>
         <location filename="../ui/main_window.ui" line="1714"/>
         <source>Overview</source>
@@ -610,6 +609,11 @@ Resources in read-only mode</source>
         <location filename="../ui/main_window.ui" line="1772"/>
         <source>Refresh</source>
         <translation>تحديث</translation>
+    </message>
+    <message>
+        <location filename="../ui/main_window.ui" line="576"/>
+        <source>Cluster</source>
+        <translation>العنقود</translation>
     </message>
     <message>
         <location filename="../ui/main_window.ui" line="1929"/>
@@ -848,7 +852,7 @@ Resources in read-only mode</source>
 <context>
     <name>SettingsPage</name>
     <message>
-        <location filename="../window.py" line="3069"/>
+        <location filename="../window.py" line="3068"/>
         <location filename="../ui/settings_page.ui" line="514"/>
         <source>Give your contexts friendlier names. Leave a name empty to keep the original one.</source>
         <translation>أعطِ سياقاتك أسماء أسهل. اترك الاسم فارغاً للاحتفاظ بالاسم الأصلي.</translation>
@@ -1257,7 +1261,7 @@ Resources in read-only mode</source>
         <location filename="../window.py" line="722"/>
         <location filename="../window.py" line="2299"/>
         <location filename="../window.py" line="2322"/>
-        <location filename="../window.py" line="3307"/>
+        <location filename="../window.py" line="3306"/>
         <source>All namespaces</source>
         <translation>كل namespaces</translation>
     </message>
@@ -2342,72 +2346,72 @@ Resources in read-only mode</source>
         <translation>تعذّرت كتابة الملف: {reason}</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2982"/>
+        <location filename="../window.py" line="2981"/>
         <source>Logs: {pod} / {container}</source>
         <translation>السجلات: {pod} / {container}</translation>
     </message>
     <message>
-        <location filename="../window.py" line="3032"/>
+        <location filename="../window.py" line="3031"/>
         <source>Automatic</source>
         <translation>تلقائي</translation>
     </message>
     <message>
-        <location filename="../window.py" line="3045"/>
+        <location filename="../window.py" line="3044"/>
         <source>Off by default. When on, KubeScope writes what it does, never Pod logs or resource contents, to {path}. Read it before sharing: it includes context names.</source>
         <translation>معطّل افتراضياً. عند تفعيله، يكتب KubeScope ما يفعله، وليس سجلات Pods ولا محتوى الموارد، في {path}. اقرأه قبل المشاركة: فهو يتضمن أسماء السياقات.</translation>
     </message>
     <message>
-        <location filename="../window.py" line="3076"/>
+        <location filename="../window.py" line="3075"/>
         <source>No contexts were found in kubeconfig.</source>
         <translation>لم يتم العثور على سياقات في kubeconfig.</translation>
     </message>
     <message>
-        <location filename="../window.py" line="3105"/>
+        <location filename="../window.py" line="3104"/>
         <source>Choose a kubeconfig file</source>
         <translation>اختر ملف kubeconfig</translation>
     </message>
     <message>
-        <location filename="../window.py" line="3151"/>
+        <location filename="../window.py" line="3150"/>
         <source>The sign-in command in row {row} is not valid.</source>
         <translation>أمر تسجيل الدخول في الصف {row} غير صالح.</translation>
     </message>
     <message>
-        <location filename="../window.py" line="3164"/>
+        <location filename="../window.py" line="3163"/>
         <source>Light</source>
         <translation>فاتح</translation>
     </message>
     <message>
-        <location filename="../window.py" line="3164"/>
+        <location filename="../window.py" line="3163"/>
         <source>Dark</source>
         <translation>داكن</translation>
     </message>
     <message>
-        <location filename="../window.py" line="3183"/>
+        <location filename="../window.py" line="3182"/>
         <source>My theme</source>
         <translation>سمتي</translation>
     </message>
     <message>
-        <location filename="../window.py" line="3227"/>
+        <location filename="../window.py" line="3226"/>
         <source>Cache cleared. Everything loads again the next time it is needed.</source>
         <translation>تم مسح الذاكرة المؤقتة. يُحمَّل كل شيء من جديد عند الحاجة التالية.</translation>
     </message>
     <message>
-        <location filename="../window.py" line="3282"/>
+        <location filename="../window.py" line="3281"/>
         <source>Settings saved.</source>
         <translation>تم حفظ الإعدادات.</translation>
     </message>
     <message>
-        <location filename="../window.py" line="3321"/>
+        <location filename="../window.py" line="3320"/>
         <source>Your user is not allowed to {action}. Ask your cluster admin for access.</source>
         <translation>ليس لمستخدمك صلاحية لتنفيذ هذا الإجراء ({action}). اطلب الوصول من مسؤول العنقود.</translation>
     </message>
     <message>
-        <location filename="../window.py" line="3326"/>
+        <location filename="../window.py" line="3325"/>
         <source>Your user is not allowed to do this. Ask your cluster admin for access.</source>
         <translation>ليس لمستخدمك صلاحية لتنفيذ هذا. اطلب الوصول من مسؤول العنقود.</translation>
     </message>
     <message>
-        <location filename="../window.py" line="3345"/>
+        <location filename="../window.py" line="3344"/>
         <source>Query failed</source>
         <translation>فشل الاستعلام</translation>
     </message>

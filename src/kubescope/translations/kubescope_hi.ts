@@ -98,17 +98,17 @@
 <context>
     <name>LogTab</name>
     <message>
-        <location filename="../log_tab.py" line="42"/>
+        <location filename="../log_tab.py" line="46"/>
         <source>No log lines returned.</source>
         <translation>कोई लॉग पंक्ति नहीं मिली।</translation>
     </message>
     <message>
-        <location filename="../log_tab.py" line="47"/>
+        <location filename="../log_tab.py" line="51"/>
         <source>Updated at {time}</source>
         <translation>{time} पर अपडेट किया गया</translation>
     </message>
     <message>
-        <location filename="../log_tab.py" line="54"/>
+        <location filename="../log_tab.py" line="58"/>
         <source>Could not refresh logs: {message}</source>
         <translation>लॉग रीफ़्रेश नहीं हो सके: {message}</translation>
     </message>
@@ -430,7 +430,6 @@
         <translation>मॉनिटरिंग</translation>
     </message>
     <message>
-        <location filename="../ui/main_window.ui" line="576"/>
         <location filename="../ui/main_window.ui" line="690"/>
         <location filename="../ui/main_window.ui" line="1714"/>
         <source>Overview</source>
@@ -440,6 +439,11 @@
         <location filename="../ui/main_window.ui" line="607"/>
         <source>Node Groups</source>
         <translation>Node Groups</translation>
+    </message>
+    <message>
+        <location filename="../ui/main_window.ui" line="576"/>
+        <source>Cluster</source>
+        <translation>क्लस्टर</translation>
     </message>
     <message>
         <location filename="../ui/main_window.ui" line="638"/>
@@ -848,7 +852,7 @@ Resources in read-only mode</source>
 <context>
     <name>SettingsPage</name>
     <message>
-        <location filename="../window.py" line="3069"/>
+        <location filename="../window.py" line="3068"/>
         <location filename="../ui/settings_page.ui" line="514"/>
         <source>Give your contexts friendlier names. Leave a name empty to keep the original one.</source>
         <translation>अपने कॉन्टेक्स्ट को आसान नाम दें। मूल नाम रखने के लिए नाम खाली छोड़ें।</translation>
@@ -1257,7 +1261,7 @@ Resources in read-only mode</source>
         <location filename="../window.py" line="722"/>
         <location filename="../window.py" line="2299"/>
         <location filename="../window.py" line="2322"/>
-        <location filename="../window.py" line="3307"/>
+        <location filename="../window.py" line="3306"/>
         <source>All namespaces</source>
         <translation>सभी namespaces</translation>
     </message>
@@ -2342,72 +2346,72 @@ Resources in read-only mode</source>
         <translation>फ़ाइल लिखी नहीं जा सकी: {reason}</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2982"/>
+        <location filename="../window.py" line="2981"/>
         <source>Logs: {pod} / {container}</source>
         <translation>लॉग: {pod} / {container}</translation>
     </message>
     <message>
-        <location filename="../window.py" line="3032"/>
+        <location filename="../window.py" line="3031"/>
         <source>Automatic</source>
         <translation>स्वचालित</translation>
     </message>
     <message>
-        <location filename="../window.py" line="3045"/>
+        <location filename="../window.py" line="3044"/>
         <source>Off by default. When on, KubeScope writes what it does, never Pod logs or resource contents, to {path}. Read it before sharing: it includes context names.</source>
         <translation>डिफ़ॉल्ट रूप से बंद। चालू होने पर KubeScope जो करता है वह {path} में लिखता है, Pod लॉग या संसाधनों की सामग्री कभी नहीं। साझा करने से पहले पढ़ लें: इसमें कॉन्टेक्स्ट के नाम होते हैं।</translation>
     </message>
     <message>
-        <location filename="../window.py" line="3076"/>
+        <location filename="../window.py" line="3075"/>
         <source>No contexts were found in kubeconfig.</source>
         <translation>kubeconfig में कोई कॉन्टेक्स्ट नहीं मिला।</translation>
     </message>
     <message>
-        <location filename="../window.py" line="3105"/>
+        <location filename="../window.py" line="3104"/>
         <source>Choose a kubeconfig file</source>
         <translation>kubeconfig फ़ाइल चुनें</translation>
     </message>
     <message>
-        <location filename="../window.py" line="3151"/>
+        <location filename="../window.py" line="3150"/>
         <source>The sign-in command in row {row} is not valid.</source>
         <translation>पंक्ति {row} का साइन-इन कमांड मान्य नहीं है।</translation>
     </message>
     <message>
-        <location filename="../window.py" line="3164"/>
+        <location filename="../window.py" line="3163"/>
         <source>Light</source>
         <translation>हल्की</translation>
     </message>
     <message>
-        <location filename="../window.py" line="3164"/>
+        <location filename="../window.py" line="3163"/>
         <source>Dark</source>
         <translation>गहरी</translation>
     </message>
     <message>
-        <location filename="../window.py" line="3183"/>
+        <location filename="../window.py" line="3182"/>
         <source>My theme</source>
         <translation>मेरी थीम</translation>
     </message>
     <message>
-        <location filename="../window.py" line="3227"/>
+        <location filename="../window.py" line="3226"/>
         <source>Cache cleared. Everything loads again the next time it is needed.</source>
         <translation>कैश साफ़ किया गया। जब भी ज़रूरत होगी, सब कुछ फिर से लोड होगा।</translation>
     </message>
     <message>
-        <location filename="../window.py" line="3282"/>
+        <location filename="../window.py" line="3281"/>
         <source>Settings saved.</source>
         <translation>सेटिंग्स सहेजी गईं।</translation>
     </message>
     <message>
-        <location filename="../window.py" line="3321"/>
+        <location filename="../window.py" line="3320"/>
         <source>Your user is not allowed to {action}. Ask your cluster admin for access.</source>
         <translation>आपके उपयोगकर्ता को यह करने की अनुमति नहीं है: {action}। पहुँच के लिए अपने क्लस्टर एडमिन से कहें।</translation>
     </message>
     <message>
-        <location filename="../window.py" line="3326"/>
+        <location filename="../window.py" line="3325"/>
         <source>Your user is not allowed to do this. Ask your cluster admin for access.</source>
         <translation>आपके उपयोगकर्ता को यह करने की अनुमति नहीं है। पहुँच के लिए अपने क्लस्टर एडमिन से कहें।</translation>
     </message>
     <message>
-        <location filename="../window.py" line="3345"/>
+        <location filename="../window.py" line="3344"/>
         <source>Query failed</source>
         <translation>क्वेरी विफल</translation>
     </message>

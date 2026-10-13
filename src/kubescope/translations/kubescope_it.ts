@@ -98,17 +98,17 @@
 <context>
     <name>LogTab</name>
     <message>
-        <location filename="../log_tab.py" line="42"/>
+        <location filename="../log_tab.py" line="46"/>
         <source>No log lines returned.</source>
         <translation>Nessuna riga di log restituita.</translation>
     </message>
     <message>
-        <location filename="../log_tab.py" line="47"/>
+        <location filename="../log_tab.py" line="51"/>
         <source>Updated at {time}</source>
         <translation>Aggiornato alle {time}</translation>
     </message>
     <message>
-        <location filename="../log_tab.py" line="54"/>
+        <location filename="../log_tab.py" line="58"/>
         <source>Could not refresh logs: {message}</source>
         <translation>Impossibile aggiornare i log: {message}</translation>
     </message>
@@ -430,7 +430,6 @@
         <translation>MONITORAGGIO</translation>
     </message>
     <message>
-        <location filename="../ui/main_window.ui" line="576"/>
         <location filename="../ui/main_window.ui" line="690"/>
         <location filename="../ui/main_window.ui" line="1714"/>
         <source>Overview</source>
@@ -610,6 +609,11 @@ Risorse in modalità sola lettura</translation>
         <location filename="../ui/main_window.ui" line="1772"/>
         <source>Refresh</source>
         <translation>Aggiorna</translation>
+    </message>
+    <message>
+        <location filename="../ui/main_window.ui" line="576"/>
+        <source>Cluster</source>
+        <translation>Cluster</translation>
     </message>
     <message>
         <location filename="../ui/main_window.ui" line="1929"/>
@@ -848,7 +852,7 @@ Risorse in modalità sola lettura</translation>
 <context>
     <name>SettingsPage</name>
     <message>
-        <location filename="../window.py" line="3069"/>
+        <location filename="../window.py" line="3068"/>
         <location filename="../ui/settings_page.ui" line="514"/>
         <source>Give your contexts friendlier names. Leave a name empty to keep the original one.</source>
         <translation>Dai ai tuoi contesti nomi più semplici. Lascia un nome vuoto per mantenere quello originale.</translation>
@@ -1257,7 +1261,7 @@ Risorse in modalità sola lettura</translation>
         <location filename="../window.py" line="722"/>
         <location filename="../window.py" line="2299"/>
         <location filename="../window.py" line="2322"/>
-        <location filename="../window.py" line="3307"/>
+        <location filename="../window.py" line="3306"/>
         <source>All namespaces</source>
         <translation>Tutti i namespace</translation>
     </message>
@@ -2342,72 +2346,72 @@ Risorse in modalità sola lettura</translation>
         <translation>Impossibile scrivere il file: {reason}</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2982"/>
+        <location filename="../window.py" line="2981"/>
         <source>Logs: {pod} / {container}</source>
         <translation>Log: {pod} / {container}</translation>
     </message>
     <message>
-        <location filename="../window.py" line="3032"/>
+        <location filename="../window.py" line="3031"/>
         <source>Automatic</source>
         <translation>Automatico</translation>
     </message>
     <message>
-        <location filename="../window.py" line="3045"/>
+        <location filename="../window.py" line="3044"/>
         <source>Off by default. When on, KubeScope writes what it does, never Pod logs or resource contents, to {path}. Read it before sharing: it includes context names.</source>
         <translation>Disattivata per impostazione predefinita. Quando è attiva, KubeScope scrive ciò che fa, mai i log dei Pod né il contenuto delle risorse, in {path}. Leggilo prima di condividerlo: include i nomi dei contesti.</translation>
     </message>
     <message>
-        <location filename="../window.py" line="3076"/>
+        <location filename="../window.py" line="3075"/>
         <source>No contexts were found in kubeconfig.</source>
         <translation>Nessun contesto trovato nel kubeconfig.</translation>
     </message>
     <message>
-        <location filename="../window.py" line="3105"/>
+        <location filename="../window.py" line="3104"/>
         <source>Choose a kubeconfig file</source>
         <translation>Scegli un file kubeconfig</translation>
     </message>
     <message>
-        <location filename="../window.py" line="3151"/>
+        <location filename="../window.py" line="3150"/>
         <source>The sign-in command in row {row} is not valid.</source>
         <translation>Il comando di accesso della riga {row} non è valido.</translation>
     </message>
     <message>
-        <location filename="../window.py" line="3164"/>
+        <location filename="../window.py" line="3163"/>
         <source>Light</source>
         <translation>Chiaro</translation>
     </message>
     <message>
-        <location filename="../window.py" line="3164"/>
+        <location filename="../window.py" line="3163"/>
         <source>Dark</source>
         <translation>Scuro</translation>
     </message>
     <message>
-        <location filename="../window.py" line="3183"/>
+        <location filename="../window.py" line="3182"/>
         <source>My theme</source>
         <translation>Il mio tema</translation>
     </message>
     <message>
-        <location filename="../window.py" line="3227"/>
+        <location filename="../window.py" line="3226"/>
         <source>Cache cleared. Everything loads again the next time it is needed.</source>
         <translation>Cache svuotata. Tutto viene caricato di nuovo la prossima volta che serve.</translation>
     </message>
     <message>
-        <location filename="../window.py" line="3282"/>
+        <location filename="../window.py" line="3281"/>
         <source>Settings saved.</source>
         <translation>Impostazioni salvate.</translation>
     </message>
     <message>
-        <location filename="../window.py" line="3321"/>
+        <location filename="../window.py" line="3320"/>
         <source>Your user is not allowed to {action}. Ask your cluster admin for access.</source>
         <translation>Il tuo utente non è autorizzato a eseguire questa azione ({action}). Chiedi l&apos;accesso all&apos;amministratore del cluster.</translation>
     </message>
     <message>
-        <location filename="../window.py" line="3326"/>
+        <location filename="../window.py" line="3325"/>
         <source>Your user is not allowed to do this. Ask your cluster admin for access.</source>
         <translation>Il tuo utente non è autorizzato a farlo. Chiedi l&apos;accesso all&apos;amministratore del cluster.</translation>
     </message>
     <message>
-        <location filename="../window.py" line="3345"/>
+        <location filename="../window.py" line="3344"/>
         <source>Query failed</source>
         <translation>Richiesta non riuscita</translation>
     </message>

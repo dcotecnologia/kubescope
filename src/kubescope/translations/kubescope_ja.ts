@@ -98,17 +98,17 @@
 <context>
     <name>LogTab</name>
     <message>
-        <location filename="../log_tab.py" line="42"/>
+        <location filename="../log_tab.py" line="46"/>
         <source>No log lines returned.</source>
         <translation>ログ行が返されませんでした。</translation>
     </message>
     <message>
-        <location filename="../log_tab.py" line="47"/>
+        <location filename="../log_tab.py" line="51"/>
         <source>Updated at {time}</source>
         <translation>{time} に更新</translation>
     </message>
     <message>
-        <location filename="../log_tab.py" line="54"/>
+        <location filename="../log_tab.py" line="58"/>
         <source>Could not refresh logs: {message}</source>
         <translation>ログを更新できませんでした：{message}</translation>
     </message>
@@ -430,7 +430,6 @@
         <translation>モニタリング</translation>
     </message>
     <message>
-        <location filename="../ui/main_window.ui" line="576"/>
         <location filename="../ui/main_window.ui" line="690"/>
         <location filename="../ui/main_window.ui" line="1714"/>
         <source>Overview</source>
@@ -610,6 +609,11 @@ Resources in read-only mode</source>
         <location filename="../ui/main_window.ui" line="1772"/>
         <source>Refresh</source>
         <translation>更新</translation>
+    </message>
+    <message>
+        <location filename="../ui/main_window.ui" line="576"/>
+        <source>Cluster</source>
+        <translation>クラスター</translation>
     </message>
     <message>
         <location filename="../ui/main_window.ui" line="1929"/>
@@ -848,7 +852,7 @@ Resources in read-only mode</source>
 <context>
     <name>SettingsPage</name>
     <message>
-        <location filename="../window.py" line="3069"/>
+        <location filename="../window.py" line="3068"/>
         <location filename="../ui/settings_page.ui" line="514"/>
         <source>Give your contexts friendlier names. Leave a name empty to keep the original one.</source>
         <translation>コンテキストに分かりやすい名前を付けます。名前を空にすると元の名前のままになります。</translation>
@@ -1257,7 +1261,7 @@ Resources in read-only mode</source>
         <location filename="../window.py" line="722"/>
         <location filename="../window.py" line="2299"/>
         <location filename="../window.py" line="2322"/>
-        <location filename="../window.py" line="3307"/>
+        <location filename="../window.py" line="3306"/>
         <source>All namespaces</source>
         <translation>すべての namespaces</translation>
     </message>
@@ -2342,72 +2346,72 @@ Resources in read-only mode</source>
         <translation>ファイルを書き込めませんでした：{reason}</translation>
     </message>
     <message>
-        <location filename="../window.py" line="2982"/>
+        <location filename="../window.py" line="2981"/>
         <source>Logs: {pod} / {container}</source>
         <translation>ログ：{pod} / {container}</translation>
     </message>
     <message>
-        <location filename="../window.py" line="3032"/>
+        <location filename="../window.py" line="3031"/>
         <source>Automatic</source>
         <translation>自動</translation>
     </message>
     <message>
-        <location filename="../window.py" line="3045"/>
+        <location filename="../window.py" line="3044"/>
         <source>Off by default. When on, KubeScope writes what it does, never Pod logs or resource contents, to {path}. Read it before sharing: it includes context names.</source>
         <translation>デフォルトではオフです。オンにすると、KubeScope は動作の記録を {path} に書き込みます。Pod のログやリソースの内容は書き込みません。共有する前に内容を確認してください。コンテキスト名が含まれます。</translation>
     </message>
     <message>
-        <location filename="../window.py" line="3076"/>
+        <location filename="../window.py" line="3075"/>
         <source>No contexts were found in kubeconfig.</source>
         <translation>kubeconfig にコンテキストが見つかりません。</translation>
     </message>
     <message>
-        <location filename="../window.py" line="3105"/>
+        <location filename="../window.py" line="3104"/>
         <source>Choose a kubeconfig file</source>
         <translation>kubeconfig ファイルを選択</translation>
     </message>
     <message>
-        <location filename="../window.py" line="3151"/>
+        <location filename="../window.py" line="3150"/>
         <source>The sign-in command in row {row} is not valid.</source>
         <translation>{row} 行目のサインインコマンドが正しくありません。</translation>
     </message>
     <message>
-        <location filename="../window.py" line="3164"/>
+        <location filename="../window.py" line="3163"/>
         <source>Light</source>
         <translation>ライト</translation>
     </message>
     <message>
-        <location filename="../window.py" line="3164"/>
+        <location filename="../window.py" line="3163"/>
         <source>Dark</source>
         <translation>ダーク</translation>
     </message>
     <message>
-        <location filename="../window.py" line="3183"/>
+        <location filename="../window.py" line="3182"/>
         <source>My theme</source>
         <translation>マイテーマ</translation>
     </message>
     <message>
-        <location filename="../window.py" line="3227"/>
+        <location filename="../window.py" line="3226"/>
         <source>Cache cleared. Everything loads again the next time it is needed.</source>
         <translation>キャッシュを消去しました。必要になったときに、すべて読み込み直します。</translation>
     </message>
     <message>
-        <location filename="../window.py" line="3282"/>
+        <location filename="../window.py" line="3281"/>
         <source>Settings saved.</source>
         <translation>設定を保存しました。</translation>
     </message>
     <message>
-        <location filename="../window.py" line="3321"/>
+        <location filename="../window.py" line="3320"/>
         <source>Your user is not allowed to {action}. Ask your cluster admin for access.</source>
         <translation>このユーザーには次の操作を行う権限がありません（{action}）。クラスター管理者にアクセスを依頼してください。</translation>
     </message>
     <message>
-        <location filename="../window.py" line="3326"/>
+        <location filename="../window.py" line="3325"/>
         <source>Your user is not allowed to do this. Ask your cluster admin for access.</source>
         <translation>このユーザーにはこの操作を行う権限がありません。クラスター管理者にアクセスを依頼してください。</translation>
     </message>
     <message>
-        <location filename="../window.py" line="3345"/>
+        <location filename="../window.py" line="3344"/>
         <source>Query failed</source>
         <translation>クエリに失敗しました</translation>
     </message>
