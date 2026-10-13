@@ -867,6 +867,27 @@ class WorkloadWindow(QMainWindow):
         self._ensure_overview()
         self._check_login()
         self._update_eks_entries()
+        self._restore_screen()
+
+    def _restore_screen(self) -> None:
+        """Back to the page and list the app was left on, when it remembers the
+        last context."""
+        if not self.settings.remember_last_context:
+            return
+        page, view = self.settings.last_screen
+        if page == 1 and view in self._nav_views:
+            self._open_list_view(view)
+        elif page in (0, 2, 4):
+            self._show_page(page)
+
+    def _remember_screen(self) -> None:
+        """Keep the page and list on screen; a viewer tab keeps the last
+        list."""
+        page = self.pages.currentIndex()
+        if self.settings.remember_last_context and page in (0, 1, 2, 4):
+            view = self._view if page == 1 else self.settings.last_screen[1]
+            self.settings.last_screen = (page, view)
+            self._save_settings()
 
     def _update_eks_entries(self) -> None:
         """Node Groups belong to Amazon EKS: show the entry only for a context
@@ -1192,6 +1213,7 @@ class WorkloadWindow(QMainWindow):
         self.nav_workloads_overview.setChecked(index == 4)
         self._apply_page_titles()
         self._render_pinned()
+        self._remember_screen()
         for page, button in (
             (0, self.overview_refresh_button),
             (1, self.refresh_button),

@@ -233,3 +233,16 @@ def test_pinned_views_persist_without_duplicates_and_ignore_damaged_values(
     assert Settings(path).pinned_views() == ["pods", "leases"]
     path.write_text('{"pinned_views": "pods"}')
     assert Settings(path).pinned_views() == []
+
+
+def test_last_screen_persists_and_ignores_damaged_values(tmp_path) -> None:
+    path = tmp_path / "settings.json"
+    settings = Settings(path)
+    assert settings.last_screen == (0, "")
+
+    settings.last_screen = (1, "pods")
+    settings.save()
+    assert Settings(path).last_screen == (1, "pods")
+
+    path.write_text('{"last_screen": "pods"}')
+    assert Settings(path).last_screen == (0, "")

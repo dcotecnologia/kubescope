@@ -75,7 +75,7 @@ prefer otherwise.
   anything; the link opens the release page in your browser. Turn the startup
   check off in Settings.
 - **Local settings hold no secrets.** `settings.json` keeps the language, the
-  last context, context display names, hidden table columns, the pinned lists, and the size
+  last context, the page and list you were on, context display names, hidden table columns, the pinned lists, and the size
   and position of the window. It lives in your
   user configuration directory (`~/.config/kubescope` on Linux).
 - **Logs and resource details are shown on screen.** The app does not write them

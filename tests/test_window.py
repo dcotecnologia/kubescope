@@ -247,7 +247,7 @@ def test_settings_page_saves_preferences_and_switches_language(
 
         assert window.context_combo.itemText(0) == "Prod ✓"
         assert window.ui.pageTitle.text() == "Configurações"
-        assert window.nav_overview.text() == "Visão geral"
+        assert window.nav_overview.text() == "Cluster"
         saved = Settings(path)
         assert saved.language == "pt"
         assert saved.context_aliases == {"prod": "Prod ✓"}
@@ -671,3 +671,42 @@ def test_log_tab_colors_the_logs_with_the_monokai_view(monkeypatch) -> None:
     assert isinstance(tab.highlighter, log_view.LogHighlighter)
     assert "#272822" in tab.ui.logText.styleSheet()
     window.close()
+
+
+def test_the_app_reopens_on_the_page_and_list_it_was_left_on(monkeypatch) -> None:
+    monkeypatch.setattr(window_module, "list_contexts", lambda: (["a", "b"], "a"))
+    for name in ("refresh", "_ensure_overview", "_check_login", "_update_eks_entries"):
+        monkeypatch.setattr(window_module.WorkloadWindow, name, lambda *_a: None)
+
+    def reopen():
+        window = window_module.WorkloadWindow()
+        window._contexts_loaded((["a", "b"], "a"))
+        return window
+
+    window = reopen()
+    window.context_combo.setCurrentIndex(1)
+    window._open_list_view("services")
+    window._show_page(3)  # a viewer tab does not replace the list
+    window.close()
+
+    again = reopen()
+    assert (again._context(), again._view, again.pages.currentIndex()) == (
+        "b",
+        "services",
+        1,
+    )
+    again._show_page(2)
+    again.close()
+    third = reopen()
+    assert third.pages.currentIndex() == 2
+    third.settings.remember_last_context = False
+    third._show_page(4)
+    third.close()
+    fourth = reopen()
+    assert fourth.settings.last_screen == (2, "services")  # not kept when off
+    fourth.settings.remember_last_context = False
+    fourth._show_page(0)
+    fourth._restore_screen()
+    assert fourth.pages.currentIndex() == 0
+    for each in (window, again, third, fourth):
+        each.close()

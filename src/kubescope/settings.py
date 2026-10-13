@@ -30,6 +30,7 @@ DEFAULTS: dict[str, Any] = {
     "theme": "dark",
     "remember_last_context": True,
     "last_context": None,
+    "last_screen": [0, ""],
     "default_namespace": "",
     "context_aliases": {},
     "hidden_columns": {},
@@ -230,6 +231,23 @@ class Settings:
     @last_context.setter
     def last_context(self, value: str | None) -> None:
         self._data["last_context"] = value
+
+    @property
+    def last_screen(self) -> tuple[int, str]:
+        """The page number and the list the app was left on."""
+        value = self._data["last_screen"]
+        if (
+            isinstance(value, list)
+            and len(value) == 2
+            and isinstance(value[0], int)
+            and isinstance(value[1], str)
+        ):
+            return value[0], value[1]
+        return 0, ""
+
+    @last_screen.setter
+    def last_screen(self, value: tuple[int, str]) -> None:
+        self._data["last_screen"] = [value[0], value[1]]
 
     @property
     def default_namespace(self) -> str:
