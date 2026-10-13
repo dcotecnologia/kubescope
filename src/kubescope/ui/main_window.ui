@@ -573,7 +573,7 @@ QPushButton#updateButton:hover { background: #f6f6fa; }
              <item>
               <widget class="QPushButton" name="navOverview">
                <property name="text">
-                <string>Overview</string>
+                <string>Cluster</string>
                </property>
                <property name="minimumSize">
                 <size>

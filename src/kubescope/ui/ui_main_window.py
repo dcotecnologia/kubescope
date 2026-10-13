@@ -1269,7 +1269,7 @@ class Ui_MainWindow(object):
         self.noContextsLabel.setText(QCoreApplication.translate("MainWindow", u"No cluster contexts were found in your kubeconfig. Add a cluster to your kubeconfig (for example with the AWS CLI: aws eks update-kubeconfig) and reload.", None))
         self.permissionDismiss.setText(QCoreApplication.translate("MainWindow", u"Dismiss", None))
         self.navSection.setText(QCoreApplication.translate("MainWindow", u"MONITORING", None))
-        self.navOverview.setText(QCoreApplication.translate("MainWindow", u"Overview", None))
+        self.navOverview.setText(QCoreApplication.translate("MainWindow", u"Cluster", None))
         self.navNodeGroups.setText(QCoreApplication.translate("MainWindow", u"Node Groups", None))
         self.navWorkloads.setText(QCoreApplication.translate("MainWindow", u"Workloads", None))
         self.navWorkloadsOverview.setText(QCoreApplication.translate("MainWindow", u"Overview", None))
