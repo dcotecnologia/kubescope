@@ -7,6 +7,7 @@ from PySide6.QtWidgets import QApplication, QTableWidgetItem
 
 from kubescope import log_view, theme
 from kubescope import window as window_module
+from kubescope.log_tab import LogTab
 from kubescope.models import ClusterOverview, NodeInfo, PodInfo, Workload
 
 application = QApplication.instance() or QApplication([])
@@ -293,6 +294,16 @@ def test_every_new_language_is_bundled_and_arabic_mirrors_the_layout() -> None:
     finally:
         i18n.apply_language("en")
     assert QApplication.layoutDirection() == Qt.LayoutDirection.LeftToRight
+
+
+def test_log_tab_drops_ansi_color_codes() -> None:
+    tab = LogTab(
+        "ctx", PodInfo("default", "api-1", "Running", 1, 1, "1d", ("app",)), "app"
+    )
+    tab.set_logs("\x1b[37m13/10/2026\x1b[0m - \x1b[1;37mINFO\x1b[0m - up")
+    assert tab.ui.logText.toPlainText() == "13/10/2026 - INFO - up"
+    tab.set_logs("\x1b[0m")  # nothing but codes counts as no lines
+    assert tab.ui.logText.toPlainText() == "No log lines returned."
 
 
 def test_details_and_logs_open_as_closable_tabs(monkeypatch) -> None:

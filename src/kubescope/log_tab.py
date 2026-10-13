@@ -1,3 +1,4 @@
+import re
 from datetime import datetime
 
 from PySide6.QtWidgets import QWidget
@@ -8,6 +9,9 @@ from kubescope.models import PodInfo, safe_file_name
 from kubescope.ui.ui_log_tab import Ui_LogTab
 
 LOG_REFRESH_MS = 3000
+# colors and cursor moves that coloredlogs and the like write: the editor would
+# draw their escape character as a box
+_ANSI = re.compile(r"\x1b\[[0-9;?]*[ -/]*[@-~]")
 
 
 class LogTab(QWidget):
@@ -39,7 +43,7 @@ class LogTab(QWidget):
         scrollbar = editor.verticalScrollBar()
         was_at_end = scrollbar.value() >= scrollbar.maximum() - 2
         previous = scrollbar.value()
-        text = text or self.tr("No log lines returned.")
+        text = _ANSI.sub("", text) or self.tr("No log lines returned.")
         if text != editor.toPlainText():
             editor.setPlainText(text)
             scrollbar.setValue(scrollbar.maximum() if was_at_end else previous)

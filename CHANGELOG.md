@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file. The format 
 
 ### Fixed
 
+- Pod logs no longer show the color codes of loggers such as coloredlogs as boxes by @danilogco
 - Working offline now shows **No network connection**, with a hint to check the internet or VPN, instead of a generic error when the AWS CLI cannot reach its endpoint by @danilogco
 
 ## [0.4.0] - 2026-10-12
