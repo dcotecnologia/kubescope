@@ -134,6 +134,21 @@ def describe_error(message: str) -> ErrorInfo:
     if any(
         word in lowered
         for word in (
+            "could not connect to the endpoint url",
+            "could not resolve host",
+            "network is unreachable",
+        )
+    ):
+        return ErrorInfo(
+            QCoreApplication.translate("Errors", "No network connection"),
+            QCoreApplication.translate(
+                "Errors", "Check your internet connection or VPN and refresh."
+            ),
+            details,
+        )
+    if any(
+        word in lowered
+        for word in (
             "timed out",
             "i/o timeout",
             "connection refused",

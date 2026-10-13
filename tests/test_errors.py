@@ -18,6 +18,11 @@ from kubescope.errors import describe_error
         ),
         ("The request timed out while contacting the cluster", "Cluster unreachable"),
         (
+            "exec: process returned 255. aws: [ERROR]: Could not connect to the "
+            'endpoint URL: "https://oidc.us-east-1.amazonaws.com/token"',
+            "No network connection",
+        ),
+        (
             "HTTPSConnection(host='x', port=443): Failed to establish a new "
             "connection: [Errno -2] Name or service not known",
             "Cluster unreachable",
