@@ -83,3 +83,26 @@ def test_light_themes_color_the_logs_with_the_light_palette() -> None:
     assert colors["ERROR"] == "#cf222e"
     assert colors["2026-10-08T05:00:01Z"] == "#6e7781"
     assert colors["ts"] == "#0550ae" and colors['"x"'] == "#116329"
+
+
+def test_a_json_object_in_a_line_gets_its_own_colors(dark) -> None:
+    colors = _colors(
+        '2026-10-08T05:00:01Z req {"id": 7, "ok": true, "tag": "a b"} done'
+    )
+
+    assert colors['"id"'] == "#66d9ef"  # keys
+    assert colors['"a b"'] == "#e6db74"  # strings
+    assert colors["7"] == "#ae81ff" and colors["true"] == "#ae81ff"
+    assert colors["{"] == "#75715e"  # punctuation is dimmed
+    assert "done" not in colors and "req" not in colors  # the rest is plain
+
+
+def test_a_python_dict_and_a_cut_object_are_colored_too(dark) -> None:
+    colors = _colors("{'sub': 'x', 'n': -1.5, 'v': None, 'k': 'cut")
+
+    assert colors["'sub'"] == "#66d9ef" and colors["'x'"] == "#e6db74"
+    assert colors["-1.5"] == "#ae81ff" and colors["None"] == "#ae81ff"
+
+
+def test_braces_without_a_key_are_not_an_object(dark) -> None:
+    assert "{" not in _colors("rendered {} and {name} 42")

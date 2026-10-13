@@ -1,7 +1,8 @@
 """Color Pod logs with the palette of the JSON view, which follows the theme.
 
 It colors the timestamp the cluster puts first on each line, the log
-level and the keys of `key=value` lines. The text is never changed.
+level, the keys of `key=value` lines and a JSON object (or a Python dict
+with single quotes) written in the line. The text is never changed.
 """
 
 import re
@@ -39,6 +40,15 @@ _LEVEL = re.compile(
     rf"|(?<=level=)(?i:{_NAMES})\b"
     rf"|(?<=\"level\":\")(?i:{_NAMES})(?=\")"
 )
+# a JSON object starts at a brace followed by a quoted key; it may use ' like a
+# Python dict does
+_OBJECT = re.compile(r"\{\s*[\"']")
+_JSON_STRING = r"\"(?:\\.|[^\"\\])*\"|'(?:\\.|[^'\\])*'"
+_JSON_KEY = re.compile(rf"(?:{_JSON_STRING})(?=\s*:)")
+_JSON_TEXT = re.compile(_JSON_STRING)
+_JSON_NUMBER = re.compile(r"(?<![\w.])-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?\b")
+_JSON_LITERAL = re.compile(r"\b(?:true|false|null|True|False|None)\b")
+_JSON_PUNCTUATION = re.compile(r"[{}\[\],:]")
 
 
 class LogHighlighter(QSyntaxHighlighter):
@@ -52,6 +62,7 @@ class LogHighlighter(QSyntaxHighlighter):
         self._key = text_format(palette.key)
         self._quoted = text_format(palette.string)
         self._timestamp = text_format(palette.timestamp)
+        self._number = text_format(palette.number)
         self._levels = {
             name: text_format(getattr(palette, name))
             for name in ("error", "warning", "info", "debug")
@@ -63,12 +74,32 @@ class LogHighlighter(QSyntaxHighlighter):
             self.setFormat(match.start(), match.end() - match.start(), self._key)
         for match in _QUOTED.finditer(text):
             self.setFormat(match.start(), match.end() - match.start(), self._quoted)
+        self._color_object(text)
         for match in _LEVEL.finditer(text):
             level = self._levels[_LEVELS[match.group().lower()]]
             self.setFormat(match.start(), match.end() - match.start(), level)
         stamp = _TIMESTAMP.match(text)
         if stamp:
             self.setFormat(0, stamp.end(), self._timestamp)
+
+    def _color_object(self, text: str) -> None:
+        """Color the JSON object of the line, from its first brace to its last
+        one (or the end of the line when it is cut short)."""
+        start = _OBJECT.search(text)
+        if start is None:
+            return
+        end = text.rfind("}") + 1
+        begin = start.start()
+        body = text[begin : end if end > begin else len(text)]
+        for pattern, fmt in (
+            (_JSON_NUMBER, self._number),
+            (_JSON_LITERAL, self._number),
+            (_JSON_PUNCTUATION, self._timestamp),
+            (_JSON_TEXT, self._quoted),
+            (_JSON_KEY, self._key),
+        ):
+            for match in pattern.finditer(body):
+                self.setFormat(begin + match.start(), match.end() - match.start(), fmt)
 
 
 def style_log_view(editor: QPlainTextEdit) -> LogHighlighter:
