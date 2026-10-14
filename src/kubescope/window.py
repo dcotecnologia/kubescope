@@ -2406,12 +2406,17 @@ class WorkloadWindow(QMainWindow):
         return self._selected_workload()
 
     def _render_rows(self) -> None:
-        if self._view == "pods":
-            self._render_pods()
-        elif self._view in RESOURCE_VIEWS:
-            self._render_resources()
-        else:
-            self._render_workloads()
+        # one repaint for the whole batch instead of one per cell and row
+        self.table.setUpdatesEnabled(False)
+        try:
+            if self._view == "pods":
+                self._render_pods()
+            elif self._view in RESOURCE_VIEWS:
+                self._render_resources()
+            else:
+                self._render_workloads()
+        finally:
+            self.table.setUpdatesEnabled(True)
 
     def _render_resources(self) -> None:
         resources = self._resources
@@ -2628,11 +2633,13 @@ class WorkloadWindow(QMainWindow):
         )
         visible_rows = 0
         rows = self._current_rows()
+        self.table.setUpdatesEnabled(False)  # hiding rows one by one relays out
         for row_index, row in enumerate(rows):
             kind = "Pod" if isinstance(row, PodInfo) else row.kind
             matches = query in f"{row.namespace} {kind} {row.name}".casefold()
             self.table.setRowHidden(row_index, not matches)
             visible_rows += matches
+        self.table.setUpdatesEnabled(True)
         self._update_workload_actions()
         template = {
             "pods": self.tr("{visible} of {total} Pods"),

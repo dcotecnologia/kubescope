@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+### Fixed
+
+- Large lists refresh and filter faster: the table repaints once per update instead of once per row by @danilogco
+
 ## [0.5.1] - 2026-10-13
 
 ### Fixed
