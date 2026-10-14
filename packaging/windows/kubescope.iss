@@ -33,6 +33,11 @@ Name: "brazilianportuguese"; MessagesFile: "compiler:Languages\BrazilianPortugue
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
+[InstallDelete]
+; An update installs over the old files. Without this the old kubescope-X.Y.Z.dist-info
+; stays next to the new one and the app keeps reading the old version.
+Type: filesandordirs; Name: "{app}\_internal"
+
 [Files]
 Source: "..\..\dist\KubeScope\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
