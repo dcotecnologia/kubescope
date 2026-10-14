@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-10-14
+
 ### Added
 
 - A welcome message on opening the app invites people to contribute, with buttons to the GitHub project and its sponsor page, **Maybe later** and **Don't show again**, which is remembered in the settings by @danilogco

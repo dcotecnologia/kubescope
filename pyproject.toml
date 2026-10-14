@@ -1,6 +1,6 @@
 [project]
 name = "kubescope"
-version = "0.5.1"
+version = "0.6.0"
 description = "Desktop viewer for Kubernetes and Amazon EKS workloads"
 readme = "README.md"
 license = "MIT"
