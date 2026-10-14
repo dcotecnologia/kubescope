@@ -23,6 +23,7 @@ from PySide6.QtWidgets import (
     QMessageBox,
     QPushButton,
     QTableWidget,
+    QWidget,
 )
 
 from kubescope import cluster as cluster_module
@@ -44,7 +45,7 @@ from kubescope.models import (
 from kubescope.settings import Settings
 from kubescope.theme import themed
 from kubescope.updates import Release, UpdateCheck
-from kubescope.window import PIN_MIME
+from kubescope.window import PIN_MIME, VIEWER_MIME
 
 application = QApplication.instance() or QApplication([])
 
@@ -2827,11 +2828,126 @@ def test_pinned_tabs_can_be_dragged_to_reorder_them(monkeypatch) -> None:
     _wait_until(lambda: window.settings.pinned_views() == ["pods", "leases", "secrets"])
     assert [b.text() for b in window._pinned_buttons] == ["Pods", "Leases", "Secrets"]
 
-    window._move_pin("secrets", 0)  # before every other tab
+    window._move_tab(("pin", "secrets"), 0)  # before every other tab
     assert window.settings.pinned_views() == ["secrets", "pods", "leases"]
-    window._move_pin("secrets", 0)  # already there: nothing changes
-    window._move_pin("unknown", 0)
+    window._move_tab(("pin", "secrets"), 0)  # already there: nothing changes
+    window._move_tab(("pin", "unknown"), 0)
     assert window.settings.pinned_views() == ["secrets", "pods", "leases"]
+    window.close()
+
+
+def test_open_details_and_logs_tabs_move_and_close_like_the_pinned_ones(
+    monkeypatch,
+) -> None:
+    window = _resource_window(monkeypatch)
+    window.show()
+    window._toggle_pin("pods")
+    for title in ("First", "Second", "Third"):
+        window._add_viewer_tab(QWidget(), title)
+
+    def shown() -> list[str]:
+        return [button.toolTip() or button.text() for button in window._pinned_buttons]
+
+    def titles() -> list[str]:
+        return [
+            window.viewer_tabs.tabText(i) for i in range(window.viewer_tabs.count())
+        ]
+
+    bar = window.ui.pinnedBar
+    mime = QMimeData()
+    mime.setData(VIEWER_MIME, b"0")
+
+    class FakeDragEvent:
+        def __init__(self, kind, x) -> None:
+            self._kind, self._x = kind, x
+
+        def type(self):
+            return self._kind
+
+        def mimeData(self):
+            return mime
+
+        def position(self):
+            return QPointF(self._x, 5)
+
+        def acceptProposedAction(self) -> None:
+            pass
+
+    started = []
+
+    class FakeDrag:
+        def __init__(self, source) -> None:
+            self.source = source
+
+        def setMimeData(self, data) -> None:
+            started.append(bytes(data.data(VIEWER_MIME)).decode())
+
+        def setPixmap(self, _pixmap) -> None:
+            pass
+
+        def setHotSpot(self, _point) -> None:
+            pass
+
+        def exec(self, _action) -> None:
+            pass
+
+    monkeypatch.setattr(window_module, "QDrag", FakeDrag)
+    first = window._pinned_buttons[1]  # after the pinned Pods
+    press = QMouseEvent(
+        QEvent.Type.MouseButtonPress,
+        QPointF(5, 5),
+        first.mapToGlobal(QPoint(5, 5)),
+        Qt.MouseButton.LeftButton,
+        Qt.MouseButton.LeftButton,
+        Qt.KeyboardModifier.NoModifier,
+    )
+    move = QMouseEvent(
+        QEvent.Type.MouseMove,
+        QPointF(80, 5),
+        first.mapToGlobal(QPoint(80, 5)),
+        Qt.MouseButton.NoButton,
+        Qt.MouseButton.LeftButton,
+        Qt.KeyboardModifier.NoModifier,
+    )
+    window.eventFilter(first, press)
+    assert window.eventFilter(first, move)
+    assert started == ["0"]
+
+    last = window._pinned_buttons[-1].parentWidget()
+    right_of_all = last.mapTo(bar, last.rect().bottomRight()).x() + 10
+    assert window.eventFilter(bar, FakeDragEvent(QEvent.Type.DragMove, right_of_all))
+    assert window._drop_marker.isVisibleTo(bar)
+    assert window.eventFilter(bar, FakeDragEvent(QEvent.Type.Drop, right_of_all))
+    _wait_until(lambda: shown() == ["Pods", "Second", "Third", "First"])
+    assert window.settings.pinned_views() == ["pods"]
+
+    # a Details or Logs tab goes in front of a pinned one, and back behind it
+    window._move_tab(("viewer", window.viewer_tabs.widget(0)), 0)
+    assert shown() == ["First", "Pods", "Second", "Third"]
+    window._move_tab(("viewer", window.viewer_tabs.widget(0)), right_of_all)
+    assert shown() == ["Pods", "Second", "Third", "First"]
+    # and a pinned one goes among them, which is remembered with the pinned
+    window._toggle_pin("secrets")
+    assert shown() == ["Pods", "Second", "Third", "First", "Secrets"]
+    window._move_tab(("pin", "secrets"), 0)
+    assert shown() == ["Secrets", "Pods", "Second", "Third", "First"]
+    assert window.settings.pinned_views() == ["secrets", "pods"]
+    window._toggle_pin("secrets")
+    assert shown() == ["Pods", "Second", "Third", "First"]
+    mime.setData(VIEWER_MIME, b"9")  # a tab that is no longer there
+    assert not window.eventFilter(bar, FakeDragEvent(QEvent.Type.DragMove, 5))
+
+    # the middle button closes the tab
+    middle = QMouseEvent(
+        QEvent.Type.MouseButtonPress,
+        QPointF(5, 5),
+        first.mapToGlobal(QPoint(5, 5)),
+        Qt.MouseButton.MiddleButton,
+        Qt.MouseButton.MiddleButton,
+        Qt.KeyboardModifier.NoModifier,
+    )
+    assert window.eventFilter(window._pinned_buttons[1], middle)
+    assert titles() == ["First", "Third"]  # the bar showed Second there
     window.close()
 
 

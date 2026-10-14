@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+### Fixed
+
+- The tabs of an open Details or Logs can be dragged to reorder them and closed with the middle button, like the pinned ones by @danilogco
+
 ## [0.6.0] - 2026-10-14
 
 ### Added

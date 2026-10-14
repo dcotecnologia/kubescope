@@ -148,6 +148,7 @@ from kubescope.updates import Release, UpdateCheck, check_for_update
 logger = logging.getLogger(__name__)
 
 PIN_MIME = "application/x-kubescope-pin"  # what a dragged pinned tab carries
+VIEWER_MIME = "application/x-kubescope-viewer"  # the same, for a Details/Logs tab
 LIST_DEBOUNCE_MS = 150
 UPDATE_SEARCH_MS = 5000  # an update check shows as searching for at least this long
 UPDATE_NOTICE_MS = 4000  # how long "Up to date" stays next to the icon
@@ -590,7 +591,10 @@ class WorkloadWindow(QMainWindow):
         self._pinned_buttons: list[QPushButton] = []
         # widget -> (what the gesture does, the list it is about)
         self._pin_gestures: dict[QObject, tuple[str, str]] = {}
-        self._pinned_order: list[str] = []  # the pinned tabs shown, left to right
+        # every tab shown in the top bar, left to right, parallel to the buttons:
+        # ("pin", the list) or ("viewer", the Details/Logs widget)
+        self._bar_items: list[tuple[str, Any]] = []
+        self._bar_order: list[tuple[str, Any]] = []  # the order the person chose
         self._drag_start: QPoint | None = None
         ui.pinnedBar.setAcceptDrops(True)  # a pinned tab dropped here moves
         ui.pinnedBar.installEventFilter(self)
@@ -957,7 +961,8 @@ class WorkloadWindow(QMainWindow):
 
     def eventFilter(self, watched: QObject, event: QEvent) -> bool:
         """Two quick clicks on a list's entry pin it; the middle button on a
-        pinned tab unpins it; dragging a pinned tab moves it."""
+        pinned tab unpins it and on an open Details or Logs closes it; dragging
+        any tab of the top bar moves it."""
         if watched is self.ui.pinnedBar and event.type() in (
             QEvent.Type.DragEnter,
             QEvent.Type.DragMove,
@@ -966,16 +971,17 @@ class WorkloadWindow(QMainWindow):
         ):
             return self._drag_over_pins(event)
         gesture, view = self._pin_gestures.get(watched, ("", ""))
-        if gesture == "unpin" and event.type() == QEvent.Type.MouseButtonPress:
+        draggable = gesture in ("unpin", "viewer")
+        if draggable and event.type() == QEvent.Type.MouseButtonPress:
             self._drag_start = (
                 event.position().toPoint()
                 if event.button() == Qt.MouseButton.LeftButton
                 else None
             )
-        elif gesture == "unpin" and event.type() == QEvent.Type.MouseButtonRelease:
+        elif draggable and event.type() == QEvent.Type.MouseButtonRelease:
             self._drag_start = None  # a click that ended is not a drag to come
         if (
-            gesture == "unpin"
+            draggable
             and event.type() == QEvent.Type.MouseMove
             and event.buttons() & Qt.MouseButton.LeftButton
             and self._drag_start is not None
@@ -983,7 +989,7 @@ class WorkloadWindow(QMainWindow):
             >= QApplication.startDragDistance()
         ):
             self._drag_start = None
-            self._drag_pin(view, watched)
+            self._drag_pin(view, watched, viewer=gesture == "viewer")
             return True
         if (
             gesture == "pin"
@@ -993,17 +999,24 @@ class WorkloadWindow(QMainWindow):
             if view not in self.settings.pinned_views():
                 self._toggle_pin(view)
         elif (
-            gesture == "unpin"
+            draggable
             and event.type() == QEvent.Type.MouseButtonPress
             and event.button() == Qt.MouseButton.MiddleButton
         ):
-            self._toggle_pin(view)
+            if gesture == "viewer":
+                self._close_viewer_tab(int(view))
+            else:
+                self._toggle_pin(view)
             return True
         return super().eventFilter(watched, event)
 
-    def _drag_pin(self, view: str, widget: QObject) -> None:
-        """Drag a pinned tab: its picture follows the cursor, translucent,
-        while the tab stays behind faded."""
+    def _drag_pin(self, view: str, widget: QObject, viewer: bool = False) -> None:
+        """Drag a tab of the top bar: its picture follows the cursor,
+        translucent, while the tab stays behind faded.
+
+        `view` is the pinned list, or the index of the Details or Logs
+        when `viewer`.
+        """
         tab = widget if isinstance(widget, QFrame) else widget.parentWidget()
         picture = QPixmap(tab.size())
         picture.fill(Qt.GlobalColor.transparent)
@@ -1012,7 +1025,7 @@ class WorkloadWindow(QMainWindow):
         painter.drawPixmap(0, 0, tab.grab())
         painter.end()
         mime = QMimeData()
-        mime.setData(PIN_MIME, view.encode())
+        mime.setData(VIEWER_MIME if viewer else PIN_MIME, view.encode())
         drag = QDrag(tab)
         drag.setMimeData(mime)
         drag.setPixmap(picture)
@@ -1025,67 +1038,76 @@ class WorkloadWindow(QMainWindow):
         if tab.graphicsEffect() is fade:  # the move may have redrawn the tabs
             tab.setGraphicsEffect(None)
 
-    def _pin_slot(self, view: str, left: int) -> tuple[int, int]:
-        """Where a pinned tab dropped at `left` (a position in the top bar)
-        would land: its place among the other pinned tabs, and the x of the edge
-        it goes against."""
+    def _pin_slot(self, item: tuple[str, Any], left: int) -> tuple[int, int]:
+        """Where a tab dropped at `left` (a position in the top bar) would
+        land: its place among the other tabs, and the x of the edge it goes
+        against."""
         bar = self.ui.pinnedBar
-        tabs = {
-            name: button.parentWidget()
-            for name, button in zip(
-                self._pinned_order, self._pinned_buttons, strict=False
-            )
-            if name != view
-        }
-        slot = sum(
-            1 for tab in tabs.values() if tab.mapTo(bar, tab.rect().center()).x() < left
-        )
-        names = list(tabs)
-        if slot < len(names):
-            return slot, tabs[names[slot]].mapTo(bar, QPoint(0, 0)).x()
-        last = tabs[names[-1]]
-        return slot, last.mapTo(bar, QPoint(last.width(), 0)).x()
+        tabs = [
+            button.parentWidget()
+            for other, button in zip(self._bar_items, self._pinned_buttons, strict=True)
+            if other != item
+        ]
+        slot = sum(1 for tab in tabs if tab.mapTo(bar, tab.rect().center()).x() < left)
+        if slot < len(tabs):
+            return slot, tabs[slot].mapTo(bar, QPoint(0, 0)).x()
+        return slot, tabs[-1].mapTo(bar, QPoint(tabs[-1].width(), 0)).x()
+
+    def _dragged_item(self, mime: QMimeData) -> tuple[str, Any] | None:
+        """The tab a drag carries, when it is one of the top bar's."""
+        if mime.hasFormat(PIN_MIME):
+            return "pin", bytes(mime.data(PIN_MIME)).decode()
+        if mime.hasFormat(VIEWER_MIME):
+            index = int(bytes(mime.data(VIEWER_MIME)).decode())
+            widget = self.viewer_tabs.widget(index)
+            return ("viewer", widget) if widget is not None else None
+        return None
 
     def _drag_over_pins(self, event: Any) -> bool:
-        """Show where a dragged pinned tab would land, a line between the tabs;
+        """Show where a dragged tab would land, a line between the tabs;
         dropping it moves it there."""
         if event.type() == QEvent.Type.DragLeave:
             self._drop_marker.hide()
             return False
-        if not event.mimeData().hasFormat(PIN_MIME):
+        item = self._dragged_item(event.mimeData())
+        if item is None:
             return False
         event.acceptProposedAction()
-        view = bytes(event.mimeData().data(PIN_MIME)).decode()
         left = event.position().toPoint().x()
         if event.type() == QEvent.Type.Drop:
             self._drop_marker.hide()
             # after the drag ends: the tab it came from is redrawn by the move
-            QTimer.singleShot(0, lambda: self._move_pin(view, left))
-        elif self._pinned_order and any(name != view for name in self._pinned_order):
-            _slot, edge = self._pin_slot(view, left)
+            QTimer.singleShot(0, lambda: self._move_tab(item, left))
+        elif any(other != item for other in self._bar_items):
+            _slot, edge = self._pin_slot(item, left)
             bar = self.ui.pinnedBar
             self._drop_marker.setGeometry(max(edge - 1, 0), 6, 2, bar.height() - 12)
             self._drop_marker.show()
             self._drop_marker.raise_()
         return True
 
-    def _move_pin(self, view: str, left: int) -> None:
-        """Put a pinned tab where it was dropped: before the first other tab
-        whose middle is right of `left`, or last."""
-        pinned = self.settings.pinned_views()
-        others = [other for other in self._pinned_order if other != view]
-        if view not in pinned or not others:
+    def _move_tab(self, item: tuple[str, Any], left: int) -> None:
+        """Put a tab where it was dropped: before the first other tab whose
+        middle is right of `left`, or last.
+
+        The pinned lists keep the order they now have among themselves.
+        """
+        others = [other for other in self._bar_items if other != item]
+        if item not in self._bar_items or not others:
             return
-        slot, _edge = self._pin_slot(view, left)
-        pinned.remove(view)
-        if slot < len(others):
-            pinned.insert(pinned.index(others[slot]), view)
-        else:
-            pinned.insert(pinned.index(others[-1]) + 1, view)
-        if pinned != self.settings.pinned_views():
-            self.settings.set_pinned_views(pinned)
+        slot, _edge = self._pin_slot(item, left)
+        order = others[:slot] + [item] + others[slot:]
+        if order == self._bar_items:
+            return
+        self._bar_order = order
+        shown = [name for kind, name in order if kind == "pin"]
+        pinned = self.settings.pinned_views()
+        ranked = iter(shown)  # the pinned lists out of sight keep their places
+        reordered = [next(ranked) if name in shown else name for name in pinned]
+        if reordered != pinned:
+            self.settings.set_pinned_views(reordered)
             self._save_settings()
-            self._render_pinned()
+        self._render_pinned()
 
     def _render_pinned(self) -> None:
         """The pinned lists, as tabs in the top bar, each with a × to unpin.
@@ -1099,7 +1121,7 @@ class WorkloadWindow(QMainWindow):
             layout.removeWidget(tab)
             tab.deleteLater()
         self._pinned_buttons = []
-        self._pinned_order = []
+        built: dict[tuple[str, Any], tuple[QFrame, QPushButton]] = {}
         self._pin_gestures = {
             widget: gesture
             for widget, gesture in self._pin_gestures.items()
@@ -1149,14 +1171,27 @@ class WorkloadWindow(QMainWindow):
                 self._pin_gestures[widget] = ("unpin", view)
             row.addWidget(button)
             row.addWidget(close)
+            built[("pin", view)] = (tab, button)
+        for index in range(self.viewer_tabs.count()):
+            widget = self.viewer_tabs.widget(index)
+            built[("viewer", widget)] = self._viewer_top_tab(index)
+        # the order the person gave them, then the ones that came after
+        self._bar_items = [item for item in self._bar_order if item in built]
+        self._bar_items += [item for item in built if item not in self._bar_items]
+        # the pinned lists keep the order of the settings among themselves
+        pins = iter(("pin", view) for view in self.settings.pinned_views())
+        pins = iter(item for item in pins if item in built)
+        self._bar_items = [
+            next(pins) if item[0] == "pin" else item for item in self._bar_items
+        ]
+        self._bar_order = list(self._bar_items)
+        for item in self._bar_items:
+            tab, button = built[item]
             layout.addWidget(tab)
             self._pinned_buttons.append(button)
-            self._pinned_order.append(view)
-        for index in range(self.viewer_tabs.count()):
-            self._add_viewer_top_tab(index)
         self.ui.pinnedBar.setVisible(bool(self._pinned_buttons))
 
-    def _add_viewer_top_tab(self, index: int) -> None:
+    def _viewer_top_tab(self, index: int) -> tuple[QFrame, QPushButton]:
         """A tab of the top bar for an open Details or Logs, with a × to close
         it."""
         title = self.viewer_tabs.tabText(index)
@@ -1181,10 +1216,12 @@ class WorkloadWindow(QMainWindow):
         close.setToolTip(self.tr("Close"))
         close.setCursor(Qt.CursorShape.PointingHandCursor)
         close.clicked.connect(lambda _checked=False, i=index: self._close_viewer_tab(i))
+        for widget in (tab, button, close):
+            widget.installEventFilter(self)
+            self._pin_gestures[widget] = ("viewer", str(index))
         row.addWidget(button)
         row.addWidget(close)
-        self.ui.pinnedLayout.addWidget(tab)
-        self._pinned_buttons.append(button)
+        return tab, button
 
     def _open_viewer_tab(self, index: int) -> None:
         self.viewer_tabs.setCurrentIndex(index)
