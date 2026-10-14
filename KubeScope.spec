@@ -63,6 +63,13 @@ analysis = Analysis(
         # the footer shows the version, which the app reads from this metadata
         *copy_metadata("kubescope"),
         (str(root / "src" / "kubescope" / "assets" / "icon.png"), "kubescope/assets"),
+        (
+            str(root / "src" / "kubescope" / "assets" / "THIRD_PARTY_NOTICES.txt"),
+            "kubescope/assets",
+        ),
+        # next to the app's files, where a person who got the bundle finds them
+        (str(root / "LICENSE"), "."),
+        (str(root / "src" / "kubescope" / "assets" / "THIRD_PARTY_NOTICES.txt"), "."),
         *(
             (str(path), "kubescope/assets/fonts")
             for path in (root / "src" / "kubescope" / "assets" / "fonts").iterdir()

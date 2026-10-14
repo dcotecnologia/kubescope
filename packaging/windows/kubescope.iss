@@ -40,6 +40,7 @@ Type: filesandordirs; Name: "{app}\_internal"
 
 [Files]
 Source: "..\..\dist\KubeScope\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\..\src\kubescope\assets\THIRD_PARTY_NOTICES.txt"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
 Name: "{group}\KubeScope"; Filename: "{app}\KubeScope.exe"

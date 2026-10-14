@@ -16,7 +16,9 @@ def main() -> int:
 
     destination = ROOT / "vendor" / "linux" / platform.machine()
     library_target = destination / "libxcb-cursor.so.0"
-    if library_target.is_file():
+    # its license notice travels with it into the bundle (tools/bundle_notices.py)
+    copyright_target = destination / f"{PACKAGE_NAME}.copyright"
+    if library_target.is_file() and copyright_target.is_file():
         print(f"Using staged library: {library_target}")
         return 0
 
@@ -42,6 +44,10 @@ def main() -> int:
             raise RuntimeError(f"{PACKAGE_NAME} did not contain libxcb-cursor.so.0")
         destination.mkdir(parents=True, exist_ok=True)
         shutil.copy2(library, library_target)
+        notice = next(extract_dir.rglob("copyright"), None)
+        if notice is None:
+            raise RuntimeError(f"{PACKAGE_NAME} did not contain its copyright file")
+        shutil.copy2(notice, copyright_target)
 
     print(f"Staged {library_target}")
     return 0

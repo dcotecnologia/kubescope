@@ -80,6 +80,9 @@ endif
 windows-remote: ## Build the Windows packages on GitHub Actions and download them to dist/
 	$(UV) run python tools/windows_remote.py
 
+notices: ## Rewrite the third-party license notices from uv.lock (after changing dependencies)
+	$(UV) run python tools/third_party_notices.py
+
 lint: ## Check the code with ruff (lint and formatting)
 	$(UV) run --extra dev ruff check .
 	$(UV) run --extra dev ruff format --check .
@@ -100,6 +103,9 @@ endif
 
 build: qt-libs $(UI_PY) ## Build the desktop bundle with the XCB library
 	$(UV) run --extra build pyinstaller --noconfirm KubeScope.spec
+ifeq ($(shell uname -s),Linux)
+	$(UV) run python tools/bundle_notices.py
+endif
 
 clean: ## Remove build artifacts and the test cache
 	rm -rf build dist .pytest_cache

@@ -14,6 +14,7 @@ from PySide6.QtGui import QImage
 ROOT = Path(__file__).resolve().parents[1]
 BUNDLE = ROOT / "dist" / "KubeScope"
 ICON = ROOT / "src" / "kubescope" / "assets" / "icon.png"
+NOTICES = ROOT / "src" / "kubescope" / "assets" / "THIRD_PARTY_NOTICES.txt"
 STAGING = ROOT / "build" / "deb"
 
 ARCHITECTURES = {"x86_64": "amd64", "aarch64": "arm64"}
@@ -101,6 +102,16 @@ def main() -> int:
     binary.symlink_to("/opt/kubescope/KubeScope")
     write(package / "usr/share/applications/kubescope.desktop", DESKTOP_ENTRY)
     write(package / "usr/share/doc/kubescope/copyright", copyright_text())
+    write(
+        package / "usr/share/doc/kubescope/THIRD_PARTY_NOTICES.txt",
+        NOTICES.read_text(encoding="utf-8"),
+    )
+    libraries = BUNDLE / "_internal" / "THIRD_PARTY_SYSTEM_LIBRARIES.txt"
+    if libraries.is_file():  # written by tools/bundle_notices.py during `make build`
+        write(
+            package / "usr/share/doc/kubescope" / libraries.name,
+            libraries.read_text(encoding="utf-8"),
+        )
 
     source = QImage(str(ICON))
     for size in ICON_SIZES:

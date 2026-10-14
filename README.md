@@ -346,3 +346,7 @@ Danilo Carolino <danilogcarolino@gmail.com>
 ---
 
 Developed by **DCO Tecnologia** · Released under the [MIT License](LICENSE).
+The licenses of the libraries it ships with (Qt for Python under the LGPL-3.0, the
+Kubernetes client under Apache-2.0, the Noto fonts under the OFL and the others) are in
+[THIRD_PARTY_NOTICES.txt](src/kubescope/assets/THIRD_PARTY_NOTICES.txt), which every
+package carries.

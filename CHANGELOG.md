@@ -12,7 +12,9 @@ All notable changes to this project will be documented in this file. The format 
 
 ### Changed
 
+- Every package now carries `THIRD_PARTY_NOTICES.txt` with the licenses of the libraries it ships (Qt for Python under the LGPL-3.0, the Kubernetes client, the fonts and the others) by @danilogco
 - The bundle only ships the Qt modules the app uses (Core, Gui and Widgets) and leaves out the GPL-only Qt Virtual Keyboard, Qt PDF and QML, making it about half the size by @danilogco
+- Linux packages also carry `THIRD_PARTY_SYSTEM_LIBRARIES.txt`, the license notices of the system libraries copied into the bundle (GTK, GLib, FreeType, ICU and the others), written by `make build` by @danilogco
 - The resource lists fit the window without a horizontal scroll bar, with headers aligned to their cells, no vertical grid lines and denser rows by @danilogco
 
 ### Fixed
