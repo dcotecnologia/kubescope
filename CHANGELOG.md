@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+## [0.5.1] - 2026-10-13
+
+### Fixed
+
+- On Windows, updating with the installer no longer leaves the old version showing: the installer now clears the previous install's files before copying the new ones by @danilogco
+
 ## [0.5.0] - 2026-10-13
 
 ### Added
@@ -111,7 +117,8 @@ The first release.
 
 - Pod logs and resource details are still never written to disk by the app on its own. **Save** is the only exception, and it writes only to the file the user chooses. SECURITY.md says so by @danilogco
 
-[Unreleased]: https://github.com/dcotecnologia/kubescope/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/dcotecnologia/kubescope/compare/v0.5.1...HEAD
+[0.5.1]: https://github.com/dcotecnologia/kubescope/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/dcotecnologia/kubescope/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/dcotecnologia/kubescope/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/dcotecnologia/kubescope/compare/v0.2.0...v0.3.0
