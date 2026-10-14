@@ -15,6 +15,7 @@ from PySide6.QtCore import (
     QCoreApplication,
     QEasingCurve,
     QEvent,
+    QMimeData,
     QObject,
     QPoint,
     QPointF,
@@ -31,7 +32,9 @@ from PySide6.QtGui import (
     QAction,
     QCloseEvent,
     QColor,
+    QCursor,
     QDesktopServices,
+    QDrag,
     QIcon,
     QKeySequence,
     QPainter,
@@ -45,6 +48,7 @@ from PySide6.QtWidgets import (
     QDialog,
     QFileDialog,
     QFrame,
+    QGraphicsOpacityEffect,
     QHBoxLayout,
     QHeaderView,
     QInputDialog,
@@ -143,6 +147,7 @@ from kubescope.updates import Release, UpdateCheck, check_for_update
 
 logger = logging.getLogger(__name__)
 
+PIN_MIME = "application/x-kubescope-pin"  # what a dragged pinned tab carries
 LIST_DEBOUNCE_MS = 150
 UPDATE_SEARCH_MS = 5000  # an update check shows as searching for at least this long
 UPDATE_NOTICE_MS = 4000  # how long "Up to date" stays next to the icon
@@ -585,6 +590,13 @@ class WorkloadWindow(QMainWindow):
         self._pinned_buttons: list[QPushButton] = []
         # widget -> (what the gesture does, the list it is about)
         self._pin_gestures: dict[QObject, tuple[str, str]] = {}
+        self._pinned_order: list[str] = []  # the pinned tabs shown, left to right
+        self._drag_start: QPoint | None = None
+        ui.pinnedBar.setAcceptDrops(True)  # a pinned tab dropped here moves
+        ui.pinnedBar.installEventFilter(self)
+        self._drop_marker = QFrame(ui.pinnedBar)  # the line a dragged tab aims at
+        self._drop_marker.setObjectName("dropMarker")
+        self._drop_marker.hide()
         self.config_submenu = ui.configSubmenu
         # the two overview pages pin like a list does, by the page they show
         self._nav_pages = {
@@ -945,8 +957,34 @@ class WorkloadWindow(QMainWindow):
 
     def eventFilter(self, watched: QObject, event: QEvent) -> bool:
         """Two quick clicks on a list's entry pin it; the middle button on a
-        pinned tab unpins it."""
+        pinned tab unpins it; dragging a pinned tab moves it."""
+        if watched is self.ui.pinnedBar and event.type() in (
+            QEvent.Type.DragEnter,
+            QEvent.Type.DragMove,
+            QEvent.Type.DragLeave,
+            QEvent.Type.Drop,
+        ):
+            return self._drag_over_pins(event)
         gesture, view = self._pin_gestures.get(watched, ("", ""))
+        if gesture == "unpin" and event.type() == QEvent.Type.MouseButtonPress:
+            self._drag_start = (
+                event.position().toPoint()
+                if event.button() == Qt.MouseButton.LeftButton
+                else None
+            )
+        elif gesture == "unpin" and event.type() == QEvent.Type.MouseButtonRelease:
+            self._drag_start = None  # a click that ended is not a drag to come
+        if (
+            gesture == "unpin"
+            and event.type() == QEvent.Type.MouseMove
+            and event.buttons() & Qt.MouseButton.LeftButton
+            and self._drag_start is not None
+            and (event.position().toPoint() - self._drag_start).manhattanLength()
+            >= QApplication.startDragDistance()
+        ):
+            self._drag_start = None
+            self._drag_pin(view, watched)
+            return True
         if (
             gesture == "pin"
             and event.type() == QEvent.Type.MouseButtonDblClick
@@ -963,6 +1001,92 @@ class WorkloadWindow(QMainWindow):
             return True
         return super().eventFilter(watched, event)
 
+    def _drag_pin(self, view: str, widget: QObject) -> None:
+        """Drag a pinned tab: its picture follows the cursor, translucent,
+        while the tab stays behind faded."""
+        tab = widget if isinstance(widget, QFrame) else widget.parentWidget()
+        picture = QPixmap(tab.size())
+        picture.fill(Qt.GlobalColor.transparent)
+        painter = QPainter(picture)
+        painter.setOpacity(0.85)
+        painter.drawPixmap(0, 0, tab.grab())
+        painter.end()
+        mime = QMimeData()
+        mime.setData(PIN_MIME, view.encode())
+        drag = QDrag(tab)
+        drag.setMimeData(mime)
+        drag.setPixmap(picture)
+        drag.setHotSpot(tab.mapFromGlobal(QCursor.pos()))
+        fade = QGraphicsOpacityEffect(tab)
+        fade.setOpacity(0.35)
+        tab.setGraphicsEffect(fade)
+        drag.exec(Qt.DropAction.MoveAction)
+        self._drop_marker.hide()
+        if tab.graphicsEffect() is fade:  # the move may have redrawn the tabs
+            tab.setGraphicsEffect(None)
+
+    def _pin_slot(self, view: str, left: int) -> tuple[int, int]:
+        """Where a pinned tab dropped at `left` (a position in the top bar)
+        would land: its place among the other pinned tabs, and the x of the edge
+        it goes against."""
+        bar = self.ui.pinnedBar
+        tabs = {
+            name: button.parentWidget()
+            for name, button in zip(
+                self._pinned_order, self._pinned_buttons, strict=False
+            )
+            if name != view
+        }
+        slot = sum(
+            1 for tab in tabs.values() if tab.mapTo(bar, tab.rect().center()).x() < left
+        )
+        names = list(tabs)
+        if slot < len(names):
+            return slot, tabs[names[slot]].mapTo(bar, QPoint(0, 0)).x()
+        last = tabs[names[-1]]
+        return slot, last.mapTo(bar, QPoint(last.width(), 0)).x()
+
+    def _drag_over_pins(self, event: Any) -> bool:
+        """Show where a dragged pinned tab would land, a line between the tabs;
+        dropping it moves it there."""
+        if event.type() == QEvent.Type.DragLeave:
+            self._drop_marker.hide()
+            return False
+        if not event.mimeData().hasFormat(PIN_MIME):
+            return False
+        event.acceptProposedAction()
+        view = bytes(event.mimeData().data(PIN_MIME)).decode()
+        left = event.position().toPoint().x()
+        if event.type() == QEvent.Type.Drop:
+            self._drop_marker.hide()
+            # after the drag ends: the tab it came from is redrawn by the move
+            QTimer.singleShot(0, lambda: self._move_pin(view, left))
+        elif self._pinned_order and any(name != view for name in self._pinned_order):
+            _slot, edge = self._pin_slot(view, left)
+            bar = self.ui.pinnedBar
+            self._drop_marker.setGeometry(max(edge - 1, 0), 6, 2, bar.height() - 12)
+            self._drop_marker.show()
+            self._drop_marker.raise_()
+        return True
+
+    def _move_pin(self, view: str, left: int) -> None:
+        """Put a pinned tab where it was dropped: before the first other tab
+        whose middle is right of `left`, or last."""
+        pinned = self.settings.pinned_views()
+        others = [other for other in self._pinned_order if other != view]
+        if view not in pinned or not others:
+            return
+        slot, _edge = self._pin_slot(view, left)
+        pinned.remove(view)
+        if slot < len(others):
+            pinned.insert(pinned.index(others[slot]), view)
+        else:
+            pinned.insert(pinned.index(others[-1]) + 1, view)
+        if pinned != self.settings.pinned_views():
+            self.settings.set_pinned_views(pinned)
+            self._save_settings()
+            self._render_pinned()
+
     def _render_pinned(self) -> None:
         """The pinned lists, as tabs in the top bar, each with a × to unpin.
 
@@ -975,6 +1099,7 @@ class WorkloadWindow(QMainWindow):
             layout.removeWidget(tab)
             tab.deleteLater()
         self._pinned_buttons = []
+        self._pinned_order = []
         self._pin_gestures = {
             widget: gesture
             for widget, gesture in self._pin_gestures.items()
@@ -1026,6 +1151,7 @@ class WorkloadWindow(QMainWindow):
             row.addWidget(close)
             layout.addWidget(tab)
             self._pinned_buttons.append(button)
+            self._pinned_order.append(view)
         for index in range(self.viewer_tabs.count()):
             self._add_viewer_top_tab(index)
         self.ui.pinnedBar.setVisible(bool(self._pinned_buttons))

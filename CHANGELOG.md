@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file. The format 
 ### Added
 
 - The Cluster and Workloads **Overview** pages can be pinned to the top bar like the lists, from the right-click menu or a double click by @danilogco
+- Pinned tabs can be dragged to reorder them: the tab fades where it was, a translucent copy follows the cursor and a line shows where it will land by @danilogco
 
 ### Changed
 

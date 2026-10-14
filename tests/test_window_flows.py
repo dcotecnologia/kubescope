@@ -7,8 +7,13 @@ import pytest
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
-from PySide6.QtCore import QObject, QPoint, Qt, Signal
-from PySide6.QtGui import QCloseEvent, QPalette, QShortcut
+from PySide6.QtCore import QEvent, QMimeData, QObject, QPoint, QPointF, Qt, Signal
+from PySide6.QtGui import (
+    QCloseEvent,
+    QMouseEvent,
+    QPalette,
+    QShortcut,
+)
 from PySide6.QtTest import QTest
 from PySide6.QtWidgets import (
     QApplication,
@@ -39,6 +44,7 @@ from kubescope.models import (
 from kubescope.settings import Settings
 from kubescope.theme import themed
 from kubescope.updates import Release, UpdateCheck
+from kubescope.window import PIN_MIME
 
 application = QApplication.instance() or QApplication([])
 
@@ -2714,6 +2720,118 @@ def test_a_window_opens_with_the_overviews_already_pinned(
     window = window_module.WorkloadWindow(settings)
 
     assert [b.text() for b in window._pinned_buttons] == ["Cluster", "Overview"]
+    window.close()
+
+
+def test_pinned_tabs_can_be_dragged_to_reorder_them(monkeypatch) -> None:
+    window = _resource_window(monkeypatch)
+    window.show()
+    for view in ("secrets", "pods", "leases"):
+        window._toggle_pin(view)
+    started = []
+
+    class FakeDrag:
+        def __init__(self, source) -> None:
+            self.source = source
+
+        def setMimeData(self, mime) -> None:
+            self.mime = mime
+
+        def setPixmap(self, _pixmap) -> None:
+            pass
+
+        def setHotSpot(self, _point) -> None:
+            pass
+
+        def exec(self, _action) -> None:
+            started.append((self.source, bytes(self.mime.data(PIN_MIME)).decode()))
+
+    monkeypatch.setattr(window_module, "QDrag", FakeDrag)
+    first = window._pinned_buttons[0]
+    start = QPointF(5, 5)
+
+    def mouse(kind, position, button=Qt.MouseButton.LeftButton, buttons=None):
+        return QMouseEvent(
+            kind,
+            position,
+            window.mapToGlobal(position.toPoint()),
+            button,
+            button if buttons is None else buttons,
+            Qt.KeyboardModifier.NoModifier,
+        )
+
+    # a small move is a click, not a drag
+    window.eventFilter(first, mouse(QEvent.Type.MouseButtonPress, start))
+    window.eventFilter(first, mouse(QEvent.Type.MouseMove, QPointF(6, 5)))
+    assert not started
+    # another button forgets the drag; moving then starts nothing
+    window.eventFilter(
+        first, mouse(QEvent.Type.MouseButtonPress, start, Qt.MouseButton.RightButton)
+    )
+    window.eventFilter(first, mouse(QEvent.Type.MouseMove, QPointF(80, 5)))
+    assert not started
+    # a finished click, and a mouse moving with no button down, never drag
+    window.eventFilter(first, mouse(QEvent.Type.MouseButtonPress, start))
+    window.eventFilter(first, mouse(QEvent.Type.MouseButtonRelease, start))
+    window.eventFilter(first, mouse(QEvent.Type.MouseMove, QPointF(80, 5)))
+    assert not started
+    window.eventFilter(first, mouse(QEvent.Type.MouseButtonPress, start))
+    assert not window.eventFilter(
+        first,
+        mouse(QEvent.Type.MouseMove, QPointF(80, 5), buttons=Qt.MouseButton.NoButton),
+    )
+    assert not started
+    assert window.eventFilter(first, mouse(QEvent.Type.MouseMove, QPointF(80, 5)))
+    assert started == [(first.parentWidget(), "secrets")]
+    window.eventFilter(first, mouse(QEvent.Type.MouseMove, QPointF(90, 5)))
+    assert len(started) == 1
+
+    bar = window.ui.pinnedBar
+    mime = QMimeData()
+    mime.setData(PIN_MIME, b"secrets")
+
+    class FakeDragEvent:
+        def __init__(self, kind, x, data) -> None:
+            self._kind, self._x, self._data = kind, x, data
+
+        def type(self):
+            return self._kind
+
+        def mimeData(self):
+            return self._data
+
+        def position(self):
+            return QPointF(self._x, 5)
+
+        def acceptProposedAction(self) -> None:
+            pass
+
+    def drop(kind, x, data=mime):
+        return FakeDragEvent(kind, x, data)
+
+    foreign = QMimeData()
+    foreign.setText("x")
+    assert not window.eventFilter(bar, drop(QEvent.Type.DragEnter, 1, foreign))
+    assert window.eventFilter(bar, drop(QEvent.Type.DragEnter, 1))
+    marker = window._drop_marker
+    assert window.eventFilter(bar, drop(QEvent.Type.DragMove, 1))
+    assert marker.isVisibleTo(bar)  # the line shows where it would land
+    before = marker.x()
+    last = window._pinned_buttons[-1].parentWidget()
+    right_of_all = last.mapTo(bar, last.rect().bottomRight()).x() + 10
+    assert window.eventFilter(bar, drop(QEvent.Type.DragMove, right_of_all))
+    assert marker.x() > before
+    assert not window.eventFilter(bar, FakeDragEvent(QEvent.Type.DragLeave, 0, mime))
+    assert marker.isHidden()
+    assert window.eventFilter(bar, drop(QEvent.Type.Drop, right_of_all))
+    _wait_until(lambda: window.settings.pinned_views() == ["pods", "leases", "secrets"])
+    assert [b.text() for b in window._pinned_buttons] == ["Pods", "Leases", "Secrets"]
+
+    window._move_pin("secrets", 0)  # before every other tab
+    assert window.settings.pinned_views() == ["secrets", "pods", "leases"]
+    window._move_pin("secrets", 0)  # already there: nothing changes
+    window._move_pin("unknown", 0)
+    assert window.settings.pinned_views() == ["secrets", "pods", "leases"]
     window.close()
 
 

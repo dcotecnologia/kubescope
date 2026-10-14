@@ -28,6 +28,7 @@ QLabel#topBrand {
 }
 QFrame[pinTab="true"] { background: transparent; border: 0; border-top: 2px solid transparent; }
 QFrame[pinTab="true"][active="true"] { background: #123764; border-top: 2px solid #6252b5; }
+QFrame#dropMarker { background: #6252b5; border-radius: 1px; }
 QFrame[pinTab="true"] QPushButton {
     color: #b8c7dc; background: transparent; border: 0; padding: 6px 4px;
     font-size: 12px; font-weight: 600;
