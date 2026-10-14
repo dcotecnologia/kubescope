@@ -58,6 +58,9 @@ def test_main_builds_the_window_and_runs_the_event_loop(monkeypatch) -> None:
         def start_update_check(self) -> None:
             events.append("update check")
 
+        def show_welcome(self) -> None:
+            events.append("welcome")
+
     monkeypatch.delenv(app.DEBUG_ENV, raising=False)
     _capture_logging(monkeypatch)
     monkeypatch.setattr(app, "QApplication", FakeApplication)
@@ -80,7 +83,7 @@ def test_main_builds_the_window_and_runs_the_event_loop(monkeypatch) -> None:
     assert events.index("fonts") < events.index(("theme", "dark"))  # before widgets
     assert ("name", "KubeScope") in events
     assert ("lang", "auto") in events
-    assert events[-3:] == ["show", "update check", "exec"]
+    assert events[-4:] == ["show", "update check", "welcome", "exec"]
 
 
 def test_old_logs_are_purged_on_a_thread_that_spares_the_open_files(

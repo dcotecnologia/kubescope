@@ -65,7 +65,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from kubescope import COMPANY_URL, LICENSE_URL, PROJECT_URL, __version__
+from kubescope import COMPANY_URL, LICENSE_URL, PROJECT_URL, SPONSOR_URL, __version__
 from kubescope.cluster import (
     ClusterError,
     LoginAction,
@@ -3512,6 +3512,43 @@ class WorkloadWindow(QMainWindow):
 
     def _hide_permission_banner(self) -> None:
         self.permission_banner.hide()
+
+    def show_welcome(self) -> None:
+        """Greet the person on opening the app and invite them to contribute,
+        unless they asked never to see this again."""
+        if self.settings.welcome_dismissed:
+            return
+        box = QMessageBox(self)
+        box.setIconPixmap(QPixmap(str(LOGO_PATH)).scaledToWidth(56))
+        box.setWindowTitle(self.tr("Welcome to KubeScope"))
+        box.setText(self.tr("Welcome to KubeScope"))
+        box.setInformativeText(
+            self.tr(
+                "KubeScope is free and open source software. If it helps you, "
+                "please consider contributing: star the project on GitHub, report "
+                "a problem, suggest an idea, translate it into your language, send "
+                "a pull request or become a sponsor."
+            )
+        )
+        github = box.addButton(
+            self.tr("Open on GitHub"), QMessageBox.ButtonRole.AcceptRole
+        )
+        sponsor = box.addButton(
+            self.tr("Sponsor on GitHub"), QMessageBox.ButtonRole.AcceptRole
+        )
+        box.addButton(self.tr("Maybe later"), QMessageBox.ButtonRole.RejectRole)
+        never = box.addButton(
+            self.tr("Don't show again"), QMessageBox.ButtonRole.DestructiveRole
+        )
+        box.setDefaultButton(github)
+        box.exec()
+        if box.clickedButton() is github:
+            QDesktopServices.openUrl(QUrl(PROJECT_URL))
+        elif box.clickedButton() is sponsor:
+            QDesktopServices.openUrl(QUrl(SPONSOR_URL))
+        elif box.clickedButton() is never:
+            self.settings.welcome_dismissed = True
+            self._save_settings()
 
     def _show_action_error(self, message: str) -> None:
         if self._close_when_worker_stops:

@@ -24,6 +24,7 @@ DEFAULTS: dict[str, Any] = {
     "pinned_views": [],
     "debug_logging": False,
     "check_updates": True,
+    "welcome_dismissed": False,
     "window_geometry": "",
     "kubeconfig_files": [],
     "sign_in_commands": {},
@@ -210,6 +211,16 @@ class Settings:
     @check_updates.setter
     def check_updates(self, value: bool) -> None:
         self._data["check_updates"] = bool(value)
+
+    @property
+    def welcome_dismissed(self) -> bool:
+        """True once the person chose never to see the welcome message
+        again."""
+        return self._data["welcome_dismissed"] is True
+
+    @welcome_dismissed.setter
+    def welcome_dismissed(self, value: bool) -> None:
+        self._data["welcome_dismissed"] = bool(value)
 
     @property
     def last_context(self) -> str | None:

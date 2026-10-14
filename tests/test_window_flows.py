@@ -2835,6 +2835,75 @@ def test_pinned_tabs_can_be_dragged_to_reorder_them(monkeypatch) -> None:
     window.close()
 
 
+def _welcome_window(monkeypatch, pressed: str | None):
+    """A window whose welcome box is answered by pressing the button
+    `pressed`."""
+    window = _ready_window(monkeypatch)
+    window.settings.welcome_dismissed = False
+    shown = []
+    opened = []
+
+    class FakeBox(QMessageBox):
+        def exec(self) -> int:
+            shown.append(self.text())
+            buttons = {b.text(): b for b in self.buttons()}
+            self._pressed = buttons.get(pressed)
+            return 0
+
+        def clickedButton(self):
+            return self._pressed
+
+    monkeypatch.setattr(window_module, "QMessageBox", FakeBox)
+    monkeypatch.setattr(
+        window_module.QDesktopServices, "openUrl", lambda url: opened.append(url)
+    )
+    return window, shown, opened
+
+
+def test_the_welcome_invites_to_contribute_and_opens_github(monkeypatch) -> None:
+    window, shown, opened = _welcome_window(monkeypatch, "Open on GitHub")
+
+    window.show_welcome()
+
+    assert shown == ["Welcome to KubeScope"]
+    assert [url.toString() for url in opened] == [window_module.PROJECT_URL]
+    assert window.settings.welcome_dismissed is False  # it comes back next time
+    window.close()
+
+
+def test_the_welcome_can_open_the_sponsor_page(monkeypatch) -> None:
+    window, _shown, opened = _welcome_window(monkeypatch, "Sponsor on GitHub")
+
+    window.show_welcome()
+
+    assert [url.toString() for url in opened] == [window_module.SPONSOR_URL]
+    assert window.settings.welcome_dismissed is False
+    window.close()
+
+
+def test_the_welcome_can_be_dismissed_for_good(monkeypatch) -> None:
+    window, shown, _opened = _welcome_window(monkeypatch, "Don't show again")
+
+    window.show_welcome()
+    assert window.settings.welcome_dismissed is True
+    window.show_welcome()  # dismissed: no second box
+
+    assert len(shown) == 1
+    window.close()
+
+
+def test_maybe_later_closes_the_welcome_but_keeps_it_for_next_time(
+    monkeypatch,
+) -> None:
+    window, shown, opened = _welcome_window(monkeypatch, "Maybe later")
+
+    window.show_welcome()
+
+    assert len(shown) == 1 and not opened
+    assert window.settings.welcome_dismissed is False
+    window.close()
+
+
 def test_the_pin_menu_offers_pin_or_unpin(monkeypatch) -> None:
     window = _resource_window(monkeypatch)
     offered = []

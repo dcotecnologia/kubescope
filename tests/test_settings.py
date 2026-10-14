@@ -246,3 +246,16 @@ def test_last_screen_persists_and_ignores_damaged_values(tmp_path) -> None:
 
     path.write_text('{"last_screen": "pods"}')
     assert Settings(path).last_screen == (0, "")
+
+
+def test_welcome_dismissed_defaults_off_and_persists(tmp_path) -> None:
+    path = tmp_path / "settings.json"
+    settings = Settings(path)
+    assert settings.welcome_dismissed is False
+
+    settings.welcome_dismissed = True
+    settings.save()
+    assert Settings(path).welcome_dismissed is True
+
+    path.write_text('{"welcome_dismissed": "yes"}', encoding="utf-8")
+    assert Settings(path).welcome_dismissed is False  # only a real true counts
