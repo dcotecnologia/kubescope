@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+### Changed
+
+- The resource lists fit the window without a horizontal scroll bar, with headers aligned to their cells, no vertical grid lines and denser rows by @danilogco
+
 ### Fixed
 
 - Large lists refresh and filter faster: the table repaints once per update instead of once per row by @danilogco

@@ -136,7 +136,7 @@ QHeaderView::up-arrow { image: url(SORT_UP); width: 9px; height: 6px; }
 QHeaderView::down-arrow { image: url(SORT_DOWN); width: 9px; height: 6px; }
 QHeaderView::section {
     background: #fbfbfc; color: #3c4149; border: 0;
-    border-bottom: 1px solid #dfe2e9; padding: 10px 8px;
+    border-bottom: 1px solid #dfe2e9; padding: 10px 11px;
     font-size: 9px; font-weight: 700;
 }
 QTableWidget[variant="data"]::item {
@@ -1991,7 +1991,7 @@ Resources in read-only mode</string>
                 <bool>false</bool>
                </attribute>
                <attribute name="verticalHeaderDefaultSectionSize">
-                <number>58</number>
+                <number>46</number>
                </attribute>
                <row />
                <row />

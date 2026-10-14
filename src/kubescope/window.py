@@ -723,14 +723,18 @@ class WorkloadWindow(QMainWindow):
         header = self.table.horizontalHeader()
         header.setStretchLastSection(True)
         header.setSectionsClickable(True)
+        header.setDefaultAlignment(
+            Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
+        )  # the headers line up with the cells below them
         header.sectionClicked.connect(self._sort_rows)
+        self.table.setShowGrid(False)  # the rows draw their own divider
         self._apply_view_columns()
         for column, width in (
             (0, 160),
             (1, 150),
-            (2, 320),
+            (2, 260),
             (3, 110),
-            (4, 150),
+            (4, 130),
             (5, 90),
             (6, 100),
             (7, 90),

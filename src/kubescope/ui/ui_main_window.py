@@ -148,12 +148,12 @@ class Ui_MainWindow(object):
 "QHeaderView::down-arrow { image: url(SORT_DOWN); width: 9px; height: 6px; }\n"
 "QHeaderView::section {\n"
 "    background: #fbfbfc; color: #3c4149; border: 0;\n"
-"    border-bottom: 1px solid #dfe2e9; padding: 10px 8px;\n"
+"    border-bottom: 1px solid #dfe2e9; padding: 10px 11px;\n"
 "    font-size: 9px; font-weight: 700;\n"
 "}\n"
 "QTableWidget[variant=\"data\"]::item {\n"
-"    padding"
-                        ": 6px 8px; border-bottom: 1px solid #e8e9ee;\n"
+"    paddin"
+                        "g: 6px 8px; border-bottom: 1px solid #e8e9ee;\n"
 "}\n"
 "QPushButton[nav=\"true\"] {\n"
 "    text-align: left; color: #4f5966; background: transparent;\n"
@@ -174,8 +174,8 @@ class Ui_MainWindow(object):
 "QLabel[variant=\"cardCaption\"] { color: #4f5966; font-size: 10px; }\n"
 "QProgressBar {\n"
 "    background: #eceef3; border: 0; border-radius: 3px;\n"
-"    min-"
-                        "height: 6px; max-height: 6px;\n"
+"    min"
+                        "-height: 6px; max-height: 6px;\n"
 "}\n"
 "QProgressBar::chunk { background: #6252b5; border-radius: 3px; }\n"
 "QProgressBar[level=\"warn\"]::chunk { background: #d58a2b; }\n"
@@ -195,8 +195,8 @@ class Ui_MainWindow(object):
 "    image: url(CLOSE_ICON); subcontrol-position: right; margin-left: 6px;\n"
 "    width: 10px; height: 10px; padding: 3px; border-radius: 4px;\n"
 "}\n"
-"QTabBar::close-button:hover { image: url(CLOSE_ICON_HOVER)"
-                        "; background: #eee9f7; }\n"
+"QTabBar::close-button:hover { image: url(CLOSE_ICON_HOVER"
+                        "); background: #eee9f7; }\n"
 "QPlainTextEdit {\n"
 "    background: #ffffff; color: #242a33; border: 1px solid #dfe2e9;\n"
 "    border-radius: 5px; padding: 8px; selection-background-color: #d9d3f2;\n"
@@ -210,8 +210,8 @@ class Ui_MainWindow(object):
 "QFrame#appFooter { background: #ffffff; border-top: 1px solid #e4e5eb; }\n"
 "QLabel#footerLicense, QLabel#footerDot, QLabel#footerVersion, QLabel#updateNotice { color: #6b7380; font-size: 10px; }\n"
 "QFrame#appFooter QPushButton[variant=\"link\"] { font-size: 10px; padding: 0 0 0 6px; }\n"
-"QPushButton#companyLink, Q"
-                        "PushButton#licenseLink { padding: 0; }\n"
+"QPushButton#companyLink, "
+                        "QPushButton#licenseLink { padding: 0; }\n"
 "QPushButton#updateButton { border: none; background: transparent; padding: 0; border-radius: 4px; }\n"
 "QPushButton#updateButton:hover { background: #f6f6fa; }\n"
 "")
@@ -1079,7 +1079,7 @@ class Ui_MainWindow(object):
         self.workloadTable.setProperty(u"variant", u"data")
         self.workloadTable.horizontalHeader().setStretchLastSection(False)
         self.workloadTable.verticalHeader().setVisible(False)
-        self.workloadTable.verticalHeader().setDefaultSectionSize(58)
+        self.workloadTable.verticalHeader().setDefaultSectionSize(46)
 
         self.workLayout.addWidget(self.workloadTable)
 
