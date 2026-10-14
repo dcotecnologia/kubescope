@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file. The format 
 
 ### Changed
 
+- The bundle only ships the Qt modules the app uses (Core, Gui and Widgets) and leaves out the GPL-only Qt Virtual Keyboard, Qt PDF and QML, making it about half the size by @danilogco
 - The resource lists fit the window without a horizontal scroll bar, with headers aligned to their cells, no vertical grid lines and denser rows by @danilogco
 
 ### Fixed

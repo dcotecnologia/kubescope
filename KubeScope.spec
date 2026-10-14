@@ -4,7 +4,7 @@ import platform
 import subprocess
 import sys
 
-from PyInstaller.utils.hooks import collect_submodules, copy_metadata, get_package_paths
+from PyInstaller.utils.hooks import copy_metadata, get_package_paths
 
 
 root = Path(SPECPATH)
@@ -76,14 +76,39 @@ analysis = Analysis(
             for path in (root / "src" / "kubescope" / "translations").glob("*.qm")
         ),
     ],
-    hiddenimports=collect_submodules("PySide6"),
+    # Only these Qt modules are used. Collecting every PySide6 module would ship
+    # Qt WebEngine (Chromium), Qt Charts and the rest, which the app never loads and
+    # whose licenses (some GPL-only) the bundle would then have to honor.
+    hiddenimports=["PySide6.QtCore", "PySide6.QtGui", "PySide6.QtWidgets"],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
-    excludes=[],
+    excludes=[
+        "PySide6.QtWebEngineCore",
+        "PySide6.QtWebEngineWidgets",
+        "PySide6.QtWebEngineQuick",
+        "PySide6.Qt3DCore",
+        "PySide6.QtCharts",
+        "PySide6.QtDataVisualization",
+        "PySide6.QtQuick",
+        "PySide6.QtQml",
+        "PySide6.QtMultimedia",
+        "PySide6.QtPdf",
+        "PySide6.QtNetwork",
+    ],
     noarchive=False,
     optimize=0,
 )
+# Qt parts a desktop widgets app never loads, which only come in through plugins:
+# Qt Virtual Keyboard is GPL-3.0 only (the rest of Qt is LGPL-3.0), and Qt PDF
+# carries Chromium's PDFium and its licenses; QML and Quick are not used at all.
+not_shipped = ("virtualkeyboard", "qt6pdf", "libqpdf", "qt6quick", "qt6qml")
+analysis.binaries = [
+    entry for entry in analysis.binaries if not any(n in entry[0].lower() for n in not_shipped)
+]
+analysis.datas = [
+    entry for entry in analysis.datas if not any(n in entry[0].lower() for n in not_shipped)
+]
 pyz = PYZ(analysis.pure)
 executable = EXE(
     pyz,
