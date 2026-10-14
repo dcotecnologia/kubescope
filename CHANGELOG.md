@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+### Added
+
+- The Cluster and Workloads **Overview** pages can be pinned to the top bar like the lists, from the right-click menu or a double click by @danilogco
+
 ### Changed
 
 - The resource lists fit the window without a horizontal scroll bar, with headers aligned to their cells, no vertical grid lines and denser rows by @danilogco

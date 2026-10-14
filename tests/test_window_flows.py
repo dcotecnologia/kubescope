@@ -2673,6 +2673,50 @@ def test_a_list_can_be_pinned_to_the_top_of_the_menu(monkeypatch) -> None:
     window.close()
 
 
+def test_the_overview_pages_can_be_pinned_to_the_top(monkeypatch) -> None:
+    window = _resource_window(monkeypatch)
+
+    window._toggle_pin("workloads-overview")
+    window._toggle_pin("cluster-overview")
+
+    assert [b.text() for b in window._pinned_buttons] == ["Overview", "Cluster"]
+    window._pinned_buttons[0].click()
+    assert window.pages.currentIndex() == 4
+    assert window._pinned_buttons[0].isChecked()
+    assert not window._pinned_buttons[1].isChecked()
+    window._pinned_buttons[1].click()
+    assert window.pages.currentIndex() == 0
+    window._toggle_pin("workloads-overview")
+    window._toggle_pin("cluster-overview")
+
+    class FakeMenu(QMenu):
+        def exec(self, *_args) -> None:
+            self.actions()[0].trigger()
+
+    monkeypatch.setattr(window_module, "QMenu", FakeMenu)
+    window.nav_overview.customContextMenuRequested.emit(QPoint(1, 1))
+    assert window.settings.pinned_views() == ["cluster-overview"]
+    window._pinned_buttons[0].customContextMenuRequested.emit(QPoint(1, 1))
+    assert window.settings.pinned_views() == []
+    window.close()
+
+
+def test_a_window_opens_with_the_overviews_already_pinned(
+    monkeypatch, tmp_path
+) -> None:
+    settings = Settings(tmp_path / "settings.json")
+    settings.set_pinned_views(["cluster-overview", "workloads-overview"])
+    monkeypatch.setattr(window_module, "list_contexts", lambda: ([], None))
+    monkeypatch.setattr(
+        window_module.WorkloadWindow, "refresh_overview", lambda *_a: None
+    )
+
+    window = window_module.WorkloadWindow(settings)
+
+    assert [b.text() for b in window._pinned_buttons] == ["Cluster", "Overview"]
+    window.close()
+
+
 def test_the_pin_menu_offers_pin_or_unpin(monkeypatch) -> None:
     window = _resource_window(monkeypatch)
     offered = []

@@ -586,6 +586,11 @@ class WorkloadWindow(QMainWindow):
         # widget -> (what the gesture does, the list it is about)
         self._pin_gestures: dict[QObject, tuple[str, str]] = {}
         self.config_submenu = ui.configSubmenu
+        # the two overview pages pin like a list does, by the page they show
+        self._nav_pages = {
+            "cluster-overview": (self.nav_overview, 0),
+            "workloads-overview": (self.nav_workloads_overview, 4),
+        }
         self._nav_views = {
             "pods": self.nav_pods,
             "deployments": self.nav_deployments,
@@ -804,6 +809,15 @@ class WorkloadWindow(QMainWindow):
             button.installEventFilter(self)
             self._pin_gestures[button] = ("pin", view)
         self.nav_workloads_overview.clicked.connect(lambda: self._show_page(4))
+        for view, (button, _page) in self._nav_pages.items():
+            button.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+            button.customContextMenuRequested.connect(
+                lambda position, view=view, button=button: self._show_pin_menu(
+                    view, button.mapToGlobal(position)
+                )
+            )
+            button.installEventFilter(self)
+            self._pin_gestures[button] = ("pin", view)
         self.workloads_refresh_button.clicked.connect(self.refresh_workloads_overview)
         # the overview names each kind; the ones that have a list link to it
         for key, view in WORKLOAD_LINKS.items():
@@ -967,10 +981,20 @@ class WorkloadWindow(QMainWindow):
             if gesture[0] == "pin"  # the tabs are gone; the menu entries stay
         }
         for view in self.settings.pinned_views():
-            source = self._nav_views.get(view)
+            page = self._nav_pages.get(view)
+            source = page[0] if page else self._nav_views.get(view)
             if source is None or source.isHidden():
                 continue
-            active = self.pages.currentIndex() == 1 and self._view == view
+            active = (
+                self.pages.currentIndex() == page[1]
+                if page
+                else self.pages.currentIndex() == 1 and self._view == view
+            )
+            show = (
+                (lambda _checked=False, index=page[1]: self._show_page(index))
+                if page
+                else (lambda _checked=False, view=view: self._open_list_view(view))
+            )
             tab = QFrame()
             tab.setProperty("pinTab", "true")
             tab.setProperty("active", "true" if active else "false")
@@ -981,9 +1005,7 @@ class WorkloadWindow(QMainWindow):
             button.setCheckable(True)
             button.setChecked(active)
             button.setCursor(Qt.CursorShape.PointingHandCursor)
-            button.clicked.connect(
-                lambda _checked=False, view=view: self._open_list_view(view)
-            )
+            button.clicked.connect(show)
             button.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
             button.customContextMenuRequested.connect(
                 lambda position, view=view, button=button: self._show_pin_menu(
