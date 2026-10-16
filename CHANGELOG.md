@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+## [0.6.2] - 2026-10-16
+
 ### Fixed
 
 - The logs of a pod can be opened for its init containers (a migration that runs and stops, for example), which are now offered in the container picker before the regular ones by @danilogco
@@ -146,7 +148,8 @@ The first release.
 
 - Pod logs and resource details are still never written to disk by the app on its own. **Save** is the only exception, and it writes only to the file the user chooses. SECURITY.md says so by @danilogco
 
-[Unreleased]: https://github.com/dcotecnologia/kubescope/compare/v0.6.1...HEAD
+[Unreleased]: https://github.com/dcotecnologia/kubescope/compare/v0.6.2...HEAD
+[0.6.2]: https://github.com/dcotecnologia/kubescope/compare/v0.6.1...v0.6.2
 [0.6.1]: https://github.com/dcotecnologia/kubescope/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/dcotecnologia/kubescope/compare/v0.5.1...v0.6.0
 [0.5.1]: https://github.com/dcotecnologia/kubescope/compare/v0.5.0...v0.5.1
