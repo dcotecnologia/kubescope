@@ -742,6 +742,26 @@ def test_parse_pod_handles_missing_names_and_ages() -> None:
     )
 
 
+def test_parse_pod_lists_init_containers() -> None:
+    now = datetime(2025, 1, 1, 1, tzinfo=UTC)
+    pod = cluster._parse_pod(
+        {
+            "metadata": {"name": "web"},
+            "spec": {
+                "initContainers": [{"name": "migrate"}, {}],
+                "containers": [{"name": "app"}],
+            },
+        },
+        now,
+    )
+    assert pod is not None
+    assert (pod.init_containers, pod.containers, pod.total) == (
+        ("migrate",),
+        ("app",),
+        1,
+    )
+
+
 def test_pod_owner_prefers_controllers_and_maps_replica_sets() -> None:
     owner = cluster._pod_owner
     assert owner({}) is None

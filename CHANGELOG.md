@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+### Fixed
+
+- The logs of a pod can be opened for its init containers (a migration that runs and stops, for example), which are now offered in the container picker before the regular ones by @danilogco
+
 ## [0.6.1] - 2026-10-14
 
 ### Fixed

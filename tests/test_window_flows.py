@@ -576,6 +576,29 @@ def test_choosing_pods_and_containers_for_logs(monkeypatch) -> None:
     window.close()
 
 
+def test_init_containers_can_be_chosen_for_logs(monkeypatch) -> None:
+    window = _ready_window(monkeypatch)
+    dispatched, offered = [], []
+    monkeypatch.setattr(
+        window, "_run_action", lambda op, _ok, *a, **_k: dispatched.append(a)
+    )
+
+    def pick(_parent, _title, _label, items, *_rest):
+        offered.append(items)
+        return "migrate", True
+
+    monkeypatch.setattr(QInputDialog, "getItem", staticmethod(pick))
+    pod = PodInfo(
+        "ns", "api", "Running", 1, 1, "1h", ("app",), init_containers=("migrate",)
+    )
+
+    window._choose_container_for_logs("prod", pod)
+
+    assert offered == [["migrate", "app"]]
+    assert dispatched == [("prod", "ns", "api", "migrate")]
+    window.close()
+
+
 def test_errors_are_shown_in_a_message_box_and_in_the_status(monkeypatch) -> None:
     window = _ready_window(monkeypatch)
     executed = []

@@ -3099,21 +3099,23 @@ class WorkloadWindow(QMainWindow):
             self._choose_container_for_logs(context, pod)
 
     def _choose_container_for_logs(self, context: str, pod: PodInfo) -> None:
-        if not pod.containers:
+        # Init containers (migrations, setup) run and stop but keep their logs.
+        choices = [*pod.init_containers, *pod.containers]
+        if not choices:
             QMessageBox.information(
                 self,
                 self.tr("Logs"),
                 self.tr("Pod {name} has no containers.").format(name=pod.name),
             )
             return
-        if len(pod.containers) == 1:
-            container, accepted = pod.containers[0], True
+        if len(choices) == 1:
+            container, accepted = choices[0], True
         else:
             container, accepted = QInputDialog.getItem(
                 self,
                 self.tr("View logs"),
                 self.tr("Select the container of {name}:").format(name=pod.name),
-                list(pod.containers),
+                choices,
                 0,
                 False,
             )

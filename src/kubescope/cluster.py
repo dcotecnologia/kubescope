@@ -1077,6 +1077,11 @@ def _parse_pod(item: dict[str, Any], now: datetime) -> PodInfo | None:
         for container in spec.get("containers") or []
         if container.get("name")
     )
+    init_containers = tuple(
+        container["name"]
+        for container in spec.get("initContainers") or []
+        if container.get("name")
+    )
     container_statuses = status.get("containerStatuses") or []
     age = "unknown"
     creation_timestamp = metadata.get("creationTimestamp")
@@ -1095,6 +1100,7 @@ def _parse_pod(item: dict[str, Any], now: datetime) -> PodInfo | None:
             container.get("restartCount") or 0 for container in container_statuses
         ),
         owner=_pod_owner(metadata),
+        init_containers=init_containers,
     )
 
 

@@ -74,6 +74,7 @@ class PodInfo:
     cpu: float | None = None
     memory: float | None = None
     owner: tuple[str, str] | None = None  # (kind, name) of the controlling workload
+    init_containers: tuple[str, ...] = ()  # run to completion before `containers`
 
 
 def safe_file_name(title: str, suffix: str) -> str:
