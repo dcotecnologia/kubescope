@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+### Fixed
+
+- The install script lets apt read the downloaded `.deb`, which ends the warning that the download was "performed unsandboxed as root" by @danilogco
+
 ## [0.6.2] - 2026-10-16
 
 ### Fixed

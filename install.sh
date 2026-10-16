@@ -206,6 +206,10 @@ if [ -n "$DIGEST" ]; then
 fi
 
 if [ "$METHOD" = deb ]; then
+  # mktemp makes the folder private; apt downloads as the _apt user, which must be
+  # able to reach the file or it falls back to root with a warning.
+  chmod 755 "$TMP"
+  chmod 644 "$TMP/$ASSET"
   if [ "$(id -u)" -eq 0 ]; then
     apt-get install -y "$TMP/$ASSET"
   elif command -v sudo >/dev/null 2>&1; then
