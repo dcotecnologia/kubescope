@@ -24,9 +24,35 @@ cluster.
 
 ## Get it
 
-- [Latest release](https://github.com/dcotecnologia/kubescope/releases/latest):
-  `.deb`, AppImage, Flatpak and Windows installer.
-- [Installation guide](https://github.com/dcotecnologia/kubescope/wiki/Installation)
+<p id="download-version">Direct downloads of the
+<a href="https://github.com/dcotecnologia/kubescope/releases/latest">latest release</a>:</p>
+
+<ul id="downloads">
+  <li><a data-asset="\.deb$" href="https://github.com/dcotecnologia/kubescope/releases/latest">Debian and Ubuntu (.deb)</a></li>
+  <li><a data-asset="\.AppImage$" href="https://github.com/dcotecnologia/kubescope/releases/latest">Any Linux (AppImage)</a></li>
+  <li><a data-asset="-windows-x64-setup\.exe$" href="https://github.com/dcotecnologia/kubescope/releases/latest">Windows installer (.exe)</a></li>
+  <li><a data-asset="-windows-x64\.zip$" href="https://github.com/dcotecnologia/kubescope/releases/latest">Windows portable (.zip)</a></li>
+</ul>
+
+<script>
+  // File names carry the version, so the links are resolved from the latest release.
+  // Without JavaScript they stay pointed at the release page.
+  fetch("https://api.github.com/repos/dcotecnologia/kubescope/releases/latest")
+    .then(function (response) { return response.ok ? response.json() : Promise.reject(); })
+    .then(function (release) {
+      document.querySelectorAll("#downloads a[data-asset]").forEach(function (link) {
+        var pattern = new RegExp(link.dataset.asset);
+        var asset = release.assets.find(function (item) { return pattern.test(item.name); });
+        if (asset) { link.href = asset.browser_download_url; }
+      });
+      document.getElementById("download-version").textContent =
+        "Direct downloads of KubeScope " + release.tag_name.replace(/^v/, "") + ":";
+    })
+    .catch(function () {});
+</script>
+
+The [installation guide](https://github.com/dcotecnologia/kubescope/wiki/Installation)
+has the one-command install script and the steps for each package.
 
 ## Learn more
 
