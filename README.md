@@ -12,8 +12,12 @@
 Desktop viewer for Kubernetes workloads, including Amazon EKS, Google GKE and
 Azure AKS clusters available
 through the local Kubernetes configuration. It talks to the cluster with the
-official Kubernetes Python client, so it needs no `kubectl`. It is read-only for
-now: it lists and inspects resources but does not change the cluster.
+official Kubernetes Python client, so it needs no `kubectl`. It is read-only by
+default: it lists and inspects resources. An optional **write mode** (off until
+you turn it on in Settings) adds a few actions to the right-click menu: delete or
+evict a Pod, scale or restart a Deployment (each asks for confirmation), and the
+complete `kubectl exec` command to open a shell in a Pod and the `kubectl
+port-forward` command of a Service, to run in your own terminal.
 
 ## Install
 
@@ -50,12 +54,12 @@ Download the package for your system from the
 [latest release](https://github.com/dcotecnologia/kubescope/releases/latest). You do
 not need `kubectl`.
 
-| System | Package | How to install |
-| ------ | ------- | -------------- |
-| Debian and Ubuntu | `kubescope_<version>_amd64.deb` | `sudo apt install ./kubescope_<version>_amd64.deb`, then `kubescope` |
-| Any Linux | `KubeScope-<version>-x86_64.AppImage` | `chmod +x` the file and run it |
-| Windows | `KubeScope-<version>-windows-x64-setup.exe` | run the installer; or unzip the portable `KubeScope-<version>-windows-x64.zip` |
-| macOS and others | none yet | [run it from source](#run-from-source) |
+| System            | Package                                     | How to install                                                                 |
+| ----------------- | ------------------------------------------- | ------------------------------------------------------------------------------ |
+| Debian and Ubuntu | `kubescope_<version>_amd64.deb`             | `sudo apt install ./kubescope_<version>_amd64.deb`, then `kubescope`           |
+| Any Linux         | `KubeScope-<version>-x86_64.AppImage`       | `chmod +x` the file and run it                                                 |
+| Windows           | `KubeScope-<version>-windows-x64-setup.exe` | run the installer; or unzip the portable `KubeScope-<version>-windows-x64.zip` |
+| macOS and others  | none yet                                    | [run it from source](#run-from-source)                                         |
 
 For the Flatpak, how to remove the app, and the details of each system, read the
 [installation guide](https://github.com/dcotecnologia/kubescope/wiki/Installation)
@@ -64,8 +68,8 @@ on the wiki. To connect to your clusters, see
 
 ![KubeScope cluster overview](docs/screenshots/overview.png)
 
-*The cluster overview, shown with sample data. Regenerate it with
-`make screenshot`.*
+_The cluster overview, shown with sample data. Regenerate it with
+`make screenshot`._
 
 ## Features
 
@@ -113,10 +117,12 @@ on the wiki. To connect to your clusters, see
   each in its own closable tab, colored like Monokai. **Save...** writes the open
   tab to a file you choose.
 - **Update check:** when it starts, KubeScope asks GitHub for the latest release
-  and shows **Update available**, linked to the download page, next to an icon in
-  the footer. The icon spins while it looks, and clicking it checks again. It sends
-  only the app version and installs nothing; **Settings** turns the startup check
-  off.
+  and shows **Update available** next to an icon in the footer. The icon spins
+  while it looks, and clicking it checks again. It sends only the app version;
+  **Settings** turns the startup check off. Clicking **Update available** asks you
+  to confirm, shows the version change and the release notes, then updates the
+  way KubeScope was installed (AppImage, `.deb` or the Windows installer) and
+  restarts it. A Flatpak or a source checkout opens the release page instead.
 - **Your table, your way:** drag any column border to resize it, and right-click
   a table header to hide or show columns. The choice is remembered.
 - **Readable errors:** a missing login tool, an unreachable cluster, expired
@@ -171,8 +177,9 @@ non-Linux systems, the target starts the app without the Linux-specific library.
 Python dev mode and Qt platform-plugin tracing. Nothing is written to disk.
 
 The app reads contexts from the default kubeconfig (`~/.kube/config` or the path
-in `KUBECONFIG`). It only reads cluster resources. Configure a read-only
-Kubernetes role for the contexts used by the app.
+in `KUBECONFIG`). Unless you turn on the write mode it only reads cluster
+resources, so configure a read-only Kubernetes role for the contexts used by the
+app. The write mode needs more rights, listed in the wiki.
 
 ## Build a bundled application
 
@@ -211,7 +218,10 @@ KubeScope ships a **Light** and a **Dark** theme, and you can make your own. In
 Settings, **New theme...** opens an editor that starts from the selected theme: give
 it a name, pick a color for each part of the interface (page, panels, top bar,
 accent, status colors, and more) and save. **Edit theme...** changes one of your
-themes, and the window follows at once when it is the one in use.
+themes (its **Reset** button undoes the color changes since the editor opened),
+and the window follows at once when it is the one in use. **Delete theme...**
+removes one you made after asking (the themes that come with the app
+cannot be deleted); if it was in use, the Dark theme comes back.
 
 A theme is a small JSON file in the `themes/` folder next to `settings.json` (the
 **Open the themes folder** button jumps there), so you can also edit or share it by
@@ -229,11 +239,14 @@ The color names are the ones the editor shows (`page`, `surface`, `text`, `accen
 `topbar`, `good`, `bad`, ...; see `ROLES` in `src/kubescope/theme.py`). A file that
 is damaged or uses an unknown name is skipped and noted in the debug log.
 
-**Community themes** live in `src/kubescope/community_themes/` and ship with the
-app: the first time KubeScope starts with one, it copies the file into your themes
-folder, so it shows up in the list. A theme is copied once, so your edits are never
-overwritten and a theme you delete stays deleted. To share a theme, add its file there
-and open a pull request (the folder's README has the steps).
+The themes that ship with the app live in `src/kubescope/themes/`, one JSON file
+each. Light and Dark (`light.json` and `dark.json`) are built in and read at start;
+for each of the others (Midnight, High contrast, Sepia,Dark Modern, Light Modern, Solarized Dark and Light, Monokai,
+Tomorrow Night Blue, Abyss and Quiet Light) KubeScope copies the file into your themes folder when it
+starts, whenever that file is missing: the first time, and again if you deleted it
+from the folder. A file that is there is never overwritten, so your edits are kept.
+None of them can be deleted from the app. To share a theme, add its file there and open a pull request
+(the folder's README has the steps).
 
 ### Languages
 
@@ -261,7 +274,7 @@ Both are welcome as pull requests; `make test` checks them, and
 
 1. In KubeScope, **Settings > New theme...**, pick your colors and save.
 2. Copy the file from your themes folder (**Open the themes folder**) into
-   `src/kubescope/community_themes/`, with a short lowercase name such as
+   `src/kubescope/themes/`, with a short lowercase name such as
    `my-theme.json`.
 3. Run `make test`. It checks that every shared theme is valid, uses known color names
    and keeps its text readable (a 4.5:1 contrast between text and page).

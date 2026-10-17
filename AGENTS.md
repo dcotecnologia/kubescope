@@ -3,10 +3,11 @@
 Guide for agents (human and AI) working in this repository.
 Goal: keep the architecture, tests, translations, and commit history consistent.
 
-KubeScope is a read-only desktop viewer for Kubernetes and Amazon EKS, built with
+KubeScope is a desktop viewer for Kubernetes and Amazon EKS, built with
 Python 3.12+ and PySide6 (Qt). It talks to the cluster with the official `kubernetes` Python client. It is
-read-only for now; that is a current scope limit, not a permanent rule, and write
-actions are expected later.
+read-only by default; the few actions that change a cluster (delete or evict a
+Pod, scale or restart a Deployment, and the shell and port-forward commands) exist only behind the write
+mode, a user setting that is off by default.
 
 ## Project documents
 
@@ -31,12 +32,22 @@ Keep the layers separate and the dependency direction one-way
 - `src/kubescope/cluster.py`
   - Everything that talks to the cluster: sends the requests to the API server through
     the `kubernetes` client, parses the JSON, and returns models. No Qt imports.
-- `src/kubescope/window.py` and `src/kubescope/log_tab.py`
+- `src/kubescope/window.py` and `src/kubescope/views/log_tab.py`
   - Qt widgets and wiring. Blocking cluster calls must run in a worker
     (`RefreshWorker` / `ActionWorker`), never on the UI thread. Show loading
     with the button spinner and the status text, never the busy cursor.
-- `src/kubescope/updates.py`
+- `src/kubescope/dialogs/` and `src/kubescope/views/`
+  - Qt pieces apart from the main window: dialogs (`theme_editor`, `update_dialog`) and tab or widget views (`log_tab`, `widgets`).
+- `src/kubescope/utils/`
+  - Helpers with no place of their own: `errors`, `diagnostics`, `fonts`, `json_view`, `log_view`, `updates` and `selfupdate`.
+- `src/kubescope/utils/updates.py`
   - The update check against GitHub's public API. No Qt; it never raises.
+- `src/kubescope/utils/selfupdate.py` and `src/kubescope/dialogs/update_dialog.py`
+  - The confirmed self-update: `utils/selfupdate.py` (no Qt) detects how the app was
+    installed, downloads the release file, verifies its sha256 and installs it;
+    `dialogs/update_dialog.py` is the dialog and the worker thread that run it.
+- `src/kubescope/writes.py`
+  - The actions that change a cluster (delete or evict a Pod, scale or restart a Deployment, and the shell and port-forward commands). No Qt; only reachable through the write mode.
 - `src/kubescope/settings.py`
   - User preferences stored as JSON; tolerant of missing or damaged files.
 - `src/kubescope/i18n.py` and `src/kubescope/languages/`
@@ -68,10 +79,10 @@ Golden rule:
 - Internal code keeps strict contracts (fail fast). Defensive validation belongs at
   the boundaries: API responses, the settings file, and user input.
 - Never block the UI thread; long work goes through the existing workers.
-- The app is read-only for now. Do not add API calls that change cluster state
-  unless the task asks for a write feature. When one does, keep it explicit and
-  confirmed by the user, and keep the write logic apart from the read paths in
-  `cluster.py` so the read-only parts stay obviously safe.
+- The app is read-only by default. Do not add API calls that change cluster state
+  unless the task asks for a write feature. When one does, put it in `writes.py`,
+  apart from the read paths in `cluster.py` so those stay obviously safe; show it
+  only while `settings.write_mode` is on; and confirm it with the user first.
 - Log unexpected errors with `logger.exception(...)` and show the user a clear
   message instead of letting the exception escape a Qt slot.
 - Code, comments, identifiers, test names, and commit messages are in English,
@@ -194,8 +205,9 @@ Follow [SECURITY.md](SECURITY.md); its guarantees are part of the product.
   ships), run `make notices` and commit `src/kubescope/assets/THIRD_PARTY_NOTICES.txt`;
   a test fails while it is out of date. Keep GPL-only Qt modules out of the bundle.
 - Do not add telemetry or network calls of the app's own, beyond the update
-  check in `updates.py` (GitHub's public API, sends only the version, can be turned
-  off in Settings). Cluster traffic goes through the `kubernetes` client only;
+  check in `utils/updates.py` (GitHub's public API, sends only the version, can be turned
+  off in Settings) and the update the person confirms in `utils/selfupdate.py` (only
+  from this project's GitHub releases, over HTTPS, and only with a verified sha256). Cluster traffic goes through the `kubernetes` client only;
   never write to the kubeconfig.
 - Keep `settings.json` free of secrets, and validate it on load.
 - Build request paths with the encoded names (`_resource_path`), and run programs
@@ -215,7 +227,7 @@ Follow [SECURITY.md](SECURITY.md); its guarantees are part of the product.
 
 - Identify the layer the change belongs to (`models`, `cluster`, `window`,
   `settings`) and keep it there.
-- Keep cluster access read-only (until a task says otherwise) and off the UI thread.
+- Keep cluster access read-only unless it is a write action behind the write mode, and off the UI thread.
 - Add or update tests next to the code, in English and function-based, and keep
   coverage at 100%.
 - Edit the `.ui` and regenerate `ui_*.py`; never hand-edit generated files.

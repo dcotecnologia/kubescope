@@ -6,8 +6,8 @@
 
 Desktop viewer for Kubernetes workloads, including Amazon EKS, Google GKE and Azure AKS clusters available
 through your local Kubernetes configuration. It uses the official Kubernetes Python client, so it needs no `kubectl`, and
-is read-only for now: it lists and inspects resources but does not change the
-cluster.
+is read-only by default: it lists and inspects resources. An optional write mode
+adds delete, evict, shell, scale and restart actions.
 
 ![KubeScope cluster overview](screenshots/overview.png)
 

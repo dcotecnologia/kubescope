@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+### Added
+
+- Eight themes inspired by the community: Dark Modern, Light Modern, Solarized Dark, Solarized Light, Monokai, Tomorrow Night Blue, Abyss and Quiet Light by @danilogco
+- The theme editor has a **Reset** button that undoes the color changes made since it opened, and **Delete theme...** in Settings removes a theme you made after asking (back to Dark if it was in use; none of the themes that ship with the app can be deleted, and a theme file removed by hand is copied back when the app starts) by @danilogco
+- A write mode, off by default and switched in Settings, adds, as buttons above the table and in the right-click menu, the actions that change a cluster: delete or evict a Pod, scale or restart a Deployment (each after a confirmation), and show the complete `kubectl exec` command to open a shell in a Pod, for the container you pick, ready to copy, and **Forward** on a Service shows the complete `kubectl port-forward` command for a port and a local port you pick; on Windows both come for PowerShell and for cmd by @danilogco
+- Clicking **Update available** asks to confirm the update, shows the current and the new version and the release notes, then downloads the release, checks its sha256, installs it the way the app was installed (AppImage, `.deb` or the Windows installer) and restarts the app; a Flatpak or a source checkout opens the release page instead by @danilogco
+
+### Changed
+
+- Settings are grouped into cards (General, Appearance, Cluster access, Debugging, Kubeconfig files, Sign-in commands and Context names) instead of one long list by @danilogco
+- The number input of the scale dialog, and the name, base and buttons of the theme editor, follow the style of the rest of the app (same borders, heights and buttons, without the platform icons) by @danilogco
+- Light and Dark are stored as JSON files like the other themes, in `src/kubescope/themes/` (renamed from `community_themes/`), and the themes that ship with the app are copied to your themes folder whenever their file is missing, not only the first time by @danilogco
+
 ### Fixed
 
 - The selects that choose the Pod or the container for the logs look like the other selects of the app, with the same border, arrow and highlight, instead of the plain system dialog by @danilogco

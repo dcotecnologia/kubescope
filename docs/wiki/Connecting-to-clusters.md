@@ -117,6 +117,22 @@ rules:
 
 Sections you cannot read are reported on the page instead of failing it.
 
+### Write mode
+
+The actions of the write mode (Settings, off by default) need more rights, only
+for the contexts where you use them:
+
+| What | Used for |
+| ---- | -------- |
+| `delete` on `pods` | Delete a Pod |
+| `create` on `pods/eviction` | Evict a Pod |
+| `patch` on `deployments/scale` | Scale a Deployment |
+| `patch` on `deployments` | Restart a Deployment |
+
+The commands the menu shows are run by you with `kubectl`, not by the app: the
+shell needs `create` on `pods/exec`, and Forward needs `get` on `services` and
+`pods` and `create` on `pods/portforward`.
+
 ## Cluster info, Node Groups and EKS add-ons (EKS only)
 
 These come from the AWS API, not from the cluster, so they need IAM

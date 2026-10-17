@@ -74,9 +74,9 @@ The release workflow publishes the section of the tag as the release notes.
 | Data shapes, formatters, sort and highlight rules | `src/kubescope/models.py` |
 | Widgets, pages and interactions | `src/kubescope/window.py` and the `.ui` files |
 | Preferences | `src/kubescope/settings.py` |
-| Friendly error messages | `src/kubescope/errors.py` |
+| Friendly error messages | `src/kubescope/utils/errors.py` |
 | Colors, themes and the theme editor | `src/kubescope/theme.py`, `theme_editor.py` |
-| A theme to share with everyone | `src/kubescope/community_themes/` (see its README) |
+| A theme to share with everyone | `src/kubescope/themes/` (see its README) |
 
 Edit layouts in the `.ui` files and run `make ui`; never edit `ui_*.py` by hand.
 Wrap user-visible text in `self.tr(...)` and run `make i18n` to add
@@ -85,7 +85,7 @@ the new text to every language file, then translate it there.
 ## Themes and languages
 
 - **A theme:** build it in Settings > New theme..., copy its JSON file into
-  `src/kubescope/community_themes/` and run `make test`. The folder's README has the
+  `src/kubescope/themes/` and run `make test`. The folder's README has the
   rules.
 - **A language:** `make language CODE=<code> NAME=<name in that language>`, translate
   `src/kubescope/languages/<code>.json`. `make test` fails while any text is

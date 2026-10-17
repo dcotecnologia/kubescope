@@ -34,9 +34,24 @@ prefer otherwise.
   and it never writes the kubeconfig: refreshed credentials are not saved back to
   it. Certificate data that sits inline in a kubeconfig is written by the library
   to a temporary file readable only by you, which is removed when the app quits.
-- **It is read-only for now.** The app only sends `GET` requests to the cluster
-  (lists, single objects, Pod logs, `/version`, and metrics). Write actions are
-  planned, and they will be explicit and confirmed by the user.
+- **It is read-only unless you turn on the write mode.** By default the app only
+  sends `GET` requests to the cluster (lists, single objects, Pod logs,
+  `/version`, and metrics). **Write mode** is a setting that is off by default
+  and is never turned on by the app itself. While it is off, the actions that
+  change a cluster are not even shown. While it is on, the right-click menu
+  offers: delete a Pod (`DELETE`), evict a Pod (`POST` of an Eviction, which
+  respects its disruption budget), scale a Deployment (`PATCH` of its scale),
+  restart a Deployment (`PATCH` that stamps the Pod template, as `kubectl rollout
+  restart` does). Each of these asks for confirmation first (Cancel is the
+  default), uses the credentials of the context you chose,
+  and nothing else is ever written: the code for these requests lives apart from
+  the read paths, in `writes.py`. The cluster's RBAC still decides: without the
+  right, it refuses and the app shows its message. For a shell in a Pod the
+  menu only shows the complete `kubectl exec` command (with the context, the
+  namespace and the container) for you to copy and run in your own terminal. The
+  same goes for **Forward** on a Service, which shows the complete `kubectl
+  port-forward` command for a port of the Service and a local port you pick. The
+  app runs neither, and does not need `kubectl`.
 - **Cluster info, Node Groups and Add-ons use the AWS CLI.** On an Amazon EKS
   context the app also runs `aws eks describe-cluster` (the Cluster info and
   Networking cards of the Overview), `list-nodegroups`, `describe-nodegroup`,
@@ -71,9 +86,18 @@ prefer otherwise.
   app starts (and when you press the update icon in the footer) it asks the public
   GitHub API (`api.github.com`, over HTTPS) for the latest release of the
   project. It sends no identifier, only a `User-Agent` with the app version, and
-  GitHub sees your IP address as in any request. It never downloads or installs
-  anything; the link opens the release page in your browser. Turn the startup
-  check off in Settings.
+  GitHub sees your IP address as in any request. Checking never downloads or
+  installs anything. Turn the startup check off in Settings.
+- **Updating is explicit and verified.** Only when you click **Update available**
+  and confirm, the app downloads the file of that release from the project's GitHub
+  releases (`github.com/dcotecnologia/kubescope/releases/download/`, over HTTPS; a
+  redirect away from HTTPS is refused). The file must match the sha256 that GitHub
+  publishes for it, or nothing is installed, and a release without a published
+  sha256 is not installed by the app. It installs the way the app was installed:
+  an AppImage replaces itself; a `.deb` is installed with `apt-get` through
+  `pkexec`, so the system asks for your password and the app never sees it; the
+  Windows installer runs silently for your user. A Flatpak or a source checkout
+  never updates itself.
 - **Local settings hold no secrets.** `settings.json` keeps the language, the
   last context, the page and list you were on, context display names, hidden table columns, the pinned lists, and the size
   and position of the window. It lives in your
@@ -107,7 +131,8 @@ prefer otherwise.
 
 ## Recommendations for users
 
-- Use a read-only Kubernetes role for the contexts you open in KubeScope.
+- Use a read-only Kubernetes role for the contexts you open in KubeScope, and turn
+  the write mode on only for the contexts where you want to change things.
 - Keep `~/.kube/config` private (`chmod 600`) and prefer short-lived credentials
   such as `aws sso login`, `gcloud auth login` or `az login`.
 - Install packages only from the project's releases. The install scripts

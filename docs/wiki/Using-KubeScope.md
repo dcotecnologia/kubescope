@@ -151,13 +151,52 @@ Language (automatic, English, Portuguese, Spanish, Italian, French, Chinese,
 Japanese, Arabic, Hindi or Russian), the theme, remembering the last
 context, display names for contexts, and the debug log.
 
+### Write mode
+
+KubeScope is read-only until you tick **Write mode** in Settings. Then the
+buttons above the table and the right-click menu of a row also offer:
+
+- on a **Pod**: **Shell command** (the complete `kubectl exec` command, with the
+  context, namespace and the container you pick in the dialog, to copy and run
+  in your own terminal),
+  **Evict** and **Delete**, in the Pods list and in the Pods dialog of a workload;
+- on a **Deployment**: **Scale** and **Restart** (a rolling restart);
+- on a **Service**: **Forward**, which shows the complete `kubectl port-forward`
+  command for the port of the Service and the local port you pick, to copy and run
+  in your own terminal (and keep open while you use it).
+
+The two commands are quoted for your system: for a POSIX shell (bash, zsh) on
+Linux and macOS, and on Windows the dialog shows one box for **PowerShell** and
+one for **cmd**, each with its own **Copy**. When you gave the app one kubeconfig
+file, the command carries `--kubeconfig <file>`, which works in any shell; with
+several files it sets `KUBECONFIG` the way each shell does (`$env:KUBECONFIG = ...;`
+in PowerShell, `set "KUBECONFIG=..." &&` in cmd, a `KUBECONFIG=...` prefix on Linux
+and macOS).
+
+Evict, Delete, Scale and Restart ask for confirmation (the two commands only show text), and the cluster's own permissions still apply:
+without the right, the cluster refuses and the message is shown. With the mode off,
+none of these entries is shown. The rights they need are in
+[Connecting to clusters](Connecting-to-clusters#write-mode).
+
 ### Updates
 
 When it starts, KubeScope asks the public GitHub API for the latest release. The
 icon in the footer spins while it looks, shows **Up to date** for a moment, or
-shows **Update available**: click it to open the download page. Click the icon at
-any time to check again. Only the app version is sent, and nothing is installed.
-To turn the startup check off, clear **Check GitHub for a new version when the app
+shows **Update available**. Click it and KubeScope asks you to confirm, showing
+the version you have, the one you would get and the release notes. **Update and
+restart** then downloads the file of the release, checks it against the sha256
+GitHub published, installs it the way KubeScope was installed, and starts the new
+version:
+
+- **AppImage:** replaces itself (and the `~/.local/bin/kubescope` link).
+- **.deb:** installs the package with `apt-get` after a system password prompt
+  (`pkexec`).
+- **Windows:** runs the installer silently for your user.
+- **Flatpak or source:** cannot update itself, so the button opens the release
+  page (Flathub updates the Flatpak).
+
+Click the icon at any time to check again. Checking sends only the app version;
+nothing is downloaded until you confirm. To turn the startup check off, clear **Check GitHub for a new version when the app
 starts** in Settings.
 
 ### Themes
@@ -165,7 +204,9 @@ starts** in Settings.
 Choose **Light**, **Dark**, or a theme of your own. **New theme...** opens an editor
 that starts from the selected theme: name it, click a color to change it, and save.
 **Edit theme...** changes one of yours (the built-in ones are fixed; copy one with
-**New theme...** instead). A theme is a JSON file in the `themes` folder next to
+**New theme...** instead), and **Reset** in the editor undoes the color changes
+since it opened. **Delete theme...** removes one you made after asking (the themes that come with the
+app can be edited but not deleted). A theme is a JSON file in the `themes` folder next to
 `settings.json`; **Open the themes folder** takes you there. The page scrolls when
 the window is small.
 
@@ -182,7 +223,9 @@ changes. The names are the ones the editor shows, such as `page`, `surface`, `te
 `accent`, `topbar`, `good` and `bad`. A file that is damaged or names an unknown
 color is skipped, and the debug log says why.
 
-KubeScope also ships a few **community themes** (Midnight, High contrast, Sepia). The
-first time it starts with one, it copies the file into your `themes` folder, where you
-can edit or delete it: edits are kept and a deleted theme does not come back. To share
-a theme, see the README in `src/kubescope/community_themes/` in the repository.
+KubeScope also ships themes as JSON files (Light and Dark are built in; the others
+are copied). When it starts it copies into your `themes` folder every one whose file
+is missing, so a file you deleted by hand comes back; a file that is there is never
+overwritten, so your edits are kept. None of the themes that ship with the app can be
+deleted from it. To share a theme,
+see the README in `src/kubescope/themes/` in the repository.

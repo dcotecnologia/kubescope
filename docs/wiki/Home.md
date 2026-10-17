@@ -2,7 +2,7 @@
 
 KubeScope is a desktop viewer for Kubernetes, including Amazon EKS, Google GKE and Azure AKS. Open it, pick a
 context from your kubeconfig, and see the cluster: overview, Pods, Deployments,
-details and live logs. It uses the official Kubernetes Python client, so it needs no `kubectl`, and is read-only for now.
+details and live logs. It uses the official Kubernetes Python client, so it needs no `kubectl`, and is read-only unless you turn on the write mode.
 
 ![KubeScope cluster overview](https://raw.githubusercontent.com/dcotecnologia/kubescope/main/docs/screenshots/overview.png)
 
