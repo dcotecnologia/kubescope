@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file. The format 
 
 ### Fixed
 
+- The selects that choose the Pod or the container for the logs look like the other selects of the app, with the same border, arrow and highlight, instead of the plain system dialog by @danilogco
 - The install script lets apt read the downloaded `.deb`, which ends the warning that the download was "performed unsandboxed as root" by @danilogco
 
 ## [0.6.2] - 2026-10-16

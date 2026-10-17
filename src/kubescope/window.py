@@ -45,13 +45,13 @@ from PySide6.QtGui import (
 )
 from PySide6.QtWidgets import (
     QApplication,
+    QComboBox,
     QDialog,
     QFileDialog,
     QFrame,
     QGraphicsOpacityEffect,
     QHBoxLayout,
     QHeaderView,
-    QInputDialog,
     QLabel,
     QMainWindow,
     QMenu,
@@ -3076,6 +3076,35 @@ class WorkloadWindow(QMainWindow):
             )
         dialog.exec()
 
+    def _pick_item(self, title: str, label: str, items: list[str]) -> tuple[str, bool]:
+        """Ask the person to pick one of `items` in a select styled like the
+        window's own filters, which a plain input dialog would not be."""
+        dialog = QDialog(self)
+        dialog.setWindowTitle(title)
+        dialog.setMinimumWidth(420)
+        layout = QVBoxLayout(dialog)
+        layout.setContentsMargins(16, 16, 16, 16)
+        layout.setSpacing(10)
+        layout.addWidget(QLabel(label))
+        combo = QComboBox()
+        combo.setProperty("variant", "filter")
+        combo.addItems(items)
+        layout.addWidget(combo)
+        actions = QHBoxLayout()
+        actions.addStretch()
+        cancel_button = QPushButton(self.tr("Cancel"))
+        cancel_button.setProperty("variant", "secondary")
+        ok_button = QPushButton(self.tr("OK"))
+        ok_button.setProperty("variant", "primary")
+        ok_button.setDefault(True)
+        cancel_button.clicked.connect(dialog.reject)
+        ok_button.clicked.connect(dialog.accept)
+        actions.addWidget(cancel_button)
+        actions.addWidget(ok_button)
+        layout.addLayout(actions)
+        accepted = dialog.exec() == QDialog.DialogCode.Accepted
+        return combo.currentText(), accepted
+
     def _choose_pod_for_logs(self, context: str, pods: list[PodInfo]) -> None:
         if not pods:
             QMessageBox.information(
@@ -3086,13 +3115,8 @@ class WorkloadWindow(QMainWindow):
             self._choose_container_for_logs(context, pods[0])
             return
         pod_names = [pod.name for pod in pods]
-        pod_name, accepted = QInputDialog.getItem(
-            self,
-            self.tr("View logs"),
-            self.tr("Select the Pod:"),
-            pod_names,
-            0,
-            False,
+        pod_name, accepted = self._pick_item(
+            self.tr("View logs"), self.tr("Select the Pod:"), pod_names
         )
         if accepted:
             pod = next(pod for pod in pods if pod.name == pod_name)
@@ -3111,13 +3135,10 @@ class WorkloadWindow(QMainWindow):
         if len(choices) == 1:
             container, accepted = choices[0], True
         else:
-            container, accepted = QInputDialog.getItem(
-                self,
+            container, accepted = self._pick_item(
                 self.tr("View logs"),
                 self.tr("Select the container of {name}:").format(name=pod.name),
                 choices,
-                0,
-                False,
             )
         if accepted:
             self._run_action(

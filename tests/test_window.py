@@ -366,7 +366,7 @@ def test_single_pod_and_container_skip_the_choice_prompts(monkeypatch) -> None:
     def fail(*_args: object, **_kwargs: object) -> None:
         raise AssertionError("no prompt expected")
 
-    monkeypatch.setattr(window_module.QInputDialog, "getItem", fail)
+    monkeypatch.setattr(window, "_pick_item", fail)
     pod = PodInfo("default", "api-1", "Running", 1, 1, "1d", ("app",))
 
     window._choose_pod_for_logs("ctx", [pod])

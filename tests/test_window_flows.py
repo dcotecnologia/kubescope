@@ -17,8 +17,8 @@ from PySide6.QtGui import (
 from PySide6.QtTest import QTest
 from PySide6.QtWidgets import (
     QApplication,
+    QComboBox,
     QDialog,
-    QInputDialog,
     QMenu,
     QMessageBox,
     QPushButton,
@@ -558,9 +558,7 @@ def test_choosing_pods_and_containers_for_logs(monkeypatch) -> None:
     other = PodInfo("ns", "api-2", "Running", 1, 1, "1h", ("app",))
     empty = PodInfo("ns", "bare", "Running", 0, 0, "1h", ())
     answers = iter([("api-2", True), ("api-1", False), ("sidecar", True)])
-    monkeypatch.setattr(
-        QInputDialog, "getItem", staticmethod(lambda *_a: next(answers))
-    )
+    monkeypatch.setattr(window, "_pick_item", lambda *_a: next(answers))
 
     window._choose_pod_for_logs("prod", [])
     window._choose_pod_for_logs("prod", [POD, other])  # picks api-2
@@ -583,11 +581,11 @@ def test_init_containers_can_be_chosen_for_logs(monkeypatch) -> None:
         window, "_run_action", lambda op, _ok, *a, **_k: dispatched.append(a)
     )
 
-    def pick(_parent, _title, _label, items, *_rest):
+    def pick(_title, _label, items):
         offered.append(items)
         return "migrate", True
 
-    monkeypatch.setattr(QInputDialog, "getItem", staticmethod(pick))
+    monkeypatch.setattr(window, "_pick_item", pick)
     pod = PodInfo(
         "ns", "api", "Running", 1, 1, "1h", ("app",), init_containers=("migrate",)
     )
@@ -596,6 +594,27 @@ def test_init_containers_can_be_chosen_for_logs(monkeypatch) -> None:
 
     assert offered == [["migrate", "app"]]
     assert dispatched == [("prod", "ns", "api", "migrate")]
+    window.close()
+
+
+def test_item_picker_is_a_filter_styled_select(monkeypatch) -> None:
+    window = _ready_window(monkeypatch)
+    seen = {}
+
+    def fake_exec(dialog):
+        combo = dialog.findChild(QComboBox)
+        seen["variant"] = combo.property("variant")
+        seen["items"] = [combo.itemText(i) for i in range(combo.count())]
+        combo.setCurrentIndex(1)
+        return QDialog.DialogCode.Accepted
+
+    monkeypatch.setattr(QDialog, "exec", fake_exec)
+
+    assert window._pick_item("Logs", "Pick:", ["app", "sidecar"]) == ("sidecar", True)
+    assert seen == {"variant": "filter", "items": ["app", "sidecar"]}
+
+    monkeypatch.setattr(QDialog, "exec", lambda _dialog: QDialog.DialogCode.Rejected)
+    assert window._pick_item("Logs", "Pick:", ["app"])[1] is False
     window.close()
 
 
