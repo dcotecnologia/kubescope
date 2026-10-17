@@ -27,7 +27,7 @@ from PySide6.QtWidgets import (
 )
 
 from kubescope import cluster as cluster_module
-from kubescope import json_view, theme
+from kubescope import theme
 from kubescope import window as window_module
 from kubescope.cluster import ClusterError, LoginAction
 from kubescope.models import (
@@ -44,7 +44,8 @@ from kubescope.models import (
 )
 from kubescope.settings import Settings
 from kubescope.theme import themed
-from kubescope.updates import Release, UpdateCheck
+from kubescope.utils import json_view
+from kubescope.utils.updates import Release, UpdateCheck
 from kubescope.window import PIN_MIME, VIEWER_MIME
 
 application = QApplication.instance() or QApplication([])
@@ -1469,7 +1470,7 @@ def test_the_window_starts_in_the_saved_theme(monkeypatch, tmp_path) -> None:
 
 def _accept_editor(monkeypatch, *, name=None, page=None, result=None):
     """Answer the theme editor as a person would, without showing it."""
-    from kubescope.theme_editor import ThemeEditor
+    from kubescope.dialogs.theme_editor import ThemeEditor
 
     seen = []
 
@@ -2373,14 +2374,20 @@ def test_a_check_looks_like_a_search_for_at_least_five_seconds(monkeypatch) -> N
     window.close()
 
 
-def test_an_available_update_shows_a_link_to_the_download(monkeypatch) -> None:
+def test_an_available_update_opens_the_update_dialog(monkeypatch) -> None:
     window, ran = _update_window(monkeypatch)
-    opened = []
-    monkeypatch.setattr(
-        window_module.QDesktopServices,
-        "openUrl",
-        lambda url: opened.append(url.toString()),
-    )
+    shown = []
+
+    class FakeDialog:
+        restart_command = None
+
+        def __init__(self, parent, current, release, install):
+            shown.append((parent, current, release, install))
+
+        def exec(self):
+            return QDialog.DialogCode.Rejected
+
+    monkeypatch.setattr(window_module, "UpdateDialog", FakeDialog)
     ui = window.ui
 
     window.check_updates()
@@ -2396,17 +2403,41 @@ def test_an_available_update_shows_a_link_to_the_download(monkeypatch) -> None:
 
     ui.updateLink.click()
     ui.updateButton.click()
-    assert opened == [RELEASE.url, RELEASE.url]
-    assert len(ran) == 1  # opening the page does not check again
+    assert [entry[2] for entry in shown] == [RELEASE, RELEASE]
+    assert len(ran) == 1  # opening the dialog does not check again
 
-    window._open_release()
-    window._update_release = None  # nothing to open
-    window._open_release()
-    assert len(opened) == 3
+    window._update_release = None  # nothing to update to
+    window._update_app()
+    assert len(shown) == 2
 
     window.check_updates()  # the right-click menu checks again
     assert ui.updateLink.isHidden()
     window.close()
+
+
+def test_a_finished_update_restarts_the_app(monkeypatch) -> None:
+    window, _ran = _update_window(monkeypatch)
+    window._update_release = RELEASE
+    restarted, quit_calls = [], []
+
+    class FakeDialog:
+        restart_command = ["kubescope"]
+
+        def __init__(self, *_args):
+            pass
+
+        def exec(self):
+            return QDialog.DialogCode.Accepted
+
+    monkeypatch.setattr(window_module, "UpdateDialog", FakeDialog)
+    monkeypatch.setattr(window_module, "restart", restarted.append)
+    monkeypatch.setattr(
+        QApplication, "quit", staticmethod(lambda: quit_calls.append(1))
+    )
+
+    window._update_app()
+
+    assert restarted == [["kubescope"]] and quit_calls == [1]
 
 
 def test_the_update_icon_spins_while_checking(monkeypatch) -> None:
@@ -3141,4 +3172,84 @@ def test_aws_words_are_shown_in_the_interface_language(monkeypatch) -> None:
         ],
     )
     assert window.table.item(0, 3).text() == "Deletion failed"
+    window.close()
+
+
+def test_a_custom_theme_can_be_deleted_after_confirming(monkeypatch) -> None:
+    window = _ready_window(monkeypatch)
+    window._load_settings_form()
+    page = window.settings_ui
+    assert not page.deleteThemeButton.isEnabled()  # the built-in themes stay
+    window._delete_theme()  # a built-in one is selected: nothing happens
+    _accept_editor(monkeypatch, name="Ocean", page="#001122")
+    page.newThemeButton.click()
+    assert page.deleteThemeButton.isEnabled()
+    answer = {"yes": False}
+    monkeypatch.setattr(window, "_confirm", lambda *_a: answer["yes"])
+
+    page.deleteThemeButton.click()  # cancelled
+    assert page.themeCombo.count() == 3
+
+    answer["yes"] = True
+    page.deleteThemeButton.click()
+    assert page.themeCombo.count() == 2
+    assert not list(window_module.themes_directory().glob("*.json"))
+    window.close()
+
+
+def test_deleting_the_theme_in_use_goes_back_to_the_default(monkeypatch) -> None:
+    window = _ready_window(monkeypatch)
+    window._load_settings_form()
+    page = window.settings_ui
+    _accept_editor(monkeypatch, name="Ocean", page="#001122")
+    page.newThemeButton.click()
+    page.saveButton.click()
+    assert window.settings.theme == "ocean" and "#001122" in window.styleSheet()
+    monkeypatch.setattr(window, "_confirm", lambda *_a: True)
+
+    window._delete_theme()
+
+    assert window.settings.theme == "dark"
+    assert page.themeCombo.currentData() == "dark"
+    assert "#001122" not in window.styleSheet()
+    window.close()
+
+
+def test_a_theme_file_that_cannot_be_removed_is_reported(monkeypatch) -> None:
+    window = _ready_window(monkeypatch)
+    window._load_settings_form()
+    _accept_editor(monkeypatch, name="Ocean", page="#001122")
+    window.settings_ui.newThemeButton.click()
+    monkeypatch.setattr(window, "_confirm", lambda *_a: True)
+    shown = []
+    monkeypatch.setattr(window, "_show_write_error", shown.append)
+
+    def broken(_theme_id):
+        raise OSError("read-only folder")
+
+    monkeypatch.setattr(window_module, "delete_custom_theme", broken)
+    window._delete_theme()
+
+    assert shown == ["read-only folder"]
+    assert window.settings_ui.themeCombo.count() == 3  # still there
+    window.close()
+
+
+def test_a_bundled_theme_can_be_edited_but_not_deleted(monkeypatch, tmp_path) -> None:
+    bundled = tmp_path / "bundled"
+    bundled.mkdir()
+    (bundled / "reef.json").write_text('{"name": "Reef", "base": "dark"}')
+    monkeypatch.setattr(theme, "BUNDLED_DIRECTORY", bundled)
+    theme.install_bundled_themes(bundled)
+    window = _ready_window(monkeypatch)
+    window._load_settings_form()
+    page = window.settings_ui
+
+    page.themeCombo.setCurrentIndex(page.themeCombo.findData("reef"))
+
+    assert page.editThemeButton.isEnabled()
+    assert not page.deleteThemeButton.isEnabled()
+    monkeypatch.setattr(window, "_confirm", lambda *_a: True)
+    window._delete_theme()  # even asked directly, it stays
+    assert (window_module.themes_directory() / "reef.json").exists()
     window.close()

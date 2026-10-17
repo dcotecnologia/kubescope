@@ -7,6 +7,7 @@ import tempfile
 import time
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
+from functools import partial
 from pathlib import Path
 from typing import Any
 
@@ -60,6 +61,7 @@ from PySide6.QtWidgets import (
     QProgressBar,
     QPushButton,
     QScrollArea,
+    QSpinBox,
     QTableWidgetItem,
     QVBoxLayout,
     QWidget,
@@ -90,19 +92,9 @@ from kubescope.cluster import (
 from kubescope.cluster import (
     configure as configure_cluster,
 )
-from kubescope.diagnostics import configure_logging, log_file
-from kubescope.errors import (
-    ErrorInfo,
-    describe_error,
-    first_line,
-    forbidden_action,
-    is_auth_error,
-    is_forbidden,
-)
-from kubescope.fonts import code_font
+from kubescope.dialogs.theme_editor import ThemeEditor
+from kubescope.dialogs.update_dialog import UpdateDialog
 from kubescope.i18n import apply_language, language_choices
-from kubescope.json_view import restyle, style_json_view
-from kubescope.log_tab import LOG_REFRESH_MS, LogTab
 from kubescope.models import (
     EKS_VIEWS,
     RESOURCE_VIEWS,
@@ -130,20 +122,51 @@ from kubescope.theme import (
     active_theme,
     apply_theme,
     available_themes,
+    can_delete_theme,
+    delete_custom_theme,
     save_custom_theme,
     theme_tokens,
     themed,
     themed_stylesheet,
     themes_directory,
 )
-from kubescope.theme_editor import ThemeEditor
 from kubescope.ui.ui_main_window import Ui_MainWindow
 from kubescope.ui.ui_overview_page import Ui_OverviewPage
 from kubescope.ui.ui_pods_dialog import Ui_PodsDialog
 from kubescope.ui.ui_settings_page import Ui_SettingsPage
 from kubescope.ui.ui_viewer_page import Ui_ViewerPage
 from kubescope.ui.ui_workloads_overview_page import Ui_WorkloadsOverviewPage
-from kubescope.updates import Release, UpdateCheck, check_for_update
+from kubescope.utils.diagnostics import configure_logging, log_file
+from kubescope.utils.errors import (
+    ErrorInfo,
+    describe_error,
+    first_line,
+    forbidden_action,
+    is_auth_error,
+    is_forbidden,
+)
+from kubescope.utils.fonts import code_font
+from kubescope.utils.json_view import restyle, style_json_view
+from kubescope.utils.selfupdate import detect_install, restart
+from kubescope.utils.updates import Release, UpdateCheck, check_for_update
+from kubescope.views.log_tab import LOG_REFRESH_MS, LogTab
+from kubescope.writes import (
+    MAX_REPLICAS,
+    delete_pod,
+    evict_pod,
+    forward_commands,
+    restart_deployment,
+    scale_deployment,
+    service_ports,
+    shell_commands,
+)
+
+# The buttons of the write mode that each list view shows.
+WRITE_VIEWS = {
+    "pods": ("shell", "evict", "delete"),
+    "deployments": ("scale", "reload"),
+    "services": ("forward",),
+}
 
 logger = logging.getLogger(__name__)
 
@@ -332,6 +355,52 @@ def _nav_icon(shape: str, colors: tuple[str, str] | None = None) -> QIcon:
             painter.setBrush(QColor(color))
             painter.drawEllipse(QPointF(6.5, 6), 1.8, 1.8)
             painter.drawEllipse(QPointF(11.5, 12), 1.8, 1.8)
+        elif shape == "shell":  # a terminal window with a prompt
+            painter.drawRoundedRect(QRectF(2.5, 3.5, 13, 11), 1.5, 1.5)
+            painter.drawPolyline(
+                QPolygonF([QPointF(5.5, 7), QPointF(8, 9), QPointF(5.5, 11)])
+            )
+            painter.drawLine(QPointF(9.5, 11.2), QPointF(12.5, 11.2))
+        elif shape == "evict":  # an arrow leaving a box
+            painter.drawPolyline(
+                QPolygonF([QPointF(8, 3.5), QPointF(3, 3.5), QPointF(3, 14.5)])
+            )
+            painter.drawPolyline(QPolygonF([QPointF(3, 14.5), QPointF(8, 14.5)]))
+            painter.drawLine(QPointF(7, 9), QPointF(15, 9))
+            painter.drawPolyline(
+                QPolygonF([QPointF(12, 6), QPointF(15, 9), QPointF(12, 12)])
+            )
+        elif shape == "delete":  # a trash can
+            painter.drawLine(QPointF(3, 5), QPointF(15, 5))
+            painter.drawPolyline(
+                QPolygonF(
+                    [QPointF(7, 5), QPointF(7, 3), QPointF(11, 3), QPointF(11, 5)]
+                )
+            )
+            painter.drawPolyline(
+                QPolygonF(
+                    [
+                        QPointF(4.5, 5),
+                        QPointF(5.3, 15),
+                        QPointF(12.7, 15),
+                        QPointF(13.5, 5),
+                    ]
+                )
+            )
+        elif shape == "forward":  # an arrow into a wall
+            painter.drawLine(QPointF(3, 9), QPointF(12, 9))
+            painter.drawPolyline(
+                QPolygonF([QPointF(9, 6), QPointF(12, 9), QPointF(9, 12)])
+            )
+            painter.drawLine(QPointF(15, 4), QPointF(15, 14))
+        elif shape == "scale":  # arrows growing apart
+            painter.drawLine(QPointF(9, 3), QPointF(9, 15))
+            painter.drawPolyline(
+                QPolygonF([QPointF(6, 6), QPointF(9, 3), QPointF(12, 6)])
+            )
+            painter.drawPolyline(
+                QPolygonF([QPointF(6, 12), QPointF(9, 15), QPointF(12, 12)])
+            )
         else:  # network: three linked nodes
             top, left, right = QPointF(9, 3.5), QPointF(3.5, 14), QPointF(14.5, 14)
             painter.drawLine(top, left)
@@ -565,6 +634,15 @@ class WorkloadWindow(QMainWindow):
         self.pods_button = ui.podsButton
         self.details_button = ui.detailsButton
         self.logs_button = ui.logsButton
+        # the write mode's buttons; each view shows its own, and only in that mode
+        self.write_buttons: dict[str, QPushButton] = {}
+        for shape in ("shell", "evict", "delete", "scale", "reload", "forward"):
+            button = QPushButton()
+            button.setProperty("variant", "secondary")
+            button.setEnabled(False)
+            button.clicked.connect(partial(self._write_button_clicked, shape))
+            ui.summaryRow.addWidget(button)
+            self.write_buttons[shape] = button
         self.table = ui.workloadTable
         self.status_label = ui.statusLabel
         self.login_button = ui.loginButton
@@ -690,6 +768,7 @@ class WorkloadWindow(QMainWindow):
         self.settings_ui.loginRemoveButton.clicked.connect(self._remove_login_row)
         self.settings_ui.newThemeButton.clicked.connect(self._new_theme)
         self.settings_ui.editThemeButton.clicked.connect(self._edit_theme)
+        self.settings_ui.deleteThemeButton.clicked.connect(self._delete_theme)
         self.settings_ui.openThemesButton.clicked.connect(self._open_themes_folder)
         self.settings_ui.themeCombo.currentIndexChanged.connect(
             self._update_theme_buttons
@@ -768,8 +847,9 @@ class WorkloadWindow(QMainWindow):
         self._style_template = self.styleSheet()
         self._apply_style()
         self._show_version()
+        self._show_access_note()
         self._update_notice_timer.timeout.connect(self.ui.updateNotice.hide)
-        self.ui.updateLink.clicked.connect(self._open_release)
+        self.ui.updateLink.clicked.connect(self._update_app)
         self.ui.updateButton.clicked.connect(self._update_clicked)
         self.ui.updateButton.setContextMenuPolicy(
             Qt.ContextMenuPolicy.CustomContextMenu
@@ -1596,7 +1676,7 @@ class WorkloadWindow(QMainWindow):
         available = state == "available" and release is not None
         if available:
             tip = self.tr(
-                "Update available: {version}. Click to open the download page; "
+                "Update available: {version}. Click to update; "
                 "right-click to check again."
             ).format(version=release.version)
         else:
@@ -1606,8 +1686,7 @@ class WorkloadWindow(QMainWindow):
         if release is not None and available:
             self.ui.updateLink.setText(self.tr("Update available"))
             self.ui.updateLink.setToolTip(
-                self.tr("Download KubeScope {version}").format(version=release.version)
-                + f"\n{release.url}"
+                self.tr("Update KubeScope to {version}").format(version=release.version)
             )
         self.ui.updateNotice.hide()
         self._update_notice_timer.stop()
@@ -1632,13 +1711,22 @@ class WorkloadWindow(QMainWindow):
 
     def _update_clicked(self) -> None:
         if self._update_state == "available":
-            self._open_release()
+            self._update_app()
         else:
             self.check_updates()
 
-    def _open_release(self) -> None:
-        if self._update_release is not None:
-            QDesktopServices.openUrl(QUrl(self._update_release.url))
+    def _update_app(self) -> None:
+        """Confirm the update, install it as this app was installed, and start
+        the new version."""
+        release = self._update_release
+        if release is None:
+            return
+        dialog = UpdateDialog(self, __version__, release, detect_install())
+        if dialog.exec() != QDialog.DialogCode.Accepted or not dialog.restart_command:
+            return
+        restart(dialog.restart_command)
+        self.close()
+        QApplication.quit()
 
     def _show_update_menu(self, position: QPoint) -> None:
         menu = QMenu(self)
@@ -1684,6 +1772,8 @@ class WorkloadWindow(QMainWindow):
         self.pods_button.setIcon(_nav_icon("pods", accent))
         self.details_button.setIcon(_nav_icon("details", accent))
         self.logs_button.setIcon(_nav_icon("document", accent))
+        for shape, button in self.write_buttons.items():
+            button.setIcon(_nav_icon(shape, accent))
 
     def _apply_theme(self) -> None:
         """Switch to the theme in the settings and redraw what was drawn with
@@ -1882,9 +1972,32 @@ class WorkloadWindow(QMainWindow):
             widget.setVisible(self._view == "nodegroups")
         self.pods_button.setVisible(self._view in WORKLOAD_VIEWS)
         self.logs_button.setVisible(self._view not in RESOURCE_VIEWS)
+        self._update_write_buttons()
         hidden = self.settings.hidden_columns(self._view) | self._always_hidden()
         for column in range(self.table.columnCount()):
             self.table.setColumnHidden(column, column in hidden)
+
+    def _update_write_buttons(self) -> None:
+        """The buttons of the write mode: the ones of this view, only while the
+        mode is on."""
+        names = {
+            "shell": self.tr("Shell command"),
+            "evict": self.tr("Evict"),
+            "delete": self.tr("Delete"),
+            "scale": self.tr("Scale"),
+            "reload": self.tr("Restart"),
+            "forward": self.tr("Forward"),
+        }
+        shown = WRITE_VIEWS.get(self._view, ()) if self.settings.write_mode else ()
+        for shape, button in self.write_buttons.items():
+            button.setText(names[shape])
+            button.setVisible(shape in shown)
+        self._update_workload_actions()
+
+    def _write_button_clicked(self, shape: str) -> None:
+        for entry_shape, _text, callback in self._write_entries():
+            if entry_shape == shape:
+                callback()
 
     def _show_row_menu(self, position: QPoint) -> None:
         """Row right-click: select the row and offer what the buttons above the
@@ -1899,6 +2012,10 @@ class WorkloadWindow(QMainWindow):
                 action = menu.addAction(button.icon(), button.text())
                 action.setEnabled(button.isEnabled())
                 action.triggered.connect(button.click)
+        entries = self._write_entries() if self.settings.write_mode else []
+        if entries:
+            menu.addSeparator()
+            self._add_entries(menu, entries)
         menu.exec(self.table.viewport().mapToGlobal(position))
 
     def _show_column_menu(self, position: QPoint) -> None:
@@ -2895,6 +3012,8 @@ class WorkloadWindow(QMainWindow):
         enabled = self._selected_row() is not None
         for button in (self.pods_button, self.details_button, self.logs_button):
             button.setEnabled(enabled and not self._close_when_worker_stops)
+        for button in self.write_buttons.values():
+            button.setEnabled(enabled and not self._close_when_worker_stops)
 
     def _run_action(
         self,
@@ -3065,6 +3184,23 @@ class WorkloadWindow(QMainWindow):
                 dialog.accept()
                 self._choose_container_for_logs(self._context(), pod)
 
+        def show_pod_menu(position: QPoint) -> None:
+            row = table.rowAt(position.y())
+            if not self.settings.write_mode or row < 0:
+                return
+            table.selectRow(row)
+            menu = QMenu(dialog)
+            self._add_entries(
+                menu,
+                [
+                    (shape, text, partial(self._after_closing, dialog, callback))
+                    for shape, text, callback in self._pod_entries(pods[row])
+                ],
+            )
+            menu.exec(table.viewport().mapToGlobal(position))
+
+        table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        table.customContextMenuRequested.connect(show_pod_menu)
         table.itemSelectionChanged.connect(update_pod_actions)
         table.cellDoubleClicked.connect(lambda _row, _column: show_pod_details())
         details_button.clicked.connect(show_pod_details)
@@ -3148,6 +3284,332 @@ class WorkloadWindow(QMainWindow):
                 pod.namespace,
                 pod.name,
                 container,
+            )
+
+    def _write_entries(self) -> list[tuple[str, str, Callable[[], None]]]:
+        """The actions that change the cluster for the selected row; only
+        offered in the write mode."""
+        row = self._selected_row()
+        if self._view == "pods" and isinstance(row, PodInfo):
+            return self._pod_entries(row)
+        if self._view == "deployments" and isinstance(row, Workload):
+            return [
+                ("scale", self.tr("Scale"), partial(self._scale_deployment, row)),
+                ("reload", self.tr("Restart"), partial(self._restart_deployment, row)),
+            ]
+        if self._view == "services" and isinstance(row, ClusterResource):
+            return [
+                ("forward", self.tr("Forward"), partial(self._forward_service, row))
+            ]
+        return []
+
+    def _pod_entries(self, pod: PodInfo) -> list[tuple[str, str, Callable[[], None]]]:
+        return [
+            ("shell", self.tr("Shell command"), partial(self._show_shell_command, pod)),
+            ("evict", self.tr("Evict"), partial(self._evict_pod, pod)),
+            ("delete", self.tr("Delete"), partial(self._delete_pod, pod)),
+        ]
+
+    @staticmethod
+    def _add_entries(
+        menu: QMenu, entries: list[tuple[str, str, Callable[[], None]]]
+    ) -> None:
+        """Add the entries to a menu like the buttons above the table: an icon
+        in the accent color and the plain name."""
+        accent = (themed("#3220a0"),) * 2
+        for shape, text, callback in entries:
+            menu.addAction(_nav_icon(shape, accent), text, callback)
+
+    @staticmethod
+    def _after_closing(dialog: QDialog, callback: Callable[[], None]) -> None:
+        dialog.accept()
+        callback()
+
+    def _confirm(self, title: str, text: str, action: str) -> bool:
+        """Ask before an action that changes the cluster; Cancel is the
+        default."""
+        box = QMessageBox(self)
+        box.setIcon(QMessageBox.Icon.Warning)
+        box.setWindowTitle(title)
+        box.setText(text)
+        confirm = box.addButton(action, QMessageBox.ButtonRole.AcceptRole)
+        cancel = box.addButton(self.tr("Cancel"), QMessageBox.ButtonRole.RejectRole)
+        box.setDefaultButton(cancel)
+        box.exec()
+        return box.clickedButton() is confirm
+
+    def _run_write(
+        self, operation: Callable[..., Any], done: str, *arguments: Any
+    ) -> None:
+        """Run an action that changes the cluster off the UI thread, then say
+        so and refresh the list."""
+        self._run_action(
+            operation,
+            lambda _result: self._write_done(done),
+            *arguments,
+            on_error=self._show_write_error,
+        )
+
+    def _write_done(self, message: str) -> None:
+        logger.info(message)
+        self._set_status(lambda: message)
+        self.refresh()
+
+    def _show_write_error(self, message: str) -> None:
+        if self._close_when_worker_stops:
+            return
+        box = QMessageBox(self)
+        box.setIcon(QMessageBox.Icon.Warning)
+        box.setWindowTitle(self.tr("Action failed"))
+        box.setText(first_line(message))
+        box.setDetailedText(message)
+        box.exec()
+
+    def _delete_pod(self, pod: PodInfo) -> None:
+        question = self.tr("Delete the Pod {name} in {namespace}?").format(
+            name=pod.name, namespace=pod.namespace
+        )
+        if self._confirm(self.tr("Delete Pod"), question, self.tr("Delete")):
+            self._run_write(
+                delete_pod,
+                self.tr("Deleted the Pod {name}").format(name=pod.name),
+                self._context(),
+                pod.namespace,
+                pod.name,
+            )
+
+    def _evict_pod(self, pod: PodInfo) -> None:
+        question = self.tr("Evict the Pod {name} in {namespace}?").format(
+            name=pod.name, namespace=pod.namespace
+        )
+        if self._confirm(self.tr("Evict Pod"), question, self.tr("Evict")):
+            self._run_write(
+                evict_pod,
+                self.tr("Evicted the Pod {name}").format(name=pod.name),
+                self._context(),
+                pod.namespace,
+                pod.name,
+            )
+
+    def _show_shell_command(self, pod: PodInfo) -> None:
+        """Show the kubectl command that opens a shell in the Pod, ready to
+        paste in a terminal, for the container the person picks; the app runs
+        nothing itself."""
+        if not pod.containers:
+            QMessageBox.information(
+                self,
+                self.tr("Shell command"),
+                self.tr("Pod {name} has no containers.").format(name=pod.name),
+            )
+            return
+        context = self._context()
+        dialog = QDialog(self)
+        dialog.setWindowTitle(self.tr("Shell command"))
+        dialog.setMinimumWidth(560)
+        layout = QVBoxLayout(dialog)
+        layout.setContentsMargins(16, 16, 16, 16)
+        layout.setSpacing(10)
+        layout.addWidget(QLabel(self.tr("Container of {name}:").format(name=pod.name)))
+        combo = QComboBox()
+        combo.setProperty("variant", "filter")
+        combo.addItems(pod.containers)
+        layout.addWidget(combo)
+        text = QLabel(self.tr("Run this in a terminal to open a shell:"))
+        text.setWordWrap(True)
+        layout.addWidget(text)
+        refresh = self._add_command_views(
+            dialog,
+            layout,
+            lambda: shell_commands(
+                context, pod.namespace, pod.name, combo.currentText()
+            ),
+        )
+        combo.currentIndexChanged.connect(refresh)
+        dialog.exec()
+
+    def _add_command_views(
+        self,
+        dialog: QDialog,
+        layout: QVBoxLayout,
+        build: Callable[[], list[tuple[str, str]]],
+    ) -> Callable[[], None]:
+        """Show the commands that `build` returns as (shell, command) pairs: a
+        box for each, named by its shell when there is more than one
+        (PowerShell and cmd on Windows), with its own Copy button, and a Close
+        button at the foot.
+
+        Returns the function that shows them again after a choice
+        changed.
+        """
+        boxes = []
+        for shell, _command in build():
+            if shell:
+                layout.addWidget(QLabel(shell))
+            box = QPlainTextEdit()
+            box.setReadOnly(True)
+            box.setFont(code_font())
+            box.setFixedHeight(96 if not shell else 64)
+            layout.addWidget(box)
+            copy_button = QPushButton(self.tr("Copy"))
+            copy_button.setProperty("variant", "primary")
+            copy_button.clicked.connect(
+                lambda _checked=False, box=box: QApplication.clipboard().setText(
+                    box.toPlainText()
+                )
+            )
+            row = QHBoxLayout()
+            row.addStretch()
+            row.addWidget(copy_button)
+            layout.addLayout(row)
+            boxes.append(box)
+
+        def refresh() -> None:
+            for box, (_shell, command) in zip(boxes, build(), strict=True):
+                box.setPlainText(command)
+
+        close_button = QPushButton(self.tr("Close"))
+        close_button.setProperty("variant", "secondary")
+        close_button.clicked.connect(dialog.accept)
+        footer = QHBoxLayout()
+        footer.addStretch()
+        footer.addWidget(close_button)
+        layout.addLayout(footer)
+        refresh()
+        return refresh
+
+    def _forward_service(self, service: ClusterResource) -> None:
+        """Read the ports of the Service, then show the kubectl command that
+        forwards one of them."""
+        self._run_action(
+            get_resource_details,
+            lambda document: self._show_forward_command(service, document),
+            self._context(),
+            "Service",
+            service.namespace,
+            service.name,
+        )
+
+    def _show_forward_command(
+        self, service: ClusterResource, document: dict[str, Any]
+    ) -> None:
+        """The kubectl port-forward command for a port of the Service and a
+        local port the person picks, ready to paste in a terminal; the app runs
+        nothing itself."""
+        ports = service_ports(document)
+        if not ports:
+            QMessageBox.information(
+                self,
+                self.tr("Forward"),
+                self.tr("Service {name} has no TCP ports to forward.").format(
+                    name=service.name
+                ),
+            )
+            return
+        context = self._context()
+        dialog = QDialog(self)
+        dialog.setWindowTitle(self.tr("Forward"))
+        dialog.setMinimumWidth(560)
+        layout = QVBoxLayout(dialog)
+        layout.setContentsMargins(16, 16, 16, 16)
+        layout.setSpacing(10)
+        layout.addWidget(QLabel(self.tr("Port of {name}:").format(name=service.name)))
+        combo = QComboBox()
+        combo.setProperty("variant", "filter")
+        for number, label in ports:
+            combo.addItem(label, number)
+        layout.addWidget(combo)
+        layout.addWidget(QLabel(self.tr("Local port:")))
+        local = QSpinBox()
+        local.setProperty("variant", "filter")
+        local.setRange(1, 65535)
+        layout.addWidget(local)
+        text = QLabel(
+            self.tr("Run this in a terminal and keep it open while you use the port:")
+        )
+        text.setWordWrap(True)
+        layout.addWidget(text)
+        refresh = self._add_command_views(
+            dialog,
+            layout,
+            lambda: forward_commands(
+                context,
+                service.namespace,
+                service.name,
+                combo.currentData(),
+                local.value(),
+            ),
+        )
+
+        def suggest_local_port() -> None:
+            # a port below 1024 needs privileges: offer it shifted up instead
+            remote = combo.currentData()
+            local.setValue(remote if remote >= 1024 else remote + 8000)
+
+        combo.currentIndexChanged.connect(suggest_local_port)
+        combo.currentIndexChanged.connect(refresh)
+        local.valueChanged.connect(refresh)
+        suggest_local_port()
+        dialog.exec()
+
+    def _ask_replicas(self, title: str, label: str, current: int) -> tuple[int, bool]:
+        dialog = QDialog(self)
+        dialog.setWindowTitle(title)
+        dialog.setMinimumWidth(360)
+        layout = QVBoxLayout(dialog)
+        layout.setContentsMargins(16, 16, 16, 16)
+        layout.setSpacing(10)
+        layout.addWidget(QLabel(label))
+        spin = QSpinBox()
+        spin.setRange(0, MAX_REPLICAS)
+        spin.setValue(current)
+        layout.addWidget(spin)
+        actions = QHBoxLayout()
+        actions.addStretch()
+        cancel_button = QPushButton(self.tr("Cancel"))
+        cancel_button.setProperty("variant", "secondary")
+        ok_button = QPushButton(self.tr("Scale"))
+        ok_button.setProperty("variant", "primary")
+        ok_button.setDefault(True)
+        cancel_button.clicked.connect(dialog.reject)
+        ok_button.clicked.connect(dialog.accept)
+        actions.addWidget(cancel_button)
+        actions.addWidget(ok_button)
+        layout.addLayout(actions)
+        accepted = dialog.exec() == QDialog.DialogCode.Accepted
+        return spin.value(), accepted
+
+    def _scale_deployment(self, workload: Workload) -> None:
+        replicas, accepted = self._ask_replicas(
+            self.tr("Scale Deployment"),
+            self.tr("Replicas of {name} in {namespace}:").format(
+                name=workload.name, namespace=workload.namespace
+            ),
+            workload.desired,
+        )
+        if accepted and replicas != workload.desired:
+            self._run_write(
+                scale_deployment,
+                self.tr("Scaled {name} to {count} replicas").format(
+                    name=workload.name, count=replicas
+                ),
+                self._context(),
+                workload.namespace,
+                workload.name,
+                replicas,
+            )
+
+    def _restart_deployment(self, workload: Workload) -> None:
+        question = self.tr(
+            "Restart the Deployment {name} in {namespace}? Its Pods are replaced "
+            "one after the other."
+        ).format(name=workload.name, namespace=workload.namespace)
+        if self._confirm(self.tr("Restart Deployment"), question, self.tr("Restart")):
+            self._run_write(
+                restart_deployment,
+                self.tr("Restarting {name}").format(name=workload.name),
+                self._context(),
+                workload.namespace,
+                workload.name,
             )
 
     def _save_viewer_tab(self) -> None:
@@ -3280,6 +3742,7 @@ class WorkloadWindow(QMainWindow):
         form.rememberCheck.setChecked(self.settings.remember_last_context)
         form.debugCheck.setChecked(self.settings.debug_logging)
         form.updatesCheck.setChecked(self.settings.check_updates)
+        form.writeModeCheck.setChecked(self.settings.write_mode)
         form.debugHint.setText(
             self.tr(
                 "Off by default. When on, KubeScope writes what it does, "
@@ -3415,7 +3878,10 @@ class WorkloadWindow(QMainWindow):
 
     def _update_theme_buttons(self) -> None:
         # the built-in themes are fixed; copy one with New theme to change it
-        self.settings_ui.editThemeButton.setEnabled(not self._selected_theme().builtin)
+        theme = self._selected_theme()
+        self.settings_ui.editThemeButton.setEnabled(not theme.builtin)
+        # the themes that come with the app can be edited, but they stay
+        self.settings_ui.deleteThemeButton.setEnabled(can_delete_theme(theme.id))
 
     def _edit_theme_dialog(self, theme: Theme, *, new: bool) -> Theme | None:
         editor = ThemeEditor(
@@ -3445,6 +3911,29 @@ class WorkloadWindow(QMainWindow):
             self._fill_theme_combo(saved.id)
             if self.settings.theme == saved.id:
                 self._apply_theme()  # the theme in use changed: show it now
+
+    def _delete_theme(self) -> None:
+        """Delete the selected custom theme after asking; if it was the one in
+        use, go back to the default theme."""
+        theme = self._selected_theme()
+        if not can_delete_theme(theme.id):
+            return
+        question = self.tr("Delete the theme {name}?").format(name=theme.name)
+        if not self._confirm(self.tr("Delete theme"), question, self.tr("Delete")):
+            return
+        try:
+            delete_custom_theme(theme.id)
+        except OSError as error:
+            self._show_write_error(str(error))
+            return
+        logger.info("Deleted theme %s", theme.id)
+        in_use = self.settings.theme == theme.id
+        if in_use:
+            self.settings.theme = DEFAULT_THEME
+            self._save_settings()
+        self._fill_theme_combo(self.settings.theme)
+        if in_use:
+            self._apply_theme()
 
     def _open_themes_folder(self) -> None:
         themes_directory().mkdir(parents=True, exist_ok=True)
@@ -3506,6 +3995,12 @@ class WorkloadWindow(QMainWindow):
         self.settings.check_updates = form.updatesCheck.isChecked()
         if self.settings.check_updates and not was_checking:
             self.check_updates()
+        was_writing = self.settings.write_mode
+        self.settings.write_mode = form.writeModeCheck.isChecked()
+        if self.settings.write_mode != was_writing:
+            logger.info("Write mode %s", "on" if self.settings.write_mode else "off")
+            self._show_access_note()
+            self._apply_view_buttons()
         was_debugging = self.settings.debug_logging
         self.settings.debug_logging = form.debugCheck.isChecked()
         self._save_settings()
@@ -3528,9 +4023,21 @@ class WorkloadWindow(QMainWindow):
             self._retranslate()
         super().changeEvent(event)
 
+    def _show_access_note(self) -> None:
+        """The note at the foot of the side menu: read-only, or the write
+        mode."""
+        if self.settings.write_mode:
+            note = self.tr("WRITE MODE\nActions that change the cluster are on")
+        else:
+            note = QCoreApplication.translate(
+                "MainWindow", "SECURE ACCESS\nResources in read-only mode"
+            )
+        self.ui.sidebarNote.setText(note)
+
     def _retranslate(self) -> None:
         """Re-apply every visible text after the translator changed."""
         self.ui.retranslateUi(self)
+        self._show_access_note()
         self.viewer_ui.retranslateUi(self.ui.viewerHost)
         self._show_version()
         self.overview_ui.retranslateUi(self.ui.overviewHost)

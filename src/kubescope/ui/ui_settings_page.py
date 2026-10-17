@@ -61,23 +61,30 @@ class Ui_SettingsPage(object):
         self.settingsContentLayout.setSpacing(12)
         self.settingsContentLayout.setObjectName(u"settingsContentLayout")
         self.settingsContentLayout.setContentsMargins(0, 0, 16, 8)
-        self.generalHeading = QLabel(self.settingsContent)
+        self.generalCard = QFrame(self.settingsContent)
+        self.generalCard.setObjectName(u"generalCard")
+        self.generalCard.setProperty(u"card", u"true")
+        self.generalCardLayout = QVBoxLayout(self.generalCard)
+        self.generalCardLayout.setSpacing(10)
+        self.generalCardLayout.setObjectName(u"generalCardLayout")
+        self.generalCardLayout.setContentsMargins(16, 14, 16, 14)
+        self.generalHeading = QLabel(self.generalCard)
         self.generalHeading.setObjectName(u"generalHeading")
         self.generalHeading.setProperty(u"variant", u"cardTitle")
 
-        self.settingsContentLayout.addWidget(self.generalHeading)
+        self.generalCardLayout.addWidget(self.generalHeading)
 
         self.generalForm = QFormLayout()
         self.generalForm.setObjectName(u"generalForm")
         self.generalForm.setLabelAlignment(Qt.AlignLeading|Qt.AlignLeft|Qt.AlignVCenter)
         self.generalForm.setHorizontalSpacing(16)
         self.generalForm.setVerticalSpacing(10)
-        self.languageLabel = QLabel(self.settingsContent)
+        self.languageLabel = QLabel(self.generalCard)
         self.languageLabel.setObjectName(u"languageLabel")
 
         self.generalForm.setWidget(0, QFormLayout.ItemRole.LabelRole, self.languageLabel)
 
-        self.languageCombo = QComboBox(self.settingsContent)
+        self.languageCombo = QComboBox(self.generalCard)
         self.languageCombo.addItem(u"Automatic")
         self.languageCombo.addItem(u"English")
         self.languageCombo.addItem(u"Portugu\u00eas")
@@ -87,36 +94,90 @@ class Ui_SettingsPage(object):
 
         self.generalForm.setWidget(0, QFormLayout.ItemRole.FieldRole, self.languageCombo)
 
-        self.themeLabel = QLabel(self.settingsContent)
+        self.defaultNamespaceLabel = QLabel(self.generalCard)
+        self.defaultNamespaceLabel.setObjectName(u"defaultNamespaceLabel")
+
+        self.generalForm.setWidget(1, QFormLayout.ItemRole.LabelRole, self.defaultNamespaceLabel)
+
+        self.defaultNamespaceCombo = QComboBox(self.generalCard)
+        self.defaultNamespaceCombo.setObjectName(u"defaultNamespaceCombo")
+        self.defaultNamespaceCombo.setMinimumSize(QSize(200, 0))
+        self.defaultNamespaceCombo.setProperty(u"variant", u"filter")
+
+        self.generalForm.setWidget(1, QFormLayout.ItemRole.FieldRole, self.defaultNamespaceCombo)
+
+        self.rememberCheck = QCheckBox(self.generalCard)
+        self.rememberCheck.setObjectName(u"rememberCheck")
+        self.rememberCheck.setChecked(True)
+
+        self.generalForm.setWidget(2, QFormLayout.ItemRole.SpanningRole, self.rememberCheck)
+
+        self.updatesCheck = QCheckBox(self.generalCard)
+        self.updatesCheck.setObjectName(u"updatesCheck")
+        self.updatesCheck.setChecked(True)
+
+        self.generalForm.setWidget(3, QFormLayout.ItemRole.SpanningRole, self.updatesCheck)
+
+
+        self.generalCardLayout.addLayout(self.generalForm)
+
+
+        self.settingsContentLayout.addWidget(self.generalCard)
+
+        self.appearanceCard = QFrame(self.settingsContent)
+        self.appearanceCard.setObjectName(u"appearanceCard")
+        self.appearanceCard.setProperty(u"card", u"true")
+        self.appearanceCardLayout = QVBoxLayout(self.appearanceCard)
+        self.appearanceCardLayout.setSpacing(10)
+        self.appearanceCardLayout.setObjectName(u"appearanceCardLayout")
+        self.appearanceCardLayout.setContentsMargins(16, 14, 16, 14)
+        self.appearanceHeading = QLabel(self.appearanceCard)
+        self.appearanceHeading.setObjectName(u"appearanceHeading")
+        self.appearanceHeading.setProperty(u"variant", u"cardTitle")
+
+        self.appearanceCardLayout.addWidget(self.appearanceHeading)
+
+        self.appearanceForm = QFormLayout()
+        self.appearanceForm.setObjectName(u"appearanceForm")
+        self.appearanceForm.setLabelAlignment(Qt.AlignLeading|Qt.AlignLeft|Qt.AlignVCenter)
+        self.appearanceForm.setHorizontalSpacing(16)
+        self.appearanceForm.setVerticalSpacing(10)
+        self.themeLabel = QLabel(self.appearanceCard)
         self.themeLabel.setObjectName(u"themeLabel")
 
-        self.generalForm.setWidget(1, QFormLayout.ItemRole.LabelRole, self.themeLabel)
+        self.appearanceForm.setWidget(0, QFormLayout.ItemRole.LabelRole, self.themeLabel)
 
-        self.themeCombo = QComboBox(self.settingsContent)
+        self.themeCombo = QComboBox(self.appearanceCard)
         self.themeCombo.addItem(u"Light")
         self.themeCombo.addItem(u"Dark")
         self.themeCombo.setObjectName(u"themeCombo")
         self.themeCombo.setMinimumSize(QSize(200, 0))
         self.themeCombo.setProperty(u"variant", u"filter")
 
-        self.generalForm.setWidget(1, QFormLayout.ItemRole.FieldRole, self.themeCombo)
+        self.appearanceForm.setWidget(0, QFormLayout.ItemRole.FieldRole, self.themeCombo)
 
         self.themeButtonsRow = QHBoxLayout()
         self.themeButtonsRow.setSpacing(8)
         self.themeButtonsRow.setObjectName(u"themeButtonsRow")
-        self.newThemeButton = QPushButton(self.settingsContent)
+        self.newThemeButton = QPushButton(self.appearanceCard)
         self.newThemeButton.setObjectName(u"newThemeButton")
         self.newThemeButton.setProperty(u"variant", u"secondary")
 
         self.themeButtonsRow.addWidget(self.newThemeButton)
 
-        self.editThemeButton = QPushButton(self.settingsContent)
+        self.editThemeButton = QPushButton(self.appearanceCard)
         self.editThemeButton.setObjectName(u"editThemeButton")
         self.editThemeButton.setProperty(u"variant", u"secondary")
 
         self.themeButtonsRow.addWidget(self.editThemeButton)
 
-        self.openThemesButton = QPushButton(self.settingsContent)
+        self.deleteThemeButton = QPushButton(self.appearanceCard)
+        self.deleteThemeButton.setObjectName(u"deleteThemeButton")
+        self.deleteThemeButton.setProperty(u"variant", u"secondary")
+
+        self.themeButtonsRow.addWidget(self.deleteThemeButton)
+
+        self.openThemesButton = QPushButton(self.appearanceCard)
         self.openThemesButton.setObjectName(u"openThemesButton")
         self.openThemesButton.setProperty(u"variant", u"secondary")
 
@@ -127,55 +188,71 @@ class Ui_SettingsPage(object):
         self.themeButtonsRow.addItem(self.themeButtonsSpacer)
 
 
-        self.generalForm.setLayout(2, QFormLayout.ItemRole.SpanningRole, self.themeButtonsRow)
+        self.appearanceForm.setLayout(1, QFormLayout.ItemRole.SpanningRole, self.themeButtonsRow)
 
-        self.defaultNamespaceLabel = QLabel(self.settingsContent)
-        self.defaultNamespaceLabel.setObjectName(u"defaultNamespaceLabel")
 
-        self.generalForm.setWidget(3, QFormLayout.ItemRole.LabelRole, self.defaultNamespaceLabel)
+        self.appearanceCardLayout.addLayout(self.appearanceForm)
 
-        self.defaultNamespaceCombo = QComboBox(self.settingsContent)
-        self.defaultNamespaceCombo.setObjectName(u"defaultNamespaceCombo")
-        self.defaultNamespaceCombo.setMinimumSize(QSize(200, 0))
-        self.defaultNamespaceCombo.setProperty(u"variant", u"filter")
 
-        self.generalForm.setWidget(3, QFormLayout.ItemRole.FieldRole, self.defaultNamespaceCombo)
+        self.settingsContentLayout.addWidget(self.appearanceCard)
 
-        self.rememberCheck = QCheckBox(self.settingsContent)
-        self.rememberCheck.setObjectName(u"rememberCheck")
-        self.rememberCheck.setChecked(True)
+        self.accessCard = QFrame(self.settingsContent)
+        self.accessCard.setObjectName(u"accessCard")
+        self.accessCard.setProperty(u"card", u"true")
+        self.accessCardLayout = QVBoxLayout(self.accessCard)
+        self.accessCardLayout.setSpacing(10)
+        self.accessCardLayout.setObjectName(u"accessCardLayout")
+        self.accessCardLayout.setContentsMargins(16, 14, 16, 14)
+        self.accessHeading = QLabel(self.accessCard)
+        self.accessHeading.setObjectName(u"accessHeading")
+        self.accessHeading.setProperty(u"variant", u"cardTitle")
 
-        self.generalForm.setWidget(4, QFormLayout.ItemRole.SpanningRole, self.rememberCheck)
+        self.accessCardLayout.addWidget(self.accessHeading)
 
-        self.updatesCheck = QCheckBox(self.settingsContent)
-        self.updatesCheck.setObjectName(u"updatesCheck")
-        self.updatesCheck.setChecked(True)
+        self.writeModeCheck = QCheckBox(self.accessCard)
+        self.writeModeCheck.setObjectName(u"writeModeCheck")
 
-        self.generalForm.setWidget(5, QFormLayout.ItemRole.SpanningRole, self.updatesCheck)
+        self.accessCardLayout.addWidget(self.writeModeCheck)
 
-        self.debugCheck = QCheckBox(self.settingsContent)
+
+        self.settingsContentLayout.addWidget(self.accessCard)
+
+        self.debugCard = QFrame(self.settingsContent)
+        self.debugCard.setObjectName(u"debugCard")
+        self.debugCard.setProperty(u"card", u"true")
+        self.debugCardLayout = QVBoxLayout(self.debugCard)
+        self.debugCardLayout.setSpacing(10)
+        self.debugCardLayout.setObjectName(u"debugCardLayout")
+        self.debugCardLayout.setContentsMargins(16, 14, 16, 14)
+        self.debugHeading = QLabel(self.debugCard)
+        self.debugHeading.setObjectName(u"debugHeading")
+        self.debugHeading.setProperty(u"variant", u"cardTitle")
+
+        self.debugCardLayout.addWidget(self.debugHeading)
+
+        self.debugCheck = QCheckBox(self.debugCard)
         self.debugCheck.setObjectName(u"debugCheck")
 
-        self.generalForm.setWidget(6, QFormLayout.ItemRole.SpanningRole, self.debugCheck)
+        self.debugCardLayout.addWidget(self.debugCheck)
 
-        self.debugHint = QLabel(self.settingsContent)
+        self.debugHint = QLabel(self.debugCard)
         self.debugHint.setObjectName(u"debugHint")
         self.debugHint.setText(u"")
         self.debugHint.setWordWrap(True)
         self.debugHint.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         self.debugHint.setProperty(u"variant", u"muted")
 
-        self.generalForm.setWidget(7, QFormLayout.ItemRole.SpanningRole, self.debugHint)
+        self.debugCardLayout.addWidget(self.debugHint)
 
         self.logButtonsRow = QHBoxLayout()
         self.logButtonsRow.setObjectName(u"logButtonsRow")
-        self.openLogsButton = QPushButton(self.settingsContent)
+        self.openLogsButton = QPushButton(self.debugCard)
         self.openLogsButton.setObjectName(u"openLogsButton")
         self.openLogsButton.setProperty(u"variant", u"secondary")
 
         self.logButtonsRow.addWidget(self.openLogsButton)
 
-        self.clearCacheButton = QPushButton(self.settingsContent)
+        self.clearCacheButton = QPushButton(self.debugCard)
         self.clearCacheButton.setObjectName(u"clearCacheButton")
         self.clearCacheButton.setProperty(u"variant", u"secondary")
 
@@ -186,41 +263,48 @@ class Ui_SettingsPage(object):
         self.logButtonsRow.addItem(self.logButtonsSpacer)
 
 
-        self.generalForm.setLayout(8, QFormLayout.ItemRole.SpanningRole, self.logButtonsRow)
+        self.debugCardLayout.addLayout(self.logButtonsRow)
 
 
-        self.settingsContentLayout.addLayout(self.generalForm)
+        self.settingsContentLayout.addWidget(self.debugCard)
 
-        self.kubeconfigHeading = QLabel(self.settingsContent)
+        self.kubeconfigCard = QFrame(self.settingsContent)
+        self.kubeconfigCard.setObjectName(u"kubeconfigCard")
+        self.kubeconfigCard.setProperty(u"card", u"true")
+        self.kubeconfigCardLayout = QVBoxLayout(self.kubeconfigCard)
+        self.kubeconfigCardLayout.setSpacing(10)
+        self.kubeconfigCardLayout.setObjectName(u"kubeconfigCardLayout")
+        self.kubeconfigCardLayout.setContentsMargins(16, 14, 16, 14)
+        self.kubeconfigHeading = QLabel(self.kubeconfigCard)
         self.kubeconfigHeading.setObjectName(u"kubeconfigHeading")
         self.kubeconfigHeading.setWordWrap(True)
         self.kubeconfigHeading.setProperty(u"variant", u"cardTitle")
 
-        self.settingsContentLayout.addWidget(self.kubeconfigHeading)
+        self.kubeconfigCardLayout.addWidget(self.kubeconfigHeading)
 
-        self.kubeconfigHint = QLabel(self.settingsContent)
+        self.kubeconfigHint = QLabel(self.kubeconfigCard)
         self.kubeconfigHint.setObjectName(u"kubeconfigHint")
         self.kubeconfigHint.setWordWrap(True)
         self.kubeconfigHint.setProperty(u"variant", u"muted")
 
-        self.settingsContentLayout.addWidget(self.kubeconfigHint)
+        self.kubeconfigCardLayout.addWidget(self.kubeconfigHint)
 
-        self.kubeconfigList = QListWidget(self.settingsContent)
+        self.kubeconfigList = QListWidget(self.kubeconfigCard)
         self.kubeconfigList.setObjectName(u"kubeconfigList")
         self.kubeconfigList.setMinimumSize(QSize(0, 90))
         self.kubeconfigList.setProperty(u"variant", u"data")
 
-        self.settingsContentLayout.addWidget(self.kubeconfigList)
+        self.kubeconfigCardLayout.addWidget(self.kubeconfigList)
 
         self.kubeconfigButtonsRow = QHBoxLayout()
         self.kubeconfigButtonsRow.setObjectName(u"kubeconfigButtonsRow")
-        self.kubeconfigAddButton = QPushButton(self.settingsContent)
+        self.kubeconfigAddButton = QPushButton(self.kubeconfigCard)
         self.kubeconfigAddButton.setObjectName(u"kubeconfigAddButton")
         self.kubeconfigAddButton.setProperty(u"variant", u"secondary")
 
         self.kubeconfigButtonsRow.addWidget(self.kubeconfigAddButton)
 
-        self.kubeconfigRemoveButton = QPushButton(self.settingsContent)
+        self.kubeconfigRemoveButton = QPushButton(self.kubeconfigCard)
         self.kubeconfigRemoveButton.setObjectName(u"kubeconfigRemoveButton")
         self.kubeconfigRemoveButton.setProperty(u"variant", u"secondary")
 
@@ -231,23 +315,33 @@ class Ui_SettingsPage(object):
         self.kubeconfigButtonsRow.addItem(self.kubeconfigButtonsRowSpacer)
 
 
-        self.settingsContentLayout.addLayout(self.kubeconfigButtonsRow)
+        self.kubeconfigCardLayout.addLayout(self.kubeconfigButtonsRow)
 
-        self.loginHeading = QLabel(self.settingsContent)
+
+        self.settingsContentLayout.addWidget(self.kubeconfigCard)
+
+        self.loginCard = QFrame(self.settingsContent)
+        self.loginCard.setObjectName(u"loginCard")
+        self.loginCard.setProperty(u"card", u"true")
+        self.loginCardLayout = QVBoxLayout(self.loginCard)
+        self.loginCardLayout.setSpacing(10)
+        self.loginCardLayout.setObjectName(u"loginCardLayout")
+        self.loginCardLayout.setContentsMargins(16, 14, 16, 14)
+        self.loginHeading = QLabel(self.loginCard)
         self.loginHeading.setObjectName(u"loginHeading")
         self.loginHeading.setWordWrap(True)
         self.loginHeading.setProperty(u"variant", u"cardTitle")
 
-        self.settingsContentLayout.addWidget(self.loginHeading)
+        self.loginCardLayout.addWidget(self.loginHeading)
 
-        self.loginHint = QLabel(self.settingsContent)
+        self.loginHint = QLabel(self.loginCard)
         self.loginHint.setObjectName(u"loginHint")
         self.loginHint.setWordWrap(True)
         self.loginHint.setProperty(u"variant", u"muted")
 
-        self.settingsContentLayout.addWidget(self.loginHint)
+        self.loginCardLayout.addWidget(self.loginHint)
 
-        self.loginTable = QTableWidget(self.settingsContent)
+        self.loginTable = QTableWidget(self.loginCard)
         if (self.loginTable.columnCount() < 2):
             self.loginTable.setColumnCount(2)
         __qtablewidgetitem = QTableWidgetItem()
@@ -262,17 +356,17 @@ class Ui_SettingsPage(object):
         self.loginTable.horizontalHeader().setStretchLastSection(True)
         self.loginTable.verticalHeader().setVisible(False)
 
-        self.settingsContentLayout.addWidget(self.loginTable)
+        self.loginCardLayout.addWidget(self.loginTable)
 
         self.loginButtonsRow = QHBoxLayout()
         self.loginButtonsRow.setObjectName(u"loginButtonsRow")
-        self.loginAddButton = QPushButton(self.settingsContent)
+        self.loginAddButton = QPushButton(self.loginCard)
         self.loginAddButton.setObjectName(u"loginAddButton")
         self.loginAddButton.setProperty(u"variant", u"secondary")
 
         self.loginButtonsRow.addWidget(self.loginAddButton)
 
-        self.loginRemoveButton = QPushButton(self.settingsContent)
+        self.loginRemoveButton = QPushButton(self.loginCard)
         self.loginRemoveButton.setObjectName(u"loginRemoveButton")
         self.loginRemoveButton.setProperty(u"variant", u"secondary")
 
@@ -283,22 +377,32 @@ class Ui_SettingsPage(object):
         self.loginButtonsRow.addItem(self.loginButtonsRowSpacer)
 
 
-        self.settingsContentLayout.addLayout(self.loginButtonsRow)
+        self.loginCardLayout.addLayout(self.loginButtonsRow)
 
-        self.contextsHeading = QLabel(self.settingsContent)
+
+        self.settingsContentLayout.addWidget(self.loginCard)
+
+        self.contextsCard = QFrame(self.settingsContent)
+        self.contextsCard.setObjectName(u"contextsCard")
+        self.contextsCard.setProperty(u"card", u"true")
+        self.contextsCardLayout = QVBoxLayout(self.contextsCard)
+        self.contextsCardLayout.setSpacing(10)
+        self.contextsCardLayout.setObjectName(u"contextsCardLayout")
+        self.contextsCardLayout.setContentsMargins(16, 14, 16, 14)
+        self.contextsHeading = QLabel(self.contextsCard)
         self.contextsHeading.setObjectName(u"contextsHeading")
         self.contextsHeading.setProperty(u"variant", u"cardTitle")
 
-        self.settingsContentLayout.addWidget(self.contextsHeading)
+        self.contextsCardLayout.addWidget(self.contextsHeading)
 
-        self.contextsHint = QLabel(self.settingsContent)
+        self.contextsHint = QLabel(self.contextsCard)
         self.contextsHint.setObjectName(u"contextsHint")
         self.contextsHint.setWordWrap(True)
         self.contextsHint.setProperty(u"variant", u"muted")
 
-        self.settingsContentLayout.addWidget(self.contextsHint)
+        self.contextsCardLayout.addWidget(self.contextsHint)
 
-        self.contextsTable = QTableWidget(self.settingsContent)
+        self.contextsTable = QTableWidget(self.contextsCard)
         if (self.contextsTable.columnCount() < 2):
             self.contextsTable.setColumnCount(2)
         __qtablewidgetitem2 = QTableWidgetItem()
@@ -328,7 +432,10 @@ class Ui_SettingsPage(object):
         self.contextsTable.verticalHeader().setVisible(False)
         self.contextsTable.verticalHeader().setDefaultSectionSize(40)
 
-        self.settingsContentLayout.addWidget(self.contextsTable)
+        self.contextsCardLayout.addWidget(self.contextsTable)
+
+
+        self.settingsContentLayout.addWidget(self.contextsCard)
 
         self.settingsScroll.setWidget(self.settingsContent)
 
@@ -345,11 +452,6 @@ class Ui_SettingsPage(object):
         self.generalHeading.setText(QCoreApplication.translate("SettingsPage", u"GENERAL", None))
         self.languageLabel.setText(QCoreApplication.translate("SettingsPage", u"Language", None))
 
-        self.themeLabel.setText(QCoreApplication.translate("SettingsPage", u"Theme", None))
-
-        self.newThemeButton.setText(QCoreApplication.translate("SettingsPage", u"New theme...", None))
-        self.editThemeButton.setText(QCoreApplication.translate("SettingsPage", u"Edit theme...", None))
-        self.openThemesButton.setText(QCoreApplication.translate("SettingsPage", u"Open the themes folder", None))
         self.defaultNamespaceLabel.setText(QCoreApplication.translate("SettingsPage", u"Default namespace", None))
 #if QT_CONFIG(tooltip)
         self.defaultNamespaceCombo.setToolTip(QCoreApplication.translate("SettingsPage", u"The namespace each context opens on. Leave empty to show all of them.", None))
@@ -359,6 +461,19 @@ class Ui_SettingsPage(object):
 #if QT_CONFIG(tooltip)
         self.updatesCheck.setToolTip(QCoreApplication.translate("SettingsPage", u"Asks the public GitHub API for the latest release and sends nothing but the app version. The icon in the footer checks on demand.", None))
 #endif // QT_CONFIG(tooltip)
+        self.appearanceHeading.setText(QCoreApplication.translate("SettingsPage", u"APPEARANCE", None))
+        self.themeLabel.setText(QCoreApplication.translate("SettingsPage", u"Theme", None))
+
+        self.newThemeButton.setText(QCoreApplication.translate("SettingsPage", u"New theme...", None))
+        self.editThemeButton.setText(QCoreApplication.translate("SettingsPage", u"Edit theme...", None))
+        self.deleteThemeButton.setText(QCoreApplication.translate("SettingsPage", u"Delete theme...", None))
+        self.openThemesButton.setText(QCoreApplication.translate("SettingsPage", u"Open the themes folder", None))
+        self.accessHeading.setText(QCoreApplication.translate("SettingsPage", u"CLUSTER ACCESS", None))
+        self.writeModeCheck.setText(QCoreApplication.translate("SettingsPage", u"Write mode: allow actions that change the cluster", None))
+#if QT_CONFIG(tooltip)
+        self.writeModeCheck.setToolTip(QCoreApplication.translate("SettingsPage", u"Shows, in the right-click menu, the actions that change a cluster: delete or evict a Pod, scale or restart a Deployment. Each one asks for confirmation. It also shows the kubectl command to open a shell in a Pod. Off keeps the app read-only.", None))
+#endif // QT_CONFIG(tooltip)
+        self.debugHeading.setText(QCoreApplication.translate("SettingsPage", u"DEBUGGING", None))
         self.debugCheck.setText(QCoreApplication.translate("SettingsPage", u"Debug mode: write a log file I can share", None))
         self.openLogsButton.setText(QCoreApplication.translate("SettingsPage", u"Open the log folder", None))
         self.clearCacheButton.setText(QCoreApplication.translate("SettingsPage", u"Clear the cache", None))
