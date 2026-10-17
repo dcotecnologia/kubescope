@@ -1,5 +1,6 @@
 """Package dist/KubeScope (from `make build`) as a Debian .deb."""
 
+import gzip
 import hashlib
 import platform
 import shutil
@@ -8,6 +9,10 @@ import sys
 import tomllib
 from pathlib import Path
 
+try:  # as a module (the tests) or as a script (tools/ is then the import path)
+    from tools import sync_changelog
+except ImportError:
+    import sync_changelog  # type: ignore[no-redef]
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QImage
 
@@ -81,11 +86,23 @@ def md5sums(root: Path) -> str:
     return "\n".join(lines) + "\n"
 
 
+def changelog_gz() -> bytes:
+    """The changelog as /usr/share/doc/kubescope/changelog.gz, where `apt
+    changelog` and the Debian tools look for it.
+
+    The time is fixed, so the same text always gives the same bytes.
+    """
+    text = sync_changelog.SOURCE.read_bytes()
+    return gzip.compress(text, mtime=0)
+
+
 def main() -> int:
     if sys.platform != "linux" or not shutil.which("dpkg-deb"):
         raise SystemExit("Building a .deb needs Linux with dpkg-deb installed")
     if not (BUNDLE / "KubeScope").is_file():
         raise SystemExit("Run `make build` before packaging the .deb")
+    sync_changelog.main()  # the copy of the package, in case it was edited
+    sync_changelog.check_bundle(BUNDLE)
     architecture = ARCHITECTURES.get(platform.machine())
     if architecture is None:
         raise SystemExit(f"Unsupported architecture: {platform.machine()}")
@@ -106,6 +123,8 @@ def main() -> int:
         package / "usr/share/doc/kubescope/THIRD_PARTY_NOTICES.txt",
         NOTICES.read_text(encoding="utf-8"),
     )
+    changelog = package / "usr/share/doc/kubescope/changelog.gz"
+    changelog.write_bytes(changelog_gz())
     libraries = BUNDLE / "_internal" / "THIRD_PARTY_SYSTEM_LIBRARIES.txt"
     if libraries.is_file():  # written by tools/bundle_notices.py during `make build`
         write(

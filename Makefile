@@ -2,7 +2,7 @@
 
 UV ?= uv
 
-.PHONY: help setup run dev debug preview language screenshot store-screenshots designer ui i18n appimage deb flatpak flatpak-lint flathub-submission windows windows-remote lint format test qt-libs build clean
+.PHONY: help setup run changelog dev debug preview language screenshot store-screenshots designer ui i18n appimage deb flatpak flatpak-lint flathub-submission windows windows-remote lint format test qt-libs build clean
 
 help: ## List the available commands
 	@awk 'BEGIN { FS = ":.*##" } /^[a-zA-Z_-]+:.*##/ { printf "  %-12s %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
@@ -61,7 +61,7 @@ appimage: build ## Package the bundle as an AppImage in dist/ (Linux x86_64)
 deb: build ## Package the bundle as a .deb in dist/ (Debian/Ubuntu)
 	$(UV) run python tools/build_deb.py
 
-flatpak: ## Build the Flatpak from this working tree into dist/ (needs flatpak-builder)
+flatpak: changelog ## Build the Flatpak from this working tree into dist/ (needs flatpak-builder)
 	$(UV) run python tools/build_flatpak.py
 
 flatpak-lint: ## Validate the Flatpak metainfo, desktop file and manifest like Flathub does
@@ -70,7 +70,7 @@ flatpak-lint: ## Validate the Flatpak metainfo, desktop file and manifest like F
 flathub-submission: ## Gather the files for a Flathub pull request in dist/flathub/ and print the steps
 	$(UV) run python tools/flathub.py package
 
-windows: $(UI_PY) ## Build the Windows installer and zip (on Linux it runs in Wine)
+windows: changelog $(UI_PY) ## Build the Windows installer and zip (on Linux it runs in Wine)
 ifeq ($(shell uname -s),Linux)
 	$(UV) run python tools/windows_wine.py
 else
@@ -82,6 +82,9 @@ windows-remote: ## Build the Windows packages on GitHub Actions and download the
 
 notices: ## Rewrite the third-party license notices from uv.lock (after changing dependencies)
 	$(UV) run python tools/third_party_notices.py
+
+changelog: ## Copy CHANGELOG.md into the package, where the app shows it (after editing it)
+	$(UV) run python tools/sync_changelog.py
 
 lint: ## Check the code with ruff (lint and formatting)
 	$(UV) run --extra dev ruff check .
@@ -101,7 +104,7 @@ else
 	@echo "Skipping Linux Qt libraries on $(shell uname -s)"
 endif
 
-build: qt-libs $(UI_PY) ## Build the desktop bundle with the XCB library
+build: changelog qt-libs $(UI_PY) ## Build the desktop bundle with the XCB library
 	$(UV) run --extra build pyinstaller --noconfirm KubeScope.spec
 ifeq ($(shell uname -s),Linux)
 	$(UV) run python tools/bundle_notices.py

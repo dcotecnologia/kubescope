@@ -39,6 +39,9 @@ jobs:
       - name: Install dependencies
         run: uv sync --extra dev --extra build --frozen
 
+      - name: Copy the changelog into the package
+        run: uv run python tools/sync_changelog.py
+
       - name: Fetch the Qt XCB library
         run: |
           uv run python tools/fetch_linux_qt_libs.py
@@ -78,6 +81,9 @@ jobs:
 
       - name: Install dependencies
         run: uv sync --extra dev --extra build --frozen
+
+      - name: Copy the changelog into the package
+        run: uv run python tools/sync_changelog.py
 
       - name: Install Inno Setup
         run: choco install innosetup --no-progress -y

@@ -17,6 +17,10 @@ import shutil
 import subprocess
 import sys
 
+try:  # as a module (the tests) or as a script (tools/ is then the import path)
+    from tools import sync_changelog
+except ImportError:
+    import sync_changelog  # type: ignore[no-redef]
 from flathub import (
     APP_ID,
     MANIFEST,
@@ -53,6 +57,8 @@ def main() -> int:
     if STAGING.exists():
         shutil.rmtree(STAGING)
     render_sources(STAGING, version)
+    # the Flatpak is built from this tree, which must carry the current changelog
+    sync_changelog.main()
     manifest = STAGING / MANIFEST
     manifest.write_text(
         use_working_tree(manifest.read_text(encoding="utf-8")), encoding="utf-8"

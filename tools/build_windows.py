@@ -10,6 +10,11 @@ import sys
 import tomllib
 from pathlib import Path
 
+try:  # as a module (the tests) or as a script (tools/ is then the import path)
+    from tools import sync_changelog
+except ImportError:
+    import sync_changelog  # type: ignore[no-redef]
+
 ROOT = Path(__file__).resolve().parents[1]
 DIST = ROOT / "dist"
 BUNDLE = DIST / "KubeScope"
@@ -43,6 +48,7 @@ def main() -> int:
     with (ROOT / "pyproject.toml").open("rb") as handle:
         version = tomllib.load(handle)["project"]["version"]
 
+    sync_changelog.main()  # the app shows the changelog of the version it ships
     run(sys.executable, "-m", "PyInstaller", "--noconfirm", "KubeScope.spec")
 
     archive = shutil.make_archive(

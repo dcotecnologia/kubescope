@@ -10,6 +10,11 @@ import tomllib
 import urllib.request
 from pathlib import Path
 
+try:  # as a module (the tests) or as a script (tools/ is then the import path)
+    from tools import sync_changelog
+except ImportError:
+    import sync_changelog  # type: ignore[no-redef]
+
 ROOT = Path(__file__).resolve().parents[1]
 BUNDLE = ROOT / "dist" / "KubeScope"
 ICON = ROOT / "src" / "kubescope" / "assets" / "icon.png"
@@ -83,6 +88,7 @@ def main() -> int:
         raise SystemExit("AppImage can only be built on Linux")
     if not (BUNDLE / "KubeScope").is_file():
         raise SystemExit("Run `make build` before packaging the AppImage")
+    sync_changelog.check_bundle(BUNDLE)  # no bundle from before the last change
     tool = fetch_appimagetool()
     build_appdir()
     output = ROOT / "dist" / f"KubeScope-{project_version()}-x86_64.AppImage"

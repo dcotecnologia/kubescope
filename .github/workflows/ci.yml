@@ -44,6 +44,11 @@ jobs:
           git diff --exit-code -- src/kubescope/ui \
             || (echo "Run 'make ui' and commit the regenerated ui_*.py" && exit 1)
 
+      - name: The changelog shipped with the app is up to date
+        run: |
+          uv run python tools/sync_changelog.py --check \
+            || (echo "Run 'make changelog' and commit the copy" && exit 1)
+
       - name: Language files list the texts of the code
         run: |
           uv run python tools/i18n.py

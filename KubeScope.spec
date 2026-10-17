@@ -1,6 +1,7 @@
 from pathlib import Path
 import os
 import platform
+import shutil
 import subprocess
 import sys
 
@@ -8,6 +9,10 @@ from PyInstaller.utils.hooks import copy_metadata, get_package_paths
 
 
 root = Path(SPECPATH)
+# The app shows the changelog of its version, so every build ships the current one.
+shutil.copyfile(
+    root / "CHANGELOG.md", root / "src" / "kubescope" / "assets" / "CHANGELOG.md"
+)
 # The commit goes into the bundle, so a crash log can say which build it is from.
 commit_file = root / "src" / "kubescope" / "_commit.txt"
 try:
@@ -63,6 +68,7 @@ analysis = Analysis(
         # the footer shows the version, which the app reads from this metadata
         *copy_metadata("kubescope"),
         (str(root / "src" / "kubescope" / "assets" / "icon.png"), "kubescope/assets"),
+        (str(root / "src" / "kubescope" / "assets" / "CHANGELOG.md"), "kubescope/assets"),
         (
             str(root / "src" / "kubescope" / "assets" / "THIRD_PARTY_NOTICES.txt"),
             "kubescope/assets",
