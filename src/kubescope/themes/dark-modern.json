@@ -1,0 +1,30 @@
+{
+    "base": "dark",
+    "colors": {
+        "accent": "#4daafc",
+        "accent_border": "#0078d4",
+        "accent_disabled": "#2b5d85",
+        "accent_hover": "#026ec1",
+        "accent_soft": "#04395e",
+        "accent_strong": "#0078d4",
+        "badge_text": "#75beff",
+        "border": "#2b2b2b",
+        "focus": "#0078d4",
+        "muted": "#9d9d9d",
+        "page": "#1f1f1f",
+        "selection": "#264f78",
+        "subtle": "#6e7681",
+        "surface": "#181818",
+        "surface_alt": "#202020",
+        "text": "#cccccc",
+        "title": "#ffffff",
+        "topbar": "#181818",
+        "topbar_border": "#3c3c3c",
+        "topbar_brand": "#1f1f1f",
+        "topbar_field": "#313131",
+        "topbar_selection": "#04395e",
+        "topbar_text": "#cccccc",
+        "track": "#2b2b2b"
+    },
+    "name": "Dark Modern"
+}

@@ -1,0 +1,30 @@
+{
+    "base": "dark",
+    "colors": {
+        "accent": "#a6e22e",
+        "accent_border": "#7aa823",
+        "accent_disabled": "#3f5a1d",
+        "accent_hover": "#5a9120",
+        "accent_soft": "#36401f",
+        "accent_strong": "#4a7a17",
+        "badge_text": "#a6e22e",
+        "border": "#3e3d32",
+        "focus": "#66d9ef",
+        "muted": "#b0b0a0",
+        "page": "#272822",
+        "selection": "#49483e",
+        "subtle": "#75715e",
+        "surface": "#1e1f1c",
+        "surface_alt": "#2d2e27",
+        "text": "#f8f8f2",
+        "title": "#f8f8f2",
+        "topbar": "#1e1f1c",
+        "topbar_border": "#4e4d42",
+        "topbar_brand": "#272822",
+        "topbar_field": "#3e3d32",
+        "topbar_selection": "#49483e",
+        "topbar_text": "#cfcfc2",
+        "track": "#3e3d32"
+    },
+    "name": "Monokai"
+}

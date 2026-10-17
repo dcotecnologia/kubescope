@@ -1,0 +1,30 @@
+{
+    "base": "dark",
+    "colors": {
+        "accent": "#4aa3e0",
+        "accent_border": "#2aa198",
+        "accent_disabled": "#1b4f6b",
+        "accent_hover": "#185f90",
+        "accent_soft": "#0a4658",
+        "accent_strong": "#1d73ad",
+        "badge_text": "#7cc4f2",
+        "border": "#124a58",
+        "focus": "#2aa198",
+        "muted": "#93a1a1",
+        "page": "#002b36",
+        "selection": "#0f4a5a",
+        "subtle": "#657b83",
+        "surface": "#073642",
+        "surface_alt": "#0a3a47",
+        "text": "#a8b5b5",
+        "title": "#eee8d5",
+        "topbar": "#00212b",
+        "topbar_border": "#124a58",
+        "topbar_brand": "#001a22",
+        "topbar_field": "#073642",
+        "topbar_selection": "#0b4a59",
+        "topbar_text": "#93a1a1",
+        "track": "#0d4552"
+    },
+    "name": "Solarized Dark"
+}

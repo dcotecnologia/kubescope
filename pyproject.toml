@@ -39,7 +39,7 @@ kubescope = [
     "assets/*.ico",
     "assets/*.txt",
     "assets/fonts/*",
-    "community_themes/*.json",
+    "themes/*.json",
 ]
 
 [tool.pytest.ini_options]

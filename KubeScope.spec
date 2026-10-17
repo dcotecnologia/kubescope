@@ -75,8 +75,8 @@ analysis = Analysis(
             for path in (root / "src" / "kubescope" / "assets" / "fonts").iterdir()
         ),
         *(
-            (str(path), "kubescope/community_themes")
-            for path in (root / "src" / "kubescope" / "community_themes").glob("*.json")
+            (str(path), "kubescope/themes")
+            for path in (root / "src" / "kubescope" / "themes").glob("*.json")
         ),
         *(
             (str(path), "kubescope/translations")

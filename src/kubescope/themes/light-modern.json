@@ -1,0 +1,30 @@
+{
+    "base": "light",
+    "colors": {
+        "accent": "#005fb8",
+        "accent_border": "#7fb1dc",
+        "accent_disabled": "#7fb1dc",
+        "accent_hover": "#0258a8",
+        "accent_soft": "#e1effa",
+        "accent_strong": "#005fb8",
+        "badge_text": "#005fb8",
+        "border": "#e5e5e5",
+        "focus": "#005fb8",
+        "muted": "#616161",
+        "page": "#ffffff",
+        "selection": "#add6ff",
+        "subtle": "#8b949e",
+        "surface": "#f8f8f8",
+        "surface_alt": "#f3f3f3",
+        "text": "#3b3b3b",
+        "title": "#1f1f1f",
+        "topbar": "#005fb8",
+        "topbar_border": "#3b86cc",
+        "topbar_brand": "#0258a8",
+        "topbar_field": "#1a6fc4",
+        "topbar_selection": "#0a4f94",
+        "topbar_text": "#dbe9f7",
+        "track": "#e5e5e5"
+    },
+    "name": "Light Modern"
+}

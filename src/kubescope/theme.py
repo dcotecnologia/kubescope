@@ -82,73 +82,6 @@ ON_ACCENT = "on_accent"
 TOKENS = (*ROLES, ON_ACCENT)
 _ROLE_OF = {color: role for role, colors in ROLES.items() for color in colors}
 
-# What every light color becomes in the Dark theme.
-SURFACE = "#1a1e26"  # white as a background or border
-_DARK = {
-    WHITE: SURFACE,
-    # backgrounds and borders; the top bar is near black in the dark theme
-    "#f7f7fa": "#11141a",
-    "#f3f4f7": "#20252e",
-    "#fbfbfc": "#1d222b",
-    "#f6f6fa": "#20252e",
-    "#eceef3": "#2a303a",
-    "#e8eaee": "#2a303a",
-    "#e1e3e9": "#2a303a",
-    "#e6e7ed": "#2a303a",
-    "#e4e5eb": "#2a303a",
-    "#dfe2e9": "#2d333d",
-    "#e8e9ee": "#262c36",
-    "#d9dce4": "#343b47",
-    "#06234a": "#07090c",
-    "#123764": "#11151a",
-    "#0d315d": "#13171d",
-    "#2d5077": "#2b3036",
-    "#1f4f87": "#2c3137",
-    # text
-    "#20232a": "#e6e9ee",
-    "#242a33": "#e1e5ea",
-    "#17191e": "#f1f3f6",
-    "#16375f": "#cfe0f7",
-    "#4f5966": "#9ba6b4",
-    "#535d69": "#98a3b1",
-    "#4d5866": "#9aa5b3",
-    "#3c4149": "#aab4c1",
-    "#6b7380": "#7f8a99",
-    "#7b8089": "#7f8a99",
-    "#8a919c": "#6b7380",
-    "#b8c7dc": "#9aa4b0",
-    "#d2deec": "#b8c0cb",
-    "#28213f": "#ece8ff",
-    # accent
-    "#3220a0": "#a99af5",
-    "#3020a5": "#5a46d4",
-    "#4030b8": "#6b58e6",
-    "#6c5fc4": "#4b3f96",
-    "#6252b5": "#8472e0",
-    "#4d35a8": "#b8a9f5",
-    "#eee9f7": "#2a2447",
-    "#f0edfa": "#2a2447",
-    "#f3f1f9": "#262140",
-    "#d9d3f2": "#3b3260",
-    "#b9b3dc": "#5b4fa0",
-    "#a9a0d6": "#5b4fa0",
-    # status
-    "#176b58": "#5fd0a8",
-    "#e5f4eb": "#173a2e",
-    "#985415": "#f0b455",
-    "#fff2de": "#3d3118",
-    "#a33d45": "#ff8a92",
-    "#fce9ea": "#3d2226",
-    "#505963": "#aab3be",
-    "#eff1f3": "#2a303a",
-    "#fbe4e4": "#3a2124",
-    "#e2f5e8": "#1c3329",
-    "#d58a2b": "#e0a030",
-    "#c9484f": "#e0606a",
-    "#3d9a6d": "#3fae7a",
-    "#d05560": "#e0606a",
-}
-
 
 @dataclass(frozen=True)
 class Theme:
@@ -160,9 +93,34 @@ class Theme:
     builtin: bool = False
 
 
-LIGHT_THEME = Theme(LIGHT, "Light", LIGHT, builtin=True)
-DARK_THEME = Theme(DARK, "Dark", DARK, _DARK, builtin=True)
+# The themes that come with the app are JSON files in this folder: Light and
+# Dark, which are built in, and the others, which are copied to the themes folder
+# the first time they are seen (see install_bundled_themes()).
+BUNDLED_DIRECTORY = Path(__file__).resolve().parent / "themes"
+
+
+def _load_builtin(theme_id: str) -> Theme:
+    """A built-in theme from its file.
+
+    Its `palette` says what each light color becomes, exactly; Light has
+    none.
+    """
+    document = json.loads(
+        (BUNDLED_DIRECTORY / f"{theme_id}.json").read_text(encoding="utf-8")
+    )
+    return Theme(
+        theme_id,
+        document["name"],
+        theme_id,
+        dict(document.get("palette", {})),
+        builtin=True,
+    )
+
+
+LIGHT_THEME = _load_builtin(LIGHT)
+DARK_THEME = _load_builtin(DARK)
 BUILTIN = {LIGHT: LIGHT_THEME, DARK: DARK_THEME}
+SURFACE = DARK_THEME.colors[WHITE]  # white as a background or border, in Dark
 
 _active = DARK_THEME
 _custom: dict[str, Theme] = {}
@@ -170,12 +128,6 @@ _custom: dict[str, Theme] = {}
 
 def themes_directory() -> Path:
     return config_directory() / "themes"
-
-
-# Themes from the community ship inside the app and are copied to the themes
-# folder the first time they are seen; see install_community_themes().
-COMMUNITY_DIRECTORY = Path(__file__).resolve().parent / "community_themes"
-INSTALLED_FILE = "installed-themes.json"
 
 
 def _valid_color(value: object) -> bool:
@@ -213,52 +165,31 @@ def parse_theme(theme_id: str, document: object) -> Theme:
     )
 
 
-def _installed_ids() -> set[str]:
-    try:
-        document = json.loads(
-            (config_directory() / INSTALLED_FILE).read_text(encoding="utf-8")
-        )
-    except (OSError, ValueError):
-        return set()
-    return (
-        {item for item in document if isinstance(item, str)}
-        if isinstance(document, list)
-        else set()
-    )
+def install_bundled_themes(source: Path | None = None) -> list[str]:
+    """Make sure the themes that came with the app are in the themes folder.
 
-
-def install_community_themes(source: Path = COMMUNITY_DIRECTORY) -> list[str]:
-    """Copy the community themes that came with the app into the themes folder.
-
-    Each one is installed once: a theme the person edited is never overwritten, and
-    one they deleted does not come back. Returns the ids installed now.
+    Each one whose file is missing is copied again, whether it was never
+    there or the person deleted it, so the folder always has them; a
+    file that is there is never overwritten, so edits are kept. Light
+    and Dark are built in and are not copied. Returns the ids copied
+    now.
     """
-    installed = _installed_ids()
+    source = BUNDLED_DIRECTORY if source is None else source
     added: list[str] = []
     for path in sorted(source.glob("*.json")) if source.is_dir() else []:
-        if path.stem in installed:
+        target = themes_directory() / path.name
+        if path.stem in BUILTIN or target.exists():
             continue
         try:
-            if path.stem in BUILTIN:
-                raise ValueError("it would hide a built-in theme")
             parse_theme(path.stem, json.loads(path.read_text(encoding="utf-8")))
-            target = themes_directory() / path.name
-            if not target.exists():  # a file of the same name is the person's own
-                themes_directory().mkdir(parents=True, exist_ok=True)
-                shutil.copyfile(path, target)
+            themes_directory().mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(path, target)
         except (OSError, ValueError) as error:
-            logger.warning("Skipping community theme %s: %s", path.name, error)
+            logger.warning("Skipping bundled theme %s: %s", path.name, error)
             continue
-        installed.add(path.stem)
         added.append(path.stem)
     if added:
-        logger.info("Installed community themes: %s", ", ".join(added))
-        try:
-            (config_directory() / INSTALLED_FILE).write_text(
-                json.dumps(sorted(installed), indent=2) + "\n", encoding="utf-8"
-            )
-        except OSError as error:
-            logger.warning("Could not record the installed themes: %s", error)
+        logger.info("Installed bundled themes: %s", ", ".join(added))
     return added
 
 
@@ -282,6 +213,31 @@ def available_themes() -> list[Theme]:
         key=lambda theme: theme.name.casefold(),
     )
     return [LIGHT_THEME, DARK_THEME, *custom]
+
+
+def bundled_theme_ids() -> set[str]:
+    """The ids of the themes that come with the app, Light and Dark
+    included."""
+    directory = BUNDLED_DIRECTORY
+    if not directory.is_dir():
+        return set()
+    return {path.stem for path in directory.glob("*.json")}
+
+
+def can_delete_theme(theme_id: str) -> bool:
+    """Only the themes the person made: the ones that come with the app
+    stay."""
+    return theme_id not in BUILTIN and theme_id not in bundled_theme_ids()
+
+
+def delete_custom_theme(theme_id: str) -> None:
+    """Remove the file of a theme the person made; the ones that come with the
+    app cannot go."""
+    if not can_delete_theme(theme_id):
+        raise ValueError(
+            f"The {theme_id} theme comes with the app and cannot be deleted"
+        )
+    (themes_directory() / f"{theme_id}.json").unlink(missing_ok=True)
 
 
 def theme_tokens(theme: Theme) -> dict[str, str]:

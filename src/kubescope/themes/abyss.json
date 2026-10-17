@@ -1,0 +1,30 @@
+{
+    "base": "dark",
+    "colors": {
+        "accent": "#5f9bff",
+        "accent_border": "#2b4a9a",
+        "accent_disabled": "#223a78",
+        "accent_hover": "#3d72ee",
+        "accent_soft": "#0a1b45",
+        "accent_strong": "#2b5fd9",
+        "badge_text": "#8fb5ff",
+        "border": "#2b2b4a",
+        "focus": "#5f9bff",
+        "muted": "#8aa0cf",
+        "page": "#000c18",
+        "selection": "#082050",
+        "subtle": "#596a96",
+        "surface": "#060621",
+        "surface_alt": "#0a0a2b",
+        "text": "#c3d0ee",
+        "title": "#ffffff",
+        "topbar": "#060621",
+        "topbar_border": "#2b2b4a",
+        "topbar_brand": "#000c18",
+        "topbar_field": "#0c1a3a",
+        "topbar_selection": "#082050",
+        "topbar_text": "#8aa4d8",
+        "track": "#14143c"
+    },
+    "name": "Abyss"
+}

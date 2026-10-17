@@ -1,0 +1,30 @@
+{
+    "base": "dark",
+    "colors": {
+        "accent": "#72a9ff",
+        "accent_border": "#3a6fd8",
+        "accent_disabled": "#274a8a",
+        "accent_hover": "#4d82ec",
+        "accent_soft": "#003875",
+        "accent_strong": "#3a6fd8",
+        "badge_text": "#bbdaff",
+        "border": "#003875",
+        "focus": "#99ffff",
+        "muted": "#9bb5d6",
+        "page": "#002451",
+        "selection": "#003f8e",
+        "subtle": "#7285b7",
+        "surface": "#001c40",
+        "surface_alt": "#002b5e",
+        "text": "#ffffff",
+        "title": "#ffffff",
+        "topbar": "#001126",
+        "topbar_border": "#003875",
+        "topbar_brand": "#00091a",
+        "topbar_field": "#00204d",
+        "topbar_selection": "#003f8e",
+        "topbar_text": "#bbdaff",
+        "track": "#003f8e"
+    },
+    "name": "Tomorrow Night Blue"
+}

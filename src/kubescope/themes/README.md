@@ -1,9 +1,12 @@
-# Community themes
+# Themes
 
-Themes made by the community. Each `*.json` file here is copied to the user's themes
-folder the first time KubeScope starts with it, so everybody gets them in
-**Settings > Theme**. A theme is installed once: one the person edited is never
-overwritten, and one they deleted does not come back.
+The themes that come with the app, one `*.json` file each. `light.json` and
+`dark.json` are the two built-in themes: KubeScope reads them at start (`dark.json`
+lists in `palette` exactly what each light color becomes). Every other file is copied
+to the user's themes folder when KubeScope starts, whenever that file is missing, so
+everybody gets it in **Settings > Theme** and a file deleted by hand comes back. A
+file that is there is never overwritten, so the person's edits are kept. None of the
+themes here can be deleted from the app; only the themes the person makes can.
 
 ## Add a theme
 

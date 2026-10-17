@@ -1,0 +1,30 @@
+{
+    "base": "light",
+    "colors": {
+        "accent": "#17679d",
+        "accent_border": "#8fbfe0",
+        "accent_disabled": "#8fbfe0",
+        "accent_hover": "#1a6498",
+        "accent_soft": "#e6efe6",
+        "accent_strong": "#2176b3",
+        "badge_text": "#1a6fa8",
+        "border": "#d6cfb8",
+        "focus": "#268bd2",
+        "muted": "#586e75",
+        "page": "#fdf6e3",
+        "selection": "#d9d2b6",
+        "subtle": "#93a1a1",
+        "surface": "#eee8d5",
+        "surface_alt": "#f5eedb",
+        "text": "#44585f",
+        "title": "#073642",
+        "topbar": "#073642",
+        "topbar_border": "#124a58",
+        "topbar_brand": "#002b36",
+        "topbar_field": "#0f4452",
+        "topbar_selection": "#19596a",
+        "topbar_text": "#93a1a1",
+        "track": "#e3dcc6"
+    },
+    "name": "Solarized Light"
+}

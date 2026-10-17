@@ -106,7 +106,7 @@ def test_every_color_the_app_uses_has_a_dark_counterpart() -> None:
     sources = [
         ROOT / "src/kubescope/ui/main_window.ui",
         ROOT / "src/kubescope/window.py",
-        ROOT / "src/kubescope/widgets.py",
+        ROOT / "src/kubescope/views/widgets.py",
     ]
     used = {
         color.lower()
@@ -116,7 +116,7 @@ def test_every_color_the_app_uses_has_a_dark_counterpart() -> None:
         )
     }
     # white is handled by themed(); the warning orange is the same in both themes
-    unmapped = used - set(theme._DARK) - {"#ffffff", "#e0a030"}
+    unmapped = used - set(theme.DARK_THEME.colors) - {"#ffffff", "#e0a030"}
 
     assert unmapped == set(), f"add dark counterparts for {sorted(unmapped)}"
 
@@ -163,7 +163,9 @@ def test_a_custom_theme_starts_from_its_base_and_changes_only_what_it_lists() ->
 
     assert custom.base == "dark" and custom.name == "Ocean" and not custom.builtin
     assert custom.colors["#f7f7fa"] == "#001122"  # the role it changed
-    assert custom.colors["#20232a"] == theme._DARK["#20232a"]  # inherited from dark
+    assert (
+        custom.colors["#20232a"] == theme.DARK_THEME.colors["#20232a"]
+    )  # inherited from dark
 
     light_based = theme.parse_theme("plain", {"name": "Plain"})
     assert light_based.base == "light" and light_based.colors == {}
@@ -294,24 +296,22 @@ def test_applying_a_custom_theme_colors_the_palette(themes_dir) -> None:
 
 
 @pytest.fixture
-def community(tmp_path):
-    folder = tmp_path / "community"
+def bundled(tmp_path):
+    folder = tmp_path / "bundled"
     folder.mkdir()
     return folder
 
 
-def test_community_themes_are_copied_to_the_themes_folder(
-    community, themes_dir
-) -> None:
-    _write(community, "ocean.json", {"name": "Ocean", "colors": {"page": "#001122"}})
-    _write(community, "reef.json", {"name": "Reef", "base": "dark"})
-    _write(community, "notes.txt", "ignored")
+def test_bundled_themes_are_copied_to_the_themes_folder(bundled, themes_dir) -> None:
+    _write(bundled, "ocean.json", {"name": "Ocean", "colors": {"page": "#001122"}})
+    _write(bundled, "reef.json", {"name": "Reef", "base": "dark"})
+    _write(bundled, "notes.txt", "ignored")
 
-    added = theme.install_community_themes(community)
+    added = theme.install_bundled_themes(bundled)
 
     assert added == ["ocean", "reef"]
     assert (themes_dir / "ocean.json").read_text(encoding="utf-8") == (
-        community / "ocean.json"
+        bundled / "ocean.json"
     ).read_text(encoding="utf-8")
     assert not (themes_dir / "notes.txt").exists()
     assert [t.id for t in theme.available_themes()] == [
@@ -320,112 +320,117 @@ def test_community_themes_are_copied_to_the_themes_folder(
         "ocean",
         "reef",
     ]
-    assert theme.install_community_themes(community) == []  # nothing new the 2nd time
+    assert theme.install_bundled_themes(bundled) == []  # nothing new the 2nd time
 
 
-def test_installed_themes_are_not_overwritten_or_brought_back(
-    community, themes_dir
+def test_installed_themes_are_not_overwritten_but_come_back_when_deleted(
+    bundled, themes_dir
 ) -> None:
-    _write(community, "ocean.json", {"name": "Ocean", "colors": {"page": "#001122"}})
-    theme.install_community_themes(community)
+    _write(bundled, "ocean.json", {"name": "Ocean", "colors": {"page": "#001122"}})
+    theme.install_bundled_themes(bundled)
 
     _write(
         themes_dir, "ocean.json", {"name": "My ocean", "colors": {"page": "#999999"}}
     )
-    _write(community, "ocean.json", {"name": "Ocean v2", "colors": {"page": "#000011"}})
-    theme.install_community_themes(community)
+    _write(bundled, "ocean.json", {"name": "Ocean v2", "colors": {"page": "#000011"}})
+    assert theme.install_bundled_themes(bundled) == []
     assert (
         json.loads((themes_dir / "ocean.json").read_text(encoding="utf-8"))["name"]
         == "My ocean"
-    )
+    )  # the edit is kept
 
-    (themes_dir / "ocean.json").unlink()  # the person deleted it
-    assert theme.install_community_themes(community) == []
-    assert not (themes_dir / "ocean.json").exists()
-
-
-def test_a_file_of_the_same_name_is_the_persons_own(community, themes_dir) -> None:
-    _write(themes_dir, "ocean.json", {"name": "Mine"})
-    _write(community, "ocean.json", {"name": "Ocean"})
-
-    assert theme.install_community_themes(community) == [
-        "ocean"
-    ]  # recorded, not copied
-
+    (themes_dir / "ocean.json").unlink()  # the file was deleted
+    assert theme.install_bundled_themes(bundled) == ["ocean"]
     assert (
         json.loads((themes_dir / "ocean.json").read_text(encoding="utf-8"))["name"]
-        == "Mine"
+        == "Ocean v2"
+    )  # regenerated from the app's own copy
+
+
+def test_the_themes_folder_is_filled_again_when_every_file_is_gone(
+    themes_dir,
+) -> None:
+    theme.install_bundled_themes()
+    shipped = {p.stem for p in theme.BUNDLED_DIRECTORY.glob("*.json")} - set(
+        theme.BUILTIN
     )
+    assert shipped and {p.stem for p in themes_dir.glob("*.json")} == shipped
+
+    for path in themes_dir.glob("*.json"):
+        path.unlink()
+    assert set(theme.install_bundled_themes()) == shipped
+    assert {p.stem for p in themes_dir.glob("*.json")} == shipped
+    assert not (themes_dir / "light.json").exists()  # built in: not copied
 
 
-def test_unusable_community_themes_are_skipped(community, themes_dir, caplog) -> None:
-    _write(community, "broken.json", "{not json")
-    _write(community, "wrong.json", {"name": "Wrong", "base": "neon"})
-    _write(community, "dark.json", {"name": "Fake dark"})
-    _write(community, "fine.json", {"name": "Fine"})
+def test_unusable_bundled_themes_are_skipped(bundled, themes_dir, caplog) -> None:
+    _write(bundled, "broken.json", "{not json")
+    _write(bundled, "wrong.json", {"name": "Wrong", "base": "neon"})
+    _write(bundled, "dark.json", {"name": "Fake dark"})
+    _write(bundled, "fine.json", {"name": "Fine"})
 
     with caplog.at_level("WARNING"):
-        added = theme.install_community_themes(community)
+        added = theme.install_bundled_themes(bundled)
 
     assert added == ["fine"]
-    assert "Skipping community theme broken.json" in caplog.text
-    assert "Skipping community theme wrong.json" in caplog.text
-    assert "hide a built-in theme" in caplog.text
+    assert "Skipping bundled theme broken.json" in caplog.text
+    assert "Skipping bundled theme wrong.json" in caplog.text
+    assert "dark.json" not in caplog.text  # built in: left alone, not an error
+    assert not (themes_dir / "dark.json").exists()
 
 
-def test_a_missing_community_folder_or_unwritable_config_is_harmless(
-    community, tmp_path, monkeypatch, caplog
+def test_a_missing_bundled_folder_or_unwritable_config_is_harmless(
+    bundled, tmp_path, monkeypatch, caplog
 ) -> None:
-    assert theme.install_community_themes(tmp_path / "nothing") == []
+    assert theme.install_bundled_themes(tmp_path / "nothing") == []
 
-    _write(community, "ocean.json", {"name": "Ocean"})
+    _write(bundled, "ocean.json", {"name": "Ocean"})
     blocker = tmp_path / "blocker"
     blocker.write_text("a file where a folder is needed")
     monkeypatch.setattr(theme, "themes_directory", lambda: blocker / "themes")
     with caplog.at_level("WARNING"):
-        assert theme.install_community_themes(community) == []
-    assert "Skipping community theme ocean.json" in caplog.text
+        assert theme.install_bundled_themes(bundled) == []
+    assert "Skipping bundled theme ocean.json" in caplog.text
 
 
-def test_failing_to_record_the_installed_themes_only_warns(
-    community, themes_dir, tmp_path, monkeypatch, caplog
-) -> None:
-    _write(community, "ocean.json", {"name": "Ocean"})
-    monkeypatch.setattr(theme, "INSTALLED_FILE", "missing-folder/installed.json")
+def test_every_bundled_theme_that_ships_is_valid() -> None:
+    files = sorted(theme.BUNDLED_DIRECTORY.glob("*.json"))
 
-    with caplog.at_level("WARNING"):
-        assert theme.install_community_themes(community) == ["ocean"]
-
-    assert "Could not record the installed themes" in caplog.text
-
-
-def test_a_damaged_record_of_installed_themes_is_ignored(
-    community, themes_dir, tmp_path
-) -> None:
-    _write(community, "ocean.json", {"name": "Ocean"})
-    record = tmp_path / "config" / theme.INSTALLED_FILE
-    record.write_text('{"not": "a list"}', encoding="utf-8")
-    assert theme.install_community_themes(community) == ["ocean"]
-
-    record.write_text('["ocean", 3, null]', encoding="utf-8")
-    (themes_dir / "ocean.json").unlink()
-    assert theme.install_community_themes(community) == []  # still recorded
-
-
-def test_every_community_theme_that_ships_is_valid() -> None:
-    files = sorted(theme.COMMUNITY_DIRECTORY.glob("*.json"))
-
-    assert {f.stem for f in files} >= {"midnight", "high-contrast", "sepia"}
+    assert {f.stem for f in files} >= {
+        "light",
+        "dark",
+        "midnight",
+        "high-contrast",
+        "sepia",
+        "dark-modern",
+        "light-modern",
+        "solarized-dark",
+        "solarized-light",
+        "monokai",
+        "tomorrow-night-blue",
+        "abyss",
+        "quiet-light",
+    }
     for path in files:
         assert path.stem == theme.slugify(path.stem), "use a lowercase-with-dashes name"
-        assert path.stem not in theme.BUILTIN
-        parsed = theme.parse_theme(
-            path.stem, json.loads(path.read_text(encoding="utf-8"))
-        )
-        assert parsed.name
+        document = json.loads(path.read_text(encoding="utf-8"))
+        assert document["name"]
+        if path.stem in theme.BUILTIN:  # Light and Dark are read, not installed
+            assert theme.BUILTIN[path.stem].name == document["name"]
+            continue
+        assert theme.parse_theme(path.stem, document).name
 
 
-def test_community_themes_keep_their_text_readable() -> None:
+def test_light_and_dark_come_from_their_json_files() -> None:
+    dark = json.loads((theme.BUNDLED_DIRECTORY / "dark.json").read_text("utf-8"))
+    light = json.loads((theme.BUNDLED_DIRECTORY / "light.json").read_text("utf-8"))
+
+    assert theme.DARK_THEME.colors == dark["palette"] and theme.DARK_THEME.builtin
+    assert theme.LIGHT_THEME.colors == {} and "palette" not in light
+    assert dark["palette"]["#ffffff"] == theme.SURFACE
+
+
+def test_bundled_themes_keep_their_text_readable() -> None:
     def contrast(a: str, b: str) -> float:
         def luminance(color: str) -> float:
             def channel(value: float) -> float:
@@ -446,9 +451,52 @@ def test_community_themes_keep_their_text_readable() -> None:
         high, low = sorted((luminance(a), luminance(b)), reverse=True)
         return (high + 0.05) / (low + 0.05)
 
-    for path in theme.COMMUNITY_DIRECTORY.glob("*.json"):
-        tokens = theme.theme_tokens(
-            theme.parse_theme(path.stem, json.loads(path.read_text(encoding="utf-8")))
-        )
+    for path in theme.BUNDLED_DIRECTORY.glob("*.json"):
+        if path.stem in theme.BUILTIN:
+            loaded = theme.BUILTIN[path.stem]
+        else:
+            loaded = theme.parse_theme(
+                path.stem, json.loads(path.read_text(encoding="utf-8"))
+            )
+        tokens = theme.theme_tokens(loaded)
         assert contrast(tokens["text"], tokens["page"]) >= 4.5, path.name
         assert contrast(tokens["text"], tokens["surface"]) >= 4.5, path.name
+
+
+def test_deleting_a_custom_theme_removes_its_file_and_keeps_the_built_in() -> None:
+    saved = theme.save_custom_theme(
+        "Ocean", "light", theme.theme_tokens(theme.LIGHT_THEME)
+    )
+    assert saved.id in [t.id for t in theme.available_themes()]
+
+    theme.delete_custom_theme(saved.id)
+    theme.delete_custom_theme(saved.id)  # already gone: nothing to do
+
+    assert saved.id not in [t.id for t in theme.available_themes()]
+    with pytest.raises(ValueError, match="comes with the app"):
+        theme.delete_custom_theme("dark")
+
+
+def test_every_theme_that_ships_is_protected_from_deletion(
+    themes_dir,
+) -> None:
+    mine = theme.save_custom_theme("Mine", "dark", theme.theme_tokens(theme.DARK_THEME))
+
+    shipped = {"light", "dark", "midnight", "sepia", "high-contrast", "monokai"}
+    assert shipped <= theme.bundled_theme_ids()
+    for theme_id in shipped:
+        assert not theme.can_delete_theme(theme_id)
+        with pytest.raises(ValueError, match="comes with the app"):
+            theme.delete_custom_theme(theme_id)
+    assert theme.can_delete_theme(mine.id)
+
+    theme.delete_custom_theme(mine.id)
+    assert not (themes_dir / f"{mine.id}.json").exists()
+
+
+def test_without_a_bundled_folder_every_custom_theme_can_go(
+    tmp_path, monkeypatch
+) -> None:
+    monkeypatch.setattr(theme, "BUNDLED_DIRECTORY", tmp_path / "missing")
+
+    assert theme.bundled_theme_ids() == set()

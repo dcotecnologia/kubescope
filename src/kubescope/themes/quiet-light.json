@@ -1,0 +1,30 @@
+{
+    "base": "light",
+    "colors": {
+        "accent": "#6a4a9c",
+        "accent_border": "#b3a3cf",
+        "accent_disabled": "#b3a3cf",
+        "accent_hover": "#5d4580",
+        "accent_soft": "#ece6f5",
+        "accent_strong": "#705697",
+        "badge_text": "#6a4a9c",
+        "border": "#dddddd",
+        "focus": "#705697",
+        "muted": "#6b6b6b",
+        "page": "#f5f5f5",
+        "selection": "#c9d0d9",
+        "subtle": "#999999",
+        "surface": "#ffffff",
+        "surface_alt": "#f0f0f0",
+        "text": "#333333",
+        "title": "#1f1f1f",
+        "topbar": "#705697",
+        "topbar_border": "#8c76b0",
+        "topbar_brand": "#5d4580",
+        "topbar_field": "#7f67a6",
+        "topbar_selection": "#5d4580",
+        "topbar_text": "#e9e2f4",
+        "track": "#e4e4e4"
+    },
+    "name": "Quiet Light"
+}
