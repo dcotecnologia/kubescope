@@ -3,7 +3,7 @@ import time
 from PySide6.QtWidgets import QApplication, QDialog
 
 from kubescope.dialogs import update_dialog
-from kubescope.dialogs.update_dialog import UpdateDialog
+from kubescope.dialogs.update_dialog import UpdateDialog, UpdateWorker
 from kubescope.utils.selfupdate import Install, UpdateError
 from kubescope.utils.updates import Asset, Release
 
@@ -138,3 +138,44 @@ def test_progress_without_a_total_leaves_the_bar_busy() -> None:
 
     dialog._progress(5, 10)
     assert dialog.bar.value() == 5 and dialog.bar.maximum() == 10
+
+
+def _run_worker(monkeypatch, behavior) -> dict:
+    """Run the body of the worker in this thread, so it is measured on every
+    Python, and collect what it reports."""
+    monkeypatch.setattr(update_dialog, "run_update", behavior)
+    worker = UpdateWorker(DEB, RELEASE, "0.6.2")
+    seen: dict = {"stages": [], "progress": []}
+    worker.stage.connect(seen["stages"].append)
+    worker.progress.connect(lambda done, total: seen["progress"].append((done, total)))
+    worker.done.connect(lambda command: seen.update(done=command))
+    worker.failed.connect(lambda message: seen.update(failed=message))
+    worker.run()
+    return seen
+
+
+def test_the_worker_reports_the_stages_and_the_restart_command(monkeypatch) -> None:
+    def run(install, release, current, stage, progress):
+        assert (install, release, current) == (DEB, RELEASE, "0.6.2")
+        stage("download")
+        progress(1, 2)
+        return ["kubescope"]
+
+    seen = _run_worker(monkeypatch, run)
+
+    assert seen == {
+        "stages": ["download"],
+        "progress": [(1, 2)],
+        "done": ["kubescope"],
+    }
+
+
+def test_the_worker_reports_an_expected_and_an_unexpected_failure(monkeypatch) -> None:
+    def refused(*_args):
+        raise UpdateError("no space")
+
+    def broken(*_args):
+        raise RuntimeError("boom")
+
+    assert _run_worker(monkeypatch, refused)["failed"] == "no space"
+    assert _run_worker(monkeypatch, broken)["failed"] == "boom"

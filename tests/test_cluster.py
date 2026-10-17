@@ -1,3 +1,4 @@
+import io
 import json
 import os
 import sys
@@ -535,7 +536,12 @@ def test_a_sign_in_program_that_is_not_installed_is_named(fake_cluster) -> None:
         cluster._request("/version", "dev")
 
 
-def test_a_sign_in_program_that_fails_reports_what_it_printed(fake_cluster) -> None:
+def test_a_sign_in_program_that_fails_reports_what_it_printed(
+    fake_cluster, monkeypatch
+) -> None:
+    # the client lets an interactive sign-in print to the terminal; the pytest
+    # option -s leaves stdout on a real terminal, so make it a plain stream
+    monkeypatch.setattr(sys, "stdout", io.StringIO())
     exec_block = {
         "apiVersion": "client.authentication.k8s.io/v1",
         "command": sys.executable,

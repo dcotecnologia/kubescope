@@ -16,7 +16,9 @@ def test_the_packaged_copy_matches_the_changelog_of_the_repository(
     assert sync_changelog.main() == 0, "run `make changelog` after editing CHANGELOG.md"
 
 
-def test_the_check_fails_when_the_copy_is_missing_or_old(monkeypatch, tmp_path) -> None:
+def test_the_check_fails_when_the_copy_is_missing_or_old(
+    monkeypatch, tmp_path, capsys
+) -> None:
     source = tmp_path / "CHANGELOG.md"
     source.write_text("# Changelog\n", encoding="utf-8")
     copy = tmp_path / "copy.md"
@@ -24,6 +26,7 @@ def test_the_check_fails_when_the_copy_is_missing_or_old(monkeypatch, tmp_path) 
     monkeypatch.setattr(sync_changelog, "OUTPUT", copy)
     monkeypatch.setattr("sys.argv", ["sync_changelog.py", "--check"])
     assert sync_changelog.main() == 1  # no copy yet
+    assert "out of date" in capsys.readouterr().out  # and it says what to do
 
     monkeypatch.setattr("sys.argv", ["sync_changelog.py"])
     assert sync_changelog.main() == 0  # writes it
@@ -32,6 +35,7 @@ def test_the_check_fails_when_the_copy_is_missing_or_old(monkeypatch, tmp_path) 
     source.write_text("# Changelog\n\nmore\n", encoding="utf-8")
     monkeypatch.setattr("sys.argv", ["sync_changelog.py", "--check"])
     assert sync_changelog.main() == 1  # old
+    assert "out of date" in capsys.readouterr().out
 
 
 def test_the_changelog_is_read_from_the_package_or_missing(
