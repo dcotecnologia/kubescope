@@ -5,10 +5,11 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QApplication, QTableWidgetItem
 
-from kubescope import log_view, theme
+from kubescope import theme
 from kubescope import window as window_module
-from kubescope.log_tab import LogTab
 from kubescope.models import ClusterOverview, NodeInfo, PodInfo, Workload
+from kubescope.utils import log_view
+from kubescope.views.log_tab import LogTab
 
 application = QApplication.instance() or QApplication([])
 

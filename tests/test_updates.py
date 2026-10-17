@@ -1,7 +1,7 @@
 import pytest
 
-from kubescope import updates
-from kubescope.updates import Release, UpdateCheck
+from kubescope.utils import updates
+from kubescope.utils.updates import Release, UpdateCheck
 
 
 @pytest.mark.parametrize(
@@ -120,3 +120,45 @@ def test_check_for_update_never_raises(monkeypatch, error) -> None:
     fake_api(monkeypatch, {"/releases/latest": error})
 
     assert updates.check_for_update("0.2.0") == UpdateCheck("failed")
+
+
+def test_latest_release_carries_the_notes_and_the_verified_files(monkeypatch) -> None:
+    digest = "a" * 64
+    fake_api(
+        monkeypatch,
+        {
+            "/releases/latest": {
+                "tag_name": "v0.3.0",
+                "body": "  ## Fixed\n- a thing  ",
+                "assets": [
+                    {"name": "kubescope_0.3.0_amd64.deb", "digest": f"sha256:{digest}"},
+                    {"name": "no-digest.AppImage", "digest": None},
+                    {"name": "../escape", "digest": f"sha256:{digest}"},
+                    "not an asset",
+                ],
+            }
+        },
+    )
+
+    release = updates.latest_release()
+
+    assert release.notes == "## Fixed\n- a thing"
+    assert release.assets == (
+        updates.Asset(
+            "kubescope_0.3.0_amd64.deb",
+            "https://github.com/dcotecnologia/kubescope/releases/download/v0.3.0/"
+            "kubescope_0.3.0_amd64.deb",
+            digest,
+        ),
+    )
+
+
+def test_a_latest_release_with_an_odd_tag_or_body_is_tolerated(monkeypatch) -> None:
+    fake_api(monkeypatch, {"/releases/latest": {"tag_name": "v0.3.0-rc1"}})
+    assert updates.latest_release() is None
+
+    fake_api(
+        monkeypatch,
+        {"/releases/latest": {"tag_name": "v0.3.0", "body": 5, "assets": "x"}},
+    )
+    assert updates.latest_release() == updates._release("v0.3.0")

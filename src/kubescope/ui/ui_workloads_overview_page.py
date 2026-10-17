@@ -20,7 +20,7 @@ from PySide6.QtWidgets import (QAbstractItemView, QApplication, QFrame, QGridLay
     QSizePolicy, QSpacerItem, QTableWidget, QTableWidgetItem,
     QVBoxLayout, QWidget)
 
-from kubescope.widgets import StatusBar
+from kubescope.views.widgets import StatusBar
 
 class Ui_WorkloadsOverviewPage(object):
     def setupUi(self, WorkloadsOverviewPage):

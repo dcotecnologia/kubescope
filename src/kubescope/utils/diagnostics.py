@@ -98,14 +98,14 @@ def commit() -> str:
     """The short git commit this build is from: written beside the code when a
     bundle is built, or asked of git in a source checkout; "unknown"
     otherwise."""
-    recorded = Path(__file__).with_name("_commit.txt")
+    recorded = Path(__file__).resolve().parent.parent / "_commit.txt"
     try:
         text = recorded.read_text(encoding="utf-8").strip()
         if text:
             return text
     except OSError:
         pass
-    checkout = Path(__file__).resolve().parents[2]
+    checkout = Path(__file__).resolve().parents[3]
     if (checkout / ".git").exists():
         try:
             result = subprocess.run(

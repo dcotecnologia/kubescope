@@ -14,9 +14,9 @@ import preview  # the fake cluster data, and a throwaway settings folder
 from PySide6.QtWidgets import QApplication
 
 from kubescope import window
-from kubescope.fonts import apply_fonts
 from kubescope.models import PodInfo
-from kubescope.theme import apply_theme, install_community_themes
+from kubescope.theme import apply_theme, install_bundled_themes
+from kubescope.utils.fonts import apply_fonts
 
 OUTPUT = Path(__file__).resolve().parent.parent / "docs" / "screenshots" / "store"
 THEMES = ("dark", "light", "midnight", "sepia", "high-contrast")
@@ -84,7 +84,7 @@ def shoot(application: QApplication, theme: str, page: str) -> Path:
 def main() -> int:
     application = QApplication(sys.argv[:1])
     apply_fonts(application)
-    install_community_themes()  # midnight, sepia and high contrast ship with the app
+    install_bundled_themes()  # midnight, sepia and high contrast ship with the app
     OUTPUT.mkdir(parents=True, exist_ok=True)
     for theme in THEMES:
         pages = ["overview", "deployments"]

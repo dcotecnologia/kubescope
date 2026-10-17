@@ -11,24 +11,35 @@ import json
 import logging
 import re
 import urllib.request
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Any
 from urllib.parse import quote
 
 from kubescope import PROJECT_URL, __version__
-from kubescope.errors import first_line
+from kubescope.utils.errors import first_line
 
 logger = logging.getLogger(__name__)
 
 API_URL = "https://api.github.com/repos/dcotecnologia/kubescope"
 TIMEOUT = 10  # seconds
 _VERSION = re.compile(r"v?(\d+)\.(\d+)\.(\d+)")
+_DIGEST = re.compile(r"sha256:([0-9a-f]{64})")
+MAX_NOTES = 20000  # characters of release notes kept
+
+
+@dataclass(frozen=True, slots=True)
+class Asset:
+    name: str  # "kubescope_0.3.0_amd64.deb"
+    url: str  # where GitHub serves the file, built here from the project
+    sha256: str  # the digest GitHub published for the file
 
 
 @dataclass(frozen=True, slots=True)
 class Release:
     version: str  # "0.3.0"
     url: str  # the page of the release on GitHub
+    notes: str = ""  # the changelog of the release, in Markdown
+    assets: tuple[Asset, ...] = ()  # the files that carry a published digest
 
 
 def parse_version(text: str) -> tuple[int, int, int] | None:
@@ -67,12 +78,38 @@ def _release(tag: str) -> Release | None:
     )
 
 
+def _assets(tag: str, items: object) -> tuple[Asset, ...]:
+    """The files of a release that GitHub gave a sha256 for.
+
+    The download link is built here, so it always points at this
+    project.
+    """
+    found = []
+    for item in items if isinstance(items, list) else []:
+        if not isinstance(item, dict):
+            continue
+        name, digest = item.get("name"), _DIGEST.fullmatch(str(item.get("digest")))
+        if isinstance(name, str) and name and "/" not in name and digest:
+            url = f"{PROJECT_URL}/releases/download/{quote(tag.strip())}/{quote(name)}"
+            found.append(Asset(name, url, digest.group(1)))
+    return tuple(found)
+
+
 def latest_release() -> Release | None:
     """The newest published release; when the project has none, the highest
     version among its tags."""
     latest = _get("/releases/latest")
     if isinstance(latest, dict) and isinstance(latest.get("tag_name"), str):
-        return _release(latest["tag_name"])
+        release = _release(latest["tag_name"])
+        if release is None:
+            return None
+        body = latest.get("body")
+        notes = body.strip()[:MAX_NOTES] if isinstance(body, str) else ""
+        return replace(
+            release,
+            notes=notes,
+            assets=_assets(latest["tag_name"], latest.get("assets")),
+        )
     tags = [
         tag["name"]
         for tag in _get("/tags")

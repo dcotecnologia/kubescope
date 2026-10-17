@@ -4,9 +4,10 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 from PySide6.QtWidgets import QApplication
 
-from kubescope import theme, widgets
+from kubescope import theme
 from kubescope.theme import themed
-from kubescope.widgets import StatusBar
+from kubescope.views import widgets
+from kubescope.views.widgets import StatusBar
 
 application = QApplication.instance() or QApplication([])
 

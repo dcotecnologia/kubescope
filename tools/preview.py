@@ -17,7 +17,6 @@ from PySide6.QtCore import QFileSystemWatcher
 from PySide6.QtWidgets import QApplication
 
 from kubescope import window
-from kubescope.fonts import apply_fonts
 from kubescope.models import (
     ClusterInfo,
     ClusterOverview,
@@ -27,6 +26,7 @@ from kubescope.models import (
     Workload,
 )
 from kubescope.theme import apply_theme
+from kubescope.utils.fonts import apply_fonts
 
 # The preview must never read or overwrite the real user settings.
 os.environ.setdefault(

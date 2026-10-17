@@ -5,7 +5,7 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 from PySide6.QtGui import QFont, QFontMetrics
 from PySide6.QtWidgets import QApplication
 
-from kubescope import fonts
+from kubescope.utils import fonts
 
 application = QApplication.instance() or QApplication([])
 

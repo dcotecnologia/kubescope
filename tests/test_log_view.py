@@ -6,7 +6,8 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 from PySide6.QtWidgets import QApplication, QPlainTextEdit
 
-from kubescope import log_view, theme
+from kubescope import theme
+from kubescope.utils import log_view
 
 application = QApplication.instance() or QApplication([])
 

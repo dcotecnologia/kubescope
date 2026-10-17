@@ -10,7 +10,7 @@ import re
 from PySide6.QtGui import QSyntaxHighlighter
 from PySide6.QtWidgets import QPlainTextEdit
 
-from kubescope.json_view import (
+from kubescope.utils.json_view import (
     Palette,
     current_palette,
     stylesheet,

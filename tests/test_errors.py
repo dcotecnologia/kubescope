@@ -1,6 +1,6 @@
 import pytest
 
-from kubescope.errors import describe_error
+from kubescope.utils.errors import describe_error
 
 
 @pytest.mark.parametrize(
@@ -91,14 +91,14 @@ def test_unknown_error_keeps_its_first_line_as_hint() -> None:
 
 
 def test_first_line_skips_blank_lines() -> None:
-    from kubescope.errors import first_line
+    from kubescope.utils.errors import first_line
 
     assert first_line("\n  \n  boom  \nsecond") == "boom"
     assert first_line("") == ""
 
 
 def test_forbidden_is_told_apart_from_a_sign_in_problem() -> None:
-    from kubescope.errors import forbidden_action, is_forbidden
+    from kubescope.utils.errors import forbidden_action, is_forbidden
 
     message = (
         'Error from server (Forbidden): services is forbidden: User "x" cannot '

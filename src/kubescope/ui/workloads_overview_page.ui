@@ -339,7 +339,7 @@
   <customwidget>
    <class>StatusBar</class>
    <extends>QWidget</extends>
-   <header>kubescope.widgets</header>
+   <header>kubescope.views.widgets</header>
   </customwidget>
  </customwidgets>
  <resources />

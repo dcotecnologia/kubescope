@@ -58,18 +58,21 @@ QLabel#sidebarNote { color: #4d5866; font-size: 10px; line-height: 1.4; }
 QWidget#pageHeader { background: #ffffff; border-bottom: 1px solid #e4e5eb; }
 QLabel#pageTitle { color: #17191e; font-size: 16px; font-weight: 700; }
 QLabel[variant="muted"] { color: #4f5966; font-size: 11px; }
-QComboBox[variant="filter"], QLineEdit#searchInput, QPushButton[variant="primary"] {
+QComboBox[variant="filter"], QLineEdit#searchInput, QLineEdit[variant="filter"],
+QPushButton[variant="primary"] {
     background: #ffffff; border: 1px solid #d9dce4; border-radius: 5px;
     min-height: 36px; padding: 0 10px; font-size: 11px;
 }
-QComboBox[variant="filter"], QLineEdit#searchInput {
+QComboBox[variant="filter"], QLineEdit#searchInput, QLineEdit[variant="filter"] {
     color: #20232a; selection-background-color: #d9d3f2;
     selection-color: #20232a;
 }
 QComboBox[variant="filter"] { padding-right: 28px; }
 QComboBox[variant="filter"]:hover { border-color: #b9b3dc; }
 QComboBox[variant="filter"]:focus, QComboBox[variant="filter"]:on,
-QLineEdit#searchInput:focus { border: 1px solid #6252b5; }
+QLineEdit#searchInput:focus, QLineEdit[variant="filter"]:focus {
+    border: 1px solid #6252b5;
+}
 QComboBox[variant="filter"]::drop-down {
     subcontrol-origin: padding; subcontrol-position: center right;
     width: 26px; border: 0; background: transparent;
@@ -81,6 +84,22 @@ QComboBox[variant="filter"] QAbstractItemView {
     background: #ffffff; color: #20232a; border: 1px solid #d9dce4;
     selection-background-color: #eee9f7; selection-color: #3220a0;
     outline: 0; padding: 2px;
+}
+QSpinBox[variant="filter"] {
+    background: #ffffff; color: #20232a; border: 1px solid #d9dce4;
+    border-radius: 5px; min-height: 36px; padding: 0 10px; font-size: 11px;
+    selection-background-color: #d9d3f2; selection-color: #20232a;
+}
+QSpinBox[variant="filter"]:hover { border-color: #b9b3dc; }
+QSpinBox[variant="filter"]:focus { border: 1px solid #6252b5; }
+QSpinBox[variant="filter"]::up-button, QSpinBox[variant="filter"]::down-button {
+    subcontrol-origin: border; width: 24px; border: 0; background: transparent;
+}
+QSpinBox[variant="filter"]::up-button { subcontrol-position: top right; }
+QSpinBox[variant="filter"]::down-button { subcontrol-position: bottom right; }
+QSpinBox[variant="filter"]::up-arrow { image: url(SORT_UP); width: 9px; height: 6px; }
+QSpinBox[variant="filter"]::down-arrow {
+    image: url(SORT_DOWN); width: 9px; height: 6px;
 }
 QComboBox[variant="filter"]:disabled {
     color: #6b7380; background: #f3f4f7; border-color: #e4e5eb;

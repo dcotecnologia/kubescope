@@ -19,8 +19,16 @@ ROOT = Path(__file__).resolve().parent.parent
 SOURCE = ROOT / "src" / "kubescope"
 LANGUAGES = SOURCE / "languages"
 SOURCES = [
-    *(SOURCE / name for name in ("window.py", "log_tab.py", "errors.py")),
-    SOURCE / "theme_editor.py",
+    *(
+        SOURCE / name
+        for name in (
+            "window.py",
+            "views/log_tab.py",
+            "utils/errors.py",
+            "dialogs/update_dialog.py",
+        )
+    ),
+    SOURCE / "dialogs/theme_editor.py",
     *sorted((SOURCE / "ui").glob("*.ui")),
 ]
 

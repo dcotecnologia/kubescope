@@ -9,16 +9,16 @@ from PySide6.QtGui import QIcon, QPixmap
 from PySide6.QtWidgets import QApplication
 
 import kubescope
-from kubescope.diagnostics import (
+from kubescope.i18n import apply_language
+from kubescope.settings import Settings
+from kubescope.theme import apply_theme, install_bundled_themes
+from kubescope.utils.diagnostics import (
     CRASH_FILE,
     LOG_FILE,
     configure_logging,
     purge_old_logs,
 )
-from kubescope.fonts import apply_fonts
-from kubescope.i18n import apply_language
-from kubescope.settings import Settings
-from kubescope.theme import apply_theme, install_community_themes
+from kubescope.utils.fonts import apply_fonts
 from kubescope.window import WorkloadWindow
 
 # __file__ of the entry script points at the bundle root once frozen, so anchor
@@ -76,7 +76,7 @@ def main() -> int:
     application.setApplicationName("KubeScope")
     application.setWindowIcon(load_app_icon())
     apply_fonts(application)
-    install_community_themes()
+    install_bundled_themes()
     apply_theme(application, settings.theme)
     apply_language(settings.language)
     window = WorkloadWindow(settings)

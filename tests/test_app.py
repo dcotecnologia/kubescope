@@ -73,13 +73,13 @@ def test_main_builds_the_window_and_runs_the_event_loop(monkeypatch) -> None:
         app, "apply_language", lambda code: events.append(("lang", code))
     )
     monkeypatch.setattr(
-        app, "install_community_themes", lambda: events.append("community themes")
+        app, "install_bundled_themes", lambda: events.append("bundled themes")
     )
     monkeypatch.setattr(app, "WorkloadWindow", FakeWindow)
 
     assert app.main() == 7
     # the shipped themes are installed first, so a saved choice of one can apply
-    assert events.index("community themes") < events.index(("theme", "dark"))
+    assert events.index("bundled themes") < events.index(("theme", "dark"))
     assert events.index("fonts") < events.index(("theme", "dark"))  # before widgets
     assert ("name", "KubeScope") in events
     assert ("lang", "auto") in events

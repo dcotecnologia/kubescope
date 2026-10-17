@@ -3,11 +3,12 @@ import os
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 from PySide6.QtGui import QColor
-from PySide6.QtWidgets import QApplication, QColorDialog, QDialogButtonBox
+from PySide6.QtWidgets import QApplication, QColorDialog
 
-from kubescope import theme, theme_editor
+from kubescope import theme
+from kubescope.dialogs import theme_editor
+from kubescope.dialogs.theme_editor import ThemeEditor, token_labels
 from kubescope.theme import DARK_THEME, LIGHT_THEME, theme_tokens
-from kubescope.theme_editor import ThemeEditor, token_labels
 
 application = QApplication.instance() or QApplication([])
 
@@ -19,7 +20,7 @@ def _editor(theme_in=LIGHT_THEME, *, new=True, name="My theme") -> ThemeEditor:
 
 
 def _save_button(editor) -> object:
-    return editor.buttons.button(QDialogButtonBox.StandardButton.Save)
+    return editor.save_button
 
 
 def test_every_color_role_has_a_label_and_a_swatch() -> None:
@@ -90,3 +91,44 @@ def test_saving_needs_a_name_and_trims_it() -> None:
 
     editor.name_edit.setText("Reef")
     assert _save_button(editor).isEnabled()
+
+
+def test_reset_undoes_the_color_changes_of_the_session(monkeypatch) -> None:
+    editor = _editor(DARK_THEME, new=False, name="Midnight")
+    monkeypatch.setattr(
+        QColorDialog, "getColor", staticmethod(lambda *_a: QColor("#112233"))
+    )
+    assert not editor.reset_button.isEnabled()  # nothing to undo yet
+
+    editor._swatches["page"].click()
+    editor._swatches["text"].click()
+    assert editor.reset_button.isEnabled()
+
+    editor.reset_button.click()
+
+    assert editor.values()[2] == theme_tokens(DARK_THEME)
+    assert editor._swatches["page"].text() == "#11141a"
+    assert not editor.reset_button.isEnabled()
+
+
+def test_reset_goes_back_to_the_theme_a_new_one_restarted_from(monkeypatch) -> None:
+    editor = _editor(LIGHT_THEME, new=True)
+    editor.base_combo.setCurrentIndex(editor.base_combo.findData("dark"))
+    monkeypatch.setattr(
+        QColorDialog, "getColor", staticmethod(lambda *_a: QColor("#112233"))
+    )
+    editor._swatches["page"].click()
+
+    editor.reset_button.click()
+
+    assert editor.values()[2] == theme_tokens(DARK_THEME)
+
+
+def test_the_inputs_and_buttons_use_the_projects_styles() -> None:
+    editor = _editor()
+
+    assert editor.name_edit.property("variant") == "filter"
+    assert editor.base_combo.property("variant") == "filter"
+    assert editor.reset_button.property("variant") == "secondary"
+    assert editor.save_button.property("variant") == "primary"
+    assert editor.save_button.isDefault()

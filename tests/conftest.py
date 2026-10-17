@@ -40,7 +40,7 @@ def no_update_check_network(monkeypatch):
     def offline(*_args, **_kwargs):
         raise OSError("the network is off in tests")
 
-    monkeypatch.setattr("kubescope.updates._get", offline)
+    monkeypatch.setattr("kubescope.utils.updates._get", offline)
     monkeypatch.setattr("kubescope.window.UPDATE_SEARCH_MS", 0)
 
 

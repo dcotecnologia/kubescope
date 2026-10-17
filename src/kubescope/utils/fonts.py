@@ -14,7 +14,7 @@ from PySide6.QtWidgets import QApplication
 logger = logging.getLogger(__name__)
 
 # __file__ points into the bundle once frozen, so anchor on the package
-FONTS_DIRECTORY = Path(__file__).resolve().parent / "assets" / "fonts"
+FONTS_DIRECTORY = Path(__file__).resolve().parent.parent / "assets" / "fonts"
 UI_FAMILY = "Noto Sans"
 CODE_FAMILY = "Noto Sans Mono"
 UI_POINT_SIZE = 9

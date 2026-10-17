@@ -6,8 +6,8 @@ from PySide6.QtWidgets import (
     QColorDialog,
     QComboBox,
     QDialog,
-    QDialogButtonBox,
     QFormLayout,
+    QHBoxLayout,
     QLabel,
     QLineEdit,
     QPushButton,
@@ -103,11 +103,14 @@ class ThemeEditor(QDialog):
         )
         self.resize(480, 620)
         self._tokens = dict(tokens)
+        self._initial = dict(tokens)  # what Reset goes back to
         self._swatches: dict[str, QPushButton] = {}
 
         self.name_edit = QLineEdit(name)
         self.name_edit.setPlaceholderText(self.tr("Theme name"))
+        self.name_edit.setProperty("variant", "filter")
         self.base_combo = QComboBox()
+        self.base_combo.setProperty("variant", "filter")
         self.base_combo.addItem(self.tr("Light"), LIGHT)
         self.base_combo.addItem(self.tr("Dark"), DARK)
         self.base_combo.setCurrentIndex(max(self.base_combo.findData(base), 0))
@@ -133,27 +136,44 @@ class ThemeEditor(QDialog):
         scroll.setWidgetResizable(True)
         scroll.setWidget(colors)
 
-        self.buttons = QDialogButtonBox(
-            QDialogButtonBox.StandardButton.Save
-            | QDialogButtonBox.StandardButton.Cancel
+        # the project's own buttons, not the platform's boxed ones with icons
+        self.reset_button = QPushButton(self.tr("Reset"))
+        self.reset_button.setProperty("variant", "secondary")
+        self.reset_button.setToolTip(
+            self.tr("Undo the color changes made since this window opened")
         )
-        self.buttons.accepted.connect(self.accept)
-        self.buttons.rejected.connect(self.reject)
+        self.reset_button.clicked.connect(self._reset)
+        cancel_button = QPushButton(self.tr("Cancel"))
+        cancel_button.setProperty("variant", "secondary")
+        cancel_button.clicked.connect(self.reject)
+        self.save_button = QPushButton(self.tr("Save"))
+        self.save_button.setProperty("variant", "primary")
+        self.save_button.setDefault(True)
+        self.save_button.clicked.connect(self.accept)
+        buttons = QHBoxLayout()
+        buttons.addWidget(self.reset_button)
+        buttons.addStretch()
+        buttons.addWidget(cancel_button)
+        buttons.addWidget(self.save_button)
         self.name_edit.textChanged.connect(self._validate)
 
         layout = QVBoxLayout(self)
         layout.addLayout(header)
         layout.addWidget(QLabel(self.tr("Colors")))
         layout.addWidget(scroll, 1)
-        layout.addWidget(self.buttons)
+        layout.addLayout(buttons)
         self._refresh_swatches()
         self._validate()
 
     def _validate(self) -> None:
-        save = self.buttons.button(QDialogButtonBox.StandardButton.Save)
-        save.setEnabled(bool(self.name_edit.text().strip()))
+        self.save_button.setEnabled(bool(self.name_edit.text().strip()))
+
+    def _reset(self) -> None:
+        self._tokens = dict(self._initial)
+        self._refresh_swatches()
 
     def _refresh_swatches(self) -> None:
+        self.reset_button.setEnabled(self._tokens != self._initial)
         for token, swatch in self._swatches.items():
             color = QColor(self._tokens[token])
             swatch.setText(self._tokens[token].lower())
@@ -164,6 +184,7 @@ class ThemeEditor(QDialog):
 
     def _restart_from_base(self) -> None:
         self._tokens = theme_tokens(BUILTIN[self.base_combo.currentData()])
+        self._initial = dict(self._tokens)  # a new start: Reset goes back to it
         self._refresh_swatches()
 
     def _pick(self, token: str) -> None:

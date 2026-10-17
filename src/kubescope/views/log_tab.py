@@ -3,10 +3,10 @@ from datetime import datetime
 
 from PySide6.QtWidgets import QWidget
 
-from kubescope.fonts import code_font
-from kubescope.log_view import style_log_view
 from kubescope.models import PodInfo, safe_file_name
 from kubescope.ui.ui_log_tab import Ui_LogTab
+from kubescope.utils.fonts import code_font
+from kubescope.utils.log_view import style_log_view
 
 LOG_REFRESH_MS = 3000
 # colors and cursor moves that coloredlogs and the like write: the editor would

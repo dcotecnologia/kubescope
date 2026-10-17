@@ -4,8 +4,8 @@ import logging.handlers
 import pytest
 
 import kubescope
-from kubescope import diagnostics
 from kubescope.settings import log_directory
+from kubescope.utils import diagnostics
 
 
 @pytest.fixture(autouse=True)
@@ -121,7 +121,9 @@ def test_crash_log_starts_each_session_with_the_build_and_the_machine() -> None:
 
 def test_commit_comes_from_the_bundle_file_or_from_git(monkeypatch, tmp_path) -> None:
     recorded = tmp_path / "_commit.txt"
-    monkeypatch.setattr(diagnostics, "__file__", str(tmp_path / "diagnostics.py"))
+    monkeypatch.setattr(
+        diagnostics, "__file__", str(tmp_path / "utils" / "diagnostics.py")
+    )
 
     recorded.write_text("abc1234\n", encoding="utf-8")
     assert diagnostics.commit() == "abc1234"
@@ -131,7 +133,7 @@ def test_commit_comes_from_the_bundle_file_or_from_git(monkeypatch, tmp_path) ->
 
 
 def test_commit_asks_git_in_a_source_checkout(monkeypatch, tmp_path) -> None:
-    package = tmp_path / "src" / "kubescope"
+    package = tmp_path / "src" / "kubescope" / "utils"
     package.mkdir(parents=True)
     (tmp_path / ".git").mkdir()
     monkeypatch.setattr(diagnostics, "__file__", str(package / "diagnostics.py"))
