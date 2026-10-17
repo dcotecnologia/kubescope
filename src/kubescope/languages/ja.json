@@ -2,6 +2,18 @@
     "name": "日本語",
     "rtl": false,
     "strings": {
+        "ChangelogDialog": {
+            "ADDED": "追加",
+            "CHANGED": "変更",
+            "Changelog": "変更履歴",
+            "Close": "閉じる",
+            "FIXED": "修正",
+            "INSTALLED": "インストール済み",
+            "Open the releases on GitHub": "GitHub でリリースを開く",
+            "REMOVED": "削除",
+            "SECURITY": "セキュリティ",
+            "The changelog is not available in this installation.": "この環境では変更履歴を利用できません。"
+        },
         "Errors": {
             "Access denied": "アクセスが拒否されました",
             "Authentication failed": "認証に失敗しました",
@@ -122,6 +134,7 @@
             "STATUS": "ステータス",
             "Search by name or namespace...": "名前または namespace で検索...",
             "Secrets": "Secrets",
+            "See what changed in each version": "各バージョンの変更内容を見る",
             "Select a context to load workloads": "コンテキストを選択して workloads を読み込みます",
             "Services": "Services",
             "Settings": "設定",

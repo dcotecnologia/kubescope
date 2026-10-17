@@ -2,6 +2,18 @@
     "name": "فارسی",
     "rtl": true,
     "strings": {
+        "ChangelogDialog": {
+            "ADDED": "افزوده",
+            "CHANGED": "تغییر",
+            "Changelog": "تاریخچه تغییرات",
+            "Close": "بستن",
+            "FIXED": "رفع شد",
+            "INSTALLED": "نصب‌شده",
+            "Open the releases on GitHub": "باز کردن انتشارها در GitHub",
+            "REMOVED": "حذف‌شده",
+            "SECURITY": "امنیت",
+            "The changelog is not available in this installation.": "تاریخچه تغییرات در این نصب موجود نیست."
+        },
         "Errors": {
             "Access denied": "دسترسی رد شد",
             "Authentication failed": "احراز هویت ناموفق بود",
@@ -122,6 +134,7 @@
             "STATUS": "وضعیت",
             "Search by name or namespace...": "جستجو بر اساس نام یا فضای نام...",
             "Secrets": "Secrets",
+            "See what changed in each version": "دیدن تغییرات هر نسخه",
             "Select a context to load workloads": "برای بارگیری بارهای کاری یک زمینه انتخاب کنید",
             "Services": "Services",
             "Settings": "تنظیمات",

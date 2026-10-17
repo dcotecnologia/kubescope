@@ -229,9 +229,9 @@ class Ui_MainWindow(object):
 "QFrame#permissionBanner QLabel { color: #a33d45; font-size: 11px; background: transparent; }\n"
 "QFrame#permissionBanner QPushButton { color: #a33d45; font-size: 11px; padding: 0 0 0 12px; }\n"
 "QFrame#appFooter { background: #ffffff; border-top: 1px solid #e4e5eb; }\n"
-"QLabel#footerLicense, QLabel#footerDot, QLabel#footerVersion, QLabel#updateNotice { color: #6b7380; font-size: 10px; }\n"
-"QFrame#appFooter "
-                        "QPushButton[variant=\"link\"] { font-size: 10px; padding: 0 0 0 6px; }\n"
+"QLabel#footerLicense, QLabel#footerDot, QLabel#updateNotice { color: #6b7380; font-size: 10px; }\n"
+"QFrame#appFooter QPushButton[variant=\""
+                        "link\"] { font-size: 10px; padding: 0 0 0 6px; }\n"
 "QPushButton#companyLink, QPushButton#licenseLink { padding: 0; }\n"
 "QPushButton#updateButton { border: none; background: transparent; padding: 0; border-radius: 4px; }\n"
 "QPushButton#updateButton:hover { background: #f6f6fa; }\n"
@@ -1246,9 +1246,11 @@ class Ui_MainWindow(object):
 
         self.appFooterLayout.addWidget(self.updateButton)
 
-        self.footerVersion = QLabel(self.appFooter)
+        self.footerVersion = QPushButton(self.appFooter)
         self.footerVersion.setObjectName(u"footerVersion")
         self.footerVersion.setText(u"v0.0.0")
+        self.footerVersion.setFlat(True)
+        self.footerVersion.setProperty(u"variant", u"link")
 
         self.appFooterLayout.addWidget(self.footerVersion)
 
@@ -1399,6 +1401,9 @@ class Ui_MainWindow(object):
 #endif // QT_CONFIG(tooltip)
 #if QT_CONFIG(tooltip)
         self.updateButton.setToolTip(QCoreApplication.translate("MainWindow", u"Check for updates", None))
+#endif // QT_CONFIG(tooltip)
+#if QT_CONFIG(tooltip)
+        self.footerVersion.setToolTip(QCoreApplication.translate("MainWindow", u"See what changed in each version", None))
 #endif // QT_CONFIG(tooltip)
 #if QT_CONFIG(tooltip)
         self.githubLink.setToolTip(QCoreApplication.translate("MainWindow", u"Open the project on GitHub", None))

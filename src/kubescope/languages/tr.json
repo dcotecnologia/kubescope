@@ -2,6 +2,18 @@
     "name": "Türkçe",
     "rtl": false,
     "strings": {
+        "ChangelogDialog": {
+            "ADDED": "EKLENDİ",
+            "CHANGED": "DEĞİŞTİ",
+            "Changelog": "Değişiklik günlüğü",
+            "Close": "Kapat",
+            "FIXED": "DÜZELTİLDİ",
+            "INSTALLED": "KURULU",
+            "Open the releases on GitHub": "Sürümleri GitHub'da aç",
+            "REMOVED": "KALDIRILDI",
+            "SECURITY": "GÜVENLİK",
+            "The changelog is not available in this installation.": "Değişiklik günlüğü bu kurulumda yok."
+        },
         "Errors": {
             "Access denied": "Erişim reddedildi",
             "Authentication failed": "Kimlik doğrulama başarısız",
@@ -122,6 +134,7 @@
             "STATUS": "DURUM",
             "Search by name or namespace...": "Ada veya ad alanına göre ara...",
             "Secrets": "Secrets",
+            "See what changed in each version": "Her sürümde nelerin değiştiğini gör",
             "Select a context to load workloads": "İş yüklerini yüklemek için bir bağlam seçin",
             "Services": "Services",
             "Settings": "Ayarlar",

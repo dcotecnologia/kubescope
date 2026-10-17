@@ -38,6 +38,7 @@ kubescope = [
     "assets/*.png",
     "assets/*.ico",
     "assets/*.txt",
+    "assets/*.md",
     "assets/fonts/*",
     "themes/*.json",
 ]

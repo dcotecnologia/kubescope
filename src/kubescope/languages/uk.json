@@ -2,6 +2,18 @@
     "name": "Українська",
     "rtl": false,
     "strings": {
+        "ChangelogDialog": {
+            "ADDED": "ДОДАНО",
+            "CHANGED": "ЗМІНЕНО",
+            "Changelog": "Журнал змін",
+            "Close": "Закрити",
+            "FIXED": "ВИПРАВЛЕНО",
+            "INSTALLED": "ВСТАНОВЛЕНА",
+            "Open the releases on GitHub": "Відкрити релізи на GitHub",
+            "REMOVED": "ВИДАЛЕНО",
+            "SECURITY": "БЕЗПЕКА",
+            "The changelog is not available in this installation.": "Журнал змін недоступний у цьому встановленні."
+        },
         "Errors": {
             "Access denied": "Доступ заборонено",
             "Authentication failed": "Помилка автентифікації",
@@ -122,6 +134,7 @@
             "STATUS": "СТАН",
             "Search by name or namespace...": "Пошук за назвою або простором імен...",
             "Secrets": "Secrets",
+            "See what changed in each version": "Переглянути, що змінилося в кожній версії",
             "Select a context to load workloads": "Виберіть контекст, щоб завантажити робочі навантаження",
             "Services": "Services",
             "Settings": "Налаштування",

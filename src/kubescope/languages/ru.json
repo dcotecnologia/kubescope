@@ -2,6 +2,18 @@
     "name": "Русский",
     "rtl": false,
     "strings": {
+        "ChangelogDialog": {
+            "ADDED": "ДОБАВЛЕНО",
+            "CHANGED": "ИЗМЕНЕНО",
+            "Changelog": "Журнал изменений",
+            "Close": "Закрыть",
+            "FIXED": "ИСПРАВЛЕНО",
+            "INSTALLED": "УСТАНОВЛЕНА",
+            "Open the releases on GitHub": "Открыть релизы на GitHub",
+            "REMOVED": "УДАЛЕНО",
+            "SECURITY": "БЕЗОПАСНОСТЬ",
+            "The changelog is not available in this installation.": "Журнал изменений недоступен в этой установке."
+        },
         "Errors": {
             "Access denied": "Доступ запрещён",
             "Authentication failed": "Ошибка аутентификации",
@@ -122,6 +134,7 @@
             "STATUS": "СТАТУС",
             "Search by name or namespace...": "Поиск по имени или namespace...",
             "Secrets": "Secrets",
+            "See what changed in each version": "Посмотреть, что изменилось в каждой версии",
             "Select a context to load workloads": "Выберите контекст, чтобы загрузить workloads",
             "Services": "Services",
             "Settings": "Настройки",

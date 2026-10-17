@@ -2,6 +2,18 @@
     "name": "العربية",
     "rtl": true,
     "strings": {
+        "ChangelogDialog": {
+            "ADDED": "مضاف",
+            "CHANGED": "متغيّر",
+            "Changelog": "سجل التغييرات",
+            "Close": "إغلاق",
+            "FIXED": "مُصلَح",
+            "INSTALLED": "مثبّت",
+            "Open the releases on GitHub": "فتح الإصدارات على GitHub",
+            "REMOVED": "محذوف",
+            "SECURITY": "الأمان",
+            "The changelog is not available in this installation.": "سجل التغييرات غير متاح في هذا التثبيت."
+        },
         "Errors": {
             "Access denied": "تم رفض الوصول",
             "Authentication failed": "فشلت المصادقة",
@@ -122,6 +134,7 @@
             "STATUS": "الحالة",
             "Search by name or namespace...": "ابحث بالاسم أو namespace...",
             "Secrets": "Secrets",
+            "See what changed in each version": "اطّلع على ما تغيّر في كل إصدار",
             "Select a context to load workloads": "اختر سياقاً لتحميل workloads",
             "Services": "Services",
             "Settings": "الإعدادات",

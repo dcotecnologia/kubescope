@@ -2,6 +2,18 @@
     "name": "繁體中文",
     "rtl": false,
     "strings": {
+        "ChangelogDialog": {
+            "ADDED": "新增",
+            "CHANGED": "變更",
+            "Changelog": "變更記錄",
+            "Close": "關閉",
+            "FIXED": "修復",
+            "INSTALLED": "已安裝",
+            "Open the releases on GitHub": "在 GitHub 上開啟發行版本",
+            "REMOVED": "移除",
+            "SECURITY": "安全性",
+            "The changelog is not available in this installation.": "此安裝中沒有變更記錄。"
+        },
         "Errors": {
             "Access denied": "存取遭拒",
             "Authentication failed": "驗證失敗",
@@ -122,6 +134,7 @@
             "STATUS": "狀態",
             "Search by name or namespace...": "依名稱或命名空間搜尋...",
             "Secrets": "Secrets",
+            "See what changed in each version": "查看每個版本的變更",
             "Select a context to load workloads": "選取內容以載入工作負載",
             "Services": "Services",
             "Settings": "設定",

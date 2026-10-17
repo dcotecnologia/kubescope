@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file. The format 
 
 ### Changed
 
+- The version in the footer opens the changelog of the installed version, laid out by version with its date and a badge on the one in use, without what is not released yet by @danilogco
 - Settings are grouped into cards (General, Appearance, Cluster access, Debugging, Kubeconfig files, Sign-in commands and Context names) instead of one long list by @danilogco
 - The number input of the scale dialog, and the name, base and buttons of the theme editor, follow the style of the rest of the app (same borders, heights and buttons, without the platform icons) by @danilogco
 - Light and Dark are stored as JSON files like the other themes, in `src/kubescope/themes/` (renamed from `community_themes/`), and the themes that ship with the app are copied to your themes folder whenever their file is missing, not only the first time by @danilogco

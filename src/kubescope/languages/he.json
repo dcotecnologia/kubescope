@@ -2,6 +2,18 @@
     "name": "עברית",
     "rtl": true,
     "strings": {
+        "ChangelogDialog": {
+            "ADDED": "נוסף",
+            "CHANGED": "שונה",
+            "Changelog": "יומן שינויים",
+            "Close": "סגור",
+            "FIXED": "תוקן",
+            "INSTALLED": "מותקן",
+            "Open the releases on GitHub": "פתיחת הגרסאות ב-GitHub",
+            "REMOVED": "הוסר",
+            "SECURITY": "אבטחה",
+            "The changelog is not available in this installation.": "יומן השינויים אינו זמין בהתקנה זו."
+        },
         "Errors": {
             "Access denied": "הגישה נדחתה",
             "Authentication failed": "האימות נכשל",
@@ -122,6 +134,7 @@
             "STATUS": "סטטוס",
             "Search by name or namespace...": "חיפוש לפי שם או מרחב שמות...",
             "Secrets": "Secrets",
+            "See what changed in each version": "צפייה במה שהשתנה בכל גרסה",
             "Select a context to load workloads": "בחרו הקשר כדי לטעון עומסי עבודה",
             "Services": "Services",
             "Settings": "הגדרות",

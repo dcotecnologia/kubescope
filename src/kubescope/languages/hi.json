@@ -2,6 +2,18 @@
     "name": "हिन्दी",
     "rtl": false,
     "strings": {
+        "ChangelogDialog": {
+            "ADDED": "जोड़ा गया",
+            "CHANGED": "बदला गया",
+            "Changelog": "बदलाव का लॉग",
+            "Close": "बंद करें",
+            "FIXED": "ठीक किया गया",
+            "INSTALLED": "इंस्टॉल्ड",
+            "Open the releases on GitHub": "GitHub पर रिलीज़ खोलें",
+            "REMOVED": "हटाया गया",
+            "SECURITY": "सुरक्षा",
+            "The changelog is not available in this installation.": "इस इंस्टॉलेशन में बदलाव का लॉग उपलब्ध नहीं है।"
+        },
         "Errors": {
             "Access denied": "पहुँच अस्वीकृत",
             "Authentication failed": "प्रमाणीकरण विफल",
@@ -122,6 +134,7 @@
             "STATUS": "स्थिति",
             "Search by name or namespace...": "नाम या namespace से खोजें...",
             "Secrets": "Secrets",
+            "See what changed in each version": "हर संस्करण में क्या बदला, देखें",
             "Select a context to load workloads": "workloads लोड करने के लिए कॉन्टेक्स्ट चुनें",
             "Services": "Services",
             "Settings": "सेटिंग्स",

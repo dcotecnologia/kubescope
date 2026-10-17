@@ -2,6 +2,18 @@
     "name": "ไทย",
     "rtl": false,
     "strings": {
+        "ChangelogDialog": {
+            "ADDED": "เพิ่ม",
+            "CHANGED": "เปลี่ยนแปลง",
+            "Changelog": "บันทึกการเปลี่ยนแปลง",
+            "Close": "ปิด",
+            "FIXED": "แก้ไข",
+            "INSTALLED": "ติดตั้งแล้ว",
+            "Open the releases on GitHub": "เปิดรุ่นที่เผยแพร่บน GitHub",
+            "REMOVED": "นำออก",
+            "SECURITY": "ความปลอดภัย",
+            "The changelog is not available in this installation.": "การติดตั้งนี้ไม่มีบันทึกการเปลี่ยนแปลง"
+        },
         "Errors": {
             "Access denied": "ปฏิเสธการเข้าถึง",
             "Authentication failed": "การยืนยันตัวตนล้มเหลว",
@@ -122,6 +134,7 @@
             "STATUS": "สถานะ",
             "Search by name or namespace...": "ค้นหาตามชื่อหรือเนมสเปซ...",
             "Secrets": "Secrets",
+            "See what changed in each version": "ดูว่าแต่ละเวอร์ชันเปลี่ยนอะไรบ้าง",
             "Select a context to load workloads": "เลือกคอนเท็กซ์เพื่อโหลดเวิร์กโหลด",
             "Services": "Services",
             "Settings": "การตั้งค่า",

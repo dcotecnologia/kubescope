@@ -76,6 +76,7 @@ The release workflow publishes the section of the tag as the release notes.
 | Preferences | `src/kubescope/settings.py` |
 | Friendly error messages | `src/kubescope/utils/errors.py` |
 | Colors, themes and the theme editor | `src/kubescope/theme.py`, `theme_editor.py` |
+| The changelog the app shows | edit `CHANGELOG.md`, then run `make changelog` to copy it into the package |
 | A theme to share with everyone | `src/kubescope/themes/` (see its README) |
 
 Edit layouts in the `.ui` files and run `make ui`; never edit `ui_*.py` by hand.

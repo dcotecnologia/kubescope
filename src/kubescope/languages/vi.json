@@ -2,6 +2,18 @@
     "name": "Tiếng Việt",
     "rtl": false,
     "strings": {
+        "ChangelogDialog": {
+            "ADDED": "ĐÃ THÊM",
+            "CHANGED": "ĐÃ THAY ĐỔI",
+            "Changelog": "Nhật ký thay đổi",
+            "Close": "Đóng",
+            "FIXED": "ĐÃ SỬA",
+            "INSTALLED": "ĐÃ CÀI",
+            "Open the releases on GitHub": "Mở các bản phát hành trên GitHub",
+            "REMOVED": "ĐÃ XÓA",
+            "SECURITY": "BẢO MẬT",
+            "The changelog is not available in this installation.": "Nhật ký thay đổi không có trong bản cài đặt này."
+        },
         "Errors": {
             "Access denied": "Truy cập bị từ chối",
             "Authentication failed": "Xác thực thất bại",
@@ -122,6 +134,7 @@
             "STATUS": "TRẠNG THÁI",
             "Search by name or namespace...": "Tìm theo tên hoặc namespace...",
             "Secrets": "Secrets",
+            "See what changed in each version": "Xem những gì đã thay đổi ở mỗi phiên bản",
             "Select a context to load workloads": "Chọn một context để tải workload",
             "Services": "Services",
             "Settings": "Cài đặt",

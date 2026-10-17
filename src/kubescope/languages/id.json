@@ -2,6 +2,18 @@
     "name": "Bahasa Indonesia",
     "rtl": false,
     "strings": {
+        "ChangelogDialog": {
+            "ADDED": "DITAMBAHKAN",
+            "CHANGED": "DIUBAH",
+            "Changelog": "Catatan perubahan",
+            "Close": "Tutup",
+            "FIXED": "DIPERBAIKI",
+            "INSTALLED": "TERPASANG",
+            "Open the releases on GitHub": "Buka rilis di GitHub",
+            "REMOVED": "DIHAPUS",
+            "SECURITY": "KEAMANAN",
+            "The changelog is not available in this installation.": "Catatan perubahan tidak tersedia di instalasi ini."
+        },
         "Errors": {
             "Access denied": "Akses ditolak",
             "Authentication failed": "Autentikasi gagal",
@@ -122,6 +134,7 @@
             "STATUS": "STATUS",
             "Search by name or namespace...": "Cari berdasarkan nama atau namespace...",
             "Secrets": "Secrets",
+            "See what changed in each version": "Lihat apa yang berubah di setiap versi",
             "Select a context to load workloads": "Pilih konteks untuk memuat workload",
             "Services": "Services",
             "Settings": "Pengaturan",

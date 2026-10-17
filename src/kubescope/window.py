@@ -92,6 +92,7 @@ from kubescope.cluster import (
 from kubescope.cluster import (
     configure as configure_cluster,
 )
+from kubescope.dialogs.changelog_dialog import ChangelogDialog
 from kubescope.dialogs.theme_editor import ThemeEditor
 from kubescope.dialogs.update_dialog import UpdateDialog
 from kubescope.i18n import apply_language, language_choices
@@ -857,6 +858,7 @@ class WorkloadWindow(QMainWindow):
         self.ui.updateButton.customContextMenuRequested.connect(self._show_update_menu)
         self.ui.githubLink.clicked.connect(self._open_project)
         self.ui.licenseLink.clicked.connect(self._open_license)
+        self.ui.footerVersion.clicked.connect(self._show_changelog)
         self.ui.companyLink.clicked.connect(self._open_company)
 
         self._spinner_angle = 0
@@ -1738,6 +1740,9 @@ class WorkloadWindow(QMainWindow):
 
     def _open_company(self) -> None:
         QDesktopServices.openUrl(QUrl(COMPANY_URL))
+
+    def _show_changelog(self) -> None:
+        ChangelogDialog(self).exec()
 
     def _open_license(self) -> None:
         QDesktopServices.openUrl(QUrl(LICENSE_URL))

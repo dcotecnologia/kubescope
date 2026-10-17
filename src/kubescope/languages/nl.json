@@ -2,6 +2,18 @@
     "name": "Nederlands",
     "rtl": false,
     "strings": {
+        "ChangelogDialog": {
+            "ADDED": "TOEGEVOEGD",
+            "CHANGED": "GEWIJZIGD",
+            "Changelog": "Wijzigingslogboek",
+            "Close": "Sluiten",
+            "FIXED": "OPGELOST",
+            "INSTALLED": "GEÏNSTALLEERD",
+            "Open the releases on GitHub": "De releases op GitHub openen",
+            "REMOVED": "VERWIJDERD",
+            "SECURITY": "BEVEILIGING",
+            "The changelog is not available in this installation.": "Het wijzigingslogboek is niet beschikbaar in deze installatie."
+        },
         "Errors": {
             "Access denied": "Toegang geweigerd",
             "Authentication failed": "Authenticatie mislukt",
@@ -122,6 +134,7 @@
             "STATUS": "STATUS",
             "Search by name or namespace...": "Zoeken op naam of namespace...",
             "Secrets": "Secrets",
+            "See what changed in each version": "Bekijk wat er in elke versie is veranderd",
             "Select a context to load workloads": "Selecteer een context om workloads te laden",
             "Services": "Services",
             "Settings": "Instellingen",

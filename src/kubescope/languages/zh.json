@@ -2,6 +2,18 @@
     "name": "中文",
     "rtl": false,
     "strings": {
+        "ChangelogDialog": {
+            "ADDED": "新增",
+            "CHANGED": "变更",
+            "Changelog": "更新日志",
+            "Close": "关闭",
+            "FIXED": "修复",
+            "INSTALLED": "已安装",
+            "Open the releases on GitHub": "在 GitHub 上打开发布页",
+            "REMOVED": "移除",
+            "SECURITY": "安全",
+            "The changelog is not available in this installation.": "此安装中没有更新日志。"
+        },
         "Errors": {
             "Access denied": "访问被拒绝",
             "Authentication failed": "身份验证失败",
@@ -122,6 +134,7 @@
             "STATUS": "状态",
             "Search by name or namespace...": "按名称或 namespace 搜索...",
             "Secrets": "Secrets",
+            "See what changed in each version": "查看每个版本的变化",
             "Select a context to load workloads": "选择上下文以加载 workloads",
             "Services": "Services",
             "Settings": "设置",

@@ -2,6 +2,18 @@
     "name": "Italiano",
     "rtl": false,
     "strings": {
+        "ChangelogDialog": {
+            "ADDED": "AGGIUNTO",
+            "CHANGED": "MODIFICATO",
+            "Changelog": "Registro delle modifiche",
+            "Close": "Chiudi",
+            "FIXED": "CORRETTO",
+            "INSTALLED": "INSTALLATA",
+            "Open the releases on GitHub": "Apri le release su GitHub",
+            "REMOVED": "RIMOSSO",
+            "SECURITY": "SICUREZZA",
+            "The changelog is not available in this installation.": "Il registro delle modifiche non è disponibile in questa installazione."
+        },
         "Errors": {
             "Access denied": "Accesso negato",
             "Authentication failed": "Autenticazione non riuscita",
@@ -122,6 +134,7 @@
             "STATUS": "STATO",
             "Search by name or namespace...": "Cerca per nome o namespace...",
             "Secrets": "Secrets",
+            "See what changed in each version": "Vedi cosa è cambiato in ogni versione",
             "Select a context to load workloads": "Seleziona un contesto per caricare i workload",
             "Services": "Service",
             "Settings": "Impostazioni",
