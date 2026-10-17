@@ -24,6 +24,7 @@ DEFAULTS: dict[str, Any] = {
     "pinned_views": [],
     "debug_logging": False,
     "check_updates": True,
+    "write_mode": False,
     "welcome_dismissed": False,
     "window_geometry": "",
     "kubeconfig_files": [],
@@ -211,6 +212,16 @@ class Settings:
     @check_updates.setter
     def check_updates(self, value: bool) -> None:
         self._data["check_updates"] = bool(value)
+
+    @property
+    def write_mode(self) -> bool:
+        """True when the person allowed the actions that change a cluster; off
+        unless the setting is exactly true."""
+        return self._data["write_mode"] is True
+
+    @write_mode.setter
+    def write_mode(self, value: bool) -> None:
+        self._data["write_mode"] = bool(value)
 
     @property
     def welcome_dismissed(self) -> bool:

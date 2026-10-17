@@ -259,3 +259,17 @@ def test_welcome_dismissed_defaults_off_and_persists(tmp_path) -> None:
 
     path.write_text('{"welcome_dismissed": "yes"}', encoding="utf-8")
     assert Settings(path).welcome_dismissed is False  # only a real true counts
+
+
+def test_write_mode_is_off_by_default_and_only_true_turns_it_on(tmp_path) -> None:
+    path = tmp_path / "settings.json"
+    settings = Settings(path)
+    assert settings.write_mode is False
+
+    settings.write_mode = True
+    settings.save()
+    assert Settings(path).write_mode is True
+
+    for stored in ('"yes"', "1", "null"):
+        path.write_text(f'{{"write_mode": {stored}}}', encoding="utf-8")
+        assert Settings(path).write_mode is False

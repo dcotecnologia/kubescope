@@ -25,7 +25,6 @@ from kubernetes.config.config_exception import ConfigException
 from kubernetes.config.kube_config import ConfigNode, KubeConfigMerger
 from urllib3.exceptions import HTTPError
 
-from kubescope.errors import first_line, is_auth_error
 from kubescope.models import (
     BAD_STATUSES,
     OK_STATUSES,
@@ -43,6 +42,7 @@ from kubescope.models import (
     parse_cpu,
     parse_memory,
 )
+from kubescope.utils.errors import first_line, is_auth_error
 
 logger = logging.getLogger(__name__)
 
