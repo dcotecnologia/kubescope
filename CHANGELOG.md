@@ -6,7 +6,7 @@ All notable changes to this project will be documented in this file. The format 
 
 ### Changed
 
-- Python 3.15 is supported: the tests run on 3.12 to 3.15 in CI and `requires-python` is `>=3.12,<3.16`; the releases are still built on 3.12 by @danilogco
+- Python 3.15 is supported: the tests run on 3.12 to 3.15 in CI and `requires-python` is `>=3.12,<3.16`; the releases are built on 3.15 by @danilogco
 
 ## [0.7.1] - 2026-10-19
 
