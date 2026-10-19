@@ -72,7 +72,7 @@ Golden rule:
 
 - Write code that reads like the surrounding code: match its naming, comment
   density, and idioms.
-- Target Python 3.12+ (CI runs 3.12 to 3.15; releases are built with 3.15). Do not use APIs deprecated in 3.14.
+- Target Python 3.12+ (CI runs 3.12 to 3.15; releases are built with 3.12). Do not use APIs deprecated in 3.14.
 - Prefer simple functions and dataclasses over class hierarchies. Use classes
   only where Qt requires them (widgets, `QThread` workers).
 - Tests are plain `pytest` functions; avoid test classes unless clearly needed.
