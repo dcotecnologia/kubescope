@@ -40,6 +40,10 @@ Keep the layers separate and the dependency direction one-way
   - Qt pieces apart from the main window: dialogs (`theme_editor`, `update_dialog`) and tab or widget views (`log_tab`, `widgets`).
 - `src/kubescope/utils/`
   - Helpers with no place of their own: `errors`, `diagnostics`, `fonts`, `json_view`, `log_view`, `updates` and `selfupdate`.
+- `src/kubescope/utils/crashreport.py` and `src/kubescope/dialogs/crash_dialog.py`
+  - The crash report: `utils/crashreport.py` (no Qt) keeps the last INFO records in
+    memory, writes a report when an exception escapes and builds the issue link;
+    `dialogs/crash_dialog.py` shows the report on the next start. Nothing is sent.
 - `src/kubescope/utils/updates.py`
   - The update check against GitHub's public API. No Qt; it never raises.
 - `src/kubescope/utils/selfupdate.py` and `src/kubescope/dialogs/update_dialog.py`

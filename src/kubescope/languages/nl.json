@@ -14,6 +14,13 @@
             "SECURITY": "BEVEILIGING",
             "The changelog is not available in this installation.": "Het wijzigingslogboek is niet beschikbaar in deze installatie."
         },
+        "CrashReportDialog": {
+            "Copy report": "Rapport kopiëren",
+            "Discard": "Negeren",
+            "KubeScope found an error": "KubeScope heeft een fout gevonden",
+            "KubeScope hit an unexpected error the last time it ran. This report stayed on your computer and was not sent anywhere. Read it, since it can include context names and paths, then choose what to do.": "KubeScope kreeg de vorige keer een onverwachte fout. Dit rapport is op uw computer gebleven en nergens naartoe verzonden. Lees het, want het kan contextnamen en paden bevatten, en kies wat u wilt doen.",
+            "Open an issue on GitHub": "Een issue openen op GitHub"
+        },
         "Errors": {
             "Access denied": "Toegang geweigerd",
             "Authentication failed": "Authenticatie mislukt",

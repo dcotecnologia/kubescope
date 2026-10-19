@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+### Added
+
+- An error that escapes unhandled, in the main thread or in another one, is saved as a crash report on your computer (the build, the system, the stack trace, the first line of the message and the recent log records, with secrets scrubbed), even with Debug mode off; the next start shows it and lets you open a pre-filled GitHub issue, copy it or discard it, and nothing is sent by the app by @danilogco
+
 ## [0.8.0] - 2026-10-19
 
 ### Changed

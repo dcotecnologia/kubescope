@@ -14,6 +14,13 @@
             "SECURITY": "KEAMANAN",
             "The changelog is not available in this installation.": "Catatan perubahan tidak tersedia di instalasi ini."
         },
+        "CrashReportDialog": {
+            "Copy report": "Salin laporan",
+            "Discard": "Buang",
+            "KubeScope found an error": "KubeScope menemukan kesalahan",
+            "KubeScope hit an unexpected error the last time it ran. This report stayed on your computer and was not sent anywhere. Read it, since it can include context names and paths, then choose what to do.": "KubeScope mengalami kesalahan tak terduga saat terakhir dijalankan. Laporan ini tetap ada di komputer Anda dan tidak dikirim ke mana pun. Bacalah, karena dapat berisi nama konteks dan jalur, lalu pilih apa yang akan dilakukan.",
+            "Open an issue on GitHub": "Buka issue di GitHub"
+        },
         "Errors": {
             "Access denied": "Akses ditolak",
             "Authentication failed": "Autentikasi gagal",

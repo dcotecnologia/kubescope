@@ -5,6 +5,7 @@ from kubescope.settings import Settings
 def _capture_logging(monkeypatch) -> list:
     calls = []
     monkeypatch.setattr(app, "configure_logging", lambda **kwargs: calls.append(kwargs))
+    monkeypatch.setattr(app.crashreport, "install", lambda: None)
     return calls
 
 
@@ -146,3 +147,53 @@ def test_main_records_the_runtime_and_the_input_when_debugging(monkeypatch) -> N
     app.main()
 
     assert events == ["runtime", "input"]
+
+
+def test_main_installs_the_crash_hooks_and_offers_the_pending_report(
+    monkeypatch,
+) -> None:
+    events = []
+
+    class FakeApplication:
+        def __init__(self, _arguments) -> None:
+            pass
+
+        def setApplicationName(self, _name) -> None:
+            pass
+
+        def setWindowIcon(self, _icon) -> None:
+            pass
+
+        def exec(self) -> int:
+            return 0
+
+    class FakeWindow:
+        def __init__(self, _settings) -> None:
+            pass
+
+        def show(self) -> None:
+            pass
+
+        def start_update_check(self) -> None:
+            pass
+
+        def show_welcome(self) -> None:
+            events.append("welcome")
+
+    monkeypatch.delenv(app.DEBUG_ENV, raising=False)
+    _capture_logging(monkeypatch)
+    monkeypatch.setattr(app.crashreport, "install", lambda: events.append("hooks"))
+    monkeypatch.setattr(app, "QApplication", FakeApplication)
+    monkeypatch.setattr(app, "load_app_icon", lambda: "icon")
+    monkeypatch.setattr(app, "apply_fonts", lambda _app: None)
+    monkeypatch.setattr(app, "apply_theme", lambda _app, _name: None)
+    monkeypatch.setattr(app, "apply_language", lambda _code: None)
+    monkeypatch.setattr(app, "install_bundled_themes", lambda: None)
+    monkeypatch.setattr(app, "WorkloadWindow", FakeWindow)
+    monkeypatch.setattr(
+        app, "show_pending_crash_report", lambda _window: events.append("report")
+    )
+
+    app.main()
+
+    assert events == ["hooks", "report", "welcome"]

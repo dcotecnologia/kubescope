@@ -14,6 +14,13 @@
             "SECURITY": "GÜVENLİK",
             "The changelog is not available in this installation.": "Değişiklik günlüğü bu kurulumda yok."
         },
+        "CrashReportDialog": {
+            "Copy report": "Raporu kopyala",
+            "Discard": "Yok say",
+            "KubeScope found an error": "KubeScope bir hata buldu",
+            "KubeScope hit an unexpected error the last time it ran. This report stayed on your computer and was not sent anywhere. Read it, since it can include context names and paths, then choose what to do.": "KubeScope son çalıştırıldığında beklenmeyen bir hatayla karşılaştı. Bu rapor bilgisayarınızda kaldı ve hiçbir yere gönderilmedi. Bağlam adları ve yollar içerebileceği için okuyun, ardından ne yapacağınızı seçin.",
+            "Open an issue on GitHub": "GitHub'da bir issue aç"
+        },
         "Errors": {
             "Access denied": "Erişim reddedildi",
             "Authentication failed": "Kimlik doğrulama başarısız",

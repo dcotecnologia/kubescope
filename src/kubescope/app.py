@@ -9,9 +9,11 @@ from PySide6.QtGui import QIcon, QPixmap
 from PySide6.QtWidgets import QApplication
 
 import kubescope
+from kubescope.dialogs.crash_dialog import show_pending_crash_report
 from kubescope.i18n import apply_language
 from kubescope.settings import Settings
 from kubescope.theme import apply_theme, install_bundled_themes
+from kubescope.utils import crashreport
 from kubescope.utils.diagnostics import (
     CRASH_FILE,
     LOG_FILE,
@@ -73,6 +75,7 @@ def main() -> int:
     settings = Settings()
     debugging = configure_debug(settings)
     start_log_purge(settings)
+    crashreport.install()
     logger.info("Starting KubeScope")
     application = QApplication(sys.argv)
     application.setApplicationName("KubeScope")
@@ -87,6 +90,7 @@ def main() -> int:
     window = WorkloadWindow(settings)
     window.show()
     window.start_update_check()
+    show_pending_crash_report(window)
     window.show_welcome()
     exit_code = application.exec()
     logger.info("KubeScope stopped (exit code %s)", exit_code)

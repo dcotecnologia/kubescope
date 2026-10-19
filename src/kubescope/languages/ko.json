@@ -14,6 +14,13 @@
             "SECURITY": "보안",
             "The changelog is not available in this installation.": "이 설치본에는 변경 내역이 없습니다."
         },
+        "CrashReportDialog": {
+            "Copy report": "보고서 복사",
+            "Discard": "삭제",
+            "KubeScope found an error": "KubeScope에서 오류를 발견했습니다",
+            "KubeScope hit an unexpected error the last time it ran. This report stayed on your computer and was not sent anywhere. Read it, since it can include context names and paths, then choose what to do.": "지난번 실행 중 KubeScope에서 예기치 않은 오류가 발생했습니다. 이 보고서는 컴퓨터에 남아 있으며 어디에도 전송되지 않았습니다. 컨텍스트 이름과 경로가 포함될 수 있으니 읽어 본 뒤 어떻게 할지 선택하세요.",
+            "Open an issue on GitHub": "GitHub에서 이슈 열기"
+        },
         "Errors": {
             "Access denied": "접근이 거부되었습니다",
             "Authentication failed": "인증에 실패했습니다",

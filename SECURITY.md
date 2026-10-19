@@ -135,6 +135,28 @@ prefer otherwise.
 - **Read it before sharing**, since scrubbing patterns cannot catch everything.
   The log is never sent anywhere by the app.
 
+## The crash report
+
+- **Always on, in memory and on your disk only.** Even with Debug mode off, the app
+  keeps the last 200 records of level INFO and above (milestones and warnings, such
+  as the context you opened or a sign-in check; never the per-request DEBUG detail)
+  in memory, and nothing else is written. When an exception escapes unhandled, in
+  the main thread or in another one, it writes one file, `crash-report.txt`, in the
+  `logs` folder next to `settings.json`, replacing the earlier one. Appending a
+  record costs next to nothing, and the text is only built when a report is written.
+- **What it holds:** the app, Python, Qt and system versions, the stack trace, the
+  **first line** of the error message only (an error from the cluster can quote what
+  it was reading), and those recent records, scrubbed like the debug log. They can
+  include context names (often an EKS ARN with the account id), namespaces and, in
+  the trace, paths with your user name. It never holds Pod logs, resource contents,
+  typed text or credentials.
+- **Nothing is sent by the app.** On the next start a window shows the report in
+  full. **Open an issue on GitHub** opens your browser on the project's new-issue page
+  with the start of the report in the address (you read it and press submit there),
+  **Copy report** puts it on the clipboard, and **Discard** drops it. The file is
+  deleted when the window closes.
+- **Read it before sharing**, since scrubbing patterns cannot catch everything.
+
 ## Recommendations for users
 
 - Use a read-only Kubernetes role for the contexts you open in KubeScope, and turn

@@ -26,6 +26,7 @@ SOURCES = [
             "views/log_tab.py",
             "utils/errors.py",
             "dialogs/changelog_dialog.py",
+            "dialogs/crash_dialog.py",
             "dialogs/update_dialog.py",
         )
     ),
