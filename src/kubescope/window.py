@@ -1,6 +1,5 @@
 import dataclasses
 import html
-import json
 import logging
 import math
 import tempfile
@@ -77,6 +76,7 @@ from kubescope.cluster import (
     get_cluster_info,
     get_cluster_overview,
     get_pod_logs,
+    get_pod_usage,
     get_pods,
     get_resource_details,
     get_resources,
@@ -113,7 +113,6 @@ from kubescope.models import (
     pod_highlight,
     pod_sort_key,
     resource_sort_key,
-    safe_file_name,
     workload_sort_key,
 )
 from kubescope.settings import Settings, log_directory
@@ -147,9 +146,10 @@ from kubescope.utils.errors import (
     is_forbidden,
 )
 from kubescope.utils.fonts import code_font
-from kubescope.utils.json_view import restyle, style_json_view
+from kubescope.utils.json_view import restyle
 from kubescope.utils.selfupdate import detect_install, restart
 from kubescope.utils.updates import Release, UpdateCheck, check_for_update
+from kubescope.views.detail_tab import USAGE_REFRESH_MS, DetailTab
 from kubescope.views.log_tab import LOG_REFRESH_MS, LogTab
 from kubescope.writes import (
     MAX_REPLICAS,
@@ -1792,7 +1792,8 @@ class WorkloadWindow(QMainWindow):
                 tab.ui.refreshButton.setIcon(_nav_icon("reload", accent))
                 restyle(tab.ui.logText, tab.highlighter)
             else:
-                restyle(tab, tab.highlighter)
+                restyle(tab.editor, tab.highlighter)
+                tab.restyle()
         self._render_rows()
         if self._overview is not None:
             self._render_overview(self._overview)
@@ -3083,7 +3084,7 @@ class WorkloadWindow(QMainWindow):
         self._run_action(
             get_resource_details,
             lambda result: self._show_json_dialog(
-                self.tr("Pod: {name}").format(name=pod.name), result
+                self.tr("Pod: {name}").format(name=pod.name), result, pod
             ),
             self._context(),
             "Pod",
@@ -3175,7 +3176,7 @@ class WorkloadWindow(QMainWindow):
             self._run_action(
                 get_resource_details,
                 lambda result: self._show_json_dialog(
-                    self.tr("Pod: {name}").format(name=pod.name), result
+                    self.tr("Pod: {name}").format(name=pod.name), result, pod
                 ),
                 self._context(),
                 "Pod",
@@ -3625,7 +3626,7 @@ class WorkloadWindow(QMainWindow):
         tab = self.viewer_tabs.currentWidget()
         if tab is None:
             return
-        editor = tab.ui.logText if isinstance(tab, LogTab) else tab
+        editor = tab.ui.logText if isinstance(tab, LogTab) else tab.editor
         path, _filter = QFileDialog.getSaveFileName(
             self,
             self.tr("Save to a file"),
@@ -3647,17 +3648,6 @@ class WorkloadWindow(QMainWindow):
             return
         logger.info("Saved a tab to a file")
 
-    def _open_text_tab(self, title: str, text: str) -> None:
-        """Show read-only JSON in a new closable tab of the viewer page."""
-        editor = QPlainTextEdit()
-        editor.setReadOnly(True)
-        editor.setFont(code_font())
-        editor.setLineWrapMode(QPlainTextEdit.LineWrapMode.NoWrap)
-        editor.highlighter = style_json_view(editor)  # kept alive with the editor
-        editor.save_name = safe_file_name(title, ".json")
-        editor.setPlainText(text)
-        self._add_viewer_tab(editor, title)
-
     def _add_viewer_tab(self, widget: QWidget, title: str) -> None:
         index = self.viewer_tabs.addTab(widget, title)
         self.viewer_tabs.setTabToolTip(index, title)
@@ -3667,15 +3657,60 @@ class WorkloadWindow(QMainWindow):
     def _close_viewer_tab(self, index: int) -> None:
         editor = self.viewer_tabs.widget(index)
         self.viewer_tabs.removeTab(index)
-        if isinstance(editor, LogTab):
+        if isinstance(editor, LogTab | DetailTab):
             editor.closed = True
         editor.deleteLater()
         if self.viewer_tabs.count() == 0 and self.pages.currentIndex() == 3:
             self._show_page(1)
         self._render_pinned()
 
-    def _show_json_dialog(self, title: str, document: dict[str, Any]) -> None:
-        self._open_text_tab(title, json.dumps(document, ensure_ascii=False, indent=2))
+    def _show_json_dialog(
+        self, title: str, document: dict[str, Any], pod: PodInfo | None = None
+    ) -> None:
+        """Open the details of a resource in a tab; a Pod's also follow its
+        live CPU and memory."""
+        tab = DetailTab(title, document, live_usage=pod is not None)
+        if pod is not None:
+            timer = QTimer(tab)
+            timer.setInterval(USAGE_REFRESH_MS)
+            timer.timeout.connect(lambda: self._refresh_usage(tab, pod))
+            timer.start()
+        self._add_viewer_tab(tab, title)
+        if pod is not None:
+            self._refresh_usage(tab, pod, True)
+
+    def _refresh_usage(self, tab: DetailTab, pod: PodInfo, force: bool = False) -> None:
+        """Take a usage sample quietly; skipped while the tab is not on
+        screen."""
+        if tab.closed or tab.busy:
+            return
+        if not force:
+            on_screen = (
+                self.pages.currentIndex() == 3
+                and self.viewer_tabs.currentWidget() is tab
+                and self.isVisible()
+            )
+            if not on_screen:
+                return
+        tab.busy = True
+
+        def done(result: tuple[float, float] | None) -> None:
+            tab.busy = False
+            if not tab.closed:
+                tab.add_usage(result)
+
+        def failed(_message: str) -> None:
+            tab.busy = False
+
+        self._run_action(
+            get_pod_usage,
+            done,
+            self._context(),
+            pod.namespace,
+            pod.name,
+            on_error=failed,
+            quiet=True,
+        )
 
     def _show_logs_dialog(self, pod: PodInfo, container: str, logs: str) -> None:
         tab = LogTab(self._context(), pod, container)

@@ -21,6 +21,19 @@
             "KubeScope hit an unexpected error the last time it ran. This report stayed on your computer and was not sent anywhere. Read it, since it can include context names and paths, then choose what to do.": "Під час минулого запуску в KubeScope сталася непередбачена помилка. Цей звіт залишився на вашому комп'ютері й нікуди не надсилався. Прочитайте його, бо він може містити імена контекстів і шляхи, та оберіть, що робити.",
             "Open an issue on GitHub": "Відкрити issue на GitHub"
         },
+        "DetailTab": {
+            "CPU": "CPU",
+            "Data": "Дані",
+            "Live usage from the Kubernetes Metrics Server": "Використання в реальному часі з Kubernetes Metrics Server",
+            "Live usage needs metrics-server in the cluster.": "Для даних у реальному часі в кластері потрібен metrics-server.",
+            "Memory": "Пам'ять",
+            "Metrics": "Метрики",
+            "Overview": "Огляд",
+            "Properties": "Властивості",
+            "Raw JSON": "Необроблений JSON",
+            "Spec": "Spec",
+            "Status": "Статус"
+        },
         "Errors": {
             "Access denied": "Доступ заборонено",
             "Authentication failed": "Помилка автентифікації",

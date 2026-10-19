@@ -21,6 +21,19 @@
             "KubeScope hit an unexpected error the last time it ran. This report stayed on your computer and was not sent anywhere. Read it, since it can include context names and paths, then choose what to do.": "पिछली बार चलने पर KubeScope में एक अप्रत्याशित त्रुटि हुई। यह रिपोर्ट आपके कंप्यूटर पर ही रही और कहीं नहीं भेजी गई। इसे पढ़ें, क्योंकि इसमें कॉन्टेक्स्ट के नाम और पथ हो सकते हैं, फिर तय करें कि क्या करना है।",
             "Open an issue on GitHub": "GitHub पर issue खोलें"
         },
+        "DetailTab": {
+            "CPU": "CPU",
+            "Data": "डेटा",
+            "Live usage from the Kubernetes Metrics Server": "Kubernetes Metrics Server से लाइव उपयोग",
+            "Live usage needs metrics-server in the cluster.": "लाइव उपयोग के लिए क्लस्टर में metrics-server चाहिए।",
+            "Memory": "मेमोरी",
+            "Metrics": "मेट्रिक्स",
+            "Overview": "अवलोकन",
+            "Properties": "गुण",
+            "Raw JSON": "रॉ JSON",
+            "Spec": "Spec",
+            "Status": "स्थिति"
+        },
         "Errors": {
             "Access denied": "पहुँच अस्वीकृत",
             "Authentication failed": "प्रमाणीकरण विफल",

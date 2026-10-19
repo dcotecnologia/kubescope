@@ -21,6 +21,19 @@
             "KubeScope hit an unexpected error the last time it ran. This report stayed on your computer and was not sent anywhere. Read it, since it can include context names and paths, then choose what to do.": "ครั้งที่แล้วที่ทำงาน KubeScope พบข้อผิดพลาดที่ไม่คาดคิด รายงานนี้อยู่ในคอมพิวเตอร์ของคุณและไม่ได้ถูกส่งไปที่ใด โปรดอ่านก่อนเพราะอาจมีชื่อบริบทและเส้นทางไฟล์ แล้วเลือกว่าจะทำอย่างไร",
             "Open an issue on GitHub": "เปิด issue บน GitHub"
         },
+        "DetailTab": {
+            "CPU": "CPU",
+            "Data": "ข้อมูล",
+            "Live usage from the Kubernetes Metrics Server": "การใช้งานแบบเรียลไทม์จาก Kubernetes Metrics Server",
+            "Live usage needs metrics-server in the cluster.": "การใช้งานแบบเรียลไทม์ต้องมี metrics-server ในคลัสเตอร์",
+            "Memory": "หน่วยความจำ",
+            "Metrics": "เมตริก",
+            "Overview": "ภาพรวม",
+            "Properties": "คุณสมบัติ",
+            "Raw JSON": "JSON ดิบ",
+            "Spec": "Spec",
+            "Status": "สถานะ"
+        },
         "Errors": {
             "Access denied": "ปฏิเสธการเข้าถึง",
             "Authentication failed": "การยืนยันตัวตนล้มเหลว",

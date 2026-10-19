@@ -21,6 +21,19 @@
             "KubeScope hit an unexpected error the last time it ran. This report stayed on your computer and was not sent anywhere. Read it, since it can include context names and paths, then choose what to do.": "KubeScope mengalami kesalahan tak terduga saat terakhir dijalankan. Laporan ini tetap ada di komputer Anda dan tidak dikirim ke mana pun. Bacalah, karena dapat berisi nama konteks dan jalur, lalu pilih apa yang akan dilakukan.",
             "Open an issue on GitHub": "Buka issue di GitHub"
         },
+        "DetailTab": {
+            "CPU": "CPU",
+            "Data": "Data",
+            "Live usage from the Kubernetes Metrics Server": "Penggunaan langsung dari Kubernetes Metrics Server",
+            "Live usage needs metrics-server in the cluster.": "Penggunaan langsung memerlukan metrics-server di klaster.",
+            "Memory": "Memori",
+            "Metrics": "Metrik",
+            "Overview": "Ikhtisar",
+            "Properties": "Properti",
+            "Raw JSON": "JSON mentah",
+            "Spec": "Spec",
+            "Status": "Status"
+        },
         "Errors": {
             "Access denied": "Akses ditolak",
             "Authentication failed": "Autentikasi gagal",
