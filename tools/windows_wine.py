@@ -17,7 +17,7 @@ from urllib.request import urlopen
 
 ROOT = Path(__file__).resolve().parents[1]
 PREFIX = ROOT / ".wine"
-PYTHON_VERSION = "3.15.0"
+PYTHON_VERSION = "3.12.10"
 PYTHON_URL = (
     f"https://www.python.org/ftp/python/{PYTHON_VERSION}/"
     f"python-{PYTHON_VERSION}-amd64.exe"
@@ -82,7 +82,7 @@ def ensure_python() -> str:
         )
     if not python.is_file():
         raise SystemExit("Could not install Python in the Wine prefix.")
-    # Wine 9 lacks CopyFile2, which shutil uses on Python 3.12+; hiding it makes
+    # Wine 9 lacks CopyFile2, which shutil uses on Python 3.12; hiding it makes
     # shutil fall back to its portable copy.
     (python.parent / "Lib" / "site-packages" / "sitecustomize.py").write_text(
         "import _winapi\n"

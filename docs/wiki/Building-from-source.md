@@ -26,7 +26,7 @@ list is short.
 | `git` | the source and the pre-commit hooks |
 | `make` | the commands above |
 | [`uv`](https://docs.astral.sh/uv/) | it makes the virtual environment, installs the dependencies and finds Python |
-| Python 3.12 or newer | `uv` fetches it for you; CI tests 3.12 to 3.15, releases are built with 3.15, and the pre-commit hooks are set to 3.12 (`uv python install 3.12`) |
+| Python 3.12 or newer | `uv` fetches it for you; CI tests 3.12 to 3.15, releases are built with 3.12, and the pre-commit hooks are set to 3.12 (`uv python install 3.12`) |
 | A network connection | the first `make setup`, and `uv run pre-commit run` download things; pre-commit installs its own Go and Node for `gitleaks` and `markdownlint` |
 | `libxcb-cursor.so.0` on Linux | Qt needs it to open a window. On Debian and Ubuntu `make run` fetches it for you with `apt-get download libxcb-cursor0`; on other distributions install the package that provides it |
 

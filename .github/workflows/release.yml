@@ -33,7 +33,7 @@ jobs:
 
       - uses: astral-sh/setup-uv@v10.3.0
         with:
-          python-version: "3.15"
+          python-version: "3.12"
           enable-cache: true
 
       - name: Install dependencies
@@ -76,7 +76,7 @@ jobs:
 
       - uses: astral-sh/setup-uv@v10.3.0
         with:
-          python-version: "3.15"
+          python-version: "3.12"
           enable-cache: true
 
       - name: Install dependencies
