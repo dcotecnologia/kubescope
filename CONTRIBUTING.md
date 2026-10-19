@@ -40,7 +40,7 @@ make i18n     # leaves no untranslated texts in src/kubescope/languages
 ```
 
 CI runs the same pre-commit hooks, the generated-UI check, and the tests on
-Python 3.12 and 3.14. A pull request must be green.
+Python 3.12 to 3.15. A pull request must be green.
 
 ## Commit messages
 
