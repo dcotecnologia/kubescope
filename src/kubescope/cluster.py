@@ -1117,26 +1117,35 @@ def _pod_owner(metadata: dict[str, Any]) -> tuple[str, str] | None:
     return None
 
 
+def _namespace_scope(namespace: str | None) -> str:
+    return f"/namespaces/{quote(namespace, safe='')}" if namespace else ""
+
+
+def _sum_usage(item: dict[str, Any]) -> tuple[float, float]:
+    """The CPU cores and memory bytes of all containers of a PodMetrics."""
+    cpu = memory = 0.0
+    for container in item.get("containers") or []:
+        container_usage = container.get("usage") or {}
+        cpu += parse_cpu(container_usage.get("cpu"))
+        memory += parse_memory(container_usage.get("memory"))
+    return cpu, memory
+
+
 def _pod_metrics(
     context: str, namespace: str | None
 ) -> dict[tuple[str, str], tuple[float, float]] | None:
     """Live (cores, bytes) per Pod; None when metrics-server is unavailable."""
-    scope = f"/namespaces/{quote(namespace, safe='')}" if namespace else ""
     try:
-        document = _get_json(f"{_METRICS_PATH}{scope}/pods", context)
+        document = _get_json(
+            f"{_METRICS_PATH}{_namespace_scope(namespace)}/pods", context
+        )
     except ClusterError:
         return None
     usage: dict[tuple[str, str], tuple[float, float]] = {}
     for item in document.get("items", []):
         metadata = item.get("metadata") or {}
-        cpu = memory = 0.0
-        for container in item.get("containers") or []:
-            container_usage = container.get("usage") or {}
-            cpu += parse_cpu(container_usage.get("cpu"))
-            memory += parse_memory(container_usage.get("memory"))
         usage[(metadata.get("namespace") or "default", metadata.get("name", ""))] = (
-            cpu,
-            memory,
+            _sum_usage(item)
         )
     return usage
 
@@ -1968,3 +1977,19 @@ def get_workloads_overview(context: str) -> WorkloadsOverview:
         events=tuple(event for _seen, event in events),
         unreadable=tuple(errors),
     )
+
+
+def get_pod_usage(
+    context: str, namespace: str, pod_name: str
+) -> tuple[float, float] | None:
+    """Live (cores, bytes) of one Pod, or None without metrics-server (or when
+    the Pod has no sample yet)."""
+    try:
+        item = _get_json(
+            f"{_METRICS_PATH}{_namespace_scope(namespace)}/pods/"
+            f"{quote(pod_name, safe='')}",
+            context,
+        )
+    except ClusterError:
+        return None
+    return _sum_usage(item)

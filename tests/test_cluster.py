@@ -2532,3 +2532,23 @@ def test_get_cluster_info_tolerates_a_bare_answer(monkeypatch) -> None:
     info = cluster.get_cluster_info("ctx")
 
     assert (info.status, info.version, info.created, info.oidc_issuer) == ("—",) * 4
+
+
+def test_get_pod_usage_sums_the_containers_or_none_without_metrics(
+    monkeypatch,
+) -> None:
+    paths = []
+
+    def fake_get_json(path: str, context: str, query=None) -> dict:
+        paths.append(path)
+        return {"containers": [{"usage": {"cpu": "100m", "memory": "64Mi"}}] * 2}
+
+    monkeypatch.setattr(cluster, "_get_json", fake_get_json)
+    assert cluster.get_pod_usage("ctx", "ns", "api 1") == (0.2, 128 * 2**20)
+    assert paths == ["/apis/metrics.k8s.io/v1beta1/namespaces/ns/pods/api%201"]
+
+    def unavailable(*_a, **_k) -> dict:
+        raise cluster.ClusterError("no metrics")
+
+    monkeypatch.setattr(cluster, "_get_json", unavailable)
+    assert cluster.get_pod_usage("ctx", "ns", "api") is None
