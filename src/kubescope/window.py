@@ -1792,6 +1792,7 @@ class WorkloadWindow(QMainWindow):
                 tab.ui.refreshButton.setIcon(_nav_icon("reload", accent))
                 restyle(tab.ui.logText, tab.highlighter)
             else:
+                assert isinstance(tab, DetailTab)
                 restyle(tab.editor, tab.highlighter)
                 tab.restyle()
         self._render_rows()
@@ -3626,7 +3627,11 @@ class WorkloadWindow(QMainWindow):
         tab = self.viewer_tabs.currentWidget()
         if tab is None:
             return
-        editor = tab.ui.logText if isinstance(tab, LogTab) else tab.editor
+        if isinstance(tab, LogTab):
+            editor = tab.ui.logText
+        else:
+            assert isinstance(tab, DetailTab)
+            editor = tab.editor
         path, _filter = QFileDialog.getSaveFileName(
             self,
             self.tr("Save to a file"),
