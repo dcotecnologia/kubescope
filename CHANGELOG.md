@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-10-19
+
 ### Changed
 
 - Python 3.15 is supported: the tests run on 3.12 to 3.15 in CI and `requires-python` is `>=3.12,<3.16`; the releases are built on 3.15 by @danilogco
@@ -183,7 +185,8 @@ The first release.
 
 - Pod logs and resource details are still never written to disk by the app on its own. **Save** is the only exception, and it writes only to the file the user chooses. SECURITY.md says so by @danilogco
 
-[Unreleased]: https://github.com/dcotecnologia/kubescope/compare/v0.7.1...HEAD
+[Unreleased]: https://github.com/dcotecnologia/kubescope/compare/v0.8.0...HEAD
+[0.8.0]: https://github.com/dcotecnologia/kubescope/compare/v0.7.1...v0.8.0
 [0.7.1]: https://github.com/dcotecnologia/kubescope/compare/v0.7.0...v0.7.1
 [0.7.0]: https://github.com/dcotecnologia/kubescope/compare/v0.6.2...v0.7.0
 [0.6.2]: https://github.com/dcotecnologia/kubescope/compare/v0.6.1...v0.6.2
