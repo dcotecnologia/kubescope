@@ -10,6 +10,7 @@ the file before sending it.
 import faulthandler
 import logging
 import logging.handlers
+import os
 import platform
 import re
 import subprocess
@@ -18,6 +19,10 @@ import time
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import IO
+
+from PySide6.QtCore import QEvent, QObject, Qt
+from PySide6.QtGui import QGuiApplication
+from PySide6.QtWidgets import QApplication
 
 import kubescope
 from kubescope.settings import log_directory
@@ -44,6 +49,26 @@ _SECRETS = (
         re.compile(r"\beyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]*"),
         "[redacted]",
     ),
+)
+
+# Native libraries whose version and origin explain a crash that Python cannot
+# show: the desktop ones a bundle may carry its own copy of, and Qt itself.
+_NATIVE_LIBRARIES = (
+    "libxkbcommon",
+    "libfontconfig",
+    "libfreetype",
+    "libharfbuzz",
+    "libglib-2.0",
+    "libgio-2.0",
+    "libdbus-1",
+    "libX11",
+    "libxcb.",
+    "libwayland-client",
+    "libEGL",
+    "libGL.",
+    "libQt6Core",
+    "libQt6XcbQpa",
+    "libQt6WaylandClient",
 )
 
 _logger = logging.getLogger("kubescope")
@@ -132,7 +157,106 @@ def describe_environment() -> list[str]:
         f"Python {platform.python_version()} on {platform.platform()}",
         f"PySide6 {pyside_version}, Qt {qVersion()}",
         f"Frozen bundle: {bool(getattr(sys, 'frozen', False))}",
+        *describe_desktop(),
     ]
+
+
+def describe_desktop() -> list[str]:
+    """The system and desktop session: a native crash often depends on them
+    (the display server, the distro, the Qt variables in the environment)."""
+    try:
+        system = platform.freedesktop_os_release().get("PRETTY_NAME", "unknown")
+    except OSError:
+        system = "unknown"
+    env = os.environ
+    qt = sorted(
+        f"{name}={value}" for name, value in env.items() if name.startswith("QT_")
+    )
+    return [
+        f"System: {system}",
+        f"Session: type={env.get('XDG_SESSION_TYPE', '-')}, "
+        f"desktop={env.get('XDG_CURRENT_DESKTOP', '-')}, "
+        f"DISPLAY={'set' if 'DISPLAY' in env else 'unset'}, "
+        f"WAYLAND_DISPLAY={'set' if 'WAYLAND_DISPLAY' in env else 'unset'}",
+        f"Qt environment: {'; '.join(qt) or 'none'}",
+    ]
+
+
+def native_libraries(maps: str = "/proc/self/maps") -> list[str]:
+    """Where each native library of interest was loaded from, and whether that
+    is the bundle or the system; empty where /proc is not available."""
+    try:
+        text = Path(maps).read_text(encoding="utf-8")
+    except OSError:
+        return []
+    bundle = getattr(sys, "_MEIPASS", None)
+
+    def origin(path: str) -> str:
+        return "bundle" if bundle and path.startswith(bundle) else "system"
+
+    found: dict[str, str] = {}
+    for line in text.splitlines():
+        fields = line.split(maxsplit=5)
+        if len(fields) == 6 and fields[5].startswith("/"):
+            found.setdefault(Path(fields[5]).name, fields[5])
+    return [
+        f"  {name} <- {path} ({origin(path)})"
+        for name, path in sorted(found.items())
+        if name.startswith(_NATIVE_LIBRARIES)
+    ]
+
+
+def describe_runtime() -> list[str]:
+    """What only exists once the application does: the platform plugin and
+    style Qt picked, and the native libraries it loaded.
+
+    A key press that crashes inside xkbcommon is explained by these
+    lines.
+    """
+    return [
+        f"Qt platform: {QGuiApplication.platformName()}, "
+        f"style: {QApplication.style().objectName()}",
+        "Native libraries:",
+        *native_libraries(),
+    ]
+
+
+def record_runtime() -> None:
+    """Put the runtime description in the log and in the crash log, beside the
+    header of this session."""
+    lines = describe_runtime()
+    if _crash_stream is not None:
+        _crash_stream.writelines(f"{line}\n" for line in lines)
+        _crash_stream.flush()
+    for line in lines:
+        _logger.info(line)
+
+
+class InputTrail(QObject):
+    """Log the keys that are not text (Ctrl, Shift, arrows, shortcuts) and the
+    widget that got them, so the last line of the log before a crash says what
+    the person had just done.
+
+    Typed characters are never recorded.
+    """
+
+    _EVENTS = {QEvent.Type.KeyPress: "pressed", QEvent.Type.KeyRelease: "released"}
+
+    def eventFilter(self, watched: QObject, event: QEvent) -> bool:
+        action = self._EVENTS.get(event.type())
+        text = event.text() if action else ""
+        if action and not (text and text.isprintable()):
+            _logger.debug(
+                "Key %s %s on %s",
+                Qt.Key(event.key()).name,
+                action,
+                type(watched).__name__,
+            )
+        return False
+
+
+def trace_input(application: QObject) -> None:
+    application.installEventFilter(InputTrail(application))
 
 
 def _write_crash_header(stream: IO[str]) -> None:

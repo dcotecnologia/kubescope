@@ -1,5 +1,6 @@
 import logging
 import logging.handlers
+import os
 
 import pytest
 
@@ -204,3 +205,119 @@ def test_a_log_that_cannot_be_deleted_is_reported(monkeypatch, caplog) -> None:
         diagnostics.purge_old_logs(max_age_days=-1)
 
     assert "Could not delete kubescope.log" in caplog.text
+
+
+def test_the_desktop_description_names_the_system_session_and_qt_variables(
+    monkeypatch,
+) -> None:
+    monkeypatch.setenv("XDG_SESSION_TYPE", "x11")
+    monkeypatch.setenv("QT_QPA_PLATFORM", "xcb")
+    monkeypatch.delenv("WAYLAND_DISPLAY", raising=False)
+    monkeypatch.setattr(
+        diagnostics.platform,
+        "freedesktop_os_release",
+        lambda: {"PRETTY_NAME": "Ubuntu"},
+    )
+
+    text = "\n".join(diagnostics.describe_desktop())
+
+    assert "System: Ubuntu" in text
+    assert "type=x11" in text and "WAYLAND_DISPLAY=unset" in text
+    assert "QT_QPA_PLATFORM=xcb" in text
+
+
+def test_the_desktop_description_survives_a_system_without_os_release(
+    monkeypatch,
+) -> None:
+    def missing():
+        raise OSError
+
+    monkeypatch.setattr(diagnostics.platform, "freedesktop_os_release", missing)
+    monkeypatch.setenv("DISPLAY", ":0")
+    for name in [n for n in os.environ if n.startswith("QT_")]:
+        monkeypatch.delenv(name)
+
+    text = "\n".join(diagnostics.describe_desktop())
+
+    assert "System: unknown" in text
+    assert "DISPLAY=set" in text and "Qt environment: none" in text
+
+
+def test_the_environment_description_includes_the_desktop() -> None:
+    assert any(
+        line.startswith("System: ") for line in diagnostics.describe_environment()
+    )
+
+
+def test_native_libraries_say_where_each_was_loaded_from(monkeypatch, tmp_path) -> None:
+    maps = tmp_path / "maps"
+    maps.write_text(
+        "7f00-7f10 r-xp 00000000 08:01 1 /opt/app/libxkbcommon.so.0\n"
+        "7f10-7f20 r-xp 00000000 08:01 1 /opt/app/libxkbcommon.so.0\n"
+        "7f20-7f30 r-xp 00000000 08:01 2 /lib/x86_64-linux-gnu/libfreetype.so.6\n"
+        "7f30-7f40 r-xp 00000000 08:01 3 /lib/x86_64-linux-gnu/libother.so.1\n"
+        "7f40-7f50 rw-p 00000000 00:00 0\n"
+        "7f50-7f60 rw-p 00000000 00:00 0 [heap]\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(diagnostics.sys, "_MEIPASS", "/opt/app", raising=False)
+
+    assert diagnostics.native_libraries(str(maps)) == [
+        "  libfreetype.so.6 <- /lib/x86_64-linux-gnu/libfreetype.so.6 (system)",
+        "  libxkbcommon.so.0 <- /opt/app/libxkbcommon.so.0 (bundle)",
+    ]
+
+
+def test_native_libraries_are_empty_without_proc(tmp_path) -> None:
+    assert diagnostics.native_libraries(str(tmp_path / "missing")) == []
+
+
+def test_the_runtime_goes_to_the_log_and_the_crash_log(caplog) -> None:
+    from PySide6.QtWidgets import QApplication
+
+    QApplication.instance() or QApplication([])
+    diagnostics.configure_logging(to_file=True)
+
+    diagnostics.record_runtime()
+
+    crash = (log_directory() / diagnostics.CRASH_FILE).read_text(encoding="utf-8")
+    assert "Qt platform: " in crash and "Native libraries:" in crash
+    diagnostics.configure_logging()
+    diagnostics.record_runtime()  # no crash file open: only the logger
+
+
+def test_the_input_trail_logs_keys_that_are_not_text_and_never_typed_text(
+    caplog,
+) -> None:
+    from PySide6.QtCore import QEvent, QObject, Qt
+    from PySide6.QtGui import QKeyEvent
+
+    def key(kind, code, text=""):
+        return QKeyEvent(kind, code, Qt.KeyboardModifier.NoModifier, text)
+
+    trail = diagnostics.InputTrail()
+    target = QObject()
+    with caplog.at_level(logging.DEBUG, logger="kubescope"):
+        trail.eventFilter(target, key(QEvent.Type.KeyPress, Qt.Key.Key_Control))
+        trail.eventFilter(target, key(QEvent.Type.KeyRelease, Qt.Key.Key_Control))
+        trail.eventFilter(target, key(QEvent.Type.KeyPress, Qt.Key.Key_A, "a"))
+        trail.eventFilter(target, key(QEvent.Type.KeyPress, 0x1234567))
+        assert not trail.eventFilter(target, QEvent(QEvent.Type.Show))
+
+    assert "Key Key_Control pressed on QObject" in caplog.text
+    assert "Key Key_Control released on QObject" in caplog.text
+    assert "Key 19088743 pressed" in caplog.text
+    assert "'a'" not in caplog.text and "Key A" not in caplog.text
+
+
+def test_tracing_input_installs_the_trail_on_the_application(monkeypatch) -> None:
+    installed = []
+
+    class FakeApplication:
+        def installEventFilter(self, filter_) -> None:
+            installed.append(filter_)
+
+    monkeypatch.setattr(diagnostics.InputTrail, "__init__", lambda self, parent: None)
+    diagnostics.trace_input(FakeApplication())
+
+    assert len(installed) == 1

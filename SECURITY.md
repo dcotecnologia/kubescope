@@ -122,9 +122,15 @@ prefer otherwise.
 - **What it records:** which cluster requests and cloud CLI commands ran, how long they
   took and how they ended, the first line of an error, and the app and Qt versions.
   Command lines include context names (often an EKS ARN with the account id) and
-  namespaces.
-- **What it never records:** Pod logs, resource contents (YAML or JSON), or
-  credentials. As a second guard, tokens, passwords, access key ids and similar
+  namespaces. To explain crashes it also records the machine: the Linux
+  distribution name and version, the session type and desktop (X11 or Wayland), the
+  `QT_*` environment variables, the Qt platform plugin, and where each native
+  library (xkbcommon, fontconfig, GLib...) was loaded from, with its path. The
+  paths can include your user name. It records the keys that are not text (Ctrl,
+  Shift, arrows, shortcuts) and the kind of widget that got them.
+- **What it never records:** Pod logs, resource contents (YAML or JSON), the text
+  you type (letters, digits and symbols are skipped, so a password typed in a field
+  never reaches it), or credentials. As a second guard, tokens, passwords, access key ids and similar
   patterns are scrubbed from every line.
 - **Read it before sharing**, since scrubbing patterns cannot catch everything.
   The log is never sent anywhere by the app.
