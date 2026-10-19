@@ -34,28 +34,28 @@ def _colors(text: str) -> dict[str, str]:
 def test_the_timestamp_and_the_level_get_their_colors(dark) -> None:
     colors = _colors("2026-10-08T05:00:01.123Z ERROR connection lost")
 
-    assert colors["2026-10-08T05:00:01.123Z"] == "#75715e"
-    assert colors["ERROR"] == "#f92672"
+    assert colors["2026-10-08T05:00:01.123Z"] == "#6a9955"
+    assert colors["ERROR"] == "#f48771"
     assert "connection" not in colors  # the message keeps the plain color
 
 
 def test_every_level_has_its_color(dark) -> None:
     expected = {
-        "FATAL": "#f92672",
-        "WARN": "#fd971f",
-        "WARNING": "#fd971f",
-        "INFO": "#a6e22e",
-        "DEBUG": "#ae81ff",
-        "TRACE": "#ae81ff",
+        "FATAL": "#f48771",
+        "WARN": "#cca700",
+        "WARNING": "#cca700",
+        "INFO": "#4ec9b0",
+        "DEBUG": "#c586c0",
+        "TRACE": "#c586c0",
     }
     for level, color in expected.items():
         assert _colors(f"2026-10-08T05:00:01Z {level} x")[level] == color
 
 
 def test_levels_in_brackets_and_in_key_value_lines_are_found(dark) -> None:
-    assert _colors("[warn] disk almost full")["warn"] == "#fd971f"
-    assert _colors("ts=1 level=info msg=started")["info"] == "#a6e22e"
-    assert _colors('{"level":"error","msg":"x"}')["error"] == "#f92672"
+    assert _colors("[warn] disk almost full")["warn"] == "#cca700"
+    assert _colors("ts=1 level=info msg=started")["info"] == "#4ec9b0"
+    assert _colors('{"level":"error","msg":"x"}')["error"] == "#f48771"
 
 
 def test_ordinary_words_are_not_taken_for_levels() -> None:
@@ -67,23 +67,23 @@ def test_ordinary_words_are_not_taken_for_levels() -> None:
 def test_keys_and_quoted_text_are_colored(dark) -> None:
     colors = _colors('ts=1 user=bob msg="a b" path=/x')
 
-    assert colors["user"] == "#66d9ef" and colors["msg"] == "#66d9ef"
-    assert colors['"a b"'] == "#e6db74"
+    assert colors["user"] == "#9cdcfe" and colors["msg"] == "#9cdcfe"
+    assert colors['"a b"'] == "#ce9178"
     assert "bob" not in colors
 
 
 def test_a_timestamp_with_an_offset_is_colored_too(dark) -> None:
     assert _colors("2026-10-08T05:00:01+02:00 hi")["2026-10-08T05:00:01+02:00"] == (
-        "#75715e"
+        "#6a9955"
     )
 
 
 def test_light_themes_color_the_logs_with_the_light_palette() -> None:
     colors = _colors('2026-10-08T05:00:01Z ERROR ts=1 msg="x"')
 
-    assert colors["ERROR"] == "#cf222e"
-    assert colors["2026-10-08T05:00:01Z"] == "#6e7781"
-    assert colors["ts"] == "#0550ae" and colors['"x"'] == "#116329"
+    assert colors["ERROR"] == "#cd3131"
+    assert colors["2026-10-08T05:00:01Z"] == "#008000"
+    assert colors["ts"] == "#0451a5" and colors['"x"'] == "#a31515"
 
 
 def test_a_json_object_in_a_line_gets_its_own_colors(dark) -> None:
@@ -91,18 +91,18 @@ def test_a_json_object_in_a_line_gets_its_own_colors(dark) -> None:
         '2026-10-08T05:00:01Z req {"id": 7, "ok": true, "tag": "a b"} done'
     )
 
-    assert colors['"id"'] == "#66d9ef"  # keys
-    assert colors['"a b"'] == "#e6db74"  # strings
-    assert colors["7"] == "#ae81ff" and colors["true"] == "#ae81ff"
-    assert colors["{"] == "#75715e"  # punctuation is dimmed
+    assert colors['"id"'] == "#9cdcfe"  # keys
+    assert colors['"a b"'] == "#ce9178"  # strings
+    assert colors["7"] == "#b5cea8" and colors["true"] == "#569cd6"
+    assert colors["{"] == "#6a9955"  # punctuation is dimmed
     assert "done" not in colors and "req" not in colors  # the rest is plain
 
 
 def test_a_python_dict_and_a_cut_object_are_colored_too(dark) -> None:
     colors = _colors("{'sub': 'x', 'n': -1.5, 'v': None, 'k': 'cut")
 
-    assert colors["'sub'"] == "#66d9ef" and colors["'x'"] == "#e6db74"
-    assert colors["-1.5"] == "#ae81ff" and colors["None"] == "#ae81ff"
+    assert colors["'sub'"] == "#9cdcfe" and colors["'x'"] == "#ce9178"
+    assert colors["-1.5"] == "#b5cea8" and colors["None"] == "#569cd6"
 
 
 def test_braces_without_a_key_are_not_an_object(dark) -> None:

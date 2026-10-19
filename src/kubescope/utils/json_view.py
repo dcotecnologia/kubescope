@@ -1,8 +1,8 @@
 """Color JSON, and the logs next to it, to match the theme in use.
 
-The dark themes get the Monokai palette; the light ones get a light
-palette of the same kind. A palette is picked when a view is made and
-again when the theme changes.
+The dark themes get the palette of VS Code's Dark+; the light ones the
+of Light+. A palette is picked when a view is made and again when the
+theme changes.
 """
 
 import re
@@ -22,7 +22,8 @@ class Palette:
     border: str
     key: str
     string: str
-    number: str  # also true, false and null
+    number: str
+    literal: str  # true, false and null
     timestamp: str  # for logs: what is not the message
     error: str
     warning: str
@@ -30,19 +31,20 @@ class Palette:
     debug: str
 
 
-MONOKAI = Palette(
-    background="#272822",
-    text="#f8f8f2",
-    selection="#49483e",
-    border="#3e3d32",
-    key="#66d9ef",
-    string="#e6db74",
-    number="#ae81ff",
-    timestamp="#75715e",
-    error="#f92672",
-    warning="#fd971f",
-    info="#a6e22e",
-    debug="#ae81ff",
+DARK_PLUS = Palette(
+    background="#1e1e1e",
+    text="#d4d4d4",
+    selection="#264f78",
+    border="#3c3c3c",
+    key="#9cdcfe",
+    string="#ce9178",
+    number="#b5cea8",
+    literal="#569cd6",
+    timestamp="#6a9955",
+    error="#f48771",
+    warning="#cca700",
+    info="#4ec9b0",
+    debug="#c586c0",
 )
 
 
@@ -53,20 +55,21 @@ def is_dark() -> bool:
 
 def current_palette() -> Palette:
     if is_dark():
-        return MONOKAI
+        return DARK_PLUS
     return Palette(
         background=themed(WHITE),
         text=themed("#242a33"),
         selection=themed("#d9d3f2"),
         border=themed("#dfe2e9"),
-        key="#0550ae",
-        string="#116329",
-        number="#b35900",
-        timestamp="#6e7781",
-        error="#cf222e",
-        warning="#9a6700",
-        info="#1a7f37",
-        debug="#8250df",
+        key="#0451a5",
+        string="#a31515",
+        number="#098658",
+        literal="#0000ff",
+        timestamp="#008000",
+        error="#cd3131",
+        warning="#bf8803",
+        info="#267f99",
+        debug="#af00db",
     )
 
 
@@ -103,14 +106,15 @@ class JsonHighlighter(QSyntaxHighlighter):
         self.set_palette(current_palette())
 
     def set_palette(self, palette: Palette) -> None:
-        number, string, key = (
+        number, literal, string, key = (
             text_format(palette.number),
+            text_format(palette.literal),
             text_format(palette.string),
             text_format(palette.key),
         )
         self._rules = [
             (_NUMBER, number),
-            (_LITERAL, number),
+            (_LITERAL, literal),
             (_STRING, string),
             (_KEY, key),
         ]

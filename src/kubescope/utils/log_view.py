@@ -63,6 +63,7 @@ class LogHighlighter(QSyntaxHighlighter):
         self._quoted = text_format(palette.string)
         self._timestamp = text_format(palette.timestamp)
         self._number = text_format(palette.number)
+        self._literal = text_format(palette.literal)
         self._levels = {
             name: text_format(getattr(palette, name))
             for name in ("error", "warning", "info", "debug")
@@ -93,7 +94,7 @@ class LogHighlighter(QSyntaxHighlighter):
         body = text[begin : end if end > begin else len(text)]
         for pattern, fmt in (
             (_JSON_NUMBER, self._number),
-            (_JSON_LITERAL, self._number),
+            (_JSON_LITERAL, self._literal),
             (_JSON_PUNCTUATION, self._timestamp),
             (_JSON_TEXT, self._quoted),
             (_JSON_KEY, self._key),
