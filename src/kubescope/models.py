@@ -1,5 +1,8 @@
 import re
+import time
 from dataclasses import dataclass
+from datetime import datetime
+from typing import Any
 
 
 @dataclass(frozen=True, slots=True)
@@ -417,3 +420,143 @@ def pod_sort_key(pod: PodInfo, column: int) -> tuple:
     else:
         primary = ()
     return (*primary, *by_name)
+
+
+@dataclass(frozen=True, slots=True)
+class DetailRow:
+    """One line of the details: a label and its value(s), or a small table."""
+
+    label: str
+    values: tuple[str, ...] = ()  # one badge each
+    headers: tuple[str, ...] = ()  # a table, when the rows of a list are flat
+    table: tuple[tuple[str, ...], ...] = ()
+
+
+@dataclass(frozen=True, slots=True)
+class DetailSection:
+    title: str
+    rows: tuple[DetailRow, ...]
+    level: int = 1  # 2 for a part of the section above, such as one container
+
+
+_DETAIL_SKIPPED = frozenset({"apiVersion", "kind", "metadata"})
+_MAX_VALUE = 160
+
+
+def _detail_text(value: Any) -> str:
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    text = "" if value is None else str(value)
+    return text if len(text) <= _MAX_VALUE else f"{text[:_MAX_VALUE]}..."
+
+
+def _is_scalar(value: Any) -> bool:
+    return not isinstance(value, dict | list)
+
+
+def _detail_rows(
+    value: Any, path: str, sections: list[DetailSection], depth: int = 1
+) -> list[DetailRow]:
+    """Flatten a document into rows labelled by their path.
+
+    A list of flat mappings becomes a table; a list of larger ones, such
+    as the containers, becomes one subsection for each item, added to
+    `sections`.
+    """
+    if isinstance(value, dict):
+        rows: list[DetailRow] = []
+        for key, item in value.items():
+            rows.extend(
+                _detail_rows(
+                    item, f"{path}.{key}" if path else str(key), sections, depth
+                )
+            )
+        return rows
+    if isinstance(value, list):
+        if not value:
+            return []
+        if all(_is_scalar(item) for item in value):
+            return [DetailRow(path, tuple(_detail_text(item) for item in value))]
+        if all(
+            isinstance(item, dict) and all(_is_scalar(v) for v in item.values())
+            for item in value
+        ):
+            headers = tuple(dict.fromkeys(key for item in value for key in item))
+            table = tuple(
+                tuple(_detail_text(item.get(key)) for key in headers) for item in value
+            )
+            return [DetailRow(path, headers=headers, table=table)]
+        for index, item in enumerate(value):
+            name = item.get("name") if isinstance(item, dict) else None
+            children: list[DetailSection] = []
+            rows = _detail_rows(item, "", children, depth + 1)
+            title = f"{path}: {name or index}"
+            if rows:
+                sections.append(DetailSection(title, tuple(rows), depth + 1))
+            sections.extend(
+                DetailSection(f"{title} / {child.title}", child.rows, child.level)
+                for child in children
+            )
+        return []
+    return [DetailRow(path, (_detail_text(value),))]
+
+
+def _created_text(timestamp: str, now: float) -> str:
+    try:
+        created = datetime.fromisoformat(timestamp)
+    except ValueError:
+        return timestamp
+    if created.tzinfo is None:
+        return timestamp
+    age = format_age(max(now - created.timestamp(), 0))
+    return f"{age} ago ({created.astimezone():%b %d, %Y, %H:%M:%S %Z})"
+
+
+def _properties(document: dict[str, Any], now: float) -> list[DetailRow]:
+    metadata = document.get("metadata")
+    if not isinstance(metadata, dict):
+        metadata = {}
+    rows = []
+    if document.get("kind"):
+        rows.append(DetailRow("Kind", (_detail_text(document["kind"]),)))
+    if created := metadata.get("creationTimestamp"):
+        rows.append(DetailRow("Created", (_created_text(str(created), now),)))
+    for label, key in (("Name", "name"), ("Namespace", "namespace")):
+        if metadata.get(key):
+            rows.append(DetailRow(label, (_detail_text(metadata[key]),)))
+    for label, key in (("Labels", "labels"), ("Annotations", "annotations")):
+        pairs = metadata.get(key)
+        if isinstance(pairs, dict) and pairs:
+            values = tuple(f"{k}={_detail_text(v)}" for k, v in pairs.items())
+            rows.append(DetailRow(label, values))
+    owners = metadata.get("ownerReferences")
+    if isinstance(owners, list) and owners:
+        values = tuple(
+            f"{owner.get('kind', '')}/{owner.get('name', '')}"
+            for owner in owners
+            if isinstance(owner, dict)
+        )
+        rows.append(DetailRow("Controlled by", values))
+    return rows
+
+
+def detail_sections(
+    document: dict[str, Any], now: float | None = None
+) -> list[DetailSection]:
+    """The details of a resource laid out for reading: its properties, then one
+    section for each other top-level field (spec, status, data...)."""
+    now = time.time() if now is None else now
+    sections = []
+    if properties := _properties(document, now):
+        sections.append(DetailSection("Properties", tuple(properties)))
+    for key, value in document.items():
+        if key in _DETAIL_SKIPPED:
+            continue
+        subsections: list[DetailSection] = []
+        rows = _detail_rows(
+            value, "" if isinstance(value, dict) else str(key), subsections
+        )
+        if rows:
+            sections.append(DetailSection(str(key).capitalize(), tuple(rows)))
+        sections.extend(subsections)
+    return sections

@@ -3,8 +3,10 @@ import pytest
 from kubescope.models import (
     POD_SORT_COLUMNS,
     SORT_COLUMNS,
+    DetailRow,
     PodInfo,
     Workload,
+    detail_sections,
     format_age,
     format_bytes,
     format_cpu,
@@ -204,3 +206,81 @@ def test_safe_file_name_keeps_letters_digits_dots_and_dashes() -> None:
     assert safe_file_name("Deployment: api", ".json") == "Deployment-api.json"
     assert safe_file_name("api-1/app v2", ".log") == "api-1-app-v2.log"
     assert safe_file_name("???", ".json") == "kubescope.json"
+
+
+DETAILS_NOW = 1_760_900_000.0  # 2025-10-19T19:33:20Z
+
+
+def test_detail_sections_lay_out_properties_spec_and_status() -> None:
+    document = {
+        "apiVersion": "v1",
+        "kind": "Pod",
+        "metadata": {
+            "name": "api-1",
+            "namespace": "ns",
+            "creationTimestamp": "2025-10-19T16:13:20Z",
+            "labels": {"app": "api", "tier": "back"},
+            "annotations": {"note": "x" * 200},
+            "ownerReferences": [{"kind": "ReplicaSet", "name": "api-5f"}, "junk"],
+            "managedFields": [{"manager": "kubectl"}],
+        },
+        "spec": {
+            "nodeName": "node-1",
+            "hostNetwork": False,
+            "args": ["--a", "--b"],
+            "containers": [
+                {"name": "app", "image": "api:1", "ports": [{"containerPort": 80}]},
+                {"image": "side:1"},
+            ],
+            "volumes": [],
+        },
+        "status": {
+            "phase": "Running",
+            "conditions": [
+                {"type": "Ready", "status": "True"},
+                {"type": "Initialized", "status": "True", "reason": None},
+            ],
+        },
+    }
+
+    sections = {s.title: s.rows for s in detail_sections(document, DETAILS_NOW)}
+
+    assert list(sections) == [
+        "Properties",
+        "Spec",
+        "containers: app",
+        "containers: 1",
+        "Status",
+    ]
+    properties = {row.label: row.values for row in sections["Properties"]}
+    assert properties["Kind"] == ("Pod",)
+    assert properties["Created"][0].startswith("2h ago (")
+    assert properties["Name"] == ("api-1",)
+    assert properties["Labels"] == ("app=api", "tier=back")
+    assert properties["Annotations"][0].endswith("...")
+    assert properties["Controlled by"] == ("ReplicaSet/api-5f",)
+    spec = {row.label: row.values for row in sections["Spec"]}
+    assert spec["nodeName"] == ("node-1",)
+    assert spec["hostNetwork"] == ("false",)
+    assert spec["args"] == ("--a", "--b")
+    app = sections["containers: app"]
+    assert (app[1].label, app[1].values) == ("image", ("api:1",))
+    assert app[2].headers == ("containerPort",)
+    assert sections["containers: 1"][0].values == ("side:1",)
+    assert "volumes" not in spec
+    conditions = sections["Status"][-1]
+    assert conditions == DetailRow(
+        "conditions",
+        headers=("type", "status", "reason"),
+        table=(("Ready", "True", ""), ("Initialized", "True", "")),
+    )
+
+
+def test_detail_sections_tolerate_odd_documents() -> None:
+    assert detail_sections({}) == []
+    odd = {"metadata": {"creationTimestamp": "soon", "ownerReferences": []}}
+    assert detail_sections(odd)[0].rows[0].values == ("soon",)
+    naive = {"metadata": {"creationTimestamp": "2025-10-19T16:13:20"}}
+    assert detail_sections(naive)[0].rows[0].values == ("2025-10-19T16:13:20",)
+    assert detail_sections({"metadata": "x", "data": {"k": "v"}})[0].title == "Data"
+    assert detail_sections({"items": [1, 2]})[0].rows[0].values == ("1", "2")
