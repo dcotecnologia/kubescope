@@ -279,7 +279,9 @@ def configure_logging(*, to_file: bool = False, to_console: bool = False) -> Non
     """Turn the debug outputs on or off; safe to call again when a setting
     changes.
 
-    Without either output, only warnings and errors are shown.
+    Without either output, nothing is written; warnings still reach
+    stderr and the latest INFO records are remembered in memory for the
+    crash report.
     """
     global _file_handler, _console_handler, _crash_stream
     _remove(_file_handler)
@@ -313,7 +315,9 @@ def configure_logging(*, to_file: bool = False, to_console: bool = False) -> Non
         if handler is not None:
             handler.setFormatter(formatter)
             _logger.addHandler(handler)
-    _logger.setLevel(logging.DEBUG if to_file or to_console else logging.WARNING)
+    # INFO even with the outputs off: the crash report keeps the latest records
+    # in memory (utils/crashreport.py); DEBUG stays off, so its calls cost nothing
+    _logger.setLevel(logging.DEBUG if to_file or to_console else logging.INFO)
     if _file_handler is not None:
         for line in describe_environment():
             _logger.info(line)

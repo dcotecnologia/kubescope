@@ -83,7 +83,7 @@ def test_turning_debug_off_removes_every_output() -> None:
 
     diagnostics.configure_logging()
 
-    assert package.handlers == [] and package.level == logging.WARNING
+    assert package.handlers == [] and package.level == logging.INFO
 
 
 def test_an_unwritable_log_folder_is_reported_not_fatal(
@@ -98,7 +98,7 @@ def test_an_unwritable_log_folder_is_reported_not_fatal(
 
     assert "Could not write the log file" in caplog.text
     assert logging.getLogger("kubescope").handlers == []
-    assert logging.getLogger("kubescope").level == logging.WARNING
+    assert logging.getLogger("kubescope").level == logging.INFO
 
 
 def test_the_environment_description_starts_with_the_app_version() -> None:

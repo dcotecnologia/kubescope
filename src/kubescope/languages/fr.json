@@ -14,6 +14,13 @@
             "SECURITY": "SÉCURITÉ",
             "The changelog is not available in this installation.": "Le journal des modifications n'est pas disponible dans cette installation."
         },
+        "CrashReportDialog": {
+            "Copy report": "Copier le rapport",
+            "Discard": "Ignorer",
+            "KubeScope found an error": "KubeScope a rencontré une erreur",
+            "KubeScope hit an unexpected error the last time it ran. This report stayed on your computer and was not sent anywhere. Read it, since it can include context names and paths, then choose what to do.": "KubeScope a rencontré une erreur inattendue lors de sa dernière exécution. Ce rapport est resté sur votre ordinateur et n'a été envoyé nulle part. Lisez-le, car il peut contenir des noms de contextes et des chemins, puis choisissez quoi faire.",
+            "Open an issue on GitHub": "Ouvrir un ticket sur GitHub"
+        },
         "Errors": {
             "Access denied": "Accès refusé",
             "Authentication failed": "Échec de l'authentification",
