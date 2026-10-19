@@ -2539,7 +2539,7 @@ def test_get_pod_usage_sums_the_containers_or_none_without_metrics(
 ) -> None:
     paths = []
 
-    def fake_get_json(path: str, context: str, query=None) -> dict:
+    def fake_get_json(path: str, context: str, query=None) -> dict[str, object]:
         paths.append(path)
         return {"containers": [{"usage": {"cpu": "100m", "memory": "64Mi"}}] * 2}
 
@@ -2547,7 +2547,7 @@ def test_get_pod_usage_sums_the_containers_or_none_without_metrics(
     assert cluster.get_pod_usage("ctx", "ns", "api 1") == (0.2, 128 * 2**20)
     assert paths == ["/apis/metrics.k8s.io/v1beta1/namespaces/ns/pods/api%201"]
 
-    def unavailable(*_a, **_k) -> dict:
+    def unavailable(*_a, **_k) -> dict[str, object]:
         raise cluster.ClusterError("no metrics")
 
     monkeypatch.setattr(cluster, "_get_json", unavailable)

@@ -9,6 +9,7 @@ from kubescope import theme
 from kubescope import window as window_module
 from kubescope.models import ClusterOverview, NodeInfo, PodInfo, Workload
 from kubescope.utils import log_view
+from kubescope.views.detail_tab import DetailTab
 from kubescope.views.log_tab import LogTab
 
 application = QApplication.instance() or QApplication([])
@@ -342,7 +343,9 @@ def test_details_and_logs_open_as_closable_tabs(monkeypatch) -> None:
     assert window.viewer_tabs.tabText(0) == "Deployment: api"
     assert window.viewer_tabs.tabText(1) == "Logs: api-1 / app"
     assert window.viewer_tabs.widget(1).ui.logText.toPlainText() == "line 1\nline 2"
-    assert window.viewer_tabs.widget(0).editor.isReadOnly()
+    detail = window.viewer_tabs.widget(0)
+    assert isinstance(detail, DetailTab)
+    assert detail.editor.isReadOnly()
 
     window.viewer_tabs.tabCloseRequested.emit(0)
     assert window.viewer_tabs.count() == 1

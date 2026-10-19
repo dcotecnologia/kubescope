@@ -46,6 +46,7 @@ from kubescope.settings import Settings
 from kubescope.theme import themed
 from kubescope.utils import json_view
 from kubescope.utils.updates import Release, UpdateCheck
+from kubescope.views.detail_tab import DetailTab
 from kubescope.window import PIN_MIME, VIEWER_MIME
 
 application = QApplication.instance() or QApplication([])
@@ -74,6 +75,12 @@ class FakeRefreshWorker(QObject):
         else:
             self.failed.emit(payload)
         self.finished.emit()
+
+
+def _detail_tab(window) -> DetailTab:
+    tab = window.viewer_tabs.currentWidget()
+    assert isinstance(tab, DetailTab)
+    return tab
 
 
 def _ready_window(monkeypatch):
@@ -2030,11 +2037,9 @@ def test_details_open_as_colored_json(monkeypatch) -> None:
 
     window._show_json_dialog("Pod: api", {"kind": "Pod", "replicas": 2})
 
-    editor = window.viewer_tabs.currentWidget().editor
+    editor = _detail_tab(window).editor
     assert '"kind": "Pod"' in editor.toPlainText()
-    assert isinstance(
-        window.viewer_tabs.currentWidget().highlighter, json_view.JsonHighlighter
-    )
+    assert isinstance(_detail_tab(window).highlighter, json_view.JsonHighlighter)
     assert "#1e1e1e" in editor.styleSheet()
     window.close()
 
@@ -2267,7 +2272,7 @@ def test_a_theme_change_redraws_the_icons_of_open_log_tabs(monkeypatch) -> None:
 def test_a_theme_change_recolors_open_json_and_log_tabs(monkeypatch) -> None:
     window = _ready_window(monkeypatch)
     window._show_json_dialog("Pod: api", {"kind": "Pod"})
-    json_editor = window.viewer_tabs.currentWidget().editor
+    json_editor = _detail_tab(window).editor
     window._show_logs_dialog(POD, "app", "2026-10-08T05:00:01Z INFO started")
     log_tab = window.viewer_tabs.currentWidget()
     assert "#1e1e1e" not in json_editor.styleSheet()  # light
@@ -3270,7 +3275,7 @@ def test_pod_details_follow_the_live_usage(monkeypatch) -> None:
 
     window._show_json_dialog("Pod: api-1", {"kind": "Pod"}, POD)
 
-    tab = window.viewer_tabs.currentWidget()
+    tab = _detail_tab(window)
     assert calls == [(window_module.get_pod_usage, ("prod", "ns", "api-1"), True)]
     assert tab.cpu_chart.samples == [0.25]
     assert tab.memory_chart.samples == [2.0**27]
@@ -3299,7 +3304,7 @@ def test_usage_errors_and_a_closed_tab_are_ignored(monkeypatch) -> None:
 
     monkeypatch.setattr(window, "_run_action", run)
     window._show_json_dialog("Pod: api-1", {"kind": "Pod"}, POD)
-    tab = window.viewer_tabs.currentWidget()
+    tab = _detail_tab(window)
     assert tab.busy
 
     outcomes[0][1]("boom")  # a failed sample only frees the tab for the next
@@ -3317,7 +3322,7 @@ def test_details_can_switch_between_the_overview_and_the_raw_json(
 ) -> None:
     window = _ready_window(monkeypatch)
     window._show_json_dialog("Deployment: api", {"kind": "Deployment"})
-    tab = window.viewer_tabs.currentWidget()
+    tab = _detail_tab(window)
     assert not tab.showing_raw
     assert not tab.usage_box.isVisibleTo(tab)  # only Pods have live usage
 
@@ -3348,7 +3353,7 @@ def test_details_overview_shows_sections_subsections_and_tables(monkeypatch) -> 
 
     window._show_json_dialog("Pod: api-1", document)
 
-    tab = window.viewer_tabs.currentWidget()
+    tab = _detail_tab(window)
     tab.restyle()
     texts = [label.text() for label in tab.findChildren(window_module.QLabel)]
     assert "containers: app" in texts

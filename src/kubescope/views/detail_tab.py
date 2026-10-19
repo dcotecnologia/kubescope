@@ -71,7 +71,8 @@ class DetailTab(QWidget):
         self.overview = QScrollArea()
         self.overview.setWidgetResizable(True)
         self.overview.setFrameShape(QFrame.Shape.NoFrame)
-        self.overview.setWidget(self._build_overview())
+        self.content = self._build_overview()
+        self.overview.setWidget(self.content)
 
         self.stack = QStackedWidget()
         self.stack.addWidget(self.overview)
@@ -105,7 +106,7 @@ class DetailTab(QWidget):
         return self.stack.currentIndex() == 1
 
     def restyle(self) -> None:
-        self.overview.widget().setStyleSheet(themed_stylesheet(_STYLE))
+        self.content.setStyleSheet(themed_stylesheet(_STYLE))
         self.cpu_chart.update()
         self.memory_chart.update()
 
