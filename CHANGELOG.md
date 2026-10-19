@@ -4,9 +4,17 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-10-19
+
 ### Added
 
-- An error that escapes unhandled, in the main thread or in another one, is saved as a crash report on your computer (the build, the system, the stack trace, the first line of the message and the recent log records, with secrets scrubbed), even with Debug mode off; the next start shows it and lets you open a pre-filled GitHub issue, copy it or discard it, and nothing is sent by the app by @danilogco
+- The details of a resource open as an **Overview** laid out in sections (Properties, Spec, Status...) with badges for labels and lists, a table for lists of flat items and a subsection for each container, with the **Raw JSON** one click away by @danilogco
+- The details of a Pod chart its live CPU and memory when the cluster has metrics-server, with the value marks, a time mark for every minute and a cursor that shows the time and value under the mouse by @danilogco
+- The raw JSON of the details shows the line numbers by @danilogco
+
+### Changed
+
+- The JSON and the logs are colored like VS Code (Dark+ on the dark themes, Light+ on the light ones) by @danilogco
 
 ## [0.8.0] - 2026-10-19
 
@@ -189,7 +197,8 @@ The first release.
 
 - Pod logs and resource details are still never written to disk by the app on its own. **Save** is the only exception, and it writes only to the file the user chooses. SECURITY.md says so by @danilogco
 
-[Unreleased]: https://github.com/dcotecnologia/kubescope/compare/v0.8.0...HEAD
+[Unreleased]: https://github.com/dcotecnologia/kubescope/compare/v0.9.0...HEAD
+[0.9.0]: https://github.com/dcotecnologia/kubescope/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/dcotecnologia/kubescope/compare/v0.7.1...v0.8.0
 [0.7.1]: https://github.com/dcotecnologia/kubescope/compare/v0.7.0...v0.7.1
 [0.7.0]: https://github.com/dcotecnologia/kubescope/compare/v0.6.2...v0.7.0
