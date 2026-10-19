@@ -342,7 +342,7 @@ def test_details_and_logs_open_as_closable_tabs(monkeypatch) -> None:
     assert window.viewer_tabs.tabText(0) == "Deployment: api"
     assert window.viewer_tabs.tabText(1) == "Logs: api-1 / app"
     assert window.viewer_tabs.widget(1).ui.logText.toPlainText() == "line 1\nline 2"
-    assert window.viewer_tabs.widget(0).isReadOnly()
+    assert window.viewer_tabs.widget(0).editor.isReadOnly()
 
     window.viewer_tabs.tabCloseRequested.emit(0)
     assert window.viewer_tabs.count() == 1
@@ -678,7 +678,7 @@ def test_log_tab_colors_the_logs_with_the_monokai_view(monkeypatch) -> None:
     window, tab = _open_log_tab(monkeypatch)
 
     assert isinstance(tab.highlighter, log_view.LogHighlighter)
-    assert "#272822" in tab.ui.logText.styleSheet()
+    assert "#1e1e1e" in tab.ui.logText.styleSheet()
     window.close()
 
 

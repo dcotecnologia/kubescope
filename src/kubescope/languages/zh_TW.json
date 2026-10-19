@@ -21,6 +21,19 @@
             "KubeScope hit an unexpected error the last time it ran. This report stayed on your computer and was not sent anywhere. Read it, since it can include context names and paths, then choose what to do.": "KubeScope 上次執行時發生了未預期的錯誤。此報告保留在您的電腦上，沒有傳送到任何地方。報告可能包含內容名稱和路徑，請先閱讀，再選擇如何處理。",
             "Open an issue on GitHub": "在 GitHub 上提交 issue"
         },
+        "DetailTab": {
+            "CPU": "CPU",
+            "Data": "資料",
+            "Live usage from the Kubernetes Metrics Server": "來自 Kubernetes Metrics Server 的即時用量",
+            "Live usage needs metrics-server in the cluster.": "即時用量需要叢集中安裝 metrics-server。",
+            "Memory": "記憶體",
+            "Metrics": "指標",
+            "Overview": "概覽",
+            "Properties": "屬性",
+            "Raw JSON": "原始 JSON",
+            "Spec": "Spec",
+            "Status": "狀態"
+        },
         "Errors": {
             "Access denied": "存取遭拒",
             "Authentication failed": "驗證失敗",

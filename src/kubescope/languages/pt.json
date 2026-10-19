@@ -21,6 +21,19 @@
             "KubeScope hit an unexpected error the last time it ran. This report stayed on your computer and was not sent anywhere. Read it, since it can include context names and paths, then choose what to do.": "O KubeScope teve um erro inesperado na última vez em que foi executado. Este relatório ficou no seu computador e não foi enviado a lugar nenhum. Leia-o, pois ele pode incluir nomes de contextos e caminhos, e escolha o que fazer.",
             "Open an issue on GitHub": "Abrir uma issue no GitHub"
         },
+        "DetailTab": {
+            "CPU": "CPU",
+            "Data": "Dados",
+            "Live usage from the Kubernetes Metrics Server": "Uso em tempo real do Kubernetes Metrics Server",
+            "Live usage needs metrics-server in the cluster.": "O uso em tempo real precisa do metrics-server no cluster.",
+            "Memory": "Memória",
+            "Metrics": "Métricas",
+            "Overview": "Visão geral",
+            "Properties": "Propriedades",
+            "Raw JSON": "JSON bruto",
+            "Spec": "Spec",
+            "Status": "Status"
+        },
         "Errors": {
             "Access denied": "Acesso negado",
             "Authentication failed": "Falha na autenticação",

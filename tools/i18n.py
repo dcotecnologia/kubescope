@@ -24,6 +24,7 @@ SOURCES = [
         for name in (
             "window.py",
             "views/log_tab.py",
+            "views/detail_tab.py",
             "utils/errors.py",
             "dialogs/changelog_dialog.py",
             "dialogs/crash_dialog.py",

@@ -21,6 +21,19 @@
             "KubeScope hit an unexpected error the last time it ran. This report stayed on your computer and was not sent anywhere. Read it, since it can include context names and paths, then choose what to do.": "前回の実行中に KubeScope で予期しないエラーが発生しました。このレポートはお使いのコンピューターに残っており、どこにも送信されていません。コンテキスト名やパスが含まれることがあるため、内容を確認してから対応を選んでください。",
             "Open an issue on GitHub": "GitHub で issue を開く"
         },
+        "DetailTab": {
+            "CPU": "CPU",
+            "Data": "データ",
+            "Live usage from the Kubernetes Metrics Server": "Kubernetes Metrics Server のリアルタイム使用量",
+            "Live usage needs metrics-server in the cluster.": "リアルタイムの使用量にはクラスターの metrics-server が必要です。",
+            "Memory": "メモリ",
+            "Metrics": "メトリクス",
+            "Overview": "概要",
+            "Properties": "プロパティ",
+            "Raw JSON": "生の JSON",
+            "Spec": "Spec",
+            "Status": "ステータス"
+        },
         "Errors": {
             "Access denied": "アクセスが拒否されました",
             "Authentication failed": "認証に失敗しました",

@@ -2030,10 +2030,12 @@ def test_details_open_as_colored_json(monkeypatch) -> None:
 
     window._show_json_dialog("Pod: api", {"kind": "Pod", "replicas": 2})
 
-    editor = window.viewer_tabs.currentWidget()
+    editor = window.viewer_tabs.currentWidget().editor
     assert '"kind": "Pod"' in editor.toPlainText()
-    assert isinstance(editor.highlighter, json_view.JsonHighlighter)
-    assert "#272822" in editor.styleSheet()
+    assert isinstance(
+        window.viewer_tabs.currentWidget().highlighter, json_view.JsonHighlighter
+    )
+    assert "#1e1e1e" in editor.styleSheet()
     window.close()
 
 
@@ -2265,19 +2267,19 @@ def test_a_theme_change_redraws_the_icons_of_open_log_tabs(monkeypatch) -> None:
 def test_a_theme_change_recolors_open_json_and_log_tabs(monkeypatch) -> None:
     window = _ready_window(monkeypatch)
     window._show_json_dialog("Pod: api", {"kind": "Pod"})
-    json_editor = window.viewer_tabs.currentWidget()
+    json_editor = window.viewer_tabs.currentWidget().editor
     window._show_logs_dialog(POD, "app", "2026-10-08T05:00:01Z INFO started")
     log_tab = window.viewer_tabs.currentWidget()
-    assert "#272822" not in json_editor.styleSheet()  # light
+    assert "#1e1e1e" not in json_editor.styleSheet()  # light
 
     window.settings.theme = "dark"
     window._apply_theme()
 
-    assert "#272822" in json_editor.styleSheet()
-    assert "#272822" in log_tab.ui.logText.styleSheet()
+    assert "#1e1e1e" in json_editor.styleSheet()
+    assert "#1e1e1e" in log_tab.ui.logText.styleSheet()
     window.settings.theme = "light"
     window._apply_theme()
-    assert "#272822" not in json_editor.styleSheet()
+    assert "#1e1e1e" not in json_editor.styleSheet()
     window.close()
 
 
@@ -3252,4 +3254,105 @@ def test_a_bundled_theme_can_be_edited_but_not_deleted(monkeypatch, tmp_path) ->
     monkeypatch.setattr(window, "_confirm", lambda *_a: True)
     window._delete_theme()  # even asked directly, it stays
     assert (window_module.themes_directory() / "reef.json").exists()
+    window.close()
+
+
+def test_pod_details_follow_the_live_usage(monkeypatch) -> None:
+    window = _ready_window(monkeypatch)
+    samples = iter([(0.25, 2.0**27), None])
+    calls = []
+
+    def run(operation, on_success, *arguments, **options):
+        calls.append((operation, arguments, options["quiet"]))
+        on_success(next(samples))
+
+    monkeypatch.setattr(window, "_run_action", run)
+
+    window._show_json_dialog("Pod: api-1", {"kind": "Pod"}, POD)
+
+    tab = window.viewer_tabs.currentWidget()
+    assert calls == [(window_module.get_pod_usage, ("prod", "ns", "api-1"), True)]
+    assert tab.cpu_chart.samples == [0.25]
+    assert tab.memory_chart.samples == [2.0**27]
+
+    window._refresh_usage(tab, POD, True)  # another sample, none this time
+    assert tab.usage_note.text().startswith("Live usage needs metrics-server")
+    assert not tab.cpu_chart.isVisibleTo(tab)
+
+    tab.busy = True
+    window._refresh_usage(tab, POD, True)  # one is in flight
+    tab.busy = False
+    window.pages.setCurrentIndex(1)
+    window._refresh_usage(tab, POD)  # not on screen
+    tab.closed = True
+    window._refresh_usage(tab, POD, True)
+    assert len(calls) == 2
+    window.close()
+
+
+def test_usage_errors_and_a_closed_tab_are_ignored(monkeypatch) -> None:
+    window = _ready_window(monkeypatch)
+    outcomes = []
+
+    def run(_operation, on_success, *_arguments, on_error, quiet):
+        outcomes.append((on_success, on_error))
+
+    monkeypatch.setattr(window, "_run_action", run)
+    window._show_json_dialog("Pod: api-1", {"kind": "Pod"}, POD)
+    tab = window.viewer_tabs.currentWidget()
+    assert tab.busy
+
+    outcomes[0][1]("boom")  # a failed sample only frees the tab for the next
+    assert not tab.busy
+
+    window._refresh_usage(tab, POD, True)
+    tab.closed = True
+    outcomes[1][0]((1.0, 1.0))
+    assert tab.cpu_chart.samples == []
+    window.close()
+
+
+def test_details_can_switch_between_the_overview_and_the_raw_json(
+    monkeypatch,
+) -> None:
+    window = _ready_window(monkeypatch)
+    window._show_json_dialog("Deployment: api", {"kind": "Deployment"})
+    tab = window.viewer_tabs.currentWidget()
+    assert not tab.showing_raw
+    assert not tab.usage_box.isVisibleTo(tab)  # only Pods have live usage
+
+    tab.raw_button.click()
+    assert tab.showing_raw
+    tab.overview_button.click()
+    assert not tab.showing_raw
+    window.close()
+
+
+def test_details_overview_shows_sections_subsections_and_tables(monkeypatch) -> None:
+    window = _ready_window(monkeypatch)
+    document = {
+        "kind": "Pod",
+        "metadata": {"name": "api-1", "labels": {"a": "b", "c": "d"}},
+        "spec": {
+            "containers": [
+                {
+                    "name": "app",
+                    "command": ["sh", "-c"],
+                    "env": [{"name": "A", "value": "1"}],
+                    "nested": [{"name": "n", "x": {"y": [{"k": 1, "z": {"q": 1}}]}}],
+                    "script": "line 1\nline 2",
+                }
+            ]
+        },
+    }
+
+    window._show_json_dialog("Pod: api-1", document)
+
+    tab = window.viewer_tabs.currentWidget()
+    tab.restyle()
+    texts = [label.text() for label in tab.findChildren(window_module.QLabel)]
+    assert "containers: app" in texts
+    assert "containers: app / nested: n" in texts
+    assert "sh" in texts and "line 1\nline 2" in texts
+    assert tab.findChildren(QTableWidget)
     window.close()
