@@ -116,8 +116,29 @@ analysis = Analysis(
 # Qt Virtual Keyboard is GPL-3.0 only (the rest of Qt is LGPL-3.0), and Qt PDF
 # carries Chromium's PDFium and its licenses; QML and Quick are not used at all.
 not_shipped = ("virtualkeyboard", "qt6pdf", "libqpdf", "qt6quick", "qt6qml")
+# These libraries read data or settings of the desktop (keymaps, fonts, locales,
+# GIO modules, the D-Bus socket). A copy built on an older distro cannot always
+# read what a newer one wrote: xkbcommon hands Qt a null state and the first key
+# press (Ctrl) segfaults. The copy of the system always matches its data.
+# Keep this list in step with DEPENDS in tools/build_deb.py.
+system_libraries = (
+    "libxkbcommon",
+    "libfontconfig",
+    "libfreetype",
+    "libharfbuzz",
+    "libglib-2.0",
+    "libgobject-2.0",
+    "libgmodule-2.0",
+    "libgthread-2.0",
+    "libgio-2.0",
+    "libdbus-1",
+    "libX11",
+)
 analysis.binaries = [
-    entry for entry in analysis.binaries if not any(n in entry[0].lower() for n in not_shipped)
+    entry
+    for entry in analysis.binaries
+    if not any(n in entry[0].lower() for n in not_shipped)
+    and not any(os.path.basename(entry[0]).startswith(n) for n in system_libraries)
 ]
 analysis.datas = [
     entry for entry in analysis.datas if not any(n in entry[0].lower() for n in not_shipped)

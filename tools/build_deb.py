@@ -26,11 +26,23 @@ ARCHITECTURES = {"x86_64": "amd64", "aarch64": "arm64"}
 ICON_SIZES = (48, 64, 128, 256, 512)
 
 # System libraries the PyInstaller bundle still loads (checked with ldd); Qt,
-# xcb, xkbcommon and fontconfig are already inside the bundle.
+# xcb is already inside the bundle. The libraries that read data of the desktop
+# (keymaps, fonts, locales, D-Bus) are not: they must match it (see
+# KubeScope.spec). Where a name changed with the 64-bit time_t transition, the
+# new one comes first.
 DEPENDS = (
     "libegl1",
     "libgl1",
     "libxcb1",
+    "libx11-6",
+    "libx11-xcb1",
+    "libxkbcommon0",
+    "libxkbcommon-x11-0",
+    "libfontconfig1",
+    "libfreetype6",
+    "libharfbuzz0b",
+    "libglib2.0-0t64 | libglib2.0-0",
+    "libdbus-1-3",
     "libwayland-client0",
     "libwayland-cursor0",
     "libwayland-egl1",
