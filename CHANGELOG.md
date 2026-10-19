@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+## [0.7.1] - 2026-10-19
+
+### Changed
+
+- The debug log and the crash log say more about the machine: the system, the desktop session, the Qt variables, the platform plugin Qt picked and where each native library (xkbcommon, fontconfig, GLib, X11...) was loaded from, bundle or system, and the log records the non-text keys pressed (Ctrl, arrows, shortcuts; never typed text) by @danilogco
+
+### Fixed
+
+- The app no longer crashes on the first key press (Ctrl) on a newer distro such as Ubuntu 26.04: the bundle shipped its own keyboard library, built for older keymap data, so the Linux bundle now uses the one of the system and the `.deb` depends on it by @danilogco
+
 ## [0.7.0] - 2026-10-17
 
 ### Added
@@ -169,7 +179,8 @@ The first release.
 
 - Pod logs and resource details are still never written to disk by the app on its own. **Save** is the only exception, and it writes only to the file the user chooses. SECURITY.md says so by @danilogco
 
-[Unreleased]: https://github.com/dcotecnologia/kubescope/compare/v0.7.0...HEAD
+[Unreleased]: https://github.com/dcotecnologia/kubescope/compare/v0.7.1...HEAD
+[0.7.1]: https://github.com/dcotecnologia/kubescope/compare/v0.7.0...v0.7.1
 [0.7.0]: https://github.com/dcotecnologia/kubescope/compare/v0.6.2...v0.7.0
 [0.6.2]: https://github.com/dcotecnologia/kubescope/compare/v0.6.1...v0.6.2
 [0.6.1]: https://github.com/dcotecnologia/kubescope/compare/v0.6.0...v0.6.1
