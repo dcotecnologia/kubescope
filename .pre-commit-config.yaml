@@ -85,6 +85,14 @@ repos:
 
   - repo: local
     hooks:
+      - id: third-party-notices
+        name: rewrite the third-party notices when uv.lock changes
+        # reads the licenses of the installed packages, and `uv run --frozen`
+        # first installs the versions of the lock
+        entry: uv run --frozen python tools/third_party_notices.py
+        language: system
+        files: ^uv\.lock$
+        pass_filenames: false
       - id: no-merge-commit
         name: block merge commits (rebase-only)
         entry: >-

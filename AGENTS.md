@@ -202,8 +202,9 @@ Follow [SECURITY.md](SECURITY.md); its guarantees are part of the product.
 - Never commit secrets, real cluster names, ARNs, or account IDs; use fake data
   in tests and in `tools/preview.py`. The `gitleaks` hook must pass.
 - When `uv.lock` changes the runtime dependencies (or the Qt modules the bundle
-  ships), run `make notices` and commit `src/kubescope/assets/THIRD_PARTY_NOTICES.txt`;
-  a test fails while it is out of date. Keep GPL-only Qt modules out of the bundle.
+  ships), the `third-party-notices` pre-commit hook rewrites
+  `src/kubescope/assets/THIRD_PARTY_NOTICES.txt`: stage it and commit again (or run
+  `make notices`). A test fails while it is out of date. Keep GPL-only Qt modules out of the bundle.
 - Do not add telemetry or network calls of the app's own, beyond the update
   check in `utils/updates.py` (GitHub's public API, sends only the version, can be turned
   off in Settings) and the update the person confirms in `utils/selfupdate.py` (only
