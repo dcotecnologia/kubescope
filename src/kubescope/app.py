@@ -17,6 +17,8 @@ from kubescope.utils.diagnostics import (
     LOG_FILE,
     configure_logging,
     purge_old_logs,
+    record_runtime,
+    trace_input,
 )
 from kubescope.utils.fonts import apply_fonts
 from kubescope.window import WorkloadWindow
@@ -69,11 +71,14 @@ def start_log_purge(settings: Settings) -> threading.Thread:
 
 def main() -> int:
     settings = Settings()
-    configure_debug(settings)
+    debugging = configure_debug(settings)
     start_log_purge(settings)
     logger.info("Starting KubeScope")
     application = QApplication(sys.argv)
     application.setApplicationName("KubeScope")
+    if debugging:
+        record_runtime()
+        trace_input(application)
     application.setWindowIcon(load_app_icon())
     apply_fonts(application)
     install_bundled_themes()
