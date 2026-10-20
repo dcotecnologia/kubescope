@@ -259,7 +259,7 @@ def test_the_shell_dialog_lets_the_person_pick_the_container(monkeypatch) -> Non
 def test_a_pod_without_containers_has_no_shell_command(monkeypatch) -> None:
     window, _ran = _window(monkeypatch)
     infos = []
-    monkeypatch.setattr(QMessageBox, "information", lambda *a: infos.append(a[2]))
+    monkeypatch.setattr(QMessageBox, "exec", lambda box: infos.append(box.text()))
 
     window._show_shell_command(PodInfo("ns", "bare", "Running", 0, 0, "1h", ()))
 
@@ -495,7 +495,7 @@ def test_the_forward_dialog_builds_the_command_for_the_chosen_ports(
 def test_a_service_without_tcp_ports_cannot_be_forwarded(monkeypatch) -> None:
     window, _ran = _services_window(monkeypatch)
     infos = []
-    monkeypatch.setattr(QMessageBox, "information", lambda *a: infos.append(a[2]))
+    monkeypatch.setattr(QMessageBox, "exec", lambda box: infos.append(box.text()))
 
     window._show_forward_command(SERVICE, {"spec": {"ports": []}})
 

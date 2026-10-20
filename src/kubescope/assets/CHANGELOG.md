@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+### Fixed
+
+- The message boxes, such as **Query failed**, use the window's own buttons instead of the style's stock ones by @danilogco
+- Changing the context no longer shows the Details and Logs tabs of the previous one; they stay open for when it comes back by @danilogco
+
+### Changed
+
+- Each list starts with the NAME column wide enough for its names by @danilogco
+
 ## [0.9.1] - 2026-10-20
 
 ### Fixed
