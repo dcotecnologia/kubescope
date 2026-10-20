@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Any
 
 from PySide6.QtCore import QCoreApplication, QLibraryInfo, QLocale, Qt, QTranslator
+from PySide6.QtGui import QGuiApplication
 
 from kubescope.settings import config_directory
 
@@ -173,6 +174,7 @@ def apply_language(choice: str) -> str:
     """Install the translators for the choice and return the language in
     use."""
     application = QCoreApplication.instance()
+    assert application is not None
     code = resolve_language(choice)
     for translator in _installed:
         application.removeTranslator(translator)
@@ -188,7 +190,7 @@ def apply_language(choice: str) -> str:
         ):
             application.installTranslator(qt_translator)
             _installed.append(qt_translator)
-    application.setLayoutDirection(
+    QGuiApplication.setLayoutDirection(
         Qt.LayoutDirection.RightToLeft
         if code != ENGLISH and languages()[code].right_to_left
         else Qt.LayoutDirection.LeftToRight

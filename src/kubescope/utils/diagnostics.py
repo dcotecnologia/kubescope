@@ -18,10 +18,10 @@ import sys
 import time
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import IO
+from typing import IO, cast
 
 from PySide6.QtCore import QEvent, QObject, Qt
-from PySide6.QtGui import QGuiApplication
+from PySide6.QtGui import QGuiApplication, QKeyEvent
 from PySide6.QtWidgets import QApplication
 
 import kubescope
@@ -244,11 +244,12 @@ class InputTrail(QObject):
 
     def eventFilter(self, watched: QObject, event: QEvent) -> bool:
         action = self._EVENTS.get(event.type())
-        text = event.text() if action else ""
+        key_event = cast(QKeyEvent, event)  # read only when it is a key event
+        text = key_event.text() if action else ""
         if action and not (text and text.isprintable()):
             _logger.debug(
                 "Key %s %s on %s",
-                Qt.Key(event.key()).name,
+                Qt.Key(key_event.key()).name,
                 action,
                 type(watched).__name__,
             )

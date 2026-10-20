@@ -310,7 +310,9 @@ def _status_message(status: int, reason: str | None, body: bytes) -> str:
 
 def _fetch(path: str, context: str, query: list[tuple[str, str]], accept: str) -> bytes:
     started = time.monotonic()
-    for attempt in (1, 2):
+    attempt = 0
+    while True:
+        attempt += 1
         api = _cached_client(context, fresh=attempt == 2)
         try:
             method, url, headers, body, _form = api.param_serialize(
@@ -561,7 +563,11 @@ def get_cluster_info(context: str) -> ClusterInfo:
     vpc = cluster.get("resourcesVpcConfig") or {}
     network = cluster.get("kubernetesNetworkConfig") or {}
     public, private = vpc.get("endpointPublicAccess"), vpc.get("endpointPrivateAccess")
-    access = {(True, False): "Public", (False, True): "Private"}.get(
+    kinds: dict[tuple[Any, Any], str] = {
+        (True, False): "Public",
+        (False, True): "Private",
+    }
+    access = kinds.get(
         (public, private), "Public and private" if public and private else _NO_VALUE
     )
     return ClusterInfo(

@@ -140,7 +140,7 @@ def check_for_update(current: str = __version__) -> UpdateCheck:
         logger.debug("Update check failed: %s", first_line(str(error)))
         return UpdateCheck("failed")
     newest = parse_version(release.version) if release else None
-    if release is None or installed is None or newest <= installed:
+    if release is None or installed is None or newest is None or newest <= installed:
         logger.info("KubeScope is up to date")
         return UpdateCheck("current")
     logger.info("A newer KubeScope is available: %s", release.version)
