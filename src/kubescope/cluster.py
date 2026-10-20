@@ -460,9 +460,12 @@ def _list_kinds(
 def list_contexts() -> tuple[list[str], str | None]:
     document = _kubeconfig()
     contexts = sorted(
-        name
-        for entry in document.get("contexts") or []
-        if (name := _plain(entry).get("name"))
+        (
+            name
+            for entry in document.get("contexts") or []
+            if (name := _plain(entry).get("name"))
+        ),
+        key=lambda name: (name.casefold(), name),
     )
     current = document.get("current-context")
     logger.info("Found %d kubeconfig context(s)", len(contexts))

@@ -488,6 +488,7 @@ class RefreshWorker(QThread):
         self.context = context
         self.namespace = namespace
         self.view = view
+        self.key: tuple[str, str | None, str] | None = None
 
     def _usage(self, kind: str) -> dict:
         try:
@@ -588,6 +589,7 @@ class WorkloadWindow(QMainWindow):
         self._workloads_overviews: dict[str, WorkloadsOverview] = {}
         self._status_message: Callable[[], str] | None = None
         self._workers: dict[str, RefreshWorker] = {}  # one request per list
+        self._retired: list[RefreshWorker] = []  # cancelled, still winding down
         # the last answer per (context, namespace, list), shown at once while the
         # list is requested again
         self._answers: dict[tuple[str, str | None, str], tuple[list, list]] = {}
@@ -875,8 +877,7 @@ class WorkloadWindow(QMainWindow):
         self._login_action: LoginAction | None = None
         self._login_checking = False
         self.login_button.clicked.connect(self._sign_in)
-        self.refresh_button.clicked.connect(self.refresh)
-        self.refresh_button.clicked.connect(lambda: self._check_login())
+        self.refresh_button.clicked.connect(self._refresh_or_cancel)
         self.pods_button.clicked.connect(self._view_workload_pods)
         self.details_button.clicked.connect(self._view_details)
         self.logs_button.clicked.connect(self._view_logs)
@@ -1438,7 +1439,10 @@ class WorkloadWindow(QMainWindow):
         name."""
         self.context_combo.blockSignals(True)
         self.context_combo.clear()
-        for context in self._contexts:
+        for context in sorted(
+            self._contexts,
+            key=lambda name: (self.settings.display_name(name).casefold(), name),
+        ):
             self.context_combo.addItem(self.settings.display_name(context), context)
             if self.settings.display_name(context) != context:
                 self.context_combo.setItemData(
@@ -2510,12 +2514,41 @@ class WorkloadWindow(QMainWindow):
         color = "#ffffff" if self._spinner_button in primary else themed("#3220a0")
         self._spinner_button.setIcon(_spinner_icon(self._spinner_angle, color))
 
+    def _refresh_or_cancel(self) -> None:
+        """The refresh button stops the list that is loading, and refreshes
+        otherwise."""
+        if self._loading(self._view):
+            self._cancel_refreshes()
+            self._set_status(lambda: self.tr("Loading cancelled"))
+            self._sync_loading()
+            return
+        self.refresh()
+        self._check_login()
+
+    def _cancel_refreshes(self) -> None:
+        """Give up on every list that is loading: the requests stop at once,
+        and whatever they answer is ignored."""
+        for view, worker in list(self._workers.items()):
+            if worker.isRunning():
+                self._retired.append(worker)
+                del self._workers[view]
+        cancel_running()
+
+    def _refresh_running(self) -> bool:
+        return any(worker.isRunning() for worker in self._retired) or any(
+            self._loading(view) for view in self._workers
+        )
+
     def refresh(self, *_args: object) -> None:
         context = self._context()
-        if not context or self._loading(self._view):
+        if not context:
             return
         namespace = self._list_namespace(self._view)
         key = (context, namespace, self._view)
+        if self._loading(self._view):
+            if self._workers[self._view].key == key:
+                return
+            self._cancel_refreshes()  # the person moved on: do not wait
         if key != self._shown_key:  # another context or namespace than on screen
             self._show_cached(key)
         logger.info(
@@ -2526,18 +2559,25 @@ class WorkloadWindow(QMainWindow):
         )
         view = self._view
         worker = RefreshWorker(context, namespace, view)
+        worker.key = key
         self._workers[view] = worker
         # An answer for a list the person has left is kept, not shown: it appears
         # at once when they come back.
         worker.completed.connect(
-            lambda namespaces, items: self._answered(
-                context, namespace, view, namespaces, items
+            lambda namespaces, items: (
+                self._answered(context, namespace, view, namespaces, items)
+                if self._workers.get(view) is worker
+                else None
             )
         )
         worker.failed.connect(
-            lambda message: self._show_error(message) if view == self._view else None
+            lambda message: (
+                self._show_error(message)
+                if view == self._view and self._workers.get(view) is worker
+                else None
+            )
         )
-        worker.finished.connect(self._refresh_finished)
+        worker.finished.connect(lambda: self._refresh_finished(worker))
         self._set_status(lambda: self.tr("Loading resources..."))
         worker.start()
         self._sync_loading()
@@ -2561,12 +2601,9 @@ class WorkloadWindow(QMainWindow):
         """Spin the refresh button while the list on screen loads; the context
         and namespace stay fixed while any list is loading."""
         loading = self._loading(self._view)
-        self.refresh_button.setEnabled(not loading)
-        busy = any(self._loading(view) for view in self._workers)
-        self.context_combo.setEnabled(not busy)
-        self.namespace_combo.setEnabled(not busy)
-        if loading:
-            self._begin_loading(self.refresh_button, self.tr("Refreshing..."))
+        self.refresh_button.setEnabled(True)
+        if loading:  # the button stops the load
+            self._begin_loading(self.refresh_button, self.tr("Cancel"))
         else:
             self._end_loading(self.refresh_button)
 
@@ -3066,7 +3103,7 @@ class WorkloadWindow(QMainWindow):
         self._finish_deferred_close()
 
     def _finish_deferred_close(self) -> None:
-        refresh_running = any(self._loading(view) for view in self._workers)
+        refresh_running = self._refresh_running()
         actions_running = any(worker.isRunning() for worker in self._action_workers)
         if (
             self._close_when_worker_stops
@@ -4203,7 +4240,9 @@ class WorkloadWindow(QMainWindow):
         self.table.setRowCount(0)
         self._filter_rows()
 
-    def _refresh_finished(self) -> None:
+    def _refresh_finished(self, worker: RefreshWorker | None = None) -> None:
+        if worker in self._retired:
+            self._retired.remove(worker)
         self._sync_loading()
         self._finish_deferred_close()
 
@@ -4220,7 +4259,7 @@ class WorkloadWindow(QMainWindow):
 
     def closeEvent(self, event: QCloseEvent) -> None:
         self._remember_geometry()
-        refresh_running = any(self._loading(view) for view in self._workers)
+        refresh_running = self._refresh_running()
         actions_running = any(worker.isRunning() for worker in self._action_workers)
         if refresh_running or actions_running:
             logger.info("Closing while requests are running; stopping them")

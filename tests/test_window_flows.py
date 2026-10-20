@@ -64,6 +64,7 @@ class FakeRefreshWorker(QObject):
     def __init__(self, context, namespace, view="deployments") -> None:
         super().__init__()
         self.context, self.namespace, self.view = context, namespace, view
+        self.key = (context, namespace, view)
 
     def isRunning(self) -> bool:
         return self.running
@@ -300,13 +301,57 @@ def test_each_list_loads_in_parallel_with_the_others(monkeypatch) -> None:
 
     assert window._workers["pods"] is pods
     assert window._workers["deployments"] is not pods
-    assert not window.context_combo.isEnabled()  # a list is still loading
+    assert window.context_combo.isEnabled()  # a list loading never locks it
     window._view = "pods"  # back on the list that is loading: it spins
     window._sync_loading()
-    assert not window.refresh_button.isEnabled()
+    assert window.refresh_button.isEnabled()  # as the way to cancel
     pods.running = False
     window._refresh_finished()
     assert window.context_combo.isEnabled() and window.refresh_button.isEnabled()
+    window.close()
+
+
+def test_another_context_cancels_the_list_that_is_loading(monkeypatch) -> None:
+    window = _ready_window(monkeypatch)
+    cancelled = []
+    monkeypatch.setattr(window_module, "cancel_running", lambda: cancelled.append(1))
+    window.context_combo.addItem("other")
+    running = FakeRefreshWorker("prod", None)
+    running.running = True
+    window._workers["deployments"] = running
+
+    window.context_combo.setCurrentIndex(window.context_combo.count() - 1)
+
+    assert cancelled and running in window._retired
+    assert window._workers["deployments"] is not running
+    assert window._workers["deployments"].context == "other"
+    running.running = False
+    window._refresh_finished(running)
+    assert running not in window._retired
+    window.close()
+
+
+def test_the_refresh_button_cancels_a_load_and_hides_its_answer(monkeypatch) -> None:
+    window = _ready_window(monkeypatch)
+    monkeypatch.setattr(window_module, "cancel_running", lambda: None)
+    running = FakeRefreshWorker("prod", None)
+    running.running = True
+    window._workers["deployments"] = running
+
+    window._refresh_or_cancel()
+
+    assert "deployments" not in window._workers and running in window._retired
+    window.close()
+
+
+def test_contexts_are_listed_alphabetically(monkeypatch) -> None:
+    window = _ready_window(monkeypatch)
+    window._contexts = ["zeta", "Beta", "alpha"]
+    window._fill_contexts(None)
+
+    names = [window.context_combo.itemData(i) for i in range(3)]
+
+    assert names == ["alpha", "Beta", "zeta"]
     window.close()
 
 
