@@ -10,7 +10,7 @@ import json
 import logging
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from PySide6.QtCore import QCoreApplication, QLibraryInfo, QLocale, Qt, QTranslator
 from PySide6.QtGui import QGuiApplication
@@ -173,8 +173,7 @@ def resolve_language(choice: str) -> str:
 def apply_language(choice: str) -> str:
     """Install the translators for the choice and return the language in
     use."""
-    application = QCoreApplication.instance()
-    assert application is not None
+    application = cast(QCoreApplication, QCoreApplication.instance())
     code = resolve_language(choice)
     for translator in _installed:
         application.removeTranslator(translator)
