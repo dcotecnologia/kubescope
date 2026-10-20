@@ -4,11 +4,13 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-10-20
+
 ### Added
 
 - Command line options: `kubescope --version`, `kubescope info`, `kubescope cleanup [--all] [--dry-run]` to delete the debug and crash logs, `kubescope check-update`, whose exit code says whether there is a newer version, and `kubescope update [--version X.Y.Z]` to install the latest or the given version by @danilogco
 - A setting, on by default, keeps the app running in the background with an icon in the system tray when the window is closed by @danilogco
-- The app looks for a new version every hour and, with the tray icon on, tells the operating system when there is one, once a day for the hourly check and every time for a check you ask for, by @danilogco
+- The app looks for a new version every hour and, with the tray icon on, tells the operating system when there is one, once a day for the hourly check and every time for a check you ask for by @danilogco
 
 ### Fixed
 
@@ -224,7 +226,8 @@ The first release.
 
 - Pod logs and resource details are still never written to disk by the app on its own. **Save** is the only exception, and it writes only to the file the user chooses. SECURITY.md says so by @danilogco
 
-[Unreleased]: https://github.com/dcotecnologia/kubescope/compare/v0.9.1...HEAD
+[Unreleased]: https://github.com/dcotecnologia/kubescope/compare/v0.10.0...HEAD
+[0.10.0]: https://github.com/dcotecnologia/kubescope/compare/v0.9.1...v0.10.0
 [0.9.1]: https://github.com/dcotecnologia/kubescope/compare/v0.9.0...v0.9.1
 [0.9.0]: https://github.com/dcotecnologia/kubescope/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/dcotecnologia/kubescope/compare/v0.7.1...v0.8.0
