@@ -40,7 +40,9 @@ def _send(
     body: dict[str, Any] | None,
     content_type: str,
 ) -> None:
-    for attempt in (1, 2):
+    attempt = 0
+    while True:
+        attempt += 1
         api = cluster._cached_client(context, fresh=attempt == 2)
         try:
             verb, url, headers, payload, _form = api.param_serialize(

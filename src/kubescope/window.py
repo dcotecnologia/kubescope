@@ -8,7 +8,7 @@ from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
 from functools import partial
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from PySide6.QtCore import (
     QByteArray,
@@ -37,6 +37,7 @@ from PySide6.QtGui import (
     QDrag,
     QIcon,
     QKeySequence,
+    QMouseEvent,
     QPainter,
     QPen,
     QPixmap,
@@ -270,6 +271,10 @@ def _gear_icon() -> QIcon:
     icon.addPixmap(pixmap, QIcon.Mode.Normal)
     icon.addPixmap(pixmap, QIcon.Mode.Disabled)
     return icon
+
+
+def _pair(color: str) -> tuple[str, str]:
+    return color, color
 
 
 def _nav_icon(shape: str, colors: tuple[str, str] | None = None) -> QIcon:
@@ -753,6 +758,7 @@ class WorkloadWindow(QMainWindow):
         self.save_button.clicked.connect(self._save_viewer_tab)
         while self.viewer_tabs.count():  # drop the sample tab used in Designer
             sample = self.viewer_tabs.widget(0)
+            assert sample is not None
             self.viewer_tabs.removeTab(0)
             sample.deleteLater()
         self.viewer_tabs.tabCloseRequested.connect(self._close_viewer_tab)
@@ -1055,10 +1061,11 @@ class WorkloadWindow(QMainWindow):
             return self._drag_over_pins(event)
         gesture, view = self._pin_gestures.get(watched, ("", ""))
         draggable = gesture in ("unpin", "viewer")
+        mouse = cast(QMouseEvent, event)  # only read once `event.type()` says so
         if draggable and event.type() == QEvent.Type.MouseButtonPress:
             self._drag_start = (
-                event.position().toPoint()
-                if event.button() == Qt.MouseButton.LeftButton
+                mouse.position().toPoint()
+                if mouse.button() == Qt.MouseButton.LeftButton
                 else None
             )
         elif draggable and event.type() == QEvent.Type.MouseButtonRelease:
@@ -1066,9 +1073,9 @@ class WorkloadWindow(QMainWindow):
         if (
             draggable
             and event.type() == QEvent.Type.MouseMove
-            and event.buttons() & Qt.MouseButton.LeftButton
+            and mouse.buttons() & Qt.MouseButton.LeftButton
             and self._drag_start is not None
-            and (event.position().toPoint() - self._drag_start).manhattanLength()
+            and (mouse.position().toPoint() - self._drag_start).manhattanLength()
             >= QApplication.startDragDistance()
         ):
             self._drag_start = None
@@ -1077,14 +1084,14 @@ class WorkloadWindow(QMainWindow):
         if (
             gesture == "pin"
             and event.type() == QEvent.Type.MouseButtonDblClick
-            and event.button() == Qt.MouseButton.LeftButton
+            and mouse.button() == Qt.MouseButton.LeftButton
         ):
             if view not in self.settings.pinned_views():
                 self._toggle_pin(view)
         elif (
             draggable
             and event.type() == QEvent.Type.MouseButtonPress
-            and event.button() == Qt.MouseButton.MiddleButton
+            and mouse.button() == Qt.MouseButton.MiddleButton
         ):
             if gesture == "viewer":
                 self._close_viewer_tab(int(view))
@@ -1100,7 +1107,12 @@ class WorkloadWindow(QMainWindow):
         `view` is the pinned list, or the index of the Details or Logs
         when `viewer`.
         """
-        tab = widget if isinstance(widget, QFrame) else widget.parentWidget()
+        tab = (
+            widget
+            if isinstance(widget, QFrame)
+            else cast(QWidget, widget).parentWidget()
+        )
+        assert tab is not None
         picture = QPixmap(tab.size())
         picture.fill(Qt.GlobalColor.transparent)
         painter = QPainter(picture)
@@ -1119,7 +1131,7 @@ class WorkloadWindow(QMainWindow):
         drag.exec(Qt.DropAction.MoveAction)
         self._drop_marker.hide()
         if tab.graphicsEffect() is fade:  # the move may have redrawn the tabs
-            tab.setGraphicsEffect(None)
+            tab.setGraphicsEffect(cast(Any, None))  # the stubs do not allow None
 
     def _pin_slot(self, item: tuple[str, Any], left: int) -> tuple[int, int]:
         """Where a tab dropped at `left` (a position in the top bar) would
@@ -1127,9 +1139,9 @@ class WorkloadWindow(QMainWindow):
         against."""
         bar = self.ui.pinnedBar
         tabs = [
-            button.parentWidget()
+            tab
             for other, button in zip(self._bar_items, self._pinned_buttons, strict=True)
-            if other != item
+            if other != item and (tab := button.parentWidget()) is not None
         ]
         slot = sum(1 for tab in tabs if tab.mapTo(bar, tab.rect().center()).x() < left)
         if slot < len(tabs):
@@ -1139,9 +1151,9 @@ class WorkloadWindow(QMainWindow):
     def _dragged_item(self, mime: QMimeData) -> tuple[str, Any] | None:
         """The tab a drag carries, when it is one of the top bar's."""
         if mime.hasFormat(PIN_MIME):
-            return "pin", bytes(mime.data(PIN_MIME)).decode()
+            return "pin", bytes(mime.data(PIN_MIME).data()).decode()
         if mime.hasFormat(VIEWER_MIME):
-            index = int(bytes(mime.data(VIEWER_MIME)).decode())
+            index = int(bytes(mime.data(VIEWER_MIME).data()).decode())
             widget = self.viewer_tabs.widget(index)
             return ("viewer", widget) if widget is not None else None
         return None
@@ -1201,6 +1213,7 @@ class WorkloadWindow(QMainWindow):
         layout = self.ui.pinnedLayout
         for button in self._pinned_buttons:
             tab = button.parentWidget()
+            assert tab is not None
             layout.removeWidget(tab)
             tab.deleteLater()
         self._pinned_buttons = []
@@ -1341,7 +1354,9 @@ class WorkloadWindow(QMainWindow):
         ):
             card.setVisible(info is not None)
             while (item := grid.takeAt(0)) is not None:
-                item.widget().deleteLater()
+                widget = item.widget()
+                assert widget is not None
+                widget.deleteLater()
         if info is None:
             return
         short = (
@@ -1680,7 +1695,7 @@ class WorkloadWindow(QMainWindow):
         }
         release = self._update_release
         available = state == "available" and release is not None
-        if available:
+        if release is not None and available:
             tip = self.tr(
                 "Update available: {version}. Click to update; "
                 "right-click to check again."
@@ -1770,14 +1785,14 @@ class WorkloadWindow(QMainWindow):
         self.nav_config.setIcon(_nav_icon("config"))
         self.save_button.setIcon(_nav_icon("save"))
         self._set_update_state(self._update_state)  # redraw its icon in this theme
-        light = (themed("#ffffff", text=True),) * 2  # on the filled buttons
+        light = _pair(themed("#ffffff", text=True))  # on the filled buttons
         for button in (
             self.workloads_refresh_button,
             self.overview_refresh_button,
             self.refresh_button,
         ):
             button.setIcon(_nav_icon("reload", light))
-        accent = (themed("#3220a0"),) * 2
+        accent = _pair(themed("#3220a0"))
         self.pods_button.setIcon(_nav_icon("pods", accent))
         self.details_button.setIcon(_nav_icon("details", accent))
         self.logs_button.setIcon(_nav_icon("document", accent))
@@ -1787,9 +1802,9 @@ class WorkloadWindow(QMainWindow):
     def _apply_theme(self) -> None:
         """Switch to the theme in the settings and redraw what was drawn with
         the old colors."""
-        apply_theme(QApplication.instance(), self.settings.theme)
+        apply_theme(cast(QApplication, QApplication.instance()), self.settings.theme)
         self._apply_style()
-        accent = (themed("#3220a0"),) * 2
+        accent = _pair(themed("#3220a0"))
         for index in range(self.viewer_tabs.count()):
             tab = self.viewer_tabs.widget(index)
             if isinstance(tab, LogTab):
@@ -2037,7 +2052,7 @@ class WorkloadWindow(QMainWindow):
         for column in range(self.table.columnCount()):
             if column in self._always_hidden():
                 continue
-            label = self.table.horizontalHeaderItem(column).text()
+            label = self._cell_text(self.table.horizontalHeaderItem(column))
             action = QAction(label, menu, checkable=True)
             action.setChecked(column not in hidden)
             action.setEnabled(column != 2)  # the name stays, rows need an identity
@@ -2680,7 +2695,8 @@ class WorkloadWindow(QMainWindow):
         saved = self.settings.default_namespace
         combo.clear()
         combo.addItem(self.tr("All namespaces"), "")
-        for namespace in sorted({*self._namespaces, *([saved] if saved else [])}):
+        extra: list[str] = [saved] if saved else []
+        for namespace in sorted({*self._namespaces, *extra}):
             combo.addItem(namespace, namespace)
         combo.setCurrentIndex(max(combo.findData(saved), 0))
 
@@ -2758,6 +2774,10 @@ class WorkloadWindow(QMainWindow):
         if self._view == "pods":
             return self._pods
         return self._resources if self._view in RESOURCE_VIEWS else self._workloads
+
+    @staticmethod
+    def _cell_text(item: QTableWidgetItem | None) -> str:
+        return item.text() if item is not None else ""
 
     def _selected_row(self) -> Workload | PodInfo | ClusterResource | None:
         if self._view == "pods":
@@ -3150,7 +3170,7 @@ class WorkloadWindow(QMainWindow):
 
     def _view_workload_details(self) -> None:
         workload = self._selected_row()
-        if workload is None:
+        if workload is None or isinstance(workload, PodInfo):
             return
         self._run_action(
             get_resource_details,
@@ -3371,7 +3391,7 @@ class WorkloadWindow(QMainWindow):
     ) -> None:
         """Add the entries to a menu like the buttons above the table: an icon
         in the accent color and the plain name."""
-        accent = (themed("#3220a0"),) * 2
+        accent = _pair(themed("#3220a0"))
         for shape, text, callback in entries:
             menu.addAction(_nav_icon(shape, accent), text, callback)
 
@@ -3710,6 +3730,7 @@ class WorkloadWindow(QMainWindow):
     def _close_viewer_tab(self, index: int) -> None:
         editor = self.viewer_tabs.widget(index)
         self.viewer_tabs.removeTab(index)
+        assert editor is not None
         if isinstance(editor, LogTab | DetailTab):
             editor.closed = True
         editor.deleteLater()
@@ -3772,7 +3793,7 @@ class WorkloadWindow(QMainWindow):
         timer.setInterval(LOG_REFRESH_MS)
         timer.timeout.connect(lambda: self._refresh_log(tab))
         timer.start()
-        tab.ui.refreshButton.setIcon(_nav_icon("reload", (themed("#3220a0"),) * 2))
+        tab.ui.refreshButton.setIcon(_nav_icon("reload", _pair(themed("#3220a0"))))
         tab.ui.refreshButton.clicked.connect(lambda: self._refresh_log(tab, True))
         title = self.tr("Logs: {pod} / {container}").format(
             pod=pod.name, container=container
@@ -3934,8 +3955,8 @@ class WorkloadWindow(QMainWindow):
         table = self.settings_ui.loginTable
         commands: dict[str, str] = {}
         for row in range(table.rowCount()):
-            program = table.item(row, 0).text().strip()
-            command = table.item(row, 1).text().strip()
+            program = self._cell_text(table.item(row, 0)).strip()
+            command = self._cell_text(table.item(row, 1)).strip()
             if not program and not command:
                 continue
             try:
@@ -4072,7 +4093,7 @@ class WorkloadWindow(QMainWindow):
         aliases = self.settings.context_aliases
         if self._contexts:
             edited = {
-                context: table.item(row, 1).text()
+                context: self._cell_text(table.item(row, 1))
                 for row, context in enumerate(self._contexts)
             }
             kept = {c: a for c, a in aliases.items() if c not in edited}
@@ -4254,7 +4275,9 @@ class WorkloadWindow(QMainWindow):
             logger.debug("The saved window geometry was not usable")
 
     def _remember_geometry(self) -> None:
-        self.settings.window_geometry = bytes(self.saveGeometry().toBase64()).decode()
+        self.settings.window_geometry = bytes(
+            self.saveGeometry().toBase64().data()
+        ).decode()
         self._save_settings()
 
     def closeEvent(self, event: QCloseEvent) -> None:

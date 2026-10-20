@@ -7,6 +7,7 @@ theme changes.
 
 import re
 from dataclasses import dataclass
+from typing import Protocol
 
 from PySide6.QtGui import QColor, QSyntaxHighlighter, QTextCharFormat
 from PySide6.QtWidgets import QPlainTextEdit
@@ -133,7 +134,13 @@ def style_json_view(editor: QPlainTextEdit) -> JsonHighlighter:
     return JsonHighlighter(editor.document())
 
 
-def restyle(editor: QPlainTextEdit, highlighter: QSyntaxHighlighter) -> None:
+class Restylable(Protocol):
+    """A highlighter that takes the colors of a theme."""
+
+    def set_palette(self, palette: Palette) -> None: ...
+
+
+def restyle(editor: QPlainTextEdit, highlighter: Restylable) -> None:
     """Redo the colors of a view after the theme changed."""
     palette = current_palette()
     editor.setStyleSheet(stylesheet(palette))

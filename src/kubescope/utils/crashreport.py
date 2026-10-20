@@ -50,7 +50,11 @@ class RecentLog(logging.Handler):
         )
         # This handler stops Python from falling back to stderr for the
         # warnings nobody else handles; keep printing those
-        if record.levelno >= logging.WARNING and _logger.handlers == [self]:
+        if (
+            record.levelno >= logging.WARNING
+            and _logger.handlers == [self]
+            and logging.lastResort is not None
+        ):
             logging.lastResort.handle(record)
 
 
