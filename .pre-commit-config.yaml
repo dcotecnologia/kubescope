@@ -9,7 +9,7 @@ default_install_hook_types:
 
 repos:
   - repo: https://github.com/astral-sh/uv-pre-commit
-    rev: 0.13.1
+    rev: 0.13.4
     hooks:
       - id: uv-lock
 
@@ -85,6 +85,12 @@ repos:
 
   - repo: local
     hooks:
+      - id: pyright
+        name: check the types like Pylance does
+        entry: uv run --frozen --extra dev pyright
+        language: system
+        types: [python]
+        pass_filenames: false
       - id: third-party-notices
         name: rewrite the third-party notices when uv.lock changes
         # reads the licenses of the installed packages, and `uv run --frozen`

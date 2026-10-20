@@ -14,6 +14,7 @@ All notable changes to this project will be documented in this file. The format 
 ### Changed
 
 - The contexts are listed in alphabetical order, ignoring case by @danilogco
+- The code passes pyright, the checker behind Pylance, and pre-commit and CI run it on every change by @danilogco
 
 ## [0.9.0] - 2026-10-19
 

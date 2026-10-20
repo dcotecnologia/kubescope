@@ -86,9 +86,10 @@ notices: ## Rewrite the third-party license notices from uv.lock (after changing
 changelog: ## Copy CHANGELOG.md into the package, where the app shows it (after editing it)
 	$(UV) run python tools/sync_changelog.py
 
-lint: ## Check the code with ruff (lint and formatting)
+lint: ## Check the code with ruff (lint and formatting) and pyright (types)
 	$(UV) run --extra dev ruff check .
 	$(UV) run --extra dev ruff format --check .
+	$(UV) run --extra dev pyright
 
 format: ## Fix lint issues and format the code with ruff
 	$(UV) run --extra dev ruff check --fix .

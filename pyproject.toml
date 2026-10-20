@@ -19,6 +19,7 @@ build-backend = "setuptools.build_meta"
 dev = [
     "pre-commit>=4.7.0",
     "pytest>=9.1.1",
+    "pyright>=1.1.414",
     "pytest-cov>=7.1.0",
     "ruff>=0.17.1",
 ]
@@ -57,6 +58,15 @@ markers = [
     "api: API test",
     "auth: authentication related",
 ]
+
+[tool.pyright]
+# What Pylance reports in the editor; the generated UI files are left out, and
+# so are the tests, which still poke at Qt through None-able and private APIs
+include = ["src"]
+exclude = ["src/kubescope/ui/ui_*.py", "**/__pycache__"]
+pythonVersion = "3.12"
+venvPath = "."
+venv = ".venv"
 
 [tool.ruff]
 line-length = 88
