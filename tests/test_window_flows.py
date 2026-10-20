@@ -23,6 +23,7 @@ from PySide6.QtWidgets import (
     QMessageBox,
     QPushButton,
     QTableWidget,
+    QTableWidgetItem,
     QWidget,
 )
 
@@ -602,9 +603,7 @@ def test_pods_dialog_lists_pods_and_opens_details_and_logs(monkeypatch) -> None:
 def test_choosing_pods_and_containers_for_logs(monkeypatch) -> None:
     window = _ready_window(monkeypatch)
     messages, dispatched = [], []
-    monkeypatch.setattr(
-        QMessageBox, "information", staticmethod(lambda *a: messages.append(a[2]))
-    )
+    monkeypatch.setattr(QMessageBox, "exec", lambda box: messages.append(box.text()))
     monkeypatch.setattr(
         window, "_run_action", lambda op, _ok, *a, **_k: dispatched.append(a)
     )
@@ -2270,7 +2269,7 @@ def test_save_does_nothing_when_cancelled_and_reports_a_failed_write(
     window._save_viewer_tab()  # no tab open: nothing to save
     window._show_json_dialog("Pod: x", {"a": 1})
     shown = []
-    monkeypatch.setattr(QMessageBox, "warning", lambda *a: shown.append(a[2]))
+    monkeypatch.setattr(QMessageBox, "exec", lambda box: shown.append(box.text()))
 
     monkeypatch.setattr(
         window_module.QFileDialog, "getSaveFileName", lambda *_a: ("", "")
@@ -3405,4 +3404,52 @@ def test_details_overview_shows_sections_subsections_and_tables(monkeypatch) -> 
     assert "containers: app / nested: n" in texts
     assert "sh" in texts and "line 1\nline 2" in texts
     assert tab.findChildren(QTableWidget)
+    window.close()
+
+
+def test_a_tab_is_shown_only_in_its_own_context(monkeypatch) -> None:
+    window = _ready_window(monkeypatch)
+    window._show_json_dialog("Pod: x", {"a": 1})
+    assert len(window._pinned_buttons) == 1
+    assert window.pages.currentIndex() == 3
+
+    window.context_combo.addItem("stage")
+    window.context_combo.setCurrentIndex(1)
+
+    assert window._pinned_buttons == []  # kept open, but not shown here
+    assert window.viewer_tabs.count() == 1
+    assert window.pages.currentIndex() == 1
+
+    window.context_combo.setCurrentIndex(0)
+
+    assert len(window._pinned_buttons) == 1
+    window.close()
+
+
+def test_changing_context_lands_on_a_tab_of_the_new_context(monkeypatch) -> None:
+    window = _ready_window(monkeypatch)
+    window.context_combo.addItem("stage")
+    window._show_json_dialog("Pod: prod", {"a": 1})
+    window.context_combo.setCurrentIndex(1)
+    window._show_json_dialog("Pod: stage", {"a": 2})
+    window.viewer_tabs.setCurrentIndex(0)  # the prod tab, still the shown one
+
+    window._leave_other_context_tab()
+
+    assert window.viewer_tabs.currentIndex() == 1
+    window.close()
+
+
+def test_the_name_column_starts_wide_enough_for_its_names(monkeypatch) -> None:
+    window = _ready_window(monkeypatch)
+    window.table.setRowCount(1)
+    window.table.setItem(0, 2, QTableWidgetItem("a-very-long-name-" * 6))
+
+    window._fit_name_column()
+    fitted = window.table.columnWidth(2)
+    window.table.setColumnWidth(2, 50)
+    window._fit_name_column()  # once per list: the width is theirs now
+
+    assert fitted > 260
+    assert window.table.columnWidth(2) == 50
     window.close()

@@ -675,6 +675,8 @@ class WorkloadWindow(QMainWindow):
         self.network_submenu = ui.networkSubmenu
         self.nav_config = ui.navConfig
         self._pinned_buttons: list[QPushButton] = []
+        self._name_fitted: set[str] = set()  # the lists whose NAME column was fitted
+        self._viewer_contexts: dict[QWidget | None, str] = {}  # the context of each tab
         # widget -> (what the gesture does, the list it is about)
         self._pin_gestures: dict[QObject, tuple[str, str]] = {}
         # every tab shown in the top bar, left to right, parallel to the buttons:
@@ -1270,6 +1272,8 @@ class WorkloadWindow(QMainWindow):
             built[("pin", view)] = (tab, button)
         for index in range(self.viewer_tabs.count()):
             widget = self.viewer_tabs.widget(index)
+            if self._viewer_contexts.get(widget) != self._context():
+                continue  # kept open, but shown only in its own context
             built[("viewer", widget)] = self._viewer_top_tab(index)
         # the order the person gave them, then the ones that came after
         self._bar_items = [item for item in self._bar_order if item in built]
@@ -2087,6 +2091,25 @@ class WorkloadWindow(QMainWindow):
             self._save_settings()
         if self.pages.currentIndex() == 0:
             self._ensure_overview()
+        self._leave_other_context_tab()
+        self._render_pinned()
+
+    def _leave_other_context_tab(self) -> None:
+        """Move off a Details or Logs tab that belongs to the context just
+        left; the tab stays open for when that context comes back."""
+        current = self.viewer_tabs.currentWidget()
+        if (
+            self.pages.currentIndex() == 3
+            and self._viewer_contexts.get(current) != self._context()
+        ):
+            for index in range(self.viewer_tabs.count()):
+                if (
+                    self._viewer_contexts.get(self.viewer_tabs.widget(index))
+                    == self._context()
+                ):
+                    self.viewer_tabs.setCurrentIndex(index)
+                    return
+            self._show_page(1)
 
     def _hide_login(self) -> None:
         self._login_action = None
@@ -2798,6 +2821,16 @@ class WorkloadWindow(QMainWindow):
                 self._render_workloads()
         finally:
             self.table.setUpdatesEnabled(True)
+        self._fit_name_column()
+
+    def _fit_name_column(self) -> None:
+        """Start each list with the whole of its names showing; after that the
+        width is the person's to drag."""
+        if self._view in self._name_fitted or self.table.rowCount() == 0:
+            return
+        self._name_fitted.add(self._view)
+        self.table.resizeColumnToContents(2)
+        self.table.setColumnWidth(2, min(max(self.table.columnWidth(2), 260), 700))
 
     def _render_resources(self) -> None:
         resources = self._resources
@@ -3318,8 +3351,10 @@ class WorkloadWindow(QMainWindow):
 
     def _choose_pod_for_logs(self, context: str, pods: list[PodInfo]) -> None:
         if not pods:
-            QMessageBox.information(
-                self, self.tr("Logs"), self.tr("This workload has no Pods.")
+            self._show_message(
+                QMessageBox.Icon.Information,
+                self.tr("Logs"),
+                self.tr("This workload has no Pods."),
             )
             return
         if len(pods) == 1:
@@ -3337,8 +3372,8 @@ class WorkloadWindow(QMainWindow):
         # Init containers (migrations, setup) run and stop but keep their logs.
         choices = [*pod.init_containers, *pod.containers]
         if not choices:
-            QMessageBox.information(
-                self,
+            self._show_message(
+                QMessageBox.Icon.Information,
                 self.tr("Logs"),
                 self.tr("Pod {name} has no containers.").format(name=pod.name),
             )
@@ -3400,6 +3435,43 @@ class WorkloadWindow(QMainWindow):
         dialog.accept()
         callback()
 
+    def _style_box_buttons(self, box: QMessageBox) -> None:
+        """Give a message box the window's own buttons: the accepting one
+        filled, the others outlined, and none of the style's stock icons."""
+        accepting = (QMessageBox.ButtonRole.AcceptRole, QMessageBox.ButtonRole.YesRole)
+        for button in box.buttons():
+            button.setIcon(QIcon())
+            button.setProperty(
+                "variant",
+                "primary" if box.buttonRole(button) in accepting else "secondary",
+            )
+            # the box polished its buttons already, before the variant
+            style = button.style()
+            style.unpolish(button)
+            style.polish(button)
+
+    def _show_message(
+        self,
+        icon: QMessageBox.Icon,
+        title: str,
+        text: str,
+        hint: str = "",
+        details: str = "",
+    ) -> None:
+        """Tell the person something, in a box styled like the window."""
+        box = QMessageBox(self)
+        box.setIcon(icon)
+        box.setWindowTitle(title)
+        box.setText(text)
+        if hint:
+            box.setInformativeText(hint)
+        if details:
+            box.setDetailedText(details)
+        ok = box.addButton(self.tr("OK"), QMessageBox.ButtonRole.AcceptRole)
+        box.setDefaultButton(ok)
+        self._style_box_buttons(box)
+        box.exec()
+
     def _confirm(self, title: str, text: str, action: str) -> bool:
         """Ask before an action that changes the cluster; Cancel is the
         default."""
@@ -3410,6 +3482,7 @@ class WorkloadWindow(QMainWindow):
         confirm = box.addButton(action, QMessageBox.ButtonRole.AcceptRole)
         cancel = box.addButton(self.tr("Cancel"), QMessageBox.ButtonRole.RejectRole)
         box.setDefaultButton(cancel)
+        self._style_box_buttons(box)
         box.exec()
         return box.clickedButton() is confirm
 
@@ -3433,12 +3506,12 @@ class WorkloadWindow(QMainWindow):
     def _show_write_error(self, message: str) -> None:
         if self._close_when_worker_stops:
             return
-        box = QMessageBox(self)
-        box.setIcon(QMessageBox.Icon.Warning)
-        box.setWindowTitle(self.tr("Action failed"))
-        box.setText(first_line(message))
-        box.setDetailedText(message)
-        box.exec()
+        self._show_message(
+            QMessageBox.Icon.Warning,
+            self.tr("Action failed"),
+            first_line(message),
+            details=message,
+        )
 
     def _delete_pod(self, pod: PodInfo) -> None:
         question = self.tr("Delete the Pod {name} in {namespace}?").format(
@@ -3471,8 +3544,8 @@ class WorkloadWindow(QMainWindow):
         paste in a terminal, for the container the person picks; the app runs
         nothing itself."""
         if not pod.containers:
-            QMessageBox.information(
-                self,
+            self._show_message(
+                QMessageBox.Icon.Information,
                 self.tr("Shell command"),
                 self.tr("Pod {name} has no containers.").format(name=pod.name),
             )
@@ -3572,8 +3645,8 @@ class WorkloadWindow(QMainWindow):
         nothing itself."""
         ports = service_ports(document)
         if not ports:
-            QMessageBox.information(
-                self,
+            self._show_message(
+                QMessageBox.Icon.Information,
                 self.tr("Forward"),
                 self.tr("Service {name} has no TCP ports to forward.").format(
                     name=service.name
@@ -3711,8 +3784,8 @@ class WorkloadWindow(QMainWindow):
             Path(path).write_text(editor.toPlainText(), encoding="utf-8")
         except OSError as error:
             logger.warning("Could not save the tab to a file: %s", error.strerror)
-            QMessageBox.warning(
-                self,
+            self._show_message(
+                QMessageBox.Icon.Warning,
                 self.tr("Could not save"),
                 self.tr("The file could not be written: {reason}").format(
                     reason=error.strerror or str(error)
@@ -3722,6 +3795,7 @@ class WorkloadWindow(QMainWindow):
         logger.info("Saved a tab to a file")
 
     def _add_viewer_tab(self, widget: QWidget, title: str) -> None:
+        self._viewer_contexts[widget] = self._context()
         index = self.viewer_tabs.addTab(widget, title)
         self.viewer_tabs.setTabToolTip(index, title)
         self.viewer_tabs.setCurrentIndex(index)
@@ -3731,6 +3805,7 @@ class WorkloadWindow(QMainWindow):
         editor = self.viewer_tabs.widget(index)
         self.viewer_tabs.removeTab(index)
         assert editor is not None
+        self._viewer_contexts.pop(editor, None)
         if isinstance(editor, LogTab | DetailTab):
             editor.closed = True
         editor.deleteLater()
@@ -4222,6 +4297,7 @@ class WorkloadWindow(QMainWindow):
             self.tr("Don't show again"), QMessageBox.ButtonRole.DestructiveRole
         )
         box.setDefaultButton(github)
+        self._style_box_buttons(box)
         box.exec()
         if box.clickedButton() is github:
             QDesktopServices.openUrl(QUrl(PROJECT_URL))
@@ -4238,13 +4314,13 @@ class WorkloadWindow(QMainWindow):
             self._show_permission_banner(message)
             return
         info = describe_error(message)
-        box = QMessageBox(self)
-        box.setIcon(QMessageBox.Icon.Warning)
-        box.setWindowTitle(self.tr("Query failed"))
-        box.setText(info.title)
-        box.setInformativeText(info.hint)
-        box.setDetailedText(info.details)
-        box.exec()
+        self._show_message(
+            QMessageBox.Icon.Warning,
+            self.tr("Query failed"),
+            info.title,
+            info.hint,
+            info.details,
+        )
 
     def _show_error(self, message: str) -> None:
         logger.info("Refresh failed: %s", first_line(message))
