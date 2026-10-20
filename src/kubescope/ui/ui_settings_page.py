@@ -118,6 +118,12 @@ class Ui_SettingsPage(object):
 
         self.generalForm.setWidget(3, QFormLayout.ItemRole.SpanningRole, self.updatesCheck)
 
+        self.backgroundCheck = QCheckBox(self.generalCard)
+        self.backgroundCheck.setObjectName(u"backgroundCheck")
+        self.backgroundCheck.setChecked(True)
+
+        self.generalForm.setWidget(4, QFormLayout.ItemRole.SpanningRole, self.backgroundCheck)
+
 
         self.generalCardLayout.addLayout(self.generalForm)
 
@@ -457,9 +463,13 @@ class Ui_SettingsPage(object):
         self.defaultNamespaceCombo.setToolTip(QCoreApplication.translate("SettingsPage", u"The namespace each context opens on. Leave empty to show all of them.", None))
 #endif // QT_CONFIG(tooltip)
         self.rememberCheck.setText(QCoreApplication.translate("SettingsPage", u"Remember the last used context", None))
-        self.updatesCheck.setText(QCoreApplication.translate("SettingsPage", u"Check GitHub for a new version when the app starts", None))
+        self.updatesCheck.setText(QCoreApplication.translate("SettingsPage", u"Check GitHub for a new version when the app starts and every hour", None))
 #if QT_CONFIG(tooltip)
         self.updatesCheck.setToolTip(QCoreApplication.translate("SettingsPage", u"Asks the public GitHub API for the latest release and sends nothing but the app version. The icon in the footer checks on demand.", None))
+#endif // QT_CONFIG(tooltip)
+        self.backgroundCheck.setText(QCoreApplication.translate("SettingsPage", u"Keep running in the background, with an icon in the system tray", None))
+#if QT_CONFIG(tooltip)
+        self.backgroundCheck.setToolTip(QCoreApplication.translate("SettingsPage", u"Closing the window hides it instead of quitting; click the tray icon to bring it back, or choose Quit in its menu. It has no effect where the desktop shows no system tray.", None))
 #endif // QT_CONFIG(tooltip)
         self.appearanceHeading.setText(QCoreApplication.translate("SettingsPage", u"APPEARANCE", None))
         self.themeLabel.setText(QCoreApplication.translate("SettingsPage", u"Theme", None))

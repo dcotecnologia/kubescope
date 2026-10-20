@@ -1,5 +1,21 @@
 # Using KubeScope
 
+## Command line
+
+`kubescope` opens the window. These commands answer on the terminal instead:
+
+- `kubescope --version` prints the version.
+- `kubescope info` prints the version, the commit and where the settings and
+  logs are kept.
+- `kubescope cleanup` deletes the debug and crash logs older than 30 days;
+  `--all` deletes all of them and `--dry-run` only lists what would go.
+- `kubescope check-update` looks for a newer version. Its exit code is 0 when
+  up to date, 10 when there is a newer one and 1 when the check failed.
+- `kubescope update` installs the latest version, or the one given with
+  `--version X.Y.Z`, checking the file against the sha256 GitHub published. It
+  works for the AppImage, the .deb and Windows installations; a Flatpak is
+  updated by Flathub.
+
 ## The window
 
 The sidebar has **Overview**, **Workloads**, **Settings**, and a **Details & Logs**
@@ -151,6 +167,12 @@ Language (automatic, English, Portuguese, Spanish, Italian, French, Chinese,
 Japanese, Arabic, Hindi or Russian), the theme, remembering the last
 context, display names for contexts, and the debug log.
 
+### Running in the background
+
+KubeScope stays in the system tray when you close the window. Clear **Keep running in the background** in Settings to quit on close instead. Click the tray icon to show or hide the
+window, or use its menu to **Quit**. It does nothing on a desktop without a
+system tray.
+
 ### Write mode
 
 KubeScope is read-only until you tick **Write mode** in Settings. Then the
@@ -196,8 +218,10 @@ version:
   page (Flathub updates the Flatpak).
 
 Click the icon at any time to check again. Checking sends only the app version;
-nothing is downloaded until you confirm. To turn the startup check off, clear **Check GitHub for a new version when the app
-starts** in Settings.
+nothing is downloaded until you confirm. The app checks when it starts and every hour; with the tray icon on, it also tells
+your system about a new version (once a day for the automatic checks). To turn the
+automatic checks off, clear **Check GitHub for a new version when the app starts and
+every hour** in Settings; the icon still checks on demand.
 
 ### Themes
 

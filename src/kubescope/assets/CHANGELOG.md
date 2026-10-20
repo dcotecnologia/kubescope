@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+### Added
+
+- Command line options: `kubescope --version`, `kubescope info`, `kubescope cleanup [--all] [--dry-run]` to delete the debug and crash logs, `kubescope check-update`, whose exit code says whether there is a newer version, and `kubescope update [--version X.Y.Z]` to install the latest or the given version by @danilogco
+- A setting, on by default, keeps the app running in the background with an icon in the system tray when the window is closed by @danilogco
+- The app looks for a new version every hour and, with the tray icon on, tells the operating system when there is one, once a day for the hourly check and every time for a check you ask for, by @danilogco
+
 ### Fixed
 
 - The message boxes, such as **Query failed**, use the window's own buttons instead of the style's stock ones by @danilogco

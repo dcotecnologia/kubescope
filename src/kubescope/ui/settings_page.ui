@@ -193,13 +193,26 @@
             <item row="3" column="0" colspan="2">
              <widget class="QCheckBox" name="updatesCheck">
               <property name="text">
-               <string>Check GitHub for a new version when the app starts</string>
+               <string>Check GitHub for a new version when the app starts and every hour</string>
               </property>
               <property name="toolTip">
                <string>Asks the public GitHub API for the latest release and sends nothing but the app version. The icon in the footer checks on demand.</string>
               </property>
               <property name="checked">
                <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+            <item row="4" column="0" colspan="2">
+             <widget class="QCheckBox" name="backgroundCheck">
+              <property name="text">
+               <string>Keep running in the background, with an icon in the system tray</string>
+              </property>
+              <property name="checked">
+               <bool>true</bool>
+              </property>
+              <property name="toolTip">
+               <string>Closing the window hides it instead of quitting; click the tray icon to bring it back, or choose Quit in its menu. It has no effect where the desktop shows no system tray.</string>
               </property>
              </widget>
             </item>

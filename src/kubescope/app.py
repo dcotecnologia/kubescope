@@ -9,6 +9,7 @@ from PySide6.QtGui import QIcon, QPixmap
 from PySide6.QtWidgets import QApplication
 
 import kubescope
+from kubescope import cli
 from kubescope.dialogs.crash_dialog import show_pending_crash_report
 from kubescope.i18n import apply_language
 from kubescope.settings import Settings
@@ -72,6 +73,9 @@ def start_log_purge(settings: Settings) -> threading.Thread:
 
 
 def main() -> int:
+    command = cli.run(sys.argv[1:])
+    if command is not None:
+        return command
     settings = Settings()
     debugging = configure_debug(settings)
     start_log_purge(settings)

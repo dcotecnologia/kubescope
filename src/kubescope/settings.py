@@ -24,7 +24,9 @@ DEFAULTS: dict[str, Any] = {
     "pinned_views": [],
     "debug_logging": False,
     "check_updates": True,
+    "last_update_notice": "",
     "write_mode": False,
+    "run_in_background": True,
     "welcome_dismissed": False,
     "window_geometry": "",
     "kubeconfig_files": [],
@@ -212,6 +214,26 @@ class Settings:
     @check_updates.setter
     def check_updates(self, value: bool) -> None:
         self._data["check_updates"] = bool(value)
+
+    @property
+    def last_update_notice(self) -> str:
+        """The day (YYYY-MM-DD) the system was last told of a new version."""
+        value = self._data["last_update_notice"]
+        return value if isinstance(value, str) else ""
+
+    @last_update_notice.setter
+    def last_update_notice(self, value: str) -> None:
+        self._data["last_update_notice"] = str(value)
+
+    @property
+    def run_in_background(self) -> bool:
+        """Whether closing the window leaves the app running in the system
+        tray; on unless the person turned it off."""
+        return self._data["run_in_background"] is not False
+
+    @run_in_background.setter
+    def run_in_background(self, value: bool) -> None:
+        self._data["run_in_background"] = bool(value)
 
     @property
     def write_mode(self) -> bool:

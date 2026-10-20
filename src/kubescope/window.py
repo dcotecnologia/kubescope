@@ -1,4 +1,5 @@
 import dataclasses
+import datetime
 import html
 import logging
 import math
@@ -62,6 +63,7 @@ from PySide6.QtWidgets import (
     QPushButton,
     QScrollArea,
     QSpinBox,
+    QSystemTrayIcon,
     QTableWidgetItem,
     QVBoxLayout,
     QWidget,
@@ -175,9 +177,11 @@ logger = logging.getLogger(__name__)
 PIN_MIME = "application/x-kubescope-pin"  # what a dragged pinned tab carries
 VIEWER_MIME = "application/x-kubescope-viewer"  # the same, for a Details/Logs tab
 LIST_DEBOUNCE_MS = 150
+UPDATE_RECHECK_MS = 60 * 60 * 1000  # look for a new version again every hour
 UPDATE_SEARCH_MS = 5000  # an update check shows as searching for at least this long
 UPDATE_NOTICE_MS = 4000  # how long "Up to date" stays next to the icon
 
+NOTICES_PATH = Path(__file__).resolve().parent / "assets" / "THIRD_PARTY_NOTICES.txt"
 LOGO_PATH = Path(__file__).resolve().parent / "assets" / "icon.png"
 
 # Overview rows that open a list when clicked, and the list each opens.
@@ -622,6 +626,11 @@ class WorkloadWindow(QMainWindow):
         self._update_delay = QTimer(self)
         self._update_delay.setSingleShot(True)
         self._update_delay.timeout.connect(self._update_checked)
+        self._update_recheck = QTimer(self)
+        self._update_recheck.setInterval(UPDATE_RECHECK_MS)
+        self._update_recheck.timeout.connect(self._recheck_updates)
+        self._update_recheck.start()
+        self._rechecking = False  # an hourly check says nothing when up to date
         self._update_notice_timer = QTimer(self)  # hides "Up to date" again
         self._update_notice_timer.setSingleShot(True)
         self._update_notice_timer.setInterval(UPDATE_NOTICE_MS)
@@ -675,6 +684,8 @@ class WorkloadWindow(QMainWindow):
         self.network_submenu = ui.networkSubmenu
         self.nav_config = ui.navConfig
         self._pinned_buttons: list[QPushButton] = []
+        self._tray: QSystemTrayIcon | None = None
+        self._quitting = False
         self._name_fitted: set[str] = set()  # the lists whose NAME column was fitted
         self._viewer_contexts: dict[QWidget | None, str] = {}  # the context of each tab
         # widget -> (what the gesture does, the list it is about)
@@ -857,6 +868,7 @@ class WorkloadWindow(QMainWindow):
         self.table.customContextMenuRequested.connect(self._show_row_menu)
         self._style_template = self.styleSheet()
         self._apply_style()
+        self._sync_tray()
         self._show_version()
         self._show_access_note()
         self._update_notice_timer.timeout.connect(self.ui.updateNotice.hide)
@@ -1654,6 +1666,11 @@ class WorkloadWindow(QMainWindow):
         if self.settings.check_updates:
             self.check_updates()
 
+    def _recheck_updates(self) -> None:
+        if self.settings.check_updates and self._update_state != "checking":
+            self._rechecking = True
+            self.check_updates()
+
     def check_updates(self) -> None:
         if self._update_state == "checking":
             return
@@ -1679,14 +1696,35 @@ class WorkloadWindow(QMainWindow):
         result = self._update_result
         self._update_release = result.release
         self._set_update_state(result.status)
+        rechecking, self._rechecking = self._rechecking, False
+        if result.release is not None:
+            self._notify_update(result.release, daily=rechecking)
         notice = {
             "current": self.tr("Up to date"),
             "failed": self.tr("Could not check"),
         }.get(result.status)
-        if notice is not None:
+        if notice is not None and not rechecking:
             self.ui.updateNotice.setText(notice)
             self.ui.updateNotice.show()
             self._update_notice_timer.start()
+
+    def _notify_update(self, release: Release, daily: bool) -> None:
+        """Tell the operating system about a new version through the tray icon:
+        a check the person asked for always says so, the hourly one only once
+        a day. Without a tray the icon in the footer is the notice."""
+        if self._tray is None:
+            return
+        if daily:
+            today = datetime.date.today().isoformat()
+            if self.settings.last_update_notice == today:
+                return
+            self.settings.last_update_notice = today
+            self._save_settings()
+        self._tray.showMessage(
+            self.tr("KubeScope update available"),
+            self.tr("Version {version} is available").format(version=release.version),
+            QSystemTrayIcon.MessageIcon.Information,
+        )
 
     def _set_update_state(self, state: str) -> None:
         self._update_state = state
@@ -3932,6 +3970,7 @@ class WorkloadWindow(QMainWindow):
         form.debugCheck.setChecked(self.settings.debug_logging)
         form.updatesCheck.setChecked(self.settings.check_updates)
         form.writeModeCheck.setChecked(self.settings.write_mode)
+        form.backgroundCheck.setChecked(self.settings.run_in_background)
         form.debugHint.setText(
             self.tr(
                 "Off by default. When on, KubeScope writes what it does, "
@@ -4184,6 +4223,8 @@ class WorkloadWindow(QMainWindow):
         self.settings.check_updates = form.updatesCheck.isChecked()
         if self.settings.check_updates and not was_checking:
             self.check_updates()
+        self.settings.run_in_background = form.backgroundCheck.isChecked()
+        self._sync_tray()
         was_writing = self.settings.write_mode
         self.settings.write_mode = form.writeModeCheck.isChecked()
         if self.settings.write_mode != was_writing:
@@ -4356,8 +4397,113 @@ class WorkloadWindow(QMainWindow):
         ).decode()
         self._save_settings()
 
+    def _sync_tray(self) -> None:
+        """Show the tray icon while the setting is on and the desktop has a
+        system tray; without one the window must still close for real."""
+        wanted = (
+            self.settings.run_in_background and QSystemTrayIcon.isSystemTrayAvailable()
+        )
+        if wanted and self._tray is None:
+            tray = QSystemTrayIcon(self.windowIcon(), self)
+            tray.setToolTip("KubeScope")
+            menu = QMenu(self)
+            menu.addAction(self.tr("Show KubeScope"), self._show_from_tray)
+            menu.addSeparator()
+            menu.addAction(self.tr("About KubeScope"), self._show_about)
+            menu.addAction(self.tr("Preferences"), self._show_preferences)
+            menu.addAction(self.tr("Check for updates"), self._check_updates_from_tray)
+            menu.addSeparator()
+            menu.addAction(self.tr("Quit"), self._quit)
+            tray.setContextMenu(menu)
+            tray.activated.connect(self._tray_activated)
+            tray.messageClicked.connect(self._show_from_tray)
+            tray.show()
+            self._tray = tray
+        elif not wanted and self._tray is not None:
+            self._tray.hide()
+            self._tray.deleteLater()
+            self._tray = None
+        QApplication.setQuitOnLastWindowClosed(self._tray is None)
+
+    def _tray_activated(self, reason: QSystemTrayIcon.ActivationReason) -> None:
+        if reason == QSystemTrayIcon.ActivationReason.Trigger:
+            if self.isVisible():
+                self.hide()
+            else:
+                self._show_from_tray()
+
+    def _show_from_tray(self) -> None:
+        self.showNormal()
+        self.raise_()
+        self.activateWindow()
+
+    def _show_about(self) -> None:
+        box = QMessageBox(self)
+        box.setIconPixmap(QPixmap(str(LOGO_PATH)).scaledToWidth(56))
+        box.setWindowTitle(self.tr("About KubeScope"))
+        box.setText(f"KubeScope {__version__}")
+        box.setInformativeText(
+            "Copyright © 2026 DCO Tecnologia\n\n"
+            + self.tr(
+                "KubeScope is free and open source software, released under the "
+                'MIT License. It is provided "as is", without warranty of any '
+                "kind."
+            )
+            + "\n\n"
+            + self.tr(
+                "It is built with Qt for Python (PySide6) and Qt, under the "
+                "LGPL-3.0. The licenses of the other libraries it uses are in the "
+                "third-party notices."
+            )
+            + "\n\n"
+            + self.tr(
+                "Kubernetes is a registered trademark of The Linux Foundation. "
+                "KubeScope is an independent project, not affiliated with or "
+                "endorsed by it."
+            )
+        )
+        github = box.addButton(
+            self.tr("Open on GitHub"), QMessageBox.ButtonRole.AcceptRole
+        )
+        license_button = box.addButton(
+            self.tr("License"), QMessageBox.ButtonRole.AcceptRole
+        )
+        notices = box.addButton(
+            self.tr("Third-party notices"), QMessageBox.ButtonRole.AcceptRole
+        )
+        box.addButton(self.tr("Close"), QMessageBox.ButtonRole.RejectRole)
+        box.setDefaultButton(github)
+        self._style_box_buttons(box)
+        box.exec()
+        if box.clickedButton() is github:
+            QDesktopServices.openUrl(QUrl(PROJECT_URL))
+        elif box.clickedButton() is license_button:
+            self._open_license()
+        elif box.clickedButton() is notices:
+            QDesktopServices.openUrl(QUrl.fromLocalFile(str(NOTICES_PATH)))
+
+    def _show_preferences(self) -> None:
+        self._show_from_tray()
+        self._show_page(2)
+
+    def _check_updates_from_tray(self) -> None:
+        self._show_from_tray()
+        self.check_updates()
+
+    def _quit(self) -> None:
+        """Quit for real, which closing the window does not while it lives in
+        the tray."""
+        self._quitting = True
+        QApplication.setQuitOnLastWindowClosed(True)
+        self.close()
+
     def closeEvent(self, event: QCloseEvent) -> None:
         self._remember_geometry()
+        if self._tray is not None and not self._quitting:
+            logger.info("Closing to the system tray")
+            self.hide()
+            event.ignore()
+            return
         refresh_running = self._refresh_running()
         actions_running = any(worker.isRunning() for worker in self._action_workers)
         if refresh_running or actions_running:
