@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+### Fixed
+
+- Add-ons list the Helm releases of every namespace, so the default namespace no longer leaves them out in the contexts that have it by @danilogco
+
 ## [0.9.0] - 2026-10-19
 
 ### Added

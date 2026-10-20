@@ -1829,7 +1829,7 @@ class WorkloadWindow(QMainWindow):
             header.setSortIndicatorShown(False)
             self._apply_view_columns()
             self._render_rows()
-            key = (self._context(), self.namespace_combo.currentData() or None, view)
+            key = (self._context(), self._list_namespace(view), view)
             known = self._answers.get(key)
             self._shown_key = key if known else None
             if known:  # the last answer, until the fresh one arrives
@@ -2514,7 +2514,7 @@ class WorkloadWindow(QMainWindow):
         context = self._context()
         if not context or self._loading(self._view):
             return
-        namespace = self.namespace_combo.currentData() or None
+        namespace = self._list_namespace(self._view)
         key = (context, namespace, self._view)
         if key != self._shown_key:  # another context or namespace than on screen
             self._show_cached(key)
@@ -2541,6 +2541,17 @@ class WorkloadWindow(QMainWindow):
         self._set_status(lambda: self.tr("Loading resources..."))
         worker.start()
         self._sync_loading()
+
+    def _list_namespace(self, view: str) -> str | None:
+        """The namespace a list is asked for.
+
+        Add-ons span the cluster: the Helm releases of every namespace sit
+        next to the cluster's EKS add-ons, so the default namespace must not
+        hide them.
+        """
+        if view == "addons":
+            return None
+        return self.namespace_combo.currentData() or None
 
     def _loading(self, view: str) -> bool:
         worker = self._workers.get(view)
