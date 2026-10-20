@@ -1,3 +1,5 @@
+import urllib.error
+
 import pytest
 
 from kubescope.utils import updates
@@ -162,3 +164,44 @@ def test_a_latest_release_with_an_odd_tag_or_body_is_tolerated(monkeypatch) -> N
         {"/releases/latest": {"tag_name": "v0.3.0", "body": 5, "assets": "x"}},
     )
     assert updates.latest_release() == updates._release("v0.3.0")
+
+
+def test_release_of_asks_for_the_tag_of_the_version(monkeypatch) -> None:
+    asked = fake_api(
+        monkeypatch,
+        {
+            "/releases/tags/v0.3.0": urllib.error.HTTPError("u", 404, "no", {}, None),
+            "/releases/tags/0.3.0": {"tag_name": "0.3.0", "body": "notes"},
+        },
+    )
+
+    release = updates.release_of("v0.3.0")
+
+    assert release is not None
+    assert (release.version, release.notes) == ("0.3.0", "notes")
+    assert asked == ["/releases/tags/v0.3.0", "/releases/tags/0.3.0"]
+
+
+def test_release_of_is_none_for_what_is_not_a_published_version(monkeypatch) -> None:
+    missing = urllib.error.HTTPError("u", 404, "no", {}, None)
+    fake_api(
+        monkeypatch,
+        {"/releases/tags/v1.0.0": missing, "/releases/tags/1.0.0": {"tag_name": "x"}},
+    )
+
+    assert updates.release_of("latest") is None
+    assert updates.release_of("1.0.0") is None
+
+
+def test_release_of_raises_what_is_not_a_missing_release(monkeypatch) -> None:
+    limited = urllib.error.HTTPError("u", 403, "limit", {}, None)
+    fake_api(monkeypatch, {"/releases/tags/v1.0.0": limited})
+
+    with pytest.raises(urllib.error.HTTPError):
+        updates.release_of("1.0.0")
+
+
+def test_release_of_ignores_an_answer_that_is_not_a_release(monkeypatch) -> None:
+    fake_api(monkeypatch, {"/releases/tags/v1.0.0": [], "/releases/tags/1.0.0": 5})
+
+    assert updates.release_of("1.0.0") is None

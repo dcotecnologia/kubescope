@@ -93,6 +93,39 @@ def log_file() -> Path:
     return log_directory() / LOG_FILE
 
 
+def log_files(
+    max_age_days: int | None = None,
+    now: float | None = None,
+    keep: tuple[str, ...] = (),
+) -> list[Path]:
+    """The debug log, its backups and the crash log, nothing else in the
+    folder; only those not written for longer than `max_age_days` when it is
+    given.
+
+    `keep` names files that are open for writing right now.
+    """
+    limit = (
+        None
+        if max_age_days is None
+        else (time.time() if now is None else now) - max_age_days * 86400
+    )
+    found = []
+    for pattern in (f"{LOG_FILE}*", f"{CRASH_FILE}*"):
+        for path in log_directory().glob(pattern):
+            try:
+                if (
+                    path.name not in keep
+                    and path.is_file()
+                    and (limit is None or path.stat().st_mtime < limit)
+                ):
+                    found.append(path)
+            except OSError as error:
+                logging.getLogger(__name__).warning(
+                    "Could not read %s: %s", path.name, error
+                )
+    return found
+
+
 def purge_old_logs(
     max_age_days: int = MAX_AGE_DAYS,
     now: float | None = None,
@@ -103,20 +136,13 @@ def purge_old_logs(
 
     `keep` names files that are open for writing right now.
     """
-    limit = (time.time() if now is None else now) - max_age_days * 86400
-    for pattern in (f"{LOG_FILE}*", f"{CRASH_FILE}*"):
-        for path in log_directory().glob(pattern):
-            try:
-                if (
-                    path.name not in keep
-                    and path.is_file()
-                    and path.stat().st_mtime < limit
-                ):
-                    path.unlink(missing_ok=True)
-            except OSError as error:
-                logging.getLogger(__name__).warning(
-                    "Could not delete %s: %s", path.name, error
-                )
+    for path in log_files(max_age_days, now, keep):
+        try:
+            path.unlink(missing_ok=True)
+        except OSError as error:
+            logging.getLogger(__name__).warning(
+                "Could not delete %s: %s", path.name, error
+            )
 
 
 def commit() -> str:

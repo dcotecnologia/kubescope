@@ -10,6 +10,7 @@ report. Settings can turn it off.
 import json
 import logging
 import re
+import urllib.error
 import urllib.request
 from dataclasses import dataclass, replace
 from typing import Any
@@ -95,21 +96,49 @@ def _assets(tag: str, items: object) -> tuple[Asset, ...]:
     return tuple(found)
 
 
+def _published(data: object) -> Release | None:
+    """The release GitHub described, with its notes and files; None when the
+    answer is not a release of a plain version."""
+    if not isinstance(data, dict) or not isinstance(data.get("tag_name"), str):
+        return None
+    release = _release(data["tag_name"])
+    if release is None:
+        return None
+    body = data.get("body")
+    notes = body.strip()[:MAX_NOTES] if isinstance(body, str) else ""
+    return replace(
+        release, notes=notes, assets=_assets(data["tag_name"], data.get("assets"))
+    )
+
+
+def release_of(version: str) -> Release | None:
+    """The published release of a version such as "0.9.1"; None when the
+    project has none.
+
+    Network errors are raised.
+    """
+    wanted = parse_version(version)
+    if wanted is None:
+        return None
+    tag = ".".join(map(str, wanted))
+    for name in (f"v{tag}", tag):
+        try:
+            found = _published(_get(f"/releases/tags/{quote(name)}"))
+        except urllib.error.HTTPError as error:
+            if error.code != 404:
+                raise
+            continue
+        if found is not None:
+            return found
+    return None
+
+
 def latest_release() -> Release | None:
     """The newest published release; when the project has none, the highest
     version among its tags."""
     latest = _get("/releases/latest")
     if isinstance(latest, dict) and isinstance(latest.get("tag_name"), str):
-        release = _release(latest["tag_name"])
-        if release is None:
-            return None
-        body = latest.get("body")
-        notes = body.strip()[:MAX_NOTES] if isinstance(body, str) else ""
-        return replace(
-            release,
-            notes=notes,
-            assets=_assets(latest["tag_name"], latest.get("assets")),
-        )
+        return _published(latest)
     tags = [
         tag["name"]
         for tag in _get("/tags")

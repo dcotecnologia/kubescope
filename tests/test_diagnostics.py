@@ -321,3 +321,23 @@ def test_tracing_input_installs_the_trail_on_the_application(monkeypatch) -> Non
     diagnostics.trace_input(FakeApplication())
 
     assert len(installed) == 1
+
+
+def test_a_log_that_cannot_be_read_is_reported_and_left_out(
+    monkeypatch, caplog
+) -> None:
+    from pathlib import Path
+
+    directory = log_directory()
+    directory.mkdir(parents=True)
+    (directory / "kubescope.log").write_text("x")
+
+    def refuse(self, **_kwargs):
+        raise OSError("gone")
+
+    monkeypatch.setattr(Path, "is_file", refuse)
+
+    with caplog.at_level(logging.WARNING):
+        assert diagnostics.log_files() == []
+
+    assert "Could not read kubescope.log" in caplog.text
