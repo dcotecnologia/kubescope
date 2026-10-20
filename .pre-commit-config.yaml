@@ -91,6 +91,29 @@ repos:
         language: system
         types: [python]
         pass_filenames: false
+      # the same three checks CI runs after pre-commit, so a commit that would
+      # fail them is not accepted here either
+      - id: generated-ui
+        name: regenerate the ui_*.py files from the .ui files
+        entry: >-
+          sh -c 'for file in src/kubescope/ui/*.ui; do
+          uv run --frozen pyside6-uic "$file" -o "${file%/*}/ui_$(basename "$file" .ui).py";
+          done'
+        language: system
+        files: ^src/kubescope/ui/.*\.ui$
+        pass_filenames: false
+      - id: changelog-copy
+        name: copy the changelog into the package
+        entry: uv run --frozen python tools/sync_changelog.py
+        language: system
+        files: ^(CHANGELOG\.md|src/kubescope/assets/CHANGELOG\.md)$
+        pass_filenames: false
+      - id: language-files
+        name: list the texts of the code in the language files
+        entry: uv run --frozen python tools/i18n.py
+        language: system
+        files: ^src/kubescope/.*\.(py|ui)$|^src/kubescope/languages/.*\.json$
+        pass_filenames: false
       - id: third-party-notices
         name: rewrite the third-party notices when uv.lock changes
         # reads the licenses of the installed packages, and `uv run --frozen`
