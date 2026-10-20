@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+## [0.9.1] - 2026-10-20
+
 ### Fixed
 
 - The window stays usable while a list loads: the contexts and namespaces can be changed at any time, the load of the one left is cancelled, and the refresh button becomes **Cancel** while it runs by @danilogco
@@ -206,7 +208,8 @@ The first release.
 
 - Pod logs and resource details are still never written to disk by the app on its own. **Save** is the only exception, and it writes only to the file the user chooses. SECURITY.md says so by @danilogco
 
-[Unreleased]: https://github.com/dcotecnologia/kubescope/compare/v0.9.0...HEAD
+[Unreleased]: https://github.com/dcotecnologia/kubescope/compare/v0.9.1...HEAD
+[0.9.1]: https://github.com/dcotecnologia/kubescope/compare/v0.9.0...v0.9.1
 [0.9.0]: https://github.com/dcotecnologia/kubescope/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/dcotecnologia/kubescope/compare/v0.7.1...v0.8.0
 [0.7.1]: https://github.com/dcotecnologia/kubescope/compare/v0.7.0...v0.7.1
