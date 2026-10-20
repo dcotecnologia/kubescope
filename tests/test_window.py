@@ -199,10 +199,10 @@ def test_context_aliases_show_in_combo_but_actions_use_real_name(
     monkeypatch.setattr(window_module.WorkloadWindow, "_run_action", _inline_actions)
 
     window = window_module.WorkloadWindow(settings)
-    window.context_combo.setCurrentIndex(0)
+    window.context_combo.setCurrentIndex(1)  # listed by the name on screen
 
-    assert window.context_combo.itemText(0) == "Production"
-    assert window.context_combo.itemText(1) == "dev"
+    assert window.context_combo.itemText(0) == "dev"
+    assert window.context_combo.itemText(1) == "Production"
     assert window._context() == "arn:aws:eks:prod"
     window.close()
 

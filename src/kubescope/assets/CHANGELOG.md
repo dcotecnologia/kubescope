@@ -6,7 +6,12 @@ All notable changes to this project will be documented in this file. The format 
 
 ### Fixed
 
+- The window stays usable while a list loads: the contexts and namespaces can be changed at any time, the load of the one left is cancelled, and the refresh button becomes **Cancel** while it runs by @danilogco
 - Add-ons list the Helm releases of every namespace, so the default namespace no longer leaves them out in the contexts that have it by @danilogco
+
+### Changed
+
+- The contexts are listed in alphabetical order, ignoring case by @danilogco
 
 ## [0.9.0] - 2026-10-19
 
