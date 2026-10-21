@@ -214,7 +214,10 @@ class DetailTab(QWidget):
             label.setObjectName("chip" if len(row.values) > 1 else "rowValue")
             # wrapping every label makes Qt size short ones too tightly
             label.setWordWrap(len(value) > 60 or "\n" in value)
-            label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+            flags = Qt.TextInteractionFlag.TextSelectableByMouse
+            if link:  # without this flag the link is drawn but never clicked
+                flags |= Qt.TextInteractionFlag.LinksAccessibleByMouse
+            label.setTextInteractionFlags(flags)
             layout.addWidget(label, 0, Qt.AlignmentFlag.AlignLeft)
         return layout
 

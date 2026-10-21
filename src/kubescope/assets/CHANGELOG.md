@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+### Fixed
+
+- The links in the Details of a resource open the resource when clicked by @danilogco
+
 ## [0.11.0] - 2026-10-21
 
 ### Added

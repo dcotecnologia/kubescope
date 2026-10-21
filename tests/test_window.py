@@ -757,6 +757,8 @@ def test_a_linked_detail_value_asks_to_open_its_resource(monkeypatch) -> None:
         if "Open Node n1" in label.toolTip()
     ]
     assert len(linked) == 1 and "n1" in linked[0].text()
+    flags = linked[0].textInteractionFlags()
+    assert flags & Qt.TextInteractionFlag.LinksAccessibleByMouse  # it can be clicked
     linked[0].linkActivated.emit("open")
     assert opened == [("Node", "", "n1")]
 
