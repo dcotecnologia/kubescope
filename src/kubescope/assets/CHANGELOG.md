@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+## [0.11.2] - 2026-10-21
+
 ### Fixed
 
 - The languages are listed again in the installed app: the bundle did not ship the language files by @danilogco
@@ -265,7 +267,8 @@ The first release.
 
 - Pod logs and resource details are still never written to disk by the app on its own. **Save** is the only exception, and it writes only to the file the user chooses. SECURITY.md says so by @danilogco
 
-[Unreleased]: https://github.com/dcotecnologia/kubescope/compare/v0.11.1...HEAD
+[Unreleased]: https://github.com/dcotecnologia/kubescope/compare/v0.11.2...HEAD
+[0.11.2]: https://github.com/dcotecnologia/kubescope/compare/v0.11.1...v0.11.2
 [0.11.1]: https://github.com/dcotecnologia/kubescope/compare/v0.11.0...v0.11.1
 [0.11.0]: https://github.com/dcotecnologia/kubescope/compare/v0.10.2...v0.11.0
 [0.10.2]: https://github.com/dcotecnologia/kubescope/compare/v0.10.1...v0.10.2
