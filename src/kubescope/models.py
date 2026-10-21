@@ -4,6 +4,8 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
 
+MAX_REPLICA_SQUARES = 5
+
 
 @dataclass(frozen=True, slots=True)
 class Workload:
@@ -30,6 +32,28 @@ class Workload:
         if self.ready > 0:
             return "Degraded"
         return "Unavailable"
+
+    @property
+    def states(self) -> tuple[str, ...]:
+        """One state for each replica, as the colored squares of the list
+        show them: running, pending, error or terminated. A Job or CronJob
+        has one, for its own state."""
+        if self.state:
+            own = {
+                "Running": "running",
+                "Active": "running",
+                "Pending": "pending",
+                "Failed": "error",
+            }
+            return (own.get(self.state, "terminated"),)
+        if self.desired == 0:
+            return ("terminated",)
+        shown = min(self.desired, MAX_REPLICA_SQUARES)
+        running = min(self.ready, self.desired) * shown // self.desired
+        if self.ready and not running:
+            running = 1  # some replicas are up, however many there are
+        missing = "pending" if self.ready else "error"
+        return ("running",) * running + (missing,) * (shown - running)
 
 
 @dataclass(frozen=True, slots=True)
@@ -78,6 +102,8 @@ class PodInfo:
     memory: float | None = None
     owner: tuple[str, str] | None = None  # (kind, name) of the controlling workload
     init_containers: tuple[str, ...] = ()  # run to completion before `containers`
+    # one per container: running, pending, error or terminated
+    container_states: tuple[str, ...] = ()
 
 
 def safe_file_name(title: str, suffix: str) -> str:

@@ -1078,6 +1078,21 @@ def _label_selector(resource: dict[str, Any]) -> str:
     return ",".join(terms)
 
 
+_FAILED_WAITING = ("CrashLoopBackOff", "Error", "ImagePull", "ErrImage", "Create")
+
+
+def _container_state(status: dict[str, Any] | None) -> str:
+    """Running, pending, error or terminated, from a `containerStatuses` entry;
+    a container with none yet is still pending."""
+    state = (status or {}).get("state") or {}
+    if "running" in state:
+        return "running"
+    if terminated := state.get("terminated"):
+        return "terminated" if terminated.get("exitCode") == 0 else "error"
+    reason = (state.get("waiting") or {}).get("reason") or ""
+    return "error" if reason.startswith(_FAILED_WAITING) else "pending"
+
+
 def _parse_pod(item: dict[str, Any], now: datetime) -> PodInfo | None:
     metadata = item.get("metadata") or {}
     spec = item.get("spec") or {}
@@ -1114,6 +1129,12 @@ def _parse_pod(item: dict[str, Any], now: datetime) -> PodInfo | None:
         ),
         owner=_pod_owner(metadata),
         init_containers=init_containers,
+        container_states=tuple(
+            _container_state(
+                next((s for s in container_statuses if s.get("name") == name), None)
+            )
+            for name in containers
+        ),
     )
 
 

@@ -2552,3 +2552,36 @@ def test_get_pod_usage_sums_the_containers_or_none_without_metrics(
 
     monkeypatch.setattr(cluster, "_get_json", unavailable)
     assert cluster.get_pod_usage("ctx", "ns", "api") is None
+
+
+@pytest.mark.parametrize(
+    ("status", "expected"),
+    [
+        (None, "pending"),
+        ({"state": {"running": {}}}, "running"),
+        ({"state": {"terminated": {"exitCode": 0}}}, "terminated"),
+        ({"state": {"terminated": {"exitCode": 1}}}, "error"),
+        ({"state": {"waiting": {"reason": "ContainerCreating"}}}, "pending"),
+        ({"state": {"waiting": {"reason": "CrashLoopBackOff"}}}, "error"),
+        ({"state": {"waiting": {"reason": "ImagePullBackOff"}}}, "error"),
+    ],
+)
+def test_a_container_state_is_running_pending_error_or_terminated(
+    status, expected
+) -> None:
+    assert cluster._container_state(status) == expected
+
+
+def test_a_pod_lists_the_state_of_each_of_its_containers() -> None:
+    pod = cluster._parse_pod(
+        {
+            "metadata": {"name": "web"},
+            "spec": {"containers": [{"name": "app"}, {"name": "side"}]},
+            "status": {
+                "containerStatuses": [{"name": "app", "state": {"running": {}}}]
+            },
+        },
+        datetime(2025, 1, 1, tzinfo=UTC),
+    )
+
+    assert pod is not None and pod.container_states == ("running", "pending")

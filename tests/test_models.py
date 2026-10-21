@@ -284,3 +284,25 @@ def test_detail_sections_tolerate_odd_documents() -> None:
     assert detail_sections(naive)[0].rows[0].values == ("2025-10-19T16:13:20",)
     assert detail_sections({"metadata": "x", "data": {"k": "v"}})[0].title == "Data"
     assert detail_sections({"items": [1, 2]})[0].rows[0].values == ("1", "2")
+
+
+@pytest.mark.parametrize(
+    ("workload", "expected"),
+    [
+        (Workload("n", "Deployment", "a", 3, 3, "1d"), ("running",) * 3),
+        (Workload("n", "Deployment", "a", 1, 3, "1d"), ("running",) + ("pending",) * 2),
+        (Workload("n", "Deployment", "a", 0, 2, "1d"), ("error", "error")),
+        (Workload("n", "Deployment", "a", 0, 0, "1d"), ("terminated",)),
+        (Workload("n", "Deployment", "a", 40, 40, "1d"), ("running",) * 5),
+        (
+            Workload("n", "Deployment", "a", 1, 40, "1d"),
+            ("running",) + ("pending",) * 4,
+        ),
+        (Workload("n", "Job", "a", 0, 1, "1d", state="Failed"), ("error",)),
+        (Workload("n", "Job", "a", 1, 1, "1d", state="Complete"), ("terminated",)),
+        (Workload("n", "Job", "a", 0, 1, "1d", state="Running"), ("running",)),
+        (Workload("n", "Job", "a", 0, 1, "1d", state="Pending"), ("pending",)),
+    ],
+)
+def test_a_workload_shows_one_state_for_each_replica(workload, expected) -> None:
+    assert workload.states == expected

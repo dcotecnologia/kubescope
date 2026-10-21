@@ -152,6 +152,11 @@ from kubescope.utils.fonts import code_font
 from kubescope.utils.json_view import restyle
 from kubescope.utils.selfupdate import detect_install, restart
 from kubescope.utils.updates import Release, UpdateCheck, check_for_update
+from kubescope.views.container_states import (
+    KEEP_TEXT_ROLE,
+    STATES_ROLE,
+    ContainerStatesDelegate,
+)
 from kubescope.views.detail_tab import USAGE_REFRESH_MS, DetailTab
 from kubescope.views.log_tab import LOG_REFRESH_MS, LogTab
 from kubescope.writes import (
@@ -662,6 +667,9 @@ class WorkloadWindow(QMainWindow):
             ui.summaryRow.addWidget(button)
             self.write_buttons[shape] = button
         self.table = ui.workloadTable
+        states_delegate = ContainerStatesDelegate(self.table)
+        for column in (1, 3):  # the containers of a Pod, the replicas of a workload
+            self.table.setItemDelegateForColumn(column, states_delegate)
         self.status_label = ui.statusLabel
         self.login_button = ui.loginButton
         ui.topLogo.setPixmap(QPixmap(str(LOGO_PATH)))
@@ -2956,6 +2964,15 @@ class WorkloadWindow(QMainWindow):
         }
         return labels.get(phase, phase)
 
+    def _container_state_label(self, state: str) -> str:
+        labels = {
+            "running": self.tr("Running"),
+            "pending": self.tr("Pending"),
+            "error": self.tr("Error"),
+            "terminated": self.tr("Terminated"),
+        }
+        return labels.get(state, state)
+
     def _render_pods(self) -> None:
         pods = self._pods
         colors = {
@@ -2973,7 +2990,7 @@ class WorkloadWindow(QMainWindow):
             tint = tints.get(pod_highlight(pod) or "")
             values = (
                 pod.namespace,
-                str(len(pod.containers)),
+                str(len(pod.containers)),  # shown as one square per container
                 pod.name,
                 f"{pod.ready}/{pod.total}",
                 self._phase_label(pod.phase),
@@ -2987,6 +3004,16 @@ class WorkloadWindow(QMainWindow):
                 item.setForeground(QColor(themed("#242a33")))
                 if tint is not None:
                     item.setBackground(tint)
+                if column == 1 and pod.container_states:
+                    item.setData(STATES_ROLE, pod.container_states)
+                    item.setToolTip(
+                        "\n".join(
+                            f"{name}: {self._container_state_label(state)}"
+                            for name, state in zip(
+                                pod.containers, pod.container_states, strict=True
+                            )
+                        )
+                    )
                 if column == 4:
                     foreground, background = colors.get(
                         pod.phase, (themed("#a33d45"), themed("#fce9ea"))
@@ -3034,6 +3061,12 @@ class WorkloadWindow(QMainWindow):
             for column, value in enumerate(values):
                 item = QTableWidgetItem(value)
                 item.setForeground(QColor(themed("#242a33")))
+                if column == 3 and workload.kind != "CronJob":
+                    item.setData(STATES_ROLE, workload.states)
+                    item.setData(KEEP_TEXT_ROLE, True)
+                    item.setTextAlignment(
+                        Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
+                    )
                 if column == 4:
                     good = (themed("#176b58"), themed("#e5f4eb"))
                     warning = (themed("#985415"), themed("#fff2de"))

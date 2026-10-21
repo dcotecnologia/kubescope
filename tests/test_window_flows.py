@@ -22,6 +22,7 @@ from PySide6.QtWidgets import (
     QMenu,
     QMessageBox,
     QPushButton,
+    QStyleOptionViewItem,
     QTableWidget,
     QTableWidgetItem,
     QWidget,
@@ -47,6 +48,7 @@ from kubescope.settings import Settings
 from kubescope.theme import themed
 from kubescope.utils import json_view
 from kubescope.utils.updates import Release, UpdateCheck
+from kubescope.views.container_states import STATES_ROLE
 from kubescope.views.detail_tab import DetailTab
 from kubescope.window import PIN_MIME, VIEWER_MIME
 
@@ -3467,3 +3469,54 @@ def test_the_cluster_info_is_read_again_once_the_overview_loads(monkeypatch) -> 
     window._show_overview("prod", ClusterOverview())
 
     assert [call[0][0].__name__ for call in ran] == ["get_cluster_info"]
+
+
+def test_pods_and_workloads_draw_colored_squares_for_their_states(
+    monkeypatch,
+) -> None:
+    window = _ready_window(monkeypatch)
+    window.resize(1000, 600)
+    window.show()
+    window._open_list_view("pods")
+    window._show_pods(
+        ["ns"],
+        [
+            PodInfo(
+                "ns",
+                "p",
+                "Running",
+                1,
+                2,
+                "1d",
+                ("app", "side"),
+                container_states=("running", "error"),
+            ),
+            PodInfo("ns", "q", "Running", 0, 0, "1d", ()),  # nothing to draw
+        ],
+    )
+    item = window.table.item(0, 1)
+    assert "side: Error" in item.toolTip() and "app: Running" in item.toolTip()
+    assert window.table.item(1, 1).data(STATES_ROLE) is None
+
+    window.table.viewport().grab()  # paints the squares and the plain cell
+    delegate = window.table.itemDelegateForColumn(1)
+    index = window.table.model().index(0, 1)
+    option = QStyleOptionViewItem()
+    assert delegate.sizeHint(option, index).width() == 2 * 8 + 2 * 12 + 4
+    plain = window.table.model().index(1, 1)
+    assert delegate.sizeHint(option, plain).width() >= 0
+
+    window._open_list_view("deployments")
+    window._show_workloads(
+        ["ns"],
+        [
+            Workload("ns", "Deployment", "api", 1, 2, "1d"),
+            Workload("ns", "CronJob", "job", 0, 0, "1d", schedule="* * * * *"),
+        ],
+    )
+    assert window.table.item(0, 3).data(STATES_ROLE) == ("running", "pending")
+    assert window.table.item(1, 3).data(STATES_ROLE) is None
+    window.table.viewport().grab()
+    kept = window.table.model().index(0, 3)
+    assert window.table.itemDelegateForColumn(3).sizeHint(option, kept).width() > 44
+    window.close()
