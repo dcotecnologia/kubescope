@@ -48,6 +48,7 @@ from PySide6.QtGui import (
 from PySide6.QtWidgets import (
     QApplication,
     QComboBox,
+    QCompleter,
     QDialog,
     QFileDialog,
     QFrame,
@@ -2822,16 +2823,13 @@ class WorkloadWindow(QMainWindow):
             self._render_pods()
 
     def _fill_default_namespaces(self) -> None:
-        """The choices for the default namespace: all of them, the ones of the
-        cluster on screen, and the saved one even if this cluster lacks it."""
-        combo = self.settings_ui.defaultNamespaceCombo
-        saved = self.settings.default_namespace
-        combo.clear()
-        combo.addItem(self.tr("All namespaces"), "")
-        extra: list[str] = [saved] if saved else []
-        for namespace in sorted({*self._namespaces, *extra}):
-            combo.addItem(namespace, namespace)
-        combo.setCurrentIndex(max(combo.findData(saved), 0))
+        """The saved default namespace, typed freely; the namespaces of the
+        cluster on screen are offered as the person types."""
+        edit = self.settings_ui.defaultNamespaceEdit
+        edit.setText(self.settings.default_namespace)
+        completer = QCompleter(sorted(self._namespaces), edit)
+        completer.setCaseSensitivity(Qt.CaseSensitivity.CaseSensitive)
+        edit.setCompleter(completer)
 
     def _select_default_namespace(self) -> None:
         """Start on the namespace chosen in Settings; the list is still to be
@@ -4376,7 +4374,7 @@ class WorkloadWindow(QMainWindow):
         self.settings.kubeconfig_files = files
         self.settings.sign_in_commands = commands
         self._apply_cluster_settings()
-        self.settings.default_namespace = form.defaultNamespaceCombo.currentData()
+        self.settings.default_namespace = form.defaultNamespaceEdit.text().strip()
         table = form.contextsTable
         aliases = self.settings.context_aliases
         if self._contexts:

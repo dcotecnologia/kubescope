@@ -212,6 +212,7 @@
             "APPEARANCE": "ظاهر",
             "Add file...": "افزودن پرونده...",
             "Add row": "افزودن ردیف",
+            "All namespaces": "همه فضاهای نام",
             "Asks the public GitHub API for the latest release and sends nothing but the app version. The icon in the footer checks on demand.": "از API عمومی GitHub آخرین انتشار را می‌پرسد و جز نسخه برنامه چیزی نمی‌فرستد. نماد پایین صفحه در صورت درخواست بررسی می‌کند.",
             "CLUSTER ACCESS": "دسترسی به خوشه",
             "CONTEXT": "زمینه",

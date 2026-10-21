@@ -212,6 +212,7 @@
             "APPEARANCE": "ВИГЛЯД",
             "Add file...": "Додати файл...",
             "Add row": "Додати рядок",
+            "All namespaces": "Усі простори імен",
             "Asks the public GitHub API for the latest release and sends nothing but the app version. The icon in the footer checks on demand.": "Запитує в публічного API GitHub останній випуск і не надсилає нічого, крім версії застосунку. Значок у нижньому колонтитулі перевіряє на вимогу.",
             "CLUSTER ACCESS": "ДОСТУП ДО КЛАСТЕРА",
             "CONTEXT": "КОНТЕКСТ",

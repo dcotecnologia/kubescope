@@ -2208,31 +2208,26 @@ def test_a_default_namespace_the_cluster_lacks_falls_back_to_all(monkeypatch) ->
     window.close()
 
 
-def test_the_default_namespace_is_chosen_from_the_clusters_namespaces(
+def test_the_default_namespace_is_typed_with_the_clusters_namespaces_offered(
     monkeypatch,
 ) -> None:
     window = _ready_window(monkeypatch)
     monkeypatch.setattr(window, "_save_settings", lambda: None)
     window._namespaces = ["ops", "dev"]
     window._load_settings_form()
-    combo = window.settings_ui.defaultNamespaceCombo
-    assert [combo.itemText(i) for i in range(combo.count())] == [
-        "All namespaces",
-        "dev",
-        "ops",
-    ]
-    assert combo.currentData() == ""
+    edit = window.settings_ui.defaultNamespaceEdit
+    assert edit.text() == "" and edit.placeholderText() == "All namespaces"
+    assert edit.completer().model().stringList() == ["dev", "ops"]
 
-    combo.setCurrentIndex(combo.findData("ops"))
+    edit.setText(" ops ")  # a name that no cluster lists is accepted too
     window._save_preferences()
     assert window.settings.default_namespace == "ops"
 
-    window._namespaces = ["other"]  # another cluster: the saved one is still offered
+    window._namespaces = ["other"]
     window._load_settings_form()
-    assert combo.currentData() == "ops"
-    assert [combo.itemData(i) for i in range(combo.count())] == ["", "ops", "other"]
+    assert edit.text() == "ops"  # the saved one stays, whatever the cluster has
 
-    combo.setCurrentIndex(0)
+    edit.setText("")
     window._save_preferences()
     assert window.settings.default_namespace == ""
     window.close()

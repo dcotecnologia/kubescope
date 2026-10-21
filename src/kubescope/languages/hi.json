@@ -212,6 +212,7 @@
             "APPEARANCE": "दिखावट",
             "Add file...": "फ़ाइल जोड़ें...",
             "Add row": "पंक्ति जोड़ें",
+            "All namespaces": "सभी namespaces",
             "Asks the public GitHub API for the latest release and sends nothing but the app version. The icon in the footer checks on demand.": "सार्वजनिक GitHub API से नवीनतम रिलीज़ पूछता है और ऐप के संस्करण के अलावा कुछ नहीं भेजता। फ़ुटर का आइकन माँगने पर जाँच करता है।",
             "CLUSTER ACCESS": "क्लस्टर एक्सेस",
             "CONTEXT": "कॉन्टेक्स्ट",

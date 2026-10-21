@@ -212,6 +212,7 @@
             "APPEARANCE": "ERSCHEINUNGSBILD",
             "Add file...": "Datei hinzufügen...",
             "Add row": "Zeile hinzufügen",
+            "All namespaces": "Alle Namespaces",
             "Asks the public GitHub API for the latest release and sends nothing but the app version. The icon in the footer checks on demand.": "Fragt die öffentliche GitHub-API nach dem neuesten Release und sendet nur die App-Version. Das Symbol in der Fußzeile prüft auf Abruf.",
             "CLUSTER ACCESS": "CLUSTER-ZUGRIFF",
             "CONTEXT": "KONTEXT",

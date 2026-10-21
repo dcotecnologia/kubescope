@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+### Fixed
+
+- The languages are listed again in the installed app: the bundle did not ship the language files by @danilogco
+- A select no longer changes when the wheel scrolls the page over it: the wheel goes to the page, and a select changes by a click or the keys by @danilogco
+- The default namespace of the Settings is a text field, with the namespaces of the cluster offered as you type, instead of a select by @danilogco
+
 ## [0.11.1] - 2026-10-21
 
 ### Fixed

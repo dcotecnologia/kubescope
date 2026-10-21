@@ -212,6 +212,7 @@
             "APPEARANCE": "المظهر",
             "Add file...": "إضافة ملف...",
             "Add row": "إضافة صف",
+            "All namespaces": "كل namespaces",
             "Asks the public GitHub API for the latest release and sends nothing but the app version. The icon in the footer checks on demand.": "يستعلم عن آخر إصدار من واجهة GitHub API العامة ولا يرسل سوى إصدار التطبيق. أيقونة التذييل تتحقق عند الطلب.",
             "CLUSTER ACCESS": "الوصول إلى الكتلة",
             "CONTEXT": "السياق",

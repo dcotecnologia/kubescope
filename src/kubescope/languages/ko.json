@@ -212,6 +212,7 @@
             "APPEARANCE": "모양",
             "Add file...": "파일 추가...",
             "Add row": "행 추가",
+            "All namespaces": "모든 네임스페이스",
             "Asks the public GitHub API for the latest release and sends nothing but the app version. The icon in the footer checks on demand.": "공개 GitHub API에 최신 릴리스를 요청하며 앱 버전 외에는 아무것도 보내지 않습니다. 하단의 아이콘으로 직접 확인할 수 있습니다.",
             "CLUSTER ACCESS": "클러스터 접근",
             "CONTEXT": "컨텍스트",

@@ -212,6 +212,7 @@
             "APPEARANCE": "ASPETTO",
             "Add file...": "Aggiungi file...",
             "Add row": "Aggiungi riga",
+            "All namespaces": "Tutti i namespace",
             "Asks the public GitHub API for the latest release and sends nothing but the app version. The icon in the footer checks on demand.": "Interroga l'API pubblica di GitHub per l'ultima versione e non invia altro che la versione dell'app. L'icona nel piè di pagina controlla su richiesta.",
             "CLUSTER ACCESS": "ACCESSO AL CLUSTER",
             "CONTEXT": "CONTESTO",

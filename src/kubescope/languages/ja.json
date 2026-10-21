@@ -212,6 +212,7 @@
             "APPEARANCE": "外観",
             "Add file...": "ファイルを追加...",
             "Add row": "行を追加",
+            "All namespaces": "すべての namespaces",
             "Asks the public GitHub API for the latest release and sends nothing but the app version. The icon in the footer checks on demand.": "GitHub の公開 API に最新リリースを問い合わせ、アプリのバージョン以外は何も送信しません。フッターのアイコンでいつでも確認できます。",
             "CLUSTER ACCESS": "クラスターへのアクセス",
             "CONTEXT": "コンテキスト",

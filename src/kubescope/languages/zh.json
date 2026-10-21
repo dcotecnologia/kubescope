@@ -212,6 +212,7 @@
             "APPEARANCE": "外观",
             "Add file...": "添加文件...",
             "Add row": "添加行",
+            "All namespaces": "所有 namespaces",
             "Asks the public GitHub API for the latest release and sends nothing but the app version. The icon in the footer checks on demand.": "向 GitHub 公共 API 查询最新版本，只发送应用版本号。页脚的图标可按需检查。",
             "CLUSTER ACCESS": "集群访问",
             "CONTEXT": "上下文",

@@ -212,6 +212,7 @@
             "APPEARANCE": "APARIENCIA",
             "Add file...": "Añadir archivo...",
             "Add row": "Añadir fila",
+            "All namespaces": "Todos los namespaces",
             "Asks the public GitHub API for the latest release and sends nothing but the app version. The icon in the footer checks on demand.": "Consulta la API pública de GitHub para obtener la última versión y no envía nada más que la versión de la aplicación. El icono del pie de página busca bajo demanda.",
             "CLUSTER ACCESS": "ACCESO AL CLÚSTER",
             "CONTEXT": "CONTEXTO",

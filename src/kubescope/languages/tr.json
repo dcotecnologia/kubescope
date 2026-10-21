@@ -212,6 +212,7 @@
             "APPEARANCE": "GÖRÜNÜM",
             "Add file...": "Dosya ekle...",
             "Add row": "Satır ekle",
+            "All namespaces": "Tüm ad alanları",
             "Asks the public GitHub API for the latest release and sends nothing but the app version. The icon in the footer checks on demand.": "Genel GitHub API'sinden en son sürümü ister ve uygulama sürümünden başka bir şey göndermez. Alt bilgideki simge isteğe bağlı denetler.",
             "CLUSTER ACCESS": "KÜME ERİŞİMİ",
             "CONTEXT": "BAĞLAM",

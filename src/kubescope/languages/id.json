@@ -212,6 +212,7 @@
             "APPEARANCE": "TAMPILAN",
             "Add file...": "Tambah berkas...",
             "Add row": "Tambah baris",
+            "All namespaces": "Semua namespace",
             "Asks the public GitHub API for the latest release and sends nothing but the app version. The icon in the footer checks on demand.": "Meminta rilis terbaru ke API GitHub publik dan tidak mengirim apa pun selain versi aplikasi. Ikon di footer memeriksa sesuai permintaan.",
             "CLUSTER ACCESS": "AKSES KLASTER",
             "CONTEXT": "KONTEKS",

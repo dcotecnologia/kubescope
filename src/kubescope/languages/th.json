@@ -212,6 +212,7 @@
             "APPEARANCE": "รูปลักษณ์",
             "Add file...": "เพิ่มไฟล์...",
             "Add row": "เพิ่มแถว",
+            "All namespaces": "เนมสเปซทั้งหมด",
             "Asks the public GitHub API for the latest release and sends nothing but the app version. The icon in the footer checks on demand.": "ถาม GitHub API สาธารณะเกี่ยวกับรุ่นล่าสุด และไม่ส่งสิ่งใดนอกจากเวอร์ชันแอป ไอคอนที่ส่วนท้ายจะตรวจสอบเมื่อสั่ง",
             "CLUSTER ACCESS": "การเข้าถึงคลัสเตอร์",
             "CONTEXT": "คอนเท็กซ์",

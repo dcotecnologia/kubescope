@@ -212,6 +212,7 @@
             "APPEARANCE": "外觀",
             "Add file...": "新增檔案...",
             "Add row": "新增列",
+            "All namespaces": "所有命名空間",
             "Asks the public GitHub API for the latest release and sends nothing but the app version. The icon in the footer checks on demand.": "向公開的 GitHub API 查詢最新版本，除了應用程式版本之外不會傳送任何資料。頁尾的圖示可依需要檢查。",
             "CLUSTER ACCESS": "叢集存取",
             "CONTEXT": "內容",

@@ -212,6 +212,7 @@
             "APPEARANCE": "מראה",
             "Add file...": "הוסף קובץ...",
             "Add row": "הוסף שורה",
+            "All namespaces": "כל מרחבי השמות",
             "Asks the public GitHub API for the latest release and sends nothing but the app version. The icon in the footer checks on demand.": "שואל את ה-API הציבורי של GitHub לגבי הגרסה האחרונה ואינו שולח דבר מלבד גרסת היישום. הסמל בכותרת התחתונה בודק לפי דרישה.",
             "CLUSTER ACCESS": "גישה לאשכול",
             "CONTEXT": "הקשר",

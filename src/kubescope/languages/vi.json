@@ -212,6 +212,7 @@
             "APPEARANCE": "GIAO DIỆN",
             "Add file...": "Thêm tệp...",
             "Add row": "Thêm dòng",
+            "All namespaces": "Tất cả namespace",
             "Asks the public GitHub API for the latest release and sends nothing but the app version. The icon in the footer checks on demand.": "Hỏi API GitHub công khai về bản phát hành mới nhất và không gửi gì ngoài phiên bản ứng dụng. Biểu tượng ở chân trang kiểm tra theo yêu cầu.",
             "CLUSTER ACCESS": "TRUY CẬP CỤM",
             "CONTEXT": "CONTEXT",

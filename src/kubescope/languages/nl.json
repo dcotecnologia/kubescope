@@ -212,6 +212,7 @@
             "APPEARANCE": "UITERLIJK",
             "Add file...": "Bestand toevoegen...",
             "Add row": "Rij toevoegen",
+            "All namespaces": "Alle namespaces",
             "Asks the public GitHub API for the latest release and sends nothing but the app version. The icon in the footer checks on demand.": "Vraagt de openbare GitHub-API om de nieuwste release en verstuurt alleen de appversie. Het pictogram in de voettekst controleert op verzoek.",
             "CLUSTER ACCESS": "CLUSTERTOEGANG",
             "CONTEXT": "CONTEXT",

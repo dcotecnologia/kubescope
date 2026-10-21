@@ -17,9 +17,9 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QPalette, QPixmap, QRadialGradient, QTransform)
 from PySide6.QtWidgets import (QAbstractItemView, QApplication, QCheckBox, QComboBox,
     QFormLayout, QFrame, QHBoxLayout, QHeaderView,
-    QLabel, QListWidget, QListWidgetItem, QPushButton,
-    QScrollArea, QSizePolicy, QSpacerItem, QTableWidget,
-    QTableWidgetItem, QVBoxLayout, QWidget)
+    QLabel, QLineEdit, QListWidget, QListWidgetItem,
+    QPushButton, QScrollArea, QSizePolicy, QSpacerItem,
+    QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget)
 
 class Ui_SettingsPage(object):
     def setupUi(self, SettingsPage):
@@ -99,12 +99,12 @@ class Ui_SettingsPage(object):
 
         self.generalForm.setWidget(1, QFormLayout.ItemRole.LabelRole, self.defaultNamespaceLabel)
 
-        self.defaultNamespaceCombo = QComboBox(self.generalCard)
-        self.defaultNamespaceCombo.setObjectName(u"defaultNamespaceCombo")
-        self.defaultNamespaceCombo.setMinimumSize(QSize(200, 0))
-        self.defaultNamespaceCombo.setProperty(u"variant", u"filter")
+        self.defaultNamespaceEdit = QLineEdit(self.generalCard)
+        self.defaultNamespaceEdit.setObjectName(u"defaultNamespaceEdit")
+        self.defaultNamespaceEdit.setMinimumSize(QSize(200, 0))
+        self.defaultNamespaceEdit.setProperty(u"variant", u"filter")
 
-        self.generalForm.setWidget(1, QFormLayout.ItemRole.FieldRole, self.defaultNamespaceCombo)
+        self.generalForm.setWidget(1, QFormLayout.ItemRole.FieldRole, self.defaultNamespaceEdit)
 
         self.rememberCheck = QCheckBox(self.generalCard)
         self.rememberCheck.setObjectName(u"rememberCheck")
@@ -460,8 +460,9 @@ class Ui_SettingsPage(object):
 
         self.defaultNamespaceLabel.setText(QCoreApplication.translate("SettingsPage", u"Default namespace", None))
 #if QT_CONFIG(tooltip)
-        self.defaultNamespaceCombo.setToolTip(QCoreApplication.translate("SettingsPage", u"The namespace each context opens on. Leave empty to show all of them.", None))
+        self.defaultNamespaceEdit.setToolTip(QCoreApplication.translate("SettingsPage", u"The namespace each context opens on. Leave empty to show all of them.", None))
 #endif // QT_CONFIG(tooltip)
+        self.defaultNamespaceEdit.setPlaceholderText(QCoreApplication.translate("SettingsPage", u"All namespaces", None))
         self.rememberCheck.setText(QCoreApplication.translate("SettingsPage", u"Remember the last used context", None))
         self.updatesCheck.setText(QCoreApplication.translate("SettingsPage", u"Check GitHub for a new version when the app starts and every hour", None))
 #if QT_CONFIG(tooltip)
