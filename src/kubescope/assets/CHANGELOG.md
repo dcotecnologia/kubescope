@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+## [0.10.2] - 2026-10-21
+
+### Fixed
+
+- `kubescope update --version X.Y.Z` can install an older version of the .deb, which apt used to refuse as a downgrade by @danilogco
+
 ## [0.10.1] - 2026-10-21
 
 ### Fixed
@@ -233,7 +239,8 @@ The first release.
 
 - Pod logs and resource details are still never written to disk by the app on its own. **Save** is the only exception, and it writes only to the file the user chooses. SECURITY.md says so by @danilogco
 
-[Unreleased]: https://github.com/dcotecnologia/kubescope/compare/v0.10.1...HEAD
+[Unreleased]: https://github.com/dcotecnologia/kubescope/compare/v0.10.2...HEAD
+[0.10.2]: https://github.com/dcotecnologia/kubescope/compare/v0.10.1...v0.10.2
 [0.10.1]: https://github.com/dcotecnologia/kubescope/compare/v0.10.0...v0.10.1
 [0.10.0]: https://github.com/dcotecnologia/kubescope/compare/v0.9.1...v0.10.0
 [0.9.1]: https://github.com/dcotecnologia/kubescope/compare/v0.9.0...v0.9.1
