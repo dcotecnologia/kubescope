@@ -52,6 +52,8 @@ class ClusterError(RuntimeError):
 
 
 REQUEST_TIMEOUT = 45  # seconds a cluster request may take
+# The app has no console on Windows, so a child would open a blank one of its own
+_NO_WINDOW = 0x08000000 if sys.platform == "win32" else 0  # CREATE_NO_WINDOW
 _running: set[subprocess.Popen] = set()
 _pending: set[Future] = set()
 _running_lock = threading.Lock()
@@ -70,6 +72,7 @@ def _stop(process: subprocess.Popen) -> None:
             ["taskkill", "/F", "/T", "/PID", str(process.pid)],
             capture_output=True,
             check=False,
+            creationflags=_NO_WINDOW,
         )
     else:
         with contextlib.suppress(ProcessLookupError):  # it may already be gone
@@ -90,6 +93,7 @@ def _run_process(command: list[str], timeout: float) -> subprocess.CompletedProc
         stderr=subprocess.PIPE,
         text=True,
         start_new_session=sys.platform != "win32",  # its own group, to stop it whole
+        creationflags=_NO_WINDOW,
     )
     with _running_lock:
         _running.add(process)

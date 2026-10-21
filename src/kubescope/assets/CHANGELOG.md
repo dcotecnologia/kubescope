@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+### Fixed
+
+- On Windows, opening Cluster or Node Groups no longer flashes blank terminal windows: the AWS CLI commands the app runs now start without a console by @danilogco
+
 ## [0.10.0] - 2026-10-20
 
 ### Added
