@@ -9,6 +9,12 @@ All notable changes to this project will be documented in this file. The format 
 ### Added
 
 - Pods show a colored square for each container, and workloads one for each replica (up to five): green when running, yellow when pending, red on error or restarting, gray when terminated by @danilogco
+- The Pods list has Controlled By, Node and QoS columns, and READY grows to fit the squares of the widest row by @danilogco
+- Quick links: the Node and Controlled By of a Pod, the Nodes of the Node Groups, the resource of an event, and the Node, Namespace, controller, ConfigMap and Secret named in a resource's Details open their own Details when clicked by @danilogco
+
+### Fixed
+
+- The tabs of the top bar scroll sideways, with the wheel, when they do not fit, instead of cutting the first ones by @danilogco
 
 ## [0.10.2] - 2026-10-21
 

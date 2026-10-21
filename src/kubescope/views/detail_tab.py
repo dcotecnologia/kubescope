@@ -1,7 +1,9 @@
+import html
 import json
 from typing import Any
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, Signal
+from PySide6.QtGui import QColor
 from PySide6.QtWidgets import (
     QAbstractItemView,
     QFrame,
@@ -23,7 +25,7 @@ from kubescope.models import (
     format_memory,
     safe_file_name,
 )
-from kubescope.theme import themed_stylesheet
+from kubescope.theme import themed, themed_stylesheet
 from kubescope.utils.fonts import code_font
 from kubescope.utils.json_view import style_json_view
 from kubescope.views.widgets import LineNumberEditor, UsageChart
@@ -44,6 +46,8 @@ QFrame#rowLine { background: #e1e3e9; max-height: 1px; border: none; }
 class DetailTab(QWidget):
     """The details of a resource: an overview laid out in sections (with the
     live usage of a Pod) and the raw JSON, one click apart."""
+
+    link_clicked = Signal(str, str, str)  # kind, namespace and name to open
 
     def __init__(
         self, title: str, document: dict[str, Any], live_usage: bool = False
@@ -195,8 +199,18 @@ class DetailTab(QWidget):
         if row.table:
             layout.addWidget(self._table(row))
             return layout
-        for value in row.values:
-            label = QLabel(value)
+        for number, value in enumerate(row.values):
+            link = row.links[number] if number < len(row.links) else None
+            label = QLabel(self._link_html(value) if link else value)
+            if link:
+                label.setTextFormat(Qt.TextFormat.RichText)
+                label.setToolTip(
+                    self.tr("Open {kind} {name}").format(kind=link[0], name=link[2])
+                )
+                label.setCursor(Qt.CursorShape.PointingHandCursor)
+                label.linkActivated.connect(
+                    lambda _href, link=link: self.link_clicked.emit(*link)
+                )
             label.setObjectName("chip" if len(row.values) > 1 else "rowValue")
             # wrapping every label makes Qt size short ones too tightly
             label.setWordWrap(len(value) > 60 or "\n" in value)
@@ -204,8 +218,26 @@ class DetailTab(QWidget):
             layout.addWidget(label, 0, Qt.AlignmentFlag.AlignLeft)
         return layout
 
+    def _style_link(self, item: QTableWidgetItem, link: tuple[str, str, str]) -> None:
+        font = item.font()
+        font.setUnderline(True)
+        item.setFont(font)
+        item.setForeground(QColor(themed("#3220a0")))
+        item.setToolTip(
+            self.tr("Open {kind} {name}").format(kind=link[0], name=link[2])
+        )
+
+    def _table_link(self, row: DetailRow, y: int, x: int) -> None:
+        link = row.links[y] if x == 0 and y < len(row.links) else None
+        if link:
+            self.link_clicked.emit(*link)
+
     @staticmethod
-    def _table(row: DetailRow) -> QTableWidget:
+    def _link_html(value: str) -> str:
+        color = themed("#3220a0")
+        return f'<a href="open" style="color:{color}">{html.escape(value)}</a>'
+
+    def _table(self, row: DetailRow) -> QTableWidget:
         table = QTableWidget(len(row.table), len(row.headers))
         table.setHorizontalHeaderLabels(row.headers)
         table.verticalHeader().setVisible(False)
@@ -224,7 +256,14 @@ class DetailTab(QWidget):
         table.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         for y, cells in enumerate(row.table):
             for x, cell in enumerate(cells):
-                table.setItem(y, x, QTableWidgetItem(cell))
+                item = QTableWidgetItem(cell)
+                link = row.links[y] if x == 0 and y < len(row.links) else None
+                if link:
+                    self._style_link(item, link)
+                table.setItem(y, x, item)
+        if row.links:
+            table.setMouseTracking(True)
+            table.cellClicked.connect(lambda y, x: self._table_link(row, y, x))
         table.resizeColumnsToContents()
         header.setStretchLastSection(True)
         scrollbar = table.horizontalScrollBar().sizeHint().height()

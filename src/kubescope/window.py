@@ -64,6 +64,7 @@ from PySide6.QtWidgets import (
     QScrollArea,
     QSpinBox,
     QSystemTrayIcon,
+    QTableWidget,
     QTableWidgetItem,
     QVBoxLayout,
     QWidget,
@@ -109,6 +110,7 @@ from kubescope.models import (
     PodInfo,
     Workload,
     WorkloadsOverview,
+    event_link,
     format_bytes,
     format_cores,
     format_cpu,
@@ -153,12 +155,14 @@ from kubescope.utils.json_view import restyle
 from kubescope.utils.selfupdate import detect_install, restart
 from kubescope.utils.updates import Release, UpdateCheck, check_for_update
 from kubescope.views.container_states import (
-    KEEP_TEXT_ROLE,
+    LINK_ROLE,
     STATES_ROLE,
+    TIPS_ROLE,
     ContainerStatesDelegate,
 )
 from kubescope.views.detail_tab import USAGE_REFRESH_MS, DetailTab
 from kubescope.views.log_tab import LOG_REFRESH_MS, LogTab
+from kubescope.views.widgets import TabScrollArea
 from kubescope.writes import (
     MAX_REPLICAS,
     delete_pod,
@@ -668,8 +672,8 @@ class WorkloadWindow(QMainWindow):
             self.write_buttons[shape] = button
         self.table = ui.workloadTable
         states_delegate = ContainerStatesDelegate(self.table)
-        for column in (1, 3):  # the containers of a Pod, the replicas of a workload
-            self.table.setItemDelegateForColumn(column, states_delegate)
+        # the containers of a Pod and the replicas of a workload, in READY
+        self.table.setItemDelegateForColumn(3, states_delegate)
         self.status_label = ui.statusLabel
         self.login_button = ui.loginButton
         ui.topLogo.setPixmap(QPixmap(str(LOGO_PATH)))
@@ -704,6 +708,13 @@ class WorkloadWindow(QMainWindow):
         self._bar_items: list[tuple[str, Any]] = []
         self._bar_order: list[tuple[str, Any]] = []  # the order the person chose
         self._drag_start: QPoint | None = None
+        # more tabs than room: the bar scrolls instead of cutting the first ones
+        self.pinned_scroll = TabScrollArea(ui.topBar)
+        position = ui.topLayout.indexOf(ui.pinnedBar)
+        ui.topLayout.removeWidget(ui.pinnedBar)
+        self.pinned_scroll.setWidget(ui.pinnedBar)
+        ui.topLayout.insertWidget(position, self.pinned_scroll)
+        self.pinned_scroll.setVisible(False)
         ui.pinnedBar.setAcceptDrops(True)  # a pinned tab dropped here moves
         ui.pinnedBar.installEventFilter(self)
         self._drop_marker = QFrame(ui.pinnedBar)  # the line a dragged tab aims at
@@ -765,6 +776,8 @@ class WorkloadWindow(QMainWindow):
         self.workloads_ui.setupUi(ui.workloadsOverviewHost)
         self.workloads_refresh_button = ui.workloadsRefreshButton
         self.workloads_table = self.workloads_ui.eventsTable
+        for linked in (self.table, self.nodes_table, self.workloads_table):
+            self._enable_links(linked)
         events_header = self.workloads_table.horizontalHeader()
         for column in range(self.workloads_table.columnCount()):
             events_header.setSectionResizeMode(
@@ -1311,6 +1324,15 @@ class WorkloadWindow(QMainWindow):
             layout.addWidget(tab)
             self._pinned_buttons.append(button)
         self.ui.pinnedBar.setVisible(bool(self._pinned_buttons))
+        self.pinned_scroll.setVisible(bool(self._pinned_buttons))
+        QTimer.singleShot(0, self._reveal_current_tab)
+
+    def _reveal_current_tab(self) -> None:
+        """Scroll the top bar to the tab that is open."""
+        for button in self._pinned_buttons:
+            if button.isChecked():
+                self.pinned_scroll.ensureWidgetVisible(button.parentWidget() or button)
+                return
 
     def _viewer_top_tab(self, index: int) -> tuple[QFrame, QPushButton]:
         """A tab of the top bar for an open Details or Logs, with a × to close
@@ -2005,20 +2027,29 @@ class WorkloadWindow(QMainWindow):
             "cronjobs": QCoreApplication.translate("MainWindow", "SCHEDULE"),
         }.get(self._view) or QCoreApplication.translate("MainWindow", "READY")
         context = "PodsDialog" if self._view == "pods" else "MainWindow"
-        self.table.setColumnCount(9)
-        self.table.setHorizontalHeaderLabels(
+        pod_columns = (
             [
-                QCoreApplication.translate("MainWindow", "NAMESPACE"),
-                QCoreApplication.translate(context, second),
-                QCoreApplication.translate("MainWindow", "NAME"),
-                ready_header,
-                QCoreApplication.translate("MainWindow", "STATUS"),
-                QCoreApplication.translate("MainWindow", "CPU"),
-                QCoreApplication.translate("MainWindow", "MEMORY"),
-                QCoreApplication.translate("MainWindow", "RESTARTS"),
-                QCoreApplication.translate("MainWindow", "AGE"),
+                QCoreApplication.translate("MainWindow", "CONTROLLED BY"),
+                QCoreApplication.translate("MainWindow", "NODE"),
+                QCoreApplication.translate("MainWindow", "QOS"),
             ]
+            if self._view == "pods"
+            else []
         )
+        headers = [
+            QCoreApplication.translate("MainWindow", "NAMESPACE"),
+            QCoreApplication.translate(context, second),
+            QCoreApplication.translate("MainWindow", "NAME"),
+            ready_header,
+            QCoreApplication.translate("MainWindow", "STATUS"),
+            QCoreApplication.translate("MainWindow", "CPU"),
+            QCoreApplication.translate("MainWindow", "MEMORY"),
+            QCoreApplication.translate("MainWindow", "RESTARTS"),
+            *pod_columns,
+            QCoreApplication.translate("MainWindow", "AGE"),
+        ]
+        self.table.setColumnCount(len(headers))
+        self.table.setHorizontalHeaderLabels(headers)
         self._apply_view_buttons()
 
     def _apply_resource_columns(self) -> None:
@@ -2035,12 +2066,12 @@ class WorkloadWindow(QMainWindow):
         self._apply_view_buttons()
 
     def _always_hidden(self) -> set[int]:
-        """The namespace column, and the kind column of every list that has
-        one:
+        """The namespace column, and the kind column of every list that has one
+        (the count of containers, for Pods, which READY shows as squares):
 
         the page and the filter already say what the rows are.
         """
-        return {0} if self._view == "pods" else {0, 1}
+        return {0, 1}
 
     def _apply_view_buttons(self) -> None:
         """Pods and logs belong to workloads; a network resource has details
@@ -2345,6 +2376,8 @@ class WorkloadWindow(QMainWindow):
             for column, value in enumerate(values):
                 item = QTableWidgetItem(value)
                 item.setToolTip(event.message)
+                if column == 3 and (link := event_link(event)):
+                    self._link_item(item, link)
                 item.setForeground(
                     QColor(
                         themed("#985415")
@@ -2557,6 +2590,8 @@ class WorkloadWindow(QMainWindow):
                     )
                     item.setForeground(QColor(text_color))
                     item.setBackground(QColor(background))
+                if column == 0:
+                    self._link_item(item, ("Node", "", node.name))
                 self.nodes_table.setItem(row, column, item)
 
     def _begin_loading(self, button: QPushButton | None, label: str) -> Callable:
@@ -2866,13 +2901,22 @@ class WorkloadWindow(QMainWindow):
         try:
             if self._view == "pods":
                 self._render_pods()
+                self._fit_states_column()
             elif self._view in RESOURCE_VIEWS:
                 self._render_resources()
             else:
                 self._render_workloads()
+                self._fit_states_column()
         finally:
             self.table.setUpdatesEnabled(True)
         self._fit_name_column()
+
+    def _fit_states_column(self) -> None:
+        """READY grows to hold the squares and the count of its widest row; a
+        width the person made larger is kept."""
+        needed = self.table.sizeHintForColumn(3) + 2 * 8
+        if needed > self.table.columnWidth(3):
+            self.table.setColumnWidth(3, needed)
 
     def _fit_name_column(self) -> None:
         """Start each list with the whole of its names showing; after that the
@@ -2990,13 +3034,16 @@ class WorkloadWindow(QMainWindow):
             tint = tints.get(pod_highlight(pod) or "")
             values = (
                 pod.namespace,
-                str(len(pod.containers)),  # shown as one square per container
+                str(len(pod.containers)),
                 pod.name,
                 f"{pod.ready}/{pod.total}",
                 self._phase_label(pod.phase),
                 format_cpu(pod.cpu),
                 format_memory(pod.memory),
                 str(pod.restarts),
+                pod.owner[0] if pod.owner else "",
+                pod.node,
+                pod.qos,
                 pod.age,
             )
             for column, value in enumerate(values):
@@ -3004,15 +3051,23 @@ class WorkloadWindow(QMainWindow):
                 item.setForeground(QColor(themed("#242a33")))
                 if tint is not None:
                     item.setBackground(tint)
-                if column == 1 and pod.container_states:
+                if column == 8 and pod.owner:
+                    self._link_item(item, (*pod.owner[:1], pod.namespace, pod.owner[1]))
+                if column == 9 and pod.node:
+                    self._link_item(item, ("Node", "", pod.node))
+                if column == 3 and pod.container_states:
                     item.setData(STATES_ROLE, pod.container_states)
-                    item.setToolTip(
-                        "\n".join(
+                    item.setTextAlignment(
+                        Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
+                    )
+                    item.setData(
+                        TIPS_ROLE,
+                        tuple(
                             f"{name}: {self._container_state_label(state)}"
                             for name, state in zip(
                                 pod.containers, pod.container_states, strict=True
                             )
-                        )
+                        ),
                     )
                 if column == 4:
                     foreground, background = colors.get(
@@ -3063,7 +3118,13 @@ class WorkloadWindow(QMainWindow):
                 item.setForeground(QColor(themed("#242a33")))
                 if column == 3 and workload.kind != "CronJob":
                     item.setData(STATES_ROLE, workload.states)
-                    item.setData(KEEP_TEXT_ROLE, True)
+                    item.setData(
+                        TIPS_ROLE,
+                        tuple(
+                            self._container_state_label(state)
+                            for state in workload.states
+                        ),
+                    )
                     item.setTextAlignment(
                         Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
                     )
@@ -3252,6 +3313,55 @@ class WorkloadWindow(QMainWindow):
             lambda result: self._show_pods_dialog(workload, result),
             context,
             workload,
+        )
+
+    def _enable_links(self, table: QTableWidget) -> None:
+        """Let the cells of a table that link to another resource be
+        clicked."""
+        table.setMouseTracking(True)
+        table.cellEntered.connect(
+            lambda row, column: self._hover_cell(table, row, column)
+        )
+        table.cellClicked.connect(
+            lambda row, column: self._open_link(table, row, column)
+        )
+
+    @staticmethod
+    def _hover_cell(table: QTableWidget, row: int, column: int) -> None:
+        """A cell that links to another resource shows the hand."""
+        item = table.item(row, column)
+        linked = item is not None and item.data(LINK_ROLE) is not None
+        table.viewport().setCursor(
+            Qt.CursorShape.PointingHandCursor if linked else Qt.CursorShape.ArrowCursor
+        )
+
+    def _open_link(self, table: QTableWidget, row: int, column: int) -> None:
+        """Open the details of the resource a cell points to."""
+        item = table.item(row, column)
+        link = item.data(LINK_ROLE) if item is not None else None
+        if link is None:
+            return
+        self._open_resource(*link)
+
+    def _open_resource(self, kind: str, namespace: str, name: str) -> None:
+        self._run_action(
+            get_resource_details,
+            lambda result: self._show_json_dialog(f"{kind}: {name}", result),
+            self._context(),
+            kind,
+            namespace,
+            name,
+        )
+
+    def _link_item(self, item: QTableWidgetItem, link: tuple[str, str, str]) -> None:
+        """Style a cell as a link to the resource `link` names."""
+        font = item.font()
+        font.setUnderline(True)
+        item.setFont(font)
+        item.setForeground(QColor(themed("#3220a0")))
+        item.setData(LINK_ROLE, link)
+        item.setToolTip(
+            self.tr("Open {kind} {name}").format(kind=link[0], name=link[2])
         )
 
     def _view_details(self) -> None:
@@ -3895,6 +4005,7 @@ class WorkloadWindow(QMainWindow):
         """Open the details of a resource in a tab; a Pod's also follow its
         live CPU and memory."""
         tab = DetailTab(title, document, live_usage=pod is not None)
+        tab.link_clicked.connect(self._open_resource)
         if pod is not None:
             timer = QTimer(tab)
             timer.setInterval(USAGE_REFRESH_MS)

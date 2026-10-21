@@ -12,8 +12,9 @@ from PySide6.QtGui import (
     QPen,
     QPolygonF,
     QResizeEvent,
+    QWheelEvent,
 )
-from PySide6.QtWidgets import QPlainTextEdit, QSizePolicy, QWidget
+from PySide6.QtWidgets import QPlainTextEdit, QScrollArea, QSizePolicy, QWidget
 
 from kubescope.theme import themed
 from kubescope.utils.json_view import current_palette
@@ -22,6 +23,37 @@ TRACK = "#e8eaee"
 OK = "#3d9a6d"
 WARNING = "#e0a030"
 BAD = "#d05560"
+
+
+class TabScrollArea(QScrollArea):
+    """Holds the tabs of the top bar: as wide as they are when there is room,
+    and scrolled sideways, by the wheel, when there is not."""
+
+    def __init__(self, parent: QWidget | None = None) -> None:
+        super().__init__(parent)
+        self.setObjectName("pinnedScroll")
+        self.setWidgetResizable(True)
+        self.setFrameShape(QScrollArea.Shape.NoFrame)
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Fixed)
+        self.setStyleSheet(
+            "QScrollArea#pinnedScroll, QScrollArea#pinnedScroll > QWidget > QWidget"
+            " { background: transparent; }"
+        )
+
+    def sizeHint(self) -> QSize:
+        content = self.widget()
+        return content.sizeHint() if content is not None else super().sizeHint()
+
+    def minimumSizeHint(self) -> QSize:
+        return QSize(120, self.sizeHint().height())
+
+    def wheelEvent(self, event: QWheelEvent) -> None:
+        bar = self.horizontalScrollBar()
+        delta = event.angleDelta().y() or event.angleDelta().x()
+        bar.setValue(bar.value() - delta)
+        event.accept()
 
 
 class StatusBar(QWidget):

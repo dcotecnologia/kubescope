@@ -1,15 +1,17 @@
 from PySide6.QtCore import QModelIndex, QPersistentModelIndex, QRectF, QSize, Qt
-from PySide6.QtGui import QColor, QPainter
+from PySide6.QtGui import QColor, QHelpEvent, QPainter
 from PySide6.QtWidgets import (
-    QStyle,
+    QAbstractItemView,
     QStyledItemDelegate,
     QStyleOptionViewItem,
+    QToolTip,
 )
 
 from kubescope.theme import themed
 
 STATES_ROLE = Qt.ItemDataRole.UserRole + 1
-KEEP_TEXT_ROLE = Qt.ItemDataRole.UserRole + 2  # the cell shows its text too
+LINK_ROLE = Qt.ItemDataRole.UserRole + 4  # (kind, namespace, name) a cell opens
+TIPS_ROLE = Qt.ItemDataRole.UserRole + 3  # what each square says when pointed at
 # state of a container -> its square: running, pending, error or terminated
 STATE_COLORS = {
     "running": "#3cb95a",
@@ -24,8 +26,8 @@ PADDING = 8
 
 class ContainerStatesDelegate(QStyledItemDelegate):
     """Draws a small colored square for each state a cell carries, such as the
-    containers of a Pod or the replicas of a workload; the text of the cell is
-    kept, aligned to the right, only when the cell asks for it."""
+    containers of a Pod or the replicas of a workload; the text of the cell,
+    aligned to the right, says how many."""
 
     def paint(
         self,
@@ -34,17 +36,9 @@ class ContainerStatesDelegate(QStyledItemDelegate):
         index: QModelIndex | QPersistentModelIndex,
     ) -> None:
         states = index.data(STATES_ROLE)
+        super().paint(painter, option, index)
         if not states:
-            super().paint(painter, option, index)
             return
-        style = option.widget.style() if option.widget else None
-        if index.data(KEEP_TEXT_ROLE):
-            super().paint(painter, option, index)
-        elif style is not None:
-            blank = QStyleOptionViewItem(option)
-            self.initStyleOption(blank, index)
-            blank.text = ""
-            style.drawControl(QStyle.ControlElement.CE_ItemViewItem, blank, painter)
         top = option.rect.top() + (option.rect.height() - SQUARE) / 2
         left = option.rect.left() + PADDING
         painter.save()
@@ -67,6 +61,22 @@ class ContainerStatesDelegate(QStyledItemDelegate):
             return super().sizeHint(option, index)
         hint = super().sizeHint(option, index)
         width = 2 * PADDING + len(states) * SQUARE + (len(states) - 1) * GAP
-        if index.data(KEEP_TEXT_ROLE):
-            width += hint.width()
-        return QSize(width, hint.height())
+        return QSize(width + hint.width(), hint.height())
+
+    def helpEvent(
+        self,
+        event: QHelpEvent,
+        view: QAbstractItemView,
+        option: QStyleOptionViewItem,
+        index: QModelIndex | QPersistentModelIndex,
+    ) -> bool:
+        tips = index.data(TIPS_ROLE)
+        if not tips:
+            return super().helpEvent(event, view, option, index)
+        offset = event.pos().x() - option.rect.left() - PADDING
+        number, within = divmod(offset, SQUARE + GAP)
+        if 0 <= number < len(tips) and within < SQUARE:
+            QToolTip.showText(event.globalPos(), tips[number], view)
+        else:
+            QToolTip.hideText()
+        return True

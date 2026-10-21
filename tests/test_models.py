@@ -4,9 +4,12 @@ from kubescope.models import (
     POD_SORT_COLUMNS,
     SORT_COLUMNS,
     DetailRow,
+    EventInfo,
     PodInfo,
     Workload,
+    detail_link,
     detail_sections,
+    event_link,
     format_age,
     format_bytes,
     format_cpu,
@@ -165,7 +168,7 @@ def test_pod_sort_key_covers_every_column() -> None:
     pod = PodInfo("ns", "Web", "Running", 1, 2, "2d", ("a", "b"), 3, 0.2, 50.0)
     empty = PodInfo("ns", "web", "Weird", 0, 0, "1h", ())
 
-    assert len(POD_SORT_COLUMNS) == 9
+    assert len(POD_SORT_COLUMNS) == 12
     assert pod_sort_key(pod, 1)[0] == 2
     assert pod_sort_key(pod, 3)[:2] == (0.5, 2)
     assert pod_sort_key(empty, 3)[:2] == (1.0, 0)
@@ -173,9 +176,16 @@ def test_pod_sort_key_covers_every_column() -> None:
     assert pod_sort_key(empty, 4)[0] == 4
     assert pod_sort_key(empty, 5)[0] == -1.0
     assert pod_sort_key(pod, 7)[0] == 3
-    assert pod_sort_key(pod, 8)[0] == 2 * 86400
+    assert pod_sort_key(pod, 11)[0] == 2 * 86400
     assert pod_sort_key(pod, 2)[0] == "web"
     assert pod_sort_key(pod, 0)[0] == "ns"
+    placed = PodInfo(
+        "ns", "w", "Running", 1, 1, "2d", ("a",), owner=("Deployment", "d"), node="N1"
+    )
+    assert pod_sort_key(placed, 8)[0] == "deployment"
+    assert pod_sort_key(pod, 8)[0] == ""
+    assert pod_sort_key(placed, 9)[0] == "n1"
+    assert pod_sort_key(placed, 10)[0] == ""
 
 
 def test_job_and_cron_job_states_replace_the_replica_status() -> None:
@@ -306,3 +316,99 @@ def test_detail_sections_tolerate_odd_documents() -> None:
 )
 def test_a_workload_shows_one_state_for_each_replica(workload, expected) -> None:
     assert workload.states == expected
+
+
+def test_detail_values_that_name_a_resource_link_to_it() -> None:
+    document = {
+        "kind": "Pod",
+        "metadata": {
+            "name": "p",
+            "namespace": "ns",
+            "ownerReferences": [
+                {"kind": "ReplicaSet", "name": "api-5d"},
+                {"kind": "Mystery", "name": "x"},
+            ],
+        },
+        "spec": {
+            "nodeName": "n1",
+            "serviceAccountName": "sa",
+            "volumes": [{"name": "c", "configMap": {"name": "cm1"}}],
+        },
+    }
+    links = {
+        row.label: row.links
+        for section in detail_sections(document)
+        for row in section.rows
+        if row.links
+    }
+
+    assert links["Namespace"] == (("Namespace", "", "ns"),)
+    assert links["Controlled by"] == (("ReplicaSet", "ns", "api-5d"), None)
+    assert links["nodeName"] == (("Node", "", "n1"),)
+    assert links["configMap.name"] == (("ConfigMap", "ns", "cm1"),)
+    assert "serviceAccountName" not in links
+
+
+def test_detail_links_skip_empty_values_and_tables() -> None:
+    assert detail_link("secretRef.name", "", "ns") is None
+    assert detail_link("secret.secretName", "s", "ns") == ("Secret", "ns", "s")
+    assert detail_link("Controlled by", "ReplicaSet", "ns") is None  # no name
+
+
+def test_an_event_links_to_the_resource_it_is_about() -> None:
+    def event(involved: str) -> EventInfo:
+        return EventInfo("Normal", "s", "ns", involved, "m", 1, "1h", "1h")
+
+    assert event_link(event("Pod: api-1")) == ("Pod", "ns", "api-1")
+    assert event_link(event("Node: n1")) == ("Node", "", "n1")
+    assert event_link(event("Mystery: x")) is None
+    assert event_link(event("?: ?")) is None
+
+
+def test_secrets_are_linked_wherever_a_pod_names_them() -> None:
+    document = {
+        "kind": "Pod",
+        "metadata": {"name": "p", "namespace": "ns"},
+        "spec": {
+            "imagePullSecrets": [{"name": "regcred"}],
+            "volumes": [
+                {"name": "v", "projected": {"sources": [{"secret": {"name": "ps"}}]}}
+            ],
+            "containers": [
+                {
+                    "name": "app",
+                    "env": [
+                        {
+                            "name": "A",
+                            "valueFrom": {"secretKeyRef": {"name": "sk", "key": "k"}},
+                        }
+                    ],
+                }
+            ],
+        },
+    }
+    found = {
+        row.label: row.links
+        for section in detail_sections(document)
+        for row in section.rows
+        if row.links
+    }
+
+    assert found["imagePullSecrets"] == (("Secret", "ns", "regcred"),)
+    assert found["secret.name"] == (("Secret", "ns", "ps"),)
+    assert found["valueFrom.secretKeyRef.name"] == (("Secret", "ns", "sk"),)
+
+
+def test_a_table_that_is_not_a_list_of_names_has_no_links() -> None:
+    document = {
+        "kind": "Pod",
+        "metadata": {"name": "p", "namespace": "ns"},
+        "spec": {"imagePullSecrets": [{"other": "x"}], "tolerations": [{"key": "a"}]},
+    }
+
+    assert not any(
+        row.links
+        for section in detail_sections(document)
+        for row in section.rows
+        if row.label != "Namespace"
+    )

@@ -1,6 +1,6 @@
 import re
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import datetime
 from typing import Any
 
@@ -104,6 +104,8 @@ class PodInfo:
     init_containers: tuple[str, ...] = ()  # run to completion before `containers`
     # one per container: running, pending, error or terminated
     container_states: tuple[str, ...] = ()
+    node: str = ""  # where it runs, empty until it is scheduled
+    qos: str = ""  # Guaranteed, Burstable or BestEffort
 
 
 def safe_file_name(title: str, suffix: str) -> str:
@@ -421,6 +423,9 @@ POD_SORT_COLUMNS = (
     "cpu",
     "memory",
     "restarts",
+    "controller",
+    "node",
+    "qos",
     "age",
 )
 _PHASE_SEVERITY = {"Failed": 0, "Unknown": 1, "Pending": 2, "Running": 3}
@@ -441,6 +446,12 @@ def pod_sort_key(pod: PodInfo, column: int) -> tuple:
         primary = (-1.0 if value is None else value,)
     elif field == "age":
         primary = (age_seconds(pod.age),)
+    elif field == "controller":
+        primary = ((pod.owner[0] if pod.owner else "").casefold(),)
+    elif field == "node":
+        primary = (pod.node.casefold(),)
+    elif field == "qos":
+        primary = (pod.qos.casefold(),)
     elif field == "name":
         primary = (pod.name.casefold(),)
     else:
@@ -456,6 +467,8 @@ class DetailRow:
     values: tuple[str, ...] = ()  # one badge each
     headers: tuple[str, ...] = ()  # a table, when the rows of a list are flat
     table: tuple[tuple[str, ...], ...] = ()
+    # for each value, the (kind, namespace, name) it opens, or None
+    links: tuple[tuple[str, str, str] | None, ...] = ()
 
 
 @dataclass(frozen=True, slots=True)
@@ -566,12 +579,92 @@ def _properties(document: dict[str, Any], now: float) -> list[DetailRow]:
     return rows
 
 
+# The kinds whose details the app can open, which a value may link to.
+LINKABLE_KINDS = frozenset(
+    {
+        "Pod",
+        "Node",
+        "Namespace",
+        "ConfigMap",
+        "Secret",
+        "Deployment",
+        "StatefulSet",
+        "DaemonSet",
+        "ReplicaSet",
+        "ReplicationController",
+        "Job",
+        "CronJob",
+    }
+)
+# The end of the label of a value that names another resource, and its kind.
+_LINKED_LABELS = {
+    "nodeName": "Node",
+    "configMap.name": "ConfigMap",
+    "configMapRef.name": "ConfigMap",
+    "configMapKeyRef.name": "ConfigMap",
+    "secret.secretName": "Secret",
+    "secret.name": "Secret",
+    "secretRef.name": "Secret",
+    "secretKeyRef.name": "Secret",
+}
+# Lists of names, shown as a table, and the kind of what they name.
+_LINKED_TABLES = {"imagePullSecrets": "Secret"}
+
+
+def detail_link(label: str, value: str, namespace: str) -> tuple[str, str, str] | None:
+    """The resource a detail value points to, as (kind, namespace, name)."""
+    if label == "Namespace":
+        return ("Namespace", "", value)
+    if label == "Controlled by":
+        kind, _, name = value.partition("/")
+        return (kind, namespace, name) if kind in LINKABLE_KINDS and name else None
+    path = label.rsplit("/", 1)[-1].strip().split(".")
+    kind = _LINKED_LABELS.get(".".join(path[-2:])) or _LINKED_LABELS.get(path[-1])
+    if kind is None or not value:
+        return None
+    return (kind, "" if kind == "Node" else namespace, value)
+
+
+def event_link(event: EventInfo) -> tuple[str, str, str] | None:
+    """The resource an event is about, when its details can be opened."""
+    kind, _, name = event.involved.partition(": ")
+    if kind not in LINKABLE_KINDS or not name:
+        return None
+    return (kind, "" if kind in {"Node", "Namespace"} else event.namespace, name)
+
+
+def _with_links(row: DetailRow, namespace: str) -> DetailRow:
+    if row.table:
+        kind = _LINKED_TABLES.get(row.label.rsplit("/", 1)[-1].strip())
+        if kind is None or row.headers[:1] != ("name",):
+            return row
+        return replace(
+            row, links=tuple((kind, namespace, cells[0]) for cells in row.table)
+        )
+    links = tuple(detail_link(row.label, value, namespace) for value in row.values)
+    return replace(row, links=links) if any(links) else row
+
+
 def detail_sections(
     document: dict[str, Any], now: float | None = None
 ) -> list[DetailSection]:
     """The details of a resource laid out for reading: its properties, then one
     section for each other top-level field (spec, status, data...)."""
     now = time.time() if now is None else now
+    sections = _detail_sections(document, now)
+    metadata = document.get("metadata")
+    namespace = (
+        str(metadata.get("namespace") or "") if isinstance(metadata, dict) else ""
+    )
+    return [
+        replace(
+            section, rows=tuple(_with_links(row, namespace) for row in section.rows)
+        )
+        for section in sections
+    ]
+
+
+def _detail_sections(document: dict[str, Any], now: float) -> list[DetailSection]:
     sections = []
     if properties := _properties(document, now):
         sections.append(DetailSection("Properties", tuple(properties)))

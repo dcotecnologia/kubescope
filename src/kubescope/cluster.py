@@ -1021,7 +1021,13 @@ def get_resource_details(
         return _helm_release_details(context, namespace, name)
     if kind in _EKS_KINDS:
         return _describe_eks(kind, _eks_target(context), name)
-    resource = {**_RESOURCES, **_LISTED_RESOURCES, "Pod": "pods"}.get(kind)
+    resource = {
+        **_RESOURCES,
+        **_LISTED_RESOURCES,
+        "Pod": "pods",
+        "Node": "nodes",  # what the links of a list open
+        "Namespace": "namespaces",
+    }.get(kind)
     if resource is None:
         raise ClusterError(f"Unsupported resource kind: {kind}")
     document = _get_json(_resource_path(resource, namespace, name), context)
@@ -1129,6 +1135,8 @@ def _parse_pod(item: dict[str, Any], now: datetime) -> PodInfo | None:
         ),
         owner=_pod_owner(metadata),
         init_containers=init_containers,
+        node=spec.get("nodeName") or "",
+        qos=status.get("qosClass") or "",
         container_states=tuple(
             _container_state(
                 next((s for s in container_statuses if s.get("name") == name), None)

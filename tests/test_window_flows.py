@@ -7,9 +7,19 @@ import pytest
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
-from PySide6.QtCore import QEvent, QMimeData, QObject, QPoint, QPointF, Qt, Signal
+from PySide6.QtCore import (
+    QEvent,
+    QMimeData,
+    QObject,
+    QPoint,
+    QPointF,
+    QRect,
+    Qt,
+    Signal,
+)
 from PySide6.QtGui import (
     QCloseEvent,
+    QHelpEvent,
     QMouseEvent,
     QPalette,
     QShortcut,
@@ -25,6 +35,7 @@ from PySide6.QtWidgets import (
     QStyleOptionViewItem,
     QTableWidget,
     QTableWidgetItem,
+    QToolTip,
     QWidget,
 )
 
@@ -48,7 +59,7 @@ from kubescope.settings import Settings
 from kubescope.theme import themed
 from kubescope.utils import json_view
 from kubescope.utils.updates import Release, UpdateCheck
-from kubescope.views.container_states import STATES_ROLE
+from kubescope.views.container_states import LINK_ROLE, STATES_ROLE, TIPS_ROLE
 from kubescope.views.detail_tab import DetailTab
 from kubescope.window import PIN_MIME, VIEWER_MIME
 
@@ -1810,7 +1821,7 @@ def test_namespace_and_kind_columns_are_never_shown(monkeypatch) -> None:
     window._open_list_view("deployments")
     assert window.table.isColumnHidden(0) and window.table.isColumnHidden(1)
     window._open_list_view("pods")
-    assert window.table.isColumnHidden(0) and not window.table.isColumnHidden(1)
+    assert window.table.isColumnHidden(0) and window.table.isColumnHidden(1)
     window._fill_namespaces(["ops"])
     window._open_list_view("nodegroups")
     window._show_resources([], [rows["nodegroups"]])
@@ -3494,17 +3505,36 @@ def test_pods_and_workloads_draw_colored_squares_for_their_states(
             PodInfo("ns", "q", "Running", 0, 0, "1d", ()),  # nothing to draw
         ],
     )
-    item = window.table.item(0, 1)
-    assert "side: Error" in item.toolTip() and "app: Running" in item.toolTip()
-    assert window.table.item(1, 1).data(STATES_ROLE) is None
+    item = window.table.item(0, 3)
+    assert item.text() == "1/2" and item.data(STATES_ROLE) == ("running", "error")
+    assert item.data(TIPS_ROLE) == ("app: Running", "side: Error")
+    assert window.table.item(1, 3).data(STATES_ROLE) is None
 
     window.table.viewport().grab()  # paints the squares and the plain cell
-    delegate = window.table.itemDelegateForColumn(1)
-    index = window.table.model().index(0, 1)
+    delegate = window.table.itemDelegateForColumn(3)
     option = QStyleOptionViewItem()
-    assert delegate.sizeHint(option, index).width() == 2 * 8 + 2 * 12 + 4
-    plain = window.table.model().index(1, 1)
+    index = window.table.model().index(0, 3)
+    assert delegate.sizeHint(option, index).width() > 2 * 8 + 2 * 12 + 4
+    plain = window.table.model().index(1, 3)
     assert delegate.sizeHint(option, plain).width() >= 0
+
+    shown = []
+    monkeypatch.setattr(
+        QToolTip, "showText", lambda _pos, text, *_a: shown.append(text)
+    )
+    hidden = []
+    monkeypatch.setattr(QToolTip, "hideText", lambda: hidden.append(True))
+    option.rect = QRect(0, 0, 120, 30)
+
+    def hover(x: int, at=index) -> None:
+        event = QHelpEvent(QEvent.Type.ToolTip, QPoint(x, 10), QPoint(x, 10))
+        delegate.helpEvent(event, window.table, option, at)
+
+    hover(8 + 16 + 2)  # on the second square
+    hover(8 + 12 + 1)  # in the gap between two
+    hover(100)  # past the last
+    hover(5, plain)  # a cell without squares
+    assert shown == ["side: Error"] and len(hidden) == 2
 
     window._open_list_view("deployments")
     window._show_workloads(
@@ -3519,4 +3549,54 @@ def test_pods_and_workloads_draw_colored_squares_for_their_states(
     window.table.viewport().grab()
     kept = window.table.model().index(0, 3)
     assert window.table.itemDelegateForColumn(3).sizeHint(option, kept).width() > 44
+    window.close()
+
+
+def test_a_pod_links_to_its_node_and_controller(monkeypatch) -> None:
+    window = _ready_window(monkeypatch)
+    window.show()
+    window._open_list_view("pods")
+    pod = PodInfo(
+        "ns", "p", "Running", 1, 1, "1d", ("c",), owner=("Deployment", "api"), node="n1"
+    )
+    window._show_pods(["ns"], [pod, PodInfo("ns", "q", "Pending", 0, 1, "1d", ("c",))])
+    ran = []
+    monkeypatch.setattr(window, "_run_action", lambda *a, **k: ran.append(a))
+
+    assert window.table.item(0, 8).data(LINK_ROLE) == ("Deployment", "ns", "api")
+    assert window.table.item(0, 9).data(LINK_ROLE) == ("Node", "", "n1")
+    assert "Open Node n1" in window.table.item(0, 9).toolTip()
+    assert window.table.item(1, 9).data(LINK_ROLE) is None  # not scheduled yet
+
+    window._open_link(window.table, 0, 9)
+    operation, on_success, context, kind, namespace, name = ran[-1]
+    assert operation.__name__ == "get_resource_details"
+    assert (kind, namespace, name) == ("Node", "", "n1")
+    opened = []
+    monkeypatch.setattr(window, "_show_json_dialog", lambda *a: opened.append(a))
+    on_success({"kind": "Node"})
+    assert opened == [("Node: n1", {"kind": "Node"})]
+
+    count = len(ran)
+    window._open_link(window.table, 1, 9)  # nothing to open
+    window._open_link(window.table, 5, 5)  # no such cell
+    assert len(ran) == count
+
+    window._hover_cell(window.table, 0, 9)
+    assert window.table.viewport().cursor().shape() == Qt.CursorShape.PointingHandCursor
+    window._hover_cell(window.table, 1, 9)
+    assert window.table.viewport().cursor().shape() == Qt.CursorShape.ArrowCursor
+    window._hover_cell(window.table, 5, 5)
+    assert window.table.viewport().cursor().shape() == Qt.CursorShape.ArrowCursor
+    window.close()
+
+
+def test_the_events_link_to_the_resource_they_are_about(monkeypatch) -> None:
+    window = _ready_window(monkeypatch)
+    window._render_events(_workloads_overview())
+    table = window.workloads_table
+
+    assert table.item(0, 3).data(LINK_ROLE) == ("Pod", "ns", "api-1")
+    assert table.item(1, 3).data(LINK_ROLE) == ("Deployment", "ns", "web")
+    assert table.item(0, 4).data(LINK_ROLE) is None
     window.close()

@@ -3,12 +3,13 @@ import os
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QApplication, QTableWidgetItem
+from PySide6.QtWidgets import QApplication, QTableWidgetItem, QWidget
 
 from kubescope import theme
 from kubescope import window as window_module
 from kubescope.models import ClusterOverview, NodeInfo, PodInfo, Workload
 from kubescope.utils import log_view
+from kubescope.views.container_states import LINK_ROLE
 from kubescope.views.detail_tab import DetailTab
 from kubescope.views.log_tab import LogTab
 
@@ -134,6 +135,7 @@ def test_node_groups_view_shows_the_nodes_too(monkeypatch) -> None:
     assert window.nodes_table.rowCount() == 1
     assert window.nodes_table.item(0, 0).text() == "node-a"
     assert window.nodes_table.item(0, 1).text() == "Ready"
+    assert window.nodes_table.item(0, 0).data(LINK_ROLE) == ("Node", "", "node-a")
 
     window._show_nodes("other", ClusterOverview())  # a stale answer is ignored
     assert window.nodes_table.rowCount() == 1
@@ -733,3 +735,86 @@ def test_addons_are_listed_for_every_namespace(monkeypatch) -> None:
     assert window._list_namespace("deployments") == "arquitech"
     assert window._list_namespace("addons") is None
     window.close()
+
+
+def test_a_linked_detail_value_asks_to_open_its_resource(monkeypatch) -> None:
+    from PySide6.QtWidgets import QLabel
+
+    tab = DetailTab(
+        "Pod: p",
+        {
+            "kind": "Pod",
+            "metadata": {"name": "p", "namespace": "ns"},
+            "spec": {"nodeName": "n1", "hostname": "h"},
+        },
+    )
+    opened = []
+    tab.link_clicked.connect(lambda *link: opened.append(link))
+
+    linked = [
+        label
+        for label in tab.content.findChildren(QLabel)
+        if "Open Node n1" in label.toolTip()
+    ]
+    assert len(linked) == 1 and "n1" in linked[0].text()
+    linked[0].linkActivated.emit("open")
+    assert opened == [("Node", "", "n1")]
+
+
+def test_a_list_of_secrets_in_the_details_opens_each_one(monkeypatch) -> None:
+    from PySide6.QtWidgets import QTableWidget
+
+    tab = DetailTab(
+        "Pod: p",
+        {
+            "kind": "Pod",
+            "metadata": {"name": "p", "namespace": "ns"},
+            "spec": {"imagePullSecrets": [{"name": "regcred"}, {"name": "other"}]},
+        },
+    )
+    opened = []
+    tab.link_clicked.connect(lambda *link: opened.append(link))
+    table = tab.content.findChild(QTableWidget)
+
+    assert "Open Secret regcred" in table.item(0, 0).toolTip()
+    table.cellClicked.emit(1, 0)
+    table.cellClicked.emit(0, 1)  # not the name
+    table.cellClicked.emit(5, 0)  # no such row
+    assert opened == [("Secret", "ns", "other")]
+
+
+def test_the_tabs_of_the_top_bar_scroll_with_the_wheel(monkeypatch) -> None:
+    from PySide6.QtCore import QPoint, QPointF
+    from PySide6.QtGui import QWheelEvent
+
+    from kubescope.views.widgets import TabScrollArea
+
+    area = TabScrollArea()
+    content = QWidget()
+    content.setMinimumWidth(1000)
+    area.setWidget(content)
+    area.resize(300, 40)
+    area.show()
+    assert area.minimumSizeHint().width() == 120
+
+    def wheel(x: int, y: int) -> None:
+        event = QWheelEvent(
+            QPointF(5, 5),
+            QPointF(5, 5),
+            QPoint(0, 0),
+            QPoint(x, y),
+            Qt.MouseButton.NoButton,
+            Qt.KeyboardModifier.NoModifier,
+            Qt.ScrollPhase.NoScrollPhase,
+            False,
+        )
+        area.wheelEvent(event)
+
+    bar = area.horizontalScrollBar()
+    bar.setValue(300)
+    wheel(0, -120)  # the wheel down goes right
+    assert bar.value() == 420
+    wheel(60, 0)  # a sideways wheel too
+    assert bar.value() == 360
+    area.close()
+    TabScrollArea().sizeHint()  # nothing inside yet: the default hint
