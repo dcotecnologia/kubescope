@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+## [0.11.0] - 2026-10-21
+
 ### Added
 
 - Pods show a colored square for each container, and workloads one for each replica (up to five): green when running, yellow when pending, red on error or restarting, gray when terminated by @danilogco
@@ -243,7 +245,8 @@ The first release.
 
 - Pod logs and resource details are still never written to disk by the app on its own. **Save** is the only exception, and it writes only to the file the user chooses. SECURITY.md says so by @danilogco
 
-[Unreleased]: https://github.com/dcotecnologia/kubescope/compare/v0.10.2...HEAD
+[Unreleased]: https://github.com/dcotecnologia/kubescope/compare/v0.11.0...HEAD
+[0.11.0]: https://github.com/dcotecnologia/kubescope/compare/v0.10.2...v0.11.0
 [0.10.2]: https://github.com/dcotecnologia/kubescope/compare/v0.10.1...v0.10.2
 [0.10.1]: https://github.com/dcotecnologia/kubescope/compare/v0.10.0...v0.10.1
 [0.10.0]: https://github.com/dcotecnologia/kubescope/compare/v0.9.1...v0.10.0
