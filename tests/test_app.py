@@ -65,6 +65,7 @@ def test_main_builds_the_window_and_runs_the_event_loop(monkeypatch) -> None:
     monkeypatch.delenv(app.DEBUG_ENV, raising=False)
     _capture_logging(monkeypatch)
     monkeypatch.setattr(app, "QApplication", FakeApplication)
+    monkeypatch.setattr(app, "install_wheel_guard", lambda _app: None)
     monkeypatch.setattr(app, "load_app_icon", lambda: "icon")
     monkeypatch.setattr(app, "apply_fonts", lambda _app: events.append("fonts"))
     monkeypatch.setattr(
@@ -135,6 +136,7 @@ def test_main_records_the_runtime_and_the_input_when_debugging(monkeypatch) -> N
     monkeypatch.setenv(app.DEBUG_ENV, "1")
     _capture_logging(monkeypatch)
     monkeypatch.setattr(app, "QApplication", FakeApplication)
+    monkeypatch.setattr(app, "install_wheel_guard", lambda _app: None)
     monkeypatch.setattr(app, "load_app_icon", lambda: "icon")
     monkeypatch.setattr(app, "apply_fonts", lambda _app: None)
     monkeypatch.setattr(app, "apply_theme", lambda _app, _name: None)
@@ -184,6 +186,7 @@ def test_main_installs_the_crash_hooks_and_offers_the_pending_report(
     _capture_logging(monkeypatch)
     monkeypatch.setattr(app.crashreport, "install", lambda: events.append("hooks"))
     monkeypatch.setattr(app, "QApplication", FakeApplication)
+    monkeypatch.setattr(app, "install_wheel_guard", lambda _app: None)
     monkeypatch.setattr(app, "load_app_icon", lambda: "icon")
     monkeypatch.setattr(app, "apply_fonts", lambda _app: None)
     monkeypatch.setattr(app, "apply_theme", lambda _app, _name: None)

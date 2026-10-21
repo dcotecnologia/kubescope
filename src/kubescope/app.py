@@ -24,6 +24,7 @@ from kubescope.utils.diagnostics import (
     trace_input,
 )
 from kubescope.utils.fonts import apply_fonts
+from kubescope.utils.wheel_guard import install_wheel_guard
 from kubescope.window import WorkloadWindow
 
 # __file__ of the entry script points at the bundle root once frozen, so anchor
@@ -82,6 +83,7 @@ def main() -> int:
     crashreport.install()
     logger.info("Starting KubeScope")
     application = QApplication(sys.argv)
+    install_wheel_guard(application)  # a select changes on click, not on hover
     application.setApplicationName("KubeScope")
     if debugging:
         record_runtime()
