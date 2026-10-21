@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file. The format 
 ### Fixed
 
 - On Windows, opening Cluster or Node Groups no longer flashes blank terminal windows: the AWS CLI commands the app runs now start without a console by @danilogco
+- The cluster data of the Overview (VPC, subnets, endpoint) now loads after the first sign-in to a context, and when switching to a signed-in one, instead of staying empty until the page was opened again by @danilogco
 
 ## [0.10.0] - 2026-10-20
 

@@ -3453,3 +3453,17 @@ def test_the_name_column_starts_wide_enough_for_its_names(monkeypatch) -> None:
     assert fitted > 260
     assert window.table.columnWidth(2) == 50
     window.close()
+
+
+def test_the_cluster_info_is_read_again_once_the_overview_loads(monkeypatch) -> None:
+    window = _resource_window(monkeypatch)
+    ran = []
+    monkeypatch.setattr(window, "_run_action", lambda *a, **k: ran.append((a, k)))
+    monkeypatch.setattr(window, "_context", lambda: "prod")
+    window._show_eks_entries("prod", True)
+    ran[-1][1]["on_error"]("not signed in")  # read before the sign-in
+    ran.clear()
+
+    window._show_overview("prod", ClusterOverview())
+
+    assert [call[0][0].__name__ for call in ran] == ["get_cluster_info"]

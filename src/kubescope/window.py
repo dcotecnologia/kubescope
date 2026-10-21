@@ -615,6 +615,7 @@ class WorkloadWindow(QMainWindow):
         self._view = "deployments"  # which list the shared table shows
         self._update_state = "idle"  # idle, checking, current, available or failed
         self._cluster_info: ClusterInfo | None = None
+        self._eks_context: str | None = None  # the open context, when it is EKS
         self._update_release: Release | None = None
         self._update_phase = 0  # frame of the icon animation
         self._update_timer = QTimer(self)
@@ -1457,6 +1458,7 @@ class WorkloadWindow(QMainWindow):
         if context != self._context():
             return  # the answer of a context that is no longer open
         self.ui.navNodeGroups.setVisible(available)
+        self._eks_context = context if available else None
         self._render_pinned()
         if available:
             self._load_cluster_info(context)
@@ -2238,6 +2240,7 @@ class WorkloadWindow(QMainWindow):
         self.refresh()
         self._overview_context = None
         self._ensure_overview()
+        self._update_eks_entries()  # the AWS data could not be read before
 
     def _ensure_workloads_overview(self) -> None:
         context = self._context()
@@ -2437,6 +2440,8 @@ class WorkloadWindow(QMainWindow):
             overview.pods_total,
         )
         self._render_overview(overview)
+        if self._eks_context == context and self._cluster_info is None:
+            self._load_cluster_info(context)  # it failed before the sign-in
 
     def _render_overview(self, overview: ClusterOverview) -> None:
         translate = QCoreApplication.translate
