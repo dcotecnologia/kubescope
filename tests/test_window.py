@@ -644,7 +644,7 @@ def test_hidden_columns_are_applied_and_saved(monkeypatch, tmp_path) -> None:
     monkeypatch.setattr(window_module.WorkloadWindow, "refresh", lambda *_a: None)
     path = tmp_path / "settings.json"
     window = window_module.WorkloadWindow(Settings(path))
-    assert window.table.columnCount() == 9
+    assert window.table.columnCount() == 10
 
     window._set_column_visible(6, False)
     assert window.table.isColumnHidden(6)
@@ -818,3 +818,50 @@ def test_the_tabs_of_the_top_bar_scroll_with_the_wheel(monkeypatch) -> None:
     assert bar.value() == 360
     area.close()
     TabScrollArea().sizeHint()  # nothing inside yet: the default hint
+
+
+def test_right_click_on_a_top_tab_closes_it_or_closes_them_all(monkeypatch) -> None:
+    from PySide6.QtCore import QPoint
+    from PySide6.QtWidgets import QMenu
+
+    monkeypatch.setattr(window_module, "list_contexts", lambda: ([], None))
+    window = window_module.WorkloadWindow()
+    window.context_combo.addItem("prod")
+    window.settings.set_pinned_views(["pods", "jobs"])
+    for title in ("Deployment: a", "Deployment: b"):
+        window._show_json_dialog(title, {"kind": "Deployment"})
+        window._viewer_contexts[
+            window.viewer_tabs.widget(window.viewer_tabs.count() - 1)
+        ] = "prod"
+    window._render_pinned()
+    chosen = []
+
+    class FakeMenu(QMenu):
+        def exec(self, *_args) -> None:
+            chosen.append([action.text() for action in self.actions()])
+            self.actions()[chosen_action[0]].trigger()
+
+    monkeypatch.setattr(window_module, "QMenu", FakeMenu)
+
+    chosen_action = [0]  # Close, on a viewer tab
+    viewer = next(b for b in window._pinned_buttons if b.text() == "Deployment: a")
+    viewer.customContextMenuRequested.emit(QPoint(1, 1))
+    assert chosen[-1] == ["Close", "Close all"]
+    assert window.viewer_tabs.count() == 1
+
+    chosen_action[0] = 0  # Close, on a pinned list, unpins it
+    pinned = next(b for b in window._pinned_buttons if b.text() == "Pods")
+    pinned.customContextMenuRequested.emit(QPoint(1, 1))
+    assert window.settings.pinned_views() == ["jobs"]
+
+    chosen_action[0] = 1  # Close all
+    window._viewer_contexts[window.viewer_tabs.widget(0)] = (
+        "other"  # not this context's
+    )
+    window._show_json_dialog("Deployment: c", {"kind": "Deployment"})
+    window._viewer_contexts[window.viewer_tabs.widget(1)] = "prod"
+    window._render_pinned()
+    window._pinned_buttons[0].customContextMenuRequested.emit(QPoint(1, 1))
+    assert window.settings.pinned_views() == []
+    assert window.viewer_tabs.count() == 1  # the other context's tab stays
+    window.close()

@@ -3172,7 +3172,7 @@ def test_the_pin_menu_offers_pin_or_unpin(monkeypatch) -> None:
     assert window.settings.pinned_views() == ["leases"]
     window._pinned_buttons[0].customContextMenuRequested.emit(QPoint(1, 1))
 
-    assert offered == ["Pin to the top", "Unpin from the top"]
+    assert offered == ["Pin to the top", "Close"]  # on the tab: close = unpin
     assert window.settings.pinned_views() == [] and window.ui.pinnedBar.isHidden()
     window.close()
 

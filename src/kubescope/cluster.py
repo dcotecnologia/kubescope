@@ -963,6 +963,10 @@ def _parse_workload(item: dict[str, Any], now: datetime) -> Workload | None:
     if creation_timestamp:
         created = datetime.fromisoformat(creation_timestamp.replace("Z", "+00:00"))
         age = format_age((now - created).total_seconds())
+    template = (spec.get("jobTemplate") or {}).get("spec") or spec
+    selector = ((template.get("template") or {}).get("spec") or {}).get(
+        "nodeSelector"
+    ) or {}
     return Workload(
         namespace=metadata.get("namespace") or "default",
         kind=kind,
@@ -972,6 +976,7 @@ def _parse_workload(item: dict[str, Any], now: datetime) -> Workload | None:
         age=age,
         state=state,
         schedule=schedule,
+        node_selector=", ".join(f"{key}={value}" for key, value in selector.items()),
     )
 
 

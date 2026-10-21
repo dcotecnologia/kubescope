@@ -1074,6 +1074,34 @@ class WorkloadWindow(QMainWindow):
         action.triggered.connect(lambda: self._toggle_pin(view))
         menu.exec(position)
 
+    def _tab_context_menu(self, button: QPushButton, close: Callable[[], None]) -> None:
+        """Right-click on a tab of the top bar: close it, or close them all."""
+        button.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        button.customContextMenuRequested.connect(
+            lambda position: self._show_tab_menu(close, button.mapToGlobal(position))
+        )
+
+    def _show_tab_menu(self, close: Callable[[], None], position: QPoint) -> None:
+        menu = QMenu(self)
+        menu.addAction(self.tr("Close")).triggered.connect(
+            lambda _checked=False: close()
+        )
+        menu.addAction(self.tr("Close all")).triggered.connect(
+            lambda _checked=False: self._close_all_tabs()
+        )
+        menu.exec(position)
+
+    def _close_all_tabs(self) -> None:
+        """Unpin every list and close every Details and Logs of this
+        context."""
+        context = self._context()
+        self.settings.set_pinned_views([])
+        self._save_settings()
+        for index in reversed(range(self.viewer_tabs.count())):
+            if self._viewer_contexts.get(self.viewer_tabs.widget(index)) == context:
+                self._close_viewer_tab(index)
+        self._render_pinned()
+
     def _toggle_pin(self, view: str) -> None:
         pinned = self.settings.pinned_views()
         if view in pinned:
@@ -1285,12 +1313,7 @@ class WorkloadWindow(QMainWindow):
             button.setChecked(active)
             button.setCursor(Qt.CursorShape.PointingHandCursor)
             button.clicked.connect(show)
-            button.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
-            button.customContextMenuRequested.connect(
-                lambda position, view=view, button=button: self._show_pin_menu(
-                    view, button.mapToGlobal(position)
-                )
-            )
+            self._tab_context_menu(button, lambda view=view: self._toggle_pin(view))
             close = QPushButton("×")
             close.setProperty("closeTab", "true")
             close.setToolTip(self.tr("Unpin from the top"))
@@ -1354,6 +1377,7 @@ class WorkloadWindow(QMainWindow):
         button.setChecked(active)
         button.setCursor(Qt.CursorShape.PointingHandCursor)
         button.clicked.connect(lambda _checked=False, i=index: self._open_viewer_tab(i))
+        self._tab_context_menu(button, lambda i=index: self._close_viewer_tab(i))
         close = QPushButton("×")
         close.setProperty("closeTab", "true")
         close.setToolTip(self.tr("Close"))
@@ -2027,14 +2051,14 @@ class WorkloadWindow(QMainWindow):
             "cronjobs": QCoreApplication.translate("MainWindow", "SCHEDULE"),
         }.get(self._view) or QCoreApplication.translate("MainWindow", "READY")
         context = "PodsDialog" if self._view == "pods" else "MainWindow"
-        pod_columns = (
+        extra_columns = (
             [
                 QCoreApplication.translate("MainWindow", "CONTROLLED BY"),
                 QCoreApplication.translate("MainWindow", "NODE"),
                 QCoreApplication.translate("MainWindow", "QOS"),
             ]
             if self._view == "pods"
-            else []
+            else [QCoreApplication.translate("MainWindow", "NODE SELECTOR")]
         )
         headers = [
             QCoreApplication.translate("MainWindow", "NAMESPACE"),
@@ -2045,7 +2069,7 @@ class WorkloadWindow(QMainWindow):
             QCoreApplication.translate("MainWindow", "CPU"),
             QCoreApplication.translate("MainWindow", "MEMORY"),
             QCoreApplication.translate("MainWindow", "RESTARTS"),
-            *pod_columns,
+            *extra_columns,
             QCoreApplication.translate("MainWindow", "AGE"),
         ]
         self.table.setColumnCount(len(headers))
@@ -3111,6 +3135,7 @@ class WorkloadWindow(QMainWindow):
                 format_cpu(workload.cpu),
                 format_memory(workload.memory),
                 str(workload.restarts),
+                workload.node_selector,
                 workload.age,
             )
             for column, value in enumerate(values):

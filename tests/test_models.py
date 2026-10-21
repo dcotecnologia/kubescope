@@ -89,7 +89,7 @@ def test_workload_sort_keys_rank_status_worst_first_and_ready_by_fraction() -> N
     assert order(2) == ["api", "db", "job", "web"]
     assert order(3) == ["db", "web", "job", "api"]  # 0/1, 1/4, 0/0, 3/3
     assert order(4) == ["db", "web", "job", "api"]  # Unavailable first
-    assert order(8) == ["job", "api", "web", "db"]  # youngest first
+    assert order(9) == ["job", "api", "web", "db"]  # youngest first
 
 
 def test_pod_highlight_flags_problems_over_young_pods() -> None:
@@ -158,7 +158,9 @@ def test_workload_sort_key_covers_every_column() -> None:
     assert workload_sort_key(bare, 3)[:2] == (1.0, 0)
     assert workload_sort_key(bare, 5)[0] == -1.0
     assert workload_sort_key(workload, 5)[0] == 0.5
-    assert workload_sort_key(workload, 8)[0] == 3 * 3600
+    assert workload_sort_key(workload, 9)[0] == 3 * 3600
+    selected = Workload("ns", "Deployment", "a", 1, 1, "1d", node_selector="Disk=ssd")
+    assert workload_sort_key(selected, 8)[0] == "disk=ssd"
     assert workload_sort_key(workload, 1)[0] == "Deployment"
     assert workload_sort_key(workload, 2)[0] == "api"
     assert workload_sort_key(workload, 0)[0] == "ns"

@@ -2585,3 +2585,27 @@ def test_a_pod_lists_the_state_of_each_of_its_containers() -> None:
     )
 
     assert pod is not None and pod.container_states == ("running", "pending")
+
+
+def test_a_workload_lists_the_node_selector_of_its_pods() -> None:
+    now = datetime(2025, 1, 1, tzinfo=UTC)
+    template = {"template": {"spec": {"nodeSelector": {"disk": "ssd", "zone": "a"}}}}
+
+    deployment = cluster._parse_workload(
+        {"kind": "Deployment", "metadata": {"name": "d"}, "spec": template}, now
+    )
+    cron = cluster._parse_workload(
+        {
+            "kind": "CronJob",
+            "metadata": {"name": "c"},
+            "spec": {"jobTemplate": {"spec": template}},
+        },
+        now,
+    )
+    bare = cluster._parse_workload(
+        {"kind": "Deployment", "metadata": {"name": "b"}}, now
+    )
+
+    assert deployment is not None and deployment.node_selector == "disk=ssd, zone=a"
+    assert cron is not None and cron.node_selector == "disk=ssd, zone=a"
+    assert bare is not None and bare.node_selector == ""

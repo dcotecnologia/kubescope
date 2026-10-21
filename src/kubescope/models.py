@@ -20,6 +20,7 @@ class Workload:
     memory: float | None = None  # bytes in use
     state: str | None = None  # Jobs and CronJobs name their own state
     schedule: str | None = None  # CronJobs only
+    node_selector: str = ""  # "key=value, ..." the Pods are placed by
 
     @property
     def status(self) -> str:
@@ -353,6 +354,7 @@ SORT_COLUMNS = (
     "cpu",
     "memory",
     "restarts",
+    "node_selector",
     "age",
 )
 
@@ -385,6 +387,8 @@ def workload_sort_key(workload: Workload, column: int) -> tuple:
         primary = (-1.0 if value is None else value,)
     elif field == "age":
         primary = (age_seconds(workload.age),)
+    elif field == "node_selector":
+        primary = (workload.node_selector.casefold(),)
     elif field == "kind":
         primary = (workload.kind,)
     elif field == "name":
