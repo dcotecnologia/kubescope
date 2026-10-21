@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pytest
 from PySide6.QtWidgets import QDialog, QPushButton
 
@@ -197,3 +199,11 @@ def test_a_bundle_with_an_old_changelog_is_refused(monkeypatch, tmp_path) -> Non
 
     shipped.write_text("new\n", encoding="utf-8")
     sync_changelog.check_bundle(bundle)  # current: fine
+
+
+def test_the_bundle_ships_the_language_files() -> None:
+    spec = (Path(__file__).resolve().parent.parent / "KubeScope.spec").read_text(
+        encoding="utf-8"
+    )
+
+    assert '"kubescope/languages"' in spec and '"languages").glob("*.json")' in spec

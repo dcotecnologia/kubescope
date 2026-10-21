@@ -85,8 +85,8 @@ analysis = Analysis(
             for path in (root / "src" / "kubescope" / "themes").glob("*.json")
         ),
         *(
-            (str(path), "kubescope/translations")
-            for path in (root / "src" / "kubescope" / "translations").glob("*.qm")
+            (str(path), "kubescope/languages")
+            for path in (root / "src" / "kubescope" / "languages").glob("*.json")
         ),
     ],
     # Only these Qt modules are used. Collecting every PySide6 module would ship
