@@ -189,6 +189,7 @@ def _install_deb(file: Path) -> None:
             "apt-get",
             "install",
             "-y",
+            "--allow-downgrades",  # `update --version` may pick an older one
             str(file),
         ],
         capture_output=True,

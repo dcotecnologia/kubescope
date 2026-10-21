@@ -220,9 +220,10 @@ def test_a_deb_is_installed_with_apt_through_pkexec(monkeypatch, tmp_path) -> No
         Install("deb", selfupdate.DEB_EXECUTABLE), file, "0.6.2", release()
     )
 
-    assert ran[0][:2] == ["pkexec", "env"] and ran[0][-3:] == [
+    assert ran[0][:2] == ["pkexec", "env"] and ran[0][-4:] == [
         "install",
         "-y",
+        "--allow-downgrades",
         str(file),
     ]
     assert command[-1] == str(selfupdate.DEB_EXECUTABLE)
