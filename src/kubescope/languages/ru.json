@@ -57,11 +57,13 @@
         },
         "LogTab": {
             "Auto-refresh": "Автообновление",
+            "Break long lines to the width of the view, to read them without scrolling sideways": "Переносит длинные строки по ширине области, чтобы читать их без горизонтальной прокрутки",
             "Could not refresh logs: {message}": "Не удалось обновить журналы: {message}",
             "Fetch new log lines every few seconds and follow the end of the log": "Получать новые строки журнала каждые несколько секунд и следить за концом журнала",
             "No log lines returned.": "Строки журнала не получены.",
             "Refresh now": "Обновить сейчас",
-            "Updated at {time}": "Обновлено в {time}"
+            "Updated at {time}": "Обновлено в {time}",
+            "Wrap lines": "Переносить строки"
         },
         "MainWindow": {
             "ADDRESS": "АДРЕС",

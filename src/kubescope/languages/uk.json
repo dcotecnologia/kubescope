@@ -57,11 +57,13 @@
         },
         "LogTab": {
             "Auto-refresh": "Автооновлення",
+            "Break long lines to the width of the view, to read them without scrolling sideways": "Переносить довгі рядки за шириною області, щоб читати без горизонтального прокручування",
             "Could not refresh logs: {message}": "Не вдалося оновити журнали: {message}",
             "Fetch new log lines every few seconds and follow the end of the log": "Отримувати нові рядки журналу кожні кілька секунд і стежити за кінцем журналу",
             "No log lines returned.": "Рядків журналу не повернуто.",
             "Refresh now": "Оновити зараз",
-            "Updated at {time}": "Оновлено о {time}"
+            "Updated at {time}": "Оновлено о {time}",
+            "Wrap lines": "Переносити рядки"
         },
         "MainWindow": {
             "ADDRESS": "АДРЕСА",

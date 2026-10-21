@@ -1,7 +1,7 @@
 import re
 from datetime import datetime
 
-from PySide6.QtWidgets import QWidget
+from PySide6.QtWidgets import QPlainTextEdit, QWidget
 
 from kubescope.models import PodInfo, safe_file_name
 from kubescope.ui.ui_log_tab import Ui_LogTab
@@ -17,7 +17,9 @@ _ANSI = re.compile(r"\x1b\[[0-9;?]*[ -/]*[@-~]")
 class LogTab(QWidget):
     """A Pod log viewer that keeps following the end of the log."""
 
-    def __init__(self, context: str, pod: PodInfo, container: str) -> None:
+    def __init__(
+        self, context: str, pod: PodInfo, container: str, wrap: bool = False
+    ) -> None:
         super().__init__()
         self.ui = Ui_LogTab()
         self.ui.setupUi(self)
@@ -31,6 +33,18 @@ class LogTab(QWidget):
         self.closed = False
         self.ui.logText.clear()
         self.ui.logStatus.setText("")
+        self.set_wrap(wrap)
+
+    def set_wrap(self, wrap: bool) -> None:
+        """Break long lines to the width of the view, or let them run on."""
+        self.ui.wrapCheck.blockSignals(True)
+        self.ui.wrapCheck.setChecked(wrap)
+        self.ui.wrapCheck.blockSignals(False)
+        self.ui.logText.setLineWrapMode(
+            QPlainTextEdit.LineWrapMode.WidgetWidth
+            if wrap
+            else QPlainTextEdit.LineWrapMode.NoWrap
+        )
 
     @property
     def auto_refresh(self) -> bool:

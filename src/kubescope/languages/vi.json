@@ -57,11 +57,13 @@
         },
         "LogTab": {
             "Auto-refresh": "Tự động làm mới",
+            "Break long lines to the width of the view, to read them without scrolling sideways": "Ngắt các dòng dài theo chiều rộng khung nhìn để đọc mà không cần cuộn ngang",
             "Could not refresh logs: {message}": "Không thể làm mới nhật ký: {message}",
             "Fetch new log lines every few seconds and follow the end of the log": "Lấy các dòng nhật ký mới sau mỗi vài giây và theo dõi phần cuối của nhật ký",
             "No log lines returned.": "Không có dòng nhật ký nào được trả về.",
             "Refresh now": "Làm mới ngay",
-            "Updated at {time}": "Cập nhật lúc {time}"
+            "Updated at {time}": "Cập nhật lúc {time}",
+            "Wrap lines": "Ngắt dòng"
         },
         "MainWindow": {
             "ADDRESS": "ĐỊA CHỈ",

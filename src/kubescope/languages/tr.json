@@ -57,11 +57,13 @@
         },
         "LogTab": {
             "Auto-refresh": "Otomatik yenile",
+            "Break long lines to the width of the view, to read them without scrolling sideways": "Uzun satırları görünümün genişliğine böler, yana kaydırmadan okumayı sağlar",
             "Could not refresh logs: {message}": "Günlükler yenilenemedi: {message}",
             "Fetch new log lines every few seconds and follow the end of the log": "Birkaç saniyede bir yeni günlük satırlarını al ve günlüğün sonunu izle",
             "No log lines returned.": "Günlük satırı döndürülmedi.",
             "Refresh now": "Şimdi yenile",
-            "Updated at {time}": "{time} itibarıyla güncellendi"
+            "Updated at {time}": "{time} itibarıyla güncellendi",
+            "Wrap lines": "Satırları kaydır"
         },
         "MainWindow": {
             "ADDRESS": "ADRES",

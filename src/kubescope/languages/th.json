@@ -57,11 +57,13 @@
         },
         "LogTab": {
             "Auto-refresh": "รีเฟรชอัตโนมัติ",
+            "Break long lines to the width of the view, to read them without scrolling sideways": "ตัดบรรทัดยาวตามความกว้างของมุมมอง เพื่ออ่านได้โดยไม่ต้องเลื่อนไปด้านข้าง",
             "Could not refresh logs: {message}": "รีเฟรชบันทึกไม่ได้: {message}",
             "Fetch new log lines every few seconds and follow the end of the log": "ดึงบรรทัดบันทึกใหม่ทุกไม่กี่วินาทีและติดตามท้ายบันทึก",
             "No log lines returned.": "ไม่มีบรรทัดบันทึกส่งกลับมา",
             "Refresh now": "รีเฟรชตอนนี้",
-            "Updated at {time}": "อัปเดตเมื่อ {time}"
+            "Updated at {time}": "อัปเดตเมื่อ {time}",
+            "Wrap lines": "ตัดบรรทัด"
         },
         "MainWindow": {
             "ADDRESS": "ที่อยู่",

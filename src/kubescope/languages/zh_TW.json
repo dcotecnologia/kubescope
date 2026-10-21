@@ -57,11 +57,13 @@
         },
         "LogTab": {
             "Auto-refresh": "自動重新整理",
+            "Break long lines to the width of the view, to read them without scrolling sideways": "依檢視寬度折行，無需左右捲動即可閱讀長行",
             "Could not refresh logs: {message}": "無法重新整理記錄：{message}",
             "Fetch new log lines every few seconds and follow the end of the log": "每隔幾秒取得新的記錄行，並跟隨記錄的結尾",
             "No log lines returned.": "沒有傳回任何記錄行。",
             "Refresh now": "立即重新整理",
-            "Updated at {time}": "更新於 {time}"
+            "Updated at {time}": "更新於 {time}",
+            "Wrap lines": "自動換行"
         },
         "MainWindow": {
             "ADDRESS": "位址",

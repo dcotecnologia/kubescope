@@ -273,3 +273,16 @@ def test_write_mode_is_off_by_default_and_only_true_turns_it_on(tmp_path) -> Non
     for stored in ('"yes"', "1", "null"):
         path.write_text(f'{{"write_mode": {stored}}}', encoding="utf-8")
         assert Settings(path).write_mode is False
+
+
+def test_wrapping_the_logs_is_off_by_default_and_persists(tmp_path) -> None:
+    path = tmp_path / "settings.json"
+    settings = Settings(path)
+    assert settings.wrap_log_lines is False
+
+    settings.wrap_log_lines = True
+    settings.save()
+    assert Settings(path).wrap_log_lines is True
+
+    path.write_text('{"wrap_log_lines": "yes"}', encoding="utf-8")
+    assert Settings(path).wrap_log_lines is False  # only a real true turns it on

@@ -57,11 +57,13 @@
         },
         "LogTab": {
             "Auto-refresh": "Segarkan otomatis",
+            "Break long lines to the width of the view, to read them without scrolling sideways": "Pecah baris panjang sesuai lebar tampilan agar terbaca tanpa menggulir ke samping",
             "Could not refresh logs: {message}": "Tidak dapat menyegarkan log: {message}",
             "Fetch new log lines every few seconds and follow the end of the log": "Ambil baris log baru setiap beberapa detik dan ikuti akhir log",
             "No log lines returned.": "Tidak ada baris log yang dikembalikan.",
             "Refresh now": "Segarkan sekarang",
-            "Updated at {time}": "Diperbarui pada {time}"
+            "Updated at {time}": "Diperbarui pada {time}",
+            "Wrap lines": "Bungkus baris"
         },
         "MainWindow": {
             "ADDRESS": "ALAMAT",

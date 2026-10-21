@@ -867,3 +867,36 @@ def test_right_click_on_a_top_tab_closes_it_or_closes_them_all(monkeypatch) -> N
     assert window.settings.pinned_views() == []
     assert window.viewer_tabs.count() == 1  # the other context's tab stays
     window.close()
+
+
+def test_wrapping_the_logs_is_remembered_and_applies_to_every_open_log(
+    monkeypatch,
+) -> None:
+    from PySide6.QtWidgets import QPlainTextEdit
+
+    monkeypatch.setattr(window_module, "list_contexts", lambda: ([], None))
+    window = window_module.WorkloadWindow()
+    monkeypatch.setattr(window, "_save_settings", lambda: None)
+    pod = PodInfo("default", "api-1", "Running", 1, 1, "1d", ("app",))
+    window._show_logs_dialog(pod, "app", "one")
+    window._show_logs_dialog(pod, "side", "two")
+    first, second = window.viewer_tabs.widget(0), window.viewer_tabs.widget(1)
+    no_wrap, wrap = (
+        QPlainTextEdit.LineWrapMode.NoWrap,
+        QPlainTextEdit.LineWrapMode.WidgetWidth,
+    )
+    assert first.ui.logText.lineWrapMode() == no_wrap  # off unless asked for
+
+    first.ui.wrapCheck.setChecked(True)
+    assert window.settings.wrap_log_lines is True
+    assert first.ui.logText.lineWrapMode() == wrap
+    assert second.ui.logText.lineWrapMode() == wrap and second.ui.wrapCheck.isChecked()
+
+    window._show_json_dialog("Deployment: a", {"kind": "Deployment"})  # not a log
+    second.ui.wrapCheck.setChecked(False)
+    assert first.ui.logText.lineWrapMode() == no_wrap
+
+    first.ui.wrapCheck.setChecked(True)
+    window._show_logs_dialog(pod, "third", "three")  # a new log starts as chosen
+    assert window.viewer_tabs.widget(3).ui.logText.lineWrapMode() == wrap
+    window.close()

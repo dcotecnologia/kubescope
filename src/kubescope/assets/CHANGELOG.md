@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+### Added
+
+- A Wrap lines option in the logs breaks long lines to the width of the view, to read them without scrolling sideways; it is off by default and the choice is remembered by @danilogco
+
 ## [0.11.2] - 2026-10-21
 
 ### Fixed

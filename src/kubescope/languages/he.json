@@ -57,11 +57,13 @@
         },
         "LogTab": {
             "Auto-refresh": "רענון אוטומטי",
+            "Break long lines to the width of the view, to read them without scrolling sideways": "שבירת שורות ארוכות לרוחב התצוגה, כדי לקרוא בלי לגלול הצידה",
             "Could not refresh logs: {message}": "לא ניתן לרענן את היומנים: {message}",
             "Fetch new log lines every few seconds and follow the end of the log": "משוך שורות יומן חדשות כל כמה שניות ועקוב אחר סוף היומן",
             "No log lines returned.": "לא הוחזרו שורות יומן.",
             "Refresh now": "רענן עכשיו",
-            "Updated at {time}": "עודכן ב-{time}"
+            "Updated at {time}": "עודכן ב-{time}",
+            "Wrap lines": "גלישת שורות"
         },
         "MainWindow": {
             "ADDRESS": "כתובת",

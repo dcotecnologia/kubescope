@@ -57,11 +57,13 @@
         },
         "LogTab": {
             "Auto-refresh": "تازه‌سازی خودکار",
+            "Break long lines to the width of the view, to read them without scrolling sideways": "خطوط طولانی را به عرض نما بشکن تا بدون پیمایش افقی خوانده شوند",
             "Could not refresh logs: {message}": "تازه‌سازی گزارش‌ها ممکن نبود: {message}",
             "Fetch new log lines every few seconds and follow the end of the log": "هر چند ثانیه خطوط جدید گزارش را بگیر و انتهای گزارش را دنبال کن",
             "No log lines returned.": "هیچ خط گزارشی برگردانده نشد.",
             "Refresh now": "اکنون تازه‌سازی کن",
-            "Updated at {time}": "به‌روزرسانی در {time}"
+            "Updated at {time}": "به‌روزرسانی در {time}",
+            "Wrap lines": "شکستن خطوط"
         },
         "MainWindow": {
             "ADDRESS": "نشانی",

@@ -57,11 +57,13 @@
         },
         "LogTab": {
             "Auto-refresh": "Odświeżanie automatyczne",
+            "Break long lines to the width of the view, to read them without scrolling sideways": "Łamie długie wiersze do szerokości widoku, by czytać je bez przewijania w bok",
             "Could not refresh logs: {message}": "Nie można odświeżyć logów: {message}",
             "Fetch new log lines every few seconds and follow the end of the log": "Pobieraj nowe wiersze logów co kilka sekund i podążaj za końcem logu",
             "No log lines returned.": "Nie zwrócono żadnych wierszy logu.",
             "Refresh now": "Odśwież teraz",
-            "Updated at {time}": "Zaktualizowano o {time}"
+            "Updated at {time}": "Zaktualizowano o {time}",
+            "Wrap lines": "Zawijaj wiersze"
         },
         "MainWindow": {
             "ADDRESS": "ADRES",

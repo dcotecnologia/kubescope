@@ -24,6 +24,7 @@ DEFAULTS: dict[str, Any] = {
     "pinned_views": [],
     "debug_logging": False,
     "check_updates": True,
+    "wrap_log_lines": False,
     "last_update_notice": "",
     "write_mode": False,
     "run_in_background": True,
@@ -214,6 +215,15 @@ class Settings:
     @check_updates.setter
     def check_updates(self, value: bool) -> None:
         self._data["check_updates"] = bool(value)
+
+    @property
+    def wrap_log_lines(self) -> bool:
+        """Whether the logs break long lines to the width of the view."""
+        return self._data["wrap_log_lines"] is True
+
+    @wrap_log_lines.setter
+    def wrap_log_lines(self, value: bool) -> None:
+        self._data["wrap_log_lines"] = bool(value)
 
     @property
     def last_update_notice(self) -> str:

@@ -36,6 +36,11 @@ class Ui_LogTab(object):
 
         self.logToolbar.addWidget(self.autoCheck)
 
+        self.wrapCheck = QCheckBox(LogTab)
+        self.wrapCheck.setObjectName(u"wrapCheck")
+
+        self.logToolbar.addWidget(self.wrapCheck)
+
         self.refreshButton = QPushButton(LogTab)
         self.refreshButton.setObjectName(u"refreshButton")
         self.refreshButton.setProperty(u"iconOnly", u"true")
@@ -76,6 +81,10 @@ class Ui_LogTab(object):
         self.autoCheck.setText(QCoreApplication.translate("LogTab", u"Auto-refresh", None))
 #if QT_CONFIG(tooltip)
         self.autoCheck.setToolTip(QCoreApplication.translate("LogTab", u"Fetch new log lines every few seconds and follow the end of the log", None))
+#endif // QT_CONFIG(tooltip)
+        self.wrapCheck.setText(QCoreApplication.translate("LogTab", u"Wrap lines", None))
+#if QT_CONFIG(tooltip)
+        self.wrapCheck.setToolTip(QCoreApplication.translate("LogTab", u"Break long lines to the width of the view, to read them without scrolling sideways", None))
 #endif // QT_CONFIG(tooltip)
 #if QT_CONFIG(tooltip)
         self.refreshButton.setToolTip(QCoreApplication.translate("LogTab", u"Refresh now", None))

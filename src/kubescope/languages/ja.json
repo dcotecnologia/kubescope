@@ -57,11 +57,13 @@
         },
         "LogTab": {
             "Auto-refresh": "自動更新",
+            "Break long lines to the width of the view, to read them without scrolling sideways": "長い行を表示幅で折り返し、横にスクロールせずに読めるようにします",
             "Could not refresh logs: {message}": "ログを更新できませんでした：{message}",
             "Fetch new log lines every few seconds and follow the end of the log": "数秒ごとに新しいログ行を取得し、ログの末尾を追従します",
             "No log lines returned.": "ログ行が返されませんでした。",
             "Refresh now": "今すぐ更新",
-            "Updated at {time}": "{time} に更新"
+            "Updated at {time}": "{time} に更新",
+            "Wrap lines": "行を折り返す"
         },
         "MainWindow": {
             "ADDRESS": "アドレス",

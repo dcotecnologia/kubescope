@@ -57,11 +57,13 @@
         },
         "LogTab": {
             "Auto-refresh": "自动刷新",
+            "Break long lines to the width of the view, to read them without scrolling sideways": "按视图宽度折行,无需左右滚动即可阅读长行",
             "Could not refresh logs: {message}": "无法刷新日志：{message}",
             "Fetch new log lines every few seconds and follow the end of the log": "每隔几秒获取新的日志行，并跟随日志末尾",
             "No log lines returned.": "没有返回日志行。",
             "Refresh now": "立即刷新",
-            "Updated at {time}": "更新于 {time}"
+            "Updated at {time}": "更新于 {time}",
+            "Wrap lines": "自动换行"
         },
         "MainWindow": {
             "ADDRESS": "地址",

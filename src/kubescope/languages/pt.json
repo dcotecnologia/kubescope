@@ -57,11 +57,13 @@
         },
         "LogTab": {
             "Auto-refresh": "Atualizar automaticamente",
+            "Break long lines to the width of the view, to read them without scrolling sideways": "Quebra as linhas longas na largura da visualização, para lê-las sem rolar para o lado",
             "Could not refresh logs: {message}": "Não foi possível atualizar os logs: {message}",
             "Fetch new log lines every few seconds and follow the end of the log": "Busca novas linhas de log a cada poucos segundos e acompanha o fim do log",
             "No log lines returned.": "Nenhuma linha de log retornada.",
             "Refresh now": "Atualizar agora",
-            "Updated at {time}": "Atualizado às {time}"
+            "Updated at {time}": "Atualizado às {time}",
+            "Wrap lines": "Quebrar linhas"
         },
         "MainWindow": {
             "ADDRESS": "ENDEREÇO",

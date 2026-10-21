@@ -37,6 +37,16 @@
       </widget>
      </item>
      <item>
+      <widget class="QCheckBox" name="wrapCheck">
+       <property name="text">
+        <string>Wrap lines</string>
+       </property>
+       <property name="toolTip">
+        <string>Break long lines to the width of the view, to read them without scrolling sideways</string>
+       </property>
+      </widget>
+     </item>
+     <item>
       <widget class="QPushButton" name="refreshButton">
        <property name="toolTip">
         <string>Refresh now</string>

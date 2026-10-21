@@ -4072,7 +4072,8 @@ class WorkloadWindow(QMainWindow):
         )
 
     def _show_logs_dialog(self, pod: PodInfo, container: str, logs: str) -> None:
-        tab = LogTab(self._context(), pod, container)
+        tab = LogTab(self._context(), pod, container, self.settings.wrap_log_lines)
+        tab.ui.wrapCheck.toggled.connect(self._wrap_logs)
         tab.set_logs(logs)
         timer = QTimer(tab)
         timer.setInterval(LOG_REFRESH_MS)
@@ -4084,6 +4085,15 @@ class WorkloadWindow(QMainWindow):
             pod=pod.name, container=container
         )
         self._add_viewer_tab(tab, title)
+
+    def _wrap_logs(self, wrap: bool) -> None:
+        """Remember the choice and apply it to every open log."""
+        self.settings.wrap_log_lines = wrap
+        self._save_settings()
+        for index in range(self.viewer_tabs.count()):
+            widget = self.viewer_tabs.widget(index)
+            if isinstance(widget, LogTab):
+                widget.set_wrap(wrap)
 
     def _refresh_log(self, tab: LogTab, force: bool = False) -> None:
         """Fetch newer lines quietly; skipped while paused or not on screen."""

@@ -57,11 +57,13 @@
         },
         "LogTab": {
             "Auto-refresh": "تحديث تلقائي",
+            "Break long lines to the width of the view, to read them without scrolling sideways": "قسّم الأسطر الطويلة على عرض العرض لقراءتها دون التمرير جانبياً",
             "Could not refresh logs: {message}": "تعذّر تحديث السجلات: {message}",
             "Fetch new log lines every few seconds and follow the end of the log": "يجلب أسطر سجل جديدة كل بضع ثوانٍ ويتابع نهاية السجل",
             "No log lines returned.": "لم يتم إرجاع أي أسطر من السجل.",
             "Refresh now": "حدّث الآن",
-            "Updated at {time}": "تم التحديث في {time}"
+            "Updated at {time}": "تم التحديث في {time}",
+            "Wrap lines": "التفاف الأسطر"
         },
         "MainWindow": {
             "ADDRESS": "العنوان",

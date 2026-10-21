@@ -57,11 +57,13 @@
         },
         "LogTab": {
             "Auto-refresh": "자동 새로 고침",
+            "Break long lines to the width of the view, to read them without scrolling sideways": "긴 줄을 보기 너비에 맞춰 나누어 옆으로 스크롤하지 않고 읽습니다",
             "Could not refresh logs: {message}": "로그를 새로 고칠 수 없습니다: {message}",
             "Fetch new log lines every few seconds and follow the end of the log": "몇 초마다 새 로그 줄을 가져오고 로그의 끝을 따라갑니다",
             "No log lines returned.": "반환된 로그 줄이 없습니다.",
             "Refresh now": "지금 새로 고침",
-            "Updated at {time}": "{time}에 업데이트됨"
+            "Updated at {time}": "{time}에 업데이트됨",
+            "Wrap lines": "줄 바꿈"
         },
         "MainWindow": {
             "ADDRESS": "주소",

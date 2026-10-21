@@ -57,11 +57,13 @@
         },
         "LogTab": {
             "Auto-refresh": "ऑटो-रीफ़्रेश",
+            "Break long lines to the width of the view, to read them without scrolling sideways": "लंबी पंक्तियों को दृश्य की चौड़ाई पर तोड़ें, ताकि बिना बगल में स्क्रॉल किए पढ़ा जा सके",
             "Could not refresh logs: {message}": "लॉग रीफ़्रेश नहीं हो सके: {message}",
             "Fetch new log lines every few seconds and follow the end of the log": "हर कुछ सेकंड में नई लॉग पंक्तियाँ लाएँ और लॉग के अंत का अनुसरण करें",
             "No log lines returned.": "कोई लॉग पंक्ति नहीं मिली।",
             "Refresh now": "अभी रीफ़्रेश करें",
-            "Updated at {time}": "{time} पर अपडेट किया गया"
+            "Updated at {time}": "{time} पर अपडेट किया गया",
+            "Wrap lines": "पंक्तियाँ लपेटें"
         },
         "MainWindow": {
             "ADDRESS": "पता",

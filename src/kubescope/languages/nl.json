@@ -57,11 +57,13 @@
         },
         "LogTab": {
             "Auto-refresh": "Automatisch verversen",
+            "Break long lines to the width of the view, to read them without scrolling sideways": "Breek lange regels af op de breedte van het beeld, om ze te lezen zonder opzij te scrollen",
             "Could not refresh logs: {message}": "Logs konden niet worden ververst: {message}",
             "Fetch new log lines every few seconds and follow the end of the log": "Haal om de paar seconden nieuwe logregels op en volg het einde van de log",
             "No log lines returned.": "Geen logregels teruggegeven.",
             "Refresh now": "Nu verversen",
-            "Updated at {time}": "Bijgewerkt om {time}"
+            "Updated at {time}": "Bijgewerkt om {time}",
+            "Wrap lines": "Regels afbreken"
         },
         "MainWindow": {
             "ADDRESS": "ADRES",
