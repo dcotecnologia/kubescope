@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+## [0.10.1] - 2026-10-21
+
 ### Fixed
 
 - On Windows, opening Cluster or Node Groups no longer flashes blank terminal windows: the AWS CLI commands the app runs now start without a console by @danilogco
@@ -230,7 +232,8 @@ The first release.
 
 - Pod logs and resource details are still never written to disk by the app on its own. **Save** is the only exception, and it writes only to the file the user chooses. SECURITY.md says so by @danilogco
 
-[Unreleased]: https://github.com/dcotecnologia/kubescope/compare/v0.10.0...HEAD
+[Unreleased]: https://github.com/dcotecnologia/kubescope/compare/v0.10.1...HEAD
+[0.10.1]: https://github.com/dcotecnologia/kubescope/compare/v0.10.0...v0.10.1
 [0.10.0]: https://github.com/dcotecnologia/kubescope/compare/v0.9.1...v0.10.0
 [0.9.1]: https://github.com/dcotecnologia/kubescope/compare/v0.9.0...v0.9.1
 [0.9.0]: https://github.com/dcotecnologia/kubescope/compare/v0.8.0...v0.9.0
