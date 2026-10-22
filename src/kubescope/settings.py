@@ -28,6 +28,7 @@ DEFAULTS: dict[str, Any] = {
     "last_update_notice": "",
     "write_mode": False,
     "run_in_background": True,
+    "system_title_bar": False,
     "welcome_dismissed": False,
     "window_geometry": "",
     "kubeconfig_files": [],
@@ -244,6 +245,17 @@ class Settings:
     @run_in_background.setter
     def run_in_background(self, value: bool) -> None:
         self._data["run_in_background"] = bool(value)
+
+    @property
+    def system_title_bar(self) -> bool:
+        """Whether the window keeps the title bar of the system instead of
+        drawing its own in the top bar; off unless the setting is exactly
+        true."""
+        return self._data["system_title_bar"] is True
+
+    @system_title_bar.setter
+    def system_title_bar(self, value: bool) -> None:
+        self._data["system_title_bar"] = bool(value)
 
     @property
     def write_mode(self) -> bool:

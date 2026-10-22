@@ -237,6 +237,7 @@
             "KubeScope reads the files in the KUBECONFIG variable, or ~/.kube/config. Add files here to read those instead. Press Save to apply.": "KubeScope پرونده‌های متغیر KUBECONFIG یا ~/.kube/config را می‌خواند. برای خواندن پرونده‌های دیگر، آن‌ها را اینجا اضافه کنید. برای اعمال، ذخیره را بزنید.",
             "Language": "زبان",
             "New theme...": "پوسته جدید...",
+            "Off by default: the window draws its own title bar in the top bar, which saves a row of space. Turn it on if moving or resizing the window misbehaves on your desktop.": "به‌طور پیش‌فرض خاموش است: پنجره نوار عنوان خود را در نوار بالا می‌کشد که یک ردیف فضا صرفه‌جویی می‌کند. اگر جابه‌جایی یا تغییر اندازهٔ پنجره در دسکتاپ شما درست کار نمی‌کند، آن را روشن کنید.",
             "Open the log folder": "باز کردن پوشه گزارش‌ها",
             "Open the themes folder": "باز کردن پوشه پوسته‌ها",
             "PROGRAM": "برنامه",
@@ -248,6 +249,7 @@
             "Shows, in the right-click menu, the actions that change a cluster: delete or evict a Pod, scale or restart a Deployment. Each one asks for confirmation. It also shows the kubectl command to open a shell in a Pod. Off keeps the app read-only.": "در منوی راست‌کلیک کارهایی را نشان می‌دهد که خوشه را تغییر می‌دهند: حذف یا تخلیه (evict) یک Pod، مقیاس‌دهی یا راه‌اندازی مجدد یک Deployment. هر کدام تأیید می‌خواهد. همچنین دستور kubectl برای باز کردن شل در یک Pod را نشان می‌دهد. وقتی خاموش است برنامه فقط‌خواندنی می‌ماند.",
             "The namespace each context opens on. Leave empty to show all of them.": "فضای نامی که هر زمینه در آن باز می‌شود. برای نمایش همه خالی بگذارید.",
             "Theme": "پوسته",
+            "Use the title bar of the system": "استفاده از نوار عنوان سیستم",
             "Write mode: allow actions that change the cluster": "حالت نوشتن: اجازه کارهایی که خوشه را تغییر می‌دهند"
         },
         "ThemeEditor": {

@@ -8,6 +8,14 @@ All notable changes to this project will be documented in this file. The format 
 
 - The list on screen is read again every five seconds instead of ten by @danilogco
 
+### Added
+
+- The window draws its own title bar in the top bar, with the minimize, maximize and close buttons, which saves a row of space; the window moves by dragging the bar and resizes from its edges, and a Settings option brings back the title bar of the system by @danilogco
+
+### Fixed
+
+- The tabs of the top bar take the room they need instead of being scrolled while there is space left by @danilogco
+
 ## [0.12.1] - 2026-10-22
 
 ### Fixed

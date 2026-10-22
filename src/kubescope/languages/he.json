@@ -237,6 +237,7 @@
             "KubeScope reads the files in the KUBECONFIG variable, or ~/.kube/config. Add files here to read those instead. Press Save to apply.": "KubeScope קורא את הקבצים שבמשתנה KUBECONFIG, או את ~/.kube/config. הוסיפו כאן קבצים כדי לקרוא אותם במקום זאת. לחצו על שמור כדי להחיל.",
             "Language": "שפה",
             "New theme...": "ערכת נושא חדשה...",
+            "Off by default: the window draws its own title bar in the top bar, which saves a row of space. Turn it on if moving or resizing the window misbehaves on your desktop.": "כבוי כברירת מחדל: החלון מצייר את שורת הכותרת שלו בסרגל העליון, וכך חוסך שורה של מקום. הפעילו זאת אם הזזה או שינוי גודל של החלון אינם פועלים כראוי בשולחן העבודה שלכם.",
             "Open the log folder": "פתח את תיקיית היומנים",
             "Open the themes folder": "פתח את תיקיית ערכות הנושא",
             "PROGRAM": "תוכנית",
@@ -248,6 +249,7 @@
             "Shows, in the right-click menu, the actions that change a cluster: delete or evict a Pod, scale or restart a Deployment. Each one asks for confirmation. It also shows the kubectl command to open a shell in a Pod. Off keeps the app read-only.": "מציג בתפריט הקליק הימני את הפעולות שמשנות את האשכול: מחיקה או פינוי (evict) של Pod, שינוי קנה מידה או הפעלה מחדש של Deployment. כל פעולה מבקשת אישור. מציג גם את פקודת kubectl לפתיחת shell ב-Pod. כשהמצב כבוי האפליקציה לקריאה בלבד.",
             "The namespace each context opens on. Leave empty to show all of them.": "מרחב השמות שבו נפתח כל הקשר. השאירו ריק כדי להציג את כולם.",
             "Theme": "ערכת נושא",
+            "Use the title bar of the system": "שימוש בשורת הכותרת של המערכת",
             "Write mode: allow actions that change the cluster": "מצב כתיבה: אפשר פעולות שמשנות את האשכול"
         },
         "ThemeEditor": {

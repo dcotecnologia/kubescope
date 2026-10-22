@@ -2579,6 +2579,43 @@ def test_the_update_check_is_switched_from_the_settings_page(monkeypatch) -> Non
     window.close()
 
 
+def test_the_window_draws_its_own_title_bar_unless_the_settings_say_otherwise(
+    monkeypatch,
+) -> None:
+    window = _ready_window(monkeypatch)
+    form = window.settings_ui
+    frameless = Qt.WindowType.FramelessWindowHint
+    assert window._frame.custom and window.windowFlags() & frameless
+    assert window.ui.windowCloseButton.isVisibleTo(window)
+
+    window._load_settings_form()
+    assert form.titleBarCheck.isChecked() is False
+    form.titleBarCheck.setChecked(True)
+    window._save_preferences()
+
+    assert window.settings.system_title_bar is True
+    assert not window._frame.custom and not window.windowFlags() & frameless
+    assert not window.ui.windowCloseButton.isVisibleTo(window)
+    form.titleBarCheck.setChecked(False)
+    window._save_preferences()
+    assert window._frame.custom
+    window.close()
+
+
+def test_a_saved_choice_of_the_system_title_bar_is_kept_on_the_next_start(
+    monkeypatch, tmp_path
+) -> None:
+    from kubescope.settings import Settings
+
+    settings = Settings(tmp_path / "settings.json")
+    settings.system_title_bar = True
+    monkeypatch.setattr(window_module, "list_contexts", lambda: ([], None))
+    window = window_module.WorkloadWindow(settings)
+
+    assert not window._frame.custom
+    window.close()
+
+
 def test_the_update_check_really_runs_in_the_background(monkeypatch) -> None:
     monkeypatch.setattr(window_module, "UPDATE_SEARCH_MS", 0)
     window = _ready_window(monkeypatch)

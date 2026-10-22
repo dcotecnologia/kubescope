@@ -219,6 +219,16 @@
               </property>
              </widget>
             </item>
+            <item row="5" column="0" colspan="2">
+             <widget class="QCheckBox" name="titleBarCheck">
+              <property name="text">
+               <string>Use the title bar of the system</string>
+              </property>
+              <property name="toolTip">
+               <string>Off by default: the window draws its own title bar in the top bar, which saves a row of space. Turn it on if moving or resizing the window misbehaves on your desktop.</string>
+              </property>
+             </widget>
+            </item>
            </layout>
           </item>
          </layout>

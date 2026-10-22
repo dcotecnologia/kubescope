@@ -237,6 +237,7 @@
             "KubeScope reads the files in the KUBECONFIG variable, or ~/.kube/config. Add files here to read those instead. Press Save to apply.": "KubeScope читає файли зі змінної KUBECONFIG або ~/.kube/config. Додайте файли сюди, щоб читати їх натомість. Натисніть «Зберегти», щоб застосувати.",
             "Language": "Мова",
             "New theme...": "Нова тема...",
+            "Off by default: the window draws its own title bar in the top bar, which saves a row of space. Turn it on if moving or resizing the window misbehaves on your desktop.": "За замовчуванням вимкнено: вікно малює власний рядок заголовка у верхній панелі, що економить один рядок місця. Увімкніть, якщо переміщення або зміна розміру вікна працює неправильно на вашому робочому столі.",
             "Open the log folder": "Відкрити теку журналів",
             "Open the themes folder": "Відкрити теку тем",
             "PROGRAM": "ПРОГРАМА",
@@ -248,6 +249,7 @@
             "Shows, in the right-click menu, the actions that change a cluster: delete or evict a Pod, scale or restart a Deployment. Each one asks for confirmation. It also shows the kubectl command to open a shell in a Pod. Off keeps the app read-only.": "Показує в контекстному меню дії, що змінюють кластер: видалити або витіснити (evict) Pod, масштабувати або перезапустити Deployment. Кожна просить підтвердження. Також показує команду kubectl для відкриття оболонки в Pod. Вимкнено — застосунок лише для читання.",
             "The namespace each context opens on. Leave empty to show all of them.": "Простір імен, у якому відкривається кожен контекст. Залиште порожнім, щоб показати всі.",
             "Theme": "Тема",
+            "Use the title bar of the system": "Використовувати рядок заголовка системи",
             "Write mode: allow actions that change the cluster": "Режим запису: дозволити дії, що змінюють кластер"
         },
         "ThemeEditor": {

@@ -237,6 +237,7 @@
             "KubeScope reads the files in the KUBECONFIG variable, or ~/.kube/config. Add files here to read those instead. Press Save to apply.": "KubeScope đọc các tệp trong biến KUBECONFIG hoặc ~/.kube/config. Thêm tệp vào đây để đọc chúng thay thế. Nhấn Lưu để áp dụng.",
             "Language": "Ngôn ngữ",
             "New theme...": "Giao diện mới...",
+            "Off by default: the window draws its own title bar in the top bar, which saves a row of space. Turn it on if moving or resizing the window misbehaves on your desktop.": "Mặc định tắt: cửa sổ tự vẽ thanh tiêu đề trong thanh trên cùng, giúp tiết kiệm một hàng không gian. Hãy bật nếu việc di chuyển hoặc đổi kích thước cửa sổ gặp lỗi trên máy tính của bạn.",
             "Open the log folder": "Mở thư mục nhật ký",
             "Open the themes folder": "Mở thư mục giao diện",
             "PROGRAM": "CHƯƠNG TRÌNH",
@@ -248,6 +249,7 @@
             "Shows, in the right-click menu, the actions that change a cluster: delete or evict a Pod, scale or restart a Deployment. Each one asks for confirmation. It also shows the kubectl command to open a shell in a Pod. Off keeps the app read-only.": "Hiển thị trong menu chuột phải các hành động thay đổi cụm: xóa hoặc trục xuất (evict) Pod, thay đổi quy mô hoặc khởi động lại Deployment. Mỗi hành động đều hỏi xác nhận. Cũng hiển thị lệnh kubectl để mở shell trong Pod. Khi tắt, ứng dụng chỉ đọc.",
             "The namespace each context opens on. Leave empty to show all of them.": "Namespace mà mỗi context mở ra. Để trống để hiển thị tất cả.",
             "Theme": "Giao diện",
+            "Use the title bar of the system": "Dùng thanh tiêu đề của hệ thống",
             "Write mode: allow actions that change the cluster": "Chế độ ghi: cho phép các hành động thay đổi cụm"
         },
         "ThemeEditor": {

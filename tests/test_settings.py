@@ -287,3 +287,16 @@ def test_wrapping_the_logs_is_off_by_default_and_persists(tmp_path) -> None:
 
     path.write_text('{"wrap_log_lines": "yes"}', encoding="utf-8")
     assert Settings(path).wrap_log_lines is False  # only a real true turns it on
+
+
+def test_the_system_title_bar_is_off_by_default_and_persists(tmp_path) -> None:
+    path = tmp_path / "settings.json"
+    settings = Settings(path)
+    assert settings.system_title_bar is False
+
+    settings.system_title_bar = True
+    settings.save()
+    assert Settings(path).system_title_bar is True
+
+    path.write_text('{"system_title_bar": "yes"}', encoding="utf-8")
+    assert Settings(path).system_title_bar is False  # only a real true turns it on

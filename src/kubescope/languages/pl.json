@@ -237,6 +237,7 @@
             "KubeScope reads the files in the KUBECONFIG variable, or ~/.kube/config. Add files here to read those instead. Press Save to apply.": "KubeScope odczytuje pliki ze zmiennej KUBECONFIG lub ~/.kube/config. Dodaj tutaj pliki, aby odczytywać je zamiast tego. Naciśnij Zapisz, aby zastosować.",
             "Language": "Język",
             "New theme...": "Nowy motyw...",
+            "Off by default: the window draws its own title bar in the top bar, which saves a row of space. Turn it on if moving or resizing the window misbehaves on your desktop.": "Domyślnie wyłączone: okno rysuje własny pasek tytułu w górnym pasku, co oszczędza jeden wiersz miejsca. Włącz, jeśli przesuwanie lub zmiana rozmiaru okna nie działa poprawnie na Twoim pulpicie.",
             "Open the log folder": "Otwórz folder logów",
             "Open the themes folder": "Otwórz folder motywów",
             "PROGRAM": "PROGRAM",
@@ -248,6 +249,7 @@
             "Shows, in the right-click menu, the actions that change a cluster: delete or evict a Pod, scale or restart a Deployment. Each one asks for confirmation. It also shows the kubectl command to open a shell in a Pod. Off keeps the app read-only.": "Pokazuje w menu kontekstowym akcje zmieniające klaster: usunięcie lub eksmisję (evict) Poda, skalowanie lub restart Deploymentu. Każda prosi o potwierdzenie. Pokazuje też polecenie kubectl otwierające powłokę w Podzie. Wyłączone: aplikacja jest tylko do odczytu.",
             "The namespace each context opens on. Leave empty to show all of them.": "Przestrzeń nazw, w której otwiera się każdy kontekst. Zostaw puste, aby pokazać wszystkie.",
             "Theme": "Motyw",
+            "Use the title bar of the system": "Użyj paska tytułu systemu",
             "Write mode: allow actions that change the cluster": "Tryb zapisu: zezwalaj na akcje zmieniające klaster"
         },
         "ThemeEditor": {

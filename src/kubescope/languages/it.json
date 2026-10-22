@@ -237,6 +237,7 @@
             "KubeScope reads the files in the KUBECONFIG variable, or ~/.kube/config. Add files here to read those instead. Press Save to apply.": "KubeScope legge i file della variabile KUBECONFIG, oppure ~/.kube/config. Aggiungi qui dei file per leggere quelli al loro posto. Premi Salva per applicare.",
             "Language": "Lingua",
             "New theme...": "Nuovo tema...",
+            "Off by default: the window draws its own title bar in the top bar, which saves a row of space. Turn it on if moving or resizing the window misbehaves on your desktop.": "Disattivato per impostazione predefinita: la finestra disegna la propria barra del titolo nella barra superiore, risparmiando una riga di spazio. Attivalo se spostare o ridimensionare la finestra non funziona bene sul tuo desktop.",
             "Open the log folder": "Apri la cartella dei log",
             "Open the themes folder": "Apri la cartella dei temi",
             "PROGRAM": "PROGRAMMA",
@@ -248,6 +249,7 @@
             "Shows, in the right-click menu, the actions that change a cluster: delete or evict a Pod, scale or restart a Deployment. Each one asks for confirmation. It also shows the kubectl command to open a shell in a Pod. Off keeps the app read-only.": "Mostra, nel menu contestuale, le azioni che modificano un cluster: eliminare o espellere (evict) un Pod, scalare o riavviare un Deployment. Ognuna chiede conferma. Mostra anche il comando kubectl per aprire una shell in un Pod. Disattivato, l'app resta di sola lettura.",
             "The namespace each context opens on. Leave empty to show all of them.": "Il namespace su cui si apre ogni contesto. Lascia vuoto per mostrarli tutti.",
             "Theme": "Tema",
+            "Use the title bar of the system": "Usa la barra del titolo del sistema",
             "Write mode: allow actions that change the cluster": "Modalità scrittura: consenti azioni che modificano il cluster"
         },
         "ThemeEditor": {
