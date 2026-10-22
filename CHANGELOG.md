@@ -18,6 +18,7 @@ All notable changes to this project will be documented in this file. The format 
 
 - The tabs of the top bar take the room they need instead of being scrolled while there is space left by @danilogco
 - The installed app starts again: the bundle left out the Qt network module that the single-instance check needs, so it stopped with "No module named PySide6.QtNetwork" by @danilogco
+- On Windows the notice of a new version reaches the notification center: the app and the shortcuts of the installer now share one application ID by @danilogco
 
 ## [0.12.1] - 2026-10-22
 

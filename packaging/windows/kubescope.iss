@@ -43,8 +43,8 @@ Source: "..\..\dist\KubeScope\*"; DestDir: "{app}"; Flags: ignoreversion recurse
 Source: "..\..\src\kubescope\assets\THIRD_PARTY_NOTICES.txt"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
-Name: "{group}\KubeScope"; Filename: "{app}\KubeScope.exe"
-Name: "{autodesktop}\KubeScope"; Filename: "{app}\KubeScope.exe"; Tasks: desktopicon
+Name: "{group}\KubeScope"; Filename: "{app}\KubeScope.exe"; AppUserModelID: "com.dcotecnologia.KubeScope"
+Name: "{autodesktop}\KubeScope"; Filename: "{app}\KubeScope.exe"; Tasks: desktopicon; AppUserModelID: "com.dcotecnologia.KubeScope"
 
 [Run]
 Filename: "{app}\KubeScope.exe"; Description: "{cm:LaunchProgram,KubeScope}"; Flags: nowait postinstall skipifsilent

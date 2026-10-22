@@ -1,5 +1,11 @@
+import ctypes
+from pathlib import Path
+from types import SimpleNamespace
+
 from kubescope import app
 from kubescope.settings import Settings
+
+ROOT = Path(__file__).resolve().parents[1]
 
 
 def _capture_logging(monkeypatch) -> list:
@@ -245,3 +251,29 @@ def test_a_second_start_asks_the_first_to_come_forward_and_quits(monkeypatch) ->
 
     assert app.main() == 0
     assert started == []
+
+
+def test_windows_is_told_which_application_this_is(monkeypatch) -> None:
+    told = []
+    shell32 = SimpleNamespace(
+        SetCurrentProcessExplicitAppUserModelID=lambda app_id: told.append(app_id)
+    )
+    monkeypatch.setattr(
+        ctypes, "windll", SimpleNamespace(shell32=shell32), raising=False
+    )
+
+    monkeypatch.setattr(app.sys, "platform", "linux")
+    app.set_app_user_model_id()
+    assert told == []  # only Windows has one
+
+    monkeypatch.setattr(app.sys, "platform", "win32")
+    app.set_app_user_model_id()
+    assert told == [app.APP_ID]
+
+
+def test_the_installer_gives_its_shortcuts_the_id_the_app_sets() -> None:
+    script = (ROOT / "packaging/windows/kubescope.iss").read_text(encoding="utf-8")
+    icons = script.split("[Icons]")[1].split("[Run]")[0]
+    shortcuts = [line for line in icons.splitlines() if line.startswith("Name:")]
+
+    assert shortcuts and all(f'AppUserModelID: "{app.APP_ID}"' in s for s in shortcuts)

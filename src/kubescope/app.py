@@ -53,6 +53,17 @@ def load_app_icon() -> QIcon:
 
 logger = logging.getLogger(__name__)
 DEBUG_ENV = "KUBESCOPE_DEBUG"
+APP_ID = "com.dcotecnologia.KubeScope"  # the same ID the installer gives its shortcuts
+
+
+def set_app_user_model_id() -> None:
+    """Tell Windows which application this process is, so the notice of a new
+    version reaches the notification center and the taskbar groups the windows
+    under the app's icon."""
+    if sys.platform == "win32":
+        import ctypes
+
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(APP_ID)
 
 
 def configure_debug(settings: Settings) -> bool:
@@ -83,6 +94,7 @@ def main() -> int:
     start_log_purge(settings)
     crashreport.install()
     logger.info("Starting KubeScope")
+    set_app_user_model_id()
     application = QApplication(sys.argv)
     instance = SingleInstance()
     if instance.notify_running():
