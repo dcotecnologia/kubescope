@@ -59,7 +59,7 @@ class Ui_MainWindow(object):
 "QPushButton[windowControl=\"close\"] {\n"
 "    background: transparent; border: 0; border-radius: 4px; padding: 0;\n"
 "}\n"
-"QPushButton[windowControl=\"close\"]:hover { background: #c42b1c; }\n"
+"QPushButton[windowControl=\"close\"]:hover { background: #a33d45; }\n"
 "QComboBox#contextCombo {\n"
 "    background: #0d315d; color: #ffffff; border: 1px solid #2d5077;\n"
 "    border-radius: 4px; min-height: 30px; padding: 0 9px; font-size: 11px;\n"
