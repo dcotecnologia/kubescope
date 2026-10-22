@@ -164,6 +164,7 @@ from kubescope.views.container_states import (
 from kubescope.views.detail_tab import USAGE_REFRESH_MS, DetailTab
 from kubescope.views.log_tab import LOG_REFRESH_MS, LogTab
 from kubescope.views.widgets import TabScrollArea
+from kubescope.views.window_frame import WindowFrame
 from kubescope.writes import (
     MAX_REPLICAS,
     delete_pod,
@@ -684,6 +685,15 @@ class WorkloadWindow(QMainWindow):
         self.status_label = ui.statusLabel
         self.login_button = ui.loginButton
         ui.topLogo.setPixmap(QPixmap(str(LOGO_PATH)))
+        self._frame = WindowFrame(
+            self,
+            ui.topBar,
+            ui.windowControls,
+            ui.minimizeButton,
+            ui.maximizeButton,
+            ui.windowCloseButton,
+        )
+        self._frame.set_custom(not self.settings.system_title_bar)
         self.no_contexts_banner = ui.noContextsBanner
         self.permission_banner = ui.permissionBanner
         ui.permissionDismiss.clicked.connect(self._hide_permission_banner)
@@ -4198,6 +4208,7 @@ class WorkloadWindow(QMainWindow):
         form.updatesCheck.setChecked(self.settings.check_updates)
         form.writeModeCheck.setChecked(self.settings.write_mode)
         form.backgroundCheck.setChecked(self.settings.run_in_background)
+        form.titleBarCheck.setChecked(self.settings.system_title_bar)
         form.debugHint.setText(
             self.tr(
                 "Off by default. When on, KubeScope writes what it does, "
@@ -4452,6 +4463,8 @@ class WorkloadWindow(QMainWindow):
             self.check_updates()
         self.settings.run_in_background = form.backgroundCheck.isChecked()
         self._sync_tray()
+        self.settings.system_title_bar = form.titleBarCheck.isChecked()
+        self._frame.set_custom(not self.settings.system_title_bar)
         was_writing = self.settings.write_mode
         self.settings.write_mode = form.writeModeCheck.isChecked()
         if self.settings.write_mode != was_writing:
@@ -4478,6 +4491,8 @@ class WorkloadWindow(QMainWindow):
     def changeEvent(self, event: QEvent) -> None:
         if event.type() == QEvent.Type.LanguageChange and hasattr(self, "ui"):
             self._retranslate()
+        elif event.type() == QEvent.Type.WindowStateChange and hasattr(self, "_frame"):
+            self._frame.refresh()
         super().changeEvent(event)
 
     def _show_access_note(self) -> None:

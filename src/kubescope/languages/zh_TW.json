@@ -237,6 +237,7 @@
             "KubeScope reads the files in the KUBECONFIG variable, or ~/.kube/config. Add files here to read those instead. Press Save to apply.": "KubeScope 會讀取 KUBECONFIG 變數中的檔案，或 ~/.kube/config。在此加入檔案可改為讀取這些檔案。按下儲存以套用。",
             "Language": "語言",
             "New theme...": "新增主題...",
+            "Off by default: the window draws its own title bar in the top bar, which saves a row of space. Turn it on if moving or resizing the window misbehaves on your desktop.": "預設關閉:視窗會在頂端列中繪製自己的標題列,可節省一列空間。如果在您的桌面上移動或調整視窗大小發生問題,請開啟。",
             "Open the log folder": "開啟記錄資料夾",
             "Open the themes folder": "開啟主題資料夾",
             "PROGRAM": "程式",
@@ -248,6 +249,7 @@
             "Shows, in the right-click menu, the actions that change a cluster: delete or evict a Pod, scale or restart a Deployment. Each one asks for confirmation. It also shows the kubectl command to open a shell in a Pod. Off keeps the app read-only.": "在右鍵選單中顯示會變更叢集的操作：刪除或驅逐（evict）Pod、調整規模或重新啟動 Deployment。每項操作都會要求確認。也會顯示在 Pod 中開啟 shell 的 kubectl 指令。關閉時應用程式保持唯讀。",
             "The namespace each context opens on. Leave empty to show all of them.": "每個內容開啟時所在的命名空間。留空則顯示全部。",
             "Theme": "主題",
+            "Use the title bar of the system": "使用系統標題列",
             "Write mode: allow actions that change the cluster": "寫入模式：允許變更叢集的操作"
         },
         "ThemeEditor": {

@@ -237,6 +237,7 @@
             "KubeScope reads the files in the KUBECONFIG variable, or ~/.kube/config. Add files here to read those instead. Press Save to apply.": "KubeScope KUBECONFIG वेरिएबल की फ़ाइलें, या ~/.kube/config पढ़ता है। उनकी जगह इन्हें पढ़ने के लिए यहाँ फ़ाइलें जोड़ें। लागू करने के लिए सहेजें दबाएँ।",
             "Language": "भाषा",
             "New theme...": "नई थीम...",
+            "Off by default: the window draws its own title bar in the top bar, which saves a row of space. Turn it on if moving or resizing the window misbehaves on your desktop.": "डिफ़ॉल्ट रूप से बंद: विंडो ऊपरी बार में अपना शीर्षक बार खुद बनाती है, जिससे एक पंक्ति की जगह बचती है। यदि आपके डेस्कटॉप पर विंडो को हिलाना या उसका आकार बदलना ठीक से काम नहीं करता, तो इसे चालू करें।",
             "Open the log folder": "लॉग फ़ोल्डर खोलें",
             "Open the themes folder": "थीम फ़ोल्डर खोलें",
             "PROGRAM": "प्रोग्राम",
@@ -248,6 +249,7 @@
             "Shows, in the right-click menu, the actions that change a cluster: delete or evict a Pod, scale or restart a Deployment. Each one asks for confirmation. It also shows the kubectl command to open a shell in a Pod. Off keeps the app read-only.": "राइट-क्लिक मेनू में वे क्रियाएँ दिखाता है जो क्लस्टर को बदलती हैं: Pod को हटाना या निष्कासित (evict) करना, Deployment को स्केल या रीस्टार्ट करना। हर क्रिया पुष्टि माँगती है। Pod में शेल खोलने की kubectl कमांड भी दिखाता है। बंद होने पर ऐप केवल-पढ़ने योग्य रहता है।",
             "The namespace each context opens on. Leave empty to show all of them.": "वह namespace जिस पर हर कॉन्टेक्स्ट खुलता है। सभी दिखाने के लिए खाली छोड़ें।",
             "Theme": "थीम",
+            "Use the title bar of the system": "सिस्टम के शीर्षक बार का उपयोग करें",
             "Write mode: allow actions that change the cluster": "राइट मोड: क्लस्टर को बदलने वाली क्रियाओं की अनुमति दें"
         },
         "ThemeEditor": {

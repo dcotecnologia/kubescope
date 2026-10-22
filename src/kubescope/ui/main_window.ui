@@ -44,6 +44,14 @@ QPushButton#settingsButton {
 }
 QPushButton#settingsButton:hover { background: #0d315d; }
 QPushButton#settingsButton:checked { background: #1f4f87; }
+QPushButton[windowControl="true"] {
+    background: transparent; border: 0; border-radius: 4px; padding: 0;
+}
+QPushButton[windowControl="true"]:hover { background: #0d315d; }
+QPushButton[windowControl="close"] {
+    background: transparent; border: 0; border-radius: 4px; padding: 0;
+}
+QPushButton[windowControl="close"]:hover { background: #c42b1c; }
 QComboBox#contextCombo {
     background: #0d315d; color: #ffffff; border: 1px solid #2d5077;
     border-radius: 4px; min-height: 30px; padding: 0 9px; font-size: 11px;
@@ -428,6 +436,96 @@ QPushButton#updateButton:hover { background: #f6f6fa; }
          <property name="flat">
           <bool>true</bool>
          </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QWidget" name="windowControls">
+         <property name="visible">
+          <bool>false</bool>
+         </property>
+         <layout class="QHBoxLayout" name="windowControlsLayout">
+          <property name="spacing">
+           <number>0</number>
+          </property>
+          <property name="leftMargin">
+           <number>0</number>
+          </property>
+          <property name="topMargin">
+           <number>0</number>
+          </property>
+          <property name="rightMargin">
+           <number>0</number>
+          </property>
+          <property name="bottomMargin">
+           <number>0</number>
+          </property>
+           <item>
+            <widget class="QPushButton" name="minimizeButton">
+             <property name="minimumSize">
+              <size>
+               <width>38</width>
+               <height>32</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>38</width>
+               <height>32</height>
+              </size>
+             </property>
+             <property name="flat">
+              <bool>true</bool>
+             </property>
+             <property name="windowControl" stdset="0">
+              <string notr="true">true</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="maximizeButton">
+             <property name="minimumSize">
+              <size>
+               <width>38</width>
+               <height>32</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>38</width>
+               <height>32</height>
+              </size>
+             </property>
+             <property name="flat">
+              <bool>true</bool>
+             </property>
+             <property name="windowControl" stdset="0">
+              <string notr="true">true</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="windowCloseButton">
+             <property name="minimumSize">
+              <size>
+               <width>38</width>
+               <height>32</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>38</width>
+               <height>32</height>
+              </size>
+             </property>
+             <property name="flat">
+              <bool>true</bool>
+             </property>
+             <property name="windowControl" stdset="0">
+              <string notr="true">close</string>
+             </property>
+            </widget>
+           </item>
+         </layout>
         </widget>
        </item>
       </layout>

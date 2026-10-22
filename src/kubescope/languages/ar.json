@@ -237,6 +237,7 @@
             "KubeScope reads the files in the KUBECONFIG variable, or ~/.kube/config. Add files here to read those instead. Press Save to apply.": "يقرأ KubeScope الملفات الموجودة في المتغير KUBECONFIG أو ~/.kube/config. أضف ملفات هنا لقراءتها بدلاً من ذلك. اضغط حفظ للتطبيق.",
             "Language": "اللغة",
             "New theme...": "سمة جديدة...",
+            "Off by default: the window draws its own title bar in the top bar, which saves a row of space. Turn it on if moving or resizing the window misbehaves on your desktop.": "افتراضيًا مُعطّل: ترسم النافذة شريط عنوانها في الشريط العلوي، مما يوفر صفًا من المساحة. فعّله إذا لم يعمل تحريك النافذة أو تغيير حجمها جيدًا على سطح مكتبك.",
             "Open the log folder": "افتح مجلد السجلات",
             "Open the themes folder": "افتح مجلد السمات",
             "PROGRAM": "البرنامج",
@@ -248,6 +249,7 @@
             "Shows, in the right-click menu, the actions that change a cluster: delete or evict a Pod, scale or restart a Deployment. Each one asks for confirmation. It also shows the kubectl command to open a shell in a Pod. Off keeps the app read-only.": "يعرض في قائمة النقر الأيمن الإجراءات التي تغيّر الكتلة: حذف Pod أو إخلاءه (evict)، تغيير حجم Deployment أو إعادة تشغيله. يطلب كل إجراء تأكيدًا. ويعرض أيضًا أمر kubectl لفتح shell في Pod. عند الإيقاف يبقى التطبيق للقراءة فقط.",
             "The namespace each context opens on. Leave empty to show all of them.": "الـ namespace الذي يُفتح عليه كل سياق. اتركه فارغاً لعرضها كلها.",
             "Theme": "السمة",
+            "Use the title bar of the system": "استخدام شريط عنوان النظام",
             "Write mode: allow actions that change the cluster": "وضع الكتابة: السماح بالإجراءات التي تغيّر الكتلة"
         },
         "ThemeEditor": {

@@ -52,19 +52,27 @@ class Ui_MainWindow(object):
 "}\n"
 "QPushButton#settingsButton:hover { background: #0d315d; }\n"
 "QPushButton#settingsButton:checked { background: #1f4f87; }\n"
+"QPushButton[windowControl=\"true\"] {\n"
+"    background: transparent; border: 0; border-radius: 4px; padding: 0;\n"
+"}\n"
+"QPushButton[windowControl=\"true\"]:hover { background: #0d315d; }\n"
+"QPushButton[windowControl=\"close\"] {\n"
+"    background: transparent; border: 0; border-radius: 4px; padding: 0;\n"
+"}\n"
+"QPushButton[windowControl=\"close\"]:hover { background: #c42b1c; }\n"
 "QComboBox#contextCombo {\n"
 "    background: #0d315d; color: #ffffff; border: 1px solid #2d5077;\n"
 "    border-radius: 4px; min-height: 30px; padding: 0 9px; font-size: 11px;\n"
 "}\n"
-"QWidget#sidebar { background: #ffffff; border-right: 1px solid #e1e3e9; }\n"
+"QWidget#sidebar { background: #ffffff; border-right: 1px solid #e1e3e"
+                        "9; }\n"
 "QScrollArea#sidebarScroll, QWidget#sidebarNav { background: transparent; border: 0; }\n"
 "QLabel#navSection, QLabel#filterLabel {\n"
 "    color: #535d69; font-size: 9px; font-weight: 700;\n"
 "}\n"
 "QFrame#sidebarRule { color: #e6e7ed; }\n"
 "QLabel#sidebarNote { color: #4d5866; font-size: 10px; line-height: 1.4; }\n"
-"QWidget#pageHeader { background: #ffffff; border-bottom: 1px sol"
-                        "id #e4e5eb; }\n"
+"QWidget#pageHeader { background: #ffffff; border-bottom: 1px solid #e4e5eb; }\n"
 "QLabel#pageTitle { color: #17191e; font-size: 16px; font-weight: 700; }\n"
 "QLabel[variant=\"muted\"] { color: #4f5966; font-size: 11px; }\n"
 "QComboBox[variant=\"filter\"], QLineEdit#searchInput, QLineEdit[variant=\"filter\"],\n"
@@ -76,15 +84,15 @@ class Ui_MainWindow(object):
 "    color: #20232a; selection-background-color: #d9d3f2;\n"
 "    selection-color: #20232a;\n"
 "}\n"
-"QComboBox[variant=\"filter\"] { padding-right: 28px; }\n"
+"QComboBox[v"
+                        "ariant=\"filter\"] { padding-right: 28px; }\n"
 "QComboBox[variant=\"filter\"]:hover { border-color: #b9b3dc; }\n"
 "QComboBox[variant=\"filter\"]:focus, QComboBox[variant=\"filter\"]:on,\n"
 "QLineEdit#searchInput:focus, QLineEdit[variant=\"filter\"]:focus {\n"
 "    border: 1px solid #6252b5;\n"
 "}\n"
 "QComboBox[variant=\"filter\"]::drop-down {\n"
-"    subcontrol-origin: padding; subcontrol-"
-                        "position: center right;\n"
+"    subcontrol-origin: padding; subcontrol-position: center right;\n"
 "    width: 26px; border: 0; background: transparent;\n"
 "}\n"
 "QComboBox[variant=\"filter\"]::down-arrow {\n"
@@ -97,15 +105,15 @@ class Ui_MainWindow(object):
 "}\n"
 "QSpinBox[variant=\"filter\"] {\n"
 "    background: #ffffff; color: #20232a; border: 1px solid #d9dce4;\n"
-"    border-radius: 5px; min-height: 36px; padding: 0 10px; font-size: 11px;\n"
+"    border-radius: 5px; min-height: 36px; padding: 0 10px; font-size: "
+                        "11px;\n"
 "    selection-background-color: #d9d3f2; selection-color: #20232a;\n"
 "}\n"
 "QSpinBox[variant=\"filter\"]:hover { border-color: #b9b3dc; }\n"
 "QSpinBox[variant=\"filter\"]:focus { border: 1px solid #6252b5; }\n"
 "QSpinBox[variant=\"filter\"]::up-button, QSpinBox[variant=\"filter\"]::down-button {\n"
 "    subcontrol-origin: border; width: 24px; border: 0; background: transparent;\n"
-""
-                        "}\n"
+"}\n"
 "QSpinBox[variant=\"filter\"]::up-button { subcontrol-position: top right; }\n"
 "QSpinBox[variant=\"filter\"]::down-button { subcontrol-position: bottom right; }\n"
 "QSpinBox[variant=\"filter\"]::up-arrow { image: url(SORT_UP); width: 9px; height: 6px; }\n"
@@ -117,7 +125,8 @@ class Ui_MainWindow(object):
 "}\n"
 "QComboBox#contextCombo:disabled { color: #ffffff; }\n"
 "QComboBox#contextCombo { padding-right: 28px; }\n"
-"QComboBox#contextCombo::drop-down {\n"
+"QComboBox#contextCombo::drop-"
+                        "down {\n"
 "    subcontrol-origin: padding; subcontrol-position: center right;\n"
 "    width: 26px; border: 0; background: transparent;\n"
 "}\n"
@@ -126,8 +135,7 @@ class Ui_MainWindow(object):
 "}\n"
 "QComboBox#contextCombo QAbstractItemView {\n"
 "    background: #0d315d; color: #ffffff; border: 1px solid #2d5077;\n"
-"    s"
-                        "election-background-color: #1f4f87; selection-color: #ffffff;\n"
+"    selection-background-color: #1f4f87; selection-color: #ffffff;\n"
 "    outline: 0; padding: 2px;\n"
 "}\n"
 "QPushButton[variant=\"primary\"] {\n"
@@ -140,14 +148,14 @@ class Ui_MainWindow(object):
 "  border: none; background: transparent; padding: 2px 0; text-align: left;\n"
 "  color: #3220a0; font-weight: 600; text-decoration: underline;\n"
 "}\n"
-"QPushButton[variant=\"link\"]:hover { color: #4030b8; }\n"
+"QPushButton[variant=\"link\"]:hover"
+                        " { color: #4030b8; }\n"
 "QPushButton[variant=\"link\"]:disabled { color: #4f5966; text-decoration: none; }\n"
 "QScrollArea { background: transparent; border: 0; }\n"
 "QWidget#settingsContent, QWidget#overviewContent { background: transparent; }\n"
 "QPushButton[variant=\"secondary\"] {\n"
 "    background: #ffffff; color: #3220a0; border: 1px solid #d9dce4;\n"
-"    border-radius: 5px; min-height"
-                        ": 32px; padding: 0 10px;\n"
+"    border-radius: 5px; min-height: 32px; padding: 0 10px;\n"
 "    font-size: 11px; font-weight: 600;\n"
 "}\n"
 "QPushButton[variant=\"secondary\"]:hover:enabled {\n"
@@ -161,7 +169,8 @@ class Ui_MainWindow(object):
 "QTableWidget[variant=\"data\"] {\n"
 "    background: #ffffff; color: #242a33;\n"
 "    border: 1px solid #dfe2e9; border-radius: 5px;\n"
-"    gridline-color: #e8e9ee; selection-background-color: #f0edfa;\n"
+"    gridline-color: #e8e9ee; selection-background-color: "
+                        "#f0edfa;\n"
 "    selection-color: #28213f;\n"
 "}\n"
 "QHeaderView { background: #fbfbfc; }\n"
@@ -170,8 +179,7 @@ class Ui_MainWindow(object):
 "QHeaderView::section {\n"
 "    background: #fbfbfc; color: #3c4149; border: 0;\n"
 "    border-bottom: 1px solid #dfe2e9; padding: 10px 11px;\n"
-" "
-                        "   font-size: 9px; font-weight: 700;\n"
+"    font-size: 9px; font-weight: 700;\n"
 "}\n"
 "QTableWidget[variant=\"data\"]::item {\n"
 "    padding: 6px 8px; border-bottom: 1px solid #e8e9ee;\n"
@@ -186,14 +194,14 @@ class Ui_MainWindow(object):
 "    color: #3220a0; background: #f3f1f9; border-right: 3px solid #3220a0;\n"
 "    font-weight: 700;\n"
 "}\n"
-"QFrame[card=\"true\"] {\n"
+"QFrame[card=\"true\"] {"
+                        "\n"
 "    background: #ffffff; border: 1px solid #dfe2e9; border-radius: 8px;\n"
 "}\n"
 "QFrame[card=\"true\"] QLabel { background: transparent; border: 0; }\n"
 "QLabel[variant=\"cardTitle\"] { color: #535d69; font-size: 9px; font-weight: 700; }\n"
 "QLabel[variant=\"cardValue\"] { color: #17191e; font-size: 20px; font-weight: 700; }\n"
-"QLabel[variant=\"cardCaption\"] { color: #4f5966; font-size"
-                        ": 10px; }\n"
+"QLabel[variant=\"cardCaption\"] { color: #4f5966; font-size: 10px; }\n"
 "QProgressBar {\n"
 "    background: #eceef3; border: 0; border-radius: 3px;\n"
 "    min-height: 6px; max-height: 6px;\n"
@@ -206,7 +214,8 @@ class Ui_MainWindow(object):
 "QTabBar { qproperty-drawBase: 0; }\n"
 "QTabWidget::pane { border: 0; border-top: 1px solid #dfe2e9; top: -1px; }\n"
 "QTabBar::tab {\n"
-"    background: transparent; color: #4f5966; padding: 9px 14px;\n"
+"    background: transparent; color: #4f5966; padding: 9px"
+                        " 14px;\n"
 "    border: 0; border-bottom: 2px solid transparent; font-size: 11px;\n"
 "    font-weight: 600; max-width: 260px;\n"
 "}\n"
@@ -214,8 +223,7 @@ class Ui_MainWindow(object):
 "QTabBar::tab:selected { color: #3220a0; border-bottom: 2px solid #3220a0; }\n"
 "QTabBar::close-button {\n"
 "    image: url(CLOSE_ICON); subcontrol-position: right; margin-left: 6px;\n"
-"    width: 10px; height: 10px; p"
-                        "adding: 3px; border-radius: 4px;\n"
+"    width: 10px; height: 10px; padding: 3px; border-radius: 4px;\n"
 "}\n"
 "QTabBar::close-button:hover { image: url(CLOSE_ICON_HOVER); background: #eee9f7; }\n"
 "QPlainTextEdit {\n"
@@ -226,12 +234,12 @@ class Ui_MainWindow(object):
 "QFrame#noContextsBanner { background: #fff2de; border-bottom: 1px solid #985415; }\n"
 "QFrame#noContextsBanner QLabel { color: #985415; font-size: 11px; background: transparent; }\n"
 "QFrame#permissionBanner { background: #fce9ea; border-bottom: 1px solid #a33d45; }\n"
-"QFrame#permissionBanner QLabel { color: #a33d45; font-size: 11px; background: transparent; }\n"
+"QFrame#permissio"
+                        "nBanner QLabel { color: #a33d45; font-size: 11px; background: transparent; }\n"
 "QFrame#permissionBanner QPushButton { color: #a33d45; font-size: 11px; padding: 0 0 0 12px; }\n"
 "QFrame#appFooter { background: #ffffff; border-top: 1px solid #e4e5eb; }\n"
 "QLabel#footerLicense, QLabel#footerDot, QLabel#updateNotice { color: #6b7380; font-size: 10px; }\n"
-"QFrame#appFooter QPushButton[variant=\""
-                        "link\"] { font-size: 10px; padding: 0 0 0 6px; }\n"
+"QFrame#appFooter QPushButton[variant=\"link\"] { font-size: 10px; padding: 0 0 0 6px; }\n"
 "QPushButton#companyLink, QPushButton#licenseLink { padding: 0; }\n"
 "QPushButton#updateButton { border: none; background: transparent; padding: 0; border-radius: 4px; }\n"
 "QPushButton#updateButton:hover { background: #f6f6fa; }\n"
@@ -320,6 +328,43 @@ class Ui_MainWindow(object):
         self.settingsButton.setFlat(True)
 
         self.topLayout.addWidget(self.settingsButton)
+
+        self.windowControls = QWidget(self.topBar)
+        self.windowControls.setObjectName(u"windowControls")
+        self.windowControls.setVisible(False)
+        self.windowControlsLayout = QHBoxLayout(self.windowControls)
+        self.windowControlsLayout.setSpacing(0)
+        self.windowControlsLayout.setObjectName(u"windowControlsLayout")
+        self.windowControlsLayout.setContentsMargins(0, 0, 0, 0)
+        self.minimizeButton = QPushButton(self.windowControls)
+        self.minimizeButton.setObjectName(u"minimizeButton")
+        self.minimizeButton.setMinimumSize(QSize(38, 32))
+        self.minimizeButton.setMaximumSize(QSize(38, 32))
+        self.minimizeButton.setFlat(True)
+        self.minimizeButton.setProperty(u"windowControl", u"true")
+
+        self.windowControlsLayout.addWidget(self.minimizeButton)
+
+        self.maximizeButton = QPushButton(self.windowControls)
+        self.maximizeButton.setObjectName(u"maximizeButton")
+        self.maximizeButton.setMinimumSize(QSize(38, 32))
+        self.maximizeButton.setMaximumSize(QSize(38, 32))
+        self.maximizeButton.setFlat(True)
+        self.maximizeButton.setProperty(u"windowControl", u"true")
+
+        self.windowControlsLayout.addWidget(self.maximizeButton)
+
+        self.windowCloseButton = QPushButton(self.windowControls)
+        self.windowCloseButton.setObjectName(u"windowCloseButton")
+        self.windowCloseButton.setMinimumSize(QSize(38, 32))
+        self.windowCloseButton.setMaximumSize(QSize(38, 32))
+        self.windowCloseButton.setFlat(True)
+        self.windowCloseButton.setProperty(u"windowControl", u"close")
+
+        self.windowControlsLayout.addWidget(self.windowCloseButton)
+
+
+        self.topLayout.addWidget(self.windowControls)
 
 
         self.rootLayout.addWidget(self.topBar)

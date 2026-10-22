@@ -237,6 +237,7 @@
             "KubeScope reads the files in the KUBECONFIG variable, or ~/.kube/config. Add files here to read those instead. Press Save to apply.": "KubeScope อ่านไฟล์ในตัวแปร KUBECONFIG หรือ ~/.kube/config เพิ่มไฟล์ที่นี่เพื่ออ่านไฟล์เหล่านั้นแทน กดบันทึกเพื่อใช้งาน",
             "Language": "ภาษา",
             "New theme...": "ธีมใหม่...",
+            "Off by default: the window draws its own title bar in the top bar, which saves a row of space. Turn it on if moving or resizing the window misbehaves on your desktop.": "ปิดไว้เป็นค่าเริ่มต้น: หน้าต่างจะวาดแถบชื่อเรื่องของตัวเองในแถบด้านบน ซึ่งช่วยประหยัดพื้นที่หนึ่งแถว เปิดใช้หากการย้ายหรือปรับขนาดหน้าต่างทำงานผิดปกติบนเดสก์ท็อปของคุณ",
             "Open the log folder": "เปิดโฟลเดอร์บันทึก",
             "Open the themes folder": "เปิดโฟลเดอร์ธีม",
             "PROGRAM": "โปรแกรม",
@@ -248,6 +249,7 @@
             "Shows, in the right-click menu, the actions that change a cluster: delete or evict a Pod, scale or restart a Deployment. Each one asks for confirmation. It also shows the kubectl command to open a shell in a Pod. Off keeps the app read-only.": "แสดงในเมนูคลิกขวาถึงการกระทำที่เปลี่ยนแปลงคลัสเตอร์: ลบหรือขับออก (evict) Pod, ปรับขนาดหรือรีสตาร์ท Deployment ทุกการกระทำจะขอการยืนยัน และยังแสดงคำสั่ง kubectl สำหรับเปิดเชลล์ใน Pod เมื่อปิด แอปจะเป็นแบบอ่านอย่างเดียว",
             "The namespace each context opens on. Leave empty to show all of them.": "เนมสเปซที่แต่ละคอนเท็กซ์เปิดขึ้นมา เว้นว่างไว้เพื่อแสดงทั้งหมด",
             "Theme": "ธีม",
+            "Use the title bar of the system": "ใช้แถบชื่อเรื่องของระบบ",
             "Write mode: allow actions that change the cluster": "โหมดเขียน: อนุญาตการกระทำที่เปลี่ยนแปลงคลัสเตอร์"
         },
         "ThemeEditor": {

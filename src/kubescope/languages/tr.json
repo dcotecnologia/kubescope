@@ -237,6 +237,7 @@
             "KubeScope reads the files in the KUBECONFIG variable, or ~/.kube/config. Add files here to read those instead. Press Save to apply.": "KubeScope, KUBECONFIG değişkenindeki dosyaları veya ~/.kube/config dosyasını okur. Bunların yerine okunacak dosyaları buraya ekleyin. Uygulamak için Kaydet'e basın.",
             "Language": "Dil",
             "New theme...": "Yeni tema...",
+            "Off by default: the window draws its own title bar in the top bar, which saves a row of space. Turn it on if moving or resizing the window misbehaves on your desktop.": "Varsayılan olarak kapalı: pencere kendi başlık çubuğunu üst çubukta çizer ve bir satırlık yer kazandırır. Masaüstünüzde pencereyi taşımak veya yeniden boyutlandırmak düzgün çalışmıyorsa açın.",
             "Open the log folder": "Günlük klasörünü aç",
             "Open the themes folder": "Tema klasörünü aç",
             "PROGRAM": "PROGRAM",
@@ -248,6 +249,7 @@
             "Shows, in the right-click menu, the actions that change a cluster: delete or evict a Pod, scale or restart a Deployment. Each one asks for confirmation. It also shows the kubectl command to open a shell in a Pod. Off keeps the app read-only.": "Sağ tık menüsünde kümeyi değiştiren eylemleri gösterir: bir Pod'u silmek veya tahliye etmek (evict), bir Deployment'ı ölçeklemek veya yeniden başlatmak. Her biri onay ister. Ayrıca bir Pod'da kabuk açmak için kubectl komutunu gösterir. Kapalıyken uygulama salt okunurdur.",
             "The namespace each context opens on. Leave empty to show all of them.": "Her bağlamın açıldığı ad alanı. Tümünü göstermek için boş bırakın.",
             "Theme": "Tema",
+            "Use the title bar of the system": "Sistemin başlık çubuğunu kullan",
             "Write mode: allow actions that change the cluster": "Yazma modu: kümeyi değiştiren eylemlere izin ver"
         },
         "ThemeEditor": {

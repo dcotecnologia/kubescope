@@ -124,6 +124,11 @@ class Ui_SettingsPage(object):
 
         self.generalForm.setWidget(4, QFormLayout.ItemRole.SpanningRole, self.backgroundCheck)
 
+        self.titleBarCheck = QCheckBox(self.generalCard)
+        self.titleBarCheck.setObjectName(u"titleBarCheck")
+
+        self.generalForm.setWidget(5, QFormLayout.ItemRole.SpanningRole, self.titleBarCheck)
+
 
         self.generalCardLayout.addLayout(self.generalForm)
 
@@ -471,6 +476,10 @@ class Ui_SettingsPage(object):
         self.backgroundCheck.setText(QCoreApplication.translate("SettingsPage", u"Keep running in the background, with an icon in the system tray", None))
 #if QT_CONFIG(tooltip)
         self.backgroundCheck.setToolTip(QCoreApplication.translate("SettingsPage", u"Closing the window hides it instead of quitting; click the tray icon to bring it back, or choose Quit in its menu. It has no effect where the desktop shows no system tray.", None))
+#endif // QT_CONFIG(tooltip)
+        self.titleBarCheck.setText(QCoreApplication.translate("SettingsPage", u"Use the title bar of the system", None))
+#if QT_CONFIG(tooltip)
+        self.titleBarCheck.setToolTip(QCoreApplication.translate("SettingsPage", u"Off by default: the window draws its own title bar in the top bar, which saves a row of space. Turn it on if moving or resizing the window misbehaves on your desktop.", None))
 #endif // QT_CONFIG(tooltip)
         self.appearanceHeading.setText(QCoreApplication.translate("SettingsPage", u"APPEARANCE", None))
         self.themeLabel.setText(QCoreApplication.translate("SettingsPage", u"Theme", None))

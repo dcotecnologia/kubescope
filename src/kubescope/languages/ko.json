@@ -237,6 +237,7 @@
             "KubeScope reads the files in the KUBECONFIG variable, or ~/.kube/config. Add files here to read those instead. Press Save to apply.": "KubeScope는 KUBECONFIG 변수의 파일 또는 ~/.kube/config를 읽습니다. 대신 읽을 파일을 여기에 추가하세요. 적용하려면 저장을 누르세요.",
             "Language": "언어",
             "New theme...": "새 테마...",
+            "Off by default: the window draws its own title bar in the top bar, which saves a row of space. Turn it on if moving or resizing the window misbehaves on your desktop.": "기본값은 꺼짐입니다. 창이 상단 바에 자체 제목 표시줄을 그려 한 줄의 공간을 절약합니다. 데스크톱에서 창 이동이나 크기 조절이 제대로 되지 않으면 켜세요.",
             "Open the log folder": "로그 폴더 열기",
             "Open the themes folder": "테마 폴더 열기",
             "PROGRAM": "프로그램",
@@ -248,6 +249,7 @@
             "Shows, in the right-click menu, the actions that change a cluster: delete or evict a Pod, scale or restart a Deployment. Each one asks for confirmation. It also shows the kubectl command to open a shell in a Pod. Off keeps the app read-only.": "오른쪽 클릭 메뉴에 클러스터를 변경하는 작업을 표시합니다: Pod 삭제 또는 퇴출(evict), Deployment 스케일 또는 재시작. 각 작업은 확인을 요청합니다. Pod에서 셸을 여는 kubectl 명령도 보여 줍니다. 끄면 앱은 읽기 전용입니다.",
             "The namespace each context opens on. Leave empty to show all of them.": "각 컨텍스트가 처음 열리는 네임스페이스입니다. 비워 두면 모두 표시합니다.",
             "Theme": "테마",
+            "Use the title bar of the system": "시스템 제목 표시줄 사용",
             "Write mode: allow actions that change the cluster": "쓰기 모드: 클러스터를 변경하는 작업 허용"
         },
         "ThemeEditor": {

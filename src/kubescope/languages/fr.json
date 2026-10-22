@@ -237,6 +237,7 @@
             "KubeScope reads the files in the KUBECONFIG variable, or ~/.kube/config. Add files here to read those instead. Press Save to apply.": "KubeScope lit les fichiers de la variable KUBECONFIG, ou ~/.kube/config. Ajoutez ici des fichiers pour lire ceux-là à la place. Cliquez sur Enregistrer pour appliquer.",
             "Language": "Langue",
             "New theme...": "Nouveau thème...",
+            "Off by default: the window draws its own title bar in the top bar, which saves a row of space. Turn it on if moving or resizing the window misbehaves on your desktop.": "Désactivé par défaut : la fenêtre dessine sa propre barre de titre dans la barre du haut, ce qui économise une ligne d'espace. Activez-le si le déplacement ou le redimensionnement de la fenêtre pose problème sur votre bureau.",
             "Open the log folder": "Ouvrir le dossier des journaux",
             "Open the themes folder": "Ouvrir le dossier des thèmes",
             "PROGRAM": "PROGRAMME",
@@ -248,6 +249,7 @@
             "Shows, in the right-click menu, the actions that change a cluster: delete or evict a Pod, scale or restart a Deployment. Each one asks for confirmation. It also shows the kubectl command to open a shell in a Pod. Off keeps the app read-only.": "Affiche, dans le menu contextuel, les actions qui modifient un cluster : supprimer ou évincer (evict) un Pod, mettre à l'échelle ou redémarrer un Deployment. Chacune demande confirmation. Affiche aussi la commande kubectl pour ouvrir un shell dans un Pod. Désactivé, l'application reste en lecture seule.",
             "The namespace each context opens on. Leave empty to show all of them.": "Le namespace sur lequel s'ouvre chaque contexte. Laissez vide pour tous les afficher.",
             "Theme": "Thème",
+            "Use the title bar of the system": "Utiliser la barre de titre du système",
             "Write mode: allow actions that change the cluster": "Mode écriture : autoriser les actions qui modifient le cluster"
         },
         "ThemeEditor": {
