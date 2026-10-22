@@ -28,7 +28,7 @@ Packages
   pyside6 6.12.0 - LGPL-3.0-only (Qt for Python and Qt)
   pyside6-addons 6.12.0 - LGPL-3.0-only (Qt for Python and Qt)
   pyside6-essentials 6.12.0 - LGPL-3.0-only (Qt for Python and Qt)
-  python-dateutil 2.9.0.post0 - BSD License / Apache Software License
+  python-dateutil 3.0.0 - BSD License / Apache Software License
   pyyaml 6.0.3 - MIT License
   requests 2.34.2 - Apache Software License
   requests-oauthlib 2.0.0 - BSD License
@@ -36,6 +36,7 @@ Packages
   six 1.17.0 - MIT License
   typing-extensions 4.16.0 - PSF-2.0
   typing-inspection 0.4.4 - MIT
+  tzdata 2026.5 - Apache-2.0
   urllib3 2.8.0 - MIT
   websocket-client 1.9.2 - Apache-2.0
   yarl 1.25.1 - Apache-2.0
@@ -2788,7 +2789,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 ==============================================================================
-python-dateutil 2.9.0.post0
+python-dateutil 3.0.0
 ==============================================================================
 
 LICENSE:
@@ -3141,6 +3142,31 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+==============================================================================
+tzdata 2026.5
+==============================================================================
+
+LICENSE:
+
+Apache Software License 2.0
+
+Copyright (c) 2020, Paul Ganssle (Google)
+Copyright (c) 2026, Stan Ulbrych
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+LICENSE_APACHE: the same text as propcache 0.5.4 above.
 
 ==============================================================================
 urllib3 2.8.0

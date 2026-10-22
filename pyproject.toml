@@ -1,6 +1,6 @@
 [project]
 name = "kubescope"
-version = "0.12.1"
+version = "0.13.0"
 description = "Desktop viewer for Kubernetes and Amazon EKS workloads"
 readme = "README.md"
 license = "MIT"
@@ -21,7 +21,7 @@ dev = [
     "pytest>=9.1.1",
     "pyright>=1.1.414",
     "pytest-cov>=7.1.0",
-    "ruff>=0.17.1",
+    "ruff>=0.17.2",
 ]
 build = [
     "pyinstaller>=6.22.3",
