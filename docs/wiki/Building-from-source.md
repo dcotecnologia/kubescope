@@ -8,8 +8,7 @@ The short version:
 ```bash
 git clone https://github.com/dcotecnologia/kubescope.git
 cd kubescope
-make setup                       # install dependencies with uv
-uv run pre-commit install        # run the checks on every commit
+make setup                       # install dependencies with uv and the pre-commit hook
 make run                         # start the app
 make preview                     # start it with fake data, no cluster needed
 ```
@@ -57,9 +56,8 @@ data.
 ## Checks
 
 ```bash
-make lint
+make lint     # every pre-commit hook on all files
 make test
-uv run pre-commit run --all-files
 ```
 
 ## Packages

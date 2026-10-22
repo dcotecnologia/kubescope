@@ -7,8 +7,9 @@ UV ?= uv
 help: ## List the available commands
 	@awk 'BEGIN { FS = ":.*##" } /^[a-zA-Z_-]+:.*##/ { printf "  %-12s %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
 
-setup: ## Sync the project dependencies
+setup: ## Sync the project dependencies and install the pre-commit hook
 	$(UV) sync --extra dev --extra build
+	$(UV) run --extra dev pre-commit install
 
 ifeq ($(shell uname -s),Linux)
 QT_XCB_LIB_DIR := $(CURDIR)/vendor/linux/$(shell uname -m)
@@ -86,10 +87,8 @@ notices: ## Rewrite the third-party license notices from uv.lock (after changing
 changelog: ## Copy CHANGELOG.md into the package, where the app shows it (after editing it)
 	$(UV) run python tools/sync_changelog.py
 
-lint: ## Check the code with ruff (lint and formatting) and pyright (types)
-	$(UV) run --extra dev ruff check .
-	$(UV) run --extra dev ruff format --check .
-	$(UV) run --extra dev pyright
+lint: ## Run every pre-commit hook on all files (ruff, pyright and the rest), as CI does
+	$(UV) run --extra dev pre-commit run --all-files --show-diff-on-failure
 
 format: ## Fix lint issues and format the code with ruff
 	$(UV) run --extra dev ruff check --fix .

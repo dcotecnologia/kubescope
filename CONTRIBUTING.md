@@ -13,8 +13,7 @@ the details live in two other files:
 ```bash
 git clone https://github.com/dcotecnologia/kubescope.git
 cd kubescope
-make setup          # uv sync with the dev and build extras
-uv run pre-commit install
+make setup          # uv sync with the dev and build extras, and the pre-commit hook
 ```
 
 Run the app against a cluster with `make run`, or without any cluster using fake
@@ -32,9 +31,8 @@ save a source, `.ui` or language file.
 ## Checks
 
 ```bash
-make lint     # ruff
+make lint     # every pre-commit hook on all files, as CI runs them
 make test     # pytest, must stay at 100% coverage (headless: QT_QPA_PLATFORM=offscreen)
-uv run pre-commit run --all-files
 make ui       # leaves no diff in src/kubescope/ui
 make i18n     # leaves no untranslated texts in src/kubescope/languages
 ```

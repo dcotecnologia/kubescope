@@ -173,7 +173,7 @@ freeze a developer's computer. Agents follow these rules while they work:
 
 Run locally and make all of it pass (once, at the end, following the rules above):
 
-- `make lint` (`ruff check` and `ruff format --check`)
+- `make lint` (every pre-commit hook on all files: `ruff`, `pyright` and the rest, as CI runs them)
 - `make test` (pytest, `QT_QPA_PLATFORM=offscreen` on a headless machine)
 - `make ui` leaves no diff in `src/kubescope/ui/`
 - `make i18n` leaves no empty (untranslated) text in the language files
