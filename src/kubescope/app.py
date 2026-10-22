@@ -24,6 +24,7 @@ from kubescope.utils.diagnostics import (
     trace_input,
 )
 from kubescope.utils.fonts import apply_fonts
+from kubescope.utils.single_instance import SingleInstance
 from kubescope.utils.wheel_guard import install_wheel_guard
 from kubescope.window import WorkloadWindow
 
@@ -83,6 +84,11 @@ def main() -> int:
     crashreport.install()
     logger.info("Starting KubeScope")
     application = QApplication(sys.argv)
+    instance = SingleInstance()
+    if instance.notify_running():
+        logger.info("KubeScope is already running; it was asked to come forward")
+        return 0
+    instance.listen()
     install_wheel_guard(application)  # a select changes on click, not on hover
     application.setApplicationName("KubeScope")
     if debugging:
@@ -94,6 +100,7 @@ def main() -> int:
     apply_theme(application, settings.theme)
     apply_language(settings.language)
     window = WorkloadWindow(settings)
+    instance.activated.connect(window.bring_to_front)
     window.show()
     window.start_update_check()
     show_pending_crash_report(window)

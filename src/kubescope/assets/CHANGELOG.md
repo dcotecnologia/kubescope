@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+### Fixed
+
+- Starting KubeScope again brings the running one forward instead of opening a second window, also when it is in the system tray by @danilogco
+- The list on screen follows the cluster: it is read again every ten seconds, quietly, so Pods that come and go show up without a manual refresh, and the selected row stays on the same item by @danilogco
+
 ## [0.12.0] - 2026-10-21
 
 ### Added

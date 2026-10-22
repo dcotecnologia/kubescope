@@ -32,6 +32,21 @@ def test_debug_follows_the_setting_and_the_environment(monkeypatch, tmp_path) ->
     assert calls[-1] == {"to_file": False, "to_console": True}
 
 
+class FakeInstance:
+    running = False
+
+    class activated:
+        @staticmethod
+        def connect(_slot) -> None:
+            pass
+
+    def notify_running(self) -> bool:
+        return self.running
+
+    def listen(self) -> bool:
+        return True
+
+
 def test_main_builds_the_window_and_runs_the_event_loop(monkeypatch) -> None:
     events = []
 
@@ -53,6 +68,9 @@ def test_main_builds_the_window_and_runs_the_event_loop(monkeypatch) -> None:
         def __init__(self, settings) -> None:
             events.append(("window", settings))
 
+        def bring_to_front(self) -> None:
+            pass
+
         def show(self) -> None:
             events.append("show")
 
@@ -66,6 +84,7 @@ def test_main_builds_the_window_and_runs_the_event_loop(monkeypatch) -> None:
     _capture_logging(monkeypatch)
     monkeypatch.setattr(app, "QApplication", FakeApplication)
     monkeypatch.setattr(app, "install_wheel_guard", lambda _app: None)
+    monkeypatch.setattr(app, "SingleInstance", FakeInstance)
     monkeypatch.setattr(app, "load_app_icon", lambda: "icon")
     monkeypatch.setattr(app, "apply_fonts", lambda _app: events.append("fonts"))
     monkeypatch.setattr(
@@ -124,6 +143,9 @@ def test_main_records_the_runtime_and_the_input_when_debugging(monkeypatch) -> N
         def __init__(self, _settings) -> None:
             pass
 
+        def bring_to_front(self) -> None:
+            pass
+
         def show(self) -> None:
             pass
 
@@ -137,6 +159,7 @@ def test_main_records_the_runtime_and_the_input_when_debugging(monkeypatch) -> N
     _capture_logging(monkeypatch)
     monkeypatch.setattr(app, "QApplication", FakeApplication)
     monkeypatch.setattr(app, "install_wheel_guard", lambda _app: None)
+    monkeypatch.setattr(app, "SingleInstance", FakeInstance)
     monkeypatch.setattr(app, "load_app_icon", lambda: "icon")
     monkeypatch.setattr(app, "apply_fonts", lambda _app: None)
     monkeypatch.setattr(app, "apply_theme", lambda _app, _name: None)
@@ -173,6 +196,9 @@ def test_main_installs_the_crash_hooks_and_offers_the_pending_report(
         def __init__(self, _settings) -> None:
             pass
 
+        def bring_to_front(self) -> None:
+            pass
+
         def show(self) -> None:
             pass
 
@@ -187,6 +213,7 @@ def test_main_installs_the_crash_hooks_and_offers_the_pending_report(
     monkeypatch.setattr(app.crashreport, "install", lambda: events.append("hooks"))
     monkeypatch.setattr(app, "QApplication", FakeApplication)
     monkeypatch.setattr(app, "install_wheel_guard", lambda _app: None)
+    monkeypatch.setattr(app, "SingleInstance", FakeInstance)
     monkeypatch.setattr(app, "load_app_icon", lambda: "icon")
     monkeypatch.setattr(app, "apply_fonts", lambda _app: None)
     monkeypatch.setattr(app, "apply_theme", lambda _app, _name: None)
@@ -200,3 +227,21 @@ def test_main_installs_the_crash_hooks_and_offers_the_pending_report(
     app.main()
 
     assert events == ["hooks", "report", "welcome"]
+
+
+def test_a_second_start_asks_the_first_to_come_forward_and_quits(monkeypatch) -> None:
+    class Second(FakeInstance):
+        running = True
+
+    class FakeApplication:
+        def __init__(self, _arguments) -> None:
+            pass
+
+    started = []
+    monkeypatch.setattr(app, "QApplication", FakeApplication)
+    monkeypatch.setattr(app, "SingleInstance", Second)
+    monkeypatch.setattr(app, "WorkloadWindow", lambda *_a: started.append("window"))
+    _capture_logging(monkeypatch)
+
+    assert app.main() == 0
+    assert started == []

@@ -3595,3 +3595,75 @@ def test_the_events_link_to_the_resource_they_are_about(monkeypatch) -> None:
     assert table.item(1, 3).data(LINK_ROLE) == ("Deployment", "ns", "web")
     assert table.item(0, 4).data(LINK_ROLE) is None
     window.close()
+
+
+def test_the_list_on_screen_is_read_again_quietly_while_it_is_looked_at(
+    monkeypatch,
+) -> None:
+    window = _ready_window(monkeypatch)
+    window.show()
+    window._open_list_view("pods")
+    calls = []
+    monkeypatch.setattr(window, "refresh", lambda *a, **k: calls.append(k))
+
+    window._refresh_live()
+    assert calls == [{"quiet": True}]
+
+    window._show_page(2)  # Settings: nothing to keep fresh
+    window._open_list_view("nodegroups")  # not a list of the namespaces
+    window._show_page(1)
+    window._refresh_live()
+    window._open_list_view("pods")
+    window.showMinimized()
+    window._refresh_live()
+    assert len(calls) == 1
+    window.close()
+
+
+def test_a_quiet_read_leaves_the_status_and_the_spinner_alone(monkeypatch) -> None:
+    window = _ready_window(monkeypatch)
+    window._open_list_view("pods")
+    window._set_status(lambda: "kept")
+    FakeRefreshWorker.outcome = ("ok", ([], []))
+
+    window.refresh(quiet=True)
+
+    assert window.status_label.text() != "Loading resources..."
+    window.close()
+
+
+def test_the_selected_row_stays_selected_when_the_rows_change(monkeypatch) -> None:
+    window = _ready_window(monkeypatch)
+    window.show()
+    window._open_list_view("pods")
+
+    def pod(name: str) -> PodInfo:
+        return PodInfo("ns", name, "Running", 1, 1, "1d", ("c",))
+
+    window._show_pods(["ns"], [pod("a"), pod("b"), pod("c")])
+    window.table.selectRow(2)
+    assert window._selected_pod().name == "c"
+
+    window._show_answer("pods", ["ns"], [pod("new"), pod("a"), pod("c")])
+    assert window._selected_pod().name == "c"  # it moved to row 2, still the one
+
+    window._show_answer("pods", ["ns"], [pod("a"), pod("new")])  # it is gone
+    assert window._selected_pod() is None
+
+    window._open_list_view("deployments")
+    deployments = [
+        Workload("ns", "Deployment", "api", 1, 1, "1d"),
+        Workload("ns", "StatefulSet", "api", 1, 1, "1d"),
+    ]
+    window._show_answer("deployments", ["ns"], deployments)
+    window.table.selectRow(1)
+    window._show_answer("deployments", ["ns"], deployments[::-1])
+    assert window._selected_workload().kind == "StatefulSet"  # kind tells them apart
+
+    window._open_list_view("services")
+    row = ClusterResource("ns", "Service", "x", ("a", "b", "c", "d"), "1d")
+    window._show_answer("services", [], [row])
+    window.table.selectRow(0)
+    window._show_answer("services", [], [row])
+    assert window._selected_resource() == row
+    window.close()

@@ -187,6 +187,7 @@ logger = logging.getLogger(__name__)
 PIN_MIME = "application/x-kubescope-pin"  # what a dragged pinned tab carries
 VIEWER_MIME = "application/x-kubescope-viewer"  # the same, for a Details/Logs tab
 LIST_DEBOUNCE_MS = 150
+LIST_REFRESH_MS = 10_000  # the list on screen is read again this often
 UPDATE_RECHECK_MS = 60 * 60 * 1000  # look for a new version again every hour
 UPDATE_SEARCH_MS = 5000  # an update check shows as searching for at least this long
 UPDATE_NOTICE_MS = 4000  # how long "Up to date" stays next to the icon
@@ -617,6 +618,11 @@ class WorkloadWindow(QMainWindow):
         self._list_timer.setSingleShot(True)
         self._list_timer.setInterval(LIST_DEBOUNCE_MS)
         self._list_timer.timeout.connect(self.refresh)
+        # the list on screen follows the cluster: Pods come and go on their own
+        self._live_timer = QTimer(self)
+        self._live_timer.setInterval(LIST_REFRESH_MS)
+        self._live_timer.timeout.connect(self._refresh_live)
+        self._live_timer.start()
         self._action_workers: list[ActionWorker] = []
         self._close_when_worker_stops = False
         self._workloads: list[Workload] = []
@@ -2688,7 +2694,19 @@ class WorkloadWindow(QMainWindow):
             self._loading(view) for view in self._workers
         )
 
-    def refresh(self, *_args: object) -> None:
+    def _refresh_live(self) -> None:
+        """Read the list on screen again, quietly, while the person is looking
+        at it."""
+        if (
+            self.pages.currentIndex() == 1
+            and self.isVisible()
+            and not self.isMinimized()
+            and not self._loading(self._view)
+            and self._view not in EKS_VIEWS
+        ):
+            self.refresh(quiet=True)
+
+    def refresh(self, *_args: object, quiet: bool = False) -> None:
         context = self._context()
         if not context:
             return
@@ -2727,9 +2745,11 @@ class WorkloadWindow(QMainWindow):
             )
         )
         worker.finished.connect(lambda: self._refresh_finished(worker))
-        self._set_status(lambda: self.tr("Loading resources..."))
+        if not quiet:  # a background read leaves the status and the spinner be
+            self._set_status(lambda: self.tr("Loading resources..."))
         worker.start()
-        self._sync_loading()
+        if not quiet:
+            self._sync_loading()
 
     def _list_namespace(self, view: str) -> str | None:
         """The namespace a list is asked for.
@@ -2782,12 +2802,37 @@ class WorkloadWindow(QMainWindow):
             self._show_answer(view, namespaces, items)
 
     def _show_answer(self, view: str, namespaces: list, items: list) -> None:
+        selected = self._selected_identity()
         if view == "pods":
             self._show_pods(namespaces, items)
         elif view in RESOURCE_VIEWS:
             self._show_resources(namespaces, items)
         else:
             self._show_workloads(namespaces, items)
+        self._reselect(selected)
+
+    def _selected_identity(self) -> tuple[str, str, str] | None:
+        """What the selected row is, to find it again when the rows change."""
+        row = self._selected_row()
+        if row is None:
+            return None
+        return (row.namespace, getattr(row, "kind", ""), row.name)
+
+    def _reselect(self, identity: tuple[str, str, str] | None) -> None:
+        """Select the row that was selected, wherever it is now; a Pod that is
+        gone leaves nothing selected rather than its neighbour."""
+        if identity is None:
+            return
+        rows = {"pods": self._pods}.get(
+            self._view,
+            self._resources if self._view in RESOURCE_VIEWS else self._workloads,
+        )
+        for index, row in enumerate(rows):
+            if (row.namespace, getattr(row, "kind", ""), row.name) == identity:
+                self.table.selectRow(index)
+                return
+        self.table.clearSelection()
+        self.table.setCurrentCell(-1, -1)
 
     def _show_resources(self, namespaces: list, resources: list) -> None:
         logger.info(
@@ -4589,7 +4634,7 @@ class WorkloadWindow(QMainWindow):
             tray = QSystemTrayIcon(self.windowIcon(), self)
             tray.setToolTip("KubeScope")
             menu = QMenu(self)
-            menu.addAction(self.tr("Show KubeScope"), self._show_from_tray)
+            menu.addAction(self.tr("Show KubeScope"), self.bring_to_front)
             menu.addSeparator()
             menu.addAction(self.tr("About KubeScope"), self._show_about)
             menu.addAction(self.tr("Preferences"), self._show_preferences)
@@ -4598,7 +4643,7 @@ class WorkloadWindow(QMainWindow):
             menu.addAction(self.tr("Quit"), self._quit)
             tray.setContextMenu(menu)
             tray.activated.connect(self._tray_activated)
-            tray.messageClicked.connect(self._show_from_tray)
+            tray.messageClicked.connect(self.bring_to_front)
             tray.show()
             self._tray = tray
         elif not wanted and self._tray is not None:
@@ -4612,9 +4657,9 @@ class WorkloadWindow(QMainWindow):
             if self.isVisible():
                 self.hide()
             else:
-                self._show_from_tray()
+                self.bring_to_front()
 
-    def _show_from_tray(self) -> None:
+    def bring_to_front(self) -> None:
         self.showNormal()
         self.raise_()
         self.activateWindow()
@@ -4665,11 +4710,11 @@ class WorkloadWindow(QMainWindow):
             QDesktopServices.openUrl(QUrl.fromLocalFile(str(NOTICES_PATH)))
 
     def _show_preferences(self) -> None:
-        self._show_from_tray()
+        self.bring_to_front()
         self._show_page(2)
 
     def _check_updates_from_tray(self) -> None:
-        self._show_from_tray()
+        self.bring_to_front()
         self.check_updates()
 
     def _quit(self) -> None:
