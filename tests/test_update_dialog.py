@@ -6,6 +6,7 @@ from kubescope.dialogs import update_dialog
 from kubescope.dialogs.update_dialog import UpdateDialog, UpdateWorker
 from kubescope.utils.selfupdate import Install, UpdateError
 from kubescope.utils.updates import Asset, Release
+from tests.qt import get_application
 
 DEB = Install("deb", update_dialog.find_asset.__globals__["DEB_EXECUTABLE"])
 ASSET = Asset("kubescope_0.7.0_amd64.deb", "https://x", "0" * 64)
@@ -25,7 +26,7 @@ def wait_until(condition, receiver, seconds: float = 5) -> None:
 
 
 def test_the_dialog_confirms_the_versions_and_shows_the_notes(qtbot_free=None) -> None:
-    QApplication.instance() or QApplication([])
+    get_application()
     dialog = UpdateDialog(None, "0.6.2", RELEASE, DEB)
 
     assert dialog.can_update
@@ -37,14 +38,14 @@ def test_the_dialog_confirms_the_versions_and_shows_the_notes(qtbot_free=None) -
 
 
 def test_a_release_without_notes_says_so() -> None:
-    QApplication.instance() or QApplication([])
+    get_application()
     dialog = UpdateDialog(None, "0.6.2", Release("0.7.0", "u", "", (ASSET,)), DEB)
 
     assert "No release notes" in dialog.notes.toPlainText()
 
 
 def test_an_installation_that_cannot_update_opens_the_release_page(monkeypatch) -> None:
-    QApplication.instance() or QApplication([])
+    get_application()
     opened = []
     monkeypatch.setattr(
         update_dialog.QDesktopServices,
@@ -67,7 +68,7 @@ def fake_run(monkeypatch, behavior) -> None:
 
 
 def test_updating_installs_and_hands_back_the_restart_command(monkeypatch) -> None:
-    QApplication.instance() or QApplication([])
+    get_application()
 
     def run(install, release, current, stage, progress):
         progress(5, 10)
@@ -89,7 +90,7 @@ def test_updating_installs_and_hands_back_the_restart_command(monkeypatch) -> No
 
 
 def test_a_failed_update_can_be_tried_again(monkeypatch) -> None:
-    QApplication.instance() or QApplication([])
+    get_application()
     outcomes = iter([UpdateError("no space"), RuntimeError("boom")])
 
     def run(*_args):
@@ -110,7 +111,7 @@ def test_a_failed_update_can_be_tried_again(monkeypatch) -> None:
 
 
 def test_the_dialog_cannot_be_dismissed_while_installing(monkeypatch) -> None:
-    QApplication.instance() or QApplication([])
+    get_application()
     closed = []
     monkeypatch.setattr(QDialog, "reject", lambda _dialog: closed.append(1))
     dialog = UpdateDialog(None, "0.6.2", RELEASE, DEB)
@@ -130,7 +131,7 @@ def test_the_dialog_cannot_be_dismissed_while_installing(monkeypatch) -> None:
 
 
 def test_progress_without_a_total_leaves_the_bar_busy() -> None:
-    QApplication.instance() or QApplication([])
+    get_application()
     dialog = UpdateDialog(None, "0.6.2", RELEASE, DEB)
 
     dialog._progress(5, 0)

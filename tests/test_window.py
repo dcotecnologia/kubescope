@@ -3,6 +3,7 @@ import os
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 from PySide6.QtCore import Qt
+from PySide6.QtGui import QAction
 from PySide6.QtWidgets import QApplication, QTableWidgetItem, QWidget
 
 from kubescope import theme
@@ -12,6 +13,7 @@ from kubescope.utils import log_view
 from kubescope.views.container_states import LINK_ROLE
 from kubescope.views.detail_tab import DetailTab
 from kubescope.views.log_tab import LogTab
+from tests.qt import cell, present, tab_at
 
 application = QApplication.instance() or QApplication([])
 
@@ -133,9 +135,9 @@ def test_node_groups_view_shows_the_nodes_too(monkeypatch) -> None:
     assert operation.__name__ == "get_cluster_overview"
     show(_overview())
     assert window.nodes_table.rowCount() == 1
-    assert window.nodes_table.item(0, 0).text() == "node-a"
-    assert window.nodes_table.item(0, 1).text() == "Ready"
-    assert window.nodes_table.item(0, 0).data(LINK_ROLE) == ("Node", "", "node-a")
+    assert cell(window.nodes_table, 0, 0).text() == "node-a"
+    assert cell(window.nodes_table, 0, 1).text() == "Ready"
+    assert cell(window.nodes_table, 0, 0).data(LINK_ROLE) == ("Node", "", "node-a")
 
     window._show_nodes("other", ClusterOverview())  # a stale answer is ignored
     assert window.nodes_table.rowCount() == 1
@@ -244,7 +246,7 @@ def test_settings_page_saves_preferences_and_switches_language(
         assert window.ui.pageTitle.text() == "Settings"
         assert form.contextsTable.rowCount() == 1
 
-        form.contextsTable.item(0, 1).setText("Prod ✓")
+        cell(form.contextsTable, 0, 1).setText("Prod ✓")
         form.languageCombo.setCurrentIndex(form.languageCombo.findData("pt"))
         form.saveButton.click()
         application.processEvents()  # Qt delivers LanguageChange via the event loop
@@ -344,7 +346,10 @@ def test_details_and_logs_open_as_closable_tabs(monkeypatch) -> None:
     assert window.viewer_tabs.count() == 2
     assert window.viewer_tabs.tabText(0) == "Deployment: api"
     assert window.viewer_tabs.tabText(1) == "Logs: api-1 / app"
-    assert window.viewer_tabs.widget(1).ui.logText.toPlainText() == "line 1\nline 2"
+    assert (
+        tab_at(window.viewer_tabs, 1, LogTab).ui.logText.toPlainText()
+        == "line 1\nline 2"
+    )
     detail = window.viewer_tabs.widget(0)
     assert isinstance(detail, DetailTab)
     assert detail.editor.isReadOnly()
@@ -392,7 +397,7 @@ def _open_log_tab(monkeypatch):
     window.context_combo.setCurrentIndex(0)
     pod = PodInfo("default", "api-1", "Running", 1, 1, "1d", ("app",))
     window._show_logs_dialog(pod, "app", "line 1")
-    return window, window.viewer_tabs.widget(0)
+    return window, tab_at(window.viewer_tabs, 0, LogTab)
 
 
 def test_log_tab_refreshes_quietly_with_the_pods_context(monkeypatch) -> None:
@@ -549,13 +554,13 @@ def test_clicking_a_header_sorts_and_clicking_again_reverses(monkeypatch) -> Non
 def test_sorting_keeps_the_selection_and_survives_a_refresh(monkeypatch) -> None:
     window = _sortable_window(monkeypatch)
     window.table.selectRow(0)  # "api"
-    assert window._selected_workload().name == "api"
+    assert present(window._selected_workload()).name == "api"
 
     window.table.horizontalHeader().sectionClicked.emit(2)
     window.table.horizontalHeader().sectionClicked.emit(2)  # descending
 
     assert _column_names(window) == ["web", "db", "api"]
-    assert window._selected_workload().name == "api"  # still the same workload
+    assert present(window._selected_workload()).name == "api"  # still the same workload
     assert window.table.currentRow() == 2
 
     fresh = [
@@ -577,8 +582,8 @@ def test_settings_page_shows_long_context_names_in_full(monkeypatch) -> None:
     window.ui.settingsButton.click()
     table = window.settings_ui.contextsTable
 
-    assert table.item(0, 0).text() == arn
-    assert table.item(0, 0).toolTip() == arn  # hover shows the whole name
+    assert cell(table, 0, 0).text() == arn
+    assert cell(table, 0, 0).toolTip() == arn  # hover shows the whole name
     assert table.textElideMode() == Qt.TextElideMode.ElideMiddle
     header = table.horizontalHeader()
     assert header.sectionResizeMode(0) == header.ResizeMode.Interactive
@@ -595,7 +600,7 @@ def test_pods_menu_lists_pods_and_deployments_menu_lists_deployments(
     window.nav_pods.click()
     assert window.pages.currentIndex() == 1
     assert window.ui.pageTitle.text() == "Pods"
-    assert window.table.horizontalHeaderItem(1).text() == "CONTAINERS"
+    assert present(window.table.horizontalHeaderItem(1)).text() == "CONTAINERS"
     assert not window.pods_button.isVisibleTo(window)
 
     pods = [
@@ -604,17 +609,17 @@ def test_pods_menu_lists_pods_and_deployments_menu_lists_deployments(
     ]
     window._show_pods(["default"], pods)
     assert window.table.rowCount() == 2
-    assert window.table.item(0, 2).text() == "web-1"
-    assert window.table.item(1, 4).text() == "Failed"
+    assert cell(window.table, 0, 2).text() == "web-1"
+    assert cell(window.table, 1, 4).text() == "Failed"
 
     window.table.selectRow(1)
-    assert window._selected_pod().name == "job-1"
+    assert present(window._selected_pod()).name == "job-1"
     window.table.horizontalHeader().sectionClicked.emit(4)  # worst phase first
-    assert window.table.item(0, 2).text() == "job-1"
+    assert cell(window.table, 0, 2).text() == "job-1"
 
     window.nav_deployments.click()
     assert window.ui.pageTitle.text() == "Deployments"
-    assert window.table.horizontalHeaderItem(1).text() == "KIND"
+    assert present(window.table.horizontalHeaderItem(1)).text() == "KIND"
     assert window.pods_button.isVisibleTo(window)
     window.close()
 
@@ -776,9 +781,9 @@ def test_a_list_of_secrets_in_the_details_opens_each_one(monkeypatch) -> None:
     )
     opened = []
     tab.link_clicked.connect(lambda *link: opened.append(link))
-    table = tab.content.findChild(QTableWidget)
+    table = present(tab.content.findChild(QTableWidget))
 
-    assert "Open Secret regcred" in table.item(0, 0).toolTip()
+    assert "Open Secret regcred" in cell(table, 0, 0).toolTip()
     table.cellClicked.emit(1, 0)
     table.cellClicked.emit(0, 1)  # not the name
     table.cellClicked.emit(5, 0)  # no such row
@@ -839,9 +844,10 @@ def test_right_click_on_a_top_tab_closes_it_or_closes_them_all(monkeypatch) -> N
     chosen = []
 
     class FakeMenu(QMenu):
-        def exec(self, *_args) -> None:
+        def exec(self, *_args, **_kwargs) -> QAction:
             chosen.append([action.text() for action in self.actions()])
             self.actions()[chosen_action[0]].trigger()
+            return QAction(self)  # the choice is not read
 
     monkeypatch.setattr(window_module, "QMenu", FakeMenu)
 
@@ -880,7 +886,8 @@ def test_wrapping_the_logs_is_remembered_and_applies_to_every_open_log(
     pod = PodInfo("default", "api-1", "Running", 1, 1, "1d", ("app",))
     window._show_logs_dialog(pod, "app", "one")
     window._show_logs_dialog(pod, "side", "two")
-    first, second = window.viewer_tabs.widget(0), window.viewer_tabs.widget(1)
+    first = tab_at(window.viewer_tabs, 0, LogTab)
+    second = tab_at(window.viewer_tabs, 1, LogTab)
     no_wrap, wrap = (
         QPlainTextEdit.LineWrapMode.NoWrap,
         QPlainTextEdit.LineWrapMode.WidgetWidth,
@@ -898,5 +905,5 @@ def test_wrapping_the_logs_is_remembered_and_applies_to_every_open_log(
 
     first.ui.wrapCheck.setChecked(True)
     window._show_logs_dialog(pod, "third", "three")  # a new log starts as chosen
-    assert window.viewer_tabs.widget(3).ui.logText.lineWrapMode() == wrap
+    assert tab_at(window.viewer_tabs, 3, LogTab).ui.logText.lineWrapMode() == wrap
     window.close()

@@ -1,4 +1,5 @@
 from PySide6.QtCore import QPoint
+from PySide6.QtGui import QAction
 from PySide6.QtWidgets import (
     QApplication,
     QComboBox,
@@ -36,8 +37,9 @@ def _window(monkeypatch, write_mode: bool = True):
 
 def _fake_menu(monkeypatch, seen: list) -> None:
     class FakeMenu(QMenu):
-        def exec(self, *_args) -> None:
+        def exec(self, *_args, **_kwargs) -> QAction:
             seen.append([action.text() for action in self.actions()])
+            return QAction(self)  # the choice is not read
 
     monkeypatch.setattr(window_module, "QMenu", FakeMenu)
 
@@ -276,9 +278,10 @@ def test_the_pods_dialog_menu_offers_the_writes_and_closes_first(monkeypatch) ->
     pick = {"index": 2}  # Delete...
 
     class FakeMenu(QMenu):
-        def exec(self, *_args) -> None:
+        def exec(self, *_args, **_kwargs) -> QAction:
             seen.append([action.text() for action in self.actions()])
             self.actions()[pick["index"]].trigger()
+            return QAction(self)  # the choice is not read
 
     monkeypatch.setattr(window_module, "QMenu", FakeMenu)
     closed = []

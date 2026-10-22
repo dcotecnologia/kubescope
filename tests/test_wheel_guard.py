@@ -1,3 +1,5 @@
+from typing import cast
+
 from PySide6.QtCore import QEvent, QObject, QPoint, QPointF, Qt
 from PySide6.QtGui import QWheelEvent
 from PySide6.QtWidgets import QApplication, QComboBox, QSpinBox, QWidget
@@ -61,6 +63,6 @@ def test_the_guard_is_installed_on_the_application() -> None:
             installed.append(guard)
 
     before = len(wheel_guard._guards)
-    install_wheel_guard(Application())
+    install_wheel_guard(cast(QApplication, Application()))
 
     assert len(installed) == 1 and len(wheel_guard._guards) == before + 1

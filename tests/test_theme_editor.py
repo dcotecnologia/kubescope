@@ -1,5 +1,7 @@
 import os
 
+from PySide6.QtWidgets import QPushButton
+
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 from PySide6.QtGui import QColor
@@ -19,7 +21,7 @@ def _editor(theme_in=LIGHT_THEME, *, new=True, name="My theme") -> ThemeEditor:
     )
 
 
-def _save_button(editor) -> object:
+def _save_button(editor) -> QPushButton:
     return editor.save_button
 
 

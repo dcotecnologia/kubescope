@@ -33,8 +33,8 @@ class FakeResponse(io.BytesIO):
     def __enter__(self):
         return self
 
-    def __exit__(self, *_exc):
-        return False
+    def __exit__(self, *_exc) -> None:
+        return None
 
 
 def serve(monkeypatch, response: FakeResponse | Exception) -> None:

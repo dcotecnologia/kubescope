@@ -1,6 +1,8 @@
 import os
 import time
 
+from tests.qt import get_application
+
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 from PySide6.QtWidgets import QApplication
@@ -23,7 +25,7 @@ def test_the_name_is_the_persons_own(monkeypatch) -> None:
 
 
 def test_a_second_start_finds_the_first_and_asks_it_to_come_forward() -> None:
-    QApplication.instance() or QApplication([])
+    get_application()
     name = f"kubescope-test-{os.getpid()}"
     first = SingleInstance(name)
     asked = []
@@ -40,7 +42,7 @@ def test_a_second_start_finds_the_first_and_asks_it_to_come_forward() -> None:
 
 
 def test_a_name_left_behind_is_taken_over() -> None:
-    QApplication.instance() or QApplication([])
+    get_application()
     name = f"kubescope-stale-{os.getpid()}"
     stale = SingleInstance(name)
     stale.listen()

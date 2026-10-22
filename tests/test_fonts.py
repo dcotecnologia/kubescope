@@ -1,13 +1,14 @@
 import os
 
+from tests.qt import get_application
+
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 from PySide6.QtGui import QFont, QFontMetrics
-from PySide6.QtWidgets import QApplication
 
 from kubescope.utils import fonts
 
-application = QApplication.instance() or QApplication([])
+application = get_application()
 
 
 def test_the_shipped_fonts_load_and_name_their_families() -> None:

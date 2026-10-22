@@ -43,7 +43,8 @@ def test_the_check_fails_when_the_copy_is_missing_or_old(
 def test_the_changelog_is_read_from_the_package_or_missing(
     monkeypatch, tmp_path
 ) -> None:
-    assert changelog.read_changelog().startswith("# Changelog")
+    text = changelog.read_changelog()
+    assert text is not None and text.startswith("# Changelog")
 
     monkeypatch.setattr(changelog, "CHANGELOG", tmp_path / "nothing.md")
     assert changelog.read_changelog() is None
@@ -131,7 +132,9 @@ def test_parse_changelog_reads_versions_sections_and_wrapped_items() -> None:
 
 
 def test_the_real_changelog_parses_into_versions() -> None:
-    versions = changelog.parse_changelog(changelog.read_changelog())
+    text = changelog.read_changelog()
+    assert text is not None
+    versions = changelog.parse_changelog(text)
 
     assert versions[0].name == "Unreleased"
     assert any(v.name == "0.6.2" for v in versions)

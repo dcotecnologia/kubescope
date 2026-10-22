@@ -3,12 +3,14 @@ import os
 import re
 from pathlib import Path
 
+from tests.qt import get_application
+
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 import pytest
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor, QPalette
-from PySide6.QtWidgets import QApplication, QLabel, QPushButton
+from PySide6.QtWidgets import QLabel, QPushButton
 
 from kubescope import theme
 from kubescope.theme import (
@@ -22,7 +24,7 @@ from kubescope.theme import (
 )
 
 ROOT = Path(__file__).resolve().parents[1]
-application = QApplication.instance() or QApplication([])
+application = get_application()
 
 
 def test_light_theme_sets_a_light_palette_and_greys_disabled_text() -> None:

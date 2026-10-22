@@ -65,7 +65,7 @@ class Server:
         outer = self
 
         class Handler(BaseHTTPRequestHandler):
-            def log_message(self, *args) -> None:
+            def log_message(self, format: str, *args: object) -> None:
                 pass
 
             def reply(self, body: bytes, status: int = 200) -> None:

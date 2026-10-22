@@ -2,6 +2,7 @@ import json
 import os
 import threading
 import time
+from typing import cast
 
 import pytest
 
@@ -14,10 +15,12 @@ from PySide6.QtCore import (
     QPoint,
     QPointF,
     QRect,
+    QStringListModel,
     Qt,
     Signal,
 )
 from PySide6.QtGui import (
+    QAction,
     QCloseEvent,
     QHelpEvent,
     QMouseEvent,
@@ -26,6 +29,7 @@ from PySide6.QtGui import (
 )
 from PySide6.QtTest import QTest
 from PySide6.QtWidgets import (
+    QAbstractButton,
     QApplication,
     QComboBox,
     QDialog,
@@ -61,7 +65,16 @@ from kubescope.utils import json_view
 from kubescope.utils.updates import Release, UpdateCheck
 from kubescope.views.container_states import LINK_ROLE, STATES_ROLE, TIPS_ROLE
 from kubescope.views.detail_tab import DetailTab
+from kubescope.views.log_tab import LogTab
 from kubescope.window import PIN_MIME, VIEWER_MIME
+from tests.qt import (
+    cell,
+    current_tab,
+    get_application,
+    present,
+    tab_at,
+    text_at,
+)
 
 application = QApplication.instance() or QApplication([])
 
@@ -93,9 +106,7 @@ class FakeRefreshWorker(QObject):
 
 
 def _detail_tab(window) -> DetailTab:
-    tab = window.viewer_tabs.currentWidget()
-    assert isinstance(tab, DetailTab)
-    return tab
+    return current_tab(window.viewer_tabs, DetailTab)
 
 
 def _ready_window(monkeypatch):
@@ -246,7 +257,7 @@ def test_refresh_buttons_show_only_an_icon_and_keep_it_spinning(monkeypatch) -> 
         "list": window.refresh_button,
         "cluster overview": window.overview_refresh_button,
         "workloads overview": window.workloads_refresh_button,
-        "logs": window.viewer_tabs.widget(0).ui.refreshButton,
+        "logs": tab_at(window.viewer_tabs, 0, LogTab).ui.refreshButton,
     }
 
     for name, button in buttons.items():
@@ -297,7 +308,7 @@ def test_refresh_does_nothing_without_a_context_or_while_running(monkeypatch) ->
     window.context_combo.addItem("prod")
     running = FakeRefreshWorker("prod", None)
     running.running = True
-    window._workers["deployments"] = running
+    window._workers["deployments"] = cast(window_module.RefreshWorker, running)
     window.refresh()
     assert window._workers["deployments"] is running
     window.close()
@@ -308,7 +319,7 @@ def test_each_list_loads_in_parallel_with_the_others(monkeypatch) -> None:
     window.context_combo.addItem("prod")
     pods = FakeRefreshWorker("prod", None, "pods")
     pods.running = True
-    window._workers["pods"] = pods
+    window._workers["pods"] = cast(window_module.RefreshWorker, pods)
     window._view = "deployments"
 
     window.refresh()  # does not wait for the Pods request
@@ -332,7 +343,7 @@ def test_another_context_cancels_the_list_that_is_loading(monkeypatch) -> None:
     window.context_combo.addItem("other")
     running = FakeRefreshWorker("prod", None)
     running.running = True
-    window._workers["deployments"] = running
+    window._workers["deployments"] = cast(window_module.RefreshWorker, running)
 
     window.context_combo.setCurrentIndex(window.context_combo.count() - 1)
 
@@ -350,7 +361,7 @@ def test_the_refresh_button_cancels_a_load_and_hides_its_answer(monkeypatch) -> 
     monkeypatch.setattr(window_module, "cancel_running", lambda: None)
     running = FakeRefreshWorker("prod", None)
     running.running = True
-    window._workers["deployments"] = running
+    window._workers["deployments"] = cast(window_module.RefreshWorker, running)
 
     window._refresh_or_cancel()
 
@@ -468,7 +479,7 @@ def test_closing_hides_the_window_and_stops_the_running_requests(
     )
     running = FakeRefreshWorker("prod", None)
     running.running = True
-    window._workers = {"deployments": running}
+    window._workers = {"deployments": cast(window_module.RefreshWorker, running)}
 
     event = QCloseEvent()
     window.closeEvent(event)
@@ -478,7 +489,7 @@ def test_closing_hides_the_window_and_stops_the_running_requests(
     assert QApplication.quitOnLastWindowClosed() is False
 
     window._workers = {}
-    window._action_workers = [running]
+    window._action_workers = [cast(window_module.ActionWorker, running)]
     window._finish_deferred_close()  # an action is still running: not yet
     assert "quit" not in cancelled
     window._action_workers = []
@@ -726,10 +737,11 @@ def test_header_menu_toggles_columns_and_keeps_the_name(monkeypatch) -> None:
     window = _ready_window(monkeypatch)
 
     class FakeMenu(QMenu):
-        def exec(self, *_args) -> None:
+        def exec(self, *_args, **_kwargs) -> QAction:
             actions = self.actions()  # no namespace and no kind: never shown
             assert actions[0].text() == "NAME" and actions[0].isEnabled() is False
             actions[1].toggle()
+            return QAction(self)  # the choice is not read
 
     monkeypatch.setattr(window_module, "QMenu", FakeMenu)
 
@@ -752,9 +764,10 @@ def test_row_menu_selects_the_row_and_offers_the_actions(monkeypatch) -> None:
     seen = []
 
     class FakeMenu(QMenu):
-        def exec(self, *_args) -> None:
+        def exec(self, *_args, **_kwargs) -> QAction:
             seen.append([action.text() for action in self.actions()])
             self.actions()[1].trigger()  # Details
+            return QAction(self)  # the choice is not read
 
     monkeypatch.setattr(window_module, "QMenu", FakeMenu)
     clicked = []
@@ -793,7 +806,7 @@ def test_settings_save_failures_are_logged_not_raised(monkeypatch) -> None:
 def test_log_tab_shows_refresh_errors_unless_it_was_closed(monkeypatch) -> None:
     window = _ready_window(monkeypatch)
     window._show_logs_dialog(POD, "app", "line 1")
-    tab = window.viewer_tabs.widget(0)
+    tab = tab_at(window.viewer_tabs, 0, LogTab)
     calls = []
     monkeypatch.setattr(
         window, "_run_action", lambda op, ok, *a, **k: calls.append(k["on_error"])
@@ -1204,13 +1217,13 @@ def test_jobs_and_cron_jobs_render_their_own_states(monkeypatch) -> None:
         ],
     )
     table = window.table
-    assert [table.item(row, 4).text() for row in range(4)] == [
+    assert [cell(table, row, 4).text() for row in range(4)] == [
         "Complete",
         "Failed",
         "Running",
         "Pending",
     ]
-    assert table.item(0, 3).text() == "3/3"
+    assert cell(table, 0, 3).text() == "3/3"
     assert "4 Jobs in 1 namespaces" in window.status_label.text()
     assert window.summary_label.text() == "4 of 4 Jobs"
 
@@ -1250,12 +1263,12 @@ def test_jobs_and_cron_jobs_render_their_own_states(monkeypatch) -> None:
             ),
         ],
     )
-    assert [table.item(row, 3).text() for row in range(3)] == [
+    assert [cell(table, row, 3).text() for row in range(3)] == [
         "0 3 * * *",
         "@daily",
         "* * * * *",
     ]
-    assert [table.item(row, 4).text() for row in range(3)] == [
+    assert [cell(table, row, 4).text() for row in range(3)] == [
         "Scheduled",
         "Suspended",
         "Active",
@@ -1283,8 +1296,8 @@ def test_daemon_set_replica_set_and_controller_lists_open(monkeypatch) -> None:
         assert window.ui.pageTitle.text() == title
         assert f"1 {title} in 1 namespaces" in window.status_label.text()
         assert window.summary_label.text() == f"1 of 1 {title}"
-        assert window.table.item(0, 1).text() == kind
-        assert window.table.item(0, 4).text() == "Degraded"
+        assert cell(window.table, 0, 1).text() == kind
+        assert cell(window.table, 0, 4).text() == "Degraded"
     window.close()
 
 
@@ -1342,7 +1355,7 @@ def test_menu_entries_are_in_alphabetical_order(monkeypatch) -> None:
         (ui.configSubmenuLayout, 0),
     ):
         names = [
-            layout.itemAt(index).widget().text().casefold()
+            text_at(layout, index).casefold()
             for index in range(skipped, layout.count())
         ]
         assert names == sorted(names)
@@ -1384,7 +1397,7 @@ def test_the_overview_shows_counts_bars_and_events(monkeypatch) -> None:
     assert page.noticeLabel.text() == ""
     table = window.workloads_table
     assert table.rowCount() == 2
-    assert [table.item(0, c).text() for c in range(8)] == [
+    assert [cell(table, 0, c).text() for c in range(8)] == [
         "Warning",
         "kubelet",
         "ns",
@@ -1394,7 +1407,7 @@ def test_the_overview_shows_counts_bars_and_events(monkeypatch) -> None:
         "2h",
         "5m",
     ]
-    assert table.item(0, 4).toolTip() == "Back-off"
+    assert cell(table, 0, 4).toolTip() == "Back-off"
     window.close()
 
 
@@ -1506,7 +1519,7 @@ def test_the_theme_is_chosen_in_settings_and_applied_at_once(monkeypatch) -> Non
 
     assert window.settings.theme == "dark"
     assert "#11141a" in window.styleSheet() and "#f7f7fa" not in window.styleSheet()
-    assert window.table.item(0, 4).foreground().color().name() == themed("#176b58")
+    assert cell(window.table, 0, 4).foreground().color().name() == themed("#176b58")
     assert "dark" in window_module._chevron_icon_path() != light_icon
     assert QApplication.palette().color(QPalette.ColorRole.Window).name() == "#11141a"
 
@@ -1523,13 +1536,13 @@ def test_the_window_starts_in_the_saved_theme(monkeypatch, tmp_path) -> None:
 
     settings = Settings(tmp_path / "settings.json")
     settings.theme = "dark"
-    apply_theme(QApplication.instance(), settings.theme)
+    apply_theme(get_application(), settings.theme)
 
     window = _ready_window(monkeypatch)
 
     assert "#11141a" in window.styleSheet()
     window.close()
-    apply_theme(QApplication.instance(), "light")
+    apply_theme(get_application(), "light")
 
 
 def _accept_editor(monkeypatch, *, name=None, page=None, result=None):
@@ -1732,18 +1745,18 @@ def test_each_network_list_opens_with_its_own_columns(monkeypatch) -> None:
 
         assert window.ui.pageTitle.text() == title
         assert window.table.columnCount() == extra + 4  # namespace, kind, name, age
-        assert window.table.item(0, 1).text() == kind
-        assert window.table.item(0, 3).text() == "v0"
-        assert window.table.item(0, extra + 3).text() == "2d"
+        assert cell(window.table, 0, 1).text() == kind
+        assert cell(window.table, 0, 3).text() == "v0"
+        assert cell(window.table, 0, extra + 3).text() == "2d"
         assert window.summary_label.text() == f"1 of 1 {title}"
         assert window.pods_button.isHidden() and window.logs_button.isHidden()
         assert not window.details_button.isHidden()
-    assert window.table.item(0, 0).text() == "ops"
+    assert cell(window.table, 0, 0).text() == "ops"
     window._open_list_view("ingressclasses")
     window._show_resources(
         ["ops"], [ClusterResource("", "IngressClass", "x", ("c", "p"), "1d")]
     )
-    assert window.table.item(0, 0).text() == "—"  # cluster-wide: no namespace
+    assert cell(window.table, 0, 0).text() == "—"  # cluster-wide: no namespace
     window.close()
 
 
@@ -1786,8 +1799,8 @@ def test_each_config_list_opens_with_its_own_columns(monkeypatch) -> None:
 
         assert window.ui.pageTitle.text() == title
         assert window.table.columnCount() == extra + 4  # namespace, kind, name, age
-        assert window.table.item(0, 1).text() == kind
-        assert window.table.item(0, 3).text() == "v0"
+        assert cell(window.table, 0, 1).text() == kind
+        assert cell(window.table, 0, 3).text() == "v0"
         assert window.summary_label.text() == f"1 of 1 {title}"
         assert window.pods_button.isHidden() and window.logs_button.isHidden()
         assert not window.details_button.isHidden()
@@ -1801,8 +1814,9 @@ def test_namespace_and_kind_columns_are_never_shown(monkeypatch) -> None:
     menu_columns = []
 
     class FakeMenu(QMenu):
-        def exec(self, *_args) -> None:
+        def exec(self, *_args, **_kwargs) -> QAction:
             menu_columns.extend(action.text() for action in self.actions())
+            return QAction(self)  # the choice is not read
 
     monkeypatch.setattr(window_module, "QMenu", FakeMenu)
     rows = {
@@ -1863,11 +1877,11 @@ def test_the_overview_shows_the_cluster_info_of_an_eks_context(monkeypatch) -> N
     card = window.overview_ui.clusterInfoCard
     grid = window.overview_ui.clusterInfoGrid
     assert not card.isHidden() and grid.count() == 9
-    texts = [grid.itemAt(i).widget().text() for i in range(grid.count())]
+    texts = [text_at(grid, i) for i in range(grid.count())]
     assert "Kubernetes version" in texts[1] and "1.37" in texts[1]
     assert "&lt;arn&gt;" in texts[6]  # values are escaped
     networking = window.overview_ui.networkingGrid
-    cells = [networking.itemAt(i).widget().text() for i in range(networking.count())]
+    cells = [text_at(networking, i) for i in range(networking.count())]
     assert not window.overview_ui.networkingCard.isHidden() and len(cells) == 8
     assert "vpc-1" in cells[0] and "None" in cells[2] and "Public" in cells[3]
     assert "subnet-a<br>subnet-b" in cells[7]  # one subnet per line
@@ -1949,13 +1963,13 @@ def test_network_lists_sort_filter_and_show_details(monkeypatch) -> None:
         ],
     )
     window._sort_rows(2)  # by name
-    assert [window.table.item(r, 2).text() for r in range(2)] == ["api", "web"]
+    assert [cell(window.table, r, 2).text() for r in range(2)] == ["api", "web"]
     window.search_input.setText("web")
     assert window.summary_label.text() == "1 of 2 Services"
     window.search_input.setText("")
 
     window.table.selectRow(1)
-    assert window._selected_row().name == "web"
+    assert present(window._selected_row()).name == "web"
     dispatched = []
     monkeypatch.setattr(window, "_run_action", lambda *a, **k: dispatched.append(a))
     window._view_details()
@@ -2159,14 +2173,14 @@ def test_lists_show_the_last_answer_for_the_context_and_namespace(monkeypatch) -
 
     window.context_combo.setCurrentIndex(0)
     window.refresh()  # a, all namespaces
-    assert window.table.item(0, 2).text() == "api"
+    assert cell(window.table, 0, 2).text() == "api"
 
     window._workers.clear()
     FakeRefreshWorker.outcome = ("fail", "boom")  # b's fresh answer is slow
     monkeypatch.setattr(window, "_show_error", lambda *_a: None)
     window.context_combo.setCurrentIndex(1)
     window.refresh()
-    assert window.table.item(0, 2).text() == "web"  # b's own answer, not a's
+    assert cell(window.table, 0, 2).text() == "web"  # b's own answer, not a's
 
     window._workers.clear()
     window.context_combo.setCurrentIndex(0)
@@ -2217,7 +2231,10 @@ def test_the_default_namespace_is_typed_with_the_clusters_namespaces_offered(
     window._load_settings_form()
     edit = window.settings_ui.defaultNamespaceEdit
     assert edit.text() == "" and edit.placeholderText() == "All namespaces"
-    assert edit.completer().model().stringList() == ["dev", "ops"]
+    assert cast(QStringListModel, present(edit.completer()).model()).stringList() == [
+        "dev",
+        "ops",
+    ]
 
     edit.setText(" ops ")  # a name that no cluster lists is accepted too
     window._save_preferences()
@@ -2308,7 +2325,7 @@ def test_the_save_button_is_an_icon_with_a_tooltip(monkeypatch) -> None:
 def test_a_theme_change_redraws_the_icons_of_open_log_tabs(monkeypatch) -> None:
     window = _ready_window(monkeypatch)
     window._show_logs_dialog(POD, "app", "2026-10-08T05:00:01Z INFO started")
-    tab = window.viewer_tabs.currentWidget()
+    tab = current_tab(window.viewer_tabs, LogTab)
     before = tab.ui.refreshButton.icon().pixmap(18, 18).toImage()
 
     window.settings.theme = "dark"
@@ -2326,7 +2343,7 @@ def test_a_theme_change_recolors_open_json_and_log_tabs(monkeypatch) -> None:
     window._show_json_dialog("Pod: api", {"kind": "Pod"})
     json_editor = _detail_tab(window).editor
     window._show_logs_dialog(POD, "app", "2026-10-08T05:00:01Z INFO started")
-    log_tab = window.viewer_tabs.currentWidget()
+    log_tab = current_tab(window.viewer_tabs, LogTab)
     assert "#1e1e1e" not in json_editor.styleSheet()  # light
 
     window.settings.theme = "dark"
@@ -2353,7 +2370,7 @@ def test_ctrl_r_and_f5_press_the_refresh_button_of_the_page_on_screen(
         button.setEnabled(True)
         button.clicked.connect(lambda _checked=False, name=name: pressed.append(name))
     window._show_logs_dialog(POD, "app", "2026-10-08T05:00:01Z INFO started")
-    logs = window.viewer_tabs.currentWidget()
+    logs = current_tab(window.viewer_tabs, LogTab)
     logs.ui.refreshButton.clicked.connect(lambda: pressed.append("logs"))
 
     keys = sorted(
@@ -2515,9 +2532,10 @@ def test_the_update_menu_checks_again(monkeypatch) -> None:
     shown = []
 
     class FakeMenu(QMenu):
-        def exec(self, _position):
+        def exec(self, *_args, **_kwargs) -> QAction:
             shown.append([action.text() for action in self.actions()])
             self.actions()[0].trigger()
+            return QAction(self)  # the choice is not read
 
     monkeypatch.setattr(window_module, "QMenu", FakeMenu)
 
@@ -2655,8 +2673,8 @@ def test_the_settings_page_lists_kubeconfig_files_and_sign_in_commands(
         "/home/me/work.yaml"
     ]
     assert form.loginTable.rowCount() == 1
-    assert form.loginTable.item(0, 0).text() == "oci"
-    assert form.loginTable.item(0, 1).text() == "oci session authenticate"
+    assert cell(form.loginTable, 0, 0).text() == "oci"
+    assert cell(form.loginTable, 0, 1).text() == "oci session authenticate"
     window.close()
 
 
@@ -2802,9 +2820,11 @@ def test_a_list_can_be_pinned_to_the_top_of_the_menu(monkeypatch) -> None:
     assert window._pinned_buttons[0].isChecked()
     assert not window._pinned_buttons[1].isChecked()
 
-    tab = window._pinned_buttons[0].parentWidget()
+    tab = present(window._pinned_buttons[0].parentWidget())
     assert tab.property("active") == "true"
-    assert window._pinned_buttons[1].parentWidget().property("active") == "false"
+    assert (
+        present(window._pinned_buttons[1].parentWidget()).property("active") == "false"
+    )
     tab.findChildren(QPushButton)[1].click()  # the × takes it back
     assert [b.text() for b in window._pinned_buttons] == ["Pods"]
     window._toggle_pin("pods")
@@ -2829,8 +2849,9 @@ def test_the_overview_pages_can_be_pinned_to_the_top(monkeypatch) -> None:
     window._toggle_pin("cluster-overview")
 
     class FakeMenu(QMenu):
-        def exec(self, *_args) -> None:
+        def exec(self, *_args, **_kwargs) -> QAction:
             self.actions()[0].trigger()
+            return QAction(self)  # the choice is not read
 
     monkeypatch.setattr(window_module, "QMenu", FakeMenu)
     window.nav_overview.customContextMenuRequested.emit(QPoint(1, 1))
@@ -2923,12 +2944,10 @@ def test_pinned_tabs_can_be_dragged_to_reorder_them(monkeypatch) -> None:
     mime = QMimeData()
     mime.setData(PIN_MIME, b"secrets")
 
-    class FakeDragEvent:
+    class FakeDragEvent(QEvent):
         def __init__(self, kind, x, data) -> None:
-            self._kind, self._x, self._data = kind, x, data
-
-        def type(self):
-            return self._kind
+            super().__init__(kind)
+            self._x, self._data = x, data
 
         def mimeData(self):
             return self._data
@@ -2950,7 +2969,7 @@ def test_pinned_tabs_can_be_dragged_to_reorder_them(monkeypatch) -> None:
     assert window.eventFilter(bar, drop(QEvent.Type.DragMove, 1))
     assert marker.isVisibleTo(bar)  # the line shows where it would land
     before = marker.x()
-    last = window._pinned_buttons[-1].parentWidget()
+    last = present(window._pinned_buttons[-1].parentWidget())
     right_of_all = last.mapTo(bar, last.rect().bottomRight()).x() + 10
     assert window.eventFilter(bar, drop(QEvent.Type.DragMove, right_of_all))
     assert marker.x() > before
@@ -2989,12 +3008,10 @@ def test_open_details_and_logs_tabs_move_and_close_like_the_pinned_ones(
     mime = QMimeData()
     mime.setData(VIEWER_MIME, b"0")
 
-    class FakeDragEvent:
+    class FakeDragEvent(QEvent):
         def __init__(self, kind, x) -> None:
-            self._kind, self._x = kind, x
-
-        def type(self):
-            return self._kind
+            super().__init__(kind)
+            self._x = x
 
         def mimeData(self):
             return mime
@@ -3045,7 +3062,7 @@ def test_open_details_and_logs_tabs_move_and_close_like_the_pinned_ones(
     assert window.eventFilter(first, move)
     assert started == ["0"]
 
-    last = window._pinned_buttons[-1].parentWidget()
+    last = present(window._pinned_buttons[-1].parentWidget())
     right_of_all = last.mapTo(bar, last.rect().bottomRight()).x() + 10
     assert window.eventFilter(bar, FakeDragEvent(QEvent.Type.DragMove, right_of_all))
     assert window._drop_marker.isVisibleTo(bar)
@@ -3095,11 +3112,11 @@ def _welcome_window(monkeypatch, pressed: str | None):
         def exec(self) -> int:
             shown.append(self.text())
             buttons = {b.text(): b for b in self.buttons()}
-            self._pressed = buttons.get(pressed)
+            self._pressed = buttons.get(pressed or "")
             return 0
 
-        def clickedButton(self):
-            return self._pressed
+        def clickedButton(self) -> QAbstractButton:
+            return cast(QAbstractButton, self._pressed)
 
     monkeypatch.setattr(window_module, "QMessageBox", FakeBox)
     monkeypatch.setattr(
@@ -3157,10 +3174,11 @@ def test_the_pin_menu_offers_pin_or_unpin(monkeypatch) -> None:
     offered = []
 
     class FakeMenu(QMenu):
-        def exec(self, *_args) -> None:
+        def exec(self, *_args, **_kwargs) -> QAction:
             action = self.actions()[0]
             offered.append(action.text())
             action.trigger()
+            return QAction(self)  # the choice is not read
 
     monkeypatch.setattr(window_module, "QMenu", FakeMenu)
     window._nav_views["leases"].customContextMenuRequested.emit(QPoint(1, 1))
@@ -3208,7 +3226,7 @@ def test_two_quick_clicks_pin_a_list_and_the_middle_button_unpins_it(
     assert window.settings.pinned_views() == [] and window._pinned_buttons == []
 
     window._toggle_pin("pods")
-    tab = window._pinned_buttons[0].parentWidget()
+    tab = present(window._pinned_buttons[0].parentWidget())
     QTest.mouseClick(tab, Qt.MouseButton.MiddleButton)  # anywhere on the tab
     assert window.settings.pinned_views() == []
     window.close()
@@ -3230,7 +3248,7 @@ def test_aws_words_are_shown_in_the_interface_language(monkeypatch) -> None:
             )
         ],
     )
-    assert window.table.item(0, 3).text() == "Deletion failed"
+    assert cell(window.table, 0, 3).text() == "Deletion failed"
     window.close()
 
 
@@ -3500,10 +3518,10 @@ def test_pods_and_workloads_draw_colored_squares_for_their_states(
             PodInfo("ns", "q", "Running", 0, 0, "1d", ()),  # nothing to draw
         ],
     )
-    item = window.table.item(0, 3)
+    item = cell(window.table, 0, 3)
     assert item.text() == "1/2" and item.data(STATES_ROLE) == ("running", "error")
     assert item.data(TIPS_ROLE) == ("app: Running", "side: Error")
-    assert window.table.item(1, 3).data(STATES_ROLE) is None
+    assert cell(window.table, 1, 3).data(STATES_ROLE) is None
 
     window.table.viewport().grab()  # paints the squares and the plain cell
     delegate = window.table.itemDelegateForColumn(3)
@@ -3539,8 +3557,8 @@ def test_pods_and_workloads_draw_colored_squares_for_their_states(
             Workload("ns", "CronJob", "job", 0, 0, "1d", schedule="* * * * *"),
         ],
     )
-    assert window.table.item(0, 3).data(STATES_ROLE) == ("running", "pending")
-    assert window.table.item(1, 3).data(STATES_ROLE) is None
+    assert cell(window.table, 0, 3).data(STATES_ROLE) == ("running", "pending")
+    assert cell(window.table, 1, 3).data(STATES_ROLE) is None
     window.table.viewport().grab()
     kept = window.table.model().index(0, 3)
     assert window.table.itemDelegateForColumn(3).sizeHint(option, kept).width() > 44
@@ -3558,10 +3576,10 @@ def test_a_pod_links_to_its_node_and_controller(monkeypatch) -> None:
     ran = []
     monkeypatch.setattr(window, "_run_action", lambda *a, **k: ran.append(a))
 
-    assert window.table.item(0, 8).data(LINK_ROLE) == ("Deployment", "ns", "api")
-    assert window.table.item(0, 9).data(LINK_ROLE) == ("Node", "", "n1")
-    assert "Open Node n1" in window.table.item(0, 9).toolTip()
-    assert window.table.item(1, 9).data(LINK_ROLE) is None  # not scheduled yet
+    assert cell(window.table, 0, 8).data(LINK_ROLE) == ("Deployment", "ns", "api")
+    assert cell(window.table, 0, 9).data(LINK_ROLE) == ("Node", "", "n1")
+    assert "Open Node n1" in cell(window.table, 0, 9).toolTip()
+    assert cell(window.table, 1, 9).data(LINK_ROLE) is None  # not scheduled yet
 
     window._open_link(window.table, 0, 9)
     operation, on_success, context, kind, namespace, name = ran[-1]
@@ -3591,9 +3609,9 @@ def test_the_events_link_to_the_resource_they_are_about(monkeypatch) -> None:
     window._render_events(_workloads_overview())
     table = window.workloads_table
 
-    assert table.item(0, 3).data(LINK_ROLE) == ("Pod", "ns", "api-1")
-    assert table.item(1, 3).data(LINK_ROLE) == ("Deployment", "ns", "web")
-    assert table.item(0, 4).data(LINK_ROLE) is None
+    assert cell(table, 0, 3).data(LINK_ROLE) == ("Pod", "ns", "api-1")
+    assert cell(table, 1, 3).data(LINK_ROLE) == ("Deployment", "ns", "web")
+    assert cell(table, 0, 4).data(LINK_ROLE) is None
     window.close()
 
 
@@ -3642,10 +3660,12 @@ def test_the_selected_row_stays_selected_when_the_rows_change(monkeypatch) -> No
 
     window._show_pods(["ns"], [pod("a"), pod("b"), pod("c")])
     window.table.selectRow(2)
-    assert window._selected_pod().name == "c"
+    assert present(window._selected_pod()).name == "c"
 
     window._show_answer("pods", ["ns"], [pod("new"), pod("a"), pod("c")])
-    assert window._selected_pod().name == "c"  # it moved to row 2, still the one
+    assert (
+        present(window._selected_pod()).name == "c"
+    )  # it moved to row 2, still the one
 
     window._show_answer("pods", ["ns"], [pod("a"), pod("new")])  # it is gone
     assert window._selected_pod() is None
@@ -3658,7 +3678,9 @@ def test_the_selected_row_stays_selected_when_the_rows_change(monkeypatch) -> No
     window._show_answer("deployments", ["ns"], deployments)
     window.table.selectRow(1)
     window._show_answer("deployments", ["ns"], deployments[::-1])
-    assert window._selected_workload().kind == "StatefulSet"  # kind tells them apart
+    assert (
+        present(window._selected_workload()).kind == "StatefulSet"
+    )  # kind tells them apart
 
     window._open_list_view("services")
     row = ClusterResource("ns", "Service", "x", ("a", "b", "c", "d"), "1d")

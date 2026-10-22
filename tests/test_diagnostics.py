@@ -1,12 +1,15 @@
 import logging
 import logging.handlers
 import os
+from typing import cast
 
 import pytest
+from PySide6.QtCore import QObject
 
 import kubescope
 from kubescope.settings import log_directory
 from kubescope.utils import diagnostics
+from tests.qt import get_application
 
 
 @pytest.fixture(autouse=True)
@@ -273,9 +276,7 @@ def test_native_libraries_are_empty_without_proc(tmp_path) -> None:
 
 
 def test_the_runtime_goes_to_the_log_and_the_crash_log(caplog) -> None:
-    from PySide6.QtWidgets import QApplication
-
-    QApplication.instance() or QApplication([])
+    get_application()
     diagnostics.configure_logging(to_file=True)
 
     diagnostics.record_runtime()
@@ -318,7 +319,7 @@ def test_tracing_input_installs_the_trail_on_the_application(monkeypatch) -> Non
             installed.append(filter_)
 
     monkeypatch.setattr(diagnostics.InputTrail, "__init__", lambda self, parent: None)
-    diagnostics.trace_input(FakeApplication())
+    diagnostics.trace_input(cast(QObject, FakeApplication()))
 
     assert len(installed) == 1
 

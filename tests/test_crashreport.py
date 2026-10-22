@@ -1,6 +1,7 @@
 import logging
 import sys
 import threading
+from types import TracebackType
 from urllib.parse import parse_qs, urlparse
 
 import pytest
@@ -21,12 +22,12 @@ def isolated_hooks(monkeypatch):
     logging.getLogger("kubescope").removeHandler(crashreport._recent)
 
 
-def _error() -> tuple:
+def _error() -> tuple[type[BaseException], BaseException, TracebackType | None]:
     message = "\n".join(("first line", "second line with a Pod's content"))
     try:
         raise ValueError(message)
-    except ValueError:
-        return sys.exc_info()
+    except ValueError as error:
+        return type(error), error, error.__traceback__
 
 
 def _log_to_the_buffer(*messages: str) -> None:

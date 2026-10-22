@@ -1,6 +1,7 @@
 import json
 import sys
 from pathlib import Path
+from typing import cast
 
 from kubescope.settings import (
     Settings,
@@ -123,7 +124,7 @@ def test_theme_defaults_to_dark_and_keeps_any_theme_id(tmp_path) -> None:
     assert Settings(path).theme == "midnight"
 
     for empty in ("", "  ", None):
-        settings.theme = empty
+        settings.theme = cast(str, empty)
         assert settings.theme == "dark"
 
     path.write_text('{"theme": 42}', encoding="utf-8")

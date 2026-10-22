@@ -1,15 +1,16 @@
-from PySide6.QtWidgets import QApplication, QDialog, QPlainTextEdit
+from PySide6.QtWidgets import QDialog, QPlainTextEdit
 
 from kubescope.dialogs import crash_dialog
 from kubescope.dialogs.crash_dialog import CrashReportDialog, show_pending_crash_report
 from kubescope.settings import log_directory
 from kubescope.utils import crashreport
+from tests.qt import get_application
 
 REPORT = "Unhandled ValueError in thread MainThread\ntrace\n"
 
 
 def _application() -> None:
-    QApplication.instance() or QApplication([])
+    get_application()
 
 
 def _leave_report() -> None:
@@ -22,6 +23,7 @@ def test_the_dialog_shows_the_report_for_reading() -> None:
     dialog = CrashReportDialog(REPORT)
 
     text = dialog.findChild(QPlainTextEdit)
+    assert text is not None
     assert text.toPlainText() == REPORT and text.isReadOnly()
     assert dialog.open_issue.isDefault()
 

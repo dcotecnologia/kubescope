@@ -1,12 +1,14 @@
 import io
 import json
 import os
+import subprocess
 import sys
 import threading
 import time
 from datetime import UTC, datetime
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from types import SimpleNamespace
+from typing import cast
 
 import pytest
 
@@ -336,7 +338,7 @@ class FakeCluster:
                 self.end_headers()
                 self.wfile.write(body)
 
-            def log_message(self, *_args: object) -> None:
+            def log_message(self, format: str, *args: object) -> None:
                 pass
 
         self.server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
@@ -986,7 +988,10 @@ def test_programs_are_found_on_the_path_on_windows(monkeypatch) -> None:
 
 
 def test_sso_profiles_are_told_apart_from_access_key_profiles(monkeypatch) -> None:
-    answers = {"sso_session": "", "sso_start_url": "https://example.awsapps.com/start"}
+    answers: dict[str, str | None] = {
+        "sso_session": "",
+        "sso_start_url": "https://example.awsapps.com/start",
+    }
 
     def configure(command, _timeout):
         assert command[:3] == ["aws", "configure", "get"]
@@ -1171,7 +1176,7 @@ def test_cancel_running_stops_commands_that_are_in_flight() -> None:
 
 def test_stop_handles_windows_and_already_finished_processes(monkeypatch) -> None:
     calls = []
-    process = SimpleNamespace(pid=4242)
+    process = cast(subprocess.Popen, SimpleNamespace(pid=4242))
 
     monkeypatch.setattr(cluster.sys, "platform", "win32")
     monkeypatch.setattr(cluster.subprocess, "run", lambda cmd, **_kw: calls.append(cmd))
@@ -2243,6 +2248,7 @@ def test_parse_nodegroup_tolerates_missing_fields() -> None:
         "NodeGroup", {"nodegroupName": "z", "scalingConfig": {"desiredSize": 3}}, now
     )
 
+    assert bare is not None and naive is not None and no_max is not None
     assert bare.values == ("—",) * 5 and bare.age == "unknown"
     assert naive.age == "2d"
     assert no_max.values[2] == "3 (0–3)"
@@ -2351,6 +2357,7 @@ def test_get_resources_lists_the_add_ons_of_eks_and_the_helm_releases(
     assert commands[1][:3] == ["aws", "eks", "describe-addon"]
     assert "--addon-name" in commands[1]
     bare = cluster._parse_eks("Addon", {"addonName": "x"}, NETWORK_NOW)
+    assert bare is not None
     assert bare.values == ("—", "—", "EKS")
     assert cluster.get_resource_details("ctx", "Addon", "", "vpc-cni")["addonName"]
 

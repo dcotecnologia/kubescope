@@ -127,7 +127,7 @@ def test_main_runs_a_command_instead_of_opening_the_window(monkeypatch) -> None:
 NEWER = Release("9.9.9", "https://x.test")
 
 
-def _updating(monkeypatch, kind="deb", release=NEWER):
+def _updating(monkeypatch, kind="deb", release: Release | None = NEWER):
     """An installation that can update itself, and the calls it makes."""
     calls = []
     monkeypatch.setattr(cli, "detect_install", lambda: Install(kind, cli.Path("/app")))

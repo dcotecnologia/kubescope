@@ -43,7 +43,7 @@ class Recorder:
 
             do_DELETE = do_POST = do_PATCH = handle_any
 
-            def log_message(self, *_args: object) -> None:
+            def log_message(self, format: str, *args: object) -> None:
                 pass
 
         self.server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
