@@ -92,7 +92,12 @@ analysis = Analysis(
     # Only these Qt modules are used. Collecting every PySide6 module would ship
     # Qt WebEngine (Chromium), Qt Charts and the rest, which the app never loads and
     # whose licenses (some GPL-only) the bundle would then have to honor.
-    hiddenimports=["PySide6.QtCore", "PySide6.QtGui", "PySide6.QtWidgets"],
+    hiddenimports=[
+        "PySide6.QtCore",
+        "PySide6.QtGui",
+        "PySide6.QtNetwork",  # the local socket that keeps one instance running
+        "PySide6.QtWidgets",
+    ],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
@@ -107,7 +112,6 @@ analysis = Analysis(
         "PySide6.QtQml",
         "PySide6.QtMultimedia",
         "PySide6.QtPdf",
-        "PySide6.QtNetwork",
     ],
     noarchive=False,
     optimize=0,

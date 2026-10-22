@@ -17,6 +17,7 @@ All notable changes to this project will be documented in this file. The format 
 ### Fixed
 
 - The tabs of the top bar take the room they need instead of being scrolled while there is space left by @danilogco
+- The installed app starts again: the bundle left out the Qt network module that the single-instance check needs, so it stopped with "No module named PySide6.QtNetwork" by @danilogco
 
 ## [0.12.1] - 2026-10-22
 
