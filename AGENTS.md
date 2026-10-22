@@ -151,9 +151,27 @@ Examples:
 - `build(flatpak): package the PyInstaller bundle as a Flatpak`
 - `docs: describe the Flatpak build in the README`
 
+## Running checks without freezing the machine
+
+The full test suite (Qt, with coverage) and the type checker are heavy enough to
+freeze a developer's computer. Agents follow these rules while they work:
+
+- Never run the whole suite: no `make test`, no `pytest` without arguments. Run
+  only the test file of the change:
+  `nice -n 19 uv run pytest tests/test_x.py -q --no-cov`.
+- Coverage only at the final gate. `--cov` (the required 100%) is the slowest part
+  and is left to the human.
+- One heavy command at a time. Never run `pytest`, `pyright` and `ruff` one after
+  the other without waiting, or in parallel; wait for one to finish before the next.
+- Check only what changed: `pyright path/to/file.py` instead of `pyright` on the
+  whole project, `ruff check path/to/file.py` instead of `ruff check .`.
+- Do not repeat a check when nothing changed since its last run.
+- Ask before the full gate. `make test` and `make lint` (section 5) run once, at
+  the end, and only after the agent asks for authorization.
+
 ## 5) Minimum quality before opening a PR
 
-Run locally and make all of it pass:
+Run locally and make all of it pass (once, at the end, following the rules above):
 
 - `make lint` (`ruff check` and `ruff format --check`)
 - `make test` (pytest, `QT_QPA_PLATFORM=offscreen` on a headless machine)
