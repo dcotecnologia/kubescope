@@ -3689,3 +3689,16 @@ def test_the_selected_row_stays_selected_when_the_rows_change(monkeypatch) -> No
     window._show_answer("services", [], [row])
     assert window._selected_resource() == row
     window.close()
+
+
+def test_the_top_bar_gives_the_tabs_all_the_room_they_need(monkeypatch) -> None:
+    window = _ready_window(monkeypatch)
+    window.resize(1400, 700)
+    window.show()
+    for view in ("pods", "deployments", "jobs", "secrets"):
+        window._toggle_pin(view)
+
+    scroll = window.pinned_scroll
+    wanted = present(scroll.widget()).sizeHint
+    _wait_until(lambda: scroll.width() >= wanted().width())
+    window.close()
