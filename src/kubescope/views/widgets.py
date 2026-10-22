@@ -3,7 +3,7 @@
 from collections.abc import Callable
 from datetime import datetime
 
-from PySide6.QtCore import QEvent, QPointF, QRect, QRectF, QSize, Qt
+from PySide6.QtCore import QEvent, QObject, QPointF, QRect, QRectF, QSize, Qt, QTimer
 from PySide6.QtGui import (
     QColor,
     QMouseEvent,
@@ -41,6 +41,17 @@ class TabScrollArea(QScrollArea):
             "QScrollArea#pinnedScroll, QScrollArea#pinnedScroll > QWidget > QWidget"
             " { background: transparent; }"
         )
+
+    def setWidget(self, widget: QWidget) -> None:
+        super().setWidget(widget)
+        widget.installEventFilter(self)
+
+    def eventFilter(self, watched: QObject, event: QEvent) -> bool:
+        """The tabs are laid out after they are added, and then they know how
+        wide they are: ask the bar for that room."""
+        if watched is self.widget() and event.type() == QEvent.Type.LayoutRequest:
+            QTimer.singleShot(0, self.updateGeometry)  # once the tabs are polished
+        return super().eventFilter(watched, event)
 
     def sizeHint(self) -> QSize:
         content = self.widget()
