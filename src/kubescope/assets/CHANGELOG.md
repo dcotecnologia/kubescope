@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+### Changed
+
+- The list on screen is read again every five seconds instead of ten by @danilogco
+
 ## [0.12.1] - 2026-10-22
 
 ### Fixed
