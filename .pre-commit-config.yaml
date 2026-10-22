@@ -36,6 +36,7 @@ repos:
       - id: mixed-line-ending
       - id: name-tests-test
         args: [--pytest-test-first]
+        exclude: ^tests/qt\.py$  # shared helpers, not a test module
       - id: sort-simple-yaml
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
