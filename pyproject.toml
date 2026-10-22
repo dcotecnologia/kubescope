@@ -60,9 +60,9 @@ markers = [
 ]
 
 [tool.pyright]
-# What Pylance reports in the editor; the generated UI files are left out, and
-# so are the tests, which still poke at Qt through None-able and private APIs
-include = ["src"]
+# What Pylance reports in the editor, tests included; the generated UI files
+# are left out
+include = ["src", "tests"]
 exclude = ["src/kubescope/ui/ui_*.py", "**/__pycache__"]
 pythonVersion = "3.12"
 venvPath = "."
