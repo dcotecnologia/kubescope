@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file. The format 
 
 ### Added
 
+- KubeScope is packaged as a snap named `dco-kubescope` (`make snap`; the Snap Store reserves `kubescope`). It is classic, like kubectl and helm, so it runs the sign-in tools of every cloud (aws, gcloud, az, kubelogin, oci...) from the system. The Release workflow builds it, and a separate Snap Store workflow sends it to the `candidate` channel of the store after a Release of a tag by @danilogco
 - The Flatpak works with GKE, AKS, OCI and the other clouds: the sign-in programs of the kubeconfig and the login commands run on the host through `flatpak-spawn --host` (the manifest asks for the `org.freedesktop.Flatpak` permission, which SECURITY.md explains), while the AWS CLI stays the one the Flatpak carries by @danilogco
 
 ## [0.13.1] - 2026-10-23

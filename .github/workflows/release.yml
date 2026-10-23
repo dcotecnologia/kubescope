@@ -2,6 +2,7 @@ name: Release
 
 # Builds the installable packages. Run it by hand ("Run workflow") to get the
 # files as artifacts, or push a tag like v0.1.0 to also publish a GitHub release.
+# The snap is sent to the Snap Store by the Snap Store workflow, after this one.
 on:
   workflow_dispatch:
     inputs:
@@ -18,7 +19,7 @@ permissions:
 
 jobs:
   linux:
-    name: Linux (.deb and AppImage)
+    name: Linux (.deb, AppImage and snap)
     if: github.event_name != 'workflow_dispatch' || inputs.target != 'windows'
     # the oldest runner keeps the glibc requirement low, so more distros work
     runs-on: ubuntu-22.04
@@ -65,6 +66,21 @@ jobs:
           path: |
             dist/*.deb
             dist/*.AppImage
+          if-no-files-found: error
+
+      # snapcraft packs the same bundle in a clean Ubuntu 24.04 (core24) container
+      - name: Lay out the snap
+        run: uv run python tools/build_snap.py --stage
+
+      - name: Build the snap
+        uses: snapcore/action-build@v1
+        with:
+          path: build/snap
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: snap-package
+          path: build/snap/*.snap
           if-no-files-found: error
 
   windows:

@@ -58,10 +58,11 @@ not need `kubectl`.
 | ----------------- | ------------------------------------------- | ------------------------------------------------------------------------------ |
 | Debian and Ubuntu | `kubescope_<version>_amd64.deb`             | `sudo apt install ./kubescope_<version>_amd64.deb`, then `kubescope`           |
 | Any Linux         | `KubeScope-<version>-x86_64.AppImage`       | `chmod +x` the file and run it                                                 |
+| Any Linux (snap)  | `dco-kubescope_<version>_amd64.snap`        | `sudo snap install dco-kubescope`                                              |
 | Windows           | `KubeScope-<version>-windows-x64-setup.exe` | run the installer; or unzip the portable `KubeScope-<version>-windows-x64.zip` |
 | macOS and others  | none yet                                    | [run it from source](#run-from-source)                                         |
 
-For the Flatpak, how to remove the app, and the details of each system, read the
+For the Flatpak and the snap, how to remove the app, and the details of each system, read the
 [installation guide](https://github.com/dcotecnologia/kubescope/wiki/Installation)
 on the wiki. To connect to your clusters, see
 [Connecting to clusters](https://github.com/dcotecnologia/kubescope/wiki/Connecting-to-clusters).
@@ -122,7 +123,8 @@ _The cluster overview, shown with sample data. Regenerate it with
   **Settings** turns the startup check off. Clicking **Update available** asks you
   to confirm, shows the version change and the release notes, then updates the
   way KubeScope was installed (AppImage, `.deb` or the Windows installer) and
-  restarts it. A Flatpak or a source checkout opens the release page instead.
+  restarts it. A Flatpak, a snap or a source checkout opens the release page instead; the Flatpak
+  and the snap are updated by their stores.
 - **Your table, your way:** drag any column border to resize it, and right-click
   a table header to hide or show columns. The choice is remembered.
 - **Readable errors:** a missing login tool, an unreachable cluster, expired
@@ -301,6 +303,7 @@ translations.
 make build      # PyInstaller bundle in dist/KubeScope
 make deb        # dist/kubescope_<version>_amd64.deb (Debian/Ubuntu)
 make appimage   # dist/KubeScope-<version>-x86_64.AppImage (any Linux with glibc)
+make snap       # dist/dco-kubescope_<version>_amd64.snap (needs snapcraft; Linux x86_64)
 make flatpak    # dist/KubeScope-<version>.flatpak, built from source (needs flatpak-builder)
 make flatpak-lint         # validate the Flatpak files like Flathub does
 make flathub-submission   # gather the files for a Flathub pull request
@@ -318,9 +321,15 @@ clouds (GKE, AKS, OCI...) it asks the host to run the programs the kubeconfig na
 `flatpak-spawn --host`, through the `org.freedesktop.Flatpak` permission; install those
 tools on the system as usual.
 
+The snap (`dco-kubescope`; the Snap Store reserves `kubescope`) is classic, like `kubectl` and `helm`: it has no sandbox and runs
+the tools of the system, so every cloud works. The Snap Store has to approve the classic
+confinement of the app (a request in the Snapcraft forum, before the first upload). It
+packs the same PyInstaller bundle as the `.deb`, with `snapcraft` (in LXD by default;
+`SNAPCRAFT_BUILD_ARGS=--destructive-mode` on Ubuntu 24.04).
+
 Windows packages can also be built without Wine: the **Release** workflow
 (`.github/workflows/release.yml`) builds everything on GitHub runners: the Linux
-`.deb` and AppImage on Ubuntu 22.04 (lower glibc requirement) and the Windows
+`.deb`, AppImage and snap on Ubuntu 22.04 (lower glibc requirement) and the Windows
 installer plus a portable zip on Windows. Run it from the Actions tab, or push a
 `v*` tag to also publish a GitHub release.
 

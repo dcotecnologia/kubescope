@@ -50,7 +50,7 @@ class Install:
 
 def detect_install() -> Install | None:
     """How this KubeScope was installed, or None when it cannot update itself
-    (a Flatpak, which Flathub updates, or a source tree)."""
+    (a Flatpak or a snap, which their stores update, or a source tree)."""
     if sys.platform == "win32":
         return Install("windows", Path(sys.executable)) if _frozen() else None
     appimage = os.environ.get("APPIMAGE")
