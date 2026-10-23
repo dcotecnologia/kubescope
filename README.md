@@ -333,6 +333,18 @@ Windows packages can also be built without Wine: the **Release** workflow
 installer plus a portable zip on Windows. Run it from the Actions tab, or push a
 `v*` tag to also publish a GitHub release.
 
+The **Snap Store** workflow (`.github/workflows/snap-store.yml`) sends the snap of a
+successful Release of a tag to the `candidate` channel of the store; promote it to
+`stable` after trying it. It needs the name registered once (`snapcraft register
+dco-kubescope`) and the `SNAPCRAFT_STORE_CREDENTIALS` secret, made with `snapcraft export-login
+--snaps=dco-kubescope --channels=candidate --acls=package_push,package_release
+credentials.txt`; without the secret the run only warns.
+Each send is listed under **Deployments** of the repository, in the `snap-store`
+environment, with a link to the app in the store; give that environment required
+reviewers to hold a send until a person approves it, and keep the credentials as a
+secret of the environment.
+Run it by hand to send the snap of another Release run, or to another channel.
+
 ## Editing the UI
 
 The screens are Qt Designer files in `src/kubescope/ui/`:
