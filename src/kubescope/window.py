@@ -188,6 +188,7 @@ logger = logging.getLogger(__name__)
 
 PIN_MIME = "application/x-kubescope-pin"  # what a dragged pinned tab carries
 VIEWER_MIME = "application/x-kubescope-viewer"  # the same, for a Details/Logs tab
+DESIGNED_COLUMNS = 6  # the columns the table has in main_window.ui
 LIST_DEBOUNCE_MS = 150
 LIST_REFRESH_MS = 5_000  # the list on screen is read again this often
 LIST_REFRESH_MAX_MS = 60_000  # ... and this rarely while the cluster keeps failing
@@ -4555,8 +4556,22 @@ class WorkloadWindow(QMainWindow):
             )
         self.ui.sidebarNote.setText(note)
 
+    def _restore_designed_headers(self) -> None:
+        """Give the table the columns and headers its layout has, which the
+        generated retranslation sets one by one; a list with fewer columns, or
+        none of its own headers, would make it fail.
+
+        The columns of the list on screen are drawn again right after.
+        """
+        if self.table.columnCount() < DESIGNED_COLUMNS:
+            self.table.setColumnCount(DESIGNED_COLUMNS)
+        for column in range(DESIGNED_COLUMNS):
+            if self.table.horizontalHeaderItem(column) is None:
+                self.table.setHorizontalHeaderItem(column, QTableWidgetItem())
+
     def _retranslate(self) -> None:
         """Re-apply every visible text after the translator changed."""
+        self._restore_designed_headers()
         self.ui.retranslateUi(self)
         self._show_access_note()
         self.viewer_ui.retranslateUi(self.ui.viewerHost)
