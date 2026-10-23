@@ -88,22 +88,12 @@ def blockers(manifest: str) -> list[str]:
             "(`make build`); Flathub builds from a public source (a git tag or an "
             "archive with its sha256), through Python modules, not a prebuilt bundle"
         )
-    if "awscli.amazonaws.com" in manifest:
-        found.append(
-            "the AWS CLI is downloaded already built; Flathub asks for open source "
-            "software to be built from its source, or the dependency to be left out"
-        )
-    if "--filesystem=~/.aws" in manifest:
-        found.append(
-            "`--filesystem=~/.aws` is a broad permission; be ready to justify it, "
-            "or narrow it, in the review"
-        )
     if "--talk-name=org.freedesktop.Flatpak" in manifest:
         found.append(
             "`--talk-name=org.freedesktop.Flatpak` lets the app run programs on the "
             "host (`flatpak-spawn --host`); Flathub reviews it case by case, so be "
-            "ready to explain that GKE, AKS and OCI sign-ins need the tools of the "
-            "system"
+            "ready to explain that EKS, GKE, AKS and OCI sign-ins need the tools of "
+            "the system"
         )
     return found
 

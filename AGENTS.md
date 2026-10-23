@@ -214,8 +214,8 @@ Requirements:
   its binaries are not patched (`no-patchelf`). `.github/workflows/snap-store.yml` sends it to the
   store after the Release workflow, to `candidate`.
 - Programs of the system (gcloud, az, kubelogin, oci...) go through `utils/flatpak.py`
-  (`on_host`, `in_terminal`) so that they run on the host when the app is a Flatpak; the AWS CLI
-  is the one the Flatpak carries. Do not start such programs with a bare `subprocess` call.
+  (`on_host`) so that they run on the host when the app is a Flatpak, which carries no cloud CLI,
+  the `aws` included. Do not start such programs with a bare `subprocess` call.
 - The Flatpak app ID is `com.dcotecnologia.KubeScope`; keep it consistent across the
   manifest, desktop file, metainfo, `tools/build_flatpak.py` and `tools/flathub.py`.
 - `python3-kubernetes.json` lists the Python packages of the Kubernetes client for

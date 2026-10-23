@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+### Changed
+
+- The Flatpak no longer carries the AWS CLI: like `gcloud`, `az`, `kubelogin` and `oci`, the `aws` of the system runs on the host through `flatpak-spawn --host`, so EKS contexts use the version and the profiles of the person's own installation (the bundled AWS CLI v1 rejected some commands that the app sends), and the `~/.aws` permission is gone from the manifest by @danilogco
+
 ## [0.14.0] - 2026-10-23
 
 ### Added

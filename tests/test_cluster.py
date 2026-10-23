@@ -2846,7 +2846,7 @@ def test_in_a_flatpak_the_programs_of_the_system_run_on_the_host(
 
     assert started == [
         ["flatpak-spawn", "--host", "gcloud", "auth", "print-access-token"],
-        ["aws", "sts", "get-caller-identity"],  # the Flatpak carries the AWS CLI
+        ["flatpak-spawn", "--host", "aws", "sts", "get-caller-identity"],
     ]
 
 
@@ -2900,24 +2900,13 @@ def test_in_a_flatpak_the_terminal_and_its_program_are_the_hosts(
     monkeypatch.setattr(cluster.sys, "platform", "linux")
     monkeypatch.setattr(cluster.subprocess, "Popen", lambda cmd: launched.append(cmd))
     monkeypatch.setattr(cluster, "host_has", lambda name: name == "konsole")
-    monkeypatch.delenv("FLATPAK_ID", raising=False)
 
     cluster._open_terminal(["gcloud", "auth", "login"])
     cluster._open_terminal(["aws", "configure"])
 
     assert launched == [
         ["flatpak-spawn", "--host", "konsole", "-e", "gcloud", "auth", "login"],
-        [
-            "flatpak-spawn",
-            "--host",
-            "konsole",
-            "-e",
-            "flatpak",
-            "run",
-            "--command=aws",
-            flatpak.APP_ID,
-            "configure",
-        ],
+        ["flatpak-spawn", "--host", "konsole", "-e", "aws", "configure"],
     ]
 
     monkeypatch.setattr(cluster, "host_has", lambda _name: False)

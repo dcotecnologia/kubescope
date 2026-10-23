@@ -60,10 +60,12 @@ flatpak install --user KubeScope-<version>.flatpak
 flatpak run com.dcotecnologia.KubeScope
 ```
 
-The Flatpak includes the AWS CLI, so EKS contexts can sign in from inside the
-sandbox. It can read `~/.kube` (read-only) and `~/.aws`. Other login tools, such
-as `gcloud` or `kubelogin`, are not available inside it; use the `.deb` or the
-AppImage if your kubeconfig needs them.
+The Flatpak reads `~/.kube` (read-only) and carries no cloud CLI. To sign in to EKS,
+GKE, AKS or OCI it asks the host to run the tools of your system (`aws`, `gcloud`,
+`az`, `kubelogin`, `oci`...), so install them there as usual. It does this through the
+`org.freedesktop.Flatpak` permission, which lets the app run programs outside the
+sandbox; read [SECURITY.md](https://github.com/dcotecnologia/kubescope/blob/main/SECURITY.md)
+before you install it.
 
 ## Windows
 

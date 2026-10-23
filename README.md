@@ -307,7 +307,7 @@ make appimage   # dist/KubeScope-<version>-x86_64.AppImage (any Linux with glibc
 make snap       # dist/dco-kubescope_<version>_amd64.snap (needs snapcraft; Linux x86_64)
 make flatpak    # dist/KubeScope-<version>.flatpak, built from source (needs flatpak-builder)
 make flatpak-lint         # validate the Flatpak files like Flathub does
-make flathub-submission   # gather the files for a Flathub pull request
+make flathub-submission   # gather the files for a Flathub pull request (steps in packaging/FLATHUB.md)
 make windows    # installer and portable zip; on Linux it builds inside Wine
 ```
 
@@ -315,12 +315,12 @@ Each of these packages the bundle in `dist/KubeScope`, so build one platform at 
 time. `make windows` keeps its Wine prefix in `.wine/` and downloads Python and
 Inno Setup on the first run.
 
-The Flatpak (`com.dcotecnologia.KubeScope`) bundles the AWS CLI, so EKS contexts sign
-in from the sandbox, and can read `~/.kube` (read-only) and `~/.aws`. For the other
-clouds (GKE, AKS, OCI...) it asks the host to run the programs the kubeconfig names
-(`gcloud`, `gke-gcloud-auth-plugin`, `az`, `kubelogin`, `oci`...) with
-`flatpak-spawn --host`, through the `org.freedesktop.Flatpak` permission; install those
-tools on the system as usual.
+The Flatpak (`com.dcotecnologia.KubeScope`) reads `~/.kube` (read-only) and carries no
+cloud CLI: for every cloud (EKS, GKE, AKS, OCI...) it asks the host to run the programs
+the kubeconfig names (`aws`, `gcloud`, `gke-gcloud-auth-plugin`, `az`, `kubelogin`,
+`oci`...) with `flatpak-spawn --host`, through the `org.freedesktop.Flatpak`
+permission. Install those tools on the system as usual; their versions and profiles are
+the ones you already use.
 
 The snap (`dco-kubescope`; the Snap Store reserves `kubescope`) is classic, like `kubectl` and `helm`: it has no sandbox and runs
 the tools of the system, so every cloud works. The Snap Store has to approve the classic

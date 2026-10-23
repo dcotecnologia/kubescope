@@ -33,9 +33,14 @@ def test_in_a_flatpak_a_command_is_asked_of_the_host(sandbox) -> None:
     ]
 
 
-def test_the_aws_cli_stays_in_the_sandbox_that_carries_it(sandbox) -> None:
-    assert flatpak.on_host(["aws", "eks", "get-token"]) == ["aws", "eks", "get-token"]
-    assert flatpak.on_host(["/app/bin/aws", "sso", "login"])[0] == "/app/bin/aws"
+def test_the_aws_cli_is_the_one_of_the_host_too(sandbox) -> None:
+    assert flatpak.on_host(["aws", "eks", "get-token"]) == [
+        "flatpak-spawn",
+        "--host",
+        "aws",
+        "eks",
+        "get-token",
+    ]
 
 
 def test_only_the_environment_that_differs_is_handed_to_the_host(
@@ -56,29 +61,6 @@ def test_only_the_environment_that_differs_is_handed_to_the_host(
         "--env=KUBERNETES_EXEC_INFO={}",
         "kubelogin",
         "get-token",
-    ]
-
-
-def test_the_aws_cli_of_the_flatpak_starts_from_the_flatpak_in_a_terminal(
-    monkeypatch,
-) -> None:
-    monkeypatch.delenv("FLATPAK_ID", raising=False)
-    assert flatpak.in_terminal(["aws", "configure", "--profile", "dev"]) == [
-        "flatpak",
-        "run",
-        "--command=aws",
-        flatpak.APP_ID,
-        "configure",
-        "--profile",
-        "dev",
-    ]
-
-    monkeypatch.setenv("FLATPAK_ID", "org.example.Other")
-    assert flatpak.in_terminal(["aws", "configure"])[3] == "org.example.Other"
-    assert flatpak.in_terminal(["gcloud", "auth", "login"]) == [
-        "gcloud",
-        "auth",
-        "login",
     ]
 
 

@@ -40,7 +40,7 @@ from kubescope.models import (
     parse_memory,
 )
 from kubescope.utils.errors import first_line, is_auth_error
-from kubescope.utils.flatpak import HOST, host_has, in_flatpak, in_terminal, on_host
+from kubescope.utils.flatpak import HOST, host_has, in_flatpak, on_host
 
 if TYPE_CHECKING:
     from kubernetes import client
@@ -915,7 +915,7 @@ def _terminal_launcher(command: list[str]) -> list[str] | None:
     if in_flatpak():  # the terminals and the programs are the host's
         return next(
             (
-                [*HOST, name, flag, *in_terminal(command)]
+                [*HOST, name, flag, *command]
                 for name, flag in _TERMINALS
                 if host_has(name)
             ),
