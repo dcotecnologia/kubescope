@@ -171,6 +171,26 @@ def test_get_pod_logs_selects_container_and_caps_lines(monkeypatch) -> None:
     ]
 
 
+def test_get_pod_logs_asks_only_for_the_lines_after_the_ones_seen(monkeypatch) -> None:
+    requests = []
+
+    def fake_request(path, context, query=None, accept="application/json"):
+        requests.append(query)
+        return b""
+
+    monkeypatch.setattr(cluster, "_request", fake_request)
+
+    cluster.get_pod_logs("dev", "ops", "api", "app", since_time="2026-10-08T00:00:01Z")
+
+    assert requests == [
+        [
+            ("container", "app"),
+            ("sinceTime", "2026-10-08T00:00:01Z"),
+            ("timestamps", "true"),
+        ]
+    ]
+
+
 def _node(name: str, ready: str = "True", role: str | None = None) -> dict:
     labels = {f"node-role.kubernetes.io/{role}": ""} if role else {}
     return {

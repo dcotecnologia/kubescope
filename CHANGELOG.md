@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file. The format 
 - Lists ask the API server for its cached copy (`resourceVersion=0`), which is cheaper for the cluster than reading its datastore every few seconds by @danilogco
 - The namespaces of a cluster are read once a minute instead of with every refresh by @danilogco
 - Pod CPU and memory are read from the metrics server at most every 15 seconds, the pace at which it samples, instead of with every refresh by @danilogco
+- An open log asks the cluster only for the lines after the last one shown and adds them to the end, instead of downloading and redrawing the last 500 lines every three seconds; the Refresh button still reads the whole tail, and a log that keeps growing holds up to 5,000 lines by @danilogco
 - When a read changes a few rows of a list, only those rows are rewritten instead of every cell of the table by @danilogco
 - Requests to the cluster accept a gzip-compressed answer, which the API server uses for large lists, so a big list crosses the network in a fraction of its size by @danilogco
 - The colors of the status column are worked out once per list instead of once per row by @danilogco

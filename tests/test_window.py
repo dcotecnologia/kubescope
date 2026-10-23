@@ -472,6 +472,59 @@ def test_log_tab_keeps_scroll_position_unless_following_the_end(monkeypatch) -> 
     window.close()
 
 
+def test_log_tab_asks_only_for_the_lines_after_the_last_one(monkeypatch) -> None:
+    window, tab = _open_log_tab(monkeypatch)
+    calls = []
+    monkeypatch.setattr(
+        window,
+        "_run_action",
+        lambda operation, ok, *args, **kw: calls.append((ok, args)),
+    )
+    first = "2026-10-08T00:00:01Z one\n2026-10-08T00:00:02Z two"
+    tab.set_logs(first)
+    assert tab.last_time == "2026-10-08T00:00:02Z"
+
+    window._refresh_log(tab, force=True)  # a button press reads it all again
+    assert calls[-1][1] == ("prod", "default", "api-1", "app")
+    calls[-1][0](first)
+    assert tab.ui.logText.toPlainText() == first
+
+    window._refresh_log(tab, force=True)
+    calls[-1][0](first)
+    tab.busy = False
+    window.show()
+    window._show_page(3)
+    window.viewer_tabs.setCurrentWidget(tab)
+    window._refresh_log(tab)
+    ok, args = calls[-1]
+    assert args == ("prod", "default", "api-1", "app", 500, "2026-10-08T00:00:02Z")
+
+    # the cluster repeats the last line it was given, then the new ones
+    ok("2026-10-08T00:00:02Z two\n2026-10-08T00:00:03Z \x1b[0mthree\n\n")
+    assert tab.ui.logText.toPlainText() == first + "\n2026-10-08T00:00:03Z three"
+    assert tab.last_time == "2026-10-08T00:00:03Z"
+
+    window._refresh_log(tab)
+    calls[-1][0]("")  # nothing new: the view stays as it is
+    assert tab.ui.logText.toPlainText().endswith("three")
+    assert "Updated at" in tab.ui.logStatus.text()
+    window.close()
+
+
+def test_log_tab_replaces_the_empty_notice_with_the_first_lines(monkeypatch) -> None:
+    window, tab = _open_log_tab(monkeypatch)
+    tab.set_logs("")
+    assert tab.last_time is None
+    assert tab.ui.logText.toPlainText() == "No log lines returned."
+
+    tab.add_logs("2026-10-08T00:00:01Z first")
+    assert tab.ui.logText.toPlainText() == "2026-10-08T00:00:01Z first"
+
+    tab.set_logs("a line without a time")
+    assert tab.last_time is None  # nothing to ask from: the next read is a full one
+    window.close()
+
+
 def test_closed_log_tab_ignores_late_results(monkeypatch) -> None:
     window, tab = _open_log_tab(monkeypatch)
     calls = []

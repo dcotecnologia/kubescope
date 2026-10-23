@@ -1768,10 +1768,18 @@ def get_pod_logs(
     pod_name: str,
     container: str,
     tail_lines: int = 500,
+    since_time: str | None = None,
 ) -> str:
-    tail = min(max(tail_lines, 1), 500)
+    """The last lines of a container's log; with `since_time` (the timestamp of
+    a line already seen) only the lines from then on, which the cluster answers
+    with a few lines instead of the whole tail."""
     path = f"{_resource_path('pods', namespace, pod_name)}/log"
-    query = [("container", container), ("tailLines", str(tail)), ("timestamps", "true")]
+    query = [("container", container)]
+    if since_time:
+        query.append(("sinceTime", since_time))
+    else:
+        query.append(("tailLines", str(min(max(tail_lines, 1), 500))))
+    query.append(("timestamps", "true"))
     return _request(path, context, query, accept="application/json, */*").decode(
         errors="replace"
     )
