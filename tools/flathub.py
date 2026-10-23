@@ -98,6 +98,13 @@ def blockers(manifest: str) -> list[str]:
             "`--filesystem=~/.aws` is a broad permission; be ready to justify it, "
             "or narrow it, in the review"
         )
+    if "--talk-name=org.freedesktop.Flatpak" in manifest:
+        found.append(
+            "`--talk-name=org.freedesktop.Flatpak` lets the app run programs on the "
+            "host (`flatpak-spawn --host`); Flathub reviews it case by case, so be "
+            "ready to explain that GKE, AKS and OCI sign-ins need the tools of the "
+            "system"
+        )
     return found
 
 

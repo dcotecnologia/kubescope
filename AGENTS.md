@@ -209,6 +209,9 @@ Requirements:
   `make windows-remote` builds them on GitHub Actions.
 - Building for another platform replaces `dist/KubeScope`, so run the Linux
   packages and the Windows build one after the other, not at the same time.
+- Programs of the system (gcloud, az, kubelogin, oci...) go through `utils/flatpak.py`
+  (`on_host`, `in_terminal`) so that they run on the host when the app is a Flatpak; the AWS CLI
+  is the one the Flatpak carries. Do not start such programs with a bare `subprocess` call.
 - The Flatpak app ID is `com.dcotecnologia.KubeScope`; keep it consistent across the
   manifest, desktop file, metainfo, `tools/build_flatpak.py` and `tools/flathub.py`.
 - `python3-kubernetes.json` lists the Python packages of the Kubernetes client for

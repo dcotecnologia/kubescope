@@ -169,8 +169,15 @@ prefer otherwise.
   publishes before installing it. That catches a damaged or swapped download, and it
   trusts GitHub and this repository.
 - The Flatpak can read `~/.kube` (read-only) and `~/.aws`, and has network
-  access. It bundles the AWS CLI so EKS contexts can sign in. Review these
-  permissions with `flatpak info --show-permissions com.dcotecnologia.KubeScope`.
+  access. It bundles the AWS CLI so EKS contexts can sign in. For the other clouds it
+  can ask the host to run programs (`org.freedesktop.Flatpak`, used with
+  `flatpak-spawn --host`): that permission lets the app run any program of your
+  session outside the sandbox, so the sandbox is not a boundary against the app
+  itself. It runs only the programs your kubeconfig names to sign in, and the
+  login tools above. Review the permissions with
+  `flatpak info --show-permissions com.dcotecnologia.KubeScope`, and remove that one
+  with `flatpak override --user --no-talk-name=org.freedesktop.Flatpak` if you only
+  use AWS.
 
 ## Supply chain
 
