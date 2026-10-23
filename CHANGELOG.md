@@ -19,6 +19,10 @@ All notable changes to this project will be documented in this file. The format 
 - The bundle is never compressed with UPX, even when the tool is installed on the machine that builds it, so the Qt libraries are not unpacked at every start and antivirus scanners have no packed binary to flag by @danilogco
 - The colors of the status column are worked out once per list instead of once per row by @danilogco
 
+### Fixed
+
+- Changing the language while a list with few columns is on screen no longer fails with an error: the table gets back the columns its layout has before the texts are translated, and the list draws its own columns again right after by @danilogco
+
 ## [0.13.0] - 2026-10-22
 
 ### Changed

@@ -3690,6 +3690,17 @@ def test_a_refresh_the_person_asked_for_signs_in_again(monkeypatch) -> None:
     window.close()
 
 
+def test_the_language_can_change_on_a_list_with_few_columns(monkeypatch) -> None:
+    window = _ready_window(monkeypatch)
+    window.table.setColumnCount(4)  # a list narrower than the layout of the table
+    window.table.takeHorizontalHeaderItem(0)
+
+    window._retranslate()
+
+    assert window.table.columnCount() >= 4
+    window.close()
+
+
 def test_a_quiet_read_leaves_the_status_and_the_spinner_alone(monkeypatch) -> None:
     window = _ready_window(monkeypatch)
     window._open_list_view("pods")
