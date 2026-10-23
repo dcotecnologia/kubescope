@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file. The format 
 - Pod CPU and memory are read from the metrics server at most every 15 seconds, the pace at which it samples, instead of with every refresh by @danilogco
 - An open log asks the cluster only for the lines after the last one shown and adds them to the end, instead of downloading and redrawing the last 500 lines every three seconds; the Refresh button still reads the whole tail, and a log that keeps growing holds up to 5,000 lines by @danilogco
 - When a read changes a few rows of a list, only those rows are rewritten instead of every cell of the table by @danilogco
+- A sign-in that failed, such as an expired AWS SSO token, is not run again for 30 seconds, so a list no longer starts the `aws` program a dozen times just to fail the same way; the Refresh button tries again at once by @danilogco
 - Requests to the cluster accept a gzip-compressed answer, which the API server uses for large lists, so a big list crosses the network in a fraction of its size by @danilogco
 - The app starts about 110 ms sooner: the Kubernetes client library is loaded by the first request to a cluster, on a worker, instead of before the window shows by @danilogco
 - The bundle is never compressed with UPX, even when the tool is installed on the machine that builds it, so the Qt libraries are not unpacked at every start and antivirus scanners have no packed binary to flag by @danilogco
