@@ -4,13 +4,13 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+## [0.14.0] - 2026-10-23
+
 ### Added
 
 - KubeScope is packaged as a snap named `dco-kubescope` (`make snap`; the Snap Store reserves `kubescope`). It is classic, like kubectl and helm, so it runs the sign-in tools of every cloud (aws, gcloud, az, kubelogin, oci...) from the system. The Release workflow builds it, and a separate Snap Store workflow sends it to the `candidate` channel of the store after a Release of a tag by @danilogco
 - A Flatpak workflow builds `KubeScope-<version>.flatpak` after a Release of a tag and attaches it to the GitHub release by @danilogco
 - The Flatpak works with GKE, AKS, OCI and the other clouds: the sign-in programs of the kubeconfig and the login commands run on the host through `flatpak-spawn --host` (the manifest asks for the `org.freedesktop.Flatpak` permission, which SECURITY.md explains), while the AWS CLI stays the one the Flatpak carries by @danilogco
-
-## [0.13.1] - 2026-10-23
 
 ### Changed
 
@@ -323,8 +323,8 @@ The first release.
 
 - Pod logs and resource details are still never written to disk by the app on its own. **Save** is the only exception, and it writes only to the file the user chooses. SECURITY.md says so by @danilogco
 
-[Unreleased]: https://github.com/dcotecnologia/kubescope/compare/v0.13.1...HEAD
-[0.13.1]: https://github.com/dcotecnologia/kubescope/compare/v0.13.0...v0.13.1
+[Unreleased]: https://github.com/dcotecnologia/kubescope/compare/v0.14.0...HEAD
+[0.14.0]: https://github.com/dcotecnologia/kubescope/compare/v0.13.0...v0.14.0
 [0.13.0]: https://github.com/dcotecnologia/kubescope/compare/v0.12.1...v0.13.0
 [0.12.1]: https://github.com/dcotecnologia/kubescope/compare/v0.12.0...v0.12.1
 [0.12.0]: https://github.com/dcotecnologia/kubescope/compare/v0.11.2...v0.12.0
