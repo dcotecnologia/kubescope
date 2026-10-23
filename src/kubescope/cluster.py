@@ -298,6 +298,8 @@ def forget_clients() -> None:
     with _running_lock:
         stale = list(_clients.values())
         _clients.clear()
+        _namespaces.clear()
+        _metrics.clear()
     for api in stale:
         api.close()
 
@@ -323,7 +325,8 @@ def _fetch(path: str, context: str, query: list[tuple[str, str]], accept: str) -
                 "GET",
                 path,
                 query_params=query,
-                header_params={"Accept": accept},
+                # the API server compresses what it sends only when asked
+                header_params={"Accept": accept, "Accept-Encoding": "gzip"},
                 auth_settings=["BearerToken"],
             )
             response = api.call_api(
@@ -440,7 +443,11 @@ def _list(
 
     A list does not name the kind of its items, so each gets it.
     """
-    query = [("labelSelector", selector)] if selector else []
+    # resourceVersion=0 lets the API server answer from its own cache instead of
+    # reading etcd, which is what keeps a list read every few seconds cheap
+    query = [("resourceVersion", "0")]
+    if selector:
+        query.append(("labelSelector", selector))
     document = _get_json(_resource_path(resource, namespace), context, query)
     kind = _KINDS[resource]
     for item in document.get("items") or []:
@@ -988,13 +995,22 @@ def _together(*calls: Any) -> list[Any]:
         return [future.result() for future in futures]
 
 
+NAMESPACES_TTL = 60.0  # namespaces come and go rarely: a list is not read every tick
+_namespaces: dict[str, tuple[float, list[str]]] = {}
+
+
 def _get_namespaces(context: str) -> list[str]:
+    cached = _namespaces.get(context)
+    if cached is not None and time.monotonic() - cached[0] < NAMESPACES_TTL:
+        return list(cached[1])
     document = _list("namespaces", context)
-    return sorted(
+    names = sorted(
         item["metadata"]["name"]
         for item in document.get("items", [])
         if item.get("metadata", {}).get("name")
     )
+    _namespaces[context] = (time.monotonic(), names)
+    return list(names)
 
 
 def get_workloads(
@@ -1178,10 +1194,30 @@ def _sum_usage(item: dict[str, Any]) -> tuple[float, float]:
     return cpu, memory
 
 
+# metrics-server samples every 15 to 60 seconds, so asking more often only
+# repeats the same numbers
+METRICS_TTL = 15.0
+_metrics: dict[
+    tuple[str, str | None],
+    tuple[float, dict[tuple[str, str], tuple[float, float]] | None],
+] = {}
+
+
 def _pod_metrics(
     context: str, namespace: str | None
 ) -> dict[tuple[str, str], tuple[float, float]] | None:
     """Live (cores, bytes) per Pod; None when metrics-server is unavailable."""
+    cached = _metrics.get((context, namespace))
+    if cached is not None and time.monotonic() - cached[0] < METRICS_TTL:
+        return cached[1]
+    usage = _read_pod_metrics(context, namespace)
+    _metrics[(context, namespace)] = (time.monotonic(), usage)
+    return usage
+
+
+def _read_pod_metrics(
+    context: str, namespace: str | None
+) -> dict[tuple[str, str], tuple[float, float]] | None:
     try:
         document = _get_json(
             f"{_METRICS_PATH}{_namespace_scope(namespace)}/pods", context

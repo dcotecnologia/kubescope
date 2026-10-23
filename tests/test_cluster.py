@@ -1,3 +1,4 @@
+import gzip
 import io
 import json
 import os
@@ -68,7 +69,9 @@ def test_get_workloads_lists_namespaces_and_every_default_kind(monkeypatch) -> N
 
     assert namespaces == ["default"]
     assert [(w.kind, w.name) for w in workloads] == [("DaemonSet", "agent")]
-    assert sorted(paths) == sorted((path, "dev", []) for path in documents)
+    assert sorted(paths) == sorted(
+        (path, "dev", [("resourceVersion", "0")]) for path in documents
+    )
 
 
 def test_get_workload_pods_uses_workload_label_selector(monkeypatch) -> None:
@@ -122,7 +125,10 @@ def test_get_workload_pods_uses_workload_label_selector(monkeypatch) -> None:
         (
             "/api/v1/namespaces/production/pods",
             "dev",
-            [("labelSelector", "app=api,tier in (backend,worker)")],
+            [
+                ("resourceVersion", "0"),
+                ("labelSelector", "app=api,tier in (backend,worker)"),
+            ],
         ),
     ]
 
@@ -314,6 +320,7 @@ def test_get_pods_and_usage_include_metrics_restarts_and_owner(monkeypatch) -> N
         return {"items": [pod]} if path.endswith("/pods") else {"items": []}
 
     monkeypatch.setattr(cluster, "_get_json", no_metrics)
+    cluster._metrics.clear()  # the sample above is still fresh
     assert cluster.get_pods("dev")[1][0].cpu is None
 
 
@@ -325,6 +332,8 @@ class FakeCluster:
         self.routes: dict[str, tuple[int, bytes]] = {}
         self.requests: list[tuple[str, str | None]] = []
         self.accept_token: str | None = None  # refuse any other token with a 401
+        self.compress = False  # answer gzip when the client asks for it
+        self.encodings: list[str | None] = []  # Accept-Encoding of each request
         outer = self
 
         class Handler(BaseHTTPRequestHandler):
@@ -334,7 +343,12 @@ class FakeCluster:
                 token = self.headers.get("Authorization")
                 if outer.accept_token and token != outer.accept_token:
                     status, body = 401, b'{"message": "Unauthorized"}'
+                encoding = self.headers.get("Accept-Encoding")
+                outer.encodings.append(encoding)
                 self.send_response(status)
+                if outer.compress and encoding and "gzip" in encoding:
+                    body = gzip.compress(body)
+                    self.send_header("Content-Encoding", "gzip")
                 self.end_headers()
                 self.wfile.write(body)
 
@@ -369,6 +383,14 @@ def fake_cluster(monkeypatch, tmp_path):
     yield fake
     fake.server.shutdown()
     fake.server.server_close()
+
+
+def test_a_request_accepts_a_compressed_answer(fake_cluster) -> None:
+    fake_cluster.compress = True
+    fake_cluster.serve("/version", {"gitVersion": "v1.30.0"})
+
+    assert json.loads(cluster._request("/version", "dev")) == {"gitVersion": "v1.30.0"}
+    assert fake_cluster.encodings == ["gzip"]
 
 
 def test_request_sends_the_token_and_returns_the_body(fake_cluster) -> None:
@@ -1378,7 +1400,7 @@ def test_cron_job_pods_come_from_the_jobs_it_created(monkeypatch) -> None:
     assert [p.name for p in pods] == ["nightly-1-abc"]
     assert seen[-1] == (
         "/api/v1/namespaces/ops/pods",
-        [("labelSelector", "job-name in (nightly-1)")],
+        [("resourceVersion", "0"), ("labelSelector", "job-name in (nightly-1)")],
     )
 
     monkeypatch.setattr(
@@ -2616,3 +2638,82 @@ def test_a_workload_lists_the_node_selector_of_its_pods() -> None:
     assert deployment is not None and deployment.node_selector == "disk=ssd, zone=a"
     assert cron is not None and cron.node_selector == "disk=ssd, zone=a"
     assert bare is not None and bare.node_selector == ""
+
+
+def test_a_list_asks_the_api_server_for_its_cache(monkeypatch) -> None:
+    queries = []
+
+    def get_json(path, context, query=None, accept="application/json"):
+        queries.append(query)
+        return {"items": []}
+
+    monkeypatch.setattr(cluster, "_get_json", get_json)
+
+    cluster._list("pods", "dev", "ops")
+    cluster._list("pods", "dev", "ops", "app=api")
+
+    assert queries == [
+        [("resourceVersion", "0")],
+        [("resourceVersion", "0"), ("labelSelector", "app=api")],
+    ]
+
+
+def test_the_namespaces_are_read_once_a_minute_not_every_refresh(monkeypatch) -> None:
+    reads = []
+    now = [100.0]
+
+    def listing(resource, context, namespace=None, selector=None):
+        reads.append(context)
+        return {"items": [{"metadata": {"name": "b"}}, {"metadata": {"name": "a"}}]}
+
+    monkeypatch.setattr(cluster, "_list", listing)
+    monkeypatch.setattr(cluster, "time", SimpleNamespace(monotonic=lambda: now[0]))
+
+    assert cluster._get_namespaces("dev") == ["a", "b"]
+    cluster._get_namespaces("dev").append("changed")  # a copy: not kept
+    assert cluster._get_namespaces("dev") == ["a", "b"]
+    assert cluster._get_namespaces("prod") == ["a", "b"]
+    assert reads == ["dev", "prod"]
+
+    now[0] += cluster.NAMESPACES_TTL + 1
+    cluster._get_namespaces("dev")
+    assert reads == ["dev", "prod", "dev"]
+
+    cluster.forget_clients()  # signing in again starts over
+    cluster._get_namespaces("dev")
+    assert reads == ["dev", "prod", "dev", "dev"]
+
+
+def test_pod_metrics_are_read_once_per_sample_not_every_refresh(monkeypatch) -> None:
+    reads = []
+    now = [100.0]
+
+    def get_json(path, context, query=None, accept="application/json"):
+        reads.append(path)
+        return {"items": []}
+
+    monkeypatch.setattr(cluster, "_get_json", get_json)
+    monkeypatch.setattr(cluster, "time", SimpleNamespace(monotonic=lambda: now[0]))
+
+    assert cluster._pod_metrics("dev", "ops") == {}
+    assert cluster._pod_metrics("dev", "ops") == {}
+    cluster._pod_metrics("dev", None)  # another scope is its own sample
+    assert len(reads) == 2
+
+    now[0] += cluster.METRICS_TTL + 1
+    cluster._pod_metrics("dev", "ops")
+    assert len(reads) == 3
+
+
+def test_missing_metrics_server_is_remembered_too(monkeypatch) -> None:
+    reads = []
+
+    def get_json(path, context, query=None, accept="application/json"):
+        reads.append(path)
+        raise cluster.ClusterError("the server could not find the requested resource")
+
+    monkeypatch.setattr(cluster, "_get_json", get_json)
+
+    assert cluster._pod_metrics("dev", None) is None
+    assert cluster._pod_metrics("dev", None) is None
+    assert len(reads) == 1
