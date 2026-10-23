@@ -8,6 +8,19 @@ def isolated_config(tmp_path, monkeypatch):
 
 
 @pytest.fixture(autouse=True)
+def no_cached_namespaces():
+    """Namespaces and Pod metrics are kept for a while; a test starts
+    without."""
+    from kubescope import cluster
+
+    cluster._namespaces.clear()
+    cluster._metrics.clear()
+    yield
+    cluster._namespaces.clear()
+    cluster._metrics.clear()
+
+
+@pytest.fixture(autouse=True)
 def no_blocking_dialogs(monkeypatch):
     """A modal dialog nobody can answer would hang the run; fail fast instead.
 
