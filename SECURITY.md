@@ -178,6 +178,9 @@ prefer otherwise.
   `flatpak info --show-permissions com.dcotecnologia.KubeScope`, and remove that one
   with `flatpak override --user --no-talk-name=org.freedesktop.Flatpak` if you only
   use AWS.
+- The snap is classic: it has no sandbox and runs with your permissions, like the
+  `.deb` and the AppImage, so it can run the sign-in tools of any cloud. Use the
+  Flatpak if you want a sandbox.
 
 ## Supply chain
 

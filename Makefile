@@ -2,7 +2,7 @@
 
 UV ?= uv
 
-.PHONY: help setup run changelog dev debug preview language screenshot store-screenshots designer ui i18n appimage deb flatpak flatpak-lint flathub-submission windows windows-remote lint format test qt-libs build clean
+.PHONY: help setup run changelog dev debug preview language screenshot store-screenshots designer ui i18n appimage deb snap flatpak flatpak-lint flathub-submission windows windows-remote lint format test qt-libs build clean
 
 help: ## List the available commands
 	@awk 'BEGIN { FS = ":.*##" } /^[a-zA-Z_-]+:.*##/ { printf "  %-12s %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
@@ -61,6 +61,9 @@ appimage: build ## Package the bundle as an AppImage in dist/ (Linux x86_64)
 
 deb: build ## Package the bundle as a .deb in dist/ (Debian/Ubuntu)
 	$(UV) run python tools/build_deb.py
+
+snap: build ## Package the bundle as a Snap in dist/ (needs snapcraft; Linux x86_64)
+	$(UV) run python tools/build_snap.py
 
 flatpak: changelog ## Build the Flatpak from this working tree into dist/ (needs flatpak-builder)
 	$(UV) run python tools/build_flatpak.py

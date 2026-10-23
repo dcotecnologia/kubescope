@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=KubeScope
+Comment=Desktop viewer for Kubernetes and Amazon EKS workloads
+Exec=dco-kubescope
+Icon=${SNAP}/meta/gui/dco-kubescope.png
+Terminal=false
+Categories=Development;System;
+StartupWMClass=KubeScope

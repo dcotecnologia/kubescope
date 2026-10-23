@@ -1,0 +1,49 @@
+name: dco-kubescope
+title: KubeScope
+base: core24
+# the build script puts the version of pyproject.toml here
+version: "@VERSION@"
+summary: Desktop viewer for Kubernetes and Amazon EKS workloads
+description: |
+  KubeScope is a desktop viewer for Kubernetes and Amazon EKS. It shows the
+  workloads, Pods, nodes, network and configuration of your clusters, with
+  live CPU and memory, Pod logs and resource details.
+
+  It is read-only by default: the few actions that change a cluster exist only
+  behind a setting that is off. It never reads or stores your credentials; the
+  Kubernetes client and the sign-in programs of your kubeconfig handle them.
+
+  The snap is classic, like kubectl and helm: it has to run the tools your
+  kubeconfig names to sign in (aws, gcloud and gke-gcloud-auth-plugin, az and
+  kubelogin, oci and others), so it works with every cloud, and it reads
+  ~/.kube and ~/.aws as you do.
+license: MIT
+website: https://github.com/dcotecnologia/kubescope
+source-code: https://github.com/dcotecnologia/kubescope
+issues: https://github.com/dcotecnologia/kubescope/issues
+grade: stable
+confinement: classic
+platforms:
+  amd64:
+
+# The bundle brings its own Qt and runs with the libraries of the system, like the
+# .deb and the AppImage do (see system_libraries in KubeScope.spec); patching its
+# binaries for the snap would break the PyInstaller bootloader.
+lint:
+  ignore:
+    - classic
+    - library
+
+apps:
+  dco-kubescope:
+    command: opt/kubescope/KubeScope
+
+parts:
+  # the PyInstaller bundle from `make build`
+  kubescope:
+    plugin: dump
+    source: bundle
+    build-attributes:
+      - no-patchelf
+    organize:
+      "*": opt/kubescope/
