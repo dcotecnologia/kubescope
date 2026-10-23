@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+### Changed
+
+- The list on screen is redrawn only when the cluster's answer differs from what is shown, so the quiet read every five seconds no longer rebuilds the table, and the scroll position, the selection and the hover stay still by @danilogco
+- A list that keeps failing is read again less and less often (up to once a minute) instead of every five seconds, and goes back to five seconds as soon as the cluster answers by @danilogco
+- When a read changes a few rows of a list, only those rows are rewritten instead of every cell of the table by @danilogco
+- The colors of the status column are worked out once per list instead of once per row by @danilogco
+
 ## [0.13.0] - 2026-10-22
 
 ### Changed

@@ -189,6 +189,7 @@ PIN_MIME = "application/x-kubescope-pin"  # what a dragged pinned tab carries
 VIEWER_MIME = "application/x-kubescope-viewer"  # the same, for a Details/Logs tab
 LIST_DEBOUNCE_MS = 150
 LIST_REFRESH_MS = 5_000  # the list on screen is read again this often
+LIST_REFRESH_MAX_MS = 60_000  # ... and this rarely while the cluster keeps failing
 UPDATE_RECHECK_MS = 60 * 60 * 1000  # look for a new version again every hour
 UPDATE_SEARCH_MS = 5000  # an update check shows as searching for at least this long
 UPDATE_NOTICE_MS = 4000  # how long "Up to date" stays next to the icon
@@ -931,6 +932,9 @@ class WorkloadWindow(QMainWindow):
 
         self._workloads_overview: WorkloadsOverview | None = None
         self._shown_key: tuple[str, str | None, str] | None = None  # what the table has
+        # the rows the table was last filled with, so a read that changed a few
+        # of them rewrites only those
+        self._rendered: tuple[str, list] | None = None
         self._workloads_overview_context: str | None = None
         self._workloads_overview_busy = False
         self._login_action: LoginAction | None = None
@@ -2742,14 +2746,14 @@ class WorkloadWindow(QMainWindow):
         # at once when they come back.
         worker.completed.connect(
             lambda namespaces, items: (
-                self._answered(context, namespace, view, namespaces, items)
+                self._answered(context, namespace, view, namespaces, items, quiet)
                 if self._workers.get(view) is worker
                 else None
             )
         )
         worker.failed.connect(
             lambda message: (
-                self._show_error(message)
+                self._failed(message, quiet)
                 if view == self._view and self._workers.get(view) is worker
                 else None
             )
@@ -2804,12 +2808,27 @@ class WorkloadWindow(QMainWindow):
         view: str,
         namespaces: list,
         items: list,
+        quiet: bool = False,
     ) -> None:
-        self._answers[(context, namespace, view)] = (namespaces, items)
+        key = (context, namespace, view)
+        unchanged = self._answers.get(key) == (namespaces, items)
+        self._answers[key] = (namespaces, items)
         if view == self._view:
+            self._live_timer.setInterval(LIST_REFRESH_MS)  # the cluster answers
             self._hide_permission_banner()  # this list loaded: access is fine
-            self._shown_key = (context, namespace, view)
+            if quiet and unchanged and self._shown_key == key:
+                return  # the table already shows exactly this: leave it be
+            self._shown_key = key
             self._show_answer(view, namespaces, items)
+
+    def _failed(self, message: str, quiet: bool) -> None:
+        """A list could not be read; a background read that keeps failing is
+        tried less and less often."""
+        if quiet:
+            self._live_timer.setInterval(
+                min(self._live_timer.interval() * 2, LIST_REFRESH_MAX_MS)
+            )
+        self._show_error(message)
 
     def _show_answer(self, view: str, namespaces: list, items: list) -> None:
         selected = self._selected_identity()
@@ -2972,7 +2991,16 @@ class WorkloadWindow(QMainWindow):
             return self._selected_resource()
         return self._selected_workload()
 
+    def _kept_rows(self, rows: list) -> list:
+        """The rows the table already shows for this list, to leave as they
+        are; nothing when it was cleared or draws another list."""
+        if self._rendered is None or self._rendered[0] != self._view:
+            return []
+        shown = self._rendered[1]
+        return shown if self.table.rowCount() == len(shown) else []
+
     def _render_rows(self) -> None:
+        self._rendered = None  # a full redraw: the theme, language or order changed
         # one repaint for the whole batch instead of one per cell and row
         self.table.setUpdatesEnabled(False)
         try:
@@ -3006,8 +3034,11 @@ class WorkloadWindow(QMainWindow):
 
     def _render_resources(self) -> None:
         resources = self._resources
+        kept = self._kept_rows(resources)
         self.table.setRowCount(len(resources))
         for row_index, resource in enumerate(resources):
+            if row_index < len(kept) and kept[row_index] == resource:
+                continue
             shown = resource.values
             if self._view in EKS_VIEWS | {"addons"}:  # the first value is a status
                 shown = (self._aws_value(shown[0]), *shown[1:])
@@ -3022,6 +3053,7 @@ class WorkloadWindow(QMainWindow):
                 item = QTableWidgetItem(value)
                 item.setForeground(QColor(themed("#242a33")))
                 self.table.setItem(row_index, column, item)
+        self._rendered = (self._view, list(resources))
         self._filter_rows()
         summaries = {
             "services": lambda: self.tr("{count} Services in {namespaces} namespaces"),
@@ -3106,8 +3138,11 @@ class WorkloadWindow(QMainWindow):
             "problem": QColor(themed("#fbe4e4")),
             "young": QColor(themed("#e2f5e8")),
         }
+        kept = self._kept_rows(pods)
         self.table.setRowCount(len(pods))
         for row_index, pod in enumerate(pods):
+            if row_index < len(kept) and kept[row_index] == pod:
+                continue
             tint = tints.get(pod_highlight(pod) or "")
             values = (
                 pod.namespace,
@@ -3153,6 +3188,7 @@ class WorkloadWindow(QMainWindow):
                     item.setForeground(QColor(foreground))
                     item.setBackground(QColor(background))
                 self.table.setItem(row_index, column, item)
+        self._rendered = (self._view, list(pods))
         self._filter_rows()
         self._set_status(
             lambda: self.tr("{count} Pods in {namespaces} namespaces").format(
@@ -3175,8 +3211,28 @@ class WorkloadWindow(QMainWindow):
             "Scheduled": self.tr("Scheduled"),
             "Running": self.tr("Running"),
         }
+        good = (themed("#176b58"), themed("#e5f4eb"))
+        warning = (themed("#985415"), themed("#fff2de"))
+        bad = (themed("#a33d45"), themed("#fce9ea"))
+        muted = (themed("#505963"), themed("#eff1f3"))
+        colors = {
+            "Healthy": good,
+            "Complete": good,
+            "Running": good,
+            "Active": good,
+            "Degraded": warning,
+            "Pending": warning,
+            "Unavailable": bad,
+            "Failed": bad,
+            "Scaled to zero": muted,
+            "Suspended": muted,
+            "Scheduled": muted,
+        }
+        kept = self._kept_rows(workloads)
         self.table.setRowCount(len(workloads))
         for row_index, workload in enumerate(workloads):
+            if row_index < len(kept) and kept[row_index] == workload:
+                continue
             values = (
                 workload.namespace,
                 workload.kind,
@@ -3207,26 +3263,11 @@ class WorkloadWindow(QMainWindow):
                         Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
                     )
                 if column == 4:
-                    good = (themed("#176b58"), themed("#e5f4eb"))
-                    warning = (themed("#985415"), themed("#fff2de"))
-                    bad = (themed("#a33d45"), themed("#fce9ea"))
-                    muted = (themed("#505963"), themed("#eff1f3"))
-                    color = {
-                        "Healthy": good,
-                        "Complete": good,
-                        "Running": good,
-                        "Active": good,
-                        "Degraded": warning,
-                        "Pending": warning,
-                        "Unavailable": bad,
-                        "Failed": bad,
-                        "Scaled to zero": muted,
-                        "Suspended": muted,
-                        "Scheduled": muted,
-                    }[workload.status]
-                    item.setForeground(QColor(color[0]))
-                    item.setBackground(QColor(color[1]))
+                    foreground, background = colors[workload.status]
+                    item.setForeground(QColor(foreground))
+                    item.setBackground(QColor(background))
                 self.table.setItem(row_index, column, item)
+        self._rendered = (self._view, list(workloads))
         self._filter_rows()
         summaries = {
             "deployments": lambda: self.tr(

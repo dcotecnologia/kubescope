@@ -3687,6 +3687,89 @@ def test_a_quiet_read_leaves_the_status_and_the_spinner_alone(monkeypatch) -> No
     window.close()
 
 
+def test_a_quiet_read_that_changed_nothing_leaves_the_table_alone(monkeypatch) -> None:
+    window = _ready_window(monkeypatch)
+    window.context_combo.addItem("prod")
+    window._open_list_view("pods")
+    shown = []
+    monkeypatch.setattr(window, "_show_pods", lambda *a: shown.append(a))
+
+    window._answered("prod", None, "pods", ["ns"], ["pod"], True)
+    window._answered("prod", None, "pods", ["ns"], ["pod"], True)  # same answer
+    assert len(shown) == 1
+
+    window._answered("prod", None, "pods", ["ns"], ["pod"])  # a button press
+    window._answered("prod", None, "pods", ["ns"], ["new"], True)  # it changed
+    assert len(shown) == 3
+    window.close()
+
+
+def test_a_background_read_that_keeps_failing_is_tried_less_often(
+    monkeypatch,
+) -> None:
+    window = _ready_window(monkeypatch)
+    window.context_combo.addItem("prod")
+    window._open_list_view("pods")
+    errors = []
+    monkeypatch.setattr(window, "_show_error", errors.append)
+
+    for _ in range(6):
+        window._failed("down", True)
+    assert window._live_timer.interval() == window_module.LIST_REFRESH_MAX_MS
+
+    window._answered("prod", None, "pods", ["ns"], [])  # the cluster is back
+    assert window._live_timer.interval() == window_module.LIST_REFRESH_MS
+
+    window._failed("down", False)  # a button press does not slow the timer
+    assert window._live_timer.interval() == window_module.LIST_REFRESH_MS
+    assert errors == ["down"] * 7
+    window.close()
+
+
+def test_a_read_rewrites_only_the_rows_that_changed(monkeypatch) -> None:
+    window = _ready_window(monkeypatch)
+    window.show()
+    window._open_list_view("pods")
+
+    def pod(name: str, restarts: int = 0) -> PodInfo:
+        return PodInfo("ns", name, "Running", 1, 1, "1d", ("c",), restarts=restarts)
+
+    window._show_pods(["ns"], [pod("a"), pod("b")])
+    first, second = window.table.item(0, 2), window.table.item(1, 2)
+
+    window._show_pods(["ns"], [pod("a"), pod("b", restarts=2), pod("c")])
+    assert window.table.item(0, 2) is first  # same row: not touched
+    assert window.table.item(1, 2) is not second  # it changed
+    assert cell(window.table, 2, 2).text() == "c"  # and a new one
+
+    window._show_pods(["ns"], [pod("a")])  # rows that went away
+    assert window.table.rowCount() == 1
+
+    kept = window.table.item(0, 2)
+    window._render_rows()  # a redraw (theme, language, order) rewrites them all
+    assert window.table.item(0, 2) is not kept
+
+    window._show_error("boom")  # the table was emptied: nothing is reused
+    window._show_pods(["ns"], [pod("a")])
+    assert cell(window.table, 0, 2).text() == "a"
+
+    window._open_list_view("deployments")
+    web = Workload("ns", "Deployment", "web", 1, 1, "1d")
+    window._show_workloads(["ns"], [web])
+    assert cell(window.table, 0, 2).text() == "web"
+    row = cell(window.table, 0, 2)
+    window._show_workloads(["ns"], [web])
+    assert cell(window.table, 0, 2) is row  # the same row: not touched
+
+    window._open_list_view("services")
+    resource = ClusterResource("ns", "Service", "svc", ("ClusterIP",), "1d")
+    window._show_resources(["ns"], [resource])
+    row = cell(window.table, 0, 2)
+    window._show_resources(["ns"], [resource])
+    assert cell(window.table, 0, 2) is row
+    window.close()
+
+
 def test_the_selected_row_stays_selected_when_the_rows_change(monkeypatch) -> None:
     window = _ready_window(monkeypatch)
     window.show()
