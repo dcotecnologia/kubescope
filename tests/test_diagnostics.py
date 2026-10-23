@@ -1,6 +1,8 @@
+import io
 import logging
 import logging.handlers
 import os
+import sys
 from typing import cast
 
 import pytest
@@ -79,8 +81,10 @@ def test_the_log_file_rotates_to_stay_small() -> None:
     assert handler.backupCount == diagnostics.BACKUPS
 
 
-def test_turning_debug_off_removes_every_output() -> None:
+def test_turning_debug_off_removes_every_output(monkeypatch) -> None:
     package = logging.getLogger("kubescope")
+    monkeypatch.setattr(sys, "stderr", io.StringIO())  # the console output goes here
+    monkeypatch.setattr(diagnostics.faulthandler, "enable", lambda *a, **k: None)
     diagnostics.configure_logging(to_file=True, to_console=True)
     assert len(package.handlers) == 2 and package.level == logging.DEBUG
 
