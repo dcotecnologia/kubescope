@@ -1,3 +1,5 @@
+import contextlib
+import io
 import os
 import sys
 import time
@@ -9,6 +11,23 @@ from kubescope.settings import log_directory
 from kubescope.utils.diagnostics import CRASH_FILE, LOG_FILE, MAX_AGE_DAYS
 from kubescope.utils.selfupdate import Install, UpdateError
 from kubescope.utils.updates import Release, UpdateCheck
+
+
+@pytest.fixture(autouse=True)
+def swallow_output(request):
+    """The commands print to the terminal.
+
+    A test that reads that asks for `capsys`. For the others it would
+    reach the log of the run (pytest runs with -s), so it goes nowhere.
+    """
+    if "capsys" in request.fixturenames:
+        yield
+        return
+    with (
+        contextlib.redirect_stdout(io.StringIO()),
+        contextlib.redirect_stderr(io.StringIO()),
+    ):
+        yield
 
 
 def _logs(old: bool) -> tuple:
@@ -62,6 +81,7 @@ def test_cleanup_all_deletes_every_log_but_nothing_else(capsys) -> None:
 
     assert not log.exists() and not crash.exists()
     assert other.exists()
+    assert "2 files" in capsys.readouterr().out
 
 
 def test_a_dry_run_deletes_nothing(capsys) -> None:
@@ -171,6 +191,7 @@ def test_update_installs_the_version_asked_for(monkeypatch, capsys) -> None:
     assert cli.run(["update", "--version", "0.5.0"]) == 0
 
     assert asked == ["0.5.0"] and calls == ["0.5.0"]
+    assert "KubeScope 0.5.0 is installed" in capsys.readouterr().out
 
 
 def test_update_on_windows_starts_the_installer_after_quitting(monkeypatch) -> None:

@@ -1,3 +1,6 @@
+import os
+import sys
+
 import pytest
 
 
@@ -5,6 +8,33 @@ import pytest
 def isolated_config(tmp_path, monkeypatch):
     """Never read or write the real user settings during tests."""
     monkeypatch.setenv("KUBESCOPE_CONFIG_DIR", str(tmp_path / "config"))
+
+
+# What the offscreen platform says about things a desktop has: it reports a system
+# tray (the window in a test has no icon for it) and cannot raise a window or
+# connect the tray signal or propagate size hints. Nothing in these lines is
+# about the code under test.
+_OFFSCREEN_NOISE = (
+    "QSystemTrayIcon::setVisible: No Icon set",
+    "No such signal QPlatformNativeInterface::systemTrayWindowChanged",
+    "This plugin does not support raise()",
+    "This plugin does not support propagateSizeHints()",
+)
+
+
+@pytest.fixture(scope="session", autouse=True)
+def quiet_offscreen_platform():
+    """Leave out the messages the offscreen platform always prints; every other
+    message of Qt still reaches the log."""
+    from PySide6.QtCore import qInstallMessageHandler
+
+    def handler(_mode, _context, message):
+        if not any(noise in message for noise in _OFFSCREEN_NOISE):
+            print(message, file=sys.stderr)
+
+    previous = qInstallMessageHandler(handler)
+    yield
+    qInstallMessageHandler(previous)
 
 
 @pytest.fixture(autouse=True)
@@ -31,7 +61,8 @@ def no_blocking_dialogs(monkeypatch):
     from PySide6.QtWidgets import QDialog, QMessageBox
 
     def refuse(*_args, **_kwargs):
-        raise AssertionError("a test opened a real modal dialog")
+        running = os.environ.get("PYTEST_CURRENT_TEST", "no test")
+        raise AssertionError(f"a test opened a real modal dialog ({running})")
 
     monkeypatch.setattr(QDialog, "exec", refuse)
     monkeypatch.setattr(QMessageBox, "exec", refuse)

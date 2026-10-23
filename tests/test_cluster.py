@@ -375,7 +375,14 @@ class FakeCluster:
             def log_message(self, format: str, *args: object) -> None:
                 pass
 
-        self.server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+        class QuietServer(ThreadingHTTPServer):
+            def handle_error(self, request, client_address) -> None:
+                # a client that gives up (the TLS handshake test speaks TLS to a
+                # plain server) is expected; the server must not print its traceback
+                if not isinstance(sys.exception(), ConnectionError):
+                    super().handle_error(request, client_address)
+
+        self.server = QuietServer(("127.0.0.1", 0), Handler)
         threading.Thread(target=self.server.serve_forever, daemon=True).start()
         self.url = f"http://127.0.0.1:{self.server.server_port}"
         self.kubeconfig = tmp_path / "kubeconfig"
