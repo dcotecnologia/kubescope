@@ -17,9 +17,6 @@ from datetime import UTC, datetime
 from functools import partial
 from typing import Any
 
-from kubernetes.client.exceptions import ApiException
-from urllib3.exceptions import HTTPError
-
 from kubescope import cluster
 from kubescope.cluster import ClusterError
 
@@ -40,6 +37,9 @@ def _send(
     body: dict[str, Any] | None,
     content_type: str,
 ) -> None:
+    from kubernetes.client.exceptions import ApiException
+    from urllib3.exceptions import HTTPError
+
     attempt = 0
     while True:
         attempt += 1

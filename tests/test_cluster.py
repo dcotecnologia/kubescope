@@ -2737,3 +2737,12 @@ def test_missing_metrics_server_is_remembered_too(monkeypatch) -> None:
     assert cluster._pod_metrics("dev", None) is None
     assert cluster._pod_metrics("dev", None) is None
     assert len(reads) == 1
+
+
+def test_the_kubernetes_client_is_imported_when_first_asked_for() -> None:
+    assert cluster.client.ApiClient is not None
+    assert cluster.config.new_client_from_config is not None
+    assert issubclass(cluster.ApiException, Exception)
+    assert issubclass(cluster.HTTPError, Exception)
+    with pytest.raises(AttributeError, match="no attribute 'nothing'"):
+        cluster.__getattr__("nothing")

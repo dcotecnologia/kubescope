@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 import contextlib
+import importlib
 import json
 import logging
 import os
@@ -16,14 +19,8 @@ from dataclasses import dataclass, replace
 from datetime import UTC, datetime
 from functools import partial
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from urllib.parse import quote
-
-from kubernetes import client, config
-from kubernetes.client.exceptions import ApiException
-from kubernetes.config.config_exception import ConfigException
-from kubernetes.config.kube_config import ConfigNode, KubeConfigMerger
-from urllib3.exceptions import HTTPError
 
 from kubescope.models import (
     BAD_STATUSES,
@@ -44,7 +41,30 @@ from kubescope.models import (
 )
 from kubescope.utils.errors import first_line, is_auth_error
 
+if TYPE_CHECKING:
+    from kubernetes import client
+
 logger = logging.getLogger(__name__)
+
+# The Kubernetes client takes about a tenth of a second to import, so it is
+# loaded by the first request (on a worker) instead of before the window shows.
+_LAZY = {
+    "client": "kubernetes.client",
+    "config": "kubernetes.config",
+    "ApiException": "kubernetes.client.exceptions",
+    "ConfigException": "kubernetes.config.config_exception",
+    "ConfigNode": "kubernetes.config.kube_config",
+    "KubeConfigMerger": "kubernetes.config.kube_config",
+    "HTTPError": "urllib3.exceptions",
+}
+
+
+def __getattr__(name: str) -> Any:
+    """The names of the Kubernetes client, imported when first asked for."""
+    if name not in _LAZY:
+        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+    module = importlib.import_module(_LAZY[name])
+    return module if name in {"client", "config"} else getattr(module, name)
 
 
 class ClusterError(RuntimeError):
@@ -188,12 +208,17 @@ def _kubeconfig_paths() -> str:
 
 
 def _plain(node: Any) -> Any:
+    from kubernetes.config.kube_config import ConfigNode
+
     return node.value if isinstance(node, ConfigNode) else node
 
 
 def _kubeconfig() -> dict[str, Any]:
     """The kubeconfig files merged into one document; empty when there are
     none."""
+    from kubernetes.config.config_exception import ConfigException
+    from kubernetes.config.kube_config import KubeConfigMerger
+
     try:
         merged = KubeConfigMerger(_kubeconfig_paths()).config
     except (ConfigException, OSError, KeyError) as error:  # KeyError: no name
@@ -251,6 +276,9 @@ def _api_client(context: str) -> client.ApiClient:
     The kubeconfig is only read: refreshed
     credentials are never written back to it.
     """
+    from kubernetes import config
+    from kubernetes.config.config_exception import ConfigException
+
     errors = _SignInErrors()
     logging.getLogger().addHandler(errors)
     try:
@@ -315,6 +343,9 @@ def _status_message(status: int, reason: str | None, body: bytes) -> str:
 
 
 def _fetch(path: str, context: str, query: list[tuple[str, str]], accept: str) -> bytes:
+    from kubernetes.client.exceptions import ApiException
+    from urllib3.exceptions import HTTPError
+
     started = time.monotonic()
     attempt = 0
     while True:
