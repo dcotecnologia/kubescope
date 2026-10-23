@@ -158,7 +158,7 @@ executable = EXE(
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
-    upx=True,
+    upx=False,  # packed Qt libraries start slower and trip antivirus scanners
     console=False,
     disable_windowed_traceback=False,
     argv_emulation=False,
@@ -171,7 +171,7 @@ COLLECT(
     analysis.binaries,
     analysis.datas,
     strip=False,
-    upx=True,
+    upx=False,
     upx_exclude=[],
     name="KubeScope",
 )
