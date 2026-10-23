@@ -40,6 +40,7 @@ from kubescope.models import (
     parse_memory,
 )
 from kubescope.utils.errors import first_line, is_auth_error
+from kubescope.utils.flatpak import HOST, host_has, in_flatpak, in_terminal, on_host
 
 if TYPE_CHECKING:
     from kubernetes import client
@@ -111,6 +112,9 @@ def _run_process(command: list[str], timeout: float) -> subprocess.CompletedProc
     started = time.monotonic()
     if sys.platform == "win32":  # az and gcloud are .cmd files there
         command = [shutil.which(command[0]) or command[0], *command[1:]]
+    command = on_host(
+        command
+    )  # in a Flatpak, the programs of the system are the host's
     process = subprocess.Popen(
         command,
         stdout=subprocess.PIPE,
@@ -274,6 +278,29 @@ def _sign_in_failure(message: str) -> str:
     return message
 
 
+class _HostSubprocess:
+    """Stands in for `subprocess` in the exec provider of the Kubernetes
+    client, so that in a Flatpak the sign-in programs of the kubeconfig run on
+    the host."""
+
+    PIPE = subprocess.PIPE
+
+    @staticmethod
+    def Popen(args: list[str], env: dict[str, str] | None = None, **options: Any):
+        return subprocess.Popen(on_host(args, env), **options)
+
+
+def _route_exec_to_host() -> None:
+    """In a Flatpak, make the `exec` credential plugins of the kubeconfig (such
+    as gke-gcloud-auth-plugin or kubelogin) run on the host; outside one,
+    nothing changes."""
+    if not in_flatpak():
+        return
+    from kubernetes.config import exec_provider
+
+    exec_provider.subprocess = _HostSubprocess  # type: ignore[assignment]
+
+
 def _api_client(context: str) -> client.ApiClient:
     """A client for one context.
 
@@ -283,6 +310,7 @@ def _api_client(context: str) -> client.ApiClient:
     from kubernetes import config
     from kubernetes.config.config_exception import ConfigException
 
+    _route_exec_to_host()
     errors = _SignInErrors()
     logging.getLogger().addHandler(errors)
     try:
@@ -879,23 +907,37 @@ _TERMINALS = (
 )
 
 
-def _open_terminal(command: list[str]) -> None:
-    """Run a command in a new terminal window and return without waiting."""
+def _terminal_launcher(command: list[str]) -> list[str] | None:
+    """The command that opens a terminal running `command`, or None when there
+    is no terminal to open."""
     if sys.platform == "win32":
-        launcher = ["cmd", "/c", "start", "", "cmd", "/k", *command]
-    else:
-        launcher = next(
+        return ["cmd", "/c", "start", "", "cmd", "/k", *command]
+    if in_flatpak():  # the terminals and the programs are the host's
+        return next(
             (
-                [path, flag, *command]
+                [*HOST, name, flag, *in_terminal(command)]
                 for name, flag in _TERMINALS
-                if (path := shutil.which(name))
+                if host_has(name)
             ),
             None,
         )
-        if launcher is None:
-            raise ClusterError(
-                "No terminal found. Run this in a terminal: " + " ".join(command)
-            )
+    return next(
+        (
+            [path, flag, *command]
+            for name, flag in _TERMINALS
+            if (path := shutil.which(name))
+        ),
+        None,
+    )
+
+
+def _open_terminal(command: list[str]) -> None:
+    """Run a command in a new terminal window and return without waiting."""
+    launcher = _terminal_launcher(command)
+    if launcher is None:
+        raise ClusterError(
+            "No terminal found. Run this in a terminal: " + " ".join(command)
+        )
     try:
         subprocess.Popen(launcher)
     except OSError as error:

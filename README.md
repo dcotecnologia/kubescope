@@ -311,10 +311,12 @@ Each of these packages the bundle in `dist/KubeScope`, so build one platform at 
 time. `make windows` keeps its Wine prefix in `.wine/` and downloads Python and
 Inno Setup on the first run.
 
-The Flatpak (`com.dcotecnologia.KubeScope`) bundles the AWS CLI so EKS contexts
-can sign in from the sandbox (GKE and AKS need the `.deb` or the AppImage), and can read `~/.kube` (read-only) and `~/.aws`.
-Other credential plugins, such as `gcloud` or `kubelogin`, are not available
-inside it.
+The Flatpak (`com.dcotecnologia.KubeScope`) bundles the AWS CLI, so EKS contexts sign
+in from the sandbox, and can read `~/.kube` (read-only) and `~/.aws`. For the other
+clouds (GKE, AKS, OCI...) it asks the host to run the programs the kubeconfig names
+(`gcloud`, `gke-gcloud-auth-plugin`, `az`, `kubelogin`, `oci`...) with
+`flatpak-spawn --host`, through the `org.freedesktop.Flatpak` permission; install those
+tools on the system as usual.
 
 Windows packages can also be built without Wine: the **Release** workflow
 (`.github/workflows/release.yml`) builds everything on GitHub runners: the Linux

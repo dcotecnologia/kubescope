@@ -1,4 +1,5 @@
 import gzip
+import importlib
 import io
 import json
 import os
@@ -15,6 +16,7 @@ import pytest
 
 from kubescope import cluster
 from kubescope.models import PodInfo, Workload
+from kubescope.utils import flatpak
 
 
 def test_parse_deployment_workload() -> None:
@@ -2813,3 +2815,111 @@ def test_other_failures_are_not_remembered(monkeypatch) -> None:
         with pytest.raises(cluster.ClusterError):
             cluster._cached_client("dev")
     assert runs == ["dev", "dev"]
+
+
+@pytest.fixture
+def in_a_flatpak(monkeypatch):
+    """The app runs inside a Flatpak."""
+    monkeypatch.setattr(flatpak, "in_flatpak", lambda: True)
+    monkeypatch.setattr(cluster, "in_flatpak", lambda: True)
+
+
+def test_in_a_flatpak_the_programs_of_the_system_run_on_the_host(
+    in_a_flatpak, monkeypatch
+) -> None:
+    started = []
+
+    class Fake:
+        pid = 1
+        returncode = 0
+
+        def __init__(self, command, **_kwargs):
+            started.append(command)
+
+        def communicate(self, timeout=None):
+            return "", ""
+
+    monkeypatch.setattr(cluster.subprocess, "Popen", Fake)
+
+    cluster._run_process(["gcloud", "auth", "print-access-token"], 5)
+    cluster._run_process(["aws", "sts", "get-caller-identity"], 5)
+
+    assert started == [
+        ["flatpak-spawn", "--host", "gcloud", "auth", "print-access-token"],
+        ["aws", "sts", "get-caller-identity"],  # the Flatpak carries the AWS CLI
+    ]
+
+
+def test_in_a_flatpak_the_sign_in_plugins_of_the_kubeconfig_run_on_the_host(
+    in_a_flatpak, monkeypatch
+) -> None:
+    exec_provider = importlib.import_module("kubernetes.config.exec_provider")
+
+    monkeypatch.setattr(exec_provider, "subprocess", exec_provider.subprocess)
+    started = []
+    monkeypatch.setattr(
+        cluster.subprocess,
+        "Popen",
+        lambda command, **options: started.append((command, options)),
+    )
+
+    cluster._route_exec_to_host()
+    exec_provider.subprocess.Popen(
+        ["gke-gcloud-auth-plugin"],
+        stdout=exec_provider.subprocess.PIPE,
+        env={"KUBERNETES_EXEC_INFO": "{}"},
+        shell=False,
+    )
+
+    command, options = started[0]
+    assert command == [
+        "flatpak-spawn",
+        "--host",
+        "--env=KUBERNETES_EXEC_INFO={}",
+        "gke-gcloud-auth-plugin",
+    ]
+    assert options == {"stdout": cluster.subprocess.PIPE, "shell": False}
+
+
+def test_outside_a_flatpak_the_sign_in_plugins_are_left_alone(monkeypatch) -> None:
+    import subprocess
+
+    exec_provider = importlib.import_module("kubernetes.config.exec_provider")
+
+    monkeypatch.setattr(exec_provider, "subprocess", subprocess)
+
+    cluster._route_exec_to_host()
+
+    assert exec_provider.subprocess is subprocess
+
+
+def test_in_a_flatpak_the_terminal_and_its_program_are_the_hosts(
+    in_a_flatpak, monkeypatch
+) -> None:
+    launched = []
+    monkeypatch.setattr(cluster.sys, "platform", "linux")
+    monkeypatch.setattr(cluster.subprocess, "Popen", lambda cmd: launched.append(cmd))
+    monkeypatch.setattr(cluster, "host_has", lambda name: name == "konsole")
+    monkeypatch.delenv("FLATPAK_ID", raising=False)
+
+    cluster._open_terminal(["gcloud", "auth", "login"])
+    cluster._open_terminal(["aws", "configure"])
+
+    assert launched == [
+        ["flatpak-spawn", "--host", "konsole", "-e", "gcloud", "auth", "login"],
+        [
+            "flatpak-spawn",
+            "--host",
+            "konsole",
+            "-e",
+            "flatpak",
+            "run",
+            "--command=aws",
+            flatpak.APP_ID,
+            "configure",
+        ],
+    ]
+
+    monkeypatch.setattr(cluster, "host_has", lambda _name: False)
+    with pytest.raises(cluster.ClusterError, match="gcloud auth login"):
+        cluster._open_terminal(["gcloud", "auth", "login"])

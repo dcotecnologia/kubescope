@@ -19,6 +19,10 @@ finish-args:
   # EKS kubeconfigs call `aws eks get-token`; the AWS CLI below needs the profiles,
   # and write access for the SSO and token caches under ~/.aws
   - --filesystem=~/.aws
+  # GKE, AKS, OCI and other contexts sign in with programs of the system (gcloud,
+  # gke-gcloud-auth-plugin, az, kubelogin, oci...), which the sandbox cannot see; the
+  # app asks the host to run them with `flatpak-spawn --host`
+  - --talk-name=org.freedesktop.Flatpak
 
 modules:
   # the AWS CLI v1 and what it needs, from PyPI (made by flatpak-pip-generator)

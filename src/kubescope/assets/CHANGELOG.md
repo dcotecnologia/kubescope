@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+### Added
+
+- The Flatpak works with GKE, AKS, OCI and the other clouds: the sign-in programs of the kubeconfig and the login commands run on the host through `flatpak-spawn --host` (the manifest asks for the `org.freedesktop.Flatpak` permission, which SECURITY.md explains), while the AWS CLI stays the one the Flatpak carries by @danilogco
+
 ## [0.13.1] - 2026-10-23
 
 ### Changed
