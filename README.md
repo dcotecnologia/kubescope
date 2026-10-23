@@ -59,6 +59,7 @@ not need `kubectl`.
 | Debian and Ubuntu | `kubescope_<version>_amd64.deb`             | `sudo apt install ./kubescope_<version>_amd64.deb`, then `kubescope`           |
 | Any Linux         | `KubeScope-<version>-x86_64.AppImage`       | `chmod +x` the file and run it                                                 |
 | Any Linux (snap)  | `dco-kubescope_<version>_amd64.snap`        | `sudo snap install dco-kubescope`                                              |
+| Linux (Flatpak)   | `KubeScope-<version>.flatpak`               | `flatpak install --user ./KubeScope-<version>.flatpak`                         |
 | Windows           | `KubeScope-<version>-windows-x64-setup.exe` | run the installer; or unzip the portable `KubeScope-<version>-windows-x64.zip` |
 | macOS and others  | none yet                                    | [run it from source](#run-from-source)                                         |
 
@@ -326,6 +327,14 @@ the tools of the system, so every cloud works. The Snap Store has to approve the
 confinement of the app (a request in the Snapcraft forum, before the first upload). It
 packs the same PyInstaller bundle as the `.deb`, with `snapcraft` (in LXD by default;
 `SNAPCRAFT_BUILD_ARGS=--destructive-mode` on Ubuntu 24.04).
+
+The **Flatpak** workflow (`.github/workflows/flatpak.yml`) builds the Flatpak of a
+successful Release of a tag (`flatpak-builder` on a GitHub runner, from the tagged
+source) and attaches `KubeScope-<version>.flatpak` to the GitHub release. Run it by hand
+with a tag to build that file again; each build is listed under **Deployments**, in the
+`flatpak` environment, with a link to the file of the release. Flathub itself has no upload: its app is a pull
+request made by a person (`make flathub-submission` gathers the files), and Flathub
+builds the app from there.
 
 Windows packages can also be built without Wine: the **Release** workflow
 (`.github/workflows/release.yml`) builds everything on GitHub runners: the Linux

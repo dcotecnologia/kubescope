@@ -1,0 +1,77 @@
+name: Flatpak
+
+# Builds the Flatpak of a tag and attaches the .flatpak file to its GitHub release, when
+# a Release of a v* tag succeeds. Run it by hand to build and attach the file of any
+# tag again. Flathub has no upload: its app is a pull request to github.com/flathub,
+# made by a person (see `make flathub-submission`), and Flathub builds it from there.
+on:
+  workflow_run:
+    workflows: [Release]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Tag to build and attach the file to, for example v0.14.0
+        required: true
+
+permissions:
+  contents: write # to attach the file to the release
+
+jobs:
+  flatpak:
+    name: Build and attach the Flatpak
+    # only a Release of a pushed tag is built on its own, never a run for a branch
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      startsWith(github.event.workflow_run.head_branch, 'v'))
+    runs-on: ubuntu-24.04
+    # shows each build under Deployments of the repository, with a link to the file
+    # of the release; use the Flathub page here once the app is accepted there
+    environment:
+      name: flatpak
+      url: ${{ github.server_url }}/${{ github.repository }}/releases/tag/${{ inputs.tag || github.event.workflow_run.head_branch }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.tag || github.event.workflow_run.head_sha }}
+
+      - name: Install Flatpak and the runtimes of the manifest
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends flatpak flatpak-builder
+          flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+          flatpak install --user --noninteractive flathub \
+            org.kde.Platform//6.11 org.kde.Sdk//6.11 io.qt.PySide.BaseApp//6.11
+
+      # flatpak-builder runs the build in a sandbox, which Ubuntu 24.04 blocks for
+      # unprivileged users unless this is off
+      - name: Let the build create its sandbox
+        run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+
+      - uses: astral-sh/setup-uv@v10.3.0
+        with:
+          python-version: "3.15"
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --extra dev --frozen
+
+      - name: Build the Flatpak
+        run: uv run python tools/build_flatpak.py
+        env:
+          QT_QPA_PLATFORM: offscreen
+          FLATPAK_BUILDER_ARGS: --user
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: flatpak-package
+          path: dist/*.flatpak
+          if-no-files-found: error
+
+      - name: Attach the Flatpak to the release
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ${{ inputs.tag || github.event.workflow_run.head_branch }}
+          files: dist/*.flatpak
