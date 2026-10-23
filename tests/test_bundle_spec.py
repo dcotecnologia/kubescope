@@ -21,3 +21,9 @@ def test_the_bundle_keeps_every_qt_module_the_app_imports() -> None:
 
     assert "PySide6.QtNetwork" in imported  # the single instance needs it
     assert imported & excluded == set()  # a module left out is a crash on start
+
+
+def test_the_bundle_is_never_packed_with_upx() -> None:
+    spec = (ROOT / "KubeScope.spec").read_text(encoding="utf-8")
+
+    assert "upx=True" not in spec
