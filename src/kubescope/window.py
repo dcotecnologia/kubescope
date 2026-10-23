@@ -4204,10 +4204,15 @@ class WorkloadWindow(QMainWindow):
             if not (tab.auto_refresh and on_screen):
                 return
         tab.busy = True
+        since = None if force else tab.last_time  # a button press reads it all again
 
         def done(result: str) -> None:
             tab.busy = False
-            if not tab.closed:
+            if tab.closed:
+                return
+            if since:
+                tab.add_logs(result)
+            else:
                 tab.set_logs(result)
 
         def failed(message: str) -> None:
@@ -4222,6 +4227,7 @@ class WorkloadWindow(QMainWindow):
             tab.pod.namespace,
             tab.pod.name,
             tab.container,
+            *((500, since) if since else ()),
             on_error=failed,
             quiet=True,
         )
