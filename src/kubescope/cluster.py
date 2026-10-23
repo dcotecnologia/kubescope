@@ -71,6 +71,10 @@ class ClusterError(RuntimeError):
     """Raised when a request to the cluster or an AWS CLI command fails."""
 
 
+class SignInFailed(ClusterError):
+    """The sign-in program of the kubeconfig ran and failed."""
+
+
 REQUEST_TIMEOUT = 45  # seconds a cluster request may take
 # The app has no console on Windows, so a child would open a blank one of its own
 _NO_WINDOW = 0x08000000 if sys.platform == "win32" else 0  # CREATE_NO_WINDOW
@@ -297,11 +301,16 @@ def _api_client(context: str) -> client.ApiClient:
         logging.getLogger().removeHandler(errors)
     if errors.messages:
         api.close()
-        raise ClusterError(_sign_in_failure(errors.messages[0]))
+        raise SignInFailed(_sign_in_failure(errors.messages[0]))
     return api
 
 
 _clients: dict[str, client.ApiClient] = {}
+# A sign-in that failed (an expired SSO token, say) is not tried again at once:
+# a list asks the cluster several times in parallel, and every call would run the
+# sign-in program of the kubeconfig just to fail the same way.
+SIGN_IN_RETRY = 30.0
+_sign_in_failures: dict[str, tuple[float, SignInFailed]] = {}
 _client_locks: dict[str, threading.Lock] = {}
 
 
@@ -317,8 +326,23 @@ def _cached_client(context: str, fresh: bool = False) -> client.ApiClient:
         if fresh and (old := _clients.pop(context, None)) is not None:
             old.close()
         if context not in _clients:
-            _clients[context] = _api_client(context)
+            failed = _sign_in_failures.get(context)
+            if failed is not None and time.monotonic() - failed[0] < SIGN_IN_RETRY:
+                raise failed[1]  # it just failed: do not run the program again
+            try:
+                _clients[context] = _api_client(context)
+            except SignInFailed as error:
+                _sign_in_failures[context] = (time.monotonic(), error)
+                raise
+            _sign_in_failures.pop(context, None)
         return _clients[context]
+
+
+def retry_sign_in() -> None:
+    """Let the next request run the sign-in again, as when the person asks for
+    a refresh after signing in somewhere else."""
+    with _running_lock:
+        _sign_in_failures.clear()
 
 
 def forget_clients() -> None:
@@ -326,6 +350,7 @@ def forget_clients() -> None:
     with _running_lock:
         stale = list(_clients.values())
         _clients.clear()
+        _sign_in_failures.clear()
         _namespaces.clear()
         _metrics.clear()
     for api in stale:

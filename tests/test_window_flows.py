@@ -3675,6 +3675,21 @@ def test_the_list_on_screen_is_read_again_quietly_while_it_is_looked_at(
     window.close()
 
 
+def test_a_refresh_the_person_asked_for_signs_in_again(monkeypatch) -> None:
+    window = _ready_window(monkeypatch)
+    window._open_list_view("pods")
+    FakeRefreshWorker.outcome = ("ok", ([], []))
+    retries = []
+    monkeypatch.setattr(window_module, "retry_sign_in", lambda: retries.append(1))
+
+    window.refresh(quiet=True)  # the timer leaves a failed sign-in alone
+    assert retries == []
+
+    window.refresh()
+    assert retries == [1]
+    window.close()
+
+
 def test_a_quiet_read_leaves_the_status_and_the_spinner_alone(monkeypatch) -> None:
     window = _ready_window(monkeypatch)
     window._open_list_view("pods")

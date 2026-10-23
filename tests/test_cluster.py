@@ -2746,3 +2746,63 @@ def test_the_kubernetes_client_is_imported_when_first_asked_for() -> None:
     assert issubclass(cluster.HTTPError, Exception)
     with pytest.raises(AttributeError, match="no attribute 'nothing'"):
         cluster.__getattr__("nothing")
+
+
+def test_a_sign_in_that_failed_is_not_run_again_at_once(monkeypatch) -> None:
+    runs = []
+    now = [100.0]
+
+    def expired(context):
+        runs.append(context)
+        raise cluster.SignInFailed("Token has expired and refresh failed")
+
+    monkeypatch.setattr(cluster, "_api_client", expired)
+    monkeypatch.setattr(cluster, "time", SimpleNamespace(monotonic=lambda: now[0]))
+
+    for _ in range(5):  # a list asks the cluster several times
+        with pytest.raises(cluster.ClusterError, match="expired"):
+            cluster._cached_client("dev")
+    assert runs == ["dev"]
+
+    cluster.retry_sign_in()  # the person asked for a refresh
+    with pytest.raises(cluster.ClusterError):
+        cluster._cached_client("dev")
+    assert runs == ["dev", "dev"]
+
+    now[0] += cluster.SIGN_IN_RETRY + 1  # and after a while it is tried anyway
+    with pytest.raises(cluster.ClusterError):
+        cluster._cached_client("dev")
+    assert runs == ["dev", "dev", "dev"]
+
+
+def test_a_sign_in_that_works_clears_the_failure(monkeypatch) -> None:
+    answers = [cluster.SignInFailed("expired"), SimpleNamespace(close=lambda: None)]
+
+    def api_client(_context):
+        answer = answers.pop(0)
+        if isinstance(answer, Exception):
+            raise answer
+        return answer
+
+    monkeypatch.setattr(cluster, "_api_client", api_client)
+
+    with pytest.raises(cluster.ClusterError):
+        cluster._cached_client("dev")
+    cluster.forget_clients()  # signing in again, as the app does after a login
+    assert cluster._cached_client("dev") is not None
+    assert cluster._sign_in_failures == {}
+
+
+def test_other_failures_are_not_remembered(monkeypatch) -> None:
+    runs = []
+
+    def unreadable(context):
+        runs.append(context)
+        raise cluster.ClusterError("Could not read the kubeconfig")
+
+    monkeypatch.setattr(cluster, "_api_client", unreadable)
+
+    for _ in range(2):  # reading a file is cheap, and the person may have fixed it
+        with pytest.raises(cluster.ClusterError):
+            cluster._cached_client("dev")
+    assert runs == ["dev", "dev"]

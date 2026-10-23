@@ -92,6 +92,7 @@ from kubescope.cluster import (
     is_eks_context,
     list_contexts,
     parse_command,
+    retry_sign_in,
     run_login,
 )
 from kubescope.cluster import (
@@ -2760,6 +2761,7 @@ class WorkloadWindow(QMainWindow):
         )
         worker.finished.connect(lambda: self._refresh_finished(worker))
         if not quiet:  # a background read leaves the status and the spinner be
+            retry_sign_in()  # the person asked: they may have signed in elsewhere
             self._set_status(lambda: self.tr("Loading resources..."))
         worker.start()
         if not quiet:
