@@ -46,8 +46,8 @@ modules:
     sources:
       - type: git
         url: https://github.com/dcotecnologia/kubescope.git
-        tag: v0.3.0
-        commit: 8aea8523c7f1c5253f6206f30181b6a39f0611b1
+        tag: v0.14.0
+        commit: 33ad92273c06e1470c8e5dea3f79f192032333fd
       - type: file
         path: com.dcotecnologia.KubeScope.desktop
       - type: file
