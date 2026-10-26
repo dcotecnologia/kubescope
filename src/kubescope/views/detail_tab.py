@@ -96,7 +96,7 @@ class DetailTab(QWidget):
         header.addStretch()
         # the search looks in the raw JSON, which it shows when something is typed
         self.search = SearchBar(self.editor)
-        self.search.edited.connect(lambda: self.show_page(1))
+        self.search.edited.connect(self._show_raw)
         header.addWidget(self.search, 1)
         find = QShortcut(QKeySequence(QKeySequence.StandardKey.Find), self)
         find.setContext(Qt.ShortcutContext.WidgetWithChildrenShortcut)
@@ -107,6 +107,9 @@ class DetailTab(QWidget):
         layout.addWidget(self.stack)
         self.show_page(0)
         self.restyle()
+
+    def _show_raw(self) -> None:
+        self.show_page(1)
 
     def show_page(self, index: int) -> None:
         self.stack.setCurrentIndex(index)

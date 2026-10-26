@@ -4,7 +4,8 @@ import pytest
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
-from PySide6.QtWidgets import QApplication, QPlainTextEdit
+from PySide6.QtCore import QEvent
+from PySide6.QtWidgets import QApplication, QPlainTextEdit, QWidget
 
 from kubescope.views import search_bar
 from kubescope.views.search_bar import SearchBar, compile_query, find_spans
@@ -14,10 +15,29 @@ application = QApplication.instance() or QApplication([])
 TEXT = "Error: disk full\nwarn: low disk\nerror: disk 42 gone"
 
 
+_made: list[QWidget] = []
+
+
+@pytest.fixture(autouse=True)
+def dispose_widgets():
+    """Delete the widgets a test made, in Qt's own way: one left to Python's
+    garbage collector can abort the process when it ends."""
+    yield
+    for widget in _made:
+        widget.deleteLater()
+    _made.clear()
+    QApplication.sendPostedEvents(None, QEvent.Type.DeferredDelete.value)
+
+
+def _made_here[T: QWidget](widget: T) -> T:
+    _made.append(widget)
+    return widget
+
+
 def _bar(text: str = TEXT) -> SearchBar:
-    editor = QPlainTextEdit()
+    editor = _made_here(QPlainTextEdit())
     editor.setPlainText(text)
-    return SearchBar(editor)
+    return _made_here(SearchBar(editor))
 
 
 def test_a_search_ignores_the_case_unless_asked() -> None:
@@ -63,6 +83,17 @@ def test_typing_marks_every_match_and_selects_the_first_one() -> None:
     assert bar.count_label.text() == "3 of 3"  # round the ends
     bar.step(1)
     assert bar.count_label.text() == "1 of 3"
+
+
+def test_the_arrow_buttons_go_to_the_next_and_the_previous_match() -> None:
+    bar = _bar()
+    bar.input.setText("disk")
+
+    bar.next_button.click()
+    assert bar.count_label.text() == "2 of 3"
+    bar.previous_button.click()
+    bar.previous_button.click()
+    assert bar.count_label.text() == "3 of 3"
 
 
 def test_the_switches_change_the_matches() -> None:
@@ -154,22 +185,17 @@ def test_enter_goes_to_the_next_match_and_shift_enter_to_the_previous(
 
 
 def test_escape_clears_the_search_and_gives_the_text_the_focus() -> None:
-    from PySide6.QtCore import QEvent, Qt
-    from PySide6.QtGui import QKeyEvent
+    from PySide6.QtCore import Qt
+    from PySide6.QtTest import QTest
 
     bar = _bar()
     bar.input.setText("disk")
 
-    key = QKeyEvent(
-        QEvent.Type.KeyPress, Qt.Key.Key_Escape, Qt.KeyboardModifier.NoModifier
-    )
-    assert bar.eventFilter(bar.input, key) is True
+    QTest.keyClick(bar.input, Qt.Key.Key_Escape)
     assert bar.input.text() == ""
 
-    other = QKeyEvent(
-        QEvent.Type.KeyPress, Qt.Key.Key_A, Qt.KeyboardModifier.NoModifier
-    )
-    assert bar.eventFilter(bar.input, other) is False
+    QTest.keyClick(bar.input, Qt.Key.Key_A)  # any other key types as usual
+    assert bar.input.text() == "a"
     bar.focus()
 
 
@@ -177,7 +203,9 @@ def test_the_log_tab_searches_its_text_and_keeps_up_with_new_lines() -> None:
     from kubescope.models import PodInfo
     from kubescope.views.log_tab import LogTab
 
-    tab = LogTab("ctx", PodInfo("ns", "api", "Running", 1, 1, "1d", ("app",)), "app")
+    tab = _made_here(
+        LogTab("ctx", PodInfo("ns", "api", "Running", 1, 1, "1d", ("app",)), "app")
+    )
     tab.set_logs("INFO up\nERROR down\nINFO up again")
 
     tab.search.input.setText("info")
@@ -192,8 +220,10 @@ def test_the_log_tab_searches_its_text_and_keeps_up_with_new_lines() -> None:
 def test_the_details_search_opens_the_raw_json() -> None:
     from kubescope.views.detail_tab import DetailTab
 
-    tab = DetailTab(
-        "pod", {"metadata": {"name": "api"}, "spec": {"nodeName": "api-node"}}
+    tab = _made_here(
+        DetailTab(
+            "pod", {"metadata": {"name": "api"}, "spec": {"nodeName": "api-node"}}
+        )
     )
     assert not tab.showing_raw
 

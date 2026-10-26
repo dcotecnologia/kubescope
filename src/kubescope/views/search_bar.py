@@ -4,7 +4,7 @@ moves between them."""
 
 import re
 
-from PySide6.QtCore import QEvent, Qt, Signal
+from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QColor, QKeyEvent, QTextCharFormat, QTextCursor
 from PySide6.QtWidgets import (
     QApplication,
@@ -77,6 +77,18 @@ def _document_offsets(text: str, spans: list[tuple[int, int]]) -> list[tuple[int
     return offsets
 
 
+class _SearchInput(QLineEdit):
+    """The search box: Escape in it asks the bar to clear the search."""
+
+    escaped = Signal()
+
+    def keyPressEvent(self, event: QKeyEvent) -> None:
+        if event.key() == Qt.Key.Key_Escape:
+            self.escaped.emit()
+            return
+        super().keyPressEvent(event)
+
+
 class SearchBar(QWidget):
     """Searches the text of `editor`; keep the editor's text and this bar in
     step by calling `refresh` after the text changes."""
@@ -91,7 +103,7 @@ class SearchBar(QWidget):
         self._format = QTextCharFormat()
         self._format.setBackground(QColor(255, 200, 0, 90))
 
-        self.input = QLineEdit()
+        self.input = _SearchInput()
         self.input.setPlaceholderText(self.tr("Search"))
         self.input.setClearButtonEnabled(True)
         self.input.setProperty("variant", "filter")
@@ -102,8 +114,8 @@ class SearchBar(QWidget):
         self.count_label = QLabel()
         self.count_label.setProperty("variant", "muted")
         self.count_label.setMinimumWidth(96)  # "12 of 345" without being cut
-        self.previous_button = self._step("↑", self.tr("Previous match"), -1)
-        self.next_button = self._step("↓", self.tr("Next match"), 1)
+        self.previous_button = self._step("↑", self.tr("Previous match"))
+        self.next_button = self._step("↓", self.tr("Next match"))
 
         layout = QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -122,33 +134,32 @@ class SearchBar(QWidget):
         self.input.returnPressed.connect(self._enter)
         self.case_button.toggled.connect(self._edited)
         self.regex_button.toggled.connect(self._edited)
-        self.input.installEventFilter(self)
+        self.input.escaped.connect(self._escape)
+        # bound methods, not lambdas: a lambda keeps the bar alive until the app ends
+        self.previous_button.clicked.connect(self._previous)
+        self.next_button.clicked.connect(self._next)
 
-    def _step(self, text: str, tip: str, step: int) -> QPushButton:
+    def _step(self, text: str, tip: str) -> QPushButton:
         button = QPushButton(text)
         button.setToolTip(tip)
         button.setFixedSize(34, HEIGHT)
         button.setProperty("variant", "secondary")
-        button.clicked.connect(lambda _checked=False: self.step(step))
         return button
 
     def focus(self) -> None:
         self.input.setFocus()
         self.input.selectAll()
 
-    def eventFilter(self, watched, event) -> bool:
-        """Escape in the box clears the search and gives the focus back to the
-        text."""
-        if (
-            watched is self.input
-            and event.type() == QEvent.Type.KeyPress
-            and isinstance(event, QKeyEvent)
-            and event.key() == Qt.Key.Key_Escape
-        ):
-            self.input.clear()
-            self.editor.setFocus()
-            return True
-        return super().eventFilter(watched, event)
+    def _escape(self) -> None:
+        """Escape clears the search and gives the focus back to the text."""
+        self.input.clear()
+        self.editor.setFocus()
+
+    def _previous(self) -> None:
+        self.step(-1)
+
+    def _next(self) -> None:
+        self.step(1)
 
     def _enter(self) -> None:
         shift = QApplication.keyboardModifiers() & Qt.KeyboardModifier.ShiftModifier
