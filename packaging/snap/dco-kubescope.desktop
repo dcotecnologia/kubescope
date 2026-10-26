@@ -1,7 +1,7 @@
 [Desktop Entry]
 Type=Application
 Name=KubeScope
-Comment=Desktop viewer for Kubernetes and Amazon EKS workloads
+Comment=Desktop IDE for Kubernetes
 Exec=dco-kubescope
 Icon=${SNAP}/meta/gui/dco-kubescope.png
 Terminal=false

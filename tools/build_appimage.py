@@ -37,7 +37,7 @@ exec "$HERE/usr/lib/kubescope/KubeScope" "$@"
 DESKTOP_ENTRY = """[Desktop Entry]
 Type=Application
 Name=KubeScope
-Comment=Desktop viewer for Kubernetes and Amazon EKS workloads
+Comment=Desktop IDE for Kubernetes
 Exec=KubeScope
 Icon=kubescope
 Terminal=false

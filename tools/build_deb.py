@@ -51,7 +51,7 @@ DEPENDS = (
 DESKTOP_ENTRY = """[Desktop Entry]
 Type=Application
 Name=KubeScope
-Comment=Desktop viewer for Kubernetes and Amazon EKS workloads
+Comment=Desktop IDE for Kubernetes
 Exec=kubescope
 Icon=kubescope
 Terminal=false
@@ -185,7 +185,7 @@ def main() -> int:
         f"Maintainer: DCO Tecnologia <{metadata['authors'][0]['email']}>\n"
         "Homepage: https://github.com/dcotecnologia/kubescope\n"
         f"Description: {metadata['description']}\n"
-        " KubeScope is a read-only desktop console for Kubernetes and Amazon EKS:\n"
+        " KubeScope is a desktop IDE for Kubernetes:\n"
         " cluster overview, workloads, Pod details and live logs.\n"
     )
     write(package / "DEBIAN" / "control", control)

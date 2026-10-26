@@ -2,7 +2,7 @@
 <component type="desktop-application">
   <id>com.dcotecnologia.KubeScope</id>
   <name>KubeScope</name>
-  <summary>Desktop viewer for Kubernetes and Amazon EKS workloads</summary>
+  <summary>Desktop IDE for Kubernetes</summary>
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>MIT</project_license>
   <developer id="com.dcotecnologia">
@@ -10,7 +10,7 @@
   </developer>
   <description>
     <p>
-      KubeScope is a read-only desktop console for Kubernetes and Amazon EKS:
+      KubeScope is a desktop IDE for Kubernetes:
       cluster overview, Pods and Deployments with CPU, memory and restarts,
       resource details and live logs.
     </p>
