@@ -2,7 +2,7 @@ name: Release
 
 # Builds the installable packages. Run it by hand ("Run workflow") to get the
 # files as artifacts, or push a tag like v0.1.0 to also publish a GitHub release.
-# The snap is sent to the Snap Store by the Snap Store workflow, after this one.
+# The snap and the Flatpak are not sent anywhere from here: upload them by hand.
 on:
   workflow_dispatch:
     inputs:

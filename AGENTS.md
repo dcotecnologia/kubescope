@@ -211,8 +211,7 @@ Requirements:
   packages and the Windows build one after the other, not at the same time.
 - `make snap` packs the same bundle as a snap (`tools/build_snap.py`, `packaging/snap/`). It
   is classic, so it uses the tools of the system and the libraries of the host, like the AppImage;
-  its binaries are not patched (`no-patchelf`). `.github/workflows/snap-store.yml` sends it to the
-  store after the Release workflow, to `candidate`.
+  its binaries are not patched (`no-patchelf`). It is sent to the store by hand.
 - Programs of the system (gcloud, az, kubelogin, oci...) go through `utils/flatpak.py`
   (`on_host`) so that they run on the host when the app is a Flatpak, which carries no cloud CLI,
   the `aws` included. Do not start such programs with a bare `subprocess` call.

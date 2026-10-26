@@ -328,13 +328,8 @@ confinement of the app (a request in the Snapcraft forum, before the first uploa
 packs the same PyInstaller bundle as the `.deb`, with `snapcraft` (in LXD by default;
 `SNAPCRAFT_BUILD_ARGS=--destructive-mode` on Ubuntu 24.04).
 
-The **Flatpak** workflow (`.github/workflows/flatpak.yml`) builds the Flatpak of a
-successful Release of a tag (`flatpak-builder` on a GitHub runner, from the tagged
-source) and attaches `KubeScope-<version>.flatpak` to the GitHub release. Run it by hand
-with a tag to build that file again; each build is listed under **Deployments**, in the
-`flatpak` environment, with a link to the file of the release. Flathub itself has no upload: its app is a pull
-request made by a person (`make flathub-submission` gathers the files), and Flathub
-builds the app from there.
+Flathub has no upload: its app is a pull request made by a person
+(`make flathub-submission` gathers the files), and Flathub builds the app from there.
 
 Windows packages can also be built without Wine: the **Release** workflow
 (`.github/workflows/release.yml`) builds everything on GitHub runners: the Linux
@@ -342,17 +337,9 @@ Windows packages can also be built without Wine: the **Release** workflow
 installer plus a portable zip on Windows. Run it from the Actions tab, or push a
 `v*` tag to also publish a GitHub release.
 
-The **Snap Store** workflow (`.github/workflows/snap-store.yml`) sends the snap of a
-successful Release of a tag to the `candidate` channel of the store; promote it to
-`stable` after trying it. It needs the name registered once (`snapcraft register
-dco-kubescope`) and the `SNAPCRAFT_STORE_CREDENTIALS` secret, made with `snapcraft export-login
---snaps=dco-kubescope --channels=candidate --acls=package_push,package_release
-credentials.txt`; without the secret the run only warns.
-Each send is listed under **Deployments** of the repository, in the `snap-store`
-environment, with a link to the app in the store; give that environment required
-reviewers to hold a send until a person approves it, and keep the credentials as a
-secret of the environment.
-Run it by hand to send the snap of another Release run, or to another channel.
+The snap built by the Release workflow is sent to the Snap Store by hand
+(`snapcraft upload --release=candidate`); promote it to `stable` after trying it. It
+needs the name registered once (`snapcraft register dco-kubescope`).
 
 ## Editing the UI
 
