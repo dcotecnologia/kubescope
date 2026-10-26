@@ -107,9 +107,11 @@ def finish_workers_with_the_test(monkeypatch):
     A window that a test leaves open keeps its workers running, and what
     they answer would reach a window, or a dialog, of the next test; one
     still running when the process ends can abort it. Their signals are
-    cut and the threads are waited for.
+    cut, the threads are waited for, and the answers already queued for
+    a window are dropped.
     """
-    from PySide6.QtCore import QThread
+    from PySide6.QtCore import QCoreApplication, QEvent, QThread
+    from PySide6.QtWidgets import QApplication
 
     started: list[QThread] = []
     original = QThread.start
@@ -124,3 +126,6 @@ def finish_workers_with_the_test(monkeypatch):
         worker.blockSignals(True)
     for worker in started:
         worker.wait(10_000)
+    # a signal sent before the signals were cut waits in the queue of the window
+    for widget in QApplication.allWidgets():
+        QCoreApplication.removePostedEvents(widget, QEvent.Type.MetaCall.value)
