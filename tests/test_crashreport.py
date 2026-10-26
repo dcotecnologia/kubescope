@@ -31,14 +31,12 @@ def _error() -> tuple[type[BaseException], BaseException, TracebackType | None]:
 
 
 def _log_to_the_buffer(*messages: str) -> None:
-    logger = logging.getLogger("kubescope.tests")
-    logger.addHandler(crashreport._recent)
-    logger.setLevel(logging.INFO)
-    try:
-        for message in messages:
-            logger.info(message)
-    finally:
-        logger.removeHandler(crashreport._recent)
+    """Hand records to the buffer as the app's loggers do, without a logger."""
+    for message in messages:
+        record = logging.LogRecord(
+            "kubescope.tests", logging.INFO, __file__, 0, message, None, None
+        )
+        crashreport._recent.handle(record)
 
 
 def test_the_report_keeps_the_first_line_of_the_message_only() -> None:
