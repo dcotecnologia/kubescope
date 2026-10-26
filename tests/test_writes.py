@@ -377,3 +377,77 @@ def test_the_forward_command_is_complete_and_ready_to_paste(monkeypatch) -> None
     versions = dict(writes.forward_commands("dev", "ops", "api", 80, 8080))
     expected = "kubectl --context dev --namespace ops port-forward service/api 8080:80"
     assert versions == {"PowerShell": expected, "cmd": expected}
+
+
+def _review(allowed) -> bytes:
+    return json.dumps({"status": {"allowed": allowed}}).encode()
+
+
+def test_allowed_actions_asks_one_access_review_for_each_button(monkeypatch) -> None:
+    sent = []
+
+    def write(method, path, context, body, content_type=""):
+        sent.append((method, path, context, body["spec"]["resourceAttributes"]))
+        attributes = body["spec"]["resourceAttributes"]
+        return _review(attributes.get("subresource") != "eviction")
+
+    monkeypatch.setattr(writes, "_write", write)
+
+    allowed = writes.allowed_actions("prod", "ops")
+
+    assert allowed == {"shell", "delete", "scale", "reload", "forward"}
+    assert {s[:3] for s in sent} == {
+        ("POST", "/apis/authorization.k8s.io/v1/selfsubjectaccessreviews", "prod")
+    }
+    assert sent[0][3] == {
+        "namespace": "ops",
+        "verb": "create",
+        "group": "",
+        "resource": "pods",
+        "subresource": "exec",
+    }
+    assert sent[3][3]["group"] == "apps"
+    assert "subresource" not in sent[2][3]  # deleting a Pod
+
+
+def test_a_review_that_fails_leaves_its_button_in(monkeypatch) -> None:
+    answers = iter(
+        [
+            ClusterError("forbidden"),
+            b"not json",
+            b"{}",
+            _review(False),
+            _review(None),
+            _review(True),
+        ]
+    )
+
+    def write(*_args, **_kwargs):
+        answer = next(answers)
+        if isinstance(answer, Exception):
+            raise answer
+        return answer
+
+    monkeypatch.setattr(writes, "_write", write)
+
+    # shell, evict and delete could not be told, scale is refused
+    assert writes.allowed_actions("prod", "ops") == {
+        "shell",
+        "evict",
+        "delete",
+        "reload",
+        "forward",
+    }
+
+
+def test_the_review_goes_through_the_write_path(monkeypatch) -> None:
+    calls = []
+
+    def background(call, _timeout):
+        calls.append(call)
+        return b"{}"
+
+    monkeypatch.setattr(writes.cluster, "_in_background", background)
+
+    assert writes._write("POST", "/p", "dev", {}) == b"{}"
+    assert len(calls) == 1

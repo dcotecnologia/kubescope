@@ -23,15 +23,22 @@ API = Workload("ns", "Deployment", "api", 2, 3, "1d")
 SINGLE = PodInfo("ns", "solo", "Running", 1, 1, "1h", ("app",))
 
 
+reviews: list = []  # the access reviews, which the person did not ask for
+
+
 def _window(monkeypatch, write_mode: bool = True):
     window = _ready_window(monkeypatch)
     window.settings.write_mode = write_mode
     ran = []
-    monkeypatch.setattr(
-        window,
-        "_run_action",
-        lambda op, ok, *a, **k: ran.append((op.__name__, a, k)),
-    )
+    reviews.clear()
+
+    def record(op, ok, *args, **kwargs) -> None:
+        if op.__name__ == "allowed_actions":
+            reviews.append((args, ok, kwargs))
+        else:
+            ran.append((op.__name__, args, kwargs))
+
+    monkeypatch.setattr(window, "_run_action", record)
     return window, ran
 
 
@@ -633,4 +640,67 @@ def test_on_windows_the_command_dialog_has_a_box_for_each_shell(monkeypatch) -> 
     assert seen["after"] == [command for _shell, command in expected]
     assert seen["clipboard"] == expected[1][1]  # the cmd one
     assert "'" in seen["texts"][0] and '"' in seen["texts"][1]
+    window.close()
+
+
+def test_the_buttons_and_menus_offer_only_what_the_cluster_allows(
+    monkeypatch,
+) -> None:
+    window, _ran = _window(monkeypatch)
+    window.show()
+    monkeypatch.setattr(window, "_context", lambda: "prod")
+    seen: list = []
+    _fake_menu(monkeypatch, seen)
+    window._open_list_view("pods")
+    window._show_pods(["ns"], [POD])
+    window.table.selectRow(0)
+
+    assert reviews[0][0] == ("prod", "ns")  # asked, no answer yet
+    assert _visible_write_buttons(window) == [
+        "Shell command",
+        "Evict",
+        "Delete",
+        "Forward",
+    ]
+
+    window._permissions_read(("prod", "ns"), frozenset({"shell", "forward"}))
+
+    assert _visible_write_buttons(window) == ["Shell command", "Forward"]
+    window._show_row_menu(QPoint(5, window.table.rowViewportPosition(0) + 2))
+    assert seen[-1] == ["Details", "Logs", "", "Shell command", "Forward"]
+    assert len(reviews) == 1  # the answer is kept
+
+    window._permissions_read(("prod", "ns"), frozenset())
+    assert _visible_write_buttons(window) == []
+    window.close()
+
+
+def test_the_permissions_are_asked_again_when_old_or_cleared(monkeypatch) -> None:
+    window, _ran = _window(monkeypatch)
+    window.show()
+    monkeypatch.setattr(window, "_context", lambda: "prod")
+    window._open_list_view("pods")
+    window._show_pods(["ns"], [POD])
+    window.table.selectRow(0)
+    key = ("prod", "ns")
+    window._permissions_read(key, frozenset({"shell"}))
+    asked = len(reviews)
+
+    window._update_workload_actions()
+    assert len(reviews) == asked
+
+    window._permissions[key] = (-1e9, frozenset({"shell"}))  # long ago
+    window._update_workload_actions()
+    assert len(reviews) == asked + 1
+    window._update_workload_actions()  # still waiting for that answer
+    assert len(reviews) == asked + 1
+
+    # a failed review is tried again at the next selection
+    reviews[-1][2]["on_error"]("boom")
+    window._update_workload_actions()
+    assert len(reviews) == asked + 2
+
+    window.settings.write_mode = False
+    window._update_workload_actions()
+    assert len(reviews) == asked + 2  # read-only never asks
     window.close()
