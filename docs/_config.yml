@@ -1,5 +1,53 @@
 title: KubeScope
-description: Read-only desktop viewer for Kubernetes and Amazon EKS.
-theme: jekyll-theme-cayman
+description: Desktop IDE for Kubernetes.
+
+app_name: KubeScope
+app_icon: assets/icon.png
+app_screenshot: screenshots/overview.png
+app_description: A desktop IDE for Kubernetes, including Amazon EKS, Google GKE and Azure AKS. Read-only by default, with no kubectl needed.
+
+# Google Tag Manager container (GTM-XXXXXXX); empty leaves the tag out of the pages
+google_tag_manager_id: "GTM-NF8JJ4QQ"
+# Google Analytics 4 measurement ID (G-XXXXXXXXXX); empty leaves the tag out of the pages
+google_analytics_id: "G-17B6Y96186"
+
+repo_url: https://github.com/dcotecnologia/kubescope
+company_name: DCO Tecnologia
+company_url: https://dcotecnologia.com
+
+# Links of the top bar
+nav:
+  - title: Install
+    url: /install/
+  - title: Guides
+    url: https://github.com/dcotecnologia/kubescope/wiki
+  - title: Source
+    url: https://github.com/dcotecnologia/kubescope
+
+# The features of the home page: a symbol, a title and a text
+features:
+  - icon: "◎"
+    title: Cluster overview
+    description: Nodes, Pod counts, and CPU and memory requests against capacity.
+  - icon: "▤"
+    title: Workloads
+    description: Pods, Deployments, StatefulSets and more, with status, CPU, memory and restarts, filtered by namespace and searchable.
+  - icon: "{ }"
+    title: Details and logs
+    description: JSON details and live Pod logs, each in its own tab.
+  - icon: "☁"
+    title: Every cloud
+    description: Amazon EKS, Google GKE and Azure AKS through your local kubeconfig, with the official Kubernetes Python client.
+  - icon: "✎"
+    title: Write mode
+    description: Off by default. Turn it on to delete or evict Pods, scale or restart Deployments, and forward ports, only where the cluster lets you.
+  - icon: "✦"
+    title: Readable errors
+    description: Short messages with a hint, with the original error one click away, in 20 languages.
+
 exclude:
   - wiki
+  - README.md
+
+sass:
+  style: compressed

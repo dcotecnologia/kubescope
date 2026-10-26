@@ -1,0 +1,36 @@
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="x-ua-compatible" content="ie=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>{% if page.title %}{{ page.title }} · {% endif %}{{ site.title }}</title>
+	<meta name="description" content="{{ site.description }}">
+	<link rel="icon" href="{{ '/assets/favicon.ico' | relative_url }}" sizes="any">
+	<link rel="icon" type="image/png" href="{{ site.app_icon | relative_url }}">
+	<link rel="apple-touch-icon" href="{{ site.app_icon | relative_url }}">
+	<meta name="theme-color" content="#0f172a">
+	<meta property="og:type" content="website">
+	<meta property="og:title" content="{{ site.title }}">
+	<meta property="og:description" content="{{ site.description }}">
+	<meta property="og:image" content="{{ site.app_icon | absolute_url }}">
+	<meta name="twitter:card" content="summary">
+	<link rel="stylesheet" href="{{ '/main.css' | relative_url }}">
+	{% if site.google_tag_manager_id != "" and site.google_tag_manager_id %}
+	<!-- Google Tag Manager -->
+	<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+	new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+	j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+	'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+	})(window,document,'script','dataLayer','{{ site.google_tag_manager_id }}');</script>
+	{% endif %}
+	{% if site.google_analytics_id != "" and site.google_analytics_id %}
+	<!-- Google tag (gtag.js) -->
+	<script async src="https://www.googletagmanager.com/gtag/js?id={{ site.google_analytics_id }}"></script>
+	<script>
+		window.dataLayer = window.dataLayer || [];
+		function gtag(){dataLayer.push(arguments);}
+		gtag('js', new Date());
+
+		gtag('config', '{{ site.google_analytics_id }}');
+	</script>
+	{% endif %}
+</head>

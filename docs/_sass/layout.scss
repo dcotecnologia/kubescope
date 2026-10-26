@@ -1,0 +1,238 @@
+// Based on the Automatic theme by Emil Baehr (MIT, see LICENSE-automatic)
+.hero {
+	background: linear-gradient(135deg, $hero-start, $hero-end);
+	border-radius: 0 0 40px 40px;
+	padding-bottom: 70px;
+}
+
+.container {
+	margin: auto;
+	max-width: $content-width;
+	padding-left: 15px;
+	padding-right: 15px;
+}
+
+.hero .container {
+	display: grid;
+	grid-template-columns: repeat(12, 1fr);
+	grid-column-gap: 30px;
+	grid-template-areas:
+		"h h h h h h h h h h h h"
+		"i i i i i p p p p p p p";
+	align-items: center;
+}
+
+header {
+	grid-area: h;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	height: 100px;
+}
+
+.logo {
+	display: flex;
+	align-items: center;
+	color: #fff !important;
+}
+
+.headerIcon {
+	width: 44px;
+	height: 44px;
+	border-radius: 10px;
+}
+
+.headerName {
+	margin-left: 14px;
+	font-weight: bold;
+	white-space: nowrap;
+}
+
+nav > ul {
+	display: flex;
+	list-style-type: none;
+}
+
+nav > ul li {
+	padding-left: 30px;
+}
+
+nav > ul li a:link, nav > ul li a:visited {
+	color: rgba(#fff, 0.65);
+}
+
+nav > ul li a:hover, nav > ul li a:active {
+	color: #fff;
+}
+
+.subPageHeaderBackground .logo { color: #000 !important; }
+.subPageHeaderBackground nav > ul li a:link,
+.subPageHeaderBackground nav > ul li a:visited { color: rgba(#000, 0.6); }
+.subPageHeaderBackground nav > ul li a:hover,
+.subPageHeaderBackground nav > ul li a:active { color: #000; }
+
+// Name, tagline and downloads
+.appInfo {
+	grid-area: i;
+	padding: 30px 0;
+}
+
+.appName { color: #fff; }
+
+.appDescription {
+	color: rgba(#fff, 0.85);
+	font-size: 2.2rem;
+	line-height: 1.5;
+	margin-top: 28px;
+}
+
+.downloads {
+	margin-top: 36px;
+	color: rgba(#fff, 0.7);
+	font-size: 1.6rem;
+	line-height: 1.5;
+
+	ul {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 12px;
+		list-style-type: none;
+		margin-top: 16px;
+	}
+
+	li a:link, li a:visited {
+		display: block;
+		padding: 12px 18px;
+		border-radius: 10px;
+		background: $accent-color;
+		color: #fff;
+		font-weight: 600;
+	}
+
+	li a:hover { background: #4a80f0; }
+	p a:link, p a:visited { color: #fff; text-decoration: underline; }
+}
+
+// The screenshot in a desktop window
+.windowPreview {
+	grid-area: p;
+	border-radius: 12px;
+	overflow: hidden;
+	background: #111827;
+	box-shadow: 0 25px 60px rgba(#000, 0.45);
+}
+
+.windowBar {
+	display: flex;
+	gap: 7px;
+	padding: 10px 14px;
+	background: #1f2937;
+
+	span {
+		width: 11px;
+		height: 11px;
+		border-radius: 50%;
+		background: #4b5563;
+	}
+}
+
+.windowScreen {
+	display: block;
+	width: 100%;
+	height: auto;
+}
+
+// Feature list
+.features {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 56px 30px;
+	margin-top: 90px;
+}
+
+.feature {
+	display: flex;
+	width: calc((100% - 60px) / 3);
+}
+
+.featureIcon {
+	flex: none;
+	width: 44px;
+	height: 44px;
+	border-radius: 50%;
+	background: #e6e6e6;
+	color: $accent-color;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 1.8rem;
+}
+
+.featureText { margin-left: 18px; }
+.featureText > h3 { color: $feature-title-color; }
+.featureText > p {
+	color: $feature-text-color;
+	margin-top: 8px;
+	font-size: 1.7rem;
+	line-height: 1.5;
+}
+
+// Sub pages
+.page {
+	margin: 30px auto 70px;
+	max-width: 780px;
+	width: 100%;
+}
+
+// Footer
+footer {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+}
+
+.footerText {
+	width: 100%;
+	text-align: center;
+	color: $feature-text-color;
+	padding: 70px 0 30px;
+}
+
+.footerLinks {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	gap: 14px 30px;
+	padding-bottom: 70px;
+	font-size: 1.7rem;
+}
+
+@media only screen and (max-width: 992px) {
+	.hero .container {
+		grid-template-areas: "h" "i" "p";
+		grid-template-columns: 1fr;
+	}
+
+	.appInfo { text-align: center; padding-bottom: 40px; }
+	.downloads ul { justify-content: center; }
+	.windowPreview { margin-bottom: 10px; }
+	.feature { width: 100%; }
+}
+
+@media only screen and (max-width: 768px) {
+	header { height: 80px; }
+	.headerName { display: none; }
+	nav > ul li { padding-left: 20px; }
+	h1 { font-size: 3.4rem; }
+}
+
+.more {
+	max-width: 780px;
+	margin: 90px auto 0;
+	color: $feature-text-color;
+	font-size: 1.8rem;
+	line-height: 1.6;
+
+	h2 { color: $feature-title-color; margin-bottom: 14px; }
+	code { font-size: 1.5rem; word-break: break-all; }
+}
