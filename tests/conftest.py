@@ -98,3 +98,29 @@ def default_cluster_settings():
     cluster.configure()
     yield
     cluster.configure()
+
+
+@pytest.fixture(autouse=True)
+def finish_workers_with_the_test(monkeypatch):
+    """A worker thread a test started ends with that test.
+
+    A window that a test leaves open keeps its workers running, and what
+    they answer would reach a window, or a dialog, of the next test; one
+    still running when the process ends can abort it. Their signals are
+    cut and the threads are waited for.
+    """
+    from PySide6.QtCore import QThread
+
+    started: list[QThread] = []
+    original = QThread.start
+
+    def start(self, *args, **kwargs):
+        started.append(self)
+        return original(self, *args, **kwargs)
+
+    monkeypatch.setattr(QThread, "start", start)
+    yield
+    for worker in started:
+        worker.blockSignals(True)
+    for worker in started:
+        worker.wait(10_000)
