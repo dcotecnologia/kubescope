@@ -171,6 +171,7 @@ from kubescope.views.widgets import TabScrollArea
 from kubescope.views.window_frame import WindowFrame
 from kubescope.writes import (
     MAX_REPLICAS,
+    allowed_actions,
     container_ports,
     delete_pod,
     evict_pod,
@@ -197,6 +198,7 @@ DESIGNED_COLUMNS = 6  # the columns the table has in main_window.ui
 LIST_DEBOUNCE_MS = 150
 LIST_REFRESH_MS = 5_000  # the list on screen is read again this often
 LIST_REFRESH_MAX_MS = 60_000  # ... and this rarely while the cluster keeps failing
+PERMISSIONS_TTL_S = 300  # what the cluster allows is asked again after this long
 UPDATE_RECHECK_MS = 60 * 60 * 1000  # look for a new version again every hour
 UPDATE_SEARCH_MS = 5000  # an update check shows as searching for at least this long
 UPDATE_NOTICE_MS = 4000  # how long "Up to date" stays next to the icon
@@ -686,6 +688,10 @@ class WorkloadWindow(QMainWindow):
         self.logs_button = ui.logsButton
         # the write mode's buttons; each view shows its own, and only in that mode
         self.write_buttons: dict[str, QPushButton] = {}
+        self._shown_shapes: set[str] = set()  # the ones this view and mode offer
+        # (context, namespace) -> when it was read, what the cluster allows there
+        self._permissions: dict[tuple[str, str], tuple[float, frozenset[str]]] = {}
+        self._permissions_loading: set[tuple[str, str]] = set()
         for shape in ("shell", "evict", "delete", "scale", "reload", "forward"):
             button = QPushButton()
             button.setProperty("variant", "secondary")
@@ -2159,9 +2165,9 @@ class WorkloadWindow(QMainWindow):
             "forward": self.tr("Forward"),
         }
         shown = WRITE_VIEWS.get(self._view, ()) if self.settings.write_mode else ()
+        self._shown_shapes = set(shown)
         for shape, button in self.write_buttons.items():
             button.setText(names[shape])
-            button.setVisible(shape in shown)
         self._update_workload_actions()
 
     def _write_button_clicked(self, shape: str) -> None:
@@ -3403,8 +3409,53 @@ class WorkloadWindow(QMainWindow):
         enabled = self._selected_row() is not None
         for button in (self.pods_button, self.details_button, self.logs_button):
             button.setEnabled(enabled and not self._close_when_worker_stops)
-        for button in self.write_buttons.values():
+        row = self._selected_row()
+        allowed = self._allowed_shapes(row.namespace) if row is not None else None
+        for shape, button in self.write_buttons.items():
             button.setEnabled(enabled and not self._close_when_worker_stops)
+            button.setVisible(
+                shape in self._shown_shapes and (allowed is None or shape in allowed)
+            )
+
+    def _allowed_shapes(self, namespace: str) -> frozenset[str] | None:
+        """The write actions the cluster lets the person do in a namespace, or
+        None while it has not answered (all of them are offered then).
+
+        Asks in the background in the write mode, when it never did or
+        the answer is old; the buttons and menus follow the answer when
+        it comes.
+        """
+        if not self.settings.write_mode:
+            return None
+        key = (self._context(), namespace)
+        cached = self._permissions.get(key)
+        if (
+            cached is None or time.monotonic() - cached[0] > PERMISSIONS_TTL_S
+        ) and key not in self._permissions_loading:
+            self._permissions_loading.add(key)
+            self._run_action(
+                allowed_actions,
+                partial(self._permissions_read, key),
+                *key,
+                on_error=lambda _message: self._permissions_loading.discard(key),
+                quiet=True,
+            )
+        return cached[1] if cached else None
+
+    def _permissions_read(self, key: tuple[str, str], allowed: frozenset[str]) -> None:
+        self._permissions_loading.discard(key)
+        self._permissions[key] = (time.monotonic(), allowed)
+        self._update_workload_actions()
+
+    def _only_allowed(
+        self,
+        entries: list[tuple[str, str, Callable[[], None]]],
+        namespace: str,
+    ) -> list[tuple[str, str, Callable[[], None]]]:
+        allowed = self._allowed_shapes(namespace)
+        if allowed is None:
+            return entries
+        return [entry for entry in entries if entry[0] in allowed]
 
     def _run_action(
         self,
@@ -3634,7 +3685,9 @@ class WorkloadWindow(QMainWindow):
                 menu,
                 [
                     (shape, text, partial(self._after_closing, dialog, callback))
-                    for shape, text, callback in self._pod_entries(pods[row])
+                    for shape, text, callback in self._only_allowed(
+                        self._pod_entries(pods[row]), pods[row].namespace
+                    )
                 ],
             )
             menu.exec(table.viewport().mapToGlobal(position))
@@ -3732,6 +3785,12 @@ class WorkloadWindow(QMainWindow):
         """The actions that change the cluster for the selected row; only
         offered in the write mode."""
         row = self._selected_row()
+        entries = self._row_entries(row)
+        return self._only_allowed(entries, row.namespace) if row is not None else []
+
+    def _row_entries(
+        self, row: Workload | PodInfo | ClusterResource | None
+    ) -> list[tuple[str, str, Callable[[], None]]]:
         if self._view == "pods" and isinstance(row, PodInfo):
             return self._pod_entries(row)
         if self._view == "deployments" and isinstance(row, Workload):
@@ -4536,6 +4595,7 @@ class WorkloadWindow(QMainWindow):
         logger.info("Clearing the cache")
         forget_clients()
         self._answers.clear()
+        self._permissions.clear()
         self._overviews.clear()
         self._workloads_overviews.clear()
         self._overview = None

@@ -53,7 +53,10 @@ prefer otherwise.
   complete `kubectl port-forward` command for a port it exposes (or its
   containers declare, or a Service that selects it sends to; for that the app
   reads the Services of the namespace) and a local port you pick. The
-  app runs neither, and does not need `kubectl`.
+  app runs neither, and does not need `kubectl`. To show only what you may do,
+  the write mode also sends the cluster a `SelfSubjectAccessReview` for each
+  action, in the namespace of the selected row. It asks and changes nothing, and
+  carries no data of yours besides the namespace.
 - **Cluster info, Node Groups and Add-ons use the AWS CLI.** On an Amazon EKS
   context the app also runs `aws eks describe-cluster` (the Cluster info and
   Networking cards of the Overview), `list-nodegroups`, `describe-nodegroup`,

@@ -4,9 +4,11 @@ Nothing here runs unless the person turned on the write mode in the
 settings and confirmed the action. Each function sends one request with
 the client and the credentials of the chosen context (see `cluster`),
 except the shell, which only builds the command for the person's own
-terminal. No Qt.
+terminal. `allowed_actions` only asks the cluster what the person may
+do. No Qt.
 """
 
+import json
 import logging
 import os
 import re
@@ -36,7 +38,7 @@ def _send(
     context: str,
     body: dict[str, Any] | None,
     content_type: str,
-) -> None:
+) -> bytes:
     from kubernetes.client.exceptions import ApiException
     from urllib3.exceptions import HTTPError
 
@@ -71,6 +73,7 @@ def _send(
         raise ClusterError(
             cluster._status_message(response.status, response.reason, data)
         )
+    return data
 
 
 def _write(
@@ -79,9 +82,9 @@ def _write(
     context: str,
     body: dict[str, Any] | None = None,
     content_type: str = "application/json",
-) -> None:
+) -> bytes:
     try:
-        cluster._in_background(
+        return cluster._in_background(
             partial(_send, method, path, context, body, content_type),
             cluster.REQUEST_TIMEOUT,
         )
@@ -90,6 +93,62 @@ def _write(
         raise ClusterError(
             "The request timed out while contacting the cluster"
         ) from error
+
+
+# What each button of the write mode needs the cluster to allow, as the
+# (verb, API group, resource, subresource) of an access review. Forwarding to a
+# Service, a Pod or a StatefulSet all end in a Pod's port-forward.
+_PERMISSIONS = {
+    "shell": ("create", "", "pods", "exec"),
+    "evict": ("create", "", "pods", "eviction"),
+    "delete": ("delete", "", "pods", ""),
+    "scale": ("patch", "apps", "deployments", "scale"),
+    "reload": ("patch", "apps", "deployments", ""),
+    "forward": ("create", "", "pods", "portforward"),
+}
+
+
+def _may(context: str, namespace: str, permission: tuple[str, str, str, str]) -> bool:
+    verb, group, resource, subresource = permission
+    attributes = {
+        "namespace": namespace,
+        "verb": verb,
+        "group": group,
+        "resource": resource,
+    }
+    if subresource:
+        attributes["subresource"] = subresource
+    data = _write(
+        "POST",
+        "/apis/authorization.k8s.io/v1/selfsubjectaccessreviews",
+        context,
+        {
+            "apiVersion": "authorization.k8s.io/v1",
+            "kind": "SelfSubjectAccessReview",
+            "spec": {"resourceAttributes": attributes},
+        },
+    )
+    document = json.loads(data)
+    return document["status"]["allowed"] is not False
+
+
+def allowed_actions(context: str, namespace: str) -> frozenset[str]:
+    """The buttons of the write mode the cluster lets the person use in a
+    namespace, from one access review for each (the same question as `kubectl
+    auth can-i`).
+
+    A review that fails or is not understood leaves its button in: the cluster
+    decides when the action is tried.
+    """
+    allowed = set()
+    for shape, permission in _PERMISSIONS.items():
+        try:
+            if _may(context, namespace, permission):
+                allowed.add(shape)
+        except (ClusterError, ValueError, KeyError, TypeError):
+            logger.debug("Could not review %s; offering it", shape)
+            allowed.add(shape)
+    return frozenset(allowed)
 
 
 def delete_pod(context: str, namespace: str, name: str) -> None:
