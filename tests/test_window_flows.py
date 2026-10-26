@@ -2374,7 +2374,9 @@ def test_ctrl_r_and_f5_press_the_refresh_button_of_the_page_on_screen(
     logs.ui.refreshButton.clicked.connect(lambda: pressed.append("logs"))
 
     keys = sorted(
-        shortcut.key().toString() for shortcut in window.findChildren(QShortcut)
+        shortcut.key().toString()
+        for shortcut in window.findChildren(QShortcut)
+        if shortcut.key().toString() != "Ctrl+F"  # the search of the tab
     )
     assert keys == ["Ctrl+R", "F5"]
 

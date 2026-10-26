@@ -3,7 +3,7 @@ import json
 from typing import Any
 
 from PySide6.QtCore import Qt, Signal
-from PySide6.QtGui import QColor
+from PySide6.QtGui import QColor, QKeySequence, QShortcut
 from PySide6.QtWidgets import (
     QAbstractItemView,
     QFrame,
@@ -28,6 +28,7 @@ from kubescope.models import (
 from kubescope.theme import themed, themed_stylesheet
 from kubescope.utils.fonts import code_font
 from kubescope.utils.json_view import style_json_view
+from kubescope.views.search_bar import SearchBar
 from kubescope.views.widgets import LineNumberEditor, UsageChart
 
 USAGE_REFRESH_MS = 5000
@@ -93,6 +94,13 @@ class DetailTab(QWidget):
         header.addWidget(self.overview_button)
         header.addWidget(self.raw_button)
         header.addStretch()
+        # the search looks in the raw JSON, which it shows when something is typed
+        self.search = SearchBar(self.editor)
+        self.search.edited.connect(lambda: self.show_page(1))
+        header.addWidget(self.search, 1)
+        find = QShortcut(QKeySequence(QKeySequence.StandardKey.Find), self)
+        find.setContext(Qt.ShortcutContext.WidgetWithChildrenShortcut)
+        find.activated.connect(self.search.focus)
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addLayout(header)
