@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-10-26
+
 ### Added
 
 - A CodeQL workflow scans the Python code and the workflows for security problems every two weeks, and on demand by @danilogco
@@ -341,7 +343,8 @@ The first release.
 
 - Pod logs and resource details are still never written to disk by the app on its own. **Save** is the only exception, and it writes only to the file the user chooses. SECURITY.md says so by @danilogco
 
-[Unreleased]: https://github.com/dcotecnologia/kubescope/compare/v0.14.0...HEAD
+[Unreleased]: https://github.com/dcotecnologia/kubescope/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/dcotecnologia/kubescope/compare/v0.14.0...v1.0.0
 [0.14.0]: https://github.com/dcotecnologia/kubescope/compare/v0.13.0...v0.14.0
 [0.13.0]: https://github.com/dcotecnologia/kubescope/compare/v0.12.1...v0.13.0
 [0.12.1]: https://github.com/dcotecnologia/kubescope/compare/v0.12.0...v0.12.1
