@@ -1,0 +1,34 @@
+name: CodeQL
+
+# Scans the code for security problems every two weeks (the 1st and the 15th of the
+# month) and on demand, and lists what it finds under Security > Code scanning.
+on:
+  schedule:
+    - cron: "0 6 1,15 * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  analyze:
+    name: Analyze (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write # to upload the results
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [python, actions]
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: github/codeql-action/init@v4
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: none
+
+      - uses: github/codeql-action/analyze@v4
+        with:
+          category: /language:${{ matrix.language }}
