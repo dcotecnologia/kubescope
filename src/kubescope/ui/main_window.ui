@@ -149,6 +149,12 @@ QPushButton[variant="secondary"]:hover:enabled {
     background: #f3f1f9; border-color: #a9a0d6;
 }
 QPushButton[variant="secondary"]:disabled { color: #7b8089; }
+QPushButton[variant="secondary"]:checked {
+    background: #3020a5; color: #ffffff; border-color: #3020a5;
+}
+QPushButton[variant="secondary"]:checked:hover:enabled {
+    background: #4030b8; border-color: #4030b8;
+}
 QPushButton[iconOnly="true"] {
     padding: 0; min-width: 36px; max-width: 36px;
 }

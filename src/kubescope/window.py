@@ -3,6 +3,7 @@ import datetime
 import html
 import logging
 import math
+import re
 import tempfile
 import time
 from collections.abc import Callable
@@ -164,6 +165,7 @@ from kubescope.views.container_states import (
 )
 from kubescope.views.detail_tab import USAGE_REFRESH_MS, DetailTab
 from kubescope.views.log_tab import LOG_REFRESH_MS, LogTab
+from kubescope.views.search_bar import compile_query, switch_button
 from kubescope.views.widgets import TabScrollArea
 from kubescope.views.window_frame import WindowFrame
 from kubescope.writes import (
@@ -667,6 +669,13 @@ class WorkloadWindow(QMainWindow):
         self.context_combo = ui.contextCombo
         self.namespace_combo = ui.namespaceCombo
         self.search_input = ui.searchInput
+        # the switches of the search: Aa matches the case, .* reads a regular expression
+        self.search_case_button = switch_button("Aa", self.tr("Match case"))
+        self.search_regex_button = switch_button(".*", self.tr("Regular expression"))
+        filters = cast(QHBoxLayout, ui.filtersBar.layout())
+        at = filters.indexOf(ui.searchInput) + 1
+        for button in (self.search_regex_button, self.search_case_button):
+            filters.insertWidget(at, button)
         self.refresh_button = ui.refreshButton
         self.summary_label = ui.summaryLabel
         self.pods_button = ui.podsButton
@@ -993,6 +1002,8 @@ class WorkloadWindow(QMainWindow):
         self.context_combo.currentTextChanged.connect(self.refresh)
         self.namespace_combo.currentIndexChanged.connect(self.refresh)
         self.search_input.textChanged.connect(self._filter_rows)
+        self.search_case_button.toggled.connect(self._filter_rows)
+        self.search_regex_button.toggled.connect(self._filter_rows)
 
     def _press_refresh(self) -> None:
         """Ctrl+R and F5: press the refresh button of the page on screen, if it
@@ -3299,17 +3310,27 @@ class WorkloadWindow(QMainWindow):
         )
 
     def _filter_rows(self, *_args: object) -> None:
-        query = (
-            ""
-            if self._view in EKS_VIEWS
-            else self.search_input.text().strip().casefold()
-        )
+        pattern = None
+        self.search_input.setToolTip("")
+        if self._view not in EKS_VIEWS:
+            text = self.search_input.text()
+            try:
+                pattern = compile_query(
+                    text if self.search_regex_button.isChecked() else text.strip(),
+                    self.search_case_button.isChecked(),
+                    self.search_regex_button.isChecked(),
+                )
+            except re.error as error:  # every row stays until it compiles
+                self.search_input.setToolTip(str(error))
         visible_rows = 0
         rows = self._current_rows()
         self.table.setUpdatesEnabled(False)  # hiding rows one by one relays out
         for row_index, row in enumerate(rows):
             kind = "Pod" if isinstance(row, PodInfo) else row.kind
-            matches = query in f"{row.namespace} {kind} {row.name}".casefold()
+            matches = (
+                pattern is None
+                or pattern.search(f"{row.namespace} {kind} {row.name}") is not None
+            )
             self.table.setRowHidden(row_index, not matches)
             visible_rows += matches
         self.table.setUpdatesEnabled(True)
@@ -4574,6 +4595,8 @@ class WorkloadWindow(QMainWindow):
         self._restore_designed_headers()
         self.ui.retranslateUi(self)
         self._show_access_note()
+        self.search_case_button.setToolTip(self.tr("Match case"))
+        self.search_regex_button.setToolTip(self.tr("Regular expression"))
         self.viewer_ui.retranslateUi(self.ui.viewerHost)
         self._show_version()
         self.overview_ui.retranslateUi(self.ui.overviewHost)

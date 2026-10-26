@@ -1,12 +1,15 @@
 import re
 from datetime import datetime
 
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QKeySequence, QShortcut
 from PySide6.QtWidgets import QPlainTextEdit, QWidget
 
 from kubescope.models import PodInfo, safe_file_name
 from kubescope.ui.ui_log_tab import Ui_LogTab
 from kubescope.utils.fonts import code_font
 from kubescope.utils.log_view import style_log_view
+from kubescope.views.search_bar import SearchBar
 
 LOG_REFRESH_MS = 3000
 LOG_MAX_LINES = 5000  # what a log that keeps growing holds before the oldest go
@@ -28,6 +31,11 @@ class LogTab(QWidget):
         self.ui.setupUi(self)
         self.ui.logText.setFont(code_font())
         self.highlighter = style_log_view(self.ui.logText)
+        self.search = SearchBar(self.ui.logText)
+        self.ui.logLayout.insertWidget(1, self.search)
+        find = QShortcut(QKeySequence(QKeySequence.StandardKey.Find), self)
+        find.setContext(Qt.ShortcutContext.WidgetWithChildrenShortcut)
+        find.activated.connect(self.search.focus)
         self.save_name = safe_file_name(f"{pod.name}-{container}", ".log")
         self.context = context
         self.pod = pod
@@ -72,6 +80,7 @@ class LogTab(QWidget):
         if shown != editor.toPlainText():
             editor.setPlainText(shown)
             scrollbar.setValue(scrollbar.maximum() if was_at_end else previous)
+            self.search.refresh()
         self._show_updated()
 
     def add_logs(self, text: str) -> None:
@@ -93,6 +102,7 @@ class LogTab(QWidget):
             self._empty = False
             self._remember_end(lines)
             scrollbar.setValue(scrollbar.maximum() if was_at_end else previous)
+            self.search.refresh()
         self._show_updated()
 
     def _remember_end(self, lines: list[str]) -> None:

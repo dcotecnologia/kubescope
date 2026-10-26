@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+### Added
+
+- A search bar in the Logs and in the Details (which looks in the Raw JSON), with **Aa** to match the case and **.\*** to read a regular expression: it marks every match, says how many there are, and goes to the next or the previous with Enter and Shift+Enter (Ctrl+F focuses it, Esc clears it). The search box of the lists has the same two switches by @danilogco
+
 ### Changed
 
 - The GitHub Pages site loads Google Tag Manager and Google Analytics (`google_tag_manager_id` and `google_analytics_id` in `docs/_config.yml`; an empty one leaves its tag out) by @danilogco
