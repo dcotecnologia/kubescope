@@ -6,6 +6,8 @@ All notable changes to this project will be documented in this file. The format 
 
 ### Changed
 
+- The GitHub Pages site loads Google Tag Manager and Google Analytics (`google_tag_manager_id` and `google_analytics_id` in `docs/_config.yml`; an empty one leaves its tag out) by @danilogco
+- The GitHub Pages site uses a landing page adapted from the Automatic Jekyll theme (MIT): the app in a desktop window, direct download buttons, the features and an install page, in place of the Cayman theme by @danilogco
 - KubeScope is now described as a desktop IDE for the whole Kubernetes ecosystem, not only a viewer or an EKS tool, in the README, the docs, the package descriptions (pip, deb, AppImage, Snap and Flatpak) and the guides for contributors by @danilogco
 - The Flatpak no longer carries the AWS CLI: like `gcloud`, `az`, `kubelogin` and `oci`, the `aws` of the system runs on the host through `flatpak-spawn --host`, so EKS contexts use the version and the profiles of the person's own installation (the bundled AWS CLI v1 rejected some commands that the app sends), and the `~/.aws` permission is gone from the manifest by @danilogco
 

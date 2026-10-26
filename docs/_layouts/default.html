@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+{% include head.html %}
+<body>
+	{% include tag_manager_noscript.html %}
+	<div class="hero">
+		<div class="container">
+			{% include header.html %}
+			<div class="appInfo">
+				<h1 class="appName">{{ site.app_name }}</h1>
+				<p class="appDescription">{{ site.app_description }}</p>
+				{% include downloads.html %}
+			</div>
+			<div class="windowPreview">
+				<div class="windowBar"><span></span><span></span><span></span></div>
+				<img class="windowScreen" src="{{ site.app_screenshot | relative_url }}" alt="KubeScope cluster overview">
+			</div>
+		</div>
+	</div>
+	<div class="container">
+		<div class="features">
+			{% for feature in site.features %}
+			<div class="feature">
+				<span class="featureIcon" aria-hidden="true">{{ feature.icon }}</span>
+				<div class="featureText">
+					<h3>{{ feature.title }}</h3>
+					<p>{{ feature.description }}</p>
+				</div>
+			</div>
+			{% endfor %}
+		</div>
+		{{ content }}
+		{% include footer.html %}
+	</div>
+</body>
+</html>
