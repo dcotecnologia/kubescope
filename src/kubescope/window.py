@@ -81,6 +81,7 @@ from kubescope.cluster import (
     forget_clients,
     get_cluster_info,
     get_cluster_overview,
+    get_forward_sources,
     get_pod_logs,
     get_pod_usage,
     get_pods,
@@ -170,6 +171,7 @@ from kubescope.views.widgets import TabScrollArea
 from kubescope.views.window_frame import WindowFrame
 from kubescope.writes import (
     MAX_REPLICAS,
+    container_ports,
     delete_pod,
     evict_pod,
     forward_commands,
@@ -181,8 +183,9 @@ from kubescope.writes import (
 
 # The buttons of the write mode that each list view shows.
 WRITE_VIEWS = {
-    "pods": ("shell", "evict", "delete"),
+    "pods": ("shell", "evict", "delete", "forward"),
     "deployments": ("scale", "reload"),
+    "statefulsets": ("forward",),
     "services": ("forward",),
 }
 
@@ -3740,6 +3743,14 @@ class WorkloadWindow(QMainWindow):
             return [
                 ("forward", self.tr("Forward"), partial(self._forward_service, row))
             ]
+        if self._view == "statefulsets" and isinstance(row, Workload):
+            return [
+                (
+                    "forward",
+                    self.tr("Forward"),
+                    partial(self._forward, "StatefulSet", row),
+                )
+            ]
         return []
 
     def _pod_entries(self, pod: PodInfo) -> list[tuple[str, str, Callable[[], None]]]:
@@ -3747,6 +3758,7 @@ class WorkloadWindow(QMainWindow):
             ("shell", self.tr("Shell command"), partial(self._show_shell_command, pod)),
             ("evict", self.tr("Evict"), partial(self._evict_pod, pod)),
             ("delete", self.tr("Delete"), partial(self._delete_pod, pod)),
+            ("forward", self.tr("Forward"), partial(self._forward, "Pod", pod)),
         ]
 
     @staticmethod
@@ -3955,25 +3967,50 @@ class WorkloadWindow(QMainWindow):
         return refresh
 
     def _forward_service(self, service: ClusterResource) -> None:
-        """Read the ports of the Service, then show the kubectl command that
-        forwards one of them."""
+        self._forward("Service", service)
+
+    def _forward(
+        self, kind: str, resource: ClusterResource | PodInfo | Workload
+    ) -> None:
+        """Read the ports of the Service, Pod or StatefulSet, then show the
+        kubectl command that forwards one of them."""
+        if kind == "Service":
+            self._run_action(
+                get_resource_details,
+                lambda document: self._show_forward_command(resource, document),
+                self._context(),
+                kind,
+                resource.namespace,
+                resource.name,
+            )
+            return
         self._run_action(
-            get_resource_details,
-            lambda document: self._show_forward_command(service, document),
+            get_forward_sources,
+            lambda sources: self._show_forward_command(
+                resource, sources[0], kind, sources[1]
+            ),
             self._context(),
-            "Service",
-            service.namespace,
-            service.name,
+            kind,
+            resource.namespace,
+            resource.name,
         )
 
     def _show_forward_command(
-        self, service: ClusterResource, document: dict[str, Any]
+        self,
+        service: ClusterResource | PodInfo | Workload,
+        document: dict[str, Any],
+        kind: str = "Service",
+        services: list[dict[str, Any]] | None = None,
     ) -> None:
-        """The kubectl port-forward command for a port of the Service and a
-        local port the person picks, ready to paste in a terminal; the app runs
-        nothing itself."""
-        ports = service_ports(document)
-        if not ports:
+        """The kubectl port-forward command for a port of the Service, Pod or
+        StatefulSet and a local port the person picks, ready to paste in a
+        terminal; the app runs nothing itself."""
+        ports = (
+            service_ports(document)
+            if kind == "Service"
+            else container_ports(document, services or ())
+        )
+        if not ports and kind == "Service":
             self._show_message(
                 QMessageBox.Icon.Information,
                 self.tr("Forward"),
@@ -3990,11 +4027,27 @@ class WorkloadWindow(QMainWindow):
         layout.setContentsMargins(16, 16, 16, 16)
         layout.setSpacing(10)
         layout.addWidget(QLabel(self.tr("Port of {name}:").format(name=service.name)))
-        combo = QComboBox()
-        combo.setProperty("variant", "filter")
-        for number, label in ports:
-            combo.addItem(label, number)
-        layout.addWidget(combo)
+        remote: QComboBox | QSpinBox
+        if ports:
+            remote = QComboBox()
+            for number, label in ports:
+                remote.addItem(label, number)
+            remote_changed = remote.currentIndexChanged
+        else:  # nothing declares one: the person says which port the Pod listens on
+            remote = QSpinBox()
+            remote.setRange(1, 65535)
+            remote.setValue(8080)
+            remote_changed = remote.valueChanged
+        remote.setProperty("variant", "filter")
+        layout.addWidget(remote)
+
+        def remote_port() -> int:
+            return (
+                remote.currentData()
+                if isinstance(remote, QComboBox)
+                else remote.value()
+            )
+
         layout.addWidget(QLabel(self.tr("Local port:")))
         local = QSpinBox()
         local.setProperty("variant", "filter")
@@ -4012,18 +4065,19 @@ class WorkloadWindow(QMainWindow):
                 context,
                 service.namespace,
                 service.name,
-                combo.currentData(),
+                remote_port(),
                 local.value(),
+                kind.lower(),
             ),
         )
 
         def suggest_local_port() -> None:
             # a port below 1024 needs privileges: offer it shifted up instead
-            remote = combo.currentData()
-            local.setValue(remote if remote >= 1024 else remote + 8000)
+            port = remote_port()
+            local.setValue(port if port >= 1024 else port + 8000)
 
-        combo.currentIndexChanged.connect(suggest_local_port)
-        combo.currentIndexChanged.connect(refresh)
+        remote_changed.connect(suggest_local_port)
+        remote_changed.connect(refresh)
         local.valueChanged.connect(refresh)
         suggest_local_port()
         dialog.exec()

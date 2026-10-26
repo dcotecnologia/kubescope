@@ -62,7 +62,7 @@ def test_the_row_menu_offers_writes_only_in_the_write_mode(monkeypatch) -> None:
     window._open_list_view("statefulsets")
     window._show_workloads(["ns"], [Workload("ns", "StatefulSet", "db", 1, 1, "1d")])
     window._show_row_menu(pos)
-    assert seen[-1] == ["Pods", "Details", "Logs"]  # only Deployments scale
+    assert seen[-1] == ["Pods", "Details", "Logs", "", "Forward"]
 
     window._open_list_view("pods")
     window._show_pods(["ns"], [POD])
@@ -74,6 +74,7 @@ def test_the_row_menu_offers_writes_only_in_the_write_mode(monkeypatch) -> None:
         "Shell command",
         "Evict",
         "Delete",
+        "Forward",
     ]
     window.close()
 
@@ -303,7 +304,7 @@ def test_the_pods_dialog_menu_offers_the_writes_and_closes_first(monkeypatch) ->
 
     window._show_pods_dialog(workload, [POD])
 
-    assert seen == [["Shell command", "Evict", "Delete"]]
+    assert seen == [["Shell command", "Evict", "Delete", "Forward"]]
     assert closed == [True]
     assert [(n, a) for n, a, _k in ran] == [("delete_pod", ("prod", "ns", "api-1"))]
     window.close()
@@ -363,11 +364,20 @@ def test_the_write_buttons_follow_the_view_and_the_write_mode(monkeypatch) -> No
     assert window.write_buttons["scale"].isEnabled()
 
     window._open_list_view("statefulsets")
-    assert _visible_write_buttons(window) == []  # only Deployments scale
+    assert _visible_write_buttons(window) == ["Forward"]
+
+    window._open_list_view("daemonsets")
+    assert _visible_write_buttons(window) == []
+    assert window._write_entries() == []  # nothing to change on a DaemonSet
 
     window._open_list_view("pods")
     window._show_pods(["ns"], [POD])
-    assert _visible_write_buttons(window) == ["Shell command", "Evict", "Delete"]
+    assert _visible_write_buttons(window) == [
+        "Shell command",
+        "Evict",
+        "Delete",
+        "Forward",
+    ]
 
     window.settings.write_mode = False
     window._apply_view_buttons()
@@ -503,6 +513,95 @@ def test_a_service_without_tcp_ports_cannot_be_forwarded(monkeypatch) -> None:
     window._show_forward_command(SERVICE, {"spec": {"ports": []}})
 
     assert infos == ["Service api has no TCP ports to forward."]
+    window.close()
+
+
+def test_a_pod_and_a_statefulset_read_their_ports_and_their_services(
+    monkeypatch,
+) -> None:
+    window, ran = _window(monkeypatch)
+    window.show()
+    monkeypatch.setattr(window, "_context", lambda: "prod")
+
+    window._forward("Pod", POD)
+    window._forward("StatefulSet", Workload("ns", "StatefulSet", "db", 1, 1, "1d"))
+
+    assert [(n, a) for n, a, _k in ran] == [
+        ("get_forward_sources", ("prod", "Pod", POD.namespace, POD.name)),
+        ("get_forward_sources", ("prod", "StatefulSet", "ns", "db")),
+    ]
+    window.close()
+
+
+def test_the_forward_dialog_lists_the_ports_of_the_services_too(monkeypatch) -> None:
+    window, _ran = _window(monkeypatch)
+    monkeypatch.setattr(window, "_context", lambda: "prod")
+    seen = {}
+
+    def fake_exec(dialog) -> int:
+        combo = dialog.findChild(QComboBox)
+        seen["items"] = [combo.itemText(i) for i in range(combo.count())]
+        seen["command"] = dialog.findChild(QPlainTextEdit).toPlainText()
+        return 0
+
+    monkeypatch.setattr(QDialog, "exec", fake_exec)
+    db = Workload("ns", "StatefulSet", "db", 1, 1, "1d")
+    document = {
+        "spec": {
+            "template": {
+                "metadata": {"labels": {"app": "db"}},
+                "spec": {"containers": [{}]},
+            }
+        }
+    }
+    services = [
+        {
+            "metadata": {"name": "db"},
+            "spec": {"selector": {"app": "db"}, "ports": [{"port": 5432}]},
+        }
+    ]
+
+    window._show_forward_command(db, document, "StatefulSet", services)
+
+    assert seen["items"] == ["5432 (Service db)"]
+    assert (
+        seen["command"]
+        == writes.forward_commands("prod", "ns", "db", 5432, 5432, "statefulset")[0][1]
+    )
+    window.close()
+
+
+def test_without_any_port_the_person_types_the_one_the_pod_listens_on(
+    monkeypatch,
+) -> None:
+    window, _ran = _window(monkeypatch)
+    monkeypatch.setattr(window, "_context", lambda: "prod")
+    seen = {}
+
+    def fake_exec(dialog) -> int:
+        remote, local = dialog.findChildren(QSpinBox)
+        assert dialog.findChild(QComboBox) is None
+        box = dialog.findChild(QPlainTextEdit)
+        seen["first"] = (remote.value(), local.value(), box.toPlainText())
+        remote.setValue(80)  # below 1024: the local port is shifted up
+        seen["second"] = (local.value(), box.toPlainText())
+        return 0
+
+    monkeypatch.setattr(QDialog, "exec", fake_exec)
+
+    window._show_forward_command(POD, {"spec": {"containers": [{}]}}, "Pod", [])
+
+    assert seen["first"] == (
+        8080,
+        8080,
+        writes.forward_commands("prod", POD.namespace, POD.name, 8080, 8080, "pod")[0][
+            1
+        ],
+    )
+    assert seen["second"] == (
+        8080,
+        writes.forward_commands("prod", POD.namespace, POD.name, 80, 8080, "pod")[0][1],
+    )
     window.close()
 
 

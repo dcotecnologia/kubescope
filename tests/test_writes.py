@@ -295,6 +295,75 @@ def test_service_ports_keeps_the_tcp_ones_with_their_names() -> None:
     assert writes.service_ports({}) == []
 
 
+def test_container_ports_reads_a_pod_or_a_pod_template() -> None:
+    containers = [
+        {
+            "ports": [
+                {"containerPort": 80, "name": "http"},
+                {"containerPort": 53, "protocol": "UDP"},
+            ]
+        },
+        {"ports": [{"containerPort": 80}, {"containerPort": 9090}]},
+        {},
+    ]
+
+    expected = [(80, "80 (http)"), (9090, "9090")]
+    assert writes.container_ports({"spec": {"containers": containers}}) == expected
+    template = {"spec": {"template": {"spec": {"containers": containers}}}}
+    assert writes.container_ports(template) == expected
+    assert writes.container_ports({}) == []
+
+
+def test_container_ports_adds_the_ports_the_services_send_to_the_pod() -> None:
+    pod = {
+        "metadata": {"labels": {"app": "api", "tier": "web"}},
+        "spec": {"containers": [{"ports": [{"containerPort": 8080, "name": "http"}]}]},
+    }
+    services = [
+        {  # selects the Pod: a number, a name of the Pod, an unknown name, UDP
+            "metadata": {"name": "api"},
+            "spec": {
+                "selector": {"app": "api"},
+                "ports": [
+                    {"port": 80, "targetPort": 3000},
+                    {"port": 81, "targetPort": "http"},
+                    {"port": 82, "targetPort": "nope"},
+                    {"port": 83, "targetPort": 9000, "protocol": "UDP"},
+                    {"port": 5432},
+                ],
+            },
+        },
+        {  # another app
+            "metadata": {"name": "other"},
+            "spec": {
+                "selector": {"app": "web"},
+                "ports": [{"port": 1, "targetPort": 1}],
+            },
+        },
+        {"metadata": {"name": "any"}, "spec": {"ports": [{"port": 2}]}},  # no selector
+    ]
+
+    assert writes.container_ports(pod, services) == [
+        (8080, "8080 (http)"),
+        (3000, "3000 (Service api)"),
+        (5432, "5432 (Service api)"),
+    ]
+    template = {
+        "spec": {"template": {"metadata": pod["metadata"], "spec": pod["spec"]}}
+    }
+    assert writes.container_ports(template, services) == writes.container_ports(
+        pod, services
+    )
+
+
+def test_the_forward_command_names_the_kind_it_forwards_to(monkeypatch) -> None:
+    _on(monkeypatch, "linux")
+
+    [(_, command)] = writes.forward_commands("d", "ops", "db-0", 5432, 5432, "pod")
+
+    assert command.endswith("port-forward pod/db-0 5432:5432")
+
+
 def test_the_forward_command_is_complete_and_ready_to_paste(monkeypatch) -> None:
     _on(monkeypatch, "linux")
 

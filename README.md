@@ -17,7 +17,7 @@ default: it lists and inspects resources. An optional **write mode** (off until
 you turn it on in Settings) adds a few actions to the right-click menu: delete or
 evict a Pod, scale or restart a Deployment (each asks for confirmation), and the
 complete `kubectl exec` command to open a shell in a Pod and the `kubectl
-port-forward` command of a Service, to run in your own terminal.
+port-forward` command of a Service, a Pod or a StatefulSet, to run in your own terminal.
 
 ## Install
 

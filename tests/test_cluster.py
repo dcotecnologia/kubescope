@@ -151,6 +151,45 @@ def test_get_resource_details_returns_json_document(monkeypatch) -> None:
     assert commands == [("/apis/apps/v1/namespaces/production/deployments/api", "dev")]
 
 
+def test_get_forward_sources_reads_the_object_and_the_services_of_its_namespace(
+    monkeypatch,
+) -> None:
+    paths = []
+
+    def fake_get_json(path: str, context: str, query=None) -> dict:
+        paths.append(path)
+        if path.endswith("/services"):
+            return {"items": [{"metadata": {"name": "db"}}]}
+        return {"kind": "StatefulSet"}
+
+    monkeypatch.setattr(cluster, "_get_json", fake_get_json)
+
+    document, services = cluster.get_forward_sources("dev", "StatefulSet", "ops", "db")
+
+    assert document == {"kind": "StatefulSet"}
+    assert [s["metadata"]["name"] for s in services] == ["db"]
+    assert sorted(paths) == [
+        "/api/v1/namespaces/ops/services",
+        "/apis/apps/v1/namespaces/ops/statefulsets/db",
+    ]
+
+
+def test_get_forward_sources_goes_on_without_the_services_it_cannot_read(
+    monkeypatch,
+) -> None:
+    def fake_get_json(path: str, context: str, query=None) -> dict:
+        if path.endswith("/services"):
+            raise cluster.ClusterError("forbidden")
+        return {"kind": "Pod"}
+
+    monkeypatch.setattr(cluster, "_get_json", fake_get_json)
+
+    assert cluster.get_forward_sources("dev", "Pod", "ops", "api") == (
+        {"kind": "Pod"},
+        [],
+    )
+
+
 def test_get_pod_logs_selects_container_and_caps_lines(monkeypatch) -> None:
     requests = []
 

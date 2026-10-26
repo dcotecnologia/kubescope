@@ -49,8 +49,10 @@ prefer otherwise.
   right, it refuses and the app shows its message. For a shell in a Pod the
   menu only shows the complete `kubectl exec` command (with the context, the
   namespace and the container) for you to copy and run in your own terminal. The
-  same goes for **Forward** on a Service, which shows the complete `kubectl
-  port-forward` command for a port of the Service and a local port you pick. The
+  same goes for **Forward** on a Service, a Pod or a StatefulSet, which shows the
+  complete `kubectl port-forward` command for a port it exposes (or its
+  containers declare, or a Service that selects it sends to; for that the app
+  reads the Services of the namespace) and a local port you pick. The
   app runs neither, and does not need `kubectl`.
 - **Cluster info, Node Groups and Add-ons use the AWS CLI.** On an Amazon EKS
   context the app also runs `aws eks describe-cluster` (the Cluster info and

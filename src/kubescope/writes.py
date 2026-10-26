@@ -217,11 +217,57 @@ def service_ports(document: dict[str, Any]) -> list[tuple[int, str]]:
     return ports
 
 
+def container_ports(
+    document: dict[str, Any], services: list[dict[str, Any]] | tuple = ()
+) -> list[tuple[int, str]]:
+    """The TCP ports a Pod, or the Pod template of a workload, can be reached
+    on, as (number, label) without repeats: the ones its containers declare,
+    then the ones the Services that select it send to (their target port)."""
+    spec = document.get("spec") or {}
+    template = spec.get("template") or {}
+    spec, meta = (
+        template.get("spec") or spec,
+        template.get("metadata") or document.get("metadata"),
+    )
+    labels = (meta or {}).get("labels") or {}
+    ports: dict[int, str] = {}
+    names: dict[str, int] = {}
+    for container in spec.get("containers") or []:
+        for port in container.get("ports") or []:
+            number = port.get("containerPort")
+            if not isinstance(number, int) or (port.get("protocol") or "TCP") != "TCP":
+                continue
+            name = port.get("name")
+            if name:
+                names[name] = number
+            ports.setdefault(number, f"{number} ({name})" if name else str(number))
+    for service in services:
+        selector = (service.get("spec") or {}).get("selector") or {}
+        if not selector or any(
+            labels.get(key) != value for key, value in selector.items()
+        ):
+            continue
+        for port in service["spec"].get("ports") or []:
+            target = port.get("targetPort", port.get("port"))
+            number = names.get(target) if isinstance(target, str) else target
+            if not isinstance(number, int) or (port.get("protocol") or "TCP") != "TCP":
+                continue
+            via = (service.get("metadata") or {}).get("name", "")
+            ports.setdefault(number, f"{number} (Service {via})")
+    return list(ports.items())
+
+
 def forward_commands(
-    context: str, namespace: str, service: str, remote: int, local: int
+    context: str,
+    namespace: str,
+    service: str,
+    remote: int,
+    local: int,
+    kind: str = "service",
 ) -> list[tuple[str, str]]:
-    """The complete kubectl commands that forward a local port to a Service
-    port, for the person to run in their own terminal.
+    """The complete kubectl commands that forward a local port to a port of a
+    Service, a Pod or a StatefulSet (named by `kind`), for the person to run in
+    their own terminal.
 
     Nothing is run here.
     """
@@ -233,7 +279,7 @@ def forward_commands(
             "--namespace",
             namespace,
             "port-forward",
-            f"service/{service}",
+            f"{kind}/{service}",
             f"{local}:{remote}",
         ]
     )
