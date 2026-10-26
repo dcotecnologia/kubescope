@@ -1,7 +1,7 @@
 [project]
 name = "kubescope"
 version = "0.14.0"
-description = "Desktop viewer for Kubernetes and Amazon EKS workloads"
+description = "Desktop IDE for Kubernetes"
 readme = "README.md"
 license = "MIT"
 authors = [{ name = "Danilo Carolino", email = "danilogcarolino@gmail.com" }]

@@ -9,7 +9,7 @@
 [![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-D7FF64.svg?logo=ruff&logoColor=black)](https://docs.astral.sh/ruff/)
 [![Kubernetes](https://img.shields.io/badge/Kubernetes-EKS%20ready-326CE5.svg?logo=kubernetes&logoColor=white)](https://kubernetes.io/)
 
-Desktop viewer for Kubernetes workloads, including Amazon EKS, Google GKE and
+Desktop IDE for Kubernetes, including Amazon EKS, Google GKE and
 Azure AKS clusters available
 through the local Kubernetes configuration. It talks to the cluster with the
 official Kubernetes Python client, so it needs no `kubectl`. It is read-only by

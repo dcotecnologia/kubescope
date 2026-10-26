@@ -1,4 +1,4 @@
-"""Desktop Kubernetes workload viewer."""
+"""Desktop IDE for Kubernetes."""
 
 from importlib import metadata
 

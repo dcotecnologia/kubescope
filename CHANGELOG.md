@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file. The format 
 
 ### Changed
 
+- KubeScope is now described as a desktop IDE for the whole Kubernetes ecosystem, not only a viewer or an EKS tool, in the README, the docs, the package descriptions (pip, deb, AppImage, Snap and Flatpak) and the guides for contributors by @danilogco
 - The Flatpak no longer carries the AWS CLI: like `gcloud`, `az`, `kubelogin` and `oci`, the `aws` of the system runs on the host through `flatpak-spawn --host`, so EKS contexts use the version and the profiles of the person's own installation (the bundled AWS CLI v1 rejected some commands that the app sends), and the `~/.aws` permission is gone from the manifest by @danilogco
 
 ## [0.14.0] - 2026-10-23

@@ -3,7 +3,7 @@
 Guide for agents (human and AI) working in this repository.
 Goal: keep the architecture, tests, translations, and commit history consistent.
 
-KubeScope is a desktop viewer for Kubernetes and Amazon EKS, built with
+KubeScope is a desktop IDE for Kubernetes, built with
 Python 3.12+ and PySide6 (Qt). It talks to the cluster with the official `kubernetes` Python client. It is
 read-only by default; the few actions that change a cluster (delete or evict a
 Pod, scale or restart a Deployment, and the shell and port-forward commands) exist only behind the write

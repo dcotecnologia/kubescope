@@ -1,6 +1,6 @@
 # Contributing to KubeScope
 
-Thanks for helping. KubeScope is a desktop viewer for Kubernetes and Amazon EKS
+Thanks for helping. KubeScope is a desktop IDE for Kubernetes
 written in Python with PySide6. This page gets you from a clone to a pull request;
 the details live in two other files:
 

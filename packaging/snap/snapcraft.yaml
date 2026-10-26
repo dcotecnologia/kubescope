@@ -3,9 +3,9 @@ title: KubeScope
 base: core24
 # the build script puts the version of pyproject.toml here
 version: "@VERSION@"
-summary: Desktop viewer for Kubernetes and Amazon EKS workloads
+summary: Desktop IDE for Kubernetes
 description: |
-  KubeScope is a desktop viewer for Kubernetes and Amazon EKS. It shows the
+  KubeScope is a desktop IDE for Kubernetes. It shows the
   workloads, Pods, nodes, network and configuration of your clusters, with
   live CPU and memory, Pod logs and resource details.
 
