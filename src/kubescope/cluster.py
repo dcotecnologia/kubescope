@@ -1826,6 +1826,27 @@ def _get_eks(context: str, kind: str) -> tuple[list[str], list[ClusterResource]]
     return [], resources
 
 
+def get_forward_sources(
+    context: str, kind: str, namespace: str, name: str
+) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+    """The document of a Pod or a workload and the Services of its namespace,
+    to find the ports it can be reached on.
+
+    Services the person may not read are left out.
+    """
+
+    def services() -> list[dict[str, Any]]:
+        try:
+            return _list("services", context, namespace).get("items") or []
+        except ClusterError:
+            return []
+
+    document, items = _together(
+        partial(get_resource_details, context, kind, namespace, name), services
+    )
+    return document, items
+
+
 def get_resources(
     context: str, namespace: str | None, kind: str
 ) -> tuple[list[str], list[ClusterResource]]:

@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file. The format 
 ### Added
 
 - A search bar in the Logs and in the Details (which looks in the Raw JSON), with **Aa** to match the case and **.\*** to read a regular expression: it marks every match, says how many there are, and goes to the next or the previous with Enter and Shift+Enter (Ctrl+F focuses it, Esc clears it). The search box of the lists has the same two switches by @danilogco
+- **Forward**, in the write mode, is also on Pods (in the Pods list and in the Pods of a workload) and on StatefulSets: it shows the complete `kubectl port-forward` command for a TCP port you pick and a local port: the ports their containers declare and the ones the Services that select them send to (the app reads the Services of the namespace for that), or, when there is none, the port you type by @danilogco
 
 ### Changed
 
