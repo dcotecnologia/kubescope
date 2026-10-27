@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+### Fixed
+
+- The Install link of the GitHub Pages site (top bar and footer) opens the install page: the page now has the `/install/` address the links point to by @danilogco
+
 ## [1.0.0] - 2026-10-26
 
 ### Added
