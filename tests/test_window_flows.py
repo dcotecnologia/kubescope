@@ -22,6 +22,7 @@ from PySide6.QtCore import (
 from PySide6.QtGui import (
     QAction,
     QCloseEvent,
+    QColor,
     QHelpEvent,
     QMouseEvent,
     QPalette,
@@ -67,6 +68,7 @@ from kubescope.views.container_states import (
     BADGE_ROLE,
     LINK_ROLE,
     STATES_ROLE,
+    TINT_ROLE,
     TIPS_ROLE,
 )
 from kubescope.views.detail_tab import DetailTab
@@ -3857,4 +3859,97 @@ def test_the_top_bar_gives_the_tabs_all_the_room_they_need(monkeypatch) -> None:
     scroll = window.pinned_scroll
     wanted = present(scroll.widget()).sizeHint
     _wait_until(lambda: scroll.width() >= wanted().width())
+    window.close()
+
+
+def test_a_status_badge_is_green_amber_red_or_grey() -> None:
+    colors = window_module._badge_colors
+
+    assert (
+        colors("deployed") == colors("Normal") == (themed("#176b58"), themed("#e5f4eb"))
+    )
+    assert (
+        colors("pending-install")
+        == colors("Warning")
+        == (
+            themed("#985415"),
+            themed("#fff2de"),
+        )
+    )
+    assert (
+        colors("failed")
+        == colors("CREATE_FAILED")
+        == (
+            themed("#a33d45"),
+            themed("#fce9ea"),
+        )
+    )
+    assert colors("superseded") == (themed("#505963"), themed("#eff1f3"))
+
+
+def test_a_pod_of_a_statefulset_has_a_lighter_row(monkeypatch) -> None:
+    window = _ready_window(monkeypatch)
+    window._open_list_view("pods")
+    owned = PodInfo(
+        "ns", "db-0", "Running", 1, 1, "2d", ("c",), owner=("StatefulSet", "db")
+    )
+    plain = PodInfo(
+        "ns", "web-1", "Running", 1, 1, "2d", ("c",), owner=("Deployment", "web")
+    )
+
+    window._show_pods(["ns"], [owned, plain])
+
+    assert cell(window.table, 0, 2).data(TINT_ROLE) == QColor(themed("#f3f4f7"))
+    assert cell(window.table, 1, 2).data(TINT_ROLE) is None
+    window.close()
+
+
+def test_restarts_are_badges_from_the_first_one(monkeypatch) -> None:
+    window = _ready_window(monkeypatch)
+    window._open_list_view("pods")
+    pods = [
+        PodInfo("ns", f"p{count}", "Running", 1, 1, "2d", ("c",), count)
+        for count in (0, 3, 12)
+    ]
+    window._show_pods(["ns"], pods)
+
+    assert [cell(window.table, row, 7).data(BADGE_ROLE) for row in range(3)] == [
+        None,
+        (themed("#985415"), themed("#fff2de")),
+        (themed("#a33d45"), themed("#fce9ea")),
+    ]
+
+    window._open_list_view("deployments")
+    window._show_workloads(
+        ["ns"], [Workload("ns", "Deployment", "api", 1, 1, "2d", restarts=4)]
+    )
+    assert cell(window.table, 0, 7).data(BADGE_ROLE) == (
+        themed("#985415"),
+        themed("#fff2de"),
+    )
+    window.close()
+
+
+def test_events_are_filtered_by_type(monkeypatch) -> None:
+    window = _ready_window(monkeypatch)
+    window._open_list_view("events")
+    events = [
+        ClusterResource(
+            "ns", "Event", "a", ("Normal", "Started", "Pod/a", "ok", "1"), "1m"
+        ),
+        ClusterResource(
+            "ns", "Event", "b", ("Warning", "BackOff", "Pod/b", "bad", "2"), "1m"
+        ),
+    ]
+    window._show_resources(["ns"], events)
+
+    window.event_type_combo.setCurrentIndex(window.event_type_combo.findData("Warning"))
+    assert [window.table.isRowHidden(row) for row in range(2)] == [True, False]
+
+    window.event_type_combo.setCurrentIndex(0)
+    assert [window.table.isRowHidden(row) for row in range(2)] == [False, False]
+    assert cell(window.table, 0, 3).data(BADGE_ROLE) == (
+        themed("#176b58"),
+        themed("#e5f4eb"),
+    )
     window.close()

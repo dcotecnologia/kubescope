@@ -36,7 +36,7 @@ Packages
   six 1.17.0 - MIT License
   typing-extensions 4.16.0 - PSF-2.0
   typing-inspection 0.4.4 - MIT
-  tzdata 2026.5 - Apache-2.0
+  tzdata 2026.6 - Apache-2.0
   urllib3 2.8.0 - MIT
   websocket-client 1.9.2 - Apache-2.0
   yarl 1.25.1 - Apache-2.0
@@ -3144,7 +3144,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 ==============================================================================
-tzdata 2026.5
+tzdata 2026.6
 ==============================================================================
 
 LICENSE:

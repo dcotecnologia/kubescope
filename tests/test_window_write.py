@@ -407,9 +407,12 @@ def test_a_write_button_does_what_its_menu_entry_does(monkeypatch) -> None:
 
     window.write_buttons["scale"].click()
     window.write_buttons["reload"].click()
-    window.write_buttons["delete"].click()  # not offered for a Deployment: nothing
+    asked = []
+    monkeypatch.setattr(window, "_confirm", lambda *a: asked.append(a[2]) or False)
+    window.write_buttons["delete"].click()  # cancelled: nothing is deleted
 
     assert calls == [("scale", API), ("restart", API)]
+    assert asked == ["Delete"]
     window.close()
 
 
@@ -704,3 +707,100 @@ def test_the_permissions_are_asked_again_when_old_or_cleared(monkeypatch) -> Non
     window._update_workload_actions()
     assert len(reviews) == asked + 2  # read-only never asks
     window.close()
+
+
+EVENT = ClusterResource(
+    "ns", "Event", "api.1", ("Warning", "BackOff", "Pod/api", "Back-off", "3"), "1m"
+)
+CLASS = ClusterResource("", "PriorityClass", "high", ("1000", "false"), "1d")
+
+
+def test_delete_asks_and_deletes_any_resource(monkeypatch) -> None:
+    window, ran = _window(monkeypatch)
+    monkeypatch.setattr(window, "_context", lambda: "prod")
+    answer = {"yes": False}
+    questions = []
+
+    def confirm(title, text, action):
+        questions.append((title, text))
+        return answer["yes"]
+
+    monkeypatch.setattr(window, "_confirm", confirm)
+
+    window._delete_resource(API)  # cancelled
+    assert ran == []
+
+    answer["yes"] = True
+    window._delete_resource(API)
+    window._delete_resource(CLASS)
+
+    assert [(n, a) for n, a, _k in ran] == [
+        ("delete_resource", ("prod", "Deployment", "ns", "api")),
+        ("delete_resource", ("prod", "PriorityClass", "", "high")),
+    ]
+    assert questions[0][1] == "Delete the Deployment api in ns?"
+    assert questions[-1] == ("Delete PriorityClass", "Delete the PriorityClass high?")
+
+
+def test_an_event_offers_edit_and_delete(monkeypatch) -> None:
+    window, _ran = _window(monkeypatch)
+    window.show()
+    window._open_list_view("events")
+    window._show_resources(["ns"], [EVENT])
+    window.table.selectRow(0)
+
+    assert _visible_write_buttons(window) == ["Edit", "Delete"]
+    assert [entry[0] for entry in window._write_entries()] == ["edit", "delete"]
+    window.close()
+
+
+def _edit(monkeypatch, text):
+    window, ran = _window(monkeypatch)
+    monkeypatch.setattr(window, "_context", lambda: "prod")
+    messages = []
+    monkeypatch.setattr(window, "_show_message", lambda *a, **k: messages.append(a))
+
+    def fake_exec(dialog):
+        if text is None:
+            return QDialog.DialogCode.Rejected
+        dialog.findChild(QPlainTextEdit).setPlainText(text)
+        return QDialog.DialogCode.Accepted
+
+    monkeypatch.setattr(QDialog, "exec", fake_exec)
+    window._edit_dialog(EVENT, {"kind": "Event"})
+    return ran, messages
+
+
+def test_editing_an_event_replaces_it_with_the_edited_json(monkeypatch) -> None:
+    ran, messages = _edit(monkeypatch, '{"kind": "Event", "message": "new"}')
+
+    assert [(n, a) for n, a, _k in ran] == [
+        (
+            "replace_resource",
+            ("prod", "Event", "ns", "api.1", {"kind": "Event", "message": "new"}),
+        )
+    ]
+    assert messages == []
+
+
+def test_editing_refuses_what_is_not_a_json_object(monkeypatch) -> None:
+    for text in ("{not json", "[1]"):
+        ran, messages = _edit(monkeypatch, text)
+        assert ran == [] and messages[0][1] == "Invalid JSON"
+
+
+def test_cancelling_the_edit_changes_nothing(monkeypatch) -> None:
+    ran, messages = _edit(monkeypatch, None)
+
+    assert ran == [] and messages == []
+
+
+def test_editing_reads_the_event_first(monkeypatch) -> None:
+    window, ran = _window(monkeypatch)
+    monkeypatch.setattr(window, "_context", lambda: "prod")
+
+    window._edit_resource(EVENT)
+
+    assert [(n, a) for n, a, _k in ran] == [
+        ("get_resource_details", ("prod", "Event", "ns", "api.1"))
+    ]
