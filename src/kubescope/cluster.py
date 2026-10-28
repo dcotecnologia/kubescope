@@ -995,7 +995,8 @@ _CONFIG_RESOURCES = {
     "MutatingWebhookConfiguration": "mutatingwebhookconfigurations",
     "ValidatingWebhookConfiguration": "validatingwebhookconfigurations",
 }
-_LISTED_RESOURCES = {**_NETWORK_RESOURCES, **_CONFIG_RESOURCES}
+_EVENT_RESOURCES = {"Event": "events"}
+_LISTED_RESOURCES = {**_EVENT_RESOURCES, **_NETWORK_RESOURCES, **_CONFIG_RESOURCES}
 _CLUSTER_WIDE = frozenset(
     {
         "IngressClass",
@@ -1589,6 +1590,18 @@ def _lease_values(item: dict[str, Any]) -> tuple[str, ...]:
     return ((item.get("spec") or {}).get("holderIdentity") or _NO_VALUE,)
 
 
+def _event_values(item: dict[str, Any]) -> tuple[str, ...]:
+    involved = item.get("involvedObject") or {}
+    series = item.get("series") or {}
+    return (
+        item.get("type") or "Normal",
+        item.get("reason") or _NO_VALUE,
+        f"{involved.get('kind') or '?'}/{involved.get('name') or '?'}",
+        item.get("message") or _NO_VALUE,
+        str(item.get("count") or series.get("count") or 1),
+    )
+
+
 def _webhook_values(item: dict[str, Any]) -> tuple[str, ...]:
     return (str(len(item.get("webhooks") or [])),)
 
@@ -1603,6 +1616,7 @@ _RESOURCE_VALUES = {
     "PriorityClass": _priority_class_values,
     "RuntimeClass": _runtime_class_values,
     "Lease": _lease_values,
+    "Event": _event_values,
     "MutatingWebhookConfiguration": _webhook_values,
     "ValidatingWebhookConfiguration": _webhook_values,
     "Service": _service_values,

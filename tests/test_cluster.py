@@ -1414,6 +1414,29 @@ def test_get_workloads_lists_only_the_requested_kinds(monkeypatch) -> None:
     assert "/apis/apps/v1/deployments" in calls
 
 
+def test_parse_resource_reads_an_event() -> None:
+    event = _network(
+        "Event",
+        {
+            "type": "Warning",
+            "reason": "BackOff",
+            "involvedObject": {"kind": "Pod", "name": "api-1"},
+            "message": "Back-off restarting",
+            "count": 4,
+        },
+    )
+    bare = _network("Event", {"metadata": {"name": "n"}})
+
+    assert event.values == (
+        "Warning",
+        "BackOff",
+        "Pod/api-1",
+        "Back-off restarting",
+        "4",
+    )
+    assert bare.values == ("Normal", "—", "?/?", "—", "1")
+
+
 @pytest.mark.parametrize(
     ("kind", "path"),
     [

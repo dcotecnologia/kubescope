@@ -327,11 +327,13 @@ CONFIG_VIEWS = {
     "nodegroups": "NodeGroup",
     "addons": "Addon",
 }
+# The list view of the events of the cluster, and the kind it lists.
+EVENT_VIEWS = {"events": "Event"}
 # The views that list Amazon EKS objects: not namespaced, so the namespace and
 # the filters do not apply.
 EKS_VIEWS = frozenset({"nodegroups"})
 # Every view that lists plain resources in the shared table.
-RESOURCE_VIEWS = {**NETWORK_VIEWS, **CONFIG_VIEWS}
+RESOURCE_VIEWS = {**EVENT_VIEWS, **NETWORK_VIEWS, **CONFIG_VIEWS}
 STATUS_SEVERITY = {
     "Failed": 0,
     "Unavailable": 0,
