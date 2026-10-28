@@ -95,6 +95,12 @@ def _write(
         ) from error
 
 
+_RESOURCE_OF_KIND = {
+    kind: resource
+    for resource, kind in cluster._KINDS.items()
+    if resource not in ("nodes", "namespaces")
+}
+
 # What each button of the write mode needs the cluster to allow, as the
 # (verb, API group, resource, subresource) of an access review. Forwarding to a
 # Service, a Pod or a StatefulSet all end in a Pod's port-forward.
@@ -105,6 +111,7 @@ _PERMISSIONS = {
     "scale": ("patch", "apps", "deployments", "scale"),
     "reload": ("patch", "apps", "deployments", ""),
     "forward": ("create", "", "pods", "portforward"),
+    "edit": ("update", "", "events", ""),
 }
 
 
@@ -154,6 +161,28 @@ def allowed_actions(context: str, namespace: str) -> frozenset[str]:
 def delete_pod(context: str, namespace: str, name: str) -> None:
     """Delete a Pod; a controller that owns it makes a new one."""
     _write("DELETE", cluster._resource_path("pods", namespace, name), context)
+
+
+def delete_resource(context: str, kind: str, namespace: str, name: str) -> None:
+    """Delete one object of a listed kind (a workload, a network or a config
+    resource); the namespace is empty for a kind that belongs to the whole
+    cluster."""
+    resource = _RESOURCE_OF_KIND.get(kind)
+    if resource is None:
+        raise ValueError(f"Cannot delete a {kind}")
+    _write("DELETE", cluster._resource_path(resource, namespace, name), context)
+
+
+def replace_resource(
+    context: str, kind: str, namespace: str, name: str, document: dict[str, Any]
+) -> None:
+    """Replace one object of a listed kind with an edited document, the way
+    `kubectl replace` does; the cluster refuses it when the object changed
+    meanwhile."""
+    resource = _RESOURCE_OF_KIND.get(kind)
+    if resource is None:
+        raise ValueError(f"Cannot edit a {kind}")
+    _write("PUT", cluster._resource_path(resource, namespace, name), context, document)
 
 
 def evict_pod(context: str, namespace: str, name: str) -> None:

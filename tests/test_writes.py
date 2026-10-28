@@ -41,7 +41,7 @@ class Recorder:
                 self.end_headers()
                 self.wfile.write(reply)
 
-            do_DELETE = do_POST = do_PATCH = handle_any
+            do_DELETE = do_POST = do_PATCH = do_PUT = handle_any
 
             def log_message(self, format: str, *args: object) -> None:
                 pass
@@ -92,6 +92,35 @@ def test_delete_pod_sends_a_delete(server) -> None:
             "token": "Bearer fake-token",
         }
     ]
+
+
+def test_delete_resource_sends_a_delete(server) -> None:
+    writes.delete_resource("dev", "Deployment", "ops", "api")
+    writes.delete_resource("dev", "PriorityClass", "", "high")
+
+    assert [r["method"] + " " + r["path"] for r in server.requests] == [
+        "DELETE /apis/apps/v1/namespaces/ops/deployments/api",
+        "DELETE /apis/scheduling.k8s.io/v1/priorityclasses/high",
+    ]
+
+
+def test_replace_resource_puts_the_document(server) -> None:
+    writes.replace_resource("dev", "Event", "ops", "e1", {"kind": "Event"})
+
+    request = server.requests[0]
+    assert request["method"] == "PUT"
+    assert request["path"] == "/api/v1/namespaces/ops/events/e1"
+    assert request["body"] == {"kind": "Event"}
+
+
+def test_replace_resource_refuses_an_unknown_kind() -> None:
+    with pytest.raises(ValueError, match="Cannot edit a Node"):
+        writes.replace_resource("dev", "Node", "", "n1", {})
+
+
+def test_delete_resource_refuses_an_unknown_kind() -> None:
+    with pytest.raises(ValueError, match="Cannot delete a Node"):
+        writes.delete_resource("dev", "Node", "", "n1")
 
 
 def test_evict_pod_posts_an_eviction(server) -> None:
@@ -395,7 +424,7 @@ def test_allowed_actions_asks_one_access_review_for_each_button(monkeypatch) -> 
 
     allowed = writes.allowed_actions("prod", "ops")
 
-    assert allowed == {"shell", "delete", "scale", "reload", "forward"}
+    assert allowed == {"shell", "delete", "scale", "reload", "forward", "edit"}
     assert {s[:3] for s in sent} == {
         ("POST", "/apis/authorization.k8s.io/v1/selfsubjectaccessreviews", "prod")
     }
@@ -419,6 +448,7 @@ def test_a_review_that_fails_leaves_its_button_in(monkeypatch) -> None:
             _review(False),
             _review(None),
             _review(True),
+            _review(True),
         ]
     )
 
@@ -437,6 +467,7 @@ def test_a_review_that_fails_leaves_its_button_in(monkeypatch) -> None:
         "delete",
         "reload",
         "forward",
+        "edit",
     }
 
 
