@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-10-28
+
 ### Added
 
 - **Events** in the side menu, below Cluster: the events of the namespace with their type, reason, object, message and count, a filter by type (Normal or Warning), the Details, and, in the write mode, **Edit** (the JSON of the event, replaced on save) by @danilogco
@@ -358,7 +360,8 @@ The first release.
 
 - Pod logs and resource details are still never written to disk by the app on its own. **Save** is the only exception, and it writes only to the file the user chooses. SECURITY.md says so by @danilogco
 
-[Unreleased]: https://github.com/dcotecnologia/kubescope/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/dcotecnologia/kubescope/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/dcotecnologia/kubescope/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/dcotecnologia/kubescope/compare/v0.14.0...v1.0.0
 [0.14.0]: https://github.com/dcotecnologia/kubescope/compare/v0.13.0...v0.14.0
 [0.13.0]: https://github.com/dcotecnologia/kubescope/compare/v0.12.1...v0.13.0
