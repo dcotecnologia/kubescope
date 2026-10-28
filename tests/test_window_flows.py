@@ -63,7 +63,12 @@ from kubescope.settings import Settings
 from kubescope.theme import themed
 from kubescope.utils import json_view
 from kubescope.utils.updates import Release, UpdateCheck
-from kubescope.views.container_states import LINK_ROLE, STATES_ROLE, TIPS_ROLE
+from kubescope.views.container_states import (
+    BADGE_ROLE,
+    LINK_ROLE,
+    STATES_ROLE,
+    TIPS_ROLE,
+)
 from kubescope.views.detail_tab import DetailTab
 from kubescope.views.log_tab import LogTab
 from kubescope.window import PIN_MIME, VIEWER_MIME
@@ -1519,7 +1524,10 @@ def test_the_theme_is_chosen_in_settings_and_applied_at_once(monkeypatch) -> Non
 
     assert window.settings.theme == "dark"
     assert "#11141a" in window.styleSheet() and "#f7f7fa" not in window.styleSheet()
-    assert cell(window.table, 0, 4).foreground().color().name() == themed("#176b58")
+    phase = window.table.item(0, 4)
+    assert phase is not None
+    badge = phase.data(BADGE_ROLE)  # the phase, as a badge
+    assert badge == (themed("#176b58"), themed("#e5f4eb"))
     assert "dark" in window_module._chevron_icon_path() != light_icon
     assert QApplication.palette().color(QPalette.ColorRole.Window).name() == "#11141a"
 

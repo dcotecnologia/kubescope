@@ -64,12 +64,12 @@ def test_the_row_menu_offers_writes_only_in_the_write_mode(monkeypatch) -> None:
 
     window.settings.write_mode = True
     window._show_row_menu(pos)
-    assert seen[-1] == ["Pods", "Details", "Logs", "", "Scale", "Restart"]
+    assert seen[-1] == ["Pods", "Details", "Logs", "", "Scale", "Restart", "Delete"]
 
     window._open_list_view("statefulsets")
     window._show_workloads(["ns"], [Workload("ns", "StatefulSet", "db", 1, 1, "1d")])
     window._show_row_menu(pos)
-    assert seen[-1] == ["Pods", "Details", "Logs", "", "Forward"]
+    assert seen[-1] == ["Pods", "Details", "Logs", "", "Forward", "Delete"]
 
     window._open_list_view("pods")
     window._show_pods(["ns"], [POD])
@@ -364,26 +364,26 @@ def test_the_write_buttons_follow_the_view_and_the_write_mode(monkeypatch) -> No
 
     window.settings.write_mode = True
     window._apply_view_buttons()
-    assert _visible_write_buttons(window) == ["Scale", "Restart"]
+    assert _visible_write_buttons(window) == ["Scale", "Restart", "Delete"]
     assert all(not b.isEnabled() for b in window.write_buttons.values())  # no row
 
     window.table.selectRow(0)
     assert window.write_buttons["scale"].isEnabled()
 
     window._open_list_view("statefulsets")
-    assert _visible_write_buttons(window) == ["Forward"]
+    assert _visible_write_buttons(window) == ["Forward", "Delete"]
 
     window._open_list_view("daemonsets")
-    assert _visible_write_buttons(window) == []
-    assert window._write_entries() == []  # nothing to change on a DaemonSet
+    assert _visible_write_buttons(window) == ["Delete"]
+    assert window._write_entries() == []  # no row to delete
 
     window._open_list_view("pods")
     window._show_pods(["ns"], [POD])
     assert _visible_write_buttons(window) == [
         "Shell command",
         "Evict",
-        "Delete",
         "Forward",
+        "Delete",
     ]
 
     window.settings.write_mode = False
@@ -448,12 +448,12 @@ def test_a_service_offers_forward_as_a_button_and_a_menu_entry(monkeypatch) -> N
     calls = []
     monkeypatch.setattr(window, "_forward_service", lambda s: calls.append(s))
 
-    assert _visible_write_buttons(window) == ["Forward"]
+    assert _visible_write_buttons(window) == ["Forward", "Delete"]
     window.write_buttons["forward"].click()
     window._show_row_menu(QPoint(5, window.table.rowViewportPosition(0) + 2))
 
     assert calls == [SERVICE]
-    assert seen[-1] == ["Details", "", "Forward"]
+    assert seen[-1] == ["Details", "", "Forward", "Delete"]
 
     window.settings.write_mode = False
     window._apply_view_buttons()
@@ -659,8 +659,8 @@ def test_the_buttons_and_menus_offer_only_what_the_cluster_allows(
     assert _visible_write_buttons(window) == [
         "Shell command",
         "Evict",
-        "Delete",
         "Forward",
+        "Delete",
     ]
 
     window._permissions_read(("prod", "ns"), frozenset({"shell", "forward"}))

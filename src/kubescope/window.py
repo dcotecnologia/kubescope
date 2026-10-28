@@ -1,6 +1,7 @@
 import dataclasses
 import datetime
 import html
+import json
 import logging
 import math
 import re
@@ -159,9 +160,12 @@ from kubescope.utils.json_view import restyle
 from kubescope.utils.selfupdate import detect_install, restart
 from kubescope.utils.updates import Release, UpdateCheck, check_for_update
 from kubescope.views.container_states import (
+    BADGE_ROLE,
     LINK_ROLE,
     STATES_ROLE,
+    TINT_ROLE,
     TIPS_ROLE,
+    BadgeDelegate,
     ContainerStatesDelegate,
 )
 from kubescope.views.detail_tab import USAGE_REFRESH_MS, DetailTab
@@ -174,8 +178,10 @@ from kubescope.writes import (
     allowed_actions,
     container_ports,
     delete_pod,
+    delete_resource,
     evict_pod,
     forward_commands,
+    replace_resource,
     restart_deployment,
     scale_deployment,
     service_ports,
@@ -185,10 +191,18 @@ from kubescope.writes import (
 # The buttons of the write mode that each list view shows.
 WRITE_VIEWS = {
     "pods": ("shell", "evict", "delete", "forward"),
-    "deployments": ("scale", "reload"),
-    "statefulsets": ("forward",),
-    "services": ("forward",),
+    "deployments": ("scale", "reload", "delete"),
+    "statefulsets": ("forward", "delete"),
+    "services": ("forward", "delete"),
+    "events": ("edit", "delete"),
 }
+WRITE_VIEWS.update(
+    {
+        view: ("delete",)
+        for view in (*WORKLOAD_VIEWS, *RESOURCE_VIEWS)
+        if view not in WRITE_VIEWS
+    }
+)
 
 logger = logging.getLogger(__name__)
 
@@ -303,6 +317,38 @@ def _pair(color: str) -> tuple[str, str]:
     return color, color
 
 
+_GOOD_STATUSES = {"NORMAL", "ACTIVE", "DEPLOYED"}
+_WARNING_STATUSES = {"WARNING", "CREATING", "UPDATING", "DELETING", "UNINSTALLING"}
+_BAD_WORDS = ("FAIL", "ERROR", "DEGRADED")
+
+
+def _badge_colors(status: str) -> tuple[str, str]:
+    """The text and fill colors of the badge of an event type or an AWS or Helm
+    status, whatever its case: green when fine, amber while it changes, red
+    when it failed."""
+    word = status.upper()
+    if any(bad in word for bad in _BAD_WORDS):
+        return themed("#a33d45"), themed("#fce9ea")
+    if word in _GOOD_STATUSES:
+        return themed("#176b58"), themed("#e5f4eb")
+    if word in _WARNING_STATUSES or word.startswith("PENDING"):
+        return themed("#985415"), themed("#fff2de")
+    return themed("#505963"), themed("#eff1f3")
+
+
+MANY_RESTARTS = 10  # a count of restarts this high is shown as a failure
+
+
+def _restart_colors(restarts: int) -> tuple[str, str] | None:
+    """The badge of a count of restarts: none for zero, amber for some, red for
+    many."""
+    if restarts <= 0:
+        return None
+    if restarts >= MANY_RESTARTS:
+        return themed("#a33d45"), themed("#fce9ea")
+    return themed("#985415"), themed("#fff2de")
+
+
 def _nav_icon(shape: str, colors: tuple[str, str] | None = None) -> QIcon:
     """A line icon in the theme's colors.
 
@@ -402,6 +448,36 @@ def _nav_icon(shape: str, colors: tuple[str, str] | None = None) -> QIcon:
             painter.drawPolyline(
                 QPolygonF([QPointF(12, 6), QPointF(15, 9), QPointF(12, 12)])
             )
+        elif shape == "events":  # a bell
+            painter.drawPolyline(
+                QPolygonF(
+                    [
+                        QPointF(4.5, 12.5),
+                        QPointF(5.5, 11),
+                        QPointF(5.5, 8),
+                    ]
+                )
+            )
+            painter.drawArc(QRectF(5.5, 3, 7, 8), 0, 180 * 16)
+            painter.drawPolyline(
+                QPolygonF([QPointF(12.5, 8), QPointF(12.5, 11), QPointF(13.5, 12.5)])
+            )
+            painter.drawLine(QPointF(4.5, 12.5), QPointF(13.5, 12.5))
+            painter.drawArc(QRectF(7.5, 12.5, 3, 3), 180 * 16, 180 * 16)
+        elif shape == "edit":  # a pencil
+            painter.drawPolyline(
+                QPolygonF(
+                    [
+                        QPointF(3.5, 14.5),
+                        QPointF(4, 11.5),
+                        QPointF(11.5, 4),
+                        QPointF(14, 6.5),
+                        QPointF(6.5, 14),
+                        QPointF(3.5, 14.5),
+                    ]
+                )
+            )
+            painter.drawLine(QPointF(10, 5.5), QPointF(12.5, 8))
         elif shape == "delete":  # a trash can
             painter.drawLine(QPointF(3, 5), QPointF(15, 5))
             painter.drawPolyline(
@@ -681,6 +757,17 @@ class WorkloadWindow(QMainWindow):
         at = filters.indexOf(ui.searchInput) + 1
         for button in (self.search_regex_button, self.search_case_button):
             filters.insertWidget(at, button)
+        self.event_type_combo = QComboBox()  # the events list only
+        self.event_type_combo.setProperty("variant", "filter")
+        for label, event_type in (
+            (self.tr("All types"), ""),
+            (self.tr("Normal"), "Normal"),
+            (self.tr("Warning"), "Warning"),
+        ):
+            self.event_type_combo.addItem(label, event_type)
+        self.event_type_combo.setVisible(False)
+        self.event_type_combo.currentIndexChanged.connect(self._filter_rows)
+        filters.insertWidget(at + 2, self.event_type_combo)
         self.refresh_button = ui.refreshButton
         self.summary_label = ui.summaryLabel
         self.pods_button = ui.podsButton
@@ -692,7 +779,7 @@ class WorkloadWindow(QMainWindow):
         # (context, namespace) -> when it was read, what the cluster allows there
         self._permissions: dict[tuple[str, str], tuple[float, frozenset[str]]] = {}
         self._permissions_loading: set[tuple[str, str]] = set()
-        for shape in ("shell", "evict", "delete", "scale", "reload", "forward"):
+        for shape in ("shell", "evict", "scale", "reload", "forward", "edit", "delete"):
             button = QPushButton()
             button.setProperty("variant", "secondary")
             button.setEnabled(False)
@@ -702,6 +789,7 @@ class WorkloadWindow(QMainWindow):
         self.table = ui.workloadTable
         states_delegate = ContainerStatesDelegate(self.table)
         # the containers of a Pod and the replicas of a workload, in READY
+        self.table.setItemDelegate(BadgeDelegate(self.table))  # badges and row tints
         self.table.setItemDelegateForColumn(3, states_delegate)
         self.status_label = ui.statusLabel
         self.login_button = ui.loginButton
@@ -787,6 +875,7 @@ class WorkloadWindow(QMainWindow):
             "poddisruptionbudgets": ui.navPodDisruptionBudgets,
             "priorityclasses": ui.navPriorityClasses,
             "runtimeclasses": ui.navRuntimeClasses,
+            "events": ui.navEvents,
             "leases": ui.navLeases,
             "mutatingwebhooks": ui.navMutatingWebhooks,
             "validatingwebhooks": ui.navValidatingWebhooks,
@@ -809,11 +898,15 @@ class WorkloadWindow(QMainWindow):
         overview_layout.addWidget(overview_scroll)
         self.overview_refresh_button = ui.overviewRefreshButton
         self.nodes_table = ui.nodesTable
+        self.nodes_table.setItemDelegateForColumn(1, BadgeDelegate(self.nodes_table))
         self.nodes_heading = ui.nodesHeading
         self.workloads_ui = Ui_WorkloadsOverviewPage()
         self.workloads_ui.setupUi(ui.workloadsOverviewHost)
         self.workloads_refresh_button = ui.workloadsRefreshButton
         self.workloads_table = self.workloads_ui.eventsTable
+        self.workloads_table.setItemDelegateForColumn(
+            0, BadgeDelegate(self.workloads_table)
+        )
         for linked in (self.table, self.nodes_table, self.workloads_table):
             self._enable_links(linked)
         events_header = self.workloads_table.horizontalHeader()
@@ -860,6 +953,7 @@ class WorkloadWindow(QMainWindow):
 
         for button in (
             self.nav_overview,
+            ui.navEvents,
             self.nav_workloads,
             self.nav_network,
             self.nav_config,
@@ -1727,6 +1821,10 @@ class WorkloadWindow(QMainWindow):
                     self.tr("Runtime Classes"),
                     self.tr("Runtime Classes of the cluster"),
                 ),
+                "events": (
+                    self.tr("Events"),
+                    self.tr("Events of the cluster"),
+                ),
                 "leases": (
                     self.tr("Leases"),
                     self.tr("Leases of the cluster"),
@@ -1921,6 +2019,7 @@ class WorkloadWindow(QMainWindow):
         )
         self.nav_overview.setIcon(_nav_icon("overview"))
         self.nav_workloads.setIcon(_nav_icon("workloads"))
+        self.ui.navEvents.setIcon(_nav_icon("events"))
         self.ui.navNodeGroups.setIcon(_nav_icon("nodegroups"))
         self.nav_network.setIcon(_nav_icon("network"))
         self.nav_config.setIcon(_nav_icon("config"))
@@ -2061,6 +2160,13 @@ class WorkloadWindow(QMainWindow):
             "runtimeclasses": [
                 translate("MainWindow", "HANDLER"),
             ],
+            "events": [
+                translate("MainWindow", "TYPE"),
+                translate("MainWindow", "REASON"),
+                translate("MainWindow", "OBJECT"),
+                translate("MainWindow", "MESSAGE"),
+                translate("MainWindow", "COUNT"),
+            ],
             "leases": [
                 translate("MainWindow", "HOLDER"),
             ],
@@ -2146,6 +2252,7 @@ class WorkloadWindow(QMainWindow):
         self.ui.filtersBar.setVisible(self._view not in EKS_VIEWS)  # nothing to filter
         for widget in (self.nodes_heading, self.nodes_table):
             widget.setVisible(self._view == "nodegroups")
+        self.event_type_combo.setVisible(self._view == "events")
         self.pods_button.setVisible(self._view in WORKLOAD_VIEWS)
         self.logs_button.setVisible(self._view not in RESOURCE_VIEWS)
         self._update_write_buttons()
@@ -2160,6 +2267,7 @@ class WorkloadWindow(QMainWindow):
             "shell": self.tr("Shell command"),
             "evict": self.tr("Evict"),
             "delete": self.tr("Delete"),
+            "edit": self.tr("Edit"),
             "scale": self.tr("Scale"),
             "reload": self.tr("Restart"),
             "forward": self.tr("Forward"),
@@ -2445,13 +2553,9 @@ class WorkloadWindow(QMainWindow):
                 item.setToolTip(event.message)
                 if column == 3 and (link := event_link(event)):
                     self._link_item(item, link)
-                item.setForeground(
-                    QColor(
-                        themed("#985415")
-                        if event.type == "Warning"
-                        else themed("#242a33")
-                    )
-                )
+                item.setForeground(QColor(themed("#242a33")))
+                if column == 0:
+                    item.setData(BADGE_ROLE, _badge_colors(event.type))
                 table.setItem(row, column, item)
 
     def _show_cached_overviews(self) -> None:
@@ -2655,8 +2759,7 @@ class WorkloadWindow(QMainWindow):
                         if node.ready
                         else (themed("#a33d45"), themed("#fce9ea"))
                     )
-                    item.setForeground(QColor(text_color))
-                    item.setBackground(QColor(background))
+                    item.setData(BADGE_ROLE, (text_color, background))
                 if column == 0:
                     self._link_item(item, ("Node", "", node.name))
                 self.nodes_table.setItem(row, column, item)
@@ -3075,6 +3178,11 @@ class WorkloadWindow(QMainWindow):
             for column, value in enumerate(values):
                 item = QTableWidgetItem(value)
                 item.setForeground(QColor(themed("#242a33")))
+                # a badge: the type of an event, the status of an AWS or Helm one
+                if (
+                    self._view == "events" or self._view in EKS_VIEWS | {"addons"}
+                ) and column == 3:
+                    item.setData(BADGE_ROLE, _badge_colors(resource.values[0]))
                 self.table.setItem(row_index, column, item)
         self._rendered = (self._view, list(resources))
         self._filter_rows()
@@ -3109,6 +3217,7 @@ class WorkloadWindow(QMainWindow):
             "poddisruptionbudgets": lambda: self.tr(
                 "{count} Pod Disruption Budgets in {namespaces} namespaces"
             ),
+            "events": lambda: self.tr("{count} Events in {namespaces} namespaces"),
             "leases": lambda: self.tr("{count} Leases in {namespaces} namespaces"),
             "priorityclasses": lambda: self.tr(
                 "{count} Priority Classes in the cluster"
@@ -3161,12 +3270,17 @@ class WorkloadWindow(QMainWindow):
             "problem": QColor(themed("#fbe4e4")),
             "young": QColor(themed("#e2f5e8")),
         }
+        # a Pod of a StatefulSet, when nothing else: the alternate surface, the
+        # same tone as the background but a little different
+        stateful = QColor(themed("#f3f4f7"))
         kept = self._kept_rows(pods)
         self.table.setRowCount(len(pods))
         for row_index, pod in enumerate(pods):
             if row_index < len(kept) and kept[row_index] == pod:
                 continue
             tint = tints.get(pod_highlight(pod) or "")
+            if tint is None and pod.owner and pod.owner[0] == "StatefulSet":
+                tint = stateful
             values = (
                 pod.namespace,
                 str(len(pod.containers)),
@@ -3185,7 +3299,7 @@ class WorkloadWindow(QMainWindow):
                 item = QTableWidgetItem(value)
                 item.setForeground(QColor(themed("#242a33")))
                 if tint is not None:
-                    item.setBackground(tint)
+                    item.setData(TINT_ROLE, tint)
                 if column == 8 and pod.owner:
                     self._link_item(item, (*pod.owner[:1], pod.namespace, pod.owner[1]))
                 if column == 9 and pod.node:
@@ -3204,12 +3318,13 @@ class WorkloadWindow(QMainWindow):
                             )
                         ),
                     )
+                if column == 7 and (badge := _restart_colors(pod.restarts)):
+                    item.setData(BADGE_ROLE, badge)
                 if column == 4:
                     foreground, background = colors.get(
                         pod.phase, (themed("#a33d45"), themed("#fce9ea"))
                     )
-                    item.setForeground(QColor(foreground))
-                    item.setBackground(QColor(background))
+                    item.setData(BADGE_ROLE, (foreground, background))
                 self.table.setItem(row_index, column, item)
         self._rendered = (self._view, list(pods))
         self._filter_rows()
@@ -3286,9 +3401,9 @@ class WorkloadWindow(QMainWindow):
                         Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
                     )
                 if column == 4:
-                    foreground, background = colors[workload.status]
-                    item.setForeground(QColor(foreground))
-                    item.setBackground(QColor(background))
+                    item.setData(BADGE_ROLE, colors[workload.status])
+                if column == 7 and (badge := _restart_colors(workload.restarts)):
+                    item.setData(BADGE_ROLE, badge)
                 self.table.setItem(row_index, column, item)
         self._rendered = (self._view, list(workloads))
         self._filter_rows()
@@ -3340,6 +3455,14 @@ class WorkloadWindow(QMainWindow):
                 pattern is None
                 or pattern.search(f"{row.namespace} {kind} {row.name}") is not None
             )
+            event_type = self.event_type_combo.currentData()
+            if (
+                matches
+                and self._view == "events"
+                and event_type
+                and isinstance(row, ClusterResource)
+            ):
+                matches = row.values[0] == event_type
             self.table.setRowHidden(row_index, not matches)
             visible_rows += matches
         self.table.setUpdatesEnabled(True)
@@ -3373,6 +3496,7 @@ class WorkloadWindow(QMainWindow):
             ),
             "priorityclasses": self.tr("{visible} of {total} Priority Classes"),
             "runtimeclasses": self.tr("{visible} of {total} Runtime Classes"),
+            "events": self.tr("{visible} of {total} Events"),
             "leases": self.tr("{visible} of {total} Leases"),
             "mutatingwebhooks": self.tr(
                 "{visible} of {total} Mutating Webhook Configurations"
@@ -3793,24 +3917,31 @@ class WorkloadWindow(QMainWindow):
     ) -> list[tuple[str, str, Callable[[], None]]]:
         if self._view == "pods" and isinstance(row, PodInfo):
             return self._pod_entries(row)
+        entries: list[tuple[str, str, Callable[[], None]]] = []
         if self._view == "deployments" and isinstance(row, Workload):
-            return [
+            entries = [
                 ("scale", self.tr("Scale"), partial(self._scale_deployment, row)),
                 ("reload", self.tr("Restart"), partial(self._restart_deployment, row)),
             ]
-        if self._view == "services" and isinstance(row, ClusterResource):
-            return [
+        elif self._view == "services" and isinstance(row, ClusterResource):
+            entries = [
                 ("forward", self.tr("Forward"), partial(self._forward_service, row))
             ]
-        if self._view == "statefulsets" and isinstance(row, Workload):
-            return [
+        elif self._view == "statefulsets" and isinstance(row, Workload):
+            entries = [
                 (
                     "forward",
                     self.tr("Forward"),
                     partial(self._forward, "StatefulSet", row),
                 )
             ]
-        return []
+        if self._view == "events" and isinstance(row, ClusterResource):
+            entries.append(("edit", self.tr("Edit"), partial(self._edit_resource, row)))
+        if isinstance(row, Workload | ClusterResource):
+            entries.append(
+                ("delete", self.tr("Delete"), partial(self._delete_resource, row))
+            )
+        return entries
 
     def _pod_entries(self, pod: PodInfo) -> list[tuple[str, str, Callable[[], None]]]:
         return [
@@ -3925,6 +4056,92 @@ class WorkloadWindow(QMainWindow):
                 pod.namespace,
                 pod.name,
             )
+
+    def _delete_resource(self, row: Workload | ClusterResource) -> None:
+        question = self.tr("Delete the {kind} {name}?").format(
+            kind=row.kind, name=row.name
+        )
+        if row.namespace:
+            question = self.tr("Delete the {kind} {name} in {namespace}?").format(
+                kind=row.kind, name=row.name, namespace=row.namespace
+            )
+        if self._confirm(
+            self.tr("Delete {kind}").format(kind=row.kind), question, self.tr("Delete")
+        ):
+            self._run_write(
+                delete_resource,
+                self.tr("Deleted the {kind} {name}").format(
+                    kind=row.kind, name=row.name
+                ),
+                self._context(),
+                row.kind,
+                row.namespace,
+                row.name,
+            )
+
+    def _edit_resource(self, row: ClusterResource) -> None:
+        """Read the object, let the person change its JSON, and replace it."""
+        self._run_action(
+            get_resource_details,
+            lambda document: self._edit_dialog(row, document),
+            self._context(),
+            row.kind,
+            row.namespace,
+            row.name,
+        )
+
+    def _edit_dialog(self, row: ClusterResource, document: dict[str, Any]) -> None:
+        dialog = QDialog(self)
+        dialog.setWindowTitle(self.tr("Edit {kind}").format(kind=row.kind))
+        dialog.resize(720, 520)
+        layout = QVBoxLayout(dialog)
+        layout.setContentsMargins(16, 16, 16, 16)
+        layout.setSpacing(10)
+        layout.addWidget(
+            QLabel(
+                self.tr("{kind} {name} in {namespace}").format(
+                    kind=row.kind, name=row.name, namespace=row.namespace
+                )
+            )
+        )
+        editor = QPlainTextEdit(json.dumps(document, indent=2))
+        layout.addWidget(editor)
+        buttons = QHBoxLayout()
+        buttons.addStretch()
+        cancel = QPushButton(self.tr("Cancel"))
+        cancel.setProperty("variant", "secondary")
+        save = QPushButton(self.tr("Save"))
+        save.setProperty("variant", "primary")
+        buttons.addWidget(cancel)
+        buttons.addWidget(save)
+        layout.addLayout(buttons)
+        cancel.clicked.connect(dialog.reject)
+        save.clicked.connect(dialog.accept)
+        if dialog.exec() != QDialog.DialogCode.Accepted:
+            return
+        try:
+            edited = json.loads(editor.toPlainText())
+        except ValueError as error:
+            self._show_message(
+                QMessageBox.Icon.Warning, self.tr("Invalid JSON"), str(error)
+            )
+            return
+        if not isinstance(edited, dict):
+            self._show_message(
+                QMessageBox.Icon.Warning,
+                self.tr("Invalid JSON"),
+                self.tr("The object must be a JSON object."),
+            )
+            return
+        self._run_write(
+            replace_resource,
+            self.tr("Saved the {kind} {name}").format(kind=row.kind, name=row.name),
+            self._context(),
+            row.kind,
+            row.namespace,
+            row.name,
+            edited,
+        )
 
     def _evict_pod(self, pod: PodInfo) -> None:
         question = self.tr("Evict the Pod {name} in {namespace}?").format(

@@ -1,7 +1,8 @@
 from PySide6.QtCore import QModelIndex, QPersistentModelIndex, QRectF, QSize, Qt
-from PySide6.QtGui import QColor, QHelpEvent, QPainter
+from PySide6.QtGui import QColor, QFont, QHelpEvent, QPainter
 from PySide6.QtWidgets import (
     QAbstractItemView,
+    QStyle,
     QStyledItemDelegate,
     QStyleOptionViewItem,
     QToolTip,
@@ -13,6 +14,8 @@ STATES_ROLE = Qt.ItemDataRole.UserRole + 1
 LINK_ROLE = Qt.ItemDataRole.UserRole + 4  # (kind, namespace, name) a cell opens
 TIPS_ROLE = Qt.ItemDataRole.UserRole + 3  # what each square says when pointed at
 # state of a container -> its square: running, pending, error or terminated
+BADGE_ROLE = Qt.ItemDataRole.UserRole + 5  # (text color, fill color) of a badge
+TINT_ROLE = Qt.ItemDataRole.UserRole + 6  # the color a whole row is washed with
 STATE_COLORS = {
     "running": "#3cb95a",
     "pending": "#e0a526",
@@ -24,7 +27,80 @@ GAP = 4
 PADDING = 8
 
 
-class ContainerStatesDelegate(QStyledItemDelegate):
+BADGE_PADDING = 10
+BADGE_HEIGHT = 20
+
+
+class BadgeDelegate(QStyledItemDelegate):
+    """Draws the text of a cell as a badge, a rounded outlined pill, when the
+    cell carries the colors of one; any other cell is drawn as usual.
+
+    A cell that carries a row tint is washed with it first: the style sheet of
+    the tables styles the items, which leaves their background role unused.
+    """
+
+    def initStyleOption(
+        self,
+        option: QStyleOptionViewItem,
+        index: QModelIndex | QPersistentModelIndex,
+    ) -> None:
+        super().initStyleOption(option, index)
+        if index.data(BADGE_ROLE):
+            option.text = ""  # the badge draws the text
+
+    @staticmethod
+    def _font(option: QStyleOptionViewItem) -> QFont:
+        font = QFont(option.font)
+        font.setBold(True)
+        return font
+
+    def paint(
+        self,
+        painter: QPainter,
+        option: QStyleOptionViewItem,
+        index: QModelIndex | QPersistentModelIndex,
+    ) -> None:
+        tint = index.data(TINT_ROLE)
+        if tint and not option.state & QStyle.StateFlag.State_Selected:
+            painter.fillRect(option.rect, tint)
+        colors = index.data(BADGE_ROLE)
+        super().paint(painter, option, index)  # the cell, without text for a badge
+        if not colors:
+            return
+        text_color, fill = (QColor(color) for color in colors)
+        text = str(index.data(Qt.ItemDataRole.DisplayRole) or "")
+        font = self._font(option)
+        painter.save()
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        painter.setFont(font)
+        width = painter.fontMetrics().horizontalAdvance(text) + 2 * BADGE_PADDING
+        rect = QRectF(
+            option.rect.left() + PADDING,
+            option.rect.top() + (option.rect.height() - BADGE_HEIGHT) / 2,
+            min(width, option.rect.width() - PADDING),
+            BADGE_HEIGHT,
+        )
+        border = QColor(text_color)
+        border.setAlpha(90)
+        painter.setPen(border)
+        painter.setBrush(fill)
+        painter.drawRoundedRect(rect, BADGE_HEIGHT / 2, BADGE_HEIGHT / 2)
+        painter.setPen(text_color)
+        painter.drawText(rect, Qt.AlignmentFlag.AlignCenter, text)
+        painter.restore()
+
+    def sizeHint(
+        self,
+        option: QStyleOptionViewItem,
+        index: QModelIndex | QPersistentModelIndex,
+    ) -> QSize:
+        hint = super().sizeHint(option, index)
+        if not index.data(BADGE_ROLE):
+            return hint
+        return QSize(hint.width() + 2 * BADGE_PADDING + PADDING, hint.height())
+
+
+class ContainerStatesDelegate(BadgeDelegate):
     """Draws a small colored square for each state a cell carries, such as the
     containers of a Pod or the replicas of a workload; the text of the cell,
     aligned to the right, says how many."""
@@ -36,7 +112,7 @@ class ContainerStatesDelegate(QStyledItemDelegate):
         index: QModelIndex | QPersistentModelIndex,
     ) -> None:
         states = index.data(STATES_ROLE)
-        super().paint(painter, option, index)
+        super().paint(painter, option, index)  # a badge or the plain cell
         if not states:
             return
         top = option.rect.top() + (option.rect.height() - SQUARE) / 2

@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+### Added
+
+- **Events** in the side menu, below Cluster: the events of the namespace with their type, reason, object, message and count, a filter by type (Normal or Warning), the Details, and, in the write mode, **Edit** (the JSON of the event, replaced on save) by @danilogco
+- **Delete**, in the write mode, is on every resource the lists show (workloads, network and config resources), in the buttons and the right-click menu, after a confirmation by @danilogco
+
+### Changed
+
+- Statuses and reasons are badges, a rounded outlined pill, in the Pods, the workloads, the Nodes, the events and the Node Groups and Add-ons: green when fine, amber while it changes, red when it failed. The **RESTARTS** of a Pod or a workload is a badge too, amber from one restart and red from ten by @danilogco
+- A Pod of a StatefulSet has a slightly lighter row in the Pods list by @danilogco
+- The top items of the side menu are a little shorter by @danilogco
+
 ### Fixed
 
 - The Install link of the GitHub Pages site (top bar and footer) opens the install page: the page now has the `/install/` address the links point to by @danilogco

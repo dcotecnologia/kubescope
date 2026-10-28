@@ -444,7 +444,7 @@ class Ui_MainWindow(object):
 
         self.navOverview = QPushButton(self.sidebarNav)
         self.navOverview.setObjectName(u"navOverview")
-        self.navOverview.setMinimumSize(QSize(0, 34))
+        self.navOverview.setMinimumSize(QSize(0, 30))
         self.navOverview.setIconSize(QSize(16, 16))
         self.navOverview.setCheckable(True)
         self.navOverview.setChecked(True)
@@ -453,9 +453,20 @@ class Ui_MainWindow(object):
 
         self.sidebarNavLayout.addWidget(self.navOverview)
 
+        self.navEvents = QPushButton(self.sidebarNav)
+        self.navEvents.setObjectName(u"navEvents")
+        self.navEvents.setMinimumSize(QSize(0, 30))
+        self.navEvents.setIconSize(QSize(16, 16))
+        self.navEvents.setCheckable(True)
+        self.navEvents.setChecked(False)
+        self.navEvents.setAutoExclusive(True)
+        self.navEvents.setProperty(u"nav", u"true")
+
+        self.sidebarNavLayout.addWidget(self.navEvents)
+
         self.navNodeGroups = QPushButton(self.sidebarNav)
         self.navNodeGroups.setObjectName(u"navNodeGroups")
-        self.navNodeGroups.setMinimumSize(QSize(0, 34))
+        self.navNodeGroups.setMinimumSize(QSize(0, 30))
         self.navNodeGroups.setIconSize(QSize(16, 16))
         self.navNodeGroups.setCheckable(True)
         self.navNodeGroups.setChecked(False)
@@ -466,7 +477,7 @@ class Ui_MainWindow(object):
 
         self.navWorkloads = QPushButton(self.sidebarNav)
         self.navWorkloads.setObjectName(u"navWorkloads")
-        self.navWorkloads.setMinimumSize(QSize(0, 34))
+        self.navWorkloads.setMinimumSize(QSize(0, 30))
         self.navWorkloads.setIconSize(QSize(16, 16))
         self.navWorkloads.setCheckable(True)
         self.navWorkloads.setChecked(False)
@@ -585,7 +596,7 @@ class Ui_MainWindow(object):
 
         self.navNetwork = QPushButton(self.sidebarNav)
         self.navNetwork.setObjectName(u"navNetwork")
-        self.navNetwork.setMinimumSize(QSize(0, 34))
+        self.navNetwork.setMinimumSize(QSize(0, 30))
         self.navNetwork.setIconSize(QSize(16, 16))
         self.navNetwork.setCheckable(True)
         self.navNetwork.setChecked(False)
@@ -671,7 +682,7 @@ class Ui_MainWindow(object):
 
         self.navConfig = QPushButton(self.sidebarNav)
         self.navConfig.setObjectName(u"navConfig")
-        self.navConfig.setMinimumSize(QSize(0, 34))
+        self.navConfig.setMinimumSize(QSize(0, 30))
         self.navConfig.setIconSize(QSize(16, 16))
         self.navConfig.setCheckable(True)
         self.navConfig.setChecked(False)
@@ -1344,6 +1355,7 @@ class Ui_MainWindow(object):
         self.permissionDismiss.setText(QCoreApplication.translate("MainWindow", u"Dismiss", None))
         self.navSection.setText(QCoreApplication.translate("MainWindow", u"MONITORING", None))
         self.navOverview.setText(QCoreApplication.translate("MainWindow", u"Cluster", None))
+        self.navEvents.setText(QCoreApplication.translate("MainWindow", u"Events", None))
         self.navNodeGroups.setText(QCoreApplication.translate("MainWindow", u"Node Groups", None))
         self.navWorkloads.setText(QCoreApplication.translate("MainWindow", u"Workloads", None))
         self.navWorkloadsOverview.setText(QCoreApplication.translate("MainWindow", u"Overview", None))
