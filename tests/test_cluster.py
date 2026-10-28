@@ -43,7 +43,7 @@ def test_parse_deployment_workload() -> None:
     assert (workload.ready, workload.desired, workload.age, workload.status) == (
         2,
         3,
-        "2m",
+        "2m0s",
         "Degraded",
     )
 
@@ -295,7 +295,7 @@ def test_build_overview_aggregates_nodes_pods_and_usage() -> None:
     assert [node.name for node in overview.nodes] == ["a", "b"]
     assert (overview.nodes_ready, overview.pods_capacity) == (1, 116)
     assert overview.nodes[0].roles == "—" and overview.nodes[1].roles == "worker"
-    assert overview.nodes[0].age == "1d"
+    assert overview.nodes[0].age == "24h0m0s"
     assert overview.nodes[0].pods_running == 2
     assert overview.nodes[0].cpu_requests == 0.75
     assert overview.nodes[1].pods_running == 1  # Succeeded/Failed pods are skipped
@@ -833,7 +833,7 @@ def test_parse_pod_handles_missing_names_and_ages() -> None:
     )
     assert pod is not None
     assert (pod.age, pod.containers, pod.phase, pod.namespace) == (
-        "1h",
+        "1h0m0s",
         ("app",),
         "Unknown",
         "default",
@@ -1580,7 +1580,7 @@ def test_events_use_whichever_timestamp_the_cluster_provides() -> None:
         "ns",
         "Pod: api-1",
     )
-    assert (event.age, event.last_seen) == ("9h", "1h")
+    assert (event.age, event.last_seen) == ("9h0m0s", "1h0m0s")
 
     modern = cluster._parse_event(
         {
@@ -1767,7 +1767,7 @@ def test_parse_network_reads_a_service() -> None:
         "lb.example",
         "80:30080/TCP, 53/UDP",
     )
-    assert resource.age == "2d"
+    assert resource.age == "48h0m0s"
 
 
 def test_parse_network_shows_a_pending_load_balancer_and_plain_services() -> None:
@@ -2363,7 +2363,7 @@ def test_parse_nodegroup_tolerates_missing_fields() -> None:
 
     assert bare is not None and naive is not None and no_max is not None
     assert bare.values == ("—",) * 5 and bare.age == "unknown"
-    assert naive.age == "2d"
+    assert naive.age == "48h0m0s"
     assert no_max.values[2] == "3 (0–3)"
     assert cluster._parse_eks("NodeGroup", {}, now) is None
 

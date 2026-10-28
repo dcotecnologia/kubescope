@@ -1,3 +1,5 @@
+import time
+
 from PySide6.QtCore import QModelIndex, QPersistentModelIndex, QRectF, QSize, Qt
 from PySide6.QtGui import QColor, QFont, QHelpEvent, QPainter
 from PySide6.QtWidgets import (
@@ -5,9 +7,12 @@ from PySide6.QtWidgets import (
     QStyle,
     QStyledItemDelegate,
     QStyleOptionViewItem,
+    QTableWidget,
+    QTableWidgetItem,
     QToolTip,
 )
 
+from kubescope.models import age_seconds, format_age
 from kubescope.theme import themed
 
 STATES_ROLE = Qt.ItemDataRole.UserRole + 1
@@ -16,6 +21,7 @@ TIPS_ROLE = Qt.ItemDataRole.UserRole + 3  # what each square says when pointed a
 # state of a container -> its square: running, pending, error or terminated
 BADGE_ROLE = Qt.ItemDataRole.UserRole + 5  # (text color, fill color) of a badge
 TINT_ROLE = Qt.ItemDataRole.UserRole + 6  # the color a whole row is washed with
+AGE_ROLE = Qt.ItemDataRole.UserRole + 7  # (seconds old, clock when that was read)
 STATE_COLORS = {
     "running": "#3cb95a",
     "pending": "#e0a526",
@@ -156,3 +162,26 @@ class ContainerStatesDelegate(BadgeDelegate):
         else:
             QToolTip.hideText()
         return True
+
+
+def stamp_age(item: QTableWidgetItem, age: str) -> None:
+    """Mark a cell as an age that keeps counting; unknown ages stay as they
+    are."""
+    seconds = age_seconds(age)
+    if seconds != float("inf"):
+        item.setData(AGE_ROLE, (seconds, time.monotonic()))
+
+
+def tick_ages(table: QTableWidget) -> None:
+    """Move every counting age of a table on to now."""
+    now = time.monotonic()
+    for row in range(table.rowCount()):
+        for column in range(table.columnCount()):
+            item = table.item(row, column)
+            if item is None:
+                continue
+            stamp = item.data(AGE_ROLE)
+            if stamp is not None:
+                text = format_age(stamp[0] + now - stamp[1])
+                if item.text() != text:
+                    item.setText(text)

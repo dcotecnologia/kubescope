@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+### Changed
+
+- The **Age** columns show hours, minutes and seconds, such as `1h5m3s`, and count up on their own by @danilogco
+
+### Removed
+
+- The green background of the Pods younger than an hour by @danilogco
+
 ## [1.1.0] - 2026-10-28
 
 ### Added

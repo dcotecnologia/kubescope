@@ -1,6 +1,6 @@
 import re
 import time
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, field, replace
 from datetime import datetime
 from typing import Any
 
@@ -14,7 +14,7 @@ class Workload:
     name: str
     ready: int
     desired: int
-    age: str
+    age: str = field(compare=False)  # the table ticks it itself
     restarts: int = 0
     cpu: float | None = None  # cores in use, None without metrics-server
     memory: float | None = None  # bytes in use
@@ -63,7 +63,7 @@ class ClusterResource:
     kind: str
     name: str
     values: tuple[str, ...]  # what the kind shows between its name and its age
-    age: str
+    age: str = field(compare=False)
 
 
 @dataclass(frozen=True, slots=True)
@@ -96,7 +96,7 @@ class PodInfo:
     phase: str
     ready: int
     total: int
-    age: str
+    age: str = field(compare=False)
     containers: tuple[str, ...]
     restarts: int = 0
     cpu: float | None = None
@@ -116,13 +116,18 @@ def safe_file_name(title: str, suffix: str) -> str:
 
 
 def format_age(seconds: float) -> str:
-    if seconds < 60:
-        return "<1m"
-    if seconds < 3600:
-        return f"{int(seconds // 60)}m"
-    if seconds < 86400:
-        return f"{int(seconds // 3600)}h"
-    return f"{int(seconds // 86400)}d"
+    """Age down to the second, from the first unit that is not zero:
+
+    "5s", "22m5s", "27h0m3s".
+    """
+    total = int(max(seconds, 0))
+    hours, rest = divmod(total, 3600)
+    minutes, secs = divmod(rest, 60)
+    if hours:
+        return f"{hours}h{minutes}m{secs}s"
+    if minutes:
+        return f"{minutes}m{secs}s"
+    return f"{secs}s"
 
 
 _BINARY_UNITS = {"Ki": 2**10, "Mi": 2**20, "Gi": 2**30, "Ti": 2**40, "Pi": 2**50}
@@ -251,9 +256,6 @@ class ClusterOverview:
         return sum(node.pods_allocatable for node in self.nodes)
 
 
-_AGE_UNITS = {"m": 60, "h": 3600, "d": 86400}
-
-
 @dataclass(frozen=True, slots=True)
 class KindSummary:
     """How many resources of one kind there are, and how many are healthy (ok),
@@ -361,14 +363,16 @@ SORT_COLUMNS = (
 )
 
 
+_AGE_PATTERN = re.compile(r"(?:(\d+)d)?(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?")
+
+
 def age_seconds(age: str) -> float:
-    """Inverse of format_age(): "12d" -> seconds, unknown ages sort last."""
-    text = age.strip()
-    if text == "<1m":
-        return 0.0
-    if text[:-1].isdigit() and text[-1:] in _AGE_UNITS:
-        return int(text[:-1]) * _AGE_UNITS[text[-1]]
-    return float("inf")
+    """Inverse of format_age(): "1h5m3s" -> seconds, unknown ages sort last."""
+    match = _AGE_PATTERN.fullmatch(age.strip())
+    if match is None or not any(match.groups()):
+        return float("inf")
+    days, hours, minutes, secs = (int(part or 0) for part in match.groups())
+    return float(days * 86400 + hours * 3600 + minutes * 60 + secs)
 
 
 def workload_sort_key(workload: Workload, column: int) -> tuple:
@@ -411,12 +415,10 @@ def resource_sort_key(resource: ClusterResource, column: int) -> tuple:
 
 
 def pod_highlight(pod: PodInfo) -> str | None:
-    """Classify a Pod as "problem", "young" (under an hour old) or neither."""
+    """Classify a Pod as "problem" or neither."""
     not_ready = pod.phase == "Running" and pod.ready < pod.total
     if pod.restarts > 0 or pod.phase in {"Failed", "Unknown"} or not_ready:
         return "problem"
-    if age_seconds(pod.age) < 3600:
-        return "young"
     return None
 
 

@@ -38,7 +38,14 @@ def test_workload_status(ready: int, desired: int, expected: str) -> None:
 
 @pytest.mark.parametrize(
     ("seconds", "expected"),
-    [(0, "<1m"), (59, "<1m"), (60, "1m"), (3600, "1h"), (86400, "1d")],
+    [
+        (0, "0s"),
+        (59, "59s"),
+        (60, "1m0s"),
+        (1325, "22m5s"),
+        (3603, "1h0m3s"),
+        (90000, "25h0m0s"),
+    ],
 )
 def test_format_age(seconds: int, expected: str) -> None:
     assert format_age(seconds) == expected
@@ -63,12 +70,13 @@ def test_parse_quantities() -> None:
 def test_age_seconds_inverts_format_age() -> None:
     from kubescope.models import age_seconds
 
-    assert age_seconds("<1m") == 0
-    assert age_seconds("5m") == 300
-    assert age_seconds("3h") == 3 * 3600
-    assert age_seconds("12d") == 12 * 86400
+    assert age_seconds("0h0m0s") == 0
+    assert age_seconds("5m0s") == 300
+    assert age_seconds("3h0m4s") == 3 * 3600 + 4
+    assert age_seconds("12d0h0m0s") == 12 * 86400
+    assert age_seconds("12x") == float("inf")
     assert age_seconds("unknown") == float("inf")
-    assert age_seconds("2d") > age_seconds("47h")
+    assert age_seconds("2d0h0m0s") > age_seconds("47h0m0s")
 
 
 def test_workload_sort_keys_rank_status_worst_first_and_ready_by_fraction() -> None:
@@ -92,21 +100,18 @@ def test_workload_sort_keys_rank_status_worst_first_and_ready_by_fraction() -> N
     assert order(9) == ["job", "api", "web", "db"]  # youngest first
 
 
-def test_pod_highlight_flags_problems_over_young_pods() -> None:
+def test_pod_highlight_flags_only_problems() -> None:
     from kubescope.models import PodInfo, pod_highlight
 
     def pod(phase="Running", ready=1, restarts=0, age="2d") -> PodInfo:
         return PodInfo("d", "p", phase, ready, 1, age, ("a",), restarts=restarts)
 
     assert pod_highlight(pod()) is None
-    assert pod_highlight(pod(age="<1m")) == "young"
-    assert pod_highlight(pod(age="59m")) == "young"
-    assert pod_highlight(pod(age="1h")) is None
+    assert pod_highlight(pod(age="5m0s")) is None  # a young Pod is not flagged
     assert pod_highlight(pod(restarts=2)) == "problem"
     assert pod_highlight(pod(phase="Failed", ready=0)) == "problem"
     assert pod_highlight(pod(ready=0)) == "problem"
-    assert pod_highlight(pod(age="5m", restarts=1)) == "problem"  # problem wins
-    assert pod_highlight(pod(phase="Pending", ready=0, age="5m")) == "young"
+    assert pod_highlight(pod(phase="Pending", ready=0, age="5m0s")) is None
 
 
 @pytest.mark.parametrize(
@@ -266,7 +271,7 @@ def test_detail_sections_lay_out_properties_spec_and_status() -> None:
     ]
     properties = {row.label: row.values for row in sections["Properties"]}
     assert properties["Kind"] == ("Pod",)
-    assert properties["Created"][0].startswith("2h ago (")
+    assert properties["Created"][0].startswith("2h40m0s ago (")
     assert properties["Name"] == ("api-1",)
     assert properties["Labels"] == ("app=api", "tier=back")
     assert properties["Annotations"][0].endswith("...")

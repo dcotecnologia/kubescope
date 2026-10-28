@@ -167,6 +167,8 @@ from kubescope.views.container_states import (
     TIPS_ROLE,
     BadgeDelegate,
     ContainerStatesDelegate,
+    stamp_age,
+    tick_ages,
 )
 from kubescope.views.detail_tab import USAGE_REFRESH_MS, DetailTab
 from kubescope.views.log_tab import LOG_REFRESH_MS, LogTab
@@ -710,6 +712,11 @@ class WorkloadWindow(QMainWindow):
         self._live_timer.setInterval(LIST_REFRESH_MS)
         self._live_timer.timeout.connect(self._refresh_live)
         self._live_timer.start()
+        # the Age columns count the seconds on their own
+        self._age_timer = QTimer(self)
+        self._age_timer.setInterval(1000)
+        self._age_timer.timeout.connect(self._tick_ages)
+        self._age_timer.start()
         self._action_workers: list[ActionWorker] = []
         self._close_when_worker_stops = False
         self._workloads: list[Workload] = []
@@ -2553,6 +2560,8 @@ class WorkloadWindow(QMainWindow):
                 item.setToolTip(event.message)
                 if column == 3 and (link := event_link(event)):
                     self._link_item(item, link)
+                if column in (6, 7):
+                    stamp_age(item, value)
                 item.setForeground(QColor(themed("#242a33")))
                 if column == 0:
                     item.setData(BADGE_ROLE, _badge_colors(event.type))
@@ -2753,6 +2762,8 @@ class WorkloadWindow(QMainWindow):
             for column, value in enumerate(values):
                 item = QTableWidgetItem(value)
                 item.setForeground(QColor(themed("#242a33")))
+                if column == len(values) - 1:
+                    stamp_age(item, value)
                 if column == 1:
                     text_color, background = (
                         (themed("#176b58"), themed("#e5f4eb"))
@@ -3117,6 +3128,11 @@ class WorkloadWindow(QMainWindow):
             return self._selected_resource()
         return self._selected_workload()
 
+    def _tick_ages(self) -> None:
+        for table in self.findChildren(QTableWidget):
+            if table.isVisible():
+                tick_ages(table)
+
     def _kept_rows(self, rows: list) -> list:
         """The rows the table already shows for this list, to leave as they
         are; nothing when it was cleared or draws another list."""
@@ -3178,6 +3194,8 @@ class WorkloadWindow(QMainWindow):
             for column, value in enumerate(values):
                 item = QTableWidgetItem(value)
                 item.setForeground(QColor(themed("#242a33")))
+                if column == len(values) - 1:
+                    stamp_age(item, value)
                 # a badge: the type of an event, the status of an AWS or Helm one
                 if (
                     self._view == "events" or self._view in EKS_VIEWS | {"addons"}
@@ -3268,7 +3286,6 @@ class WorkloadWindow(QMainWindow):
         }
         tints = {
             "problem": QColor(themed("#fbe4e4")),
-            "young": QColor(themed("#e2f5e8")),
         }
         # a Pod of a StatefulSet, when nothing else: the alternate surface, the
         # same tone as the background but a little different
@@ -3300,6 +3317,8 @@ class WorkloadWindow(QMainWindow):
                 item.setForeground(QColor(themed("#242a33")))
                 if tint is not None:
                     item.setData(TINT_ROLE, tint)
+                if column == len(values) - 1:
+                    stamp_age(item, value)
                 if column == 8 and pod.owner:
                     self._link_item(item, (*pod.owner[:1], pod.namespace, pod.owner[1]))
                 if column == 9 and pod.node:
@@ -3388,6 +3407,8 @@ class WorkloadWindow(QMainWindow):
             for column, value in enumerate(values):
                 item = QTableWidgetItem(value)
                 item.setForeground(QColor(themed("#242a33")))
+                if column == len(values) - 1:
+                    stamp_age(item, value)
                 if column == 3 and workload.kind != "CronJob":
                     item.setData(STATES_ROLE, workload.states)
                     item.setData(
@@ -3764,6 +3785,8 @@ class WorkloadWindow(QMainWindow):
             for column, value in enumerate(values):
                 item = QTableWidgetItem(value)
                 item.setForeground(QColor(themed("#242a33")))
+                if column == len(values) - 1:
+                    stamp_age(item, value)
                 table.setItem(row, column, item)
 
         def selected_pod() -> PodInfo | None:
