@@ -153,4 +153,11 @@ def test_a_snap_is_only_built_on_linux(monkeypatch) -> None:
 
 
 def test_the_version_comes_from_pyproject() -> None:
-    assert re.fullmatch(r"\d+\.\d+\.\d+", build_snap.project_version())
+    assert re.fullmatch(r"\d+\.\d+\.\d+((a|b|rc)\d+)?", build_snap.project_version())
+
+
+def test_a_pre_release_is_a_devel_snap_and_a_release_is_stable() -> None:
+    assert "grade: devel" in build_snap.render_snapcraft("1.3.0rc1")
+    assert "grade: devel" in build_snap.render_snapcraft("1.3.0a1")
+    stable = build_snap.render_snapcraft("1.3.0")
+    assert "grade: stable" in stable and "grade: devel" not in stable

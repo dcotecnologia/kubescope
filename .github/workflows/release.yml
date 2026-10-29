@@ -176,3 +176,5 @@ jobs:
         with:
           files: packages/*
           body_path: release-notes.md
+          # v1.3.0-rc1 is a pre-release: GitHub does not make it the latest release
+          prerelease: ${{ contains(github.ref_name, '-') }}
