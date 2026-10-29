@@ -294,7 +294,7 @@ def test_the_panel_leaves_the_window_for_one_of_its_own_and_comes_back() -> None
     dock.panel.float_button.click()  # attach again
     assert not dock.is_floating and not frame.isVisible()
     assert dock.panel.parent() is host and dock.is_open
-    assert dock.panel.float_button.toolTip() == "Detach"
+    assert dock.panel.float_button.toolTip() == "Open in a window of its own"
     assert saved[-1]["floating"] is False
 
     dock.set_floating(False)  # already in the window
