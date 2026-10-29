@@ -257,7 +257,7 @@
             "Save changes": "बदलाव सहेजें",
             "Show the assistant, a chat in the corner of the window": "",
             "Shows, in the right-click menu, the actions that change a cluster: delete or evict a Pod, scale or restart a Deployment. Each one asks for confirmation. It also shows the kubectl command to open a shell in a Pod. Off keeps the app read-only.": "राइट-क्लिक मेनू में वे क्रियाएँ दिखाता है जो क्लस्टर को बदलती हैं: Pod को हटाना या निष्कासित (evict) करना, Deployment को स्केल या रीस्टार्ट करना। हर क्रिया पुष्टि माँगती है। Pod में शेल खोलने की kubectl कमांड भी दिखाता है। बंद होने पर ऐप केवल-पढ़ने योग्य रहता है।",
-            "The chat asks a program of this computer, such as Claude Code. What you ask and what it reads from the cluster go to that program and to its service. The conversations are kept on this computer, without the documents and logs that were read.": "",
+            "The assistant uses the client that is already installed on this computer, such as Claude Code or Codex, signed in the way you already are. KubeScope asks you for no credentials and stores none: the sign-in stays with that program. What you ask, attach and what it reads from the cluster go to that program and to its service. The conversations are kept on this computer, without the documents and logs that were read.": "",
             "The namespace each context opens on. Leave empty to show all of them.": "वह namespace जिस पर हर कॉन्टेक्स्ट खुलता है। सभी दिखाने के लिए खाली छोड़ें।",
             "The program of this computer that answers. Automatic uses the first one the system has.": "",
             "Theme": "थीम",

@@ -520,3 +520,15 @@ def test_the_panel_state_is_read_at_the_start_and_written_when_it_changes(
     assert "floating" not in window.settings.assistant_panel  # only "out" is kept
     assert Settings().assistant_panel.get("width") == 500
     window.close()
+
+
+def test_the_settings_say_the_assistant_uses_the_client_of_the_computer(
+    monkeypatch,
+) -> None:
+    window, _messages = _open(monkeypatch)
+
+    hint = window.settings_ui.assistantHint.text()
+
+    assert "already installed on this computer" in hint
+    assert "asks you for no credentials and stores none" in hint
+    window.close()

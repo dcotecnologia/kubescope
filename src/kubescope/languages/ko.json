@@ -257,7 +257,7 @@
             "Save changes": "변경 사항 저장",
             "Show the assistant, a chat in the corner of the window": "",
             "Shows, in the right-click menu, the actions that change a cluster: delete or evict a Pod, scale or restart a Deployment. Each one asks for confirmation. It also shows the kubectl command to open a shell in a Pod. Off keeps the app read-only.": "오른쪽 클릭 메뉴에 클러스터를 변경하는 작업을 표시합니다: Pod 삭제 또는 퇴출(evict), Deployment 스케일 또는 재시작. 각 작업은 확인을 요청합니다. Pod에서 셸을 여는 kubectl 명령도 보여 줍니다. 끄면 앱은 읽기 전용입니다.",
-            "The chat asks a program of this computer, such as Claude Code. What you ask and what it reads from the cluster go to that program and to its service. The conversations are kept on this computer, without the documents and logs that were read.": "",
+            "The assistant uses the client that is already installed on this computer, such as Claude Code or Codex, signed in the way you already are. KubeScope asks you for no credentials and stores none: the sign-in stays with that program. What you ask, attach and what it reads from the cluster go to that program and to its service. The conversations are kept on this computer, without the documents and logs that were read.": "",
             "The namespace each context opens on. Leave empty to show all of them.": "각 컨텍스트가 처음 열리는 네임스페이스입니다. 비워 두면 모두 표시합니다.",
             "The program of this computer that answers. Automatic uses the first one the system has.": "",
             "Theme": "테마",

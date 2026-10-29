@@ -549,7 +549,7 @@ class Ui_SettingsPage(object):
 #if QT_CONFIG(tooltip)
         self.assistantCombo.setToolTip(QCoreApplication.translate("SettingsPage", u"The program of this computer that answers. Automatic uses the first one the system has.", None))
 #endif // QT_CONFIG(tooltip)
-        self.assistantHint.setText(QCoreApplication.translate("SettingsPage", u"The chat asks a program of this computer, such as Claude Code. What you ask and what it reads from the cluster go to that program and to its service. The conversations are kept on this computer, without the documents and logs that were read.", None))
+        self.assistantHint.setText(QCoreApplication.translate("SettingsPage", u"The assistant uses the client that is already installed on this computer, such as Claude Code or Codex, signed in the way you already are. KubeScope asks you for no credentials and stores none: the sign-in stays with that program. What you ask, attach and what it reads from the cluster go to that program and to its service. The conversations are kept on this computer, without the documents and logs that were read.", None))
         self.assistantClearButton.setText(QCoreApplication.translate("SettingsPage", u"Clear the chat history", None))
         self.debugHeading.setText(QCoreApplication.translate("SettingsPage", u"DEBUGGING", None))
         self.debugCheck.setText(QCoreApplication.translate("SettingsPage", u"Debug mode: write a log file I can share", None))
