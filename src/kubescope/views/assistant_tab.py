@@ -19,16 +19,12 @@ from kubescope.assistant.actions import Invalid, Request
 from kubescope.assistant.history import Entry
 from kubescope.assistant.runner import AssistantError
 from kubescope.assistant.session import ChatSession, Message
+from kubescope.theme import themed
 from kubescope.views.chat_icons import attach_icon, mic_icon, send_icon, stop_icon
 
 SHUTDOWN_WAIT_MS = 3000
 MAX_FOLLOW_UPS = 5  # reads the assistant may ask for after one question
 BUBBLE_WIDTH = 0.82  # of the width of the conversation
-# the colors of a chat, light and dark: background, own bubble, other bubble, text,
-# quiet text and the ticks, all greens besides the background
-_LIGHT = ("#efeae2", "#d9fdd3", "#ffffff", "#111b21", "#667781", "#1fa67a")
-_DARK = ("#0b141a", "#005c4b", "#202c33", "#e9edef", "#8696a0", "#8ef0cf")
-_SEND = "#00a884"  # the green of the send button
 DOODLE = 56  # the size of a tile of the pattern behind the messages
 
 
@@ -38,8 +34,8 @@ class ChatBackground(QWidget):
 
     def __init__(self) -> None:
         super().__init__()
-        self.color = QColor(_LIGHT[0])
-        self.ink = QColor(_LIGHT[4])
+        self.color = QColor(themed("#f7f7fa"))
+        self.ink = QColor(themed("#6b7380"))
 
     def paintEvent(self, event) -> None:
         painter = QPainter(self)
@@ -134,6 +130,7 @@ class AssistantTab(QWidget):
         self._entries: list[Entry] = []  # (role, text) of what is shown
         self._bubbles: list[QFrame] = []
         self._labels: list[QLabel] = []
+        self._bubble_info: list[tuple[str, QLabel | None, str]] = []
         self._stream: QLabel | None = None  # the bubble of the answer coming in
         self._answer = ""
         self._follow_ups = 0
@@ -160,16 +157,12 @@ class AssistantTab(QWidget):
         self.input.setPlaceholderText(
             self.tr("Ask about the cluster or ask for an action...")
         )
-        self.send_button = self._round_button(send_icon(), self.tr("Send"), _SEND)
-        self.stop_button = self._round_button(stop_icon(), self.tr("Stop"), "#d64545")
+        self.send_button = self._round_button(self.tr("Send"))
+        self.stop_button = self._round_button(self.tr("Stop"))
         self.stop_button.setEnabled(False)
         self.stop_button.hide()
-        self.attach_button = self._round_button(
-            attach_icon(), self.tr("Attach"), "transparent"
-        )
-        self.mic_button = self._round_button(
-            mic_icon(), self.tr("Record a voice message"), "transparent"
-        )
+        self.attach_button = self._round_button(self.tr("Attach"))
+        self.mic_button = self._round_button(self.tr("Record a voice message"))
         self.status = QLabel("")
         self.status.hide()
         self.send_button.clicked.connect(self.submit)
@@ -199,6 +192,7 @@ class AssistantTab(QWidget):
         layout.addWidget(self.thread_scroll, 1)
         layout.addWidget(composer)
         self._restyle_thread()
+        self._style_buttons()
         for role, text in history:
             self._entries.append((role, text))
             self._add_bubble(role, text)
@@ -206,16 +200,37 @@ class AssistantTab(QWidget):
                 self.session.messages.append(Message(role, text))  # type: ignore[arg-type]
 
     @staticmethod
-    def _round_button(icon, tip: str, color: str) -> QPushButton:
+    def _round_button(tip: str) -> QPushButton:
         button = QPushButton()
-        button.setIcon(icon)
         button.setToolTip(tip)
         button.setFixedSize(40, 40)
-        button.setStyleSheet(
-            f"QPushButton {{ background: {color}; border: 0; border-radius: 20px; }}"
-            "QPushButton:disabled { background: #8696a0; }"
-        )
         return button
+
+    def _style_buttons(self) -> None:
+        """Color the round buttons from the theme in use."""
+        on_accent = themed("#ffffff", text=True)
+        quiet = self._palette()[4]
+        solid = (
+            (self.send_button, send_icon(on_accent), themed("#3020a5")),
+            (self.stop_button, stop_icon(on_accent), themed("#a33d45")),
+        )
+        for button, icon, color in solid:
+            button.setIcon(icon)
+            button.setStyleSheet(
+                f"QPushButton {{ background: {color}; border: 0;"
+                " border-radius: 20px; }"
+                f"QPushButton:disabled {{ background: {themed('#6c5fc4')}; }}"
+            )
+        for button, icon in (
+            (self.attach_button, attach_icon(quiet)),
+            (self.mic_button, mic_icon(quiet)),
+        ):
+            button.setIcon(icon)
+            button.setStyleSheet(
+                "QPushButton { background: transparent; border: 0;"
+                " border-radius: 20px; }"
+                f"QPushButton:hover {{ background: {themed('#eceef3')}; }}"
+            )
 
     @property
     def busy(self) -> bool:
@@ -244,9 +259,19 @@ class AssistantTab(QWidget):
         self._add_entry("app", text)
         self.changed.emit()
 
-    def _palette(self) -> tuple[str, str, str, str, str, str]:
-        dark = self.palette().window().color().lightness() < 128
-        return _DARK if dark else _LIGHT
+    @staticmethod
+    def _palette() -> tuple[str, str, str, str, str, str]:
+        """The colors of the chat, from the theme in use: the wall, the
+        person's bubble, the other bubbles, the text, the quiet text and the
+        ticks."""
+        return (
+            themed("#f7f7fa"),
+            themed("#e5f4eb"),
+            themed("#ffffff"),
+            themed("#20232a"),
+            themed("#6b7380"),
+            themed("#176b58"),
+        )
 
     def _restyle_thread(self) -> None:
         background, _own, other, ink, quiet, _tick = self._palette()
@@ -268,7 +293,6 @@ class AssistantTab(QWidget):
     def _add_bubble(self, role: str, text: str) -> QLabel:
         """Put a bubble at the end: the person's on the right, the others on
         the left."""
-        _background, own, other, ink, quiet, tick_color = self._palette()
         label = QLabel()
         label.setWordWrap(True)
         label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
@@ -280,36 +304,20 @@ class AssistantTab(QWidget):
         label.setText(text)
         bubble = QFrame()
         bubble.setObjectName("assistantBubbleOf" + role)
-        color = own if role == "user" else other
-        edge = "" if role != "app" else f"border: 1px dashed {quiet};"
-        text_color = quiet if role == "app" else ink
-        name = f"QFrame#assistantBubbleOf{role}"
-        tail = (
-            "border-top-right-radius: 2px;"
-            if role == "user"
-            else "border-top-left-radius: 2px;"
-        )
-        bubble.setStyleSheet(
-            f"{name} {{ background: {color}; {edge} border-radius: 10px; {tail} }}"
-            f"{name} QLabel {{ color: {text_color}; background: transparent; }}"
-        )
         inside = QVBoxLayout(bubble)
         inside.setContentsMargins(10, 6, 10, 4)
         inside.setSpacing(2)
         inside.addWidget(label)
+        stamp = None
         if role != "app":
-            ticks = (
-                f' <span style="color: {tick_color}">✓✓</span>'
-                if role == "user"
-                else ""
-            )
-            stamp = QLabel(datetime.now().strftime("%H:%M") + ticks)
+            stamp = QLabel()
             stamp.setTextFormat(Qt.TextFormat.RichText)
             stamp.setAlignment(
                 Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
             )
-            stamp.setStyleSheet(f"font-size: 10px; color: {quiet};")
             inside.addWidget(stamp)
+        clock = datetime.now().strftime("%H:%M")
+        self._style_bubble(bubble, role, stamp, clock)
         line = QHBoxLayout()
         line.setContentsMargins(8, 2, 8, 2)
         if role == "user":
@@ -321,8 +329,45 @@ class AssistantTab(QWidget):
         self.thread_layout.insertLayout(self.thread_layout.count() - 1, line)
         self._bubbles.append(bubble)
         self._labels.append(label)
+        self._bubble_info.append((role, stamp, clock))
         self._fit()
         return label
+
+    def _style_bubble(
+        self, bubble: QFrame, role: str, stamp: QLabel | None, clock: str
+    ) -> None:
+        """Color a bubble from the theme in use."""
+        _background, own, other, ink, quiet, tick_color = self._palette()
+        color = own if role == "user" else other
+        edge = f"border: 1px dashed {quiet};" if role == "app" else ""
+        text_color = quiet if role == "app" else ink
+        name = f"QFrame#assistantBubbleOf{role}"
+        tail = (
+            "border-top-right-radius: 2px;"
+            if role == "user"
+            else "border-top-left-radius: 2px;"
+        )
+        bubble.setStyleSheet(
+            f"{name} {{ background: {color}; {edge} border-radius: 10px; {tail} }}"
+            f"{name} QLabel {{ color: {text_color}; background: transparent; }}"
+        )
+        if stamp is not None:
+            ticks = (
+                f' <span style="color: {tick_color}">✓✓</span>'
+                if role == "user"
+                else ""
+            )
+            stamp.setText(clock + ticks)
+            stamp.setStyleSheet(f"font-size: 10px; color: {quiet};")
+
+    def restyle(self) -> None:
+        """Take the colors of the theme in use, for what is already shown."""
+        self._restyle_thread()
+        self._style_buttons()
+        for bubble, (role, stamp, clock) in zip(
+            self._bubbles, self._bubble_info, strict=True
+        ):
+            self._style_bubble(bubble, role, stamp, clock)
 
     def _fit(self) -> None:
         """Keep the bubbles within a share of the width, so a long answer wraps
@@ -368,6 +413,7 @@ class AssistantTab(QWidget):
         if self._bubbles:
             self._bubbles.pop().parentWidget()
             label = self._labels.pop()
+            self._bubble_info.pop()
             frame = label.parentWidget()
             assert frame is not None
             line = self.thread_layout.itemAt(self.thread_layout.count() - 2)

@@ -89,3 +89,21 @@ def test_the_buttons_of_the_panel_say_so() -> None:
 
     assert seen == ["clear", "closed"]
     host.close()
+
+
+def test_the_button_and_the_panel_take_the_colors_of_the_theme(monkeypatch) -> None:
+    from kubescope import theme
+
+    host = _host()
+    dock = AssistantDock(host)
+    monkeypatch.setattr(theme, "_active", theme.LIGHT_THEME)
+    dock.restyle()
+    light = (dock.bubble.styleSheet(), dock.panel.styleSheet())
+
+    monkeypatch.setattr(theme, "_active", theme.DARK_THEME)
+    dock.restyle()
+
+    assert (dock.bubble.styleSheet(), dock.panel.styleSheet()) != light
+    assert theme.themed("#3020a5") in dock.bubble.styleSheet()  # as Save changes
+    assert theme.themed("#f7f7fa") in dock.panel.styleSheet()
+    host.close()

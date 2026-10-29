@@ -8,27 +8,41 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from kubescope.theme import themed
 from kubescope.views.chat_icons import sparkle_icon
 
 BUBBLE = 54  # the round button in the corner
 MARGIN = 20
 BOTTOM = 56  # above the footer of the window, which has links
 PANEL = QSize(430, 600)  # the chat, as large as the window leaves room for
-_BUBBLE_STYLE = (
-    "QPushButton#assistantBubble { background: #3220a0; border: 0;"
-    f" border-radius: {BUBBLE // 2}px; }}"
-    "QPushButton#assistantBubble:hover { background: #4631c4; }"
-)
-_PANEL_STYLE = (
-    "QFrame#assistantPanel { background: palette(window); border: 1px solid"
-    " palette(mid); border-radius: 10px; }"
-    "QFrame#assistantHeader { background: #0d315d; border-top-left-radius: 10px;"
-    " border-top-right-radius: 10px; }"
-    "QFrame#assistantHeader QLabel { color: #ffffff; font-weight: 700; }"
-    "QFrame#assistantHeader QPushButton { background: transparent; color: #ffffff;"
-    " border: 1px solid #2d5077; border-radius: 4px; padding: 2px 8px; }"
-    "QFrame#assistantHeader QPushButton:hover { background: #1f4f87; }"
-)
+
+
+def _bubble_style() -> str:
+    """The round button of the corner, in the colors of the theme."""
+    return (
+        f"QPushButton#assistantBubble {{ background: {themed('#3020a5')};"
+        f" border: 0; border-radius: {BUBBLE // 2}px; }}"
+        f"QPushButton#assistantBubble:hover {{ background: {themed('#4030b8')}; }}"
+    )
+
+
+def _panel_style() -> str:
+    """The panel and its header, in the colors of the theme."""
+    border = themed("#e1e3e9")
+    header = themed("#0d315d")
+    ink = themed("#ffffff", text=True)
+    edge = themed("#2d5077")
+    return (
+        f"QFrame#assistantPanel {{ background: {themed('#f7f7fa')};"
+        f" border: 1px solid {border}; border-radius: 10px; }}"
+        f"QFrame#assistantHeader {{ background: {header};"
+        " border-top-left-radius: 10px; border-top-right-radius: 10px; }"
+        f"QFrame#assistantHeader QLabel {{ color: {ink}; font-weight: 700; }}"
+        f"QFrame#assistantHeader QPushButton {{ background: transparent; color: {ink};"
+        f" border: 1px solid {edge}; border-radius: 4px; padding: 2px 8px; }}"
+        "QFrame#assistantHeader QPushButton:hover "
+        f"{{ background: {themed('#1f4f87')}; }}"
+    )
 
 
 class AssistantPanel(QFrame):
@@ -40,7 +54,7 @@ class AssistantPanel(QFrame):
     def __init__(self, parent: QWidget) -> None:
         super().__init__(parent)
         self.setObjectName("assistantPanel")
-        self.setStyleSheet(_PANEL_STYLE)
+        self.restyle()
         header = QFrame()
         header.setObjectName("assistantHeader")
         self.title = QLabel(self.tr("Assistant"))
@@ -65,6 +79,10 @@ class AssistantPanel(QFrame):
         self.close_button.clicked.connect(self.closed)
         self.hide()
 
+    def restyle(self) -> None:
+        """Take the colors of the theme in use."""
+        self.setStyleSheet(_panel_style())
+
     def show_chat(self, chat: QWidget | None) -> None:
         """Put a chat in the panel, in place of the one it had."""
         while (item := self.body.takeAt(0)) is not None:
@@ -85,15 +103,22 @@ class AssistantDock(QObject):
         super().__init__(host)
         self.host = host
         self.bubble = QPushButton(host)
-        self.bubble.setIcon(sparkle_icon("#ffffff", 34))
         self.bubble.setIconSize(QSize(34, 34))
         self.bubble.setObjectName("assistantBubble")
-        self.bubble.setStyleSheet(_BUBBLE_STYLE)
         self.bubble.setFixedSize(BUBBLE, BUBBLE)
         self.bubble.setToolTip(self.tr("Ask the assistant"))
         self.panel = AssistantPanel(host)
+        self.restyle()
         host.installEventFilter(self)
         self.place()
+
+    def restyle(self) -> None:
+        """Take the colors of the theme in use."""
+        self.bubble.setStyleSheet(_bubble_style())
+        self.bubble.setIcon(
+            sparkle_icon(themed("#ffffff", text=True), 34, themed("#3020a5"))
+        )
+        self.panel.restyle()
 
     def retranslate(self) -> None:
         self.bubble.setToolTip(self.tr("Ask the assistant"))

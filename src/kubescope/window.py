@@ -2098,6 +2098,9 @@ class WorkloadWindow(QMainWindow):
                 assert isinstance(tab, DetailTab)
                 restyle(tab.editor, tab.highlighter)
                 tab.restyle()
+        self.assistant_dock.restyle()
+        if self._assistant_tab is not None:
+            self._assistant_tab.restyle()
         self._render_rows()
         if self._overview is not None:
             self._render_overview(self._overview)
