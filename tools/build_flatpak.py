@@ -80,6 +80,7 @@ def main() -> int:
         cwd=STAGING,
     )
     output = ROOT / "dist" / f"KubeScope-{version}.flatpak"
+    output.parent.mkdir(exist_ok=True)  # a clean checkout has no dist/
     subprocess.run(
         ["flatpak", "build-bundle", str(repository), str(output), APP_ID],
         check=True,
