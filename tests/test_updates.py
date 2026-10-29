@@ -163,7 +163,10 @@ def test_latest_release_carries_the_notes_and_the_verified_files(monkeypatch) ->
 
 
 def test_a_latest_release_with_an_odd_tag_or_body_is_tolerated(monkeypatch) -> None:
-    fake_api(monkeypatch, {"/releases/latest": {"tag_name": "v0.3.0-rc1"}})
+    fake_api(
+        monkeypatch,
+        {"/releases/latest": {"tag_name": "v0.3.0-rc1"}, "/releases?per_page=30": []},
+    )
     assert updates.latest_release() is None
 
     fake_api(
@@ -247,3 +250,102 @@ def test_any_other_failure_has_no_time_to_try_again(monkeypatch, error) -> None:
     fake_api(monkeypatch, {"/releases/latest": error})
 
     assert updates.check_for_update("0.2.0") == UpdateCheck("failed")
+
+
+@pytest.mark.parametrize(
+    ("text", "numbers"),
+    [
+        ("1.3.0", (1, 3, 0)),
+        ("v1.3.0", (1, 3, 0)),
+        ("1.3.0rc1", (1, 3, -1)),
+        ("1.3.0-rc.1", (1, 3, -1)),
+        ("1.3.0-rc1", (1, 3, -1)),
+        ("v1.3.2a2", (1, 3, 1)),
+        ("1.3.0-beta1", (1, 3, -1)),
+        ("1.3.0.dev3", (1, 3, -1)),
+        ("unknown", None),
+        ("1.3", None),
+    ],
+)
+def test_a_pre_release_counts_as_just_before_its_own_release(text, numbers) -> None:
+    assert updates.installed_version(text) == numbers
+
+
+def _release_data(tag: str, **flags) -> dict:
+    return {"tag_name": tag, **flags}
+
+
+def test_the_app_is_never_offered_a_pre_release(monkeypatch) -> None:
+    for tag, flags in (
+        ("v1.3.0-rc1", {"prerelease": True}),
+        ("v1.3.0-rc1", {}),  # tagged as one, though GitHub does not say it is
+        ("v1.3.0-beta2", {"prerelease": False}),
+    ):
+        fake_api(
+            monkeypatch,
+            {
+                "/releases/latest": _release_data(tag, **flags),
+                "/releases?per_page=30": [],
+            },
+        )
+
+        assert updates.check_for_update("1.2.0") == UpdateCheck("current")
+
+
+def test_when_the_newest_release_is_a_pre_release_the_newest_stable_one_is_found(
+    monkeypatch,
+) -> None:
+    listing = [
+        _release_data("v1.3.0-rc2", prerelease=True),
+        _release_data("v1.3.0-rc1"),
+        _release_data("v1.2.1", draft=True),  # not published yet
+        _release_data("v1.2.0"),
+        _release_data("v1.1.1"),
+        "not a release",
+    ]
+    asked = fake_api(
+        monkeypatch,
+        {
+            "/releases/latest": _release_data("v1.3.0-rc2", prerelease=False),
+            "/releases?per_page=30": listing,
+        },
+    )
+
+    found = updates.check_for_update("1.1.0")
+
+    assert found == UpdateCheck("available", updates._release("v1.2.0"))
+    assert asked == ["/releases/latest", "/releases?per_page=30"]
+    assert updates.check_for_update("1.2.0") == UpdateCheck("current")
+
+
+def test_a_stable_latest_release_needs_no_second_question(monkeypatch) -> None:
+    asked = fake_api(monkeypatch, {"/releases/latest": _release_data("v1.2.0")})
+
+    updates.check_for_update("1.1.0")
+
+    assert asked == ["/releases/latest"]
+
+
+def test_a_listing_that_is_not_a_list_leaves_nothing_to_offer(monkeypatch) -> None:
+    fake_api(
+        monkeypatch,
+        {
+            "/releases/latest": _release_data("v1.3.0-rc1", prerelease=True),
+            "/releases?per_page=30": {"message": "nope"},
+        },
+    )
+
+    assert updates.check_for_update("1.2.0") == UpdateCheck("current")
+
+
+def test_a_release_candidate_is_told_about_its_own_stable_release_and_no_older_one(
+    monkeypatch,
+) -> None:
+    fake_api(monkeypatch, {"/releases/latest": _release_data("v1.3.0")})
+    assert updates.check_for_update("1.3.0rc1") == UpdateCheck(
+        "available", updates._release("v1.3.0")
+    )
+
+    fake_api(monkeypatch, {"/releases/latest": _release_data("v1.2.5")})
+    assert updates.check_for_update("1.3.0rc1") == UpdateCheck("current")  # older
+    assert updates.check_for_update("1.3.0-rc.2") == UpdateCheck("current")
