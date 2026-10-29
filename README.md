@@ -120,6 +120,7 @@ _The cluster overview, shown with sample data. Regenerate it with
   tab to a file you choose.
 - **Assistant:** the round button in the corner of the window opens a chat with
   **Gabi**, the assistant of DCO Tecnologia, expert in Kubernetes and KubeScope.
+  She only talks about Kubernetes and KubeScope, and politely declines anything else.
   She runs on a coding assistant that is already installed and signed in on your computer
   (Claude Code or Codex; KubeScope asks for no credentials and stores none). It sees what you see, can read details, logs, lists
   and events to look into a problem, answers in the language of the app, and
