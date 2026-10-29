@@ -85,8 +85,8 @@ class AssistantDock(QObject):
         super().__init__(host)
         self.host = host
         self.bubble = QPushButton(host)
-        self.bubble.setIcon(sparkle_icon("#ffffff", 30))
-        self.bubble.setIconSize(QSize(30, 30))
+        self.bubble.setIcon(sparkle_icon("#ffffff", 34))
+        self.bubble.setIconSize(QSize(34, 34))
         self.bubble.setObjectName("assistantBubble")
         self.bubble.setStyleSheet(_BUBBLE_STYLE)
         self.bubble.setFixedSize(BUBBLE, BUBBLE)

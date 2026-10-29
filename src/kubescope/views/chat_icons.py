@@ -4,7 +4,15 @@ them."""
 from math import cos, pi, sin
 
 from PySide6.QtCore import QPointF, QRectF, Qt
-from PySide6.QtGui import QColor, QIcon, QPainter, QPen, QPixmap, QPolygonF
+from PySide6.QtGui import (
+    QColor,
+    QIcon,
+    QPainter,
+    QPainterPath,
+    QPen,
+    QPixmap,
+    QPolygonF,
+)
 
 SIZE = 22
 
@@ -77,7 +85,7 @@ def mic_icon(color: str = "#8696a0") -> QIcon:
 
 def _star(painter: QPainter, x: float, y: float, radius: float) -> None:
     """A four-pointed star centered at (x, y)."""
-    inner = radius * 0.28
+    inner = radius * 0.36
     points = []
     for index in range(8):
         reach = radius if index % 2 == 0 else inner
@@ -88,8 +96,10 @@ def _star(painter: QPainter, x: float, y: float, radius: float) -> None:
     painter.drawPolygon(QPolygonF(points))
 
 
-def sparkle_icon(color: str = "#ffffff", size: int = SIZE) -> QIcon:
-    """The sparkles that stand for an AI: a large star and two small ones."""
+def sparkle_icon(
+    color: str = "#ffffff", size: int = SIZE, inside: str = "#3220a0"
+) -> QIcon:
+    """A speech bubble with the star of an AI inside it."""
     pixmap = QPixmap(size * 2, size * 2)
     pixmap.fill(Qt.GlobalColor.transparent)
     painter = QPainter(pixmap)
@@ -97,8 +107,15 @@ def sparkle_icon(color: str = "#ffffff", size: int = SIZE) -> QIcon:
     painter.scale(2 * size / SIZE, 2 * size / SIZE)
     painter.setPen(Qt.PenStyle.NoPen)
     painter.setBrush(QColor(color))
-    _star(painter, 9.5, 12.5, 8)
-    _star(painter, 17.5, 5.5, 4)
-    _star(painter, 18, 17, 2.8)
+    bubble = QPainterPath()
+    bubble.addRoundedRect(QRectF(2, 3, 18, 13.5), 5, 5)
+    tail = QPainterPath()
+    tail.moveTo(6.5, 15.5)
+    tail.lineTo(5, 20)
+    tail.lineTo(11, 16)
+    tail.closeSubpath()
+    painter.drawPath(bubble.united(tail))
+    painter.setBrush(QColor(inside))
+    _star(painter, 11, 9.7, 5.6)
     painter.end()
     return QIcon(pixmap)
