@@ -342,3 +342,25 @@ def test_the_windows_animate_unless_the_person_turned_it_off(tmp_path) -> None:
 
     path.write_text('{"animations": 0}', encoding="utf-8")
     assert Settings(path).animations is True  # only a real false counts
+
+
+def test_a_recent_up_to_date_is_remembered_for_the_version_that_found_it(
+    tmp_path,
+) -> None:
+    path = tmp_path / "settings.json"
+    settings = Settings(path)
+    assert not settings.update_check_is_fresh("1.2.0", 1000.0, 3600)  # never checked
+
+    settings.record_update_check("1.2.0", 1000.0)
+    settings.save()
+    again = Settings(path)
+
+    assert again.update_check_is_fresh("1.2.0", 1000.0 + 3599, 3600)
+    assert not again.update_check_is_fresh("1.2.0", 1000.0 + 3600, 3600)  # stale
+    assert not again.update_check_is_fresh("1.3.0", 1100.0, 3600)  # another version
+    assert not again.update_check_is_fresh("1.2.0", 900.0, 3600)  # the clock went back
+
+    path.write_text('{"update_checked_at": "soon", "update_checked_for": "1.2.0"}')
+    assert not Settings(path).update_check_is_fresh("1.2.0", 1000.0, 3600)
+    path.write_text('{"update_checked_at": true, "update_checked_for": "1.2.0"}')
+    assert not Settings(path).update_check_is_fresh("1.2.0", 0.5, 3600)
