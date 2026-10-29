@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+## [1.3.0-rc2] - 2026-10-29
+
+### Added
+
+- Gabi reads the live CPU and memory of a Pod, by container, beside what each container asks for and may use, as KubeScope shows them, and the lists she reads carry the use of each Pod and workload, so she no longer sends you to `kubectl top` for what she can read by @danilogco
+
+### Changed
+
+- An alpha, a beta or a release candidate now updates to the next pre-release as well as to the stable release that follows it, and never to an older one; a stable installation still updates only to stable releases by @danilogco
+
+### Fixed
+
+- The messages of the chat are no longer cut at the end or squeezed into a narrow bubble: each is as high as its text and as wide as the text needs, up to the room it has by @danilogco
+
 ## [1.3.0-rc1] - 2026-10-29
 
 ### Added
@@ -17,7 +31,7 @@ All notable changes to this project will be documented in this file. The format 
 
 ### Changed
 
-- A stable installation updates only to **stable** releases, and an alpha, a beta or a release candidate updates to the next pre-release as well as to the stable release that follows it, never to an older one by @danilogco
+- The app updates only to **stable** releases: an alpha, a beta or a release candidate is never offered, and a release candidate is told about its own stable release when it comes by @danilogco
 - The update check no longer asks GitHub again when the app starts within an hour of finding that it is up to date, so it spends less of the limit GitHub gives an address by @danilogco
 
 ## [1.2.0] - 2026-10-29
@@ -397,7 +411,8 @@ The first release.
 
 - Pod logs and resource details are still never written to disk by the app on its own. **Save** is the only exception, and it writes only to the file the user chooses. SECURITY.md says so by @danilogco
 
-[Unreleased]: https://github.com/dcotecnologia/kubescope/compare/v1.3.0-rc1...HEAD
+[Unreleased]: https://github.com/dcotecnologia/kubescope/compare/v1.3.0-rc2...HEAD
+[1.3.0-rc2]: https://github.com/dcotecnologia/kubescope/compare/v1.3.0-rc1...v1.3.0-rc2
 [1.3.0-rc1]: https://github.com/dcotecnologia/kubescope/compare/v1.2.0...v1.3.0-rc1
 [1.2.0]: https://github.com/dcotecnologia/kubescope/compare/v1.1.1...v1.2.0
 [1.1.1]: https://github.com/dcotecnologia/kubescope/compare/v1.1.0...v1.1.1
