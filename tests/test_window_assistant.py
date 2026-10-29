@@ -721,3 +721,51 @@ def test_every_section_of_the_menu_starts_open_and_what_is_closed_is_kept(
         again.submenu.maximumHeight() > 0 and again.network_submenu.maximumHeight() > 0
     )
     again.close()
+
+
+def test_each_entry_of_the_side_menu_carries_its_whole_name_as_a_tip(
+    monkeypatch,
+) -> None:
+    window, _messages = _open(monkeypatch)
+
+    for button in window._nav_views.values():
+        assert button.toolTip() == button.text() != ""
+    window._retranslate()
+    assert window.nav_pods.toolTip() == window.nav_pods.text()
+    window.close()
+
+
+def _preview_tool():
+    """The tool that takes the screenshots, which is not a package."""
+    import importlib.util
+    from pathlib import Path
+
+    path = Path(__file__).resolve().parent.parent / "tools" / "preview.py"
+    spec = importlib.util.spec_from_file_location("kubescope_preview", path)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def test_the_screenshot_opens_what_is_closed_and_leaves_open_what_is_open(
+    monkeypatch,
+) -> None:
+    from PySide6.QtWidgets import QApplication
+
+    preview = _preview_tool()
+    window, _messages = _open(monkeypatch)
+    sections = (window.submenu, window.network_submenu, window.config_submenu)
+    window.nav_config.click()  # one of them closed by the person
+    window._submenus[window.config_submenu].setCurrentTime(
+        window._submenus[window.config_submenu].duration()
+    )
+    assert window.config_submenu.maximumHeight() == 0
+    application = QApplication.instance()
+    assert application is not None
+
+    preview.open_menus(application, window)
+    preview.open_menus(application, window)  # again: nothing is closed
+
+    assert all(section.maximumHeight() > 0 for section in sections)
+    window.close()

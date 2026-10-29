@@ -1017,6 +1017,7 @@ class WorkloadWindow(QMainWindow):
             animation.setDuration(180)
             animation.setEasingCurve(QEasingCurve.Type.InOutCubic)
             self._submenus[submenu] = animation
+        self._name_the_menu_entries()
         self._menu_names = {
             self.submenu: "workloads",
             self.network_submenu: "network",
@@ -5555,10 +5556,17 @@ class WorkloadWindow(QMainWindow):
             if self.table.horizontalHeaderItem(column) is None:
                 self.table.setHorizontalHeaderItem(column, QTableWidgetItem())
 
+    def _name_the_menu_entries(self) -> None:
+        """Give each entry of the side menu its whole name as a tip, since a
+        long one does not fit when the menu is narrow."""
+        for button in self._nav_views.values():
+            button.setToolTip(button.text())
+
     def _retranslate(self) -> None:
         """Re-apply every visible text after the translator changed."""
         self._restore_designed_headers()
         self.ui.retranslateUi(self)
+        self._name_the_menu_entries()
         self._show_access_note()
         self.assistant_dock.retranslate()
         self.search_case_button.setToolTip(self.tr("Match case"))

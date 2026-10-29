@@ -217,10 +217,19 @@ def wait_until_idle(application: QApplication, main_window) -> None:
 
 
 def open_menus(application: QApplication, main_window) -> None:
-    """Slide out both menus and let the animation finish, for the
-    screenshot."""
-    main_window.nav_workloads.click()
-    main_window.nav_network.click()
+    """Make sure every section of the side menu is open and let the animation
+    finish, for the screenshot.
+
+    A section that is open already is left as it is, since clicking it
+    would close it.
+    """
+    for submenu, button in (
+        (main_window.submenu, main_window.nav_workloads),
+        (main_window.network_submenu, main_window.nav_network),
+        (main_window.config_submenu, main_window.nav_config),
+    ):
+        if submenu.maximumHeight() == 0:
+            button.click()
     deadline = time.monotonic() + 1
     while time.monotonic() < deadline:
         application.processEvents()
