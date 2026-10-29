@@ -4,10 +4,30 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-10-29
+
+### Added
+
+- Gabi reads the live CPU and memory of a Pod, by container, beside what each container asks for and may use, as KubeScope shows them, and the lists she reads carry the use of each Pod and workload, so she no longer sends you to `kubectl top` for what she can read by @danilogco
+- **Gabi**, the assistant of DCO Tecnologia and an expert in Kubernetes and KubeScope: a chat in the corner of the window that only talks about Kubernetes and KubeScope, laid out like a phone chat, that asks a coding assistant that is already installed on your computer (Claude Code or Codex) about the cluster, without asking you for credentials or storing any. It sees what you see (the list, the selected row, the open Details or Logs, the numbers of the overviews and the open tabs), reads details, logs, lists and events to look into a problem, answers in the language of the app, and can change the window as you would: go to a list, a page, a tab or the logs of a Pod. A change to the cluster is only a card with **Run**, available with the write mode on; in the read-only mode it has no way to edit, update or delete anything and tells you so when you ask. You can attach images and text files, resize the panel, take it out into a window of its own, and the conversations are kept for each context, without the data that was read. It starts off until you open it and agree, and **Settings** turns it off by @danilogco
+- Windows, dialogs and lists rise into place as they first show, and **Settings** can turn it off by @danilogco
+- When GitHub limits the update checks, the footer says when to try again by @danilogco
+- Gabi asks which container you mean when a Pod or a workload has more than one main container, reads the main one without asking when there is only one, and never takes an init container (a migration, say) unless you ask for it; the lists she reads now show the containers of Pods and workloads by @danilogco
+- A guide that opens when there is no Claude Code CLI or Codex CLI on the computer, with a button for the settings and one for the installation guide of each by @danilogco
+- The side menu opens with every section open, can be resized by its right edge, and remembers both by @danilogco
+
+### Changed
+
+- The **Light** theme is gray instead of white: the page, the side menu, the tables and the fields use soft grays with firmer borders, and the quiet texts are a step stronger to read on them by @danilogco
+- An alpha, a beta or a release candidate now updates to the next pre-release as well as to the stable release that follows it, and never to an older one; a stable installation still updates only to stable releases by @danilogco
+- The app updates only to **stable** releases: an alpha, a beta or a release candidate is never offered, and a release candidate is told about its own stable release when it comes by @danilogco
+- The update check no longer asks GitHub again when the app starts within an hour of finding that it is up to date, so it spends less of the limit GitHub gives an address by @danilogco
+
 ### Fixed
 
 - On Windows, Gabi finds the `claude` and `codex` programs where their installers put them (`%USERPROFILE%\.local\bin`, the Codex folder in `%LOCALAPPDATA%\Programs\OpenAI`, the npm folder) even when the app was started with a shorter path than the terminal's, runs it by its whole name so a `.cmd` file starts, and no console window flashes up when she answers by @danilogco
 - On Windows, the sign-in programs of the kubeconfig (such as `aws eks get-token`) no longer open a terminal window each time Gabi, or any list, reads the cluster by @danilogco
+- The messages of the chat are no longer cut at the end or squeezed into a narrow bubble: each is as high as its text and as wide as the text needs, up to the room it has by @danilogco
 
 ## [1.3.0-rc3] - 2026-10-29
 
@@ -422,7 +442,8 @@ The first release.
 
 - Pod logs and resource details are still never written to disk by the app on its own. **Save** is the only exception, and it writes only to the file the user chooses. SECURITY.md says so by @danilogco
 
-[Unreleased]: https://github.com/dcotecnologia/kubescope/compare/v1.3.0-rc3...HEAD
+[Unreleased]: https://github.com/dcotecnologia/kubescope/compare/v1.3.0...HEAD
+[1.3.0]: https://github.com/dcotecnologia/kubescope/compare/v1.2.0...v1.3.0
 [1.3.0-rc3]: https://github.com/dcotecnologia/kubescope/compare/v1.3.0-rc2...v1.3.0-rc3
 [1.3.0-rc2]: https://github.com/dcotecnologia/kubescope/compare/v1.3.0-rc1...v1.3.0-rc2
 [1.3.0-rc1]: https://github.com/dcotecnologia/kubescope/compare/v1.2.0...v1.3.0-rc1
