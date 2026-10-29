@@ -708,10 +708,13 @@ def test_a_short_message_is_as_wide_as_its_text_and_not_squeezed(replies) -> Non
     _settle(tab)
 
     question_label, short = tab._labels
-    line = short.height()  # one line
-    assert question_label.height() == line  # the whole question is on one line
-    assert question_label.width() > short.width() > 0
-    assert short.width() < 100  # a short answer has a small bubble
+    room = tab._bubbles[0].maximumWidth() - 20  # what its bubble leaves for the text
+    wanted = question_label.sizeHint().width()  # as wide as the text, not wrapped
+    # as wide as the text needs, or as the room it has: whatever the font is
+    assert question_label.width() >= min(wanted, room) - 2
+    assert question_label.width() > 130  # not squeezed into a narrow column
+    assert question_label.height() < short.height() * 4  # nor a tall thin bubble
+    assert 0 < short.width() < 100  # a short answer has a small bubble
     tab.close()
 
 

@@ -308,8 +308,6 @@ _TEXT_PROPERTIES = frozenset({"color", "selection-color"})
 
 def themed_stylesheet(stylesheet: str) -> str:
     """Recolor a style sheet written with the light colors."""
-    if not _active.colors and _active.on_accent == WHITE:
-        return stylesheet
 
     def declaration(match: re.Match[str]) -> str:
         prop, separator, value = match.groups()

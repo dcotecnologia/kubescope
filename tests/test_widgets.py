@@ -39,10 +39,11 @@ def test_idle_resources_and_empty_totals_leave_the_track_empty() -> None:
     bar = _bar()
 
     bar.set_summary(ok=1, warning=0, bad=0, total=4)  # three idle of four
-    assert _colors(bar, 0.1, 0.6) == [widgets.OK, widgets.TRACK]
+    track = themed(widgets.TRACK)  # the track of the theme in use, which may be gray
+    assert _colors(bar, 0.1, 0.6) == [widgets.OK, track]
 
     bar.set_summary(ok=0, warning=0, bad=0, total=0)
-    assert _colors(bar, 0.1, 0.9) == [widgets.TRACK, widgets.TRACK]
+    assert _colors(bar, 0.1, 0.9) == [track, track]
 
 
 def test_status_bar_is_thin_and_stretches_sideways() -> None:
