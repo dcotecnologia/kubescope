@@ -160,6 +160,17 @@ def language_choices() -> list[tuple[str, str]]:
     return [(ENGLISH, "English"), *((code, label) for _, code, label in named)]
 
 
+def english_names() -> list[str]:
+    """The English name of every language of the app, English first, then in
+    alphabetical order: "Portuguese", "Chinese (Taiwan)"."""
+    others = [
+        _english_name(code) or name
+        for code, name in available_languages().items()
+        if code != ENGLISH
+    ]
+    return ["English", *sorted(others, key=str.casefold)]
+
+
 def resolve_language(choice: str) -> str:
     """Map a stored choice ("auto", "en", "pt") to a supported language
     code."""

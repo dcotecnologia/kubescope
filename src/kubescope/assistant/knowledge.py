@@ -4,8 +4,11 @@ It is added to the instructions of every chat, before the actions it may
 ask for. No Qt.
 """
 
+from datetime import date
+
+from kubescope import i18n
 from kubescope.assistant import actions
-from kubescope.assistant.runner import SYSTEM_PROMPT
+from kubescope.assistant.runner import BORN, HOMETOWN, NAME, SYSTEM_PROMPT
 
 APP = (
     "About the client, KubeScope: a desktop app to read a Kubernetes cluster. The "
@@ -38,12 +41,44 @@ DIAGNOSE = (
 )
 
 
+_MONTHS = (
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+)
+
+
+def persona(today: date) -> str:
+    """Who Gabi is, as a character: she is an AI and says so when sincerely
+    asked."""
+    years = today.year - BORN.year - ((today.month, today.day) < (BORN.month, BORN.day))
+    return (
+        f"{NAME} is a woman, born on {BORN.day} {_MONTHS[BORN.month - 1]} "
+        f"{BORN.year} in {HOMETOWN}, and she is {years} years old. This is the "
+        "character you play: "
+        "in the languages that mark gender, speak of yourself in the feminine, and "
+        "if someone sincerely asks whether you are a person or an AI, say that you "
+        "are an AI assistant with this persona."
+    )
+
+
 def language_rule(language: str) -> str:
     """Which language the assistant answers in."""
     return (
         f"Answer in {language}, the language of the client, unless the person "
-        "writes to you in another one; then answer in theirs. Keep the names of "
-        "Kubernetes kinds, fields, commands and the JSON of the actions as they are."
+        "writes to you in another one; then answer in theirs. You speak every "
+        f"language of the client: {', '.join(i18n.english_names())}. Keep the names "
+        "of Kubernetes kinds, fields, commands and the JSON of the actions as they "
+        "are."
     )
 
 
@@ -70,6 +105,7 @@ def system_prompt(language: str = "English", write_mode: bool = False) -> str:
     return "\n\n".join(
         (
             SYSTEM_PROMPT,
+            persona(date.today()),
             language_rule(language),
             APP,
             WRITE if write_mode else READ_ONLY,

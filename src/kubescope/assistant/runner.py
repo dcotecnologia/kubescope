@@ -15,6 +15,7 @@ import subprocess
 import tempfile
 from collections.abc import Callable, Generator, Sequence
 from dataclasses import dataclass
+from datetime import date
 from pathlib import Path
 
 from kubescope.assistant.attachments import Attachment
@@ -23,6 +24,8 @@ from kubescope.utils.flatpak import host_has, in_flatpak, on_host
 
 NAME = "Gabi"
 COMPANY = "DCO Tecnologia"
+BORN = date(1992, 6, 6)
+HOMETOWN = "São Paulo, Brazil"
 SYSTEM_PROMPT = (
     f"Your name is {NAME}. You work for {COMPANY}, the makers of KubeScope, and you "
     "are an expert in Kubernetes and in KubeScope. You are an AI assistant: say "
