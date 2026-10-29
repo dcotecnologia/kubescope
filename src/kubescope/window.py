@@ -82,7 +82,7 @@ from kubescope.assistant import installed as installed_assistants
 from kubescope.assistant.dispatch import write_call
 from kubescope.assistant.history import History
 from kubescope.assistant.knowledge import system_prompt
-from kubescope.assistant.runner import Assistant
+from kubescope.assistant.runner import NAME, Assistant
 from kubescope.assistant.runner import is_available as is_available_assistant
 from kubescope.assistant.screen import (
     Screen,
@@ -4675,14 +4675,7 @@ class WorkloadWindow(QMainWindow):
         """Open the chat with the assistant of the system, for this context."""
         assistant = self._assistant_program()
         if assistant is None:
-            self._show_message(
-                QMessageBox.Icon.Information,
-                self.tr("Assistant"),
-                self.tr(
-                    "No assistant program was found on this computer. Install one, "
-                    "such as Claude Code, and open this again."
-                ),
-            )
+            self._guide_assistant_setup()
             return
         if not self._context():
             self._show_message(
@@ -4857,6 +4850,57 @@ class WorkloadWindow(QMainWindow):
         """Forget every conversation, from the settings."""
         self._forget_assistant_history(
             None, self.tr("Forget every conversation with the assistant?")
+        )
+
+    def _guide_assistant_setup(self) -> None:
+        """There is no program to run Gabi on: say what to install, offer the
+        settings where its place is told, and the instructions."""
+        broken = [
+            one.name
+            for one in ASSISTANTS.values()
+            if self.settings.assistant_programs.get(one.key)
+            and not is_available_assistant(one)
+        ]
+        steps = self.tr(
+            "KubeScope found neither of them on this computer. They are programs "
+            "that you install and sign in to yourself, as you would in a terminal; "
+            "KubeScope asks for no credentials and stores none.\n\n"
+            "1. Install Claude Code (claude) or Codex (codex) and sign in.\n"
+            "2. If it is installed where the system does not look, tell KubeScope "
+            "where in Settings.\n"
+            "3. Open this button again."
+        )
+        if broken:
+            steps += "\n\n" + self.tr(
+                "The path set for {names} is not a program that can be run."
+            ).format(names=", ".join(broken))
+        box = QMessageBox(self)
+        box.setIcon(QMessageBox.Icon.Information)
+        box.setWindowTitle(NAME)
+        box.setText(self.tr("{name} needs Claude Code or Codex.").format(name=NAME))
+        box.setInformativeText(steps)
+        settings = box.addButton(
+            self.tr("Open Settings"), QMessageBox.ButtonRole.AcceptRole
+        )
+        guide = box.addButton(
+            self.tr("How to set it up"), QMessageBox.ButtonRole.ActionRole
+        )
+        box.addButton(self.tr("Close"), QMessageBox.ButtonRole.RejectRole)
+        settings.clicked.connect(self._show_assistant_settings)
+        guide.clicked.connect(
+            lambda: QDesktopServices.openUrl(QUrl(f"{PROJECT_URL}#gabi-the-assistant"))
+        )
+        self._style_box_buttons(box)
+        box.exec()
+
+    def _show_assistant_settings(self) -> None:
+        """Go to the Settings, to the card of the assistant."""
+        self._show_page(2)
+        QTimer.singleShot(
+            0,
+            lambda: self.settings_ui.settingsScroll.ensureWidgetVisible(
+                self.settings_ui.assistantCard, 0, 20
+            ),
         )
 
     def _assistant_choose(

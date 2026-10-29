@@ -67,16 +67,115 @@ def test_the_corner_button_opens_and_puts_away_the_chat(monkeypatch) -> None:
     window.close()
 
 
-def test_without_a_program_or_a_context_there_is_no_chat(monkeypatch) -> None:
-    window, messages = _open(monkeypatch, found=())
-    window._open_assistant()
-    assert "No assistant program" in messages[-1][1]
-    assert window._assistant_tab is None and not window.assistant_dock.is_open
+def _answer_the_guide(monkeypatch, button: str) -> list:
+    """Make the guide be answered with a click on one of its buttons; the boxes
+    it showed are returned."""
+    boxes: list = []
 
-    monkeypatch.setattr(window_module, "installed_assistants", lambda: [ONE])
+    def answer(box) -> int:
+        boxes.append(box)
+        for one in box.buttons():
+            if one.text() == button:
+                one.click()
+        return 0
+
+    monkeypatch.setattr(window_module.QMessageBox, "exec", answer)
+    return boxes
+
+
+def test_without_a_context_there_is_no_chat(monkeypatch) -> None:
+    window, messages = _open(monkeypatch)
     window.context_combo.clear()
+
     window._open_assistant()
+
     assert "Choose a context" in messages[-1][1] and window._assistant_tab is None
+    window.close()
+
+
+def test_without_a_program_the_button_guides_to_the_setup(monkeypatch) -> None:
+    window, _messages = _open(monkeypatch, found=())
+    boxes = _answer_the_guide(monkeypatch, "Close")
+
+    window.assistant_dock.bubble.click()  # the button is there, to be found
+
+    (box,) = boxes
+    assert window.assistant_dock.bubble.isVisibleTo(window)
+    assert box.text() == "Gabi needs Claude Code or Codex."
+    steps = box.informativeText()
+    for phrase in (
+        "found neither of them",
+        "Install Claude Code (claude) or Codex (codex) and sign in",
+        "tell KubeScope where in Settings",
+        "asks for no credentials and stores none",
+    ):
+        assert phrase in steps
+    assert {one.text() for one in box.buttons()} == {
+        "Open Settings",
+        "How to set it up",
+        "Close",
+    }
+    assert window._assistant_tab is None and not window.assistant_dock.is_open
+    assert window.pages.currentIndex() != 2
+    window.close()
+
+
+def test_the_guide_opens_the_settings_at_the_card_of_the_assistant(
+    monkeypatch,
+) -> None:
+    window, _messages = _open(monkeypatch, found=())
+    window.show()
+    _answer_the_guide(monkeypatch, "Open Settings")
+
+    window._open_assistant()
+    for _ in range(5):
+        window_module.QApplication.processEvents()
+
+    assert window.pages.currentIndex() == 2
+    card = window.settings_ui.assistantCard
+    scroll = window.settings_ui.settingsScroll
+    content = scroll.widget()
+    assert content is not None
+    top = card.mapTo(content, card.rect().topLeft()).y()
+    assert scroll.verticalScrollBar().value() <= top  # the card is in view
+    window.close()
+
+
+def test_the_guide_links_to_the_instructions(monkeypatch) -> None:
+    window, _messages = _open(monkeypatch, found=())
+    opened: list[str] = []
+    monkeypatch.setattr(
+        window_module.QDesktopServices,
+        "openUrl",
+        lambda url: opened.append(url.toString()),
+    )
+    _answer_the_guide(monkeypatch, "How to set it up")
+
+    window._open_assistant()
+
+    assert opened == [f"{window_module.PROJECT_URL}#gabi-the-assistant"]
+    window.close()
+
+
+def test_the_guide_says_when_a_path_that_was_set_is_no_longer_a_program(
+    monkeypatch, tmp_path
+) -> None:
+    from kubescope.assistant import runner
+
+    monkeypatch.setattr(runner, "CUSTOM_PROGRAMS", {})
+    window, _messages = _open(monkeypatch, found=())
+    window.settings.assistant_programs = {"claude": str(tmp_path / "gone")}
+    boxes = _answer_the_guide(monkeypatch, "Close")
+    monkeypatch.setattr(window_module, "is_available_assistant", lambda one: False)
+
+    window._open_assistant()
+
+    assert "The path set for Claude is not a program that can be run." in (
+        boxes[0].informativeText()
+    )
+    window.settings.assistant_programs = {}
+    window._open_assistant()
+    assert "The path set for" not in boxes[1].informativeText()
     window.close()
 
 
