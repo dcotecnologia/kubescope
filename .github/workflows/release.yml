@@ -98,7 +98,7 @@ jobs:
       - name: Install Flatpak and its runtimes
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends flatpak flatpak-builder \
+          sudo apt-get install -y --no-install-recommends flatpak flatpak-builder elfutils \
             libegl1 libgl1 libxkbcommon0 libfontconfig1 libdbus-1-3 libglib2.0-0
           flatpak remote-add --user --if-not-exists flathub \
             https://dl.flathub.org/repo/flathub.flatpakrepo
