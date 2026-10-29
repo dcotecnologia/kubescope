@@ -735,25 +735,36 @@ def test_each_entry_of_the_side_menu_carries_its_whole_name_as_a_tip(
     window.close()
 
 
-def _preview_tool():
-    """The tool that takes the screenshots, which is not a package."""
+@pytest.fixture
+def preview_tool():
+    """The tool that takes the screenshots, which is not a package.
+
+    It puts a fake cluster in the window module when it is loaded, which
+    is taken back when the test is over.
+    """
     import importlib.util
     from pathlib import Path
 
+    kept = dict(vars(window_module))
     path = Path(__file__).resolve().parent.parent / "tools" / "preview.py"
     spec = importlib.util.spec_from_file_location("kubescope_preview", path)
     assert spec is not None and spec.loader is not None
     module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
+    try:
+        spec.loader.exec_module(module)
+        yield module
+    finally:
+        for name, value in kept.items():
+            if getattr(window_module, name, None) is not value:
+                setattr(window_module, name, value)
 
 
 def test_the_screenshot_opens_what_is_closed_and_leaves_open_what_is_open(
-    monkeypatch,
+    monkeypatch, preview_tool
 ) -> None:
     from PySide6.QtWidgets import QApplication
 
-    preview = _preview_tool()
+    preview = preview_tool
     window, _messages = _open(monkeypatch)
     sections = (window.submenu, window.network_submenu, window.config_submenu)
     window.nav_config.click()  # one of them closed by the person

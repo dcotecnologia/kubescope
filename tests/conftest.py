@@ -133,7 +133,15 @@ def finish_workers_with_the_test(monkeypatch):
 
 @pytest.fixture(autouse=True)
 def still_windows(monkeypatch):
-    """Windows and lists show at once; the tests of the motion turn it on."""
-    from kubescope.views import motion
+    """Windows, lists and the panel of the assistant show at once; the tests of
+    the motion turn it on.
+
+    A window sets `motion.ENABLED` from its settings, which are on by
+    default, so the animations are held off by their duration, which
+    nothing sets.
+    """
+    from kubescope.views import assistant_panel, motion
 
     monkeypatch.setattr(motion, "ENABLED", False)
+    monkeypatch.setattr(motion, "DURATION_MS", 0)
+    monkeypatch.setattr(assistant_panel, "ANIMATION_MS", 0)
