@@ -18,6 +18,8 @@ The program is started so that it can only answer, never act. Claude Code runs w
 2. Open the round button in the corner of the window. The first time, you agree that what you ask and what she reads from the cluster go to that program and to its service. Nothing is sent before that.
 3. In **Settings**, the **Assistant** card turns the button on or off, picks the program, and takes the path of a program the system does not find by itself.
 
+The button is there even before any of this. If KubeScope finds neither program, it opens a short guide with what to install, a button that takes you to the settings and a link to these instructions.
+
 ## What she can do
 
 - **See what you see:** the list and its rows, the selected row, the namespace and the search, the open Details or Logs, the numbers of the overviews and your open tabs.

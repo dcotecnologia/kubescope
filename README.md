@@ -181,6 +181,10 @@ both without a saved session. Gabi cannot read a file of your computer or run a 
    (**Automatic** uses the first one it finds) and, if the system does not find a
    program on its path, takes the path of it, which you can type or browse for.
 
+The button is there even before any of this. If KubeScope finds neither program, it
+opens a short guide with what to install, an **Open Settings** button that takes you
+to the card where the path is told, and a link to these instructions.
+
 ### What she can do
 
 - **See what you see.** With each question she gets a description of the window: the
