@@ -21,6 +21,8 @@ def test_claude_runs_with_nothing_it_could_act_on_the_machine_with() -> None:
     assert options[options.index("--system-prompt") + 1] == runner.SYSTEM_PROMPT
     assert "--model" not in options
     assert runner.command(claude.CLAUDE, "opus")[-2:] == ["--model", "opus"]
+    custom = runner.command(claude.CLAUDE, None, "my rules")
+    assert custom[custom.index("--system-prompt") + 1] == "my rules"
 
 
 def test_a_line_gives_its_text_or_its_error() -> None:

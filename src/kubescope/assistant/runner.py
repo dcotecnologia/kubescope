@@ -36,8 +36,9 @@ class Assistant:
     key: str  # what the settings keep
     name: str  # what the person reads
     program: str
-    # the options of the program for a read-only answer, from the model
-    options: Callable[[str | None], list[str]]
+    # the options of the program for a read-only answer, from the model and the
+    # instructions it follows
+    options: Callable[[str | None, str], list[str]]
     # the text a line of its output adds, and the error it reports
     parse_line: Callable[[str], tuple[str, str]]
 
@@ -49,19 +50,26 @@ def is_available(assistant: Assistant) -> bool:
     return shutil.which(assistant.program) is not None
 
 
-def command(assistant: Assistant, model: str | None = None) -> list[str]:
+def command(
+    assistant: Assistant, model: str | None = None, system: str = SYSTEM_PROMPT
+) -> list[str]:
     """The program and the options that keep it from acting on the machine."""
-    return on_host([assistant.program, *assistant.options(model)])
+    return on_host([assistant.program, *assistant.options(model, system)])
 
 
-def ask(assistant: Assistant, prompt: str, model: str | None = None) -> Generator[str]:
+def ask(
+    assistant: Assistant,
+    prompt: str,
+    model: str | None = None,
+    system: str = SYSTEM_PROMPT,
+) -> Generator[str]:
     """Send the question and yield the answer in pieces.
 
     Closing the generator before the end stops the program.
     """
     try:
         process = subprocess.Popen(
-            command(assistant, model),
+            command(assistant, model, system),
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,

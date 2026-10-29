@@ -19,8 +19,8 @@ def _delta(text: str) -> str:
     return f"text:{text}\n"
 
 
-def _options(model: str | None) -> list[str]:
-    return ["--read-only", *(["--model", model] if model else [])]
+def _options(model: str | None, system: str) -> list[str]:
+    return ["--read-only", f"--system={system}", *(["--model", model] if model else [])]
 
 
 FAKE = Assistant("fake", "Fake", "fake-ai", _options, _parse)
@@ -74,7 +74,11 @@ def start(monkeypatch):
 
 
 def test_the_program_runs_with_the_options_of_its_assistant() -> None:
-    assert runner.command(FAKE) == ["fake-ai", "--read-only"]
+    assert runner.command(FAKE, None, "be brief") == [
+        "fake-ai",
+        "--read-only",
+        "--system=be brief",
+    ]
     assert runner.command(FAKE, "big")[-2:] == ["--model", "big"]
 
 

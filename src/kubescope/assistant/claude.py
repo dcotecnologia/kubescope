@@ -3,10 +3,10 @@
 import json
 from typing import Any
 
-from kubescope.assistant.runner import SYSTEM_PROMPT, Assistant
+from kubescope.assistant.runner import Assistant
 
 
-def options(model: str | None) -> list[str]:
+def options(model: str | None, system: str) -> list[str]:
     """No tools, so it cannot read a file or run a command, and no saved
     session."""
     arguments = [
@@ -19,7 +19,7 @@ def options(model: str | None) -> list[str]:
         "",
         "--no-session-persistence",
         "--system-prompt",
-        SYSTEM_PROMPT,
+        system,
     ]
     return [*arguments, "--model", model] if model else arguments
 
