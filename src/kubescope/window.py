@@ -46,6 +46,7 @@ from PySide6.QtGui import (
     QPixmap,
     QPolygonF,
     QShortcut,
+    QShowEvent,
 )
 from PySide6.QtWidgets import (
     QApplication,
@@ -175,6 +176,7 @@ from kubescope.utils.fonts import code_font
 from kubescope.utils.json_view import restyle
 from kubescope.utils.selfupdate import detect_install, restart
 from kubescope.utils.updates import Release, UpdateCheck, check_for_update
+from kubescope.views import motion
 from kubescope.views.assistant_panel import AssistantDock
 from kubescope.views.assistant_tab import AssistantTab
 from kubescope.views.container_states import (
@@ -1094,6 +1096,8 @@ class WorkloadWindow(QMainWindow):
         self.logs_button.clicked.connect(self._view_logs)
         self.table.itemSelectionChanged.connect(self._update_workload_actions)
         self.table.cellDoubleClicked.connect(lambda _row, _column: self._view_details())
+        motion.ENABLED = self.settings.animations
+        self._shown_once = False
         self._assistant_history = History(config_directory() / "assistant_history.json")
         self._assistant_tab: AssistantTab | None = None
         self._assistant_switching = False  # the assistant itself changes the context
@@ -2591,8 +2595,14 @@ class WorkloadWindow(QMainWindow):
             else ""
         )
 
+    def _reveal(self, table: QTableWidget, arriving: bool) -> None:
+        """Let a list that had no rows rise into place as they arrive."""
+        if arriving and table.rowCount() > 0:
+            motion.slide_up(table)
+
     def _render_events(self, overview: WorkloadsOverview) -> None:
         table = self.workloads_table
+        arriving = table.rowCount() == 0
         table.setRowCount(len(overview.events))
         for row, event in enumerate(overview.events):
             values = (
@@ -2616,6 +2626,7 @@ class WorkloadWindow(QMainWindow):
                 if column == 0:
                     item.setData(BADGE_ROLE, _badge_colors(event.type))
                 table.setItem(row, column, item)
+        self._reveal(table, arriving)
 
     def _show_cached_overviews(self) -> None:
         """Another context was chosen: show what was last read from it, or
@@ -2795,6 +2806,7 @@ class WorkloadWindow(QMainWindow):
     def _show_nodes(self, context: str, overview: ClusterOverview) -> None:
         if context != self._context() or self._view != "nodegroups":
             return  # the answer of a list that is no longer open
+        arriving = self.nodes_table.rowCount() == 0
         self.nodes_table.setRowCount(len(overview.nodes))
         for row, node in enumerate(overview.nodes):
             values = (
@@ -2824,6 +2836,7 @@ class WorkloadWindow(QMainWindow):
                 if column == 0:
                     self._link_item(item, ("Node", "", node.name))
                 self.nodes_table.setItem(row, column, item)
+        self._reveal(self.nodes_table, arriving)
 
     def _begin_loading(self, button: QPushButton | None, label: str) -> Callable:
         """Spin the button while work runs in the background; return a one-shot
@@ -3243,6 +3256,7 @@ class WorkloadWindow(QMainWindow):
     def _render_resources(self) -> None:
         resources = self._resources
         kept = self._kept_rows(resources)
+        arriving = self.table.rowCount() == 0
         self.table.setRowCount(len(resources))
         for row_index, resource in enumerate(resources):
             if row_index < len(kept) and kept[row_index] == resource:
@@ -3269,6 +3283,7 @@ class WorkloadWindow(QMainWindow):
                     item.setData(BADGE_ROLE, _badge_colors(resource.values[0]))
                 self.table.setItem(row_index, column, item)
         self._rendered = (self._view, list(resources))
+        self._reveal(self.table, arriving)
         self._filter_rows()
         summaries = {
             "services": lambda: self.tr("{count} Services in {namespaces} namespaces"),
@@ -3357,6 +3372,7 @@ class WorkloadWindow(QMainWindow):
         # same tone as the background but a little different
         stateful = QColor(themed("#f3f4f7"))
         kept = self._kept_rows(pods)
+        arriving = self.table.rowCount() == 0
         self.table.setRowCount(len(pods))
         for row_index, pod in enumerate(pods):
             if row_index < len(kept) and kept[row_index] == pod:
@@ -3412,6 +3428,7 @@ class WorkloadWindow(QMainWindow):
                     item.setData(BADGE_ROLE, (foreground, background))
                 self.table.setItem(row_index, column, item)
         self._rendered = (self._view, list(pods))
+        self._reveal(self.table, arriving)
         self._filter_rows()
         self._set_status(
             lambda: self.tr("{count} Pods in {namespaces} namespaces").format(
@@ -3452,6 +3469,7 @@ class WorkloadWindow(QMainWindow):
             "Scheduled": muted,
         }
         kept = self._kept_rows(workloads)
+        arriving = self.table.rowCount() == 0
         self.table.setRowCount(len(workloads))
         for row_index, workload in enumerate(workloads):
             if row_index < len(kept) and kept[row_index] == workload:
@@ -3493,6 +3511,7 @@ class WorkloadWindow(QMainWindow):
                     item.setData(BADGE_ROLE, badge)
                 self.table.setItem(row_index, column, item)
         self._rendered = (self._view, list(workloads))
+        self._reveal(self.table, arriving)
         self._filter_rows()
         summaries = {
             "deployments": lambda: self.tr(
@@ -4962,6 +4981,7 @@ class WorkloadWindow(QMainWindow):
         form.writeModeCheck.setChecked(self.settings.write_mode)
         form.backgroundCheck.setChecked(self.settings.run_in_background)
         form.titleBarCheck.setChecked(self.settings.system_title_bar)
+        form.animationsCheck.setChecked(self.settings.animations)
         form.assistantCheck.setChecked(self.settings.assistant_enabled)
         form.assistantCombo.clear()
         form.assistantCombo.addItem(self.tr("Automatic: the first one found"), "")
@@ -5224,6 +5244,8 @@ class WorkloadWindow(QMainWindow):
         if self.settings.check_updates and not was_checking:
             self.check_updates()
         self.settings.run_in_background = form.backgroundCheck.isChecked()
+        self.settings.animations = form.animationsCheck.isChecked()
+        motion.ENABLED = self.settings.animations
         self.settings.assistant_enabled = form.assistantCheck.isChecked()
         self.settings.assistant = form.assistantCombo.currentData() or ""
         self.assistant_dock.bubble.setVisible(self.settings.assistant_enabled)
@@ -5258,6 +5280,14 @@ class WorkloadWindow(QMainWindow):
         form.noticeLabel.setText(self.tr("Settings saved."))
         if files_changed:
             self._load_contexts()  # the contexts come from other files now
+
+    def showEvent(self, event: QShowEvent) -> None:
+        super().showEvent(event)
+        if not self._shown_once:  # the window rises into place the first time
+            self._shown_once = True
+            central = self.centralWidget()
+            assert central is not None
+            motion.slide_up(central)
 
     def changeEvent(self, event: QEvent) -> None:
         if event.type() == QEvent.Type.LanguageChange and hasattr(self, "ui"):

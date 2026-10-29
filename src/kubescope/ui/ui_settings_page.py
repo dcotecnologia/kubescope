@@ -129,6 +129,11 @@ class Ui_SettingsPage(object):
 
         self.generalForm.setWidget(5, QFormLayout.ItemRole.SpanningRole, self.titleBarCheck)
 
+        self.animationsCheck = QCheckBox(self.generalCard)
+        self.animationsCheck.setObjectName(u"animationsCheck")
+
+        self.generalForm.setWidget(6, QFormLayout.ItemRole.SpanningRole, self.animationsCheck)
+
 
         self.generalCardLayout.addLayout(self.generalForm)
 
@@ -519,6 +524,10 @@ class Ui_SettingsPage(object):
         self.titleBarCheck.setText(QCoreApplication.translate("SettingsPage", u"Use the title bar of the system", None))
 #if QT_CONFIG(tooltip)
         self.titleBarCheck.setToolTip(QCoreApplication.translate("SettingsPage", u"Off by default: the window draws its own title bar in the top bar, which saves a row of space. Turn it on if moving or resizing the window misbehaves on your desktop.", None))
+#endif // QT_CONFIG(tooltip)
+        self.animationsCheck.setText(QCoreApplication.translate("SettingsPage", u"Animate windows and lists as they open", None))
+#if QT_CONFIG(tooltip)
+        self.animationsCheck.setToolTip(QCoreApplication.translate("SettingsPage", u"On by default: a window or a list rises into place as it first shows. Turn it off to show everything at once.", None))
 #endif // QT_CONFIG(tooltip)
         self.appearanceHeading.setText(QCoreApplication.translate("SettingsPage", u"APPEARANCE", None))
         self.themeLabel.setText(QCoreApplication.translate("SettingsPage", u"Theme", None))

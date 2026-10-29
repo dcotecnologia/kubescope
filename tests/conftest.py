@@ -129,3 +129,11 @@ def finish_workers_with_the_test(monkeypatch):
     # a signal sent before the signals were cut waits in the queue of the window
     for widget in QApplication.allWidgets():
         QCoreApplication.removePostedEvents(widget, QEvent.Type.MetaCall.value)
+
+
+@pytest.fixture(autouse=True)
+def still_windows(monkeypatch):
+    """Windows and lists show at once; the tests of the motion turn it on."""
+    from kubescope.views import motion
+
+    monkeypatch.setattr(motion, "ENABLED", False)

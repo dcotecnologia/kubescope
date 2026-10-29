@@ -26,6 +26,7 @@ from kubescope.utils.diagnostics import (
 from kubescope.utils.fonts import apply_fonts
 from kubescope.utils.single_instance import SingleInstance
 from kubescope.utils.wheel_guard import install_wheel_guard
+from kubescope.views.motion import DialogSlide
 from kubescope.window import WorkloadWindow
 
 # __file__ of the entry script points at the bundle root once frozen, so anchor
@@ -102,6 +103,8 @@ def main() -> int:
         return 0
     instance.listen()
     install_wheel_guard(application)  # a select changes on click, not on hover
+    dialog_slide = DialogSlide()  # dialogs rise into place as they open
+    application.installEventFilter(dialog_slide)
     application.setApplicationName("KubeScope")
     if debugging:
         record_runtime()

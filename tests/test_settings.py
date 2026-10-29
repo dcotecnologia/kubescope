@@ -329,3 +329,16 @@ def test_the_assistant_shows_unless_the_person_turned_it_off(tmp_path) -> None:
 
     path.write_text('{"assistant_enabled": "no"}', encoding="utf-8")
     assert Settings(path).assistant_enabled is True  # only a real false counts
+
+
+def test_the_windows_animate_unless_the_person_turned_it_off(tmp_path) -> None:
+    path = tmp_path / "settings.json"
+    settings = Settings(path)
+    assert settings.animations is True
+
+    settings.animations = False
+    settings.save()
+    assert Settings(path).animations is False
+
+    path.write_text('{"animations": 0}', encoding="utf-8")
+    assert Settings(path).animations is True  # only a real false counts
