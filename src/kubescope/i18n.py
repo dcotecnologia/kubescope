@@ -136,6 +136,13 @@ def _english_name(code: str) -> str:
     return name
 
 
+def language_name(choice: str) -> str:
+    """The English name of the language in use for a stored choice, such as
+    "Portuguese"; the name the language file gives when Qt does not know it."""
+    code = resolve_language(choice)
+    return _english_name(code) or available_languages()[code]
+
+
 def language_choices() -> list[tuple[str, str]]:
     """The languages for a list: English first, then the others by their
     English name, each shown as its own name followed by the English one, so a

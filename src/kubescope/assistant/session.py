@@ -23,6 +23,7 @@ _LABELS: dict[Role, str] = {"user": "User", "assistant": "Assistant"}
 class Message:
     role: Role
     text: str
+    screen: str = ""  # what the person saw when they asked; sent with the newest only
 
 
 class ChatSession:
@@ -52,15 +53,20 @@ class ChatSession:
         turns = "\n\n".join(
             f"{_LABELS[message.role]}: {message.text}" for message in reversed(kept)
         )
+        if self.messages and self.messages[-1].screen:
+            turns += (
+                "\n\n[What the person sees in KubeScope right now]\n"
+                f"{self.messages[-1].screen}"
+            )
         return f"{turns}\n\nAnswer the last message of the User as the Assistant."
 
-    def send(self, text: str) -> Generator[str]:
+    def send(self, text: str, screen: str = "") -> Generator[str]:
         """Add the question and yield the answer in pieces.
 
         An answer that was stopped halfway is kept as it is; a failure
         takes the question back, so it can be sent again.
         """
-        self.messages.append(Message("user", text))
+        self.messages.append(Message("user", text, screen))
         answer: list[str] = []
         failed = False
         try:

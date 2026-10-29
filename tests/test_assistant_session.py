@@ -98,3 +98,19 @@ def test_stopping_keeps_what_was_answered_and_nothing_when_nothing_was(
         next(silent)
     assert session.messages[-1] == Message("assistant", "one")
     assert len(session.messages) == 2
+
+
+def test_what_the_person_sees_goes_with_the_newest_question_only(answers) -> None:
+    calls, plan = answers
+    session = ChatSession(FAKE)
+    plan["pieces"] = ["ok"]
+
+    list(session.send("what is wrong?", "Context: prod"))
+    list(session.send("and now?", "Context: dev"))
+
+    assert "[What the person sees in KubeScope right now]\nContext: prod" in calls[0][1]
+    second = calls[1][1]
+    assert "Context: dev" in second and "Context: prod" not in second
+    assert session.messages[0].screen == "Context: prod"
+    list(session.send("again"))
+    assert "[What the person sees" not in calls[2][1]

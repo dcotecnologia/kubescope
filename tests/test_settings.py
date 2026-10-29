@@ -316,3 +316,16 @@ def test_the_system_title_bar_is_off_by_default_and_persists(tmp_path) -> None:
 
     path.write_text('{"system_title_bar": "yes"}', encoding="utf-8")
     assert Settings(path).system_title_bar is False  # only a real true turns it on
+
+
+def test_the_assistant_shows_unless_the_person_turned_it_off(tmp_path) -> None:
+    path = tmp_path / "settings.json"
+    settings = Settings(path)
+    assert settings.assistant_enabled is True
+
+    settings.assistant_enabled = False
+    settings.save()
+    assert Settings(path).assistant_enabled is False
+
+    path.write_text('{"assistant_enabled": "no"}', encoding="utf-8")
+    assert Settings(path).assistant_enabled is True  # only a real false counts

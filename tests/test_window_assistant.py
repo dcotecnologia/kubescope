@@ -2,7 +2,7 @@ import os
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
-from PySide6.QtWidgets import QFileDialog, QMessageBox
+from PySide6.QtWidgets import QMessageBox
 
 from kubescope import window as window_module
 from kubescope.assistant import actions
@@ -32,20 +32,42 @@ def _open(monkeypatch, found=(ONE,), consent=True):
 
 
 def _tab(window) -> AssistantTab:
-    tab = window.viewer_tabs.currentWidget()
+    tab = window._assistant_tab
     assert isinstance(tab, AssistantTab)
     return tab
+
+
+def test_the_corner_button_opens_and_puts_away_the_chat(monkeypatch) -> None:
+    window, _messages = _open(monkeypatch)
+    window.show()
+    dock = window.assistant_dock
+    assert dock.bubble.isVisible() and not dock.is_open
+
+    dock.bubble.click()
+    assert dock.is_open and window._assistant_tab is not None
+
+    tab = _tab(window)
+    dock.bubble.click()  # the same button puts it away
+    assert not dock.is_open
+
+    dock.bubble.click()
+    assert dock.is_open and _tab(window) is tab  # the conversation is kept
+
+    dock.panel.close_button.click()
+    assert not dock.is_open
+    window.close()
 
 
 def test_without_a_program_or_a_context_there_is_no_chat(monkeypatch) -> None:
     window, messages = _open(monkeypatch, found=())
     window._open_assistant()
-    assert "No assistant program" in messages[-1][1] and window.viewer_tabs.count() == 0
+    assert "No assistant program" in messages[-1][1]
+    assert window._assistant_tab is None and not window.assistant_dock.is_open
 
     monkeypatch.setattr(window_module, "installed_assistants", lambda: [ONE])
     window.context_combo.clear()
     window._open_assistant()
-    assert "Choose a context" in messages[-1][1] and window.viewer_tabs.count() == 0
+    assert "Choose a context" in messages[-1][1] and window._assistant_tab is None
     window.close()
 
 
@@ -62,14 +84,14 @@ def test_the_chat_asks_once_before_anything_can_leave_the_computer(monkeypatch) 
     monkeypatch.setattr(window, "_save_settings", lambda: None)
 
     window._open_assistant()
-    assert window.viewer_tabs.count() == 0 and not window.settings.assistant_consent
+    assert window._assistant_tab is None and not window.settings.assistant_consent
 
     window._open_assistant()
-    assert window.settings.assistant_consent and window.settings.assistant == "one"
-    assert window.viewer_tabs.count() == 1 and "sent to One" in asked[0]
+    assert window.settings.assistant_consent
+    assert window._assistant_tab is not None and "sent to One" in asked[0]
 
     window._open_assistant()  # agreed already: it does not ask again
-    assert window.viewer_tabs.count() == 2 and len(asked) == 2
+    assert len(asked) == 2
     window.close()
 
 
@@ -80,6 +102,110 @@ def test_the_assistant_chosen_is_used_and_otherwise_the_first_one(monkeypatch) -
     assert window._assistant_program() is TWO
     window.settings.assistant = "gone"
     assert window._assistant_program() is ONE
+    window.close()
+
+
+def test_the_conversation_is_kept_and_found_again_in_the_same_context(
+    monkeypatch,
+) -> None:
+    window, _messages = _open(monkeypatch)
+    window._open_assistant()
+    first = _tab(window)
+    first.note("a note worth keeping")
+    window.assistant_dock.close()
+    window._end_assistant_chat()  # as when the app is closed and opened again
+
+    window._open_assistant()
+
+    second = _tab(window)
+    assert second is not first
+    assert ("app", "a note worth keeping") in second.entries()
+    assert window._assistant_history.entries("prod")[-1] == (
+        "app",
+        "a note worth keeping",
+    )
+    window.close()
+
+
+def test_the_history_is_forgotten_only_after_the_person_agrees(monkeypatch) -> None:
+    window, _messages = _open(monkeypatch)
+    window._open_assistant()
+    _tab(window).note("old")
+    answers = [QMessageBox.StandardButton.No, QMessageBox.StandardButton.Yes]
+    monkeypatch.setattr(
+        window_module.QMessageBox, "question", lambda *_a: answers.pop(0)
+    )
+
+    window.assistant_dock.panel.clear_button.click()
+    assert ("app", "old") in _tab(window).entries()
+
+    window.assistant_dock.panel.clear_button.click()
+    assert window._assistant_history.entries("prod") == []
+    assert _tab(window).entries() == [] and window.assistant_dock.is_open
+    window.close()
+
+
+def test_the_settings_turn_the_chat_on_or_off_and_choose_the_program(
+    monkeypatch,
+) -> None:
+    window, _messages = _open(monkeypatch, found=(ONE, TWO))
+    window._load_settings_form()
+    form = window.settings_ui
+    assert form.assistantCheck.isChecked() and window.assistant_dock.bubble.isVisibleTo(
+        window
+    )
+    assert form.assistantCombo.itemData(0) == ""
+    monkeypatch.setattr(window_module, "ASSISTANTS", {"two": TWO, "one": ONE})
+    window._load_settings_form()
+    assert [form.assistantCombo.itemText(i) for i in range(3)][1:] == ["Two", "One"]
+
+    window._open_assistant()
+    form.assistantCheck.setChecked(False)
+    form.assistantCombo.setCurrentIndex(form.assistantCombo.findData("two"))
+    window._save_preferences()
+
+    assert not window.settings.assistant_enabled and window.settings.assistant == "two"
+    assert not window.assistant_dock.bubble.isVisibleTo(window)
+    assert not window.assistant_dock.is_open
+    window.close()
+
+
+def test_every_conversation_can_be_forgotten_from_the_settings(monkeypatch) -> None:
+    window, _messages = _open(monkeypatch)
+    window._open_assistant()
+    _tab(window).note("a")
+    window.assistant_dock.close()
+    monkeypatch.setattr(
+        window_module.QMessageBox,
+        "question",
+        lambda *_a: QMessageBox.StandardButton.Yes,
+    )
+
+    window.settings_ui.assistantClearButton.click()
+
+    assert (
+        window._assistant_history.entries("prod") == []
+        and window._assistant_tab is None
+    )
+    window.close()
+
+
+def test_a_chat_belongs_to_its_cluster_unless_the_assistant_moves_it(
+    monkeypatch,
+) -> None:
+    window, _messages = _open(monkeypatch)
+    window.context_combo.addItem("dev", "dev")
+    window.context_combo.addItem("qa", "qa")
+    window._open_assistant()
+    tab = _tab(window)
+
+    tab.navigate.emit(_request("switch_context", context="dev"))
+    assert window._assistant_tab is tab and tab.context == "dev"
+    assert window.assistant_dock.is_open
+
+    window.context_combo.setCurrentIndex(window.context_combo.findData("qa"))
+    assert window._assistant_tab is None and tab.closed
+    assert not window.assistant_dock.is_open
     window.close()
 
 
@@ -104,15 +230,13 @@ def test_the_assistant_navigates_the_window_as_the_person_would(monkeypatch) -> 
 
     tab.navigate.emit(_request("search", text="web", regex=True, case=True))
     assert window.search_input.text() == "web"
-    assert (
-        window.search_regex_button.isChecked() and window.search_case_button.isChecked()
-    )
+    assert window.search_regex_button.isChecked()
+    assert window.search_case_button.isChecked()
     tab.navigate.emit(_request("search", text=""))
     assert not window.search_regex_button.isChecked()
 
     tab.navigate.emit(_request("switch_context", context="dev"))
     assert window._context() == "dev" and tab.context == "dev"
-    assert window._viewer_contexts[tab] == "dev"
     tab.navigate.emit(_request("switch_context", context="gone"))
     assert tab.context == "dev" and "There is no context gone" in tab.markdown()
 
@@ -163,23 +287,108 @@ def test_a_confirmed_change_runs_only_with_the_write_mode_on(monkeypatch) -> Non
     window.close()
 
 
-def test_the_chat_tab_is_closed_saved_and_themed_like_the_others(
-    monkeypatch, tmp_path
+def test_closing_the_window_stops_the_chat_and_a_language_change_retitles_it(
+    monkeypatch,
 ) -> None:
     window, _messages = _open(monkeypatch)
     window._open_assistant()
     tab = _tab(window)
-    tab.note("hello")
-    target = tmp_path / "chat.txt"
-    monkeypatch.setattr(
-        QFileDialog, "getSaveFileName", lambda *a, **k: (str(target), "")
+
+    window._retranslate()
+    assert window.assistant_dock.panel.title.text() == "Assistant"
+    window.close()
+
+    assert tab.closed
+
+
+def test_the_assistant_sees_the_list_the_selection_and_the_open_tab(
+    monkeypatch,
+) -> None:
+    from kubescope.models import ClusterResource
+
+    window, _messages = _open(monkeypatch)
+    window.show()
+    assert "Page: Cluster overview" in window._screen_snapshot()
+
+    window._open_list_view("services")
+    window._show_resources(
+        ["ns"],
+        [
+            ClusterResource("ns", "Service", "web", ("ClusterIP",), "1d"),
+            ClusterResource("ns", "Service", "api", ("ClusterIP",), "2d"),
+        ],
+    )
+    window.search_input.setText("web")
+    window.table.selectRow(0)
+    window.table.setColumnHidden(0, True)  # what is hidden is not seen
+
+    seen = window._screen_snapshot()
+    assert "Page: the services list" in seen and 'Search: "web"' in seen
+    assert "Rows shown: 1" in seen and "Selected row: web | ClusterIP" in seen
+    assert "api" not in seen and "NAME | TYPE" in seen and "NAMESPACE" not in seen
+
+    window.table.clearSelection()
+    assert "Selected row" not in window._screen_snapshot()
+
+    window._show_json_dialog("Service: web", {"spec": {"type": "ClusterIP"}})
+    assert "an open tab, Service: web" in window._screen_snapshot()
+    assert '"type": "ClusterIP"' in window._screen_snapshot()
+    window.close()
+
+
+def test_the_assistant_sees_the_log_that_is_open(monkeypatch) -> None:
+    from kubescope.models import PodInfo
+    from kubescope.views.log_tab import LogTab
+
+    window, _messages = _open(monkeypatch)
+    tab = LogTab("prod", PodInfo("ns", "p", "Running", 1, 1, "1m", ("app",)), "app")
+    tab.set_logs("line one\nline two")
+    window._add_viewer_tab(tab, "Logs: p")
+
+    seen = window._screen_snapshot()
+
+    assert "an open tab, Logs: p" in seen and "line two" in seen
+    window.close()
+
+
+def test_the_chat_answers_in_the_language_of_the_app_and_follows_a_change(
+    monkeypatch,
+) -> None:
+    window, _messages = _open(monkeypatch)
+    window.settings.language = "pt"
+    window._open_assistant()
+    tab = _tab(window)
+    assert "Answer in Portuguese" in tab.session.system
+
+    window._load_settings_form()
+    form = window.settings_ui
+    form.languageCombo.setCurrentIndex(form.languageCombo.findData("de"))
+    window._save_preferences()
+
+    assert "Answer in German" in tab.session.system
+    window.close()
+
+
+def test_the_assistant_sees_the_numbers_of_the_overviews(monkeypatch) -> None:
+    from kubescope.models import (
+        ClusterOverview,
+        EventInfo,
+        KindSummary,
+        WorkloadsOverview,
     )
 
-    window._save_viewer_tab()
-    window._apply_theme()
-    window._retranslate()
-    window._close_viewer_tab(0)
+    window, _messages = _open(monkeypatch)
+    window._overview = ClusterOverview(namespaces=4, pods_total=9)
+    window._show_page(0)
+    assert "Namespaces: 4" in window._screen_snapshot()
+    assert "Pods: 9 total" in window._screen_snapshot()
 
-    assert "hello" in target.read_text(encoding="utf-8")
-    assert tab.closed and window.assistant_button.text() == "Assistant"
+    window._workloads_overview = WorkloadsOverview(
+        {"Deployment": KindSummary(3, 2, 0, 1)},
+        (EventInfo("Warning", "kubelet", "ns", "Pod: p", "crash", 2, "1h", "1m"),),
+    )
+    window._show_page(4)
+    seen = window._screen_snapshot()
+    assert "Page: Workloads overview" in seen
+    assert "Deployment: 3 in all, 2 healthy" in seen and "Pod: p in ns: crash" in seen
     window.close()

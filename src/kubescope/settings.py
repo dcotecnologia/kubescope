@@ -27,6 +27,7 @@ DEFAULTS: dict[str, Any] = {
     "wrap_log_lines": False,
     "last_update_notice": "",
     "write_mode": False,
+    "assistant_enabled": True,
     "assistant": "",
     "assistant_consent": False,
     "run_in_background": True,
@@ -268,6 +269,19 @@ class Settings:
     @write_mode.setter
     def write_mode(self, value: bool) -> None:
         self._data["write_mode"] = bool(value)
+
+    @property
+    def assistant_enabled(self) -> bool:
+        """Whether the chat button shows in the window; on unless the person
+        turned it off.
+
+        Nothing is sent before the person opens the chat and agrees.
+        """
+        return self._data["assistant_enabled"] is not False
+
+    @assistant_enabled.setter
+    def assistant_enabled(self, value: bool) -> None:
+        self._data["assistant_enabled"] = bool(value)
 
     @property
     def assistant(self) -> str:

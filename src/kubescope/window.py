@@ -74,10 +74,21 @@ from PySide6.QtWidgets import (
 )
 
 from kubescope import COMPANY_URL, LICENSE_URL, PROJECT_URL, SPONSOR_URL, __version__
+from kubescope.assistant import ASSISTANTS
 from kubescope.assistant import actions as assistant_actions
 from kubescope.assistant import installed as installed_assistants
 from kubescope.assistant.dispatch import write_call
-from kubescope.assistant.runner import SYSTEM_PROMPT, Assistant
+from kubescope.assistant.history import History
+from kubescope.assistant.knowledge import system_prompt
+from kubescope.assistant.runner import Assistant
+from kubescope.assistant.screen import (
+    Screen,
+    describe_cluster_overview,
+    describe_workloads_overview,
+)
+from kubescope.assistant.screen import (
+    describe as describe_screen,
+)
 from kubescope.assistant.session import ChatSession
 from kubescope.cluster import (
     ClusterError,
@@ -109,7 +120,7 @@ from kubescope.cluster import (
 from kubescope.dialogs.changelog_dialog import ChangelogDialog
 from kubescope.dialogs.theme_editor import ThemeEditor
 from kubescope.dialogs.update_dialog import UpdateDialog
-from kubescope.i18n import apply_language, language_choices
+from kubescope.i18n import apply_language, language_choices, language_name
 from kubescope.models import (
     EKS_VIEWS,
     RESOURCE_VIEWS,
@@ -130,7 +141,7 @@ from kubescope.models import (
     resource_sort_key,
     workload_sort_key,
 )
-from kubescope.settings import Settings, log_directory
+from kubescope.settings import Settings, config_directory, log_directory
 from kubescope.theme import (
     DEFAULT_THEME,
     Theme,
@@ -164,6 +175,7 @@ from kubescope.utils.fonts import code_font
 from kubescope.utils.json_view import restyle
 from kubescope.utils.selfupdate import detect_install, restart
 from kubescope.utils.updates import Release, UpdateCheck, check_for_update
+from kubescope.views.assistant_panel import AssistantDock
 from kubescope.views.assistant_tab import AssistantTab
 from kubescope.views.container_states import (
     BADGE_ROLE,
@@ -214,12 +226,6 @@ WRITE_VIEWS.update(
 
 logger = logging.getLogger(__name__)
 
-# the button of the chat in the top bar, over its dark background
-_ASSISTANT_BUTTON_STYLE = (
-    "QPushButton { background: transparent; color: #ffffff; border: 1px solid #2d5077;"
-    " border-radius: 4px; padding: 0 10px; min-height: 30px; font-size: 11px; }"
-    "QPushButton:hover { background: #0d315d; }"
-)
 PIN_MIME = "application/x-kubescope-pin"  # what a dragged pinned tab carries
 VIEWER_MIME = "application/x-kubescope-viewer"  # the same, for a Details/Logs tab
 DESIGNED_COLUMNS = 6  # the columns the table has in main_window.ui
@@ -959,6 +965,9 @@ class WorkloadWindow(QMainWindow):
         self.settings_ui.contextsTable.setRowCount(0)
         self.settings_ui.saveButton.clicked.connect(self._save_preferences)
         self.settings_ui.openLogsButton.clicked.connect(self._open_log_folder)
+        self.settings_ui.assistantClearButton.clicked.connect(
+            self._clear_assistant_history
+        )
         self.settings_ui.clearCacheButton.clicked.connect(self._clear_cache)
         self.settings_ui.kubeconfigAddButton.clicked.connect(self._add_kubeconfig_file)
         self.settings_ui.kubeconfigRemoveButton.clicked.connect(
@@ -1085,13 +1094,16 @@ class WorkloadWindow(QMainWindow):
         self.logs_button.clicked.connect(self._view_logs)
         self.table.itemSelectionChanged.connect(self._update_workload_actions)
         self.table.cellDoubleClicked.connect(lambda _row, _column: self._view_details())
-        self.assistant_button = QPushButton(self.tr("Assistant"))
-        self.assistant_button.setStyleSheet(_ASSISTANT_BUTTON_STYLE)
-        bar = ui.settingsButton.parentWidget()
-        assert bar is not None
-        top_bar = cast(QHBoxLayout, bar.layout())
-        top_bar.insertWidget(top_bar.indexOf(ui.settingsButton), self.assistant_button)
-        self.assistant_button.clicked.connect(self._open_assistant)
+        self._assistant_history = History(config_directory() / "assistant_history.json")
+        self._assistant_tab: AssistantTab | None = None
+        self._assistant_switching = False  # the assistant itself changes the context
+        central = self.centralWidget()
+        assert central is not None
+        self.assistant_dock = AssistantDock(central)
+        self.assistant_dock.bubble.clicked.connect(self._toggle_assistant)
+        self.assistant_dock.panel.closed.connect(self.assistant_dock.close)
+        self.assistant_dock.panel.clear_requested.connect(self._clear_assistant_chat)
+        self.assistant_dock.bubble.setVisible(self.settings.assistant_enabled)
         ui.settingsButton.setIcon(_gear_icon())
         ui.settingsButton.clicked.connect(lambda: self._show_page(2))
         for keys in ("Ctrl+R", "F5"):
@@ -2082,7 +2094,8 @@ class WorkloadWindow(QMainWindow):
             if isinstance(tab, LogTab):
                 tab.ui.refreshButton.setIcon(_nav_icon("reload", accent))
                 restyle(tab.ui.logText, tab.highlighter)
-            elif isinstance(tab, DetailTab):
+            else:
+                assert isinstance(tab, DetailTab)
                 restyle(tab.editor, tab.highlighter)
                 tab.restyle()
         self._render_rows()
@@ -2361,6 +2374,15 @@ class WorkloadWindow(QMainWindow):
 
     def _context_changed(self, *_args: object) -> None:
         logger.info("Context changed to %s", self._context())
+        tab = self._assistant_tab
+        # a chat belongs to one cluster, unless the assistant itself moved it
+        if (
+            tab is not None
+            and tab.context != self._context()
+            and not self._assistant_switching
+        ):
+            self._end_assistant_chat()
+            self.assistant_dock.close()
         self._select_default_namespace()
         self._hide_permission_banner()
         self._overview_context = None
@@ -4504,8 +4526,6 @@ class WorkloadWindow(QMainWindow):
             return
         if isinstance(tab, LogTab):
             editor = tab.ui.logText
-        elif isinstance(tab, AssistantTab):
-            editor = tab.transcript
         else:
             assert isinstance(tab, DetailTab)
             editor = tab.editor
@@ -4558,13 +4578,19 @@ class WorkloadWindow(QMainWindow):
         )
         if answer != QMessageBox.StandardButton.Yes:
             return False
-        self.settings.assistant = assistant.key
         self.settings.assistant_consent = True
         self._save_settings()
         return True
 
+    def _toggle_assistant(self) -> None:
+        """The button of the corner: open the chat, or put it away."""
+        if self.assistant_dock.is_open:
+            self.assistant_dock.close()
+        else:
+            self._open_assistant()
+
     def _open_assistant(self) -> None:
-        """Open a chat with the assistant of the system, for this context."""
+        """Open the chat with the assistant of the system, for this context."""
         assistant = self._assistant_program()
         if assistant is None:
             self._show_message(
@@ -4587,14 +4613,125 @@ class WorkloadWindow(QMainWindow):
             assistant
         ):
             return
-        session = ChatSession(
-            assistant,
-            system=f"{SYSTEM_PROMPT}\n\n{assistant_actions.instructions()}",
+        tab = self._assistant_tab
+        if tab is None:
+            session = ChatSession(
+                assistant, system=system_prompt(language_name(self.settings.language))
+            )
+            tab = AssistantTab(
+                session,
+                self._context(),
+                lambda: self.settings.write_mode,
+                screen=self._screen_snapshot,
+                history=self._assistant_history.entries(self._context()),
+            )
+            tab.changed.connect(lambda: self._keep_assistant_chat(tab))
+            tab.navigate.connect(lambda request: self._assistant_navigate(tab, request))
+            tab.write.connect(lambda request: self._assistant_write(tab, request))
+            self._assistant_tab = tab
+            self.assistant_dock.panel.show_chat(tab)
+        self.assistant_dock.open()
+        tab.input.setFocus()
+
+    def _screen_snapshot(self) -> str:
+        """What the window shows, in words, for the assistant."""
+        page = self.pages.currentIndex()
+        table = self.table
+        headers: tuple[str, ...] = ()
+        rows: tuple[tuple[str, ...], ...] = ()
+        selected: tuple[str, ...] = ()
+        title = text = ""
+        if page == 1:
+            columns = [
+                column
+                for column in range(table.columnCount())
+                if not table.isColumnHidden(column)
+            ]
+
+            def cells(row: int) -> tuple[str, ...]:
+                return tuple(self._cell_text(table.item(row, c)) for c in columns)
+
+            headers = tuple(
+                self._cell_text(table.horizontalHeaderItem(column))
+                for column in columns
+            )
+            rows = tuple(
+                cells(row)
+                for row in range(table.rowCount())
+                if not table.isRowHidden(row)
+            )
+            chosen = table.selectedItems()
+            selected = cells(chosen[0].row()) if chosen else ()
+        elif page == 3:
+            tab = self.viewer_tabs.currentWidget()
+            title = self.viewer_tabs.tabText(self.viewer_tabs.currentIndex())
+            if isinstance(tab, LogTab):
+                text = tab.ui.logText.toPlainText()
+            elif isinstance(tab, DetailTab):
+                text = tab.editor.toPlainText()
+        extra: tuple[str, ...] = ()
+        if page == 0:
+            extra = describe_cluster_overview(self._overview)
+        elif page == 4:
+            extra = describe_workloads_overview(self._workloads_overview)
+        return describe_screen(
+            Screen(
+                context=self._context(),
+                page=page,
+                view=self._view,
+                namespace=self.namespace_combo.currentData() or "",
+                search=self.search_input.text(),
+                regex=self.search_regex_button.isChecked(),
+                case=self.search_case_button.isChecked(),
+                headers=headers,
+                rows=rows,
+                selected=selected,
+                viewer_title=title,
+                viewer_text=text,
+                extra=extra,
+            )
         )
-        tab = AssistantTab(session, self._context(), lambda: self.settings.write_mode)
-        tab.navigate.connect(lambda request: self._assistant_navigate(tab, request))
-        tab.write.connect(lambda request: self._assistant_write(tab, request))
-        self._add_viewer_tab(tab, self.tr("{name} chat").format(name=assistant.name))
+
+    def _end_assistant_chat(self) -> None:
+        """Drop the conversation, stopping what it runs."""
+        tab, self._assistant_tab = self._assistant_tab, None
+        self.assistant_dock.panel.show_chat(None)
+        if tab is not None:
+            tab.shutdown()
+            tab.deleteLater()
+
+    def _keep_assistant_chat(self, tab: AssistantTab) -> None:
+        """Write the conversation down, to find it again."""
+        self._assistant_history.set(tab.context, tab.entries())
+
+    def _forget_assistant_history(self, context: str | None, text: str) -> None:
+        """Ask, then forget the conversation of a context, or all of them."""
+        answer = QMessageBox.question(
+            self,
+            self.tr("Assistant"),
+            text,
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No,
+        )
+        if answer != QMessageBox.StandardButton.Yes:
+            return
+        self._end_assistant_chat()
+        self._assistant_history.clear(context)
+        if self.assistant_dock.is_open:
+            self._open_assistant()
+
+    def _clear_assistant_chat(self) -> None:
+        """Forget the conversation of this context."""
+        self._forget_assistant_history(
+            self._context(),
+            self.tr("Forget the conversation with the assistant in this context?"),
+        )
+
+    def _clear_assistant_history(self) -> None:
+        """Forget every conversation, from the settings."""
+        self._forget_assistant_history(
+            None, self.tr("Forget every conversation with the assistant?")
+        )
 
     def _assistant_choose(
         self, tab: AssistantTab, combo: QComboBox, value: str, what: str
@@ -4632,11 +4769,14 @@ class WorkloadWindow(QMainWindow):
             self.search_case_button.setChecked(args.get("case", False))
             self.search_input.setText(args["text"])
         elif name == "switch_context":
-            if self._assistant_choose(
-                tab, self.context_combo, args["context"], "context"
-            ):
-                tab.context = self._context()
-                self._viewer_contexts[tab] = tab.context  # the chat follows
+            self._assistant_switching = True
+            try:
+                if self._assistant_choose(
+                    tab, self.context_combo, args["context"], "context"
+                ):
+                    tab.context = self._context()  # the chat follows
+            finally:
+                self._assistant_switching = False
         elif name == "refresh":
             self._press_refresh()
         else:
@@ -4674,9 +4814,7 @@ class WorkloadWindow(QMainWindow):
         self.viewer_tabs.removeTab(index)
         assert editor is not None
         self._viewer_contexts.pop(editor, None)
-        if isinstance(editor, AssistantTab):
-            editor.shutdown()
-        elif isinstance(editor, LogTab | DetailTab):
+        if isinstance(editor, LogTab | DetailTab):
             editor.closed = True
         editor.deleteLater()
         if self.viewer_tabs.count() == 0 and self.pages.currentIndex() == 3:
@@ -4821,6 +4959,14 @@ class WorkloadWindow(QMainWindow):
         form.writeModeCheck.setChecked(self.settings.write_mode)
         form.backgroundCheck.setChecked(self.settings.run_in_background)
         form.titleBarCheck.setChecked(self.settings.system_title_bar)
+        form.assistantCheck.setChecked(self.settings.assistant_enabled)
+        form.assistantCombo.clear()
+        form.assistantCombo.addItem(self.tr("Automatic: the first one found"), "")
+        for one in ASSISTANTS.values():
+            form.assistantCombo.addItem(one.name, one.key)
+        form.assistantCombo.setCurrentIndex(
+            max(form.assistantCombo.findData(self.settings.assistant), 0)
+        )
         form.debugHint.setText(
             self.tr(
                 "Off by default. When on, KubeScope writes what it does, "
@@ -5075,6 +5221,11 @@ class WorkloadWindow(QMainWindow):
         if self.settings.check_updates and not was_checking:
             self.check_updates()
         self.settings.run_in_background = form.backgroundCheck.isChecked()
+        self.settings.assistant_enabled = form.assistantCheck.isChecked()
+        self.settings.assistant = form.assistantCombo.currentData() or ""
+        self.assistant_dock.bubble.setVisible(self.settings.assistant_enabled)
+        if not self.settings.assistant_enabled:
+            self.assistant_dock.close()
         self._sync_tray()
         self.settings.system_title_bar = form.titleBarCheck.isChecked()
         self._frame.set_custom(not self.settings.system_title_bar)
@@ -5094,6 +5245,10 @@ class WorkloadWindow(QMainWindow):
         self._fill_contexts(self._context())
         if self.settings.language != previous_language:
             apply_language(self.settings.language)
+            if self._assistant_tab is not None:  # the chat answers in the new one
+                self._assistant_tab.session.system = system_prompt(
+                    language_name(self.settings.language)
+                )
         if self.settings.theme != previous_theme:
             logger.info("Theme changed to %s", self.settings.theme)
             self._apply_theme()
@@ -5137,7 +5292,7 @@ class WorkloadWindow(QMainWindow):
         self._restore_designed_headers()
         self.ui.retranslateUi(self)
         self._show_access_note()
-        self.assistant_button.setText(self.tr("Assistant"))
+        self.assistant_dock.retranslate()
         self.search_case_button.setToolTip(self.tr("Match case"))
         self.search_regex_button.setToolTip(self.tr("Regular expression"))
         self.viewer_ui.retranslateUi(self.ui.viewerHost)
@@ -5371,6 +5526,8 @@ class WorkloadWindow(QMainWindow):
 
     def closeEvent(self, event: QCloseEvent) -> None:
         self._remember_geometry()
+        if self._assistant_tab is not None and (self._tray is None or self._quitting):
+            self._assistant_tab.shutdown()
         if self._tray is not None and not self._quitting:
             logger.info("Closing to the system tray")
             self.hide()
