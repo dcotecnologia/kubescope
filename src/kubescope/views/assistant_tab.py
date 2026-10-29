@@ -24,10 +24,10 @@ from kubescope.views.chat_icons import attach_icon, mic_icon, send_icon, stop_ic
 SHUTDOWN_WAIT_MS = 3000
 MAX_FOLLOW_UPS = 5  # reads the assistant may ask for after one question
 BUBBLE_WIDTH = 0.82  # of the width of the conversation
-# the colors of a chat, light and dark: background, own bubble, other bubble, text
-_LIGHT = ("#efeae2", "#d9fdd3", "#ffffff", "#111b21", "#667781")
-_DARK = ("#0b141a", "#005c4b", "#202c33", "#e9edef", "#8696a0")
-_TICK = "#53bdeb"  # the blue of a message that was read
+# the colors of a chat, light and dark: background, own bubble, other bubble, text,
+# quiet text and the ticks, all greens besides the background
+_LIGHT = ("#efeae2", "#d9fdd3", "#ffffff", "#111b21", "#667781", "#1fa67a")
+_DARK = ("#0b141a", "#005c4b", "#202c33", "#e9edef", "#8696a0", "#8ef0cf")
 _SEND = "#00a884"  # the green of the send button
 DOODLE = 56  # the size of a tile of the pattern behind the messages
 
@@ -244,12 +244,12 @@ class AssistantTab(QWidget):
         self._add_entry("app", text)
         self.changed.emit()
 
-    def _palette(self) -> tuple[str, str, str, str, str]:
+    def _palette(self) -> tuple[str, str, str, str, str, str]:
         dark = self.palette().window().color().lightness() < 128
         return _DARK if dark else _LIGHT
 
     def _restyle_thread(self) -> None:
-        background, _own, other, ink, quiet = self._palette()
+        background, _own, other, ink, quiet, _tick = self._palette()
         self.thread_view.color = QColor(background)
         self.thread_view.ink = QColor(quiet)
         self.thread_view.update()
@@ -268,7 +268,7 @@ class AssistantTab(QWidget):
     def _add_bubble(self, role: str, text: str) -> QLabel:
         """Put a bubble at the end: the person's on the right, the others on
         the left."""
-        _background, own, other, ink, quiet = self._palette()
+        _background, own, other, ink, quiet, tick_color = self._palette()
         label = QLabel()
         label.setWordWrap(True)
         label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
@@ -298,7 +298,11 @@ class AssistantTab(QWidget):
         inside.setSpacing(2)
         inside.addWidget(label)
         if role != "app":
-            ticks = f' <span style="color: {_TICK}">✓✓</span>' if role == "user" else ""
+            ticks = (
+                f' <span style="color: {tick_color}">✓✓</span>'
+                if role == "user"
+                else ""
+            )
             stamp = QLabel(datetime.now().strftime("%H:%M") + ticks)
             stamp.setTextFormat(Qt.TextFormat.RichText)
             stamp.setAlignment(
