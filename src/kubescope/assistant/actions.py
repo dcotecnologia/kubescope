@@ -229,3 +229,12 @@ def instructions() -> str:
         )
         lines.append(f"- {action.name} [{action.kind}] {{{fields}}}: {action.summary}")
     return "\n".join(lines)
+
+
+def describe(request: Request) -> str:
+    """What the action does, in a line, for the person to confirm."""
+    fields = ", ".join(
+        f"{key}={json.dumps(value) if isinstance(value, dict) else value}"
+        for key, value in request.args.items()
+    )
+    return f"{request.action.name}({fields})"

@@ -129,3 +129,26 @@ def test_only_the_actions_that_change_the_cluster_are_writes() -> None:
     writes = {action.name for action in actions.ACTIONS if action.kind == "write"}
 
     assert writes == {"scale", "restart", "evict_pod", "delete", "replace"}
+
+
+def test_a_request_is_described_in_one_line_for_the_person_to_confirm() -> None:
+    scale = _only(
+        _block({"action": "scale", "namespace": "ns", "name": "web", "replicas": 3})
+    )
+    replace = _only(
+        _block(
+            {
+                "action": "replace",
+                "kind": "Pod",
+                "namespace": "ns",
+                "name": "p",
+                "document": {"a": 1},
+            }
+        )
+    )
+
+    assert isinstance(scale, Request) and isinstance(replace, Request)
+    assert actions.describe(scale) == "scale(namespace=ns, name=web, replicas=3)"
+    assert 'document={"a": 1}' in actions.describe(replace)
+    refresh = _only(_block({"action": "refresh"}))
+    assert isinstance(refresh, Request) and actions.describe(refresh) == "refresh()"
