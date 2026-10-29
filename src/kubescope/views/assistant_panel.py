@@ -8,13 +8,15 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from kubescope.views.chat_icons import sparkle_icon
+
 BUBBLE = 54  # the round button in the corner
 MARGIN = 20
 BOTTOM = 56  # above the footer of the window, which has links
 PANEL = QSize(430, 600)  # the chat, as large as the window leaves room for
 _BUBBLE_STYLE = (
-    "QPushButton#assistantBubble { background: #3220a0; color: #ffffff;"
-    f" border: 0; border-radius: {BUBBLE // 2}px; font-size: 15px; font-weight: 700; }}"
+    "QPushButton#assistantBubble { background: #3220a0; border: 0;"
+    f" border-radius: {BUBBLE // 2}px; }}"
     "QPushButton#assistantBubble:hover { background: #4631c4; }"
 )
 _PANEL_STYLE = (
@@ -46,12 +48,16 @@ class AssistantPanel(QFrame):
         self.close_button = QPushButton("×")
         self.close_button.setToolTip(self.tr("Close"))
         row = QHBoxLayout(header)
+        row.setContentsMargins(14, 8, 10, 8)
+        row.setSpacing(8)
         row.addWidget(self.title, 1)
         row.addWidget(self.clear_button)
         row.addWidget(self.close_button)
         self.body = QVBoxLayout()
+        self.body.setContentsMargins(0, 0, 0, 0)
+        self.body.setSpacing(0)
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setContentsMargins(1, 1, 1, 1)
         layout.setSpacing(0)
         layout.addWidget(header)
         layout.addLayout(self.body, 1)
@@ -78,7 +84,9 @@ class AssistantDock(QObject):
     def __init__(self, host: QWidget) -> None:
         super().__init__(host)
         self.host = host
-        self.bubble = QPushButton("AI", host)
+        self.bubble = QPushButton(host)
+        self.bubble.setIcon(sparkle_icon("#ffffff", 30))
+        self.bubble.setIconSize(QSize(30, 30))
         self.bubble.setObjectName("assistantBubble")
         self.bubble.setStyleSheet(_BUBBLE_STYLE)
         self.bubble.setFixedSize(BUBBLE, BUBBLE)
