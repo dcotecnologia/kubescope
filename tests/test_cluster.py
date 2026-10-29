@@ -1068,7 +1068,7 @@ def test_programs_are_found_on_the_path_on_windows(monkeypatch) -> None:
     monkeypatch.setattr(
         cluster.shutil,
         "which",
-        lambda name: "C:\\cli\\az.CMD" if name == "az" else None,
+        lambda name, path=None: "C:\\cli\\az.CMD" if name == "az" else None,
     )
 
     cluster._run_process(["az", "login"], 5)
@@ -2924,6 +2924,7 @@ def test_in_a_flatpak_the_programs_of_the_system_run_on_the_host(
             return "", ""
 
     monkeypatch.setattr(cluster.subprocess, "Popen", Fake)
+    monkeypatch.setattr(cluster.sys, "platform", "linux")  # a Flatpak is Linux
 
     cluster._run_process(["gcloud", "auth", "print-access-token"], 5)
     cluster._run_process(["aws", "sts", "get-caller-identity"], 5)
@@ -2971,10 +2972,38 @@ def test_outside_a_flatpak_the_sign_in_plugins_are_left_alone(monkeypatch) -> No
     exec_provider = importlib.import_module("kubernetes.config.exec_provider")
 
     monkeypatch.setattr(exec_provider, "subprocess", subprocess)
+    monkeypatch.setattr(cluster.sys, "platform", "linux")
 
     cluster._route_exec_to_host()
 
     assert exec_provider.subprocess is subprocess
+
+
+def test_on_windows_the_sign_in_plugins_of_the_kubeconfig_start_without_a_console(
+    monkeypatch,
+) -> None:
+    exec_provider = importlib.import_module("kubernetes.config.exec_provider")
+    monkeypatch.setattr(exec_provider, "subprocess", exec_provider.subprocess)
+    monkeypatch.setattr(cluster.sys, "platform", "win32")
+    monkeypatch.setattr(cluster, "in_flatpak", lambda: False)
+    monkeypatch.setattr(cluster, "_NO_WINDOW", 0x08000000)
+    monkeypatch.setattr(cluster, "find_program", lambda name: "C:\\cli\\" + name)
+    started = []
+    monkeypatch.setattr(
+        cluster.subprocess,
+        "Popen",
+        lambda command, **options: started.append((command, options)),
+    )
+
+    cluster._route_exec_to_host()
+    exec_provider.subprocess.Popen(
+        ["aws", "eks", "get-token"], stdout=exec_provider.subprocess.PIPE
+    )
+
+    command, options = started[0]
+    assert command == ["C:\\cli\\aws", "eks", "get-token"]  # found off the path
+    assert options["creationflags"] == 0x08000000
+    assert options["stdout"] == cluster.subprocess.PIPE
 
 
 def test_in_a_flatpak_the_terminal_and_its_program_are_the_hosts(

@@ -12,7 +12,8 @@ def _delta(text: str) -> str:
     return json.dumps({"type": "stream_event", "event": event}) + "\n"
 
 
-def test_claude_runs_with_nothing_it_could_act_on_the_machine_with() -> None:
+def test_claude_runs_with_nothing_it_could_act_on_the_machine_with(monkeypatch) -> None:
+    monkeypatch.setattr(runner, "find_program", lambda program: None)
     options = runner.command(claude.CLAUDE)
 
     assert options[:2] == ["claude", "-p"]
