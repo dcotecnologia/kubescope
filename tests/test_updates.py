@@ -1,5 +1,6 @@
 import email.message
 import urllib.error
+from typing import Any, cast
 
 import pytest
 
@@ -211,3 +212,38 @@ def test_release_of_ignores_an_answer_that_is_not_a_release(monkeypatch) -> None
     fake_api(monkeypatch, {"/releases/tags/v1.0.0": [], "/releases/tags/1.0.0": 5})
 
     assert updates.release_of("1.0.0") is None
+
+
+def _limited(code: int, remaining: str | None, reset: str | None):
+    headers = email.message.Message()
+    if remaining is not None:
+        headers["X-RateLimit-Remaining"] = remaining
+    if reset is not None:
+        headers["X-RateLimit-Reset"] = reset
+    return urllib.error.HTTPError("u", code, "limit", headers, None)
+
+
+def test_a_check_refused_for_asking_too_often_says_when_it_may_try_again(
+    monkeypatch,
+) -> None:
+    for code in (403, 429):
+        fake_api(monkeypatch, {"/releases/latest": _limited(code, "0", "1793302518")})
+        assert updates.check_for_update("0.2.0") == UpdateCheck(
+            "failed", limited_until=1793302518.0
+        )
+
+
+@pytest.mark.parametrize(
+    "error",
+    [
+        _limited(403, "5", "1793302518"),  # forbidden for another reason
+        _limited(403, "0", None),  # no time given
+        _limited(429, "0", "soon"),  # a time that is not a number
+        _limited(500, "0", "1793302518"),  # not a refusal for asking too often
+        urllib.error.HTTPError("u", 403, "limit", cast(Any, None), None),  # no headers
+    ],
+)
+def test_any_other_failure_has_no_time_to_try_again(monkeypatch, error) -> None:
+    fake_api(monkeypatch, {"/releases/latest": error})
+
+    assert updates.check_for_update("0.2.0") == UpdateCheck("failed")

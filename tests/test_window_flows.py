@@ -2490,6 +2490,21 @@ def test_only_an_up_to_date_is_remembered_and_the_setting_can_turn_the_check_off
     window.close()
 
 
+def test_a_check_that_github_limited_says_when_to_try_again(monkeypatch) -> None:
+    window, ran = _update_window(monkeypatch)
+    ui = window.ui
+    reset = time.mktime((2026, 10, 29, 16, 35, 0, 0, 0, -1))
+
+    window.check_updates()
+    ran[0][1](UpdateCheck("failed", limited_until=reset))
+
+    assert window._update_state == "failed"
+    assert ui.updateNotice.text() == "GitHub limited the checks; try again at 16:35"
+    assert "try again at 16:35" in ui.updateButton.toolTip()
+    assert "Click to try again" in ui.updateButton.toolTip()
+    window.close()
+
+
 def test_a_check_looks_like_a_search_for_at_least_five_seconds(monkeypatch) -> None:
     window, ran = _update_window(monkeypatch, search_ms=300)
 
