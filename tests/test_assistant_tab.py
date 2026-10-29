@@ -660,3 +660,97 @@ def test_the_worker_of_a_read_hands_over_what_was_read() -> None:
     worker.run()
 
     assert done == ["the document"]
+
+
+_LONG = (
+    "Eu não consigo ler o consumo ao vivo. As ações que tenho devolvem só os "
+    "documentos do cluster, e o uso atual não vem neles.\n\n"
+    "Se preferir o terminal, este comando mostra o uso por container:\n\n"
+    "`kubectl top pod arquitt-back-ocr-api-89777fb74-5bqjt --containers`\n\n"
+    "- **CPU:** request de `25m` e nenhum limit.\n"
+    "- **Memória:** request de `512Mi` e nenhum limit.\n\n"
+    "Sem limits, o container pode usar mais que o request, até o que sobrar no "
+    "node. O request só reserva a capacidade no scheduler. Se o uso real ficar "
+    "bem acima de 25m de CPU ou de 512Mi de memória, vale aumentar o request."
+)
+
+
+def _settle(tab: AssistantTab) -> None:
+    for _ in range(12):
+        application.processEvents()
+        time.sleep(0.01)
+
+
+def test_a_message_is_as_high_as_its_text_at_any_width_of_the_panel() -> None:
+    tab = _tab()
+    tab.resize(430, 560)
+    tab.show()
+    tab._add_entry("assistant", _LONG)
+    tab._add_entry("user", "Quanto está consumindo de cpu e memória, atualmente?")
+
+    for width in (430, 330, 700, 360, 520):
+        tab.resize(width, 560)
+        _settle(tab)
+        for label in tab._labels:
+            needed = label.document().size().height()
+            assert label.height() >= needed - 1, (width, label.text()[:20])
+            assert label.height() <= needed + 2  # and no blank room under it
+    tab.close()
+
+
+def test_a_short_message_is_as_wide_as_its_text_and_not_squeezed(replies) -> None:
+    tab = _tab()
+    tab.resize(430, 560)
+    tab.show()
+    question = "Quanto está consumindo de cpu e memória, atualmente?"
+    tab._add_entry("user", question)
+    tab._add_entry("user", "ok")
+    _settle(tab)
+
+    question_label, short = tab._labels
+    line = short.height()  # one line
+    assert question_label.height() == line  # the whole question is on one line
+    assert question_label.width() > short.width() > 0
+    assert short.width() < 100  # a short answer has a small bubble
+    tab.close()
+
+
+def test_the_text_of_a_message_keeps_its_format_and_is_selectable() -> None:
+    from kubescope.views.assistant_tab import MessageText
+
+    markdown, plain = MessageText(markdown=True), MessageText(markdown=False)
+    markdown.setText("**bold** and `code`")
+    plain.setText("**not bold**")
+
+    assert markdown.textFormat() == assistant_tab.Qt.TextFormat.MarkdownText
+    assert plain.textFormat() == assistant_tab.Qt.TextFormat.PlainText
+    assert markdown.text() == "**bold** and `code`" and "**" not in (
+        markdown.toPlainText()
+    )
+    assert plain.toPlainText() == "**not bold**"
+    markdown.selectAll()
+    assert markdown.textCursor().selectedText() == "bold and code"
+    assert markdown.sizeHint().width() > 0 and markdown.sizeHint().height() > 0
+
+
+def test_the_wheel_over_a_message_scrolls_the_conversation_not_the_message() -> None:
+    from PySide6.QtCore import QPoint, QPointF
+    from PySide6.QtGui import QWheelEvent
+
+    from kubescope.views.assistant_tab import MessageText
+
+    text = MessageText(markdown=False)
+    event = QWheelEvent(
+        QPointF(5, 5),
+        QPointF(5, 5),
+        QPoint(0, 0),
+        QPoint(0, -120),
+        assistant_tab.Qt.MouseButton.NoButton,
+        assistant_tab.Qt.KeyboardModifier.ControlModifier,  # which would zoom it
+        assistant_tab.Qt.ScrollPhase.NoScrollPhase,
+        False,
+    )
+
+    text.wheelEvent(event)
+
+    assert not event.isAccepted()
