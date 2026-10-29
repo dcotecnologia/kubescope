@@ -1,4 +1,5 @@
 import io
+import shutil
 import subprocess
 
 import pytest
@@ -97,14 +98,28 @@ def test_in_a_flatpak_the_host_runs_the_program(monkeypatch) -> None:
 
 
 def test_the_program_is_found_on_the_system_or_on_the_host(monkeypatch) -> None:
-    monkeypatch.setattr(runner.shutil, "which", lambda name: "/bin/" + name)
+    monkeypatch.setattr(shutil, "which", lambda name, path=None: "/bin/" + name)
     assert runner.is_available(FAKE)
-    monkeypatch.setattr(runner.shutil, "which", lambda name: None)
+    monkeypatch.setattr(shutil, "which", lambda name, path=None: None)
     assert not runner.is_available(FAKE)
 
     monkeypatch.setattr(runner, "in_flatpak", lambda: True)
     monkeypatch.setattr(runner, "host_has", lambda name: name == "fake-ai")
     assert runner.is_available(FAKE)
+
+
+def test_on_windows_the_program_runs_by_its_whole_name(monkeypatch) -> None:
+    monkeypatch.setattr(runner.sys, "platform", "win32")
+    monkeypatch.setattr(runner, "in_flatpak", lambda: False)
+    monkeypatch.setattr(
+        runner, "find_program", lambda name: "C:\\cli\\" + name + ".cmd"
+    )
+
+    assert runner.command(FAKE)[0] == "C:\\cli\\fake-ai.cmd"
+
+    monkeypatch.setattr(runner, "find_program", lambda name: None)
+
+    assert runner.command(FAKE)[0] == "fake-ai"  # not found: the name, to fail
 
 
 def test_the_answer_comes_in_pieces_and_the_question_goes_in_by_stdin(start) -> None:

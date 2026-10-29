@@ -4,7 +4,8 @@ from kubescope import assistant
 from kubescope.assistant import codex, runner
 
 
-def test_codex_runs_with_nothing_it_could_act_on_the_machine_with() -> None:
+def test_codex_runs_with_nothing_it_could_act_on_the_machine_with(monkeypatch) -> None:
+    monkeypatch.setattr(runner, "find_program", lambda program: None)
     arguments = runner.command(codex.CODEX)
 
     assert arguments[:2] == ["codex", "exec"]

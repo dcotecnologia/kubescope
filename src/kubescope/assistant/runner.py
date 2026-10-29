@@ -10,8 +10,8 @@ options and the shape of its output, is an `Assistant` of its own.
 """
 
 import os
-import shutil
 import subprocess
+import sys
 import tempfile
 from collections.abc import Callable, Generator, Sequence
 from dataclasses import dataclass
@@ -21,6 +21,10 @@ from pathlib import Path
 from kubescope.assistant.attachments import Attachment
 from kubescope.utils.errors import first_line
 from kubescope.utils.flatpak import host_has, in_flatpak, on_host
+from kubescope.utils.programs import find_program
+
+# no console window flashing up from the program, on Windows
+_NO_WINDOW = getattr(subprocess, "CREATE_NO_WINDOW", 0)
 
 NAME = "Gabi"
 COMPANY = "DCO Tecnologia"
@@ -98,7 +102,7 @@ def is_available(assistant: Assistant) -> bool:
         return is_runnable(program)
     if in_flatpak():
         return host_has(program)
-    return shutil.which(program) is not None
+    return find_program(program) is not None
 
 
 def command(
@@ -110,7 +114,11 @@ def command(
     """The program and the options that keep it from acting on the machine."""
     options = assistant.image_options if with_images else assistant.options
     assert options is not None
-    return on_host([program_of(assistant), *options(model, system)])
+    program = program_of(assistant)
+    if sys.platform == "win32" and not in_flatpak():
+        # CreateProcess adds only ".exe" to a name, so a ".cmd" must be given whole
+        program = find_program(program) or program
+    return on_host([program, *options(model, system)])
 
 
 def ask(
@@ -162,6 +170,7 @@ def _run(
             text=True,
             encoding="utf-8",
             cwd=tempfile.gettempdir(),  # no project files for it to read
+            creationflags=_NO_WINDOW,
         )
     except OSError as error:
         raise AssistantError(str(error)) from error

@@ -42,6 +42,7 @@ from kubescope.models import (
 )
 from kubescope.utils.errors import first_line, is_auth_error
 from kubescope.utils.flatpak import HOST, host_has, in_flatpak, on_host
+from kubescope.utils.programs import find_program
 
 if TYPE_CHECKING:
     from kubernetes import client
@@ -112,7 +113,7 @@ def _run_process(command: list[str], timeout: float) -> subprocess.CompletedProc
     logger.debug("Run: %s", label)
     started = time.monotonic()
     if sys.platform == "win32":  # az and gcloud are .cmd files there
-        command = [shutil.which(command[0]) or command[0], *command[1:]]
+        command = [find_program(command[0]) or command[0], *command[1:]]
     command = on_host(
         command
     )  # in a Flatpak, the programs of the system are the host's
@@ -291,15 +292,32 @@ class _HostSubprocess:
         return subprocess.Popen(on_host(args, env), **options)
 
 
+class _QuietSubprocess:
+    """Stands in for `subprocess` in the exec provider of the Kubernetes client
+    on Windows, so that the sign-in programs of the kubeconfig (such as `aws
+    eks get-token`) start without a console window."""
+
+    PIPE = subprocess.PIPE
+
+    @staticmethod
+    def Popen(args: list[str], **options: Any):
+        # the program may be where the path of the app does not reach
+        program = find_program(args[0]) or args[0]
+        options.setdefault("creationflags", _NO_WINDOW)
+        return subprocess.Popen([program, *args[1:]], **options)
+
+
 def _route_exec_to_host() -> None:
     """In a Flatpak, make the `exec` credential plugins of the kubeconfig (such
-    as gke-gcloud-auth-plugin or kubelogin) run on the host; outside one,
-    nothing changes."""
-    if not in_flatpak():
+    as gke-gcloud-auth-plugin or kubelogin) run on the host; on Windows, make
+    them run without a console window; elsewhere nothing changes."""
+    if not in_flatpak() and sys.platform != "win32":
         return
     from kubernetes.config import exec_provider
 
-    exec_provider.subprocess = _HostSubprocess  # type: ignore[assignment]
+    exec_provider.subprocess = (  # type: ignore[assignment]
+        _HostSubprocess if in_flatpak() else _QuietSubprocess
+    )
 
 
 def _api_client(context: str) -> client.ApiClient:

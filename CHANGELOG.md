@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+### Fixed
+
+- On Windows, Gabi finds the `claude` and `codex` programs where their installers put them (`%USERPROFILE%\.local\bin`, the Codex folder in `%LOCALAPPDATA%\Programs\OpenAI`, the npm folder) even when the app was started with a shorter path than the terminal's, runs it by its whole name so a `.cmd` file starts, and no console window flashes up when she answers by @danilogco
+- On Windows, the sign-in programs of the kubeconfig (such as `aws eks get-token`) no longer open a terminal window each time Gabi, or any list, reads the cluster by @danilogco
+
 ## [1.3.0-rc3] - 2026-10-29
 
 ### Changed
