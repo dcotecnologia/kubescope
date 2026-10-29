@@ -256,6 +256,20 @@ class Ui_SettingsPage(object):
 
         self.assistantCardLayout.addWidget(self.assistantCombo)
 
+        self.assistantPathsLabel = QLabel(self.assistantCard)
+        self.assistantPathsLabel.setObjectName(u"assistantPathsLabel")
+
+        self.assistantCardLayout.addWidget(self.assistantPathsLabel)
+
+        self.assistantPathsHost = QWidget(self.assistantCard)
+        self.assistantPathsHost.setObjectName(u"assistantPathsHost")
+        self.assistantPathsLayout = QVBoxLayout(self.assistantPathsHost)
+        self.assistantPathsLayout.setSpacing(6)
+        self.assistantPathsLayout.setObjectName(u"assistantPathsLayout")
+        self.assistantPathsLayout.setContentsMargins(0, 0, 0, 0)
+
+        self.assistantCardLayout.addWidget(self.assistantPathsHost)
+
         self.assistantHint = QLabel(self.assistantCard)
         self.assistantHint.setObjectName(u"assistantHint")
         self.assistantHint.setWordWrap(True)
@@ -549,6 +563,7 @@ class Ui_SettingsPage(object):
 #if QT_CONFIG(tooltip)
         self.assistantCombo.setToolTip(QCoreApplication.translate("SettingsPage", u"The program of this computer that answers. Automatic uses the first one the system has.", None))
 #endif // QT_CONFIG(tooltip)
+        self.assistantPathsLabel.setText(QCoreApplication.translate("SettingsPage", u"Where the programs are, when the system does not find them", None))
         self.assistantHint.setText(QCoreApplication.translate("SettingsPage", u"The assistant uses the client that is already installed on this computer, such as Claude Code or Codex, signed in the way you already are. KubeScope asks you for no credentials and stores none: the sign-in stays with that program. What you ask, attach and what it reads from the cluster go to that program and to its service. The conversations are kept on this computer, without the documents and logs that were read.", None))
         self.assistantClearButton.setText(QCoreApplication.translate("SettingsPage", u"Clear the chat history", None))
         self.debugHeading.setText(QCoreApplication.translate("SettingsPage", u"DEBUGGING", None))

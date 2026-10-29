@@ -9,6 +9,7 @@ command on the machine. What differs from one program to another, its
 options and the shape of its output, is an `Assistant` of its own.
 """
 
+import os
 import shutil
 import subprocess
 import tempfile
@@ -58,11 +59,34 @@ class Assistant:
         return by_message or self.image_files is not None
 
 
+# where the person says a program is, by the key of its assistant, for the ones the
+# system does not find on its path
+CUSTOM_PROGRAMS: dict[str, str] = {}
+
+
+def program_of(assistant: Assistant) -> str:
+    """The program to run: the path the person gave, or the name on the
+    path."""
+    custom = CUSTOM_PROGRAMS.get(assistant.key)
+    return str(Path(custom).expanduser()) if custom else assistant.program
+
+
+def is_runnable(path: str) -> bool:
+    """Whether a path is a file that can be run, on this computer or, in a
+    Flatpak, on the host."""
+    if in_flatpak():
+        return host_has(path)
+    return os.path.isfile(path) and os.access(path, os.X_OK)
+
+
 def is_available(assistant: Assistant) -> bool:
     """Whether the system has the program."""
+    program = program_of(assistant)
+    if assistant.key in CUSTOM_PROGRAMS:
+        return is_runnable(program)
     if in_flatpak():
-        return host_has(assistant.program)
-    return shutil.which(assistant.program) is not None
+        return host_has(program)
+    return shutil.which(program) is not None
 
 
 def command(
@@ -74,7 +98,7 @@ def command(
     """The program and the options that keep it from acting on the machine."""
     options = assistant.image_options if with_images else assistant.options
     assert options is not None
-    return on_host([assistant.program, *options(model, system)])
+    return on_host([program_of(assistant), *options(model, system)])
 
 
 def ask(

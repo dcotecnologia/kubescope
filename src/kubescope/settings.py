@@ -32,6 +32,7 @@ DEFAULTS: dict[str, Any] = {
     "animations": True,
     "assistant_enabled": True,
     "assistant_panel": {},
+    "assistant_programs": {},
     "assistant": "",
     "assistant_consent": False,
     "run_in_background": True,
@@ -322,6 +323,24 @@ class Settings:
     @assistant_enabled.setter
     def assistant_enabled(self, value: bool) -> None:
         self._data["assistant_enabled"] = bool(value)
+
+    @property
+    def assistant_programs(self) -> dict[str, str]:
+        """The path of the program of each assistant, for the ones the system
+        does not find; what is not a name and a path is left out."""
+        value = self._data["assistant_programs"]
+        return {
+            key.strip(): path.strip()
+            for key, path in (value.items() if isinstance(value, dict) else [])
+            if isinstance(key, str)
+            and isinstance(path, str)
+            and key.strip()
+            and path.strip()
+        }
+
+    @assistant_programs.setter
+    def assistant_programs(self, value: dict[str, str]) -> None:
+        self._data["assistant_programs"] = dict(value)
 
     @property
     def assistant_panel(self) -> dict[str, Any]:

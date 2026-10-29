@@ -267,3 +267,40 @@ def test_the_files_of_the_images_go_even_when_the_answer_is_cut_short(start) -> 
     pieces.close()
 
     assert not os.path.exists(paths[0])
+
+
+def test_a_path_the_person_gave_replaces_the_name_of_the_program(
+    monkeypatch, tmp_path
+) -> None:
+    program = tmp_path / "bin" / "fake-ai"
+    program.parent.mkdir()
+    program.write_text("#!/bin/sh\n")
+    monkeypatch.setattr(runner, "CUSTOM_PROGRAMS", {})
+
+    assert runner.program_of(FAKE) == "fake-ai"  # nothing given: the name
+
+    runner.CUSTOM_PROGRAMS["fake"] = str(program)
+    assert runner.program_of(FAKE) == str(program)
+    assert runner.command(FAKE)[0] == str(program)
+    assert not runner.is_available(FAKE)  # a file that cannot be run
+
+    program.chmod(0o755)
+    assert runner.is_available(FAKE)
+    assert runner.is_runnable(str(program))
+    assert not runner.is_runnable(str(tmp_path))  # a folder
+
+    runner.CUSTOM_PROGRAMS["fake"] = "~/does-not-exist/fake-ai"
+    assert runner.program_of(FAKE).endswith("does-not-exist/fake-ai")
+    assert "~" not in runner.program_of(FAKE)
+    assert not runner.is_available(FAKE)
+
+
+def test_in_a_flatpak_the_host_says_whether_a_path_can_be_run(monkeypatch) -> None:
+    monkeypatch.setattr(runner, "in_flatpak", lambda: True)
+    monkeypatch.setattr(runner, "host_has", lambda path: path == "/opt/ai/fake-ai")
+    monkeypatch.setattr(runner, "CUSTOM_PROGRAMS", {"fake": "/opt/ai/fake-ai"})
+
+    assert runner.is_runnable("/opt/ai/fake-ai")
+    assert runner.is_available(FAKE)
+    runner.CUSTOM_PROGRAMS["fake"] = "/nowhere/fake-ai"
+    assert not runner.is_available(FAKE)

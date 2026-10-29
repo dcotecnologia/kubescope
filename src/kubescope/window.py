@@ -59,6 +59,7 @@ from PySide6.QtWidgets import (
     QHBoxLayout,
     QHeaderView,
     QLabel,
+    QLineEdit,
     QMainWindow,
     QMenu,
     QMessageBox,
@@ -75,13 +76,14 @@ from PySide6.QtWidgets import (
 )
 
 from kubescope import COMPANY_URL, LICENSE_URL, PROJECT_URL, SPONSOR_URL, __version__
-from kubescope.assistant import ASSISTANTS
+from kubescope.assistant import ASSISTANTS, runner
 from kubescope.assistant import actions as assistant_actions
 from kubescope.assistant import installed as installed_assistants
 from kubescope.assistant.dispatch import write_call
 from kubescope.assistant.history import History
 from kubescope.assistant.knowledge import system_prompt
 from kubescope.assistant.runner import Assistant
+from kubescope.assistant.runner import is_available as is_available_assistant
 from kubescope.assistant.screen import (
     Screen,
     describe_cluster_overview,
@@ -1098,6 +1100,8 @@ class WorkloadWindow(QMainWindow):
         self.table.itemSelectionChanged.connect(self._update_workload_actions)
         self.table.cellDoubleClicked.connect(lambda _row, _column: self._view_details())
         motion.ENABLED = self.settings.animations
+        runner.CUSTOM_PROGRAMS.clear()
+        runner.CUSTOM_PROGRAMS.update(self.settings.assistant_programs)
         self._shown_once = False
         self._assistant_history = History(config_directory() / "assistant_history.json")
         self._assistant_tab: AssistantTab | None = None
@@ -5083,6 +5087,7 @@ class WorkloadWindow(QMainWindow):
         form.titleBarCheck.setChecked(self.settings.system_title_bar)
         form.animationsCheck.setChecked(self.settings.animations)
         form.assistantCheck.setChecked(self.settings.assistant_enabled)
+        self._fill_assistant_paths()
         form.assistantCombo.clear()
         form.assistantCombo.addItem(self.tr("Automatic: the first one found"), "")
         for one in ASSISTANTS.values():
@@ -5131,6 +5136,71 @@ class WorkloadWindow(QMainWindow):
             self._add_login_row(program, command)
         self._show_config_tables()
         form.noticeLabel.setText("")
+
+    def _fill_assistant_paths(self) -> None:
+        """One line for each assistant to say where its program is, which the
+        system may not find by itself."""
+        layout = self.settings_ui.assistantPathsLayout
+        while (item := layout.takeAt(0)) is not None:
+            if (widget := item.widget()) is not None:
+                widget.deleteLater()
+        self._assistant_paths: dict[str, QLineEdit] = {}
+        saved = self.settings.assistant_programs
+        for one in ASSISTANTS.values():
+            edit = QLineEdit(saved.get(one.key, ""))
+            found = is_available_assistant(one)
+            missing = self.tr("Not found: {program} is not on the path").format(
+                program=one.program
+            )
+            edit.setPlaceholderText(
+                self.tr("Found on the path of the system") if found else missing
+            )
+            browse = QPushButton(self.tr("Browse..."))
+            browse.clicked.connect(
+                lambda _checked=False, field=edit, name=one.name: self._browse_program(
+                    field, name
+                )
+            )
+            row = QHBoxLayout()
+            name = QLabel(one.name)
+            name.setMinimumWidth(60)
+            row.addWidget(name)
+            row.addWidget(edit, 1)
+            row.addWidget(browse)
+            holder = QWidget()
+            holder.setLayout(row)
+            layout.addWidget(holder)
+            self._assistant_paths[one.key] = edit
+
+    def _browse_program(self, edit: QLineEdit, name: str) -> None:
+        path, _filter = QFileDialog.getOpenFileName(
+            self,
+            self.tr("Where is {name}?").format(name=name),
+            str(Path.home()),
+        )
+        if path:
+            edit.setText(path)
+
+    def _assistant_programs_from_form(self) -> dict[str, str] | None:
+        """The paths in the settings; None, with a notice, when one is not a
+        program that can be run.
+
+        Empty ones are left out.
+        """
+        programs: dict[str, str] = {}
+        for one in ASSISTANTS.values():
+            path = self._assistant_paths[one.key].text().strip()
+            if not path:
+                continue
+            if not runner.is_runnable(str(Path(path).expanduser())):
+                self.settings_ui.noticeLabel.setText(
+                    self.tr("{path} is not a program that can be run ({name}).").format(
+                        path=path, name=one.name
+                    )
+                )
+                return None
+            programs[one.key] = path
+        return programs
 
     def _show_config_tables(self) -> None:
         """The kubeconfig list and the sign-in table (and their Remove buttons)
@@ -5314,6 +5384,9 @@ class WorkloadWindow(QMainWindow):
         commands = self._login_commands_from_form()
         if commands is None:
             return  # nothing is saved until every command is valid
+        programs = self._assistant_programs_from_form()
+        if programs is None:
+            return  # nor until every path of an assistant is a program
         files = [
             form.kubeconfigList.item(row).text()
             for row in range(form.kubeconfigList.count())
@@ -5346,6 +5419,9 @@ class WorkloadWindow(QMainWindow):
         self.settings.run_in_background = form.backgroundCheck.isChecked()
         self.settings.animations = form.animationsCheck.isChecked()
         motion.ENABLED = self.settings.animations
+        self.settings.assistant_programs = programs
+        runner.CUSTOM_PROGRAMS.clear()
+        runner.CUSTOM_PROGRAMS.update(programs)
         self.settings.assistant_enabled = form.assistantCheck.isChecked()
         self.settings.assistant = form.assistantCombo.currentData() or ""
         self.assistant_dock.bubble.setVisible(self.settings.assistant_enabled)

@@ -532,3 +532,71 @@ def test_the_settings_say_the_assistant_uses_the_client_of_the_computer(
     assert "already installed on this computer" in hint
     assert "asks you for no credentials and stores none" in hint
     window.close()
+
+
+def test_the_settings_take_the_path_of_a_program_the_system_does_not_find(
+    monkeypatch, tmp_path
+) -> None:
+    from kubescope.assistant import runner
+
+    monkeypatch.setattr(runner, "CUSTOM_PROGRAMS", {})
+    program = tmp_path / "claude"
+    program.write_text("#!/bin/sh\n")
+    program.chmod(0o755)
+    window, _messages = _open(monkeypatch)
+    monkeypatch.setattr(window_module, "ASSISTANTS", {"one": ONE, "two": TWO})
+    window._load_settings_form()
+    paths = window._assistant_paths
+    assert set(paths) == {"one", "two"}
+    assert paths["one"].placeholderText().startswith("Not found")
+
+    paths["one"].setText("/nowhere/one-ai")  # not a program
+    window._save_preferences()
+    assert (
+        "is not a program that can be run (One)"
+        in window.settings_ui.noticeLabel.text()
+    )
+    assert window.settings.assistant_programs == {} and runner.CUSTOM_PROGRAMS == {}
+
+    paths["one"].setText(str(program))
+    window._save_preferences()
+    assert window.settings.assistant_programs == {"one": str(program)}
+    assert {"one": str(program)} == runner.CUSTOM_PROGRAMS
+
+    window._load_settings_form()  # it is shown again, and the other is empty
+    assert window._assistant_paths["one"].text() == str(program)
+    window._assistant_paths["one"].setText("")
+    window._save_preferences()
+    assert window.settings.assistant_programs == {} and runner.CUSTOM_PROGRAMS == {}
+    window.close()
+
+
+def test_browsing_for_a_program_fills_its_path(monkeypatch, tmp_path) -> None:
+    window, _messages = _open(monkeypatch)
+    window._load_settings_form()
+    edit = window._assistant_paths["claude"]
+    chosen = [str(tmp_path / "claude"), ""]
+    monkeypatch.setattr(
+        window_module.QFileDialog, "getOpenFileName", lambda *_a: (chosen.pop(0), "")
+    )
+
+    window._browse_program(edit, "Claude")
+    assert edit.text() == str(tmp_path / "claude")
+    window._browse_program(edit, "Claude")  # cancelled: nothing changes
+    assert edit.text() == str(tmp_path / "claude")
+    window.close()
+
+
+def test_the_paths_kept_are_used_from_the_start(monkeypatch, tmp_path) -> None:
+    from kubescope.assistant import runner
+    from kubescope.settings import Settings
+
+    monkeypatch.setattr(runner, "CUSTOM_PROGRAMS", {})
+    saved = Settings()
+    saved.assistant_programs = {"claude": str(tmp_path / "claude")}
+    saved.save()
+
+    window, _messages = _open(monkeypatch)
+
+    assert {"claude": str(tmp_path / "claude")} == runner.CUSTOM_PROGRAMS
+    window.close()
