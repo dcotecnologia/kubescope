@@ -154,6 +154,21 @@ def latest_release() -> Release | None:
 class UpdateCheck:
     status: str  # "current", "available" or "failed"
     release: Release | None = None  # the newer release, when there is one
+    limited_until: float | None = None  # when GitHub lets this address ask again
+
+
+def _limited_until(error: Exception) -> float | None:
+    """When GitHub lets the address ask again, if it refused for asking too
+    often (the time it gives, in seconds since the epoch)."""
+    if not isinstance(error, urllib.error.HTTPError) or error.code not in (403, 429):
+        return None
+    headers = error.headers
+    if headers is None or headers.get("X-RateLimit-Remaining", "0") != "0":
+        return None
+    try:
+        return float(headers["X-RateLimit-Reset"])
+    except (KeyError, TypeError, ValueError):
+        return None
 
 
 def check_for_update(current: str = __version__) -> UpdateCheck:
@@ -167,7 +182,7 @@ def check_for_update(current: str = __version__) -> UpdateCheck:
         release = latest_release()
     except (OSError, ValueError) as error:  # offline, rate limited, bad answer
         logger.debug("Update check failed: %s", first_line(str(error)))
-        return UpdateCheck("failed")
+        return UpdateCheck("failed", limited_until=_limited_until(error))
     newest = parse_version(release.version) if release else None
     if release is None or installed is None or newest is None or newest <= installed:
         logger.info("KubeScope is up to date")

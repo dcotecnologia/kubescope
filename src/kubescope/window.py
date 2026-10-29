@@ -1960,6 +1960,16 @@ class WorkloadWindow(QMainWindow):
             "current": self.tr("Up to date"),
             "failed": self.tr("Could not check"),
         }.get(result.status)
+        if result.limited_until is not None:
+            when = datetime.datetime.fromtimestamp(result.limited_until).strftime(
+                "%H:%M"
+            )
+            notice = self.tr("GitHub limited the checks; try again at {time}").format(
+                time=when
+            )
+            self.ui.updateButton.setToolTip(
+                notice + ". " + self.tr("Click to try again.")
+            )
         if notice is not None and not rechecking:
             self.ui.updateNotice.setText(notice)
             self.ui.updateNotice.show()
