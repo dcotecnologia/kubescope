@@ -70,19 +70,6 @@ def attach_icon(color: str = "#8696a0") -> QIcon:
     return _draw(paint)
 
 
-def mic_icon(color: str = "#8696a0") -> QIcon:
-    """A microphone."""
-
-    def paint(painter: QPainter) -> None:
-        painter.setPen(_pen(color, 1.8))
-        painter.setBrush(Qt.BrushStyle.NoBrush)
-        painter.drawRoundedRect(QRectF(8, 3, 6, 10), 3, 3)
-        painter.drawArc(QRectF(5, 7, 12, 9), 0, -180 * 16)
-        painter.drawLine(QPointF(11, 16), QPointF(11, 19))
-
-    return _draw(paint)
-
-
 def _star(painter: QPainter, x: float, y: float, radius: float) -> None:
     """A four-pointed star centered at (x, y)."""
     inner = radius * 0.36
