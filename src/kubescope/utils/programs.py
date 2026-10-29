@@ -6,6 +6,7 @@ shorter path than a terminal, and the installers of these programs often
 put them in a folder of the person that is on no path at all.
 """
 
+import ntpath
 import os
 import shutil
 import sys
@@ -37,7 +38,7 @@ def _registry_path() -> list[str]:
         except OSError:
             continue
         if isinstance(value, str):
-            folders += [os.path.expandvars(part) for part in value.split(";") if part]
+            folders += [ntpath.expandvars(part) for part in value.split(";") if part]
     return folders
 
 

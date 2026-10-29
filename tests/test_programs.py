@@ -44,6 +44,15 @@ def test_the_folders_of_the_installers_are_searched_on_windows(
     assert standalone / "current" / "bin" in folders
 
 
+def test_on_windows_a_program_in_no_folder_is_not_found(monkeypatch, tmp_path) -> None:
+    monkeypatch.setattr(programs.sys, "platform", "win32")
+    monkeypatch.setattr(programs.Path, "home", lambda: tmp_path)
+    monkeypatch.setattr(programs, "_registry_path", lambda: [])
+    monkeypatch.setattr(shutil, "which", lambda name, path=None: None)
+
+    assert programs.find_program("fake-ai") is None
+
+
 def test_off_windows_only_the_path_is_searched(monkeypatch) -> None:
     monkeypatch.setattr(programs.sys, "platform", "linux")
     monkeypatch.setattr(shutil, "which", lambda name, path=None: None)
