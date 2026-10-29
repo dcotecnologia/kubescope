@@ -14,6 +14,7 @@ import subprocess
 import tempfile
 from collections.abc import Callable, Generator, Sequence
 from dataclasses import dataclass
+from pathlib import Path
 
 from kubescope.assistant.attachments import Attachment
 from kubescope.utils.errors import first_line
@@ -46,10 +47,15 @@ class Assistant:
     # with them, and the message to write to it, with the images in it
     image_options: Callable[[str | None, str], list[str]] | None = None
     image_payload: Callable[[str, Sequence[Attachment]], str] | None = None
+    # a program with no option for its instructions gets them before the question
+    compose: Callable[[str, str], str] | None = None
+    # a program that reads images from files: its options for the files
+    image_files: Callable[[Sequence[str]], list[str]] | None = None
 
     @property
     def takes_images(self) -> bool:
-        return self.image_options is not None and self.image_payload is not None
+        by_message = self.image_options is not None and self.image_payload is not None
+        return by_message or self.image_files is not None
 
 
 def is_available(assistant: Assistant) -> bool:
@@ -83,11 +89,37 @@ def ask(
 
     Closing the generator before the end stops the program.
     """
-    if images and (not assistant.takes_images or assistant.image_payload is None):
+    if images and not assistant.takes_images:
         raise AssistantError(f"{assistant.name} does not take images")
+    folder = tempfile.TemporaryDirectory() if images and assistant.image_files else None
+    try:
+        yield from _run(assistant, prompt, model, system, images, folder)
+    finally:
+        if folder is not None:
+            folder.cleanup()
+
+
+def _run(
+    assistant: Assistant,
+    prompt: str,
+    model: str | None,
+    system: str,
+    images: Sequence[Attachment],
+    folder: tempfile.TemporaryDirectory[str] | None,
+) -> Generator[str]:
+    """Start the program and read its answer; the images it reads from files
+    are written to `folder`."""
+    arguments = command(assistant, model, system, bool(images) and folder is None)
+    if folder is not None and assistant.image_files is not None:
+        paths = []
+        for number, image in enumerate(images, start=1):
+            path = Path(folder.name) / f"image-{number}{Path(image.name).suffix}"
+            path.write_bytes(image.data)
+            paths.append(str(path))
+        arguments += assistant.image_files(paths)
     try:
         process = subprocess.Popen(
-            command(assistant, model, system, bool(images)),
+            arguments,
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
@@ -102,9 +134,13 @@ def ask(
     try:
         try:
             payload = assistant.image_payload
-            process.stdin.write(
-                payload(prompt, images) if images and payload else prompt
-            )
+            if images and folder is None and payload is not None:
+                text = payload(prompt, images)
+            elif assistant.compose is not None:
+                text = assistant.compose(system, prompt)
+            else:
+                text = prompt
+            process.stdin.write(text)
             process.stdin.close()
         except OSError as error:
             raise AssistantError(str(error)) from error

@@ -205,3 +205,65 @@ def test_images_are_refused_by_a_program_that_does_not_take_them(start) -> None:
     assert not FAKE.takes_images
     with pytest.raises(AssistantError, match="Fake does not take images"):
         list(runner.ask(FAKE, "look", None, "rules", [image]))
+
+
+def test_a_program_that_reads_images_from_files_gets_them_and_the_instructions(
+    start,
+) -> None:
+    import os
+    from pathlib import Path
+
+    from kubescope.assistant.attachments import Attachment
+
+    paths: list[str] = []
+    contents: list[bytes] = []
+
+    def files(found) -> list[str]:
+        paths.extend(found)
+        contents.extend(Path(path).read_bytes() for path in found)
+        return [f"--image={path}" for path in found]
+
+    reader = Assistant(
+        "reader",
+        "Reader",
+        "reader-ai",
+        _options,
+        _parse,
+        compose=lambda system, prompt: f"<{system}>{prompt}",
+        image_files=files,
+    )
+    image = Attachment("a.png", "image", b"PIX", "image/png")
+    process = FakeProcess(_delta("seen"))
+    started = start(process)
+
+    assert list(runner.ask(reader, "look", None, "rules", [image])) == ["seen"]
+
+    assert started["arguments"][-1] == f"--image={paths[0]}"
+    assert paths[0].endswith("image-1.png") and contents == [b"PIX"]
+    assert process.stdin.written == ["<rules>look"]
+    assert not os.path.exists(paths[0])  # the files go when the answer is over
+
+
+def test_the_files_of_the_images_go_even_when_the_answer_is_cut_short(start) -> None:
+    import os
+
+    from kubescope.assistant.attachments import Attachment
+
+    paths: list[str] = []
+    reader = Assistant(
+        "reader",
+        "Reader",
+        "reader-ai",
+        _options,
+        _parse,
+        image_files=lambda found: paths.extend(found) or [],
+    )
+    start(FakeProcess(_delta("a") + _delta("b")))
+
+    pieces = runner.ask(
+        reader, "look", None, "rules", [Attachment("a.png", "image", b"x", "image/png")]
+    )
+    assert next(pieces) == "a" and os.path.exists(paths[0])
+    pieces.close()
+
+    assert not os.path.exists(paths[0])

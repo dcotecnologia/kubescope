@@ -96,11 +96,15 @@ prefer otherwise.
 - **The assistant sends what you ask to a program of your computer.** The chat in
   the corner does nothing until you open it and agree, once, that what you type
   and attach, and what the assistant reads from the cluster to answer, are sent
-  to the program (Claude Code, which must be installed and signed in) and from
-  it to its service. KubeScope does not talk to that service, holds no key for it
+  to the program (Claude Code or Codex, installed and signed in on your
+  computer, which you choose in Settings) and from it to its service. KubeScope
+  does not talk to that service, asks you for no credentials, holds no key for it
   and never sees your sign-in. The program is started with **no tools** (it can
   read no file and run no command), with no saved session and from the temporary
-  folder. What goes: your questions; the images and text files you attach (a text
+  folder. Claude Code is started with `--tools ""`; Codex with its shell, file
+  viewing, plugins, apps, browser and computer tools switched off, a read-only
+  sandbox, no web search and without your Codex configuration, because its
+  read-only sandbox alone still lets it read any file of the computer. What goes: your questions; the images and text files you attach (a text
   file is read with tokens and keys redacted); a description of what the window
   shows (the list, the selected row, the open Details or Logs, the numbers of the
   overviews, the names of the open tabs); and what the assistant asks the app to

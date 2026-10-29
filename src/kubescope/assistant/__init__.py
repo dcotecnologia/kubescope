@@ -1,9 +1,10 @@
 """The coding assistants of the system the person can ask about the cluster."""
 
 from kubescope.assistant.claude import CLAUDE
+from kubescope.assistant.codex import CODEX
 from kubescope.assistant.runner import Assistant, is_available
 
-ASSISTANTS = {assistant.key: assistant for assistant in (CLAUDE,)}
+ASSISTANTS = {assistant.key: assistant for assistant in (CLAUDE, CODEX)}
 
 
 def installed() -> list[Assistant]:
