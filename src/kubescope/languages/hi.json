@@ -3,13 +3,11 @@
     "rtl": false,
     "strings": {
         "AssistantDock": {
-            "Ask the assistant": "असिस्टेंट से पूछें",
-            "Assistant": "असिस्टेंट",
+            "Ask Gabi": "गैबी से पूछें",
             "Clear history": "इतिहास साफ़ करें",
             "Close": "बंद करें"
         },
         "AssistantPanel": {
-            "Assistant": "असिस्टेंट",
             "Clear history": "इतिहास साफ़ करें",
             "Close": "बंद करें",
             "Open in a window of its own": "अलग विंडो में खोलें",
@@ -19,11 +17,11 @@
             "(attached: {names})": "(संलग्न: {names})",
             "(read) {what}": "(पढ़ा) {what}",
             "App": "ऐप",
-            "Ask about the cluster or ask for an action...": "क्लस्टर के बारे में पूछें या कोई क्रिया करने को कहें...",
-            "Assistant": "असिस्टेंट",
+            "Ask Gabi about the cluster or ask for an action...": "क्लस्टर के बारे में गैबी से पूछें या कोई क्रिया करने को कहें...",
             "At most {count} files go with a question.": "एक प्रश्न के साथ अधिकतम {count} फ़ाइलें जा सकती हैं।",
             "Attach": "संलग्न करें",
             "Cancel": "रद्द करें",
+            "Hi, I'm {name}, from {company}. I know Kubernetes and KubeScope well. Ask me about what you see on the screen, ask me to look into a problem, or ask me to take you somewhere in the app.": "नमस्ते, मैं {company} की {name} हूँ। मुझे Kubernetes और KubeScope की अच्छी जानकारी है। स्क्रीन पर जो दिख रहा है, उसके बारे में मुझसे पूछें, किसी समस्या की जाँच करने को कहें, या ऐप में किसी जगह ले जाने को कहें।",
             "Ignored an action: {why}": "एक क्रिया अनदेखी की गई: {why}",
             "Read-only mode: nothing was changed. Turn on the write mode in Settings to allow {what}.": "केवल-पढ़ने का मोड: कुछ भी नहीं बदला गया। {what} की अनुमति देने के लिए सेटिंग्स में राइट मोड चालू करें।",
             "Run": "चलाएँ",
@@ -89,9 +87,6 @@
             "Your credentials may have expired. Sign in again (for example “aws sso login”, “gcloud auth login” or “az login”) and refresh.": "आपके क्रेडेंशियल की अवधि समाप्त हो गई होगी। फिर से साइन इन करें (उदाहरण के लिए “aws sso login”, “gcloud auth login” या “az login”) और रीफ़्रेश करें।",
             "Your kubeconfig runs “{tool}” to sign in, but it is not installed or not on the PATH. Install it and refresh.": "आपका kubeconfig साइन इन के लिए “{tool}” चलाता है, लेकिन वह इंस्टॉल नहीं है या PATH में नहीं है। उसे इंस्टॉल करें और रीफ़्रेश करें।",
             "Your user is not allowed to read this resource.": "आपके उपयोगकर्ता को यह संसाधन पढ़ने की अनुमति नहीं है।"
-        },
-        "FloatingFrame": {
-            "Assistant": "असिस्टेंट"
         },
         "LogTab": {
             "Auto-refresh": "ऑटो-रीफ़्रेश",

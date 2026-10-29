@@ -3,13 +3,11 @@
     "rtl": false,
     "strings": {
         "AssistantDock": {
-            "Ask the assistant": "Asistana sor",
-            "Assistant": "Asistan",
+            "Ask Gabi": "Gabi'ye sor",
             "Clear history": "Geçmişi temizle",
             "Close": "Kapat"
         },
         "AssistantPanel": {
-            "Assistant": "Asistan",
             "Clear history": "Geçmişi temizle",
             "Close": "Kapat",
             "Open in a window of its own": "Ayrı bir pencerede aç",
@@ -19,11 +17,11 @@
             "(attached: {names})": "(eklendi: {names})",
             "(read) {what}": "(okuma) {what}",
             "App": "Uygulama",
-            "Ask about the cluster or ask for an action...": "Küme hakkında soru sorun veya bir eylem isteyin...",
-            "Assistant": "Asistan",
+            "Ask Gabi about the cluster or ask for an action...": "Gabi'ye küme hakkında soru sorun veya bir eylem isteyin...",
             "At most {count} files go with a question.": "Bir soruyla en fazla {count} dosya gönderilebilir.",
             "Attach": "Ekle",
             "Cancel": "İptal",
+            "Hi, I'm {name}, from {company}. I know Kubernetes and KubeScope well. Ask me about what you see on the screen, ask me to look into a problem, or ask me to take you somewhere in the app.": "Merhaba, ben {company} şirketinden {name}. Kubernetes ve KubeScope'u çok iyi bilirim. Ekranda gördüklerinizi bana sorabilir, bir sorunu incelememi isteyebilir veya sizi uygulamada bir yere götürmemi isteyebilirsiniz.",
             "Ignored an action: {why}": "Bir eylem yok sayıldı: {why}",
             "Read-only mode: nothing was changed. Turn on the write mode in Settings to allow {what}.": "Salt okunur mod: hiçbir şey değiştirilmedi. {what} eylemine izin vermek için Ayarlar'dan yazma modunu açın.",
             "Run": "Çalıştır",
@@ -89,9 +87,6 @@
             "Your credentials may have expired. Sign in again (for example “aws sso login”, “gcloud auth login” or “az login”) and refresh.": "Kimlik bilgilerinizin süresi dolmuş olabilir. Yeniden oturum açın (örneğin “aws sso login”, “gcloud auth login” veya “az login”) ve yenileyin.",
             "Your kubeconfig runs “{tool}” to sign in, but it is not installed or not on the PATH. Install it and refresh.": "kubeconfig dosyanız oturum açmak için “{tool}” çalıştırıyor, ancak yüklü değil veya PATH içinde değil. Yükleyin ve yenileyin.",
             "Your user is not allowed to read this resource.": "Kullanıcınızın bu kaynağı okuma izni yok."
-        },
-        "FloatingFrame": {
-            "Assistant": "Asistan"
         },
         "LogTab": {
             "Auto-refresh": "Otomatik yenile",

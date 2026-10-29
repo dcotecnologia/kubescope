@@ -3,13 +3,11 @@
     "rtl": false,
     "strings": {
         "AssistantDock": {
-            "Ask the assistant": "Tanya asisten",
-            "Assistant": "Asisten",
+            "Ask Gabi": "Tanya Gabi",
             "Clear history": "Hapus riwayat",
             "Close": "Tutup"
         },
         "AssistantPanel": {
-            "Assistant": "Asisten",
             "Clear history": "Hapus riwayat",
             "Close": "Tutup",
             "Open in a window of its own": "Buka di jendela tersendiri",
@@ -19,11 +17,11 @@
             "(attached: {names})": "(terlampir: {names})",
             "(read) {what}": "(baca) {what}",
             "App": "Aplikasi",
-            "Ask about the cluster or ask for an action...": "Tanyakan tentang klaster atau minta suatu tindakan...",
-            "Assistant": "Asisten",
+            "Ask Gabi about the cluster or ask for an action...": "Tanyakan kepada Gabi tentang klaster atau minta suatu tindakan...",
             "At most {count} files go with a question.": "Satu pertanyaan hanya dapat disertai maksimal {count} berkas.",
             "Attach": "Lampirkan",
             "Cancel": "Batal",
+            "Hi, I'm {name}, from {company}. I know Kubernetes and KubeScope well. Ask me about what you see on the screen, ask me to look into a problem, or ask me to take you somewhere in the app.": "Halo, saya {name} dari {company}. Saya memahami Kubernetes dan KubeScope dengan baik. Tanyakan kepada saya tentang apa yang Anda lihat di layar, minta saya menyelidiki suatu masalah, atau minta saya mengantar Anda ke bagian tertentu di aplikasi.",
             "Ignored an action: {why}": "Satu tindakan diabaikan: {why}",
             "Read-only mode: nothing was changed. Turn on the write mode in Settings to allow {what}.": "Mode baca saja: tidak ada yang diubah. Aktifkan mode tulis di Pengaturan untuk mengizinkan {what}.",
             "Run": "Jalankan",
@@ -89,9 +87,6 @@
             "Your credentials may have expired. Sign in again (for example “aws sso login”, “gcloud auth login” or “az login”) and refresh.": "Kredensial Anda mungkin sudah kedaluwarsa. Masuk lagi (misalnya “aws sso login”, “gcloud auth login”, atau “az login”) lalu segarkan.",
             "Your kubeconfig runs “{tool}” to sign in, but it is not installed or not on the PATH. Install it and refresh.": "kubeconfig Anda menjalankan “{tool}” untuk masuk, tetapi belum terpasang atau tidak ada di PATH. Pasang lalu segarkan.",
             "Your user is not allowed to read this resource.": "Pengguna Anda tidak diizinkan membaca sumber daya ini."
-        },
-        "FloatingFrame": {
-            "Assistant": "Asisten"
         },
         "LogTab": {
             "Auto-refresh": "Segarkan otomatis",

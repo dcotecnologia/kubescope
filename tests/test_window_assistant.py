@@ -319,7 +319,7 @@ def test_closing_the_window_stops_the_chat_and_a_language_change_retitles_it(
     tab = _tab(window)
 
     window._retranslate()
-    assert window.assistant_dock.panel.title.text() == "Assistant"
+    assert window.assistant_dock.panel.title.text() == "Gabi"
     window.close()
 
     assert tab.closed

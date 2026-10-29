@@ -3,13 +3,11 @@
     "rtl": true,
     "strings": {
         "AssistantDock": {
-            "Ask the assistant": "از دستیار بپرسید",
-            "Assistant": "دستیار",
+            "Ask Gabi": "از گابی بپرسید",
             "Clear history": "پاک کردن تاریخچه",
             "Close": "بستن"
         },
         "AssistantPanel": {
-            "Assistant": "دستیار",
             "Clear history": "پاک کردن تاریخچه",
             "Close": "بستن",
             "Open in a window of its own": "باز کردن در پنجره‌ای جداگانه",
@@ -19,11 +17,11 @@
             "(attached: {names})": "(پیوست‌شده: {names})",
             "(read) {what}": "(خواندن) {what}",
             "App": "برنامه",
-            "Ask about the cluster or ask for an action...": "درباره خوشه بپرسید یا کاری بخواهید...",
-            "Assistant": "دستیار",
+            "Ask Gabi about the cluster or ask for an action...": "از گابی درباره خوشه بپرسید یا یک کار بخواهید...",
             "At most {count} files go with a question.": "هر پرسش حداکثر می‌تواند {count} پرونده همراه داشته باشد.",
             "Attach": "پیوست",
             "Cancel": "انصراف",
+            "Hi, I'm {name}, from {company}. I know Kubernetes and KubeScope well. Ask me about what you see on the screen, ask me to look into a problem, or ask me to take you somewhere in the app.": "سلام، من {name} از {company} هستم. Kubernetes و KubeScope را به خوبی می‌شناسم. هر چه روی صفحه می‌بینید از من بپرسید، از من بخواهید مشکلی را بررسی کنم، یا بخواهید شما را به جایی در برنامه ببرم.",
             "Ignored an action: {why}": "یک کنش نادیده گرفته شد: {why}",
             "Read-only mode: nothing was changed. Turn on the write mode in Settings to allow {what}.": "حالت فقط‌خواندنی: چیزی تغییر نکرد. برای اجازه دادن به {what}، حالت نوشتن را در تنظیمات روشن کنید.",
             "Run": "اجرا",
@@ -89,9 +87,6 @@
             "Your credentials may have expired. Sign in again (for example “aws sso login”, “gcloud auth login” or “az login”) and refresh.": "ممکن است اعتبارنامه‌های شما منقضی شده باشند. دوباره وارد شوید (برای مثال «aws sso login»، «gcloud auth login» یا «az login») و تازه‌سازی کنید.",
             "Your kubeconfig runs “{tool}” to sign in, but it is not installed or not on the PATH. Install it and refresh.": "kubeconfig شما برای ورود «{tool}» را اجرا می‌کند، اما نصب نشده یا در PATH نیست. آن را نصب کنید و تازه‌سازی کنید.",
             "Your user is not allowed to read this resource.": "کاربر شما اجازه خواندن این منبع را ندارد."
-        },
-        "FloatingFrame": {
-            "Assistant": "دستیار"
         },
         "LogTab": {
             "Auto-refresh": "تازه‌سازی خودکار",

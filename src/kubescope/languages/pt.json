@@ -3,13 +3,11 @@
     "rtl": false,
     "strings": {
         "AssistantDock": {
-            "Ask the assistant": "Perguntar ao assistente",
-            "Assistant": "Assistente",
+            "Ask Gabi": "Pergunte à Gabi",
             "Clear history": "Limpar histórico",
             "Close": "Fechar"
         },
         "AssistantPanel": {
-            "Assistant": "Assistente",
             "Clear history": "Limpar histórico",
             "Close": "Fechar",
             "Open in a window of its own": "Abrir em janela própria",
@@ -19,11 +17,11 @@
             "(attached: {names})": "(anexados: {names})",
             "(read) {what}": "(leitura) {what}",
             "App": "App",
-            "Ask about the cluster or ask for an action...": "Pergunte sobre o cluster ou peça uma ação...",
-            "Assistant": "Assistente",
+            "Ask Gabi about the cluster or ask for an action...": "Pergunte à Gabi sobre o cluster ou peça uma ação...",
             "At most {count} files go with a question.": "No máximo {count} arquivos acompanham uma pergunta.",
             "Attach": "Anexar",
             "Cancel": "Cancelar",
+            "Hi, I'm {name}, from {company}. I know Kubernetes and KubeScope well. Ask me about what you see on the screen, ask me to look into a problem, or ask me to take you somewhere in the app.": "Olá, eu sou {name}, da {company}. Conheço bem o Kubernetes e o KubeScope. Pergunte-me sobre o que você vê na tela, peça que eu investigue um problema ou peça que eu leve você a algum lugar do app.",
             "Ignored an action: {why}": "Uma ação foi ignorada: {why}",
             "Read-only mode: nothing was changed. Turn on the write mode in Settings to allow {what}.": "Modo somente leitura: nada foi alterado. Ative o modo de escrita em Configurações para permitir {what}.",
             "Run": "Executar",
@@ -89,9 +87,6 @@
             "Your credentials may have expired. Sign in again (for example “aws sso login”, “gcloud auth login” or “az login”) and refresh.": "Suas credenciais podem ter expirado. Faça login novamente (por exemplo com “aws sso login”, “gcloud auth login” ou “az login”) e atualize.",
             "Your kubeconfig runs “{tool}” to sign in, but it is not installed or not on the PATH. Install it and refresh.": "Seu kubeconfig executa “{tool}” para autenticar, mas ela não está instalada ou não está no PATH. Instale-a e atualize.",
             "Your user is not allowed to read this resource.": "Seu usuário não tem permissão para ler este recurso."
-        },
-        "FloatingFrame": {
-            "Assistant": "Assistente"
         },
         "LogTab": {
             "Auto-refresh": "Atualizar automaticamente",

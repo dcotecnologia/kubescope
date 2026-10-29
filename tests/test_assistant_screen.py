@@ -185,3 +185,14 @@ def test_the_overview_of_the_workloads_gives_each_kind_and_the_events() -> None:
         {}, (EventInfo("Normal", "k", "", "Pod: x", "m", 1, "1s", "1s"),)
     )
     assert "in -:" in "\n".join(describe_workloads_overview(nameless))
+
+
+def test_the_assistant_is_gabi_of_dco_tecnologia_and_says_it_is_an_ai() -> None:
+    told = knowledge.system_prompt()
+
+    assert "Your name is Gabi" in told
+    assert "You work for DCO Tecnologia" in told
+    assert "expert in Kubernetes and in KubeScope" in told
+    assert "You are an AI assistant: say so if asked" in told
+    assert "do not claim to be anything else" in told
+    assert runner.NAME == "Gabi" and runner.COMPANY == "DCO Tecnologia"

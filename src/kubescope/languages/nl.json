@@ -3,13 +3,11 @@
     "rtl": false,
     "strings": {
         "AssistantDock": {
-            "Ask the assistant": "Vraag het de assistent",
-            "Assistant": "Assistent",
+            "Ask Gabi": "Vraag het Gabi",
             "Clear history": "Geschiedenis wissen",
             "Close": "Sluiten"
         },
         "AssistantPanel": {
-            "Assistant": "Assistent",
             "Clear history": "Geschiedenis wissen",
             "Close": "Sluiten",
             "Open in a window of its own": "Openen in een eigen venster",
@@ -19,11 +17,11 @@
             "(attached: {names})": "(bijgevoegd: {names})",
             "(read) {what}": "(gelezen) {what}",
             "App": "App",
-            "Ask about the cluster or ask for an action...": "Vraag iets over het cluster of vraag om een actie...",
-            "Assistant": "Assistent",
+            "Ask Gabi about the cluster or ask for an action...": "Vraag Gabi iets over het cluster of om een actie...",
             "At most {count} files go with a question.": "Bij een vraag kunnen maximaal {count} bestanden mee.",
             "Attach": "Bijvoegen",
             "Cancel": "Annuleren",
+            "Hi, I'm {name}, from {company}. I know Kubernetes and KubeScope well. Ask me about what you see on the screen, ask me to look into a problem, or ask me to take you somewhere in the app.": "Hallo, ik ben {name} van {company}. Ik ken Kubernetes en KubeScope goed. Vraag me gerust naar wat u op het scherm ziet, laat me een probleem onderzoeken, of vraag me u ergens naartoe te brengen in de app.",
             "Ignored an action: {why}": "Een actie genegeerd: {why}",
             "Read-only mode: nothing was changed. Turn on the write mode in Settings to allow {what}.": "Alleen-lezenmodus: er is niets gewijzigd. Schakel de schrijfmodus in bij Instellingen om {what} toe te staan.",
             "Run": "Uitvoeren",
@@ -89,9 +87,6 @@
             "Your credentials may have expired. Sign in again (for example “aws sso login”, “gcloud auth login” or “az login”) and refresh.": "Je inloggegevens zijn mogelijk verlopen. Meld je opnieuw aan (bijvoorbeeld met “aws sso login”, “gcloud auth login” of “az login”) en ververs.",
             "Your kubeconfig runs “{tool}” to sign in, but it is not installed or not on the PATH. Install it and refresh.": "Je kubeconfig voert “{tool}” uit om aan te melden, maar het is niet geïnstalleerd of niet in het PATH. Installeer het en ververs.",
             "Your user is not allowed to read this resource.": "Je gebruiker mag deze resource niet lezen."
-        },
-        "FloatingFrame": {
-            "Assistant": "Assistent"
         },
         "LogTab": {
             "Auto-refresh": "Automatisch verversen",

@@ -3,13 +3,11 @@
     "rtl": false,
     "strings": {
         "AssistantDock": {
-            "Ask the assistant": "ถามผู้ช่วย",
-            "Assistant": "ผู้ช่วย",
+            "Ask Gabi": "ถามกาบี",
             "Clear history": "ล้างประวัติ",
             "Close": "ปิด"
         },
         "AssistantPanel": {
-            "Assistant": "ผู้ช่วย",
             "Clear history": "ล้างประวัติ",
             "Close": "ปิด",
             "Open in a window of its own": "เปิดในหน้าต่างแยก",
@@ -19,11 +17,11 @@
             "(attached: {names})": "(แนบแล้ว: {names})",
             "(read) {what}": "(อ่าน) {what}",
             "App": "แอป",
-            "Ask about the cluster or ask for an action...": "ถามเกี่ยวกับคลัสเตอร์หรือขอให้ทำบางอย่าง...",
-            "Assistant": "ผู้ช่วย",
+            "Ask Gabi about the cluster or ask for an action...": "ถามกาบีเกี่ยวกับคลัสเตอร์ หรือขอให้ดำเนินการ...",
             "At most {count} files go with a question.": "แนบไฟล์ได้สูงสุด {count} ไฟล์ต่อหนึ่งคำถาม",
             "Attach": "แนบ",
             "Cancel": "ยกเลิก",
+            "Hi, I'm {name}, from {company}. I know Kubernetes and KubeScope well. Ask me about what you see on the screen, ask me to look into a problem, or ask me to take you somewhere in the app.": "สวัสดีค่ะ ฉันคือ {name} จาก {company} ฉันเชี่ยวชาญ Kubernetes และ KubeScope ถามฉันได้เลยเกี่ยวกับสิ่งที่คุณเห็นบนหน้าจอ ให้ฉันช่วยตรวจสอบปัญหา หรือให้ฉันพาไปยังส่วนต่าง ๆ ในแอปค่ะ",
             "Ignored an action: {why}": "ข้ามการกระทำหนึ่งรายการ: {why}",
             "Read-only mode: nothing was changed. Turn on the write mode in Settings to allow {what}.": "โหมดอ่านอย่างเดียว: ไม่มีการเปลี่ยนแปลงใด ๆ เปิดโหมดเขียนในการตั้งค่าเพื่ออนุญาต {what}",
             "Run": "เรียกใช้",
@@ -89,9 +87,6 @@
             "Your credentials may have expired. Sign in again (for example “aws sso login”, “gcloud auth login” or “az login”) and refresh.": "ข้อมูลรับรองของคุณอาจหมดอายุ ลงชื่อเข้าใช้อีกครั้ง (เช่น “aws sso login”, “gcloud auth login” หรือ “az login”) แล้วรีเฟรช",
             "Your kubeconfig runs “{tool}” to sign in, but it is not installed or not on the PATH. Install it and refresh.": "kubeconfig ของคุณเรียกใช้ “{tool}” เพื่อลงชื่อเข้าใช้ แต่ยังไม่ได้ติดตั้งหรือไม่อยู่ใน PATH ติดตั้งแล้วรีเฟรช",
             "Your user is not allowed to read this resource.": "ผู้ใช้ของคุณไม่ได้รับอนุญาตให้อ่านทรัพยากรนี้"
-        },
-        "FloatingFrame": {
-            "Assistant": "ผู้ช่วย"
         },
         "LogTab": {
             "Auto-refresh": "รีเฟรชอัตโนมัติ",
