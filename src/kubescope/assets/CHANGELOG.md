@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+## [1.3.0-rc3] - 2026-10-29
+
 ### Changed
 
 - The **Light** theme is gray instead of white: the page, the side menu, the tables and the fields use soft grays with firmer borders, and the quiet texts are a step stronger to read on them by @danilogco
@@ -415,7 +417,8 @@ The first release.
 
 - Pod logs and resource details are still never written to disk by the app on its own. **Save** is the only exception, and it writes only to the file the user chooses. SECURITY.md says so by @danilogco
 
-[Unreleased]: https://github.com/dcotecnologia/kubescope/compare/v1.3.0-rc2...HEAD
+[Unreleased]: https://github.com/dcotecnologia/kubescope/compare/v1.3.0-rc3...HEAD
+[1.3.0-rc3]: https://github.com/dcotecnologia/kubescope/compare/v1.3.0-rc2...v1.3.0-rc3
 [1.3.0-rc2]: https://github.com/dcotecnologia/kubescope/compare/v1.3.0-rc1...v1.3.0-rc2
 [1.3.0-rc1]: https://github.com/dcotecnologia/kubescope/compare/v1.2.0...v1.3.0-rc1
 [1.2.0]: https://github.com/dcotecnologia/kubescope/compare/v1.1.1...v1.2.0
