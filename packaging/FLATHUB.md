@@ -15,9 +15,9 @@ point to check and to rewrite by hand, not text to send.
 
 ## Before it is opened
 
-- The release tag exists on GitHub (for example `v1.1.0`). Flathub builds from it.
+- The release tag exists on GitHub (for example `v1.2.0`). Flathub builds from it.
 - The git source of `packaging/flatpak/com.dcotecnologia.KubeScope.yml` names that tag
-  and the commit it points at (`git rev-parse v1.1.0^{}`; the commit, not the tag
+  and the commit it points at (`git rev-parse v1.2.0^{}`; the commit, not the tag
   object).
 - The manifest was reviewed by hand, including the permissions in `finish-args`. The ones
   that reviewers question, and why the app has them, are in [SECURITY.md](../SECURITY.md).
