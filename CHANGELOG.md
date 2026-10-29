@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+### Added
+
+- The **Assistant**: a chat in the corner of the window, laid out like a phone chat, that asks a coding assistant of your computer (Claude Code for now) about the cluster. It sees what you see (the list, the selected row, the open Details or Logs, the numbers of the overviews and the open tabs), reads details, logs, lists and events to look into a problem, answers in the language of the app, and can change the window as you would: go to a list, a page, a tab or the logs of a Pod. A change to the cluster is only a card with **Run**, available with the write mode on. You can attach images and text files, resize the panel, take it out into a window of its own, and the conversations are kept for each context, without the data that was read. It starts off until you open it and agree, and **Settings** turns it off by @danilogco
+- Windows, dialogs and lists rise into place as they first show, and **Settings** can turn it off by @danilogco
+- When GitHub limits the update checks, the footer says when to try again by @danilogco
+
+### Changed
+
+- The update check no longer asks GitHub again when the app starts within an hour of finding that it is up to date, so it spends less of the limit GitHub gives an address by @danilogco
+
 ## [1.2.0] - 2026-10-29
 
 ### Added
