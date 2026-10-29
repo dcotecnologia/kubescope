@@ -631,3 +631,32 @@ def test_a_conversation_that_comes_from_the_history_has_no_greeting() -> None:
 
     assert not tab.welcome.isVisible()
     tab.close()
+
+
+def test_the_worker_of_an_answer_hands_over_each_piece_and_each_failure(
+    replies,
+) -> None:
+    queue, _prompts = replies
+    queue.append(["one ", "two"])
+    queue.append(AssistantError("Not logged in"))
+    pieces: list[str] = []
+    failures: list[str] = []
+
+    for _ in range(2):
+        worker = AnswerWorker(ChatSession(FAKE), "why?")
+        worker.piece.connect(pieces.append)
+        worker.failed.connect(failures.append)
+        worker.run()  # in this thread, which is the one that is measured
+
+    assert pieces == ["one ", "two"]
+    assert failures == ["Not logged in"]
+
+
+def test_the_worker_of_a_read_hands_over_what_was_read() -> None:
+    worker = ReadWorker(lambda: "the document")
+    done: list[str] = []
+    worker.done.connect(done.append)
+
+    worker.run()
+
+    assert done == ["the document"]
