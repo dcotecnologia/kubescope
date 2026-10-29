@@ -633,13 +633,13 @@ QPushButton#updateButton:hover { background: #f6f6fa; }
        <widget class="QFrame" name="sidebar">
         <property name="minimumSize">
          <size>
-          <width>320</width>
+          <width>240</width>
           <height>0</height>
          </size>
         </property>
         <property name="maximumSize">
          <size>
-          <width>320</width>
+          <width>240</width>
           <height>16777215</height>
          </size>
         </property>
@@ -673,7 +673,7 @@ QPushButton#updateButton:hover { background: #f6f6fa; }
            <widget class="QWidget" name="sidebarNav">
             <layout class="QVBoxLayout" name="sidebarNavLayout">
              <property name="spacing">
-              <number>2</number>
+              <number>0</number>
              </property>
              <property name="leftMargin">
               <number>0</number>
@@ -702,7 +702,7 @@ QPushButton#updateButton:hover { background: #f6f6fa; }
                <property name="minimumSize">
                 <size>
                  <width>0</width>
-                 <height>30</height>
+                 <height>24</height>
                 </size>
                </property>
                <property name="iconSize">
@@ -733,7 +733,7 @@ QPushButton#updateButton:hover { background: #f6f6fa; }
                <property name="minimumSize">
                 <size>
                  <width>0</width>
-                 <height>30</height>
+                 <height>24</height>
                 </size>
                </property>
                <property name="iconSize">
@@ -764,7 +764,7 @@ QPushButton#updateButton:hover { background: #f6f6fa; }
                <property name="minimumSize">
                 <size>
                  <width>0</width>
-                 <height>30</height>
+                 <height>24</height>
                 </size>
                </property>
                <property name="iconSize">
@@ -795,7 +795,7 @@ QPushButton#updateButton:hover { background: #f6f6fa; }
                <property name="minimumSize">
                 <size>
                  <width>0</width>
-                 <height>30</height>
+                 <height>24</height>
                 </size>
                </property>
                <property name="iconSize">
@@ -847,7 +847,7 @@ QPushButton#updateButton:hover { background: #f6f6fa; }
                     <property name="minimumSize">
                      <size>
                       <width>0</width>
-                      <height>28</height>
+                      <height>22</height>
                      </size>
                     </property>
                     <property name="iconSize">
@@ -878,7 +878,7 @@ QPushButton#updateButton:hover { background: #f6f6fa; }
                     <property name="minimumSize">
                      <size>
                       <width>0</width>
-                      <height>28</height>
+                      <height>22</height>
                      </size>
                     </property>
                     <property name="iconSize">
@@ -909,7 +909,7 @@ QPushButton#updateButton:hover { background: #f6f6fa; }
                     <property name="minimumSize">
                      <size>
                       <width>0</width>
-                      <height>28</height>
+                      <height>22</height>
                      </size>
                     </property>
                     <property name="iconSize">
@@ -940,7 +940,7 @@ QPushButton#updateButton:hover { background: #f6f6fa; }
                     <property name="minimumSize">
                      <size>
                       <width>0</width>
-                      <height>28</height>
+                      <height>22</height>
                      </size>
                     </property>
                     <property name="iconSize">
@@ -971,7 +971,7 @@ QPushButton#updateButton:hover { background: #f6f6fa; }
                     <property name="minimumSize">
                      <size>
                       <width>0</width>
-                      <height>28</height>
+                      <height>22</height>
                      </size>
                     </property>
                     <property name="iconSize">
@@ -1002,7 +1002,7 @@ QPushButton#updateButton:hover { background: #f6f6fa; }
                     <property name="minimumSize">
                      <size>
                       <width>0</width>
-                      <height>28</height>
+                      <height>22</height>
                      </size>
                     </property>
                     <property name="iconSize">
@@ -1033,7 +1033,7 @@ QPushButton#updateButton:hover { background: #f6f6fa; }
                     <property name="minimumSize">
                      <size>
                       <width>0</width>
-                      <height>28</height>
+                      <height>22</height>
                      </size>
                     </property>
                     <property name="iconSize">
@@ -1064,7 +1064,7 @@ QPushButton#updateButton:hover { background: #f6f6fa; }
                     <property name="minimumSize">
                      <size>
                       <width>0</width>
-                      <height>28</height>
+                      <height>22</height>
                      </size>
                     </property>
                     <property name="iconSize">
@@ -1095,7 +1095,7 @@ QPushButton#updateButton:hover { background: #f6f6fa; }
                     <property name="minimumSize">
                      <size>
                       <width>0</width>
-                      <height>28</height>
+                      <height>22</height>
                      </size>
                     </property>
                     <property name="iconSize">
@@ -1129,7 +1129,7 @@ QPushButton#updateButton:hover { background: #f6f6fa; }
                <property name="minimumSize">
                 <size>
                  <width>0</width>
-                 <height>30</height>
+                 <height>24</height>
                 </size>
                </property>
                <property name="iconSize">
@@ -1181,7 +1181,7 @@ QPushButton#updateButton:hover { background: #f6f6fa; }
                     <property name="minimumSize">
                      <size>
                       <width>0</width>
-                      <height>28</height>
+                      <height>22</height>
                      </size>
                     </property>
                     <property name="iconSize">
@@ -1212,7 +1212,7 @@ QPushButton#updateButton:hover { background: #f6f6fa; }
                     <property name="minimumSize">
                      <size>
                       <width>0</width>
-                      <height>28</height>
+                      <height>22</height>
                      </size>
                     </property>
                     <property name="iconSize">
@@ -1243,7 +1243,7 @@ QPushButton#updateButton:hover { background: #f6f6fa; }
                     <property name="minimumSize">
                      <size>
                       <width>0</width>
-                      <height>28</height>
+                      <height>22</height>
                      </size>
                     </property>
                     <property name="iconSize">
@@ -1274,7 +1274,7 @@ QPushButton#updateButton:hover { background: #f6f6fa; }
                     <property name="minimumSize">
                      <size>
                       <width>0</width>
-                      <height>28</height>
+                      <height>22</height>
                      </size>
                     </property>
                     <property name="iconSize">
@@ -1305,7 +1305,7 @@ QPushButton#updateButton:hover { background: #f6f6fa; }
                     <property name="minimumSize">
                      <size>
                       <width>0</width>
-                      <height>28</height>
+                      <height>22</height>
                      </size>
                     </property>
                     <property name="iconSize">
@@ -1336,7 +1336,7 @@ QPushButton#updateButton:hover { background: #f6f6fa; }
                     <property name="minimumSize">
                      <size>
                       <width>0</width>
-                      <height>28</height>
+                      <height>22</height>
                      </size>
                     </property>
                     <property name="iconSize">
@@ -1370,7 +1370,7 @@ QPushButton#updateButton:hover { background: #f6f6fa; }
                <property name="minimumSize">
                 <size>
                  <width>0</width>
-                 <height>30</height>
+                 <height>24</height>
                 </size>
                </property>
                <property name="iconSize">
@@ -1422,7 +1422,7 @@ QPushButton#updateButton:hover { background: #f6f6fa; }
                     <property name="minimumSize">
                      <size>
                       <width>0</width>
-                      <height>28</height>
+                      <height>22</height>
                      </size>
                     </property>
                     <property name="iconSize">
@@ -1453,7 +1453,7 @@ QPushButton#updateButton:hover { background: #f6f6fa; }
                     <property name="minimumSize">
                      <size>
                       <width>0</width>
-                      <height>28</height>
+                      <height>22</height>
                      </size>
                     </property>
                     <property name="iconSize">
@@ -1484,7 +1484,7 @@ QPushButton#updateButton:hover { background: #f6f6fa; }
                     <property name="minimumSize">
                      <size>
                       <width>0</width>
-                      <height>28</height>
+                      <height>22</height>
                      </size>
                     </property>
                     <property name="iconSize">
@@ -1515,7 +1515,7 @@ QPushButton#updateButton:hover { background: #f6f6fa; }
                     <property name="minimumSize">
                      <size>
                       <width>0</width>
-                      <height>28</height>
+                      <height>22</height>
                      </size>
                     </property>
                     <property name="iconSize">
@@ -1546,7 +1546,7 @@ QPushButton#updateButton:hover { background: #f6f6fa; }
                     <property name="minimumSize">
                      <size>
                       <width>0</width>
-                      <height>28</height>
+                      <height>22</height>
                      </size>
                     </property>
                     <property name="iconSize">
@@ -1577,7 +1577,7 @@ QPushButton#updateButton:hover { background: #f6f6fa; }
                     <property name="minimumSize">
                      <size>
                       <width>0</width>
-                      <height>28</height>
+                      <height>22</height>
                      </size>
                     </property>
                     <property name="iconSize">
@@ -1608,7 +1608,7 @@ QPushButton#updateButton:hover { background: #f6f6fa; }
                     <property name="minimumSize">
                      <size>
                       <width>0</width>
-                      <height>28</height>
+                      <height>22</height>
                      </size>
                     </property>
                     <property name="iconSize">
@@ -1639,7 +1639,7 @@ QPushButton#updateButton:hover { background: #f6f6fa; }
                     <property name="minimumSize">
                      <size>
                       <width>0</width>
-                      <height>28</height>
+                      <height>22</height>
                      </size>
                     </property>
                     <property name="iconSize">
@@ -1670,7 +1670,7 @@ QPushButton#updateButton:hover { background: #f6f6fa; }
                     <property name="minimumSize">
                      <size>
                       <width>0</width>
-                      <height>28</height>
+                      <height>22</height>
                      </size>
                     </property>
                     <property name="iconSize">
@@ -1701,7 +1701,7 @@ QPushButton#updateButton:hover { background: #f6f6fa; }
                     <property name="minimumSize">
                      <size>
                       <width>0</width>
-                      <height>28</height>
+                      <height>22</height>
                      </size>
                     </property>
                     <property name="iconSize">
@@ -1732,7 +1732,7 @@ QPushButton#updateButton:hover { background: #f6f6fa; }
                     <property name="minimumSize">
                      <size>
                       <width>0</width>
-                      <height>28</height>
+                      <height>22</height>
                      </size>
                     </property>
                     <property name="iconSize">
@@ -1763,7 +1763,7 @@ QPushButton#updateButton:hover { background: #f6f6fa; }
                     <property name="minimumSize">
                      <size>
                       <width>0</width>
-                      <height>28</height>
+                      <height>22</height>
                      </size>
                     </property>
                     <property name="iconSize">

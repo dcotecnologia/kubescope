@@ -418,3 +418,36 @@ def test_the_paths_of_the_assistant_programs_keep_only_names_and_paths(
     assert Settings(path).assistant_programs == {"codex": "/x/codex"}
     path.write_text('{"assistant_programs": ["claude"]}', encoding="utf-8")
     assert Settings(path).assistant_programs == {}
+
+
+def test_the_width_the_person_gave_the_side_menu_is_kept_when_it_makes_sense(
+    tmp_path,
+) -> None:
+    path = tmp_path / "settings.json"
+    settings = Settings(path)
+    assert settings.sidebar_width == 0  # none given: the usual width
+
+    settings.sidebar_width = 410
+    settings.save()
+    assert Settings(path).sidebar_width == 410
+
+    for stored in ("12", "99999", '"wide"', "true", "null"):
+        path.write_text(f'{{"sidebar_width": {stored}}}', encoding="utf-8")
+        assert Settings(path).sidebar_width == 0
+
+
+def test_the_sections_of_the_menu_the_person_closed_are_kept(tmp_path) -> None:
+    path = tmp_path / "settings.json"
+    settings = Settings(path)
+    assert settings.menu_collapsed == []  # all open
+
+    settings.menu_collapsed = ["config", "workloads"]
+    settings.save()
+    assert Settings(path).menu_collapsed == ["config", "workloads"]
+
+    path.write_text(
+        '{"menu_collapsed": ["network", "other", 3, "network"]}', encoding="utf-8"
+    )
+    assert Settings(path).menu_collapsed == ["network"]
+    path.write_text('{"menu_collapsed": "config"}', encoding="utf-8")
+    assert Settings(path).menu_collapsed == []

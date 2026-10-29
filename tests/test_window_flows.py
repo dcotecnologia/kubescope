@@ -1948,10 +1948,7 @@ def test_the_config_menu_opens_and_lists_every_entry(monkeypatch) -> None:
     window = _resource_window(monkeypatch)
     assert not window.nav_config.isCheckable()
 
-    window._toggle_submenu(window.config_submenu)
-    window._submenus[window.config_submenu].stop()
-
-    assert window._submenus[window.config_submenu].endValue() > 0
+    assert window.config_submenu.maximumHeight() > 0  # open from the start
     for view in set(CONFIG_VIEWS) - {"nodegroups"}:
         assert window._nav_views[view].parent() is window.config_submenu
     assert window._nav_views["nodegroups"].parent() is not window.config_submenu
@@ -2030,17 +2027,17 @@ def test_the_two_menus_open_and_close_independently(monkeypatch) -> None:
         for animation in window._submenus.values():
             animation.setCurrentTime(animation.duration())
 
-    window.nav_workloads.click()
-    settle()
-    window.nav_network.click()  # opening Network leaves Workloads open
-    settle()
-    assert window.submenu.maximumHeight() > 0
+    assert window.submenu.maximumHeight() > 0  # both start open
     assert window.network_submenu.maximumHeight() > 0
 
     window.nav_workloads.click()
     settle()
-    assert window.submenu.maximumHeight() == 0
+    assert window.submenu.maximumHeight() == 0  # closing one leaves the other
     assert window.network_submenu.maximumHeight() > 0
+
+    window.nav_workloads.click()
+    settle()
+    assert window.submenu.maximumHeight() > 0
     window.close()
 
 
@@ -2048,11 +2045,7 @@ def test_the_menu_scrolls_when_both_lists_do_not_fit(monkeypatch) -> None:
     window = _resource_window(monkeypatch)
     window.resize(1100, 520)
     window.show()
-    window.nav_workloads.click()
-    window.nav_network.click()
-    for animation in window._submenus.values():
-        animation.setCurrentTime(animation.duration())
-    application.processEvents()
+    application.processEvents()  # both menus are open from the start
 
     scroll = window.ui.sidebarScroll
     assert scroll.verticalScrollBar().maximum() > 0  # more menu than room

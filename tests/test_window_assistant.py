@@ -2,16 +2,25 @@ import os
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
+import pytest
 from PySide6.QtWidgets import QMessageBox
 
 from kubescope import window as window_module
 from kubescope.assistant import actions
 from kubescope.assistant.runner import Assistant
+from kubescope.i18n import apply_language
 from kubescope.views.assistant_tab import AssistantTab
 from tests.test_window_flows import _ready_window
 
 ONE = Assistant("one", "One", "one-ai", lambda m, s: [], lambda line: ("", ""))
 TWO = Assistant("two", "Two", "two-ai", lambda m, s: [], lambda line: ("", ""))
+
+
+@pytest.fixture(autouse=True)
+def english_again():
+    """A test that changes the language of the app leaves English behind."""
+    yield
+    apply_language("en")
 
 
 def _request(action: str, **args) -> actions.Request:
@@ -622,3 +631,93 @@ def test_the_assistant_is_told_the_mode_and_follows_it_when_it_changes(
     assert "READ-ONLY mode" in tab.session.system
     assert "- delete [" not in tab.session.system
     window.close()
+
+
+def test_the_corner_of_the_footer_is_left_to_the_button_of_the_assistant(
+    monkeypatch,
+) -> None:
+    from kubescope.views.assistant_panel import BUBBLE, MARGIN
+
+    window, _messages = _open(monkeypatch)
+    footer = window.ui.footerRow
+    links = window.ui.appFooterLayout
+    original = {
+        footer: footer.contentsMargins().right(),
+        links: links.contentsMargins().right(),
+    }
+    room = BUBBLE + MARGIN
+    assert footer.contentsMargins().right() == original[footer]  # on: room was made
+    window._load_settings_form()
+    window.settings_ui.assistantCheck.setChecked(False)
+    window._save_preferences()
+    assert footer.contentsMargins().right() == original[footer] - room
+    assert links.contentsMargins().right() == original[links] - room
+
+    window.settings_ui.assistantCheck.setChecked(True)
+    window._save_preferences()
+    assert footer.contentsMargins().right() == original[footer]
+    assert links.contentsMargins().right() == original[links]
+    window.close()
+
+
+def test_the_side_menu_width_is_read_at_the_start_and_written_when_it_changes(
+    monkeypatch,
+) -> None:
+    from kubescope.settings import Settings
+
+    saved = Settings()
+    saved.sidebar_width = 400
+    saved.save()
+    window, _messages = _open(monkeypatch)
+    assert window.ui.sidebar.maximumWidth() == 400
+
+    window.sidebar_resizer.set_width(250)
+    window.sidebar_resizer.width_changed.emit(250)
+    assert Settings().sidebar_width == 250
+
+    window.sidebar_resizer.width_changed.emit(window_module.SIDEBAR_WIDTH)
+    assert Settings().sidebar_width == 0  # the usual width is kept as none
+    window.close()
+
+
+def test_the_side_menu_starts_240_wide_and_goes_back_to_it(monkeypatch) -> None:
+    window, _messages = _open(monkeypatch)
+
+    assert window_module.SIDEBAR_WIDTH == 240
+    assert window.ui.sidebar.maximumWidth() == 240
+
+    window.sidebar_resizer.set_width(400)
+    window.sidebar_resizer.grip.reset.emit()
+    assert window.ui.sidebar.maximumWidth() == 240
+    window.close()
+
+
+def test_every_section_of_the_menu_starts_open_and_what_is_closed_is_kept(
+    monkeypatch,
+) -> None:
+    from kubescope.settings import Settings
+
+    window, _messages = _open(monkeypatch)
+    sections = (window.submenu, window.network_submenu, window.config_submenu)
+    assert all(section.maximumHeight() > 0 for section in sections)
+    assert Settings().menu_collapsed == []
+
+    window.nav_network.click()  # close Network
+    window._submenus[window.network_submenu].setCurrentTime(
+        window._submenus[window.network_submenu].duration()
+    )
+    assert window.network_submenu.maximumHeight() == 0
+    assert Settings().menu_collapsed == ["network"]
+
+    window.nav_config.click()
+    assert Settings().menu_collapsed == ["config", "network"]
+    window.nav_network.click()  # open it again
+    assert Settings().menu_collapsed == ["config"]
+    window.close()
+
+    again, _messages = _open(monkeypatch)  # the next run: Config is still closed
+    assert again.config_submenu.maximumHeight() == 0
+    assert (
+        again.submenu.maximumHeight() > 0 and again.network_submenu.maximumHeight() > 0
+    )
+    again.close()

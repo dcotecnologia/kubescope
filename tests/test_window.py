@@ -677,21 +677,23 @@ def test_pods_menu_lists_pods_and_deployments_menu_lists_deployments(
     window.close()
 
 
-def test_workloads_menu_slides_open_the_pods_and_deployments_entries(
+def test_workloads_menu_starts_open_and_slides_shut_and_open_again(
     monkeypatch,
 ) -> None:
     monkeypatch.setattr(window_module, "list_contexts", lambda: ([], None))
     window = window_module.WorkloadWindow()
-    assert window.submenu.maximumHeight() == 0
+    assert window.submenu.maximumHeight() > 0  # every section starts open
 
     window.nav_workloads.click()
     animation = window._submenus[window.submenu]
+    assert animation.endValue() == 0
+    animation.setCurrentTime(animation.duration())
+    assert window.submenu.maximumHeight() == 0
+
+    window.nav_workloads.click()
     assert animation.endValue() > 0
     animation.setCurrentTime(animation.duration())
     assert window.submenu.maximumHeight() == animation.endValue()
-
-    window.nav_workloads.click()
-    assert animation.endValue() == 0
     window.close()
 
 
