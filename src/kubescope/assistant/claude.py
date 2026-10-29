@@ -66,6 +66,20 @@ def parse_line(line: str) -> tuple[str, str]:
     return (text if isinstance(text, str) else ""), ""
 
 
+def guide(language: str) -> str:
+    """The quickstart of Claude Code, in Portuguese or English."""
+    return (
+        f"https://code.claude.com/docs/{'pt' if language == 'pt' else 'en'}/quickstart"
+    )
+
+
 CLAUDE = Assistant(
-    "claude", "Claude", "claude", options, parse_line, image_options, image_payload
+    "claude",
+    "Claude Code",
+    "claude",
+    options,
+    parse_line,
+    image_options,
+    image_payload,
+    guide=guide,
 )
