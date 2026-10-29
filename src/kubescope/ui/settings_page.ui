@@ -474,6 +474,34 @@
            </widget>
           </item>
           <item>
+           <widget class="QLabel" name="assistantPathsLabel">
+            <property name="text">
+             <string>Where the programs are, when the system does not find them</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QWidget" name="assistantPathsHost">
+            <layout class="QVBoxLayout" name="assistantPathsLayout">
+             <property name="spacing">
+              <number>6</number>
+             </property>
+             <property name="leftMargin">
+              <number>0</number>
+             </property>
+             <property name="topMargin">
+              <number>0</number>
+             </property>
+             <property name="rightMargin">
+              <number>0</number>
+             </property>
+             <property name="bottomMargin">
+              <number>0</number>
+             </property>
+            </layout>
+           </widget>
+          </item>
+          <item>
            <widget class="QLabel" name="assistantHint">
             <property name="text">
              <string>The assistant uses the client that is already installed on this computer, such as Claude Code or Codex, signed in the way you already are. KubeScope asks you for no credentials and stores none: the sign-in stays with that program. What you ask, attach and what it reads from the cluster go to that program and to its service. The conversations are kept on this computer, without the documents and logs that were read.</string>

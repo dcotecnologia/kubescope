@@ -398,3 +398,23 @@ def test_the_state_of_the_chat_panel_keeps_only_what_can_be_read(tmp_path) -> No
         encoding="utf-8",
     )
     assert Settings(path).assistant_panel == {}
+
+
+def test_the_paths_of_the_assistant_programs_keep_only_names_and_paths(
+    tmp_path,
+) -> None:
+    path = tmp_path / "settings.json"
+    settings = Settings(path)
+    assert settings.assistant_programs == {}
+
+    settings.assistant_programs = {"claude": "/opt/claude/bin/claude"}
+    settings.save()
+    assert Settings(path).assistant_programs == {"claude": "/opt/claude/bin/claude"}
+
+    path.write_text(
+        '{"assistant_programs": {"codex": " /x/codex ", "": "/y", "a": "", "b": 3}}',
+        encoding="utf-8",
+    )
+    assert Settings(path).assistant_programs == {"codex": "/x/codex"}
+    path.write_text('{"assistant_programs": ["claude"]}', encoding="utf-8")
+    assert Settings(path).assistant_programs == {}
