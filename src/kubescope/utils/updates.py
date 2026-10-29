@@ -24,6 +24,10 @@ logger = logging.getLogger(__name__)
 API_URL = "https://api.github.com/repos/dcotecnologia/kubescope"
 TIMEOUT = 10  # seconds
 _VERSION = re.compile(r"v?(\d+)\.(\d+)\.(\d+)")
+# 1.3.0rc1, 1.3.0-rc.1, 1.3.0a2, 1.3.0-beta1: the version being built, not a release
+_PRE_RELEASE = re.compile(
+    r"v?(\d+)\.(\d+)\.(\d+)[-.]?(?:a|alpha|b|beta|rc|dev)[-.]?\d*"
+)
 _DIGEST = re.compile(r"sha256:([0-9a-f]{64})")
 MAX_NOTES = 20000  # characters of release notes kept
 
@@ -51,6 +55,35 @@ def parse_version(text: str) -> tuple[int, int, int] | None:
         return None
     major, minor, patch = (int(part) for part in found.groups())
     return major, minor, patch
+
+
+def installed_version(text: str) -> tuple[int, int, int] | None:
+    """The version of the running app as numbers.
+
+    A pre-release (alpha, beta or release candidate) counts as just
+    before its own release, so it is told about that release when it
+    comes, and never about an older one.
+    """
+    stable = parse_version(text)
+    if stable is not None:
+        return stable
+    found = _PRE_RELEASE.fullmatch(text.strip())
+    if found is None:
+        return None
+    major, minor, patch = (int(part) for part in found.groups())
+    return major, minor, patch - 1
+
+
+def _stable(release: object) -> bool:
+    """Whether GitHub describes a release of a plain version: not a draft, not
+    marked as a pre-release and not tagged as one (v1.3.0-rc1)."""
+    return (
+        isinstance(release, dict)
+        and not release.get("draft")
+        and not release.get("prerelease")
+        and isinstance(release.get("tag_name"), str)
+        and parse_version(release["tag_name"]) is not None
+    )
 
 
 def _get(path: str) -> Any:
@@ -134,11 +167,26 @@ def release_of(version: str) -> Release | None:
 
 
 def latest_release() -> Release | None:
-    """The newest published release; when the project has none, the highest
+    """The newest stable release; when the project has none, the highest
     version among its tags."""
     latest = _get("/releases/latest")
     if isinstance(latest, dict) and isinstance(latest.get("tag_name"), str):
-        return _published(latest)
+        if _stable(latest):
+            return _published(latest)
+        # the newest release is an alpha, a beta or a release candidate, which the
+        # app never updates to: look for the newest stable one among the releases
+        listed = _get("/releases?per_page=30")
+        stable = (
+            [item for item in listed if _stable(item)]
+            if isinstance(listed, list)
+            else []
+        )
+        newest = max(
+            stable,
+            key=lambda item: parse_version(item["tag_name"]) or (0, 0, 0),
+            default=None,
+        )
+        return _published(newest) if newest is not None else None
     tags = [
         tag["name"]
         for tag in _get("/tags")
@@ -177,7 +225,7 @@ def check_for_update(current: str = __version__) -> UpdateCheck:
     A source tree that was never installed has no version to compare, so
     it counts as current.
     """
-    installed = parse_version(current)
+    installed = installed_version(current)
     try:
         release = latest_release()
     except (OSError, ValueError) as error:  # offline, rate limited, bad answer
