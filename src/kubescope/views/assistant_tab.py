@@ -1,6 +1,8 @@
 from collections.abc import Callable, Sequence
+from datetime import datetime
 
-from PySide6.QtCore import Qt, QThread, Signal
+from PySide6.QtCore import QPointF, Qt, QThread, Signal
+from PySide6.QtGui import QColor, QPainter, QPen
 from PySide6.QtWidgets import (
     QFrame,
     QHBoxLayout,
@@ -17,6 +19,7 @@ from kubescope.assistant.actions import Invalid, Request
 from kubescope.assistant.history import Entry
 from kubescope.assistant.runner import AssistantError
 from kubescope.assistant.session import ChatSession, Message
+from kubescope.views.chat_icons import attach_icon, mic_icon, send_icon, stop_icon
 
 SHUTDOWN_WAIT_MS = 3000
 MAX_FOLLOW_UPS = 5  # reads the assistant may ask for after one question
@@ -24,6 +27,39 @@ BUBBLE_WIDTH = 0.82  # of the width of the conversation
 # the colors of a chat, light and dark: background, own bubble, other bubble, text
 _LIGHT = ("#efeae2", "#d9fdd3", "#ffffff", "#111b21", "#667781")
 _DARK = ("#0b141a", "#005c4b", "#202c33", "#e9edef", "#8696a0")
+_TICK = "#53bdeb"  # the blue of a message that was read
+_SEND = "#00a884"  # the green of the send button
+DOODLE = 56  # the size of a tile of the pattern behind the messages
+
+
+class ChatBackground(QWidget):
+    """The wall behind the messages: a plain color with a faint pattern, like a
+    chat of a phone."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.color = QColor(_LIGHT[0])
+        self.ink = QColor(_LIGHT[4])
+
+    def paintEvent(self, event) -> None:
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        painter.fillRect(self.rect(), self.color)
+        faint = QColor(self.ink)
+        faint.setAlpha(26)
+        painter.setPen(QPen(faint, 1.4))
+        for row in range(0, self.height() // DOODLE + 1):
+            for column in range(0, self.width() // DOODLE + 1):
+                x = column * DOODLE + (DOODLE // 2 if row % 2 else 0)
+                y = row * DOODLE
+                shape = (row + column) % 3
+                if shape == 0:
+                    painter.drawEllipse(QPointF(x + 14, y + 14), 5, 5)
+                elif shape == 1:
+                    painter.drawLine(QPointF(x + 8, y + 14), QPointF(x + 20, y + 14))
+                    painter.drawLine(QPointF(x + 14, y + 8), QPointF(x + 14, y + 20))
+                else:
+                    painter.drawRect(int(x + 9), int(y + 9), 10, 10)
 
 
 class AnswerWorker(QThread):
@@ -109,7 +145,7 @@ class AssistantTab(QWidget):
         self.thread_scroll = QScrollArea()
         self.thread_scroll.setWidgetResizable(True)
         self.thread_scroll.setFrameShape(QFrame.Shape.NoFrame)
-        self.thread_view = QWidget()
+        self.thread_view = ChatBackground()
         self.thread_layout = QVBoxLayout(self.thread_view)
         self.thread_layout.addStretch(1)
         self.thread_scroll.setWidget(self.thread_view)
@@ -118,35 +154,68 @@ class AssistantTab(QWidget):
         bar.valueChanged.connect(self._scrolled)
         self.cards = QVBoxLayout()
         self.input = QPlainTextEdit()
-        self.input.setMaximumHeight(70)
+        self.input.setObjectName("assistantInput")
+        self.input.setMaximumHeight(72)
+        self.input.setMinimumHeight(40)
         self.input.setPlaceholderText(
             self.tr("Ask about the cluster or ask for an action...")
         )
-        self.send_button = QPushButton(self.tr("Send"))
-        self.stop_button = QPushButton(self.tr("Stop"))
+        self.send_button = self._round_button(send_icon(), self.tr("Send"), _SEND)
+        self.stop_button = self._round_button(stop_icon(), self.tr("Stop"), "#d64545")
         self.stop_button.setEnabled(False)
+        self.stop_button.hide()
+        self.attach_button = self._round_button(
+            attach_icon(), self.tr("Attach"), "transparent"
+        )
+        self.mic_button = self._round_button(
+            mic_icon(), self.tr("Record a voice message"), "transparent"
+        )
         self.status = QLabel("")
+        self.status.hide()
         self.send_button.clicked.connect(self.submit)
         self.stop_button.clicked.connect(self.stop)
 
-        buttons = QVBoxLayout()
-        buttons.addWidget(self.send_button)
-        buttons.addWidget(self.stop_button)
+        composer = QFrame()
+        composer.setObjectName("assistantComposer")
+        bar = QVBoxLayout(composer)
+        bar.setContentsMargins(8, 6, 8, 8)
+        bar.setSpacing(6)
         row = QHBoxLayout()
+        row.setSpacing(6)
+        row.addWidget(self.attach_button, 0, Qt.AlignmentFlag.AlignBottom)
         row.addWidget(self.input, 1)
-        row.addLayout(buttons)
+        row.addWidget(self.mic_button, 0, Qt.AlignmentFlag.AlignBottom)
+        row.addWidget(self.send_button, 0, Qt.AlignmentFlag.AlignBottom)
+        row.addWidget(self.stop_button, 0, Qt.AlignmentFlag.AlignBottom)
+        self.status.setWordWrap(True)
+        self.cards.setSpacing(6)
+        bar.addLayout(self.cards)
+        bar.addWidget(self.status)
+        bar.addLayout(row)
+        self.composer = composer
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 8)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
         layout.addWidget(self.thread_scroll, 1)
-        layout.addLayout(self.cards)
-        layout.addWidget(self.status)
-        layout.addLayout(row)
+        layout.addWidget(composer)
         self._restyle_thread()
         for role, text in history:
             self._entries.append((role, text))
             self._add_bubble(role, text)
             if role in ("user", "assistant"):
                 self.session.messages.append(Message(role, text))  # type: ignore[arg-type]
+
+    @staticmethod
+    def _round_button(icon, tip: str, color: str) -> QPushButton:
+        button = QPushButton()
+        button.setIcon(icon)
+        button.setToolTip(tip)
+        button.setFixedSize(40, 40)
+        button.setStyleSheet(
+            f"QPushButton {{ background: {color}; border: 0; border-radius: 20px; }}"
+            "QPushButton:disabled { background: #8696a0; }"
+        )
+        return button
 
     @property
     def busy(self) -> bool:
@@ -180,10 +249,16 @@ class AssistantTab(QWidget):
         return _DARK if dark else _LIGHT
 
     def _restyle_thread(self) -> None:
-        background = self._palette()[0]
-        self.thread_view.setObjectName("assistantThread")
-        self.thread_view.setStyleSheet(
-            f"QWidget#assistantThread {{ background: {background}; }}"
+        background, _own, other, ink, quiet = self._palette()
+        self.thread_view.color = QColor(background)
+        self.thread_view.ink = QColor(quiet)
+        self.thread_view.update()
+        self.composer.setStyleSheet(
+            f"QFrame#assistantComposer {{ background: {background}; }}"
+        )
+        self.input.setStyleSheet(
+            f"QPlainTextEdit#assistantInput {{ background: {other}; color: {ink};"
+            " border: 0; border-radius: 18px; padding: 6px 12px; }"
         )
 
     def _add_entry(self, role: str, text: str) -> None:
@@ -209,13 +284,28 @@ class AssistantTab(QWidget):
         edge = "" if role != "app" else f"border: 1px dashed {quiet};"
         text_color = quiet if role == "app" else ink
         name = f"QFrame#assistantBubbleOf{role}"
+        tail = (
+            "border-top-right-radius: 2px;"
+            if role == "user"
+            else "border-top-left-radius: 2px;"
+        )
         bubble.setStyleSheet(
-            f"{name} {{ background: {color}; {edge} border-radius: 10px; }}"
+            f"{name} {{ background: {color}; {edge} border-radius: 10px; {tail} }}"
             f"{name} QLabel {{ color: {text_color}; background: transparent; }}"
         )
         inside = QVBoxLayout(bubble)
-        inside.setContentsMargins(10, 6, 10, 6)
+        inside.setContentsMargins(10, 6, 10, 4)
+        inside.setSpacing(2)
         inside.addWidget(label)
+        if role != "app":
+            ticks = f' <span style="color: {_TICK}">✓✓</span>' if role == "user" else ""
+            stamp = QLabel(datetime.now().strftime("%H:%M") + ticks)
+            stamp.setTextFormat(Qt.TextFormat.RichText)
+            stamp.setAlignment(
+                Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
+            )
+            stamp.setStyleSheet(f"font-size: 10px; color: {quiet};")
+            inside.addWidget(stamp)
         line = QHBoxLayout()
         line.setContentsMargins(8, 2, 8, 2)
         if role == "user":
@@ -371,13 +461,21 @@ class AssistantTab(QWidget):
         self.cards.removeWidget(card)
         card.deleteLater()
 
+    def _show_status(self, text: str) -> None:
+        """Say what is going on, taking no room when there is nothing to
+        say."""
+        self.status.setText(text)
+        self.status.setVisible(bool(text))
+
     def _set_busy(self, busy: bool) -> None:
         self.send_button.setEnabled(not busy)
         self.stop_button.setEnabled(busy)
+        self.send_button.setVisible(not busy)
+        self.stop_button.setVisible(busy)
         if busy:
-            self.status.setText(self.tr("Thinking..."))
+            self._show_status(self.tr("Thinking..."))
         elif not self._failed:
-            self.status.setText("")
+            self._show_status("")
 
     def markdown(self) -> str:
         """The conversation, to read or to save."""
