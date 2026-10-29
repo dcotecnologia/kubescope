@@ -276,6 +276,22 @@ def test_write_mode_is_off_by_default_and_only_true_turns_it_on(tmp_path) -> Non
         assert Settings(path).write_mode is False
 
 
+def test_the_assistant_is_chosen_by_name_and_needs_a_consent(tmp_path) -> None:
+    path = tmp_path / "settings.json"
+    settings = Settings(path)
+    assert settings.assistant == "" and settings.assistant_consent is False
+
+    settings.assistant = "claude"
+    settings.assistant_consent = True
+    settings.save()
+    reloaded = Settings(path)
+    assert reloaded.assistant == "claude" and reloaded.assistant_consent is True
+
+    path.write_text('{"assistant": 3, "assistant_consent": "yes"}', encoding="utf-8")
+    damaged = Settings(path)
+    assert damaged.assistant == "" and damaged.assistant_consent is False
+
+
 def test_wrapping_the_logs_is_off_by_default_and_persists(tmp_path) -> None:
     path = tmp_path / "settings.json"
     settings = Settings(path)

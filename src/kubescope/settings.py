@@ -27,6 +27,8 @@ DEFAULTS: dict[str, Any] = {
     "wrap_log_lines": False,
     "last_update_notice": "",
     "write_mode": False,
+    "assistant": "",
+    "assistant_consent": False,
     "run_in_background": True,
     "system_title_bar": False,
     "welcome_dismissed": False,
@@ -266,6 +268,28 @@ class Settings:
     @write_mode.setter
     def write_mode(self, value: bool) -> None:
         self._data["write_mode"] = bool(value)
+
+    @property
+    def assistant(self) -> str:
+        """The program the person chose for the assistant; empty leaves it to
+        the first one the system has."""
+        value = self._data["assistant"]
+        return value if isinstance(value, str) else ""
+
+    @assistant.setter
+    def assistant(self, value: str) -> None:
+        self._data["assistant"] = str(value)
+
+    @property
+    def assistant_consent(self) -> bool:
+        """True once the person agreed that what they ask the assistant, with
+        the cluster data it reads, leaves this computer; off unless exactly
+        true."""
+        return self._data["assistant_consent"] is True
+
+    @assistant_consent.setter
+    def assistant_consent(self, value: bool) -> None:
+        self._data["assistant_consent"] = bool(value)
 
     @property
     def welcome_dismissed(self) -> bool:

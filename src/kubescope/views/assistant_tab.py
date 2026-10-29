@@ -80,7 +80,7 @@ class AssistantTab(QWidget):
         super().__init__()
         self.session = session
         self.context = context
-        self.save_name = "assistant.md"
+        self.save_name = "assistant.txt"
         self.closed = False
         self._write_mode = write_mode
         self._fetch = fetch
