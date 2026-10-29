@@ -277,3 +277,22 @@ def test_gabi_asks_which_container_when_there_are_several_and_does_not_guess() -
     ):
         assert phrase in rule
     assert told.index(knowledge.DIAGNOSE) < told.index(knowledge.CONTAINERS)
+
+
+def test_gabi_is_told_she_can_read_the_live_usage_and_not_to_send_to_kubectl_top() -> (
+    None
+):
+    told = knowledge.system_prompt()
+    rule = knowledge.DIAGNOSE
+
+    assert rule in told
+    for phrase in (
+        "its live CPU and memory with get_usage",
+        "get_usage gives it by container beside what each container asks for and "
+        "may use",
+        "the rows of the lists carry the use of each Pod and workload",
+        "compare the use with the requests and the limits",
+        "Do not send the person to kubectl top for what you can read",
+        "if the cluster has no metrics-server, say so",
+    ):
+        assert phrase in rule

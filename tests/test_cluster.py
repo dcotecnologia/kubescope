@@ -3024,3 +3024,42 @@ def test_a_workload_carries_the_containers_of_its_pod_template() -> None:
         assert workload.containers == ("api", "worker")
         assert workload.init_containers == ("migrate",)
     assert bare.containers == () and bare.init_containers == ()
+
+
+def test_the_live_usage_of_a_pod_is_read_by_container(monkeypatch) -> None:
+    item = {
+        "containers": [
+            {"name": "api", "usage": {"cpu": "12m", "memory": "130Mi"}},
+            {"name": "side", "usage": {"cpu": "1500000n", "memory": "20480Ki"}},
+        ]
+    }
+    asked: list[str] = []
+
+    def get(path, _context):
+        asked.append(path)
+        return item
+
+    monkeypatch.setattr(cluster, "_get_json", get)
+
+    usage = cluster.get_pod_container_usage("ctx", "ns", "web-1")
+
+    assert asked == ["/apis/metrics.k8s.io/v1beta1/namespaces/ns/pods/web-1"]
+    assert usage == {
+        "api": (0.012, 130 * 2**20),
+        "side": (pytest.approx(0.0015), 20 * 2**20),
+    }
+
+
+def test_no_live_usage_is_none_without_metrics_server_or_a_sample(
+    monkeypatch,
+) -> None:
+    def refuse(_path, _context):
+        raise cluster.ClusterError("the server could not find the requested resource")
+
+    monkeypatch.setattr(cluster, "_get_json", refuse)
+    assert cluster.get_pod_container_usage("ctx", "ns", "web-1") is None
+
+    monkeypatch.setattr(cluster, "_get_json", lambda _p, _c: {"containers": []})
+    assert cluster.get_pod_container_usage("ctx", "ns", "web-1") is None
+    monkeypatch.setattr(cluster, "_get_json", lambda _p, _c: {})
+    assert cluster.get_pod_container_usage("ctx", "ns", "web-1") is None

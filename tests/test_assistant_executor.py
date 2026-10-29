@@ -230,6 +230,11 @@ def lists(monkeypatch):
         return [], events if kind == "Event" else [service]
 
     monkeypatch.setattr(executor.cluster, "get_pods", get_pods)
+    monkeypatch.setattr(
+        executor.cluster,
+        "get_usage",
+        lambda _c, _n: {("ns", "Deployment", "web"): (3, None, None)},
+    )
     monkeypatch.setattr(executor.cluster, "get_workloads", get_workloads)
     monkeypatch.setattr(executor.cluster, "get_resources", get_resources)
     return calls
@@ -290,3 +295,127 @@ def test_the_events_can_be_kept_by_the_name_of_their_object(lists) -> None:
     assert lists[0] == ("resources", "ctx", "ns", "Event")
     empty = executor.fetch(_request("get_events", namespace="", name="zzz"), "ctx")
     assert "(no rows)" in empty
+
+
+@pytest.fixture
+def usage(monkeypatch):
+    """The live usage and the declared resources of a Pod with two
+    containers."""
+    state: dict = {
+        "live": {"api": (0.012, 130 * 2**20), "side": (0.003, 20 * 2**20)},
+        "details": {
+            "spec": {
+                "containers": [
+                    {
+                        "name": "api",
+                        "resources": {
+                            "requests": {"cpu": "25m", "memory": "512Mi"},
+                            "limits": {"memory": "1Gi"},
+                        },
+                    },
+                    {"name": "side"},
+                ]
+            }
+        },
+    }
+    asked: list[tuple] = []
+
+    def live(context, namespace, pod):
+        asked.append(("live", context, namespace, pod))
+        return state["live"]
+
+    def details(context, kind, namespace, name):
+        asked.append(("details", context, kind, namespace, name))
+        return state["details"]
+
+    monkeypatch.setattr(executor.cluster, "get_pod_container_usage", live)
+    monkeypatch.setattr(executor.cluster, "get_resource_details", details)
+    return state, asked
+
+
+def test_the_live_usage_is_read_by_container_beside_what_it_asks_for(usage) -> None:
+    _state, asked = usage
+
+    message = executor.fetch(_request("get_usage", namespace="ns", pod="api-1"), "ctx")
+
+    assert (
+        "Live usage of the Pod ns/api-1, by container, from metrics-server." in message
+    )
+    assert (
+        "api: uses cpu 12m, memory 130 MiB; asks for (cpu 25m, memory 512Mi); may use "
+        "up to (cpu none, memory 1Gi)"
+    ) in message
+    assert (
+        "side: uses cpu 3m, memory 20 MiB; asks for (cpu none, memory none); may use "
+        "up to (cpu none, memory none)"
+    ) in message
+    assert "Together: cpu 15m, memory 150 MiB" in message
+    assert asked == [
+        ("details", "ctx", "Pod", "ns", "api-1"),
+        ("live", "ctx", "ns", "api-1"),
+    ]
+
+
+def test_without_metrics_server_it_says_so_and_still_gives_what_is_declared(
+    usage,
+) -> None:
+    state, _asked = usage
+    state["live"] = None
+
+    message = executor.fetch(_request("get_usage", namespace="ns", pod="api-1"), "ctx")
+
+    assert "No live usage of the Pod ns/api-1" in message
+    assert "no metrics-server, or it has no sample of this Pod yet" in message
+    assert "api: asks for (cpu 25m, memory 512Mi)" in message
+    assert "Together" not in message and "uses cpu" not in message
+
+
+def test_a_container_without_a_sample_shows_only_what_it_declares(usage) -> None:
+    state, _asked = usage
+    state["live"] = {"api": (0.012, 130 * 2**20)}  # nothing for the sidecar yet
+
+    message = executor.fetch(_request("get_usage", namespace="ns", pod="api-1"), "ctx")
+
+    assert "api: uses cpu 12m" in message
+    assert "side: asks for" in message and "side: uses" not in message
+    assert "Together: cpu 12m, memory 130 MiB" in message
+
+
+def test_the_rows_of_the_lists_carry_the_live_usage_when_there_is_any(
+    lists, monkeypatch
+) -> None:
+    from kubescope.models import PodInfo
+
+    monkeypatch.setattr(
+        executor.cluster,
+        "get_pods",
+        lambda context, namespace: (
+            [],
+            [
+                PodInfo(
+                    "ns", "hot", "Running", 1, 1, "1m", ("app",), cpu=0.25, memory=2**30
+                ),
+                PodInfo("ns", "cold", "Running", 1, 1, "1m", ("app",)),
+            ],
+        ),
+    )
+    monkeypatch.setattr(
+        executor.cluster,
+        "get_usage",
+        lambda context, namespace: {("ns", "Deployment", "web"): (4, 0.5, 2**29)},
+    )
+
+    pods = executor.fetch(_request("list", view="pods", namespace="ns"), "ctx")
+    workloads = executor.fetch(
+        _request("list", view="deployments", namespace="ns"), "ctx"
+    )
+
+    assert (
+        "ns/hot Running ready 1/1 restarts 0 node - age 1m cpu 250m memory 1.0 GiB"
+        in pods
+    )
+    cold = next(line for line in pods.splitlines() if "ns/cold" in line)
+    assert "cpu" not in cold  # no metrics: nothing is made up
+    assert (
+        "restarts 4 age 1d cpu 500m memory 512 MiB containers api, worker" in workloads
+    )

@@ -32,12 +32,19 @@ APP = (
 DIAGNOSE = (
     "When asked to look into a problem, work like this: start from what the person "
     "sees; read the object with get_details, its events with get_events and, for a "
-    "Pod, its logs with get_logs; follow what you find (the owner of a Pod, its "
-    "node, a Service that selects it) with list and get_details; say what you "
+    "Pod, its logs with get_logs and its live CPU and memory with get_usage; "
+    "follow what you find (the owner of a Pod, its node, a Service that selects it) "
+    "with list and get_details; say what you "
     "checked, what the evidence shows and how sure you are; then suggest the fix, "
     "as a command or YAML to review or as an action the person confirms. Read "
     "before you propose a change, change one thing at a time, and prefer the "
-    "smallest change."
+    "smallest change. You can read the live use of CPU and memory, as KubeScope "
+    "shows it: get_usage gives it by container beside what each container asks for "
+    "and may use, and the rows of the lists carry the use of each Pod and workload "
+    "when the cluster has metrics-server. Use them to answer how much a Pod or a "
+    "workload is using, and compare the use with the requests and the limits. Do "
+    "not send the person to kubectl top for what you can read; if the cluster has "
+    "no metrics-server, say so."
 )
 
 

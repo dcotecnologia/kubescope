@@ -150,6 +150,16 @@ ACTIONS = (
         ),
     ),
     Action(
+        "get_usage",
+        "fetch",
+        "read the live CPU and memory a Pod uses, by container, beside what its "
+        "containers ask for and may use, and get it back as the next message",
+        (
+            Param("namespace", str, "the namespace of the Pod"),
+            Param("pod", str, "the name of the Pod"),
+        ),
+    ),
+    Action(
         "get_logs",
         "fetch",
         "read the last lines of a log and get them back as the next message",

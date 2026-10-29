@@ -7,6 +7,7 @@ it is cut at a limit. It is labeled as data, not as instructions: a log
 or an annotation may carry text meant to steer the assistant. No Qt.
 """
 
+import dataclasses
 import json
 from typing import Any
 
@@ -19,6 +20,8 @@ from kubescope.models import (
     ClusterResource,
     PodInfo,
     Workload,
+    format_cpu,
+    format_memory,
 )
 from kubescope.utils.diagnostics import redact
 
@@ -69,10 +72,19 @@ def _container(context: str, namespace: str, pod: str) -> str:
     return (regular or init)[0]
 
 
+def _usage_of(cpu: float | None, memory: float | None) -> str:
+    """The live usage of a row, when the cluster has metrics-server."""
+    if cpu is None or memory is None:
+        return ""
+    return f" cpu {format_cpu(cpu)} memory {format_memory(memory)}"
+
+
 def _pod_row(pod: PodInfo) -> str:
     return (
         f"{pod.namespace}/{pod.name} {pod.phase} ready {pod.ready}/{pod.total} "
-        f"restarts {pod.restarts} node {pod.node or '-'} age {pod.age} "
+        f"restarts {pod.restarts} node {pod.node or '-'} age {pod.age}"
+        + _usage_of(pod.cpu, pod.memory)
+        + " "
         f"containers {', '.join(pod.containers) or '-'}"
         + (f" init {', '.join(pod.init_containers)}" if pod.init_containers else "")
         + (f" owner {pod.owner[0]}/{pod.owner[1]}" if pod.owner else "")
@@ -83,7 +95,9 @@ def _workload_row(workload: Workload) -> str:
     return (
         f"{workload.namespace}/{workload.kind}/{workload.name} {workload.status} "
         f"ready {workload.ready}/{workload.desired} restarts {workload.restarts} "
-        f"age {workload.age} containers {', '.join(workload.containers) or '-'}"
+        f"age {workload.age}"
+        + _usage_of(workload.cpu, workload.memory)
+        + f" containers {', '.join(workload.containers) or '-'}"
         + (
             f" init {', '.join(workload.init_containers)}"
             if workload.init_containers
@@ -112,11 +126,70 @@ def _list(context: str, view: str, namespace: str) -> str:
     if view in WORKLOAD_VIEWS:
         kinds = (WORKLOAD_VIEWS[view],)
         found = cluster.get_workloads(context, scope, kinds)[1]
-        return _rows([_workload_row(workload) for workload in found])
+        usage = cluster.get_usage(context, scope)  # restarts, CPU and memory
+        return _rows(
+            [
+                _workload_row(
+                    dataclasses.replace(
+                        workload,
+                        restarts=restarts,
+                        cpu=cpu,
+                        memory=memory,
+                    )
+                )
+                for workload in found
+                for restarts, cpu, memory in [
+                    usage.get((workload.namespace, workload.kind, workload.name))
+                    or (0, None, None)
+                ]
+            ]
+        )
     if view in RESOURCE_VIEWS:
         found = cluster.get_resources(context, scope, RESOURCE_VIEWS[view])[1]
         return _rows([_resource_row(resource) for resource in found])
     raise ValueError(f"The list {view} cannot be read this way")
+
+
+def _declared(resources: dict[str, Any], kind: str) -> str:
+    """What a container asks for or may use of CPU and memory, as it wrote
+    it."""
+    values = resources.get(kind) or {}
+    return f"cpu {values.get('cpu', 'none')}, memory {values.get('memory', 'none')}"
+
+
+def _usage(context: str, namespace: str, pod: str) -> str:
+    """The live usage of each container of a Pod, beside what it asks for and
+    what it may use."""
+    document = cluster.get_resource_details(context, "Pod", namespace, pod)
+    containers = (document.get("spec") or {}).get("containers") or []
+    live = cluster.get_pod_container_usage(context, namespace, pod)
+    lines = [
+        f"Live usage of the Pod {namespace}/{pod}, by container, from metrics-server."
+        if live
+        else f"No live usage of the Pod {namespace}/{pod}: the cluster has no "
+        "metrics-server, or it has no sample of this Pod yet. What each container "
+        "asks for and may use is below."
+    ]
+    for container in containers:
+        name = str(container.get("name"))
+        resources = container.get("resources") or {}
+        declared = (
+            f"asks for ({_declared(resources, 'requests')}); "
+            f"may use up to ({_declared(resources, 'limits')})"
+        )
+        if live and name in live:
+            cpu, memory = live[name]
+            lines.append(
+                f"{name}: uses cpu {format_cpu(cpu)}, memory {format_memory(memory)}; "
+                f"{declared}"
+            )
+        else:
+            lines.append(f"{name}: {declared}")
+    if live:
+        cpu = sum(cores for cores, _bytes in live.values())
+        memory = sum(size for _cores, size in live.values())
+        lines.append(f"Together: cpu {format_cpu(cpu)}, memory {format_memory(memory)}")
+    return "\n".join(lines)
 
 
 def _events(context: str, namespace: str, name: str) -> str:
@@ -134,6 +207,8 @@ def _read(request: Request, context: str) -> str:
     args = request.args
     if request.action.name == "list":
         return _list(context, args["view"], args["namespace"])
+    if request.action.name == "get_usage":
+        return _usage(context, args["namespace"], args["pod"])
     if request.action.name == "get_events":
         return _events(context, args["namespace"], args.get("name", ""))
     if request.action.name == "get_details":

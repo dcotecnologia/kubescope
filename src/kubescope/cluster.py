@@ -2212,6 +2212,29 @@ def get_workloads_overview(context: str) -> WorkloadsOverview:
     )
 
 
+def get_pod_container_usage(
+    context: str, namespace: str, pod_name: str
+) -> dict[str, tuple[float, float]] | None:
+    """Live (cores, bytes) of each container of a Pod, by its name; None
+    without metrics-server or when the Pod has no sample yet."""
+    try:
+        item = _get_json(
+            f"{_METRICS_PATH}{_namespace_scope(namespace)}/pods/"
+            f"{quote(pod_name, safe='')}",
+            context,
+        )
+    except ClusterError:
+        return None
+    usage = {
+        str(container.get("name")): (
+            parse_cpu((container.get("usage") or {}).get("cpu")),
+            parse_memory((container.get("usage") or {}).get("memory")),
+        )
+        for container in item.get("containers") or []
+    }
+    return usage or None
+
+
 def get_pod_usage(
     context: str, namespace: str, pod_name: str
 ) -> tuple[float, float] | None:
