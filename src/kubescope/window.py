@@ -1109,6 +1109,8 @@ class WorkloadWindow(QMainWindow):
         self.assistant_dock.panel.closed.connect(self.assistant_dock.close)
         self.assistant_dock.panel.clear_requested.connect(self._clear_assistant_chat)
         self.assistant_dock.bubble.setVisible(self.settings.assistant_enabled)
+        self.assistant_dock.restore(self.settings.assistant_panel)
+        self.assistant_dock.state_changed.connect(self._keep_assistant_panel)
         ui.settingsButton.setIcon(_gear_icon())
         ui.settingsButton.clicked.connect(lambda: self._show_page(2))
         for keys in ("Ctrl+R", "F5"):
@@ -4753,6 +4755,11 @@ class WorkloadWindow(QMainWindow):
         if tab is not None:
             tab.shutdown()
             tab.deleteLater()
+
+    def _keep_assistant_panel(self) -> None:
+        """Write down the size and the place of the chat panel."""
+        self.settings.assistant_panel = self.assistant_dock.state()
+        self._save_settings()
 
     def _keep_assistant_chat(self, tab: AssistantTab) -> None:
         """Write the conversation down, to find it again."""

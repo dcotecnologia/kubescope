@@ -364,3 +364,37 @@ def test_a_recent_up_to_date_is_remembered_for_the_version_that_found_it(
     assert not Settings(path).update_check_is_fresh("1.2.0", 1000.0, 3600)
     path.write_text('{"update_checked_at": true, "update_checked_for": "1.2.0"}')
     assert not Settings(path).update_check_is_fresh("1.2.0", 0.5, 3600)
+
+
+def test_the_state_of_the_chat_panel_keeps_only_what_can_be_read(tmp_path) -> None:
+    path = tmp_path / "settings.json"
+    settings = Settings(path)
+    assert settings.assistant_panel == {}
+
+    settings.assistant_panel = {
+        "width": 520,
+        "height": 640,
+        "floating": True,
+        "geometry": "AAEC",
+    }
+    settings.save()
+    assert Settings(path).assistant_panel == {
+        "width": 520,
+        "height": 640,
+        "floating": True,
+        "geometry": "AAEC",
+    }
+
+    path.write_text(
+        '{"assistant_panel": {"width": 5, "height": true, "floating": "yes", '
+        '"geometry": 7}}',
+        encoding="utf-8",
+    )
+    assert Settings(path).assistant_panel == {}  # none of it is usable
+    path.write_text('{"assistant_panel": [1]}', encoding="utf-8")
+    assert Settings(path).assistant_panel == {}
+    path.write_text(
+        '{"assistant_panel": {"width": 90000, "geometry": "' + "A" * 5000 + '"}}',
+        encoding="utf-8",
+    )
+    assert Settings(path).assistant_panel == {}

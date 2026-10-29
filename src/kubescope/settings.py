@@ -31,6 +31,7 @@ DEFAULTS: dict[str, Any] = {
     "write_mode": False,
     "animations": True,
     "assistant_enabled": True,
+    "assistant_panel": {},
     "assistant": "",
     "assistant_consent": False,
     "run_in_background": True,
@@ -321,6 +322,28 @@ class Settings:
     @assistant_enabled.setter
     def assistant_enabled(self, value: bool) -> None:
         self._data["assistant_enabled"] = bool(value)
+
+    @property
+    def assistant_panel(self) -> dict[str, Any]:
+        """The size of the chat panel, whether it is out of the window and
+        where; what cannot be read is left out."""
+        value = self._data["assistant_panel"]
+        stored = value if isinstance(value, dict) else {}
+        kept: dict[str, Any] = {}
+        for key in ("width", "height"):
+            number = stored.get(key)
+            if type(number) is int and 200 <= number <= 10_000:
+                kept[key] = number
+        if stored.get("floating") is True:
+            kept["floating"] = True
+        geometry = stored.get("geometry")
+        if isinstance(geometry, str) and geometry.isascii() and len(geometry) < 4096:
+            kept["geometry"] = geometry
+        return kept
+
+    @assistant_panel.setter
+    def assistant_panel(self, value: dict[str, Any]) -> None:
+        self._data["assistant_panel"] = dict(value)
 
     @property
     def assistant(self) -> str:
