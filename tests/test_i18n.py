@@ -104,3 +104,9 @@ def test_traditional_chinese_is_listed_apart_from_simplified() -> None:
 
     assert labels["zh_TW"] == "繁體中文 · Chinese (Taiwan)"
     assert labels["zh"].endswith("· Chinese")
+
+
+def test_a_language_is_named_in_english_for_the_assistant() -> None:
+    assert i18n.language_name("en") == "English"
+    assert i18n.language_name("pt") == "Portuguese"
+    assert i18n.language_name("zh_TW") == "Chinese (Taiwan)"

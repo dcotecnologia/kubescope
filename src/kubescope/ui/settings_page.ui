@@ -416,6 +416,80 @@
         </widget>
        </item>
        <item>
+        <widget class="QFrame" name="assistantCard">
+         <property name="card" stdset="0">
+          <string notr="true">true</string>
+         </property>
+         <layout class="QVBoxLayout" name="assistantCardLayout">
+          <property name="spacing">
+           <number>10</number>
+          </property>
+          <property name="leftMargin">
+           <number>16</number>
+          </property>
+          <property name="topMargin">
+           <number>14</number>
+          </property>
+          <property name="rightMargin">
+           <number>16</number>
+          </property>
+          <property name="bottomMargin">
+           <number>14</number>
+          </property>
+          <item>
+           <widget class="QLabel" name="assistantHeading">
+            <property name="text">
+             <string>ASSISTANT</string>
+            </property>
+            <property name="variant" stdset="0">
+             <string notr="true">cardTitle</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="assistantCheck">
+            <property name="text">
+             <string>Show the assistant, a chat in the corner of the window</string>
+            </property>
+            <property name="toolTip">
+             <string>Turns the chat button on or off. Nothing is sent anywhere until you open the chat and agree.</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QComboBox" name="assistantCombo">
+            <property name="toolTip">
+             <string>The program of this computer that answers. Automatic uses the first one the system has.</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="assistantHint">
+            <property name="text">
+             <string>The chat asks a program of this computer, such as Claude Code. What you ask and what it reads from the cluster go to that program and to its service. The conversations are kept on this computer, without the documents and logs that were read.</string>
+            </property>
+            <property name="wordWrap">
+             <bool>true</bool>
+            </property>
+            <property name="textInteractionFlags">
+             <set>Qt::TextInteractionFlag::TextSelectableByMouse</set>
+            </property>
+            <property name="variant" stdset="0">
+             <string notr="true">muted</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="assistantClearButton">
+            <property name="text">
+             <string>Clear the chat history</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
         <widget class="QFrame" name="debugCard">
          <property name="card" stdset="0">
           <string notr="true">true</string>

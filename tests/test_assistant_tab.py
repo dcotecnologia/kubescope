@@ -78,7 +78,7 @@ def test_the_question_is_sent_and_the_answer_is_shown_as_it_comes(replies) -> No
     assert "**Assistant**\n\nIt is a Pod." in tab.markdown()
     assert tab.input.toPlainText() == "" and tab.status.text() == ""
     assert tab.send_button.isEnabled() and not tab.stop_button.isEnabled()
-    assert "It is a Pod." in tab.transcript.toPlainText()
+    assert [label.text() for label in tab._labels] == ["what is x?", "It is a Pod."]
 
 
 def test_an_empty_question_or_one_while_busy_is_ignored(replies) -> None:
@@ -219,19 +219,31 @@ def test_a_worker_that_was_stopped_sends_nothing_and_closes_the_answer(
     _tab().stop()  # nothing running: nothing to stop
 
 
-def test_the_conversation_can_be_noted_and_stays_at_the_end_only_if_it_was() -> None:
+def test_the_chat_goes_to_the_newest_message_and_keeps_the_sides(replies) -> None:
     tab = _tab()
     tab.resize(400, 300)
     tab.show()
-    tab.note("\n\n".join(f"line {number}" for number in range(200)))
-    application.processEvents()
-    bar = tab.transcript.verticalScrollBar()
+    for number in range(40):
+        tab.note(f"line {number}")
+    for _ in range(10):  # the layout settles over a few turns of the loop
+        application.processEvents()
+        time.sleep(0.02)
+    bar = tab.thread_scroll.verticalScrollBar()
     assert bar.value() == bar.maximum() > 0
 
-    bar.setValue(0)
-    tab.note("more")
+    bar.setValue(0)  # the person scrolls up to read: the view stays there
+    tab.note("a new one")
+    for _ in range(5):
+        application.processEvents()
+        time.sleep(0.02)
+    assert bar.value() == 0
+    bar.setValue(bar.maximum())
+
+    first = tab._bubbles[0]
+    assert first.maximumWidth() <= int(tab.thread_scroll.viewport().width() * 0.82) + 1
+    tab.resize(700, 300)
     application.processEvents()
-    assert bar.value() == 0 and "**App**" in tab.markdown()
+    assert tab._bubbles[0].maximumWidth() > first.maximumWidth() - 1
     tab.close()
 
 
@@ -268,11 +280,92 @@ def test_stop_cuts_the_answer_short_and_keeps_what_came(replies) -> None:
     tab.input.setPlainText("go")
     tab.submit()
     deadline = time.monotonic() + 5
-    while "first" not in tab.markdown() and time.monotonic() < deadline:
+    while tab._stream is None and time.monotonic() < deadline:
         application.processEvents()
         time.sleep(0.005)
+    assert "first" in tab.markdown()  # the answer is there as it comes
     tab.stop_button.click()
     settle(tab)
 
     assert "first" in tab.markdown() and "second" not in tab.markdown()
+    assert tab.send_button.isEnabled()
+
+
+def test_the_question_goes_with_what_the_window_shows_now(replies) -> None:
+    queue, prompts = replies
+    queue.append(["ok"])
+    tab = AssistantTab(
+        ChatSession(FAKE),
+        "ctx",
+        lambda: True,
+        screen=lambda: "Context: prod\nPage: pods",
+    )
+
+    _say(tab, "what is wrong?")
+
+    assert "[What the person sees in KubeScope right now]\nContext: prod" in prompts[0]
+    assert "Page: pods" not in tab.markdown()  # the person is not shown it again
+
+
+def test_what_the_person_writes_is_on_the_right_and_the_rest_on_the_left(
+    replies,
+) -> None:
+    queue, _prompts = replies
+    queue.append(["**bold** answer"])
+    tab = _tab()
+    tab.resize(500, 400)
+    tab.show()
+
+    _say(tab, "hello")
+    tab.note("noted")
+    application.processEvents()
+
+    def side(bubble) -> str:
+        row = bubble.geometry().center().x() > tab.thread_view.width() / 2
+        return "right" if row else "left"
+
+    mine, answer, noted = tab._bubbles
+    assert [side(b) for b in (mine, answer, noted)] == ["right", "left", "left"]
+    assert tab._labels[0].textFormat() == assistant_tab.Qt.TextFormat.PlainText
+    assert tab._labels[1].textFormat() == assistant_tab.Qt.TextFormat.MarkdownText
+    tab.close()
+
+
+def test_the_conversation_comes_back_from_the_history_and_goes_to_it(replies) -> None:
+    queue, prompts = replies
+    queue.append(["Sure."])
+    saved: list = []
+    kept = [
+        ("user", "earlier question"),
+        ("assistant", "earlier answer"),
+        ("app", "Done: scale()"),
+    ]
+    tab = AssistantTab(ChatSession(FAKE), "ctx", lambda: True, history=kept)
+    tab.changed.connect(lambda: saved.append(tab.entries()))
+
+    assert [label.text() for label in tab._labels] == [text for _role, text in kept]
+    assert [m.role for m in tab.session.messages] == ["user", "assistant"]
+
+    _say(tab, "and now?")
+
+    assert "earlier question" in prompts[0] and "earlier answer" in prompts[0]
+    assert "Done: scale()" not in prompts[0]  # a note of the app is not a message
+    assert saved[-1][-2:] == [("user", "and now?"), ("assistant", "Sure.")]
+    assert tab.entries()[:3] == kept
+
+
+def test_a_failure_after_half_an_answer_takes_both_bubbles_back(replies) -> None:
+    queue, _prompts = replies
+
+    def half():
+        yield "half an ans"
+        raise AssistantError("cut off")
+
+    queue.append(half())
+    tab = _tab()
+
+    _say(tab, "why?")
+
+    assert "cut off" in tab.status.text()
+    assert tab._bubbles == [] and tab._labels == [] and tab.entries() == []
     assert tab.send_button.isEnabled()

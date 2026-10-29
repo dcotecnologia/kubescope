@@ -228,6 +228,45 @@ class Ui_SettingsPage(object):
 
         self.settingsContentLayout.addWidget(self.accessCard)
 
+        self.assistantCard = QFrame(self.settingsContent)
+        self.assistantCard.setObjectName(u"assistantCard")
+        self.assistantCard.setProperty(u"card", u"true")
+        self.assistantCardLayout = QVBoxLayout(self.assistantCard)
+        self.assistantCardLayout.setSpacing(10)
+        self.assistantCardLayout.setObjectName(u"assistantCardLayout")
+        self.assistantCardLayout.setContentsMargins(16, 14, 16, 14)
+        self.assistantHeading = QLabel(self.assistantCard)
+        self.assistantHeading.setObjectName(u"assistantHeading")
+        self.assistantHeading.setProperty(u"variant", u"cardTitle")
+
+        self.assistantCardLayout.addWidget(self.assistantHeading)
+
+        self.assistantCheck = QCheckBox(self.assistantCard)
+        self.assistantCheck.setObjectName(u"assistantCheck")
+
+        self.assistantCardLayout.addWidget(self.assistantCheck)
+
+        self.assistantCombo = QComboBox(self.assistantCard)
+        self.assistantCombo.setObjectName(u"assistantCombo")
+
+        self.assistantCardLayout.addWidget(self.assistantCombo)
+
+        self.assistantHint = QLabel(self.assistantCard)
+        self.assistantHint.setObjectName(u"assistantHint")
+        self.assistantHint.setWordWrap(True)
+        self.assistantHint.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+        self.assistantHint.setProperty(u"variant", u"muted")
+
+        self.assistantCardLayout.addWidget(self.assistantHint)
+
+        self.assistantClearButton = QPushButton(self.assistantCard)
+        self.assistantClearButton.setObjectName(u"assistantClearButton")
+
+        self.assistantCardLayout.addWidget(self.assistantClearButton)
+
+
+        self.settingsContentLayout.addWidget(self.assistantCard)
+
         self.debugCard = QFrame(self.settingsContent)
         self.debugCard.setObjectName(u"debugCard")
         self.debugCard.setProperty(u"card", u"true")
@@ -493,6 +532,16 @@ class Ui_SettingsPage(object):
 #if QT_CONFIG(tooltip)
         self.writeModeCheck.setToolTip(QCoreApplication.translate("SettingsPage", u"Shows, in the right-click menu, the actions that change a cluster: delete or evict a Pod, scale or restart a Deployment. Each one asks for confirmation. It also shows the kubectl command to open a shell in a Pod. Off keeps the app read-only.", None))
 #endif // QT_CONFIG(tooltip)
+        self.assistantHeading.setText(QCoreApplication.translate("SettingsPage", u"ASSISTANT", None))
+        self.assistantCheck.setText(QCoreApplication.translate("SettingsPage", u"Show the assistant, a chat in the corner of the window", None))
+#if QT_CONFIG(tooltip)
+        self.assistantCheck.setToolTip(QCoreApplication.translate("SettingsPage", u"Turns the chat button on or off. Nothing is sent anywhere until you open the chat and agree.", None))
+#endif // QT_CONFIG(tooltip)
+#if QT_CONFIG(tooltip)
+        self.assistantCombo.setToolTip(QCoreApplication.translate("SettingsPage", u"The program of this computer that answers. Automatic uses the first one the system has.", None))
+#endif // QT_CONFIG(tooltip)
+        self.assistantHint.setText(QCoreApplication.translate("SettingsPage", u"The chat asks a program of this computer, such as Claude Code. What you ask and what it reads from the cluster go to that program and to its service. The conversations are kept on this computer, without the documents and logs that were read.", None))
+        self.assistantClearButton.setText(QCoreApplication.translate("SettingsPage", u"Clear the chat history", None))
         self.debugHeading.setText(QCoreApplication.translate("SettingsPage", u"DEBUGGING", None))
         self.debugCheck.setText(QCoreApplication.translate("SettingsPage", u"Debug mode: write a log file I can share", None))
         self.openLogsButton.setText(QCoreApplication.translate("SettingsPage", u"Open the log folder", None))

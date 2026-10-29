@@ -95,6 +95,32 @@ ACTIONS = (
         (_KIND, _NAMESPACE, _NAME),
     ),
     Action(
+        "list",
+        "fetch",
+        "read a list of the cluster, as the app shows it, and get it back as the "
+        "next message",
+        (
+            Param("view", str, "the list", choices=VIEWS),
+            Param("namespace", str, "its namespace; empty is all", empty=True),
+        ),
+    ),
+    Action(
+        "get_events",
+        "fetch",
+        "read the events of a namespace, the youngest first, and get them back as "
+        "the next message",
+        (
+            Param("namespace", str, "the namespace; empty is all", empty=True),
+            Param(
+                "name",
+                str,
+                "keep the events whose object has this in its name",
+                required=False,
+                empty=True,
+            ),
+        ),
+    ),
+    Action(
         "get_logs",
         "fetch",
         "read the last lines of a log and get them back as the next message",
