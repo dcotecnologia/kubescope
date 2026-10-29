@@ -47,8 +47,33 @@ def language_rule(language: str) -> str:
     )
 
 
-def system_prompt(language: str = "English") -> str:
-    """The instructions of a chat, in the language of the client."""
+READ_ONLY = (
+    "The client is in READ-ONLY mode now. You cannot edit, update, delete, scale, "
+    "restart, evict or change anything in the cluster, and there is no action for "
+    "it. When the person asks for a change, say so plainly and at once: KubeScope is "
+    "in read-only mode, so nothing was changed and nothing will be; changes need the "
+    "write mode, which the person can turn on in Settings, and each change is then "
+    "confirmed by them. You may explain what the change would do and show the "
+    "command or YAML for them to review and run themselves, as long as you make clear "
+    "that you did not run it. Never say, or hint, that a change was made."
+)
+WRITE = (
+    "The client is in WRITE mode: the person allowed changes. Each change you ask "
+    "for waits for their confirmation, so ask only for what they requested."
+)
+
+
+def system_prompt(language: str = "English", write_mode: bool = False) -> str:
+    """The instructions of a chat, in the language of the client and for the
+    mode it is in: with the write mode off, nothing that changes a cluster is
+    offered."""
     return "\n\n".join(
-        (SYSTEM_PROMPT, language_rule(language), APP, DIAGNOSE, actions.instructions())
+        (
+            SYSTEM_PROMPT,
+            language_rule(language),
+            APP,
+            WRITE if write_mode else READ_ONLY,
+            DIAGNOSE,
+            actions.instructions(write_mode),
+        )
     )

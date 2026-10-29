@@ -623,6 +623,14 @@ class AssistantTab(QWidget):
                 )
             elif found.action.kind == "navigate":
                 self.navigate.emit(found)
+            elif found.action.kind == "write" and not self._write_mode():
+                self._add_entry(
+                    "app",
+                    self.tr(
+                        "Read-only mode: nothing was changed. Turn on the write mode "
+                        "in Settings to allow {what}."
+                    ).format(what=actions.describe(found)),
+                )
             elif found.action.kind == "write":
                 self._add_card(found)
             else:
@@ -654,15 +662,10 @@ class AssistantTab(QWidget):
         card = QFrame()
         card.setFrameShape(QFrame.Shape.StyledPanel)
         layout = QHBoxLayout(card)
-        allowed = self._write_mode()
-        text = actions.describe(request)
-        if not allowed:
-            text += "\n" + self.tr("The write mode is off; turn it on in Settings.")
-        label = QLabel(text)
+        label = QLabel(actions.describe(request))
         label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         label.setWordWrap(True)
         run = QPushButton(self.tr("Run"))
-        run.setEnabled(allowed)
         cancel = QPushButton(self.tr("Cancel"))
         layout.addWidget(label, 1)
         layout.addWidget(run)

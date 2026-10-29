@@ -114,7 +114,12 @@ prefer otherwise.
   still go, so open the chat with care on a cluster whose logs hold secrets. The
   assistant only **asks**: moving the window runs at once, as if you had clicked,
   and a change to the cluster is a card that you run, available only with the
-  write mode on, through the same functions and limits as the buttons. It reads
+  write mode on, through the same functions and limits as the buttons. **With the
+  write mode off (the default) the assistant cannot edit, update, delete, scale,
+  restart or evict anything**: it is not even told that those actions exist, one
+  it asks for anyway is refused with a note in the chat and no card, and when you
+  ask for a change it is told to say plainly that KubeScope is in read-only mode,
+  that nothing was changed and that the write mode is in Settings. It reads
   at most five times for a question. **Settings** turns the chat off.
 - **The assistant's conversations are kept on your computer.** For each context,
   `assistant_history.json` in the configuration directory holds what you said,

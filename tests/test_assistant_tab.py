@@ -145,17 +145,49 @@ def test_a_change_waits_for_the_person_and_can_be_run_or_cancelled(replies) -> N
     assert tab.cards.count() == 0 and len(confirmed) == 1
 
 
-def test_a_change_cannot_be_run_while_the_write_mode_is_off(replies) -> None:
+def test_in_the_read_only_mode_a_change_is_refused_and_no_card_is_offered(
+    replies,
+) -> None:
     queue, _prompts = replies
-    queue.append([_block('{"action": "restart", "namespace": "ns", "name": "web"}')])
+    for document in (
+        '{"action": "restart", "namespace": "ns", "name": "web"}',
+        '{"action": "delete", "kind": "Pod", "namespace": "ns", "name": "p"}',
+        '{"action": "scale", "namespace": "ns", "name": "web", "replicas": 0}',
+        '{"action": "evict_pod", "namespace": "ns", "name": "p"}',
+        '{"action": "replace", "kind": "Pod", "namespace": "ns", "name": "p",'
+        ' "document": {"a": 1}}',
+    ):
+        queue.append(["Done, I changed it.\n" + _block(document)])
     tab = _tab(write_mode=False)
+    wrote: list = []
+    tab.write.connect(wrote.append)
 
-    _say(tab, "restart web")
+    for question in ("restart", "delete", "scale", "evict", "edit"):
+        _say(tab, question)
 
-    card = _card(tab)
-    run = card.findChildren(assistant_tab.QPushButton)[0]
-    assert not run.isEnabled()
-    assert "write mode is off" in card.findChildren(assistant_tab.QLabel)[0].text()
+    assert tab.cards.count() == 0 and wrote == []  # nothing to run, nothing sent
+    notes = [text for role, text in tab.entries() if role == "app"]
+    assert len(notes) == 5
+    assert all(
+        note.startswith("Read-only mode: nothing was changed.") for note in notes
+    )
+    assert "restart(namespace=ns, name=web)" in notes[0]
+    assert "Turn on the write mode in Settings" in notes[0]
+
+
+def test_what_only_reads_or_moves_the_window_still_works_in_the_read_only_mode(
+    replies,
+) -> None:
+    queue, _prompts = replies
+    queue.append([_block('{"action": "open_view", "view": "pods"}')])
+    tab = _tab(write_mode=False)
+    seen: list = []
+    tab.navigate.connect(seen.append)
+
+    _say(tab, "show the pods")
+
+    assert [request.action.name for request in seen] == ["open_view"]
+    assert not any(role == "app" for role, _text in tab.entries())
 
 
 def test_a_block_that_does_not_fit_the_catalog_is_noted(replies) -> None:

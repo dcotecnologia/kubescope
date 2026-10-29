@@ -76,20 +76,40 @@ def test_what_is_seen_is_redacted_like_every_read() -> None:
 def test_the_chat_is_told_the_app_the_way_to_look_into_a_problem_and_the_actions() -> (
     None
 ):
-    told = knowledge.system_prompt()
+    told = knowledge.system_prompt(write_mode=True)
 
     assert told.startswith(runner.SYSTEM_PROMPT)
     assert "KubeScope" in told and "write mode" in told
     assert "get_events" in knowledge.DIAGNOSE and "get_logs" in knowledge.DIAGNOSE
-    assert told.endswith(actions.instructions())
+    assert told.endswith(actions.instructions(True))
+    assert knowledge.WRITE in told and knowledge.READ_ONLY not in told
 
 
-def test_the_chat_is_told_to_answer_in_the_language_of_the_client() -> None:
-    portuguese = knowledge.system_prompt("Portuguese")
+def test_in_the_read_only_mode_nothing_that_changes_a_cluster_is_offered() -> None:
+    told = knowledge.system_prompt()  # read-only is the default
+    offered = actions.instructions(write_mode=False)
 
-    assert "Answer in Portuguese, the language of the client" in portuguese
-    assert "Answer in English" in knowledge.system_prompt()
-    assert "unless the person writes to you in another one" in portuguese
+    assert knowledge.READ_ONLY in told and knowledge.WRITE not in told
+    assert told.endswith(offered)
+    for action in actions.ACTIONS:
+        line = f"- {action.name} ["
+        assert (line in offered) is (action.kind != "write")
+    for word in ("scale", "restart", "evict_pod", "delete", "replace"):
+        assert f"- {word} [" not in offered
+    assert "- get_details [" in offered and "- open_view [" in offered
+
+
+def test_the_assistant_is_told_to_say_plainly_that_it_is_read_only() -> None:
+    rule = knowledge.READ_ONLY
+
+    for phrase in (
+        "READ-ONLY",
+        "cannot edit, update, delete, scale, restart, evict or change anything",
+        "KubeScope is in read-only mode, so nothing was changed and nothing will be",
+        "turn on in Settings",
+        "Never say, or hint, that a change was made",
+    ):
+        assert phrase in rule
 
 
 def _overview():

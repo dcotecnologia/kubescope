@@ -265,8 +265,10 @@ def strip(text: str) -> str:
     return _BLOCK.sub("", text).strip()
 
 
-def instructions() -> str:
-    """What the assistant is told about the actions."""
+def instructions(write_mode: bool = True) -> str:
+    """What the assistant is told about the actions; with the write mode off,
+    the ones that change a cluster are not among them, as if they did not
+    exist."""
     lines = [
         "The client can act for the person. To ask for an action, put a fenced "
         f"block in your answer, tagged {FENCE}, with one JSON object and the name "
@@ -277,6 +279,8 @@ def instructions() -> str:
         "next message. Use only these actions and their fields:",
     ]
     for action in ACTIONS:
+        if action.kind == "write" and not write_mode:
+            continue
         fields = ", ".join(
             f"{param.name}{'' if param.required else '?'}: {param.type.__name__}"
             + (f" ({'|'.join(param.choices)})" if param.choices else "")
