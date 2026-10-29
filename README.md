@@ -124,7 +124,8 @@ _The cluster overview, shown with sample data. Regenerate it with
   and events to look into a problem, answers in the language of the app, and
   moves the window for you: a list, a page, a tab, the logs of a Pod. It never
   changes a cluster by itself: a change is a card with **Run**, available only
-  with the write mode on. Attach images and text files, resize the panel, or take
+  with the write mode on; in the default read-only mode it cannot edit, update or
+  delete anything, and says so when you ask. Attach images and text files, resize the panel, or take
   it out into a window of its own; conversations are kept for each context.
   Nothing is sent until you open the chat and agree, and **Settings** turns it
   off. What goes where is in [SECURITY.md](SECURITY.md).

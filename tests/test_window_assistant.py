@@ -600,3 +600,25 @@ def test_the_paths_kept_are_used_from_the_start(monkeypatch, tmp_path) -> None:
 
     assert {"claude": str(tmp_path / "claude")} == runner.CUSTOM_PROGRAMS
     window.close()
+
+
+def test_the_assistant_is_told_the_mode_and_follows_it_when_it_changes(
+    monkeypatch,
+) -> None:
+    window, _messages = _open(monkeypatch)
+    window.settings.write_mode = False
+    window._open_assistant()
+    tab = _tab(window)
+    assert "READ-ONLY mode" in tab.session.system
+    assert "- scale [" not in tab.session.system
+
+    window._load_settings_form()
+    window.settings_ui.writeModeCheck.setChecked(True)
+    window._save_preferences()
+    assert "WRITE mode" in tab.session.system and "- scale [" in tab.session.system
+
+    window.settings_ui.writeModeCheck.setChecked(False)
+    window._save_preferences()
+    assert "READ-ONLY mode" in tab.session.system
+    assert "- delete [" not in tab.session.system
+    window.close()

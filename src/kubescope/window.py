@@ -4666,9 +4666,7 @@ class WorkloadWindow(QMainWindow):
             return
         tab = self._assistant_tab
         if tab is None:
-            session = ChatSession(
-                assistant, system=system_prompt(language_name(self.settings.language))
-            )
+            session = ChatSession(assistant, system=self._assistant_system())
             tab = AssistantTab(
                 session,
                 self._context(),
@@ -4684,6 +4682,19 @@ class WorkloadWindow(QMainWindow):
             self.assistant_dock.panel.show_chat(tab)
         self.assistant_dock.open()
         tab.input.setFocus()
+
+    def _assistant_system(self) -> str:
+        """What the assistant is told: the language of the app and the mode it
+        is in, since with the write mode off it has nothing that changes a
+        cluster."""
+        return system_prompt(
+            language_name(self.settings.language), self.settings.write_mode
+        )
+
+    def _refresh_assistant_system(self) -> None:
+        """Tell the open chat about a change of language or of mode."""
+        if self._assistant_tab is not None:
+            self._assistant_tab.session.system = self._assistant_system()
 
     def _screen_snapshot(self) -> str:
         """What the window shows, in words, for the assistant."""
@@ -5436,6 +5447,7 @@ class WorkloadWindow(QMainWindow):
             logger.info("Write mode %s", "on" if self.settings.write_mode else "off")
             self._show_access_note()
             self._apply_view_buttons()
+            self._refresh_assistant_system()  # nothing to change without it
         was_debugging = self.settings.debug_logging
         self.settings.debug_logging = form.debugCheck.isChecked()
         self._save_settings()
@@ -5446,10 +5458,7 @@ class WorkloadWindow(QMainWindow):
         self._fill_contexts(self._context())
         if self.settings.language != previous_language:
             apply_language(self.settings.language)
-            if self._assistant_tab is not None:  # the chat answers in the new one
-                self._assistant_tab.session.system = system_prompt(
-                    language_name(self.settings.language)
-                )
+            self._refresh_assistant_system()  # the chat answers in the new one
         if self.settings.theme != previous_theme:
             logger.info("Theme changed to %s", self.settings.theme)
             self._apply_theme()
