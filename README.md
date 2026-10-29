@@ -118,6 +118,16 @@ _The cluster overview, shown with sample data. Regenerate it with
 - **Details and logs:** JSON details of a Pod or workload, and live Pod logs,
   each in its own closable tab, colored like Monokai. **Save...** writes the open
   tab to a file you choose.
+- **Assistant:** the round button in the corner of the window opens a chat with a
+  coding assistant of your computer (Claude Code is the first; it must be
+  installed and signed in). It sees what you see, can read details, logs, lists
+  and events to look into a problem, answers in the language of the app, and
+  moves the window for you: a list, a page, a tab, the logs of a Pod. It never
+  changes a cluster by itself: a change is a card with **Run**, available only
+  with the write mode on. Attach images and text files, resize the panel, or take
+  it out into a window of its own; conversations are kept for each context.
+  Nothing is sent until you open the chat and agree, and **Settings** turns it
+  off. What goes where is in [SECURITY.md](SECURITY.md).
 - **Update check:** when it starts, KubeScope asks GitHub for the latest release
   and shows **Update available** next to an icon in the footer. The icon spins
   while it looks, and clicking it checks again. It sends only the app version;
@@ -138,6 +148,8 @@ _The cluster overview, shown with sample data. Regenerate it with
   terminal with `aws configure` for that profile. Google GKE and Azure AKS
   contexts get a **Sign in to Google Cloud** button (`gcloud auth login`) or a
   **Sign in to Azure** button (`az login`) when their credentials have expired.
+- **Windows and lists rise into place** as they first show; **Settings** turns the
+  animations off.
 - **Always responsive:** every cluster call runs in the background, so the window
   never freezes while the cluster or the cloud CLIs work.
 - **English, Portuguese, Spanish, Italian, French, German, Dutch, Polish, Turkish,

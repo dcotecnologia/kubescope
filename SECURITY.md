@@ -93,6 +93,31 @@ prefer otherwise.
   project. It sends no identifier, only a `User-Agent` with the app version, and
   GitHub sees your IP address as in any request. Checking never downloads or
   installs anything. Turn the startup check off in Settings.
+- **The assistant sends what you ask to a program of your computer.** The chat in
+  the corner does nothing until you open it and agree, once, that what you type
+  and attach, and what the assistant reads from the cluster to answer, are sent
+  to the program (Claude Code, which must be installed and signed in) and from
+  it to its service. KubeScope does not talk to that service, holds no key for it
+  and never sees your sign-in. The program is started with **no tools** (it can
+  read no file and run no command), with no saved session and from the temporary
+  folder. What goes: your questions; the images and text files you attach (a text
+  file is read with tokens and keys redacted); a description of what the window
+  shows (the list, the selected row, the open Details or Logs, the numbers of the
+  overviews, the names of the open tabs); and what the assistant asks the app to
+  read: a resource document (Secret values are hidden), the last lines of a Pod
+  log, a list or the events. Tokens and keys are redacted from all of it, but
+  text an application prints in a log, such as a password in a sentence, can
+  still go, so open the chat with care on a cluster whose logs hold secrets. The
+  assistant only **asks**: moving the window runs at once, as if you had clicked,
+  and a change to the cluster is a card that you run, available only with the
+  write mode on, through the same functions and limits as the buttons. It reads
+  at most five times for a question. **Settings** turns the chat off.
+- **The assistant's conversations are kept on your computer.** For each context,
+  `assistant_history.json` in the configuration directory holds what you said,
+  what the assistant answered and the notes of the app, with tokens and keys
+  redacted. It never holds the documents, logs, screens or files that were read
+  or attached (only the names of the files). **Clear history** in the chat forgets
+  a context and **Settings** forgets every one.
 - **Updating is explicit and verified.** Only when you click **Update available**
   and confirm, the app downloads the file of that release from the project's GitHub
   releases (`github.com/dcotecnologia/kubescope/releases/download/`, over HTTPS; a
@@ -104,13 +129,14 @@ prefer otherwise.
   Windows installer runs silently for your user. A Flatpak or a source checkout
   never updates itself.
 - **Local settings hold no secrets.** `settings.json` keeps the language, the
-  last context, the page and list you were on, context display names, hidden table columns, the pinned lists, and the size
-  and position of the window. It lives in your
+  last context, the page and list you were on, context display names, hidden table columns, the pinned lists, the size
+  and position of the window, and the size and place of the assistant panel. It lives in your
   user configuration directory (`~/.config/kubescope` on Linux). Next to it, the
   `languages` folder can hold translation files you add, plain text that the app only
   reads as a dictionary of texts.
 - **Logs and resource details are shown on screen.** The app does not write them
-  to disk or send them anywhere, not even in the debug log below. The one
+  to disk or send them anywhere on its own, not even in the debug log below. The
+  assistant, when you ask it, sends what it reads to its program, as above. The one
   exception is **Save...** in the Details & Logs page: it writes the text of the
   open tab to a file only after you pick where, and the app keeps no copy. Pod
   logs can contain secrets printed by an application, so treat saved files,
