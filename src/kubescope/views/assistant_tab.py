@@ -32,7 +32,7 @@ from kubescope.assistant.history import Entry
 from kubescope.assistant.runner import AssistantError
 from kubescope.assistant.session import ChatSession, Message
 from kubescope.theme import themed
-from kubescope.views.chat_icons import attach_icon, mic_icon, send_icon, stop_icon
+from kubescope.views.chat_icons import attach_icon, send_icon, stop_icon
 
 SHUTDOWN_WAIT_MS = 3000
 MAX_FOLLOW_UPS = 5  # reads the assistant may ask for after one question
@@ -204,7 +204,6 @@ class AssistantTab(QWidget):
         self.stop_button.setEnabled(False)
         self.stop_button.hide()
         self.attach_button = self._round_button(self.tr("Attach"))
-        self.mic_button = self._round_button(self.tr("Record a voice message"))
         self.attach_button.clicked.connect(self._choose_files)
         self.input.image_pasted.connect(self.attach_image)
         self.chips = QHBoxLayout()
@@ -226,7 +225,6 @@ class AssistantTab(QWidget):
         row.setSpacing(6)
         row.addWidget(self.attach_button, 0, Qt.AlignmentFlag.AlignBottom)
         row.addWidget(self.input, 1)
-        row.addWidget(self.mic_button, 0, Qt.AlignmentFlag.AlignBottom)
         row.addWidget(self.send_button, 0, Qt.AlignmentFlag.AlignBottom)
         row.addWidget(self.stop_button, 0, Qt.AlignmentFlag.AlignBottom)
         self.status.setWordWrap(True)
@@ -271,16 +269,12 @@ class AssistantTab(QWidget):
                 " border-radius: 20px; }"
                 f"QPushButton:disabled {{ background: {themed('#6c5fc4')}; }}"
             )
-        for button, icon in (
-            (self.attach_button, attach_icon(quiet)),
-            (self.mic_button, mic_icon(quiet)),
-        ):
-            button.setIcon(icon)
-            button.setStyleSheet(
-                "QPushButton { background: transparent; border: 0;"
-                " border-radius: 20px; }"
-                f"QPushButton:hover {{ background: {themed('#eceef3')}; }}"
-            )
+        self.attach_button.setIcon(attach_icon(quiet))
+        self.attach_button.setStyleSheet(
+            "QPushButton { background: transparent; border: 0;"
+            " border-radius: 20px; }"
+            f"QPushButton:hover {{ background: {themed('#eceef3')}; }}"
+        )
 
     @property
     def busy(self) -> bool:
