@@ -60,17 +60,34 @@ def test_a_list_rises_when_its_rows_first_arrive_and_not_when_they_refresh(
     window = _ready_window(monkeypatch)
     window.show()
     window._open_list_view("services")
+    window._list_timer.stop()  # the list does not refresh itself while this looks
+    risen: list = []
+    monkeypatch.setattr(motion, "slide_up", risen.append)
     rows = [ClusterResource("ns", "Service", "web", ("ClusterIP",), "1d")]
 
     window._show_resources(["ns"], [])
-    assert not _rising(window.table)  # nothing to show yet
+    assert risen == []  # nothing to show yet
 
     window._show_resources(["ns"], rows)
-    assert _rising(window.table)
-    _wait(lambda: window.table.graphicsEffect() is None)
+    assert risen == [window.table]
 
     window._show_resources(["ns"], rows)  # the periodic refresh
-    assert window.table.graphicsEffect() is None
+    assert risen == [window.table]  # it did not rise again
+    window.close()
+
+
+def test_a_list_that_rises_is_drawn_by_the_effect_until_it_arrives(monkeypatch) -> None:
+    window = _ready_window(monkeypatch)
+    window.show()
+    window._open_list_view("services")
+    window._list_timer.stop()
+
+    window._show_resources(
+        ["ns"], [ClusterResource("ns", "Service", "web", ("ClusterIP",), "1d")]
+    )
+
+    assert _rising(window.table)
+    _wait(lambda: window.table.graphicsEffect() is None)
     window.close()
 
 
