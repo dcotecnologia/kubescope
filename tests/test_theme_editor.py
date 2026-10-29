@@ -30,8 +30,8 @@ def test_every_color_role_has_a_label_and_a_swatch() -> None:
 
     assert set(token_labels()) == set(theme.TOKENS)
     assert set(editor._swatches) == set(theme.TOKENS)
-    assert editor._swatches["page"].text() == "#f7f7fa"
-    assert "background: #f7f7fa" in editor._swatches["page"].styleSheet()
+    assert editor._swatches["page"].text() == "#dfe2e8"
+    assert "background: #dfe2e8" in editor._swatches["page"].styleSheet()
 
 
 def test_swatch_text_stays_readable_on_light_and_dark_colors() -> None:
@@ -57,7 +57,7 @@ def test_cancelling_the_color_dialog_keeps_the_color(monkeypatch) -> None:
 
     editor._swatches["page"].click()
 
-    assert editor.values()[2]["page"] == "#f7f7fa"
+    assert editor.values()[2]["page"] == "#dfe2e8"
 
 
 def test_a_new_theme_can_restart_from_the_other_built_in_theme(monkeypatch) -> None:

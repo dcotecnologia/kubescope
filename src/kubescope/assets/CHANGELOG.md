@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+### Changed
+
+- The **Light** theme is gray instead of white: the page, the side menu, the tables and the fields use soft grays with firmer borders, and the quiet texts are a step stronger to read on them by @danilogco
+
 ## [1.3.0-rc2] - 2026-10-29
 
 ### Added

@@ -1,4 +1,31 @@
 {
     "base": "light",
-    "name": "Light"
+    "name": "Light",
+    "palette": {
+        "#6b7380": "#5d6571",
+        "#7b8089": "#6a707a",
+        "#d9d3f2": "#c4bde4",
+        "#d9dce4": "#b9bec7",
+        "#dfe2e9": "#c1c5cd",
+        "#e1e3e9": "#c3c8d0",
+        "#e2f5e8": "#cbe1d3",
+        "#e4e5eb": "#c5c9d1",
+        "#e5f4eb": "#cfe3d7",
+        "#e6e7ed": "#c8ccd4",
+        "#e8e9ee": "#cacdd5",
+        "#e8eaee": "#cfd3da",
+        "#eceef3": "#d3d6dd",
+        "#eee9f7": "#d9d5e8",
+        "#eff1f3": "#d9dce1",
+        "#f0edfa": "#dbd8ea",
+        "#f3f1f9": "#dedbea",
+        "#f3f4f7": "#e3e5ea",
+        "#f6f6fa": "#e3e5ea",
+        "#f7f7fa": "#dfe2e8",
+        "#fbe4e4": "#e9cdcd",
+        "#fbfbfc": "#f1f2f5",
+        "#fce9ea": "#ebd2d4",
+        "#fff2de": "#ecdfc6",
+        "#ffffff": "#eceef2"
+    }
 }
