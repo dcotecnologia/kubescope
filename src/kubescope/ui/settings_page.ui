@@ -229,6 +229,16 @@
               </property>
              </widget>
             </item>
+            <item row="6" column="0" colspan="2">
+             <widget class="QCheckBox" name="animationsCheck">
+              <property name="text">
+               <string>Animate windows and lists as they open</string>
+              </property>
+              <property name="toolTip">
+               <string>On by default: a window or a list rises into place as it first shows. Turn it off to show everything at once.</string>
+              </property>
+             </widget>
+            </item>
            </layout>
           </item>
          </layout>

@@ -63,6 +63,9 @@ def test_main_builds_the_window_and_runs_the_event_loop(monkeypatch) -> None:
         def setApplicationName(self, name) -> None:
             events.append(("name", name))
 
+        def installEventFilter(self, _filter) -> None:
+            events.append("dialog slide")
+
         def setWindowIcon(self, _icon) -> None:
             events.append("icon")
 
@@ -109,6 +112,7 @@ def test_main_builds_the_window_and_runs_the_event_loop(monkeypatch) -> None:
     assert events.index("bundled themes") < events.index(("theme", "dark"))
     assert events.index("fonts") < events.index(("theme", "dark"))  # before widgets
     assert ("name", "KubeScope") in events
+    assert "dialog slide" in events  # every dialog rises as it opens
     assert ("lang", "auto") in events
     assert events[-4:] == ["show", "update check", "welcome", "exec"]
 
@@ -137,6 +141,9 @@ def test_main_records_the_runtime_and_the_input_when_debugging(monkeypatch) -> N
             pass
 
         def setApplicationName(self, _name) -> None:
+            pass
+
+        def installEventFilter(self, _filter) -> None:
             pass
 
         def setWindowIcon(self, _icon) -> None:
@@ -190,6 +197,9 @@ def test_main_installs_the_crash_hooks_and_offers_the_pending_report(
             pass
 
         def setApplicationName(self, _name) -> None:
+            pass
+
+        def installEventFilter(self, _filter) -> None:
             pass
 
         def setWindowIcon(self, _icon) -> None:

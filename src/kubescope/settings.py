@@ -27,6 +27,7 @@ DEFAULTS: dict[str, Any] = {
     "wrap_log_lines": False,
     "last_update_notice": "",
     "write_mode": False,
+    "animations": True,
     "assistant_enabled": True,
     "assistant": "",
     "assistant_consent": False,
@@ -269,6 +270,16 @@ class Settings:
     @write_mode.setter
     def write_mode(self, value: bool) -> None:
         self._data["write_mode"] = bool(value)
+
+    @property
+    def animations(self) -> bool:
+        """Whether windows and lists rise into place as they show; on unless
+        the person turned it off."""
+        return self._data["animations"] is not False
+
+    @animations.setter
+    def animations(self, value: bool) -> None:
+        self._data["animations"] = bool(value)
 
     @property
     def assistant_enabled(self) -> bool:
