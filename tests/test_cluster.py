@@ -16,7 +16,7 @@ import pytest
 
 from kubescope import cluster
 from kubescope.models import PodInfo, Workload
-from kubescope.utils import flatpak
+from kubescope.utils import flatpak, programs
 
 
 def test_parse_deployment_workload() -> None:
@@ -1065,6 +1065,7 @@ def test_programs_are_found_on_the_path_on_windows(monkeypatch) -> None:
 
     monkeypatch.setattr(cluster.sys, "platform", "win32")
     monkeypatch.setattr(cluster.subprocess, "Popen", Fake)
+    monkeypatch.setattr(programs, "_registry_path", lambda: [])  # no registry here
     monkeypatch.setattr(
         cluster.shutil,
         "which",
