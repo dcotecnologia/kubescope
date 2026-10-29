@@ -769,3 +769,20 @@ def test_the_screenshot_opens_what_is_closed_and_leaves_open_what_is_open(
 
     assert all(section.maximumHeight() > 0 for section in sections)
     window.close()
+
+
+def test_changing_the_theme_repaints_the_chat_that_is_open(monkeypatch) -> None:
+    from kubescope import theme
+
+    window, _messages = _open(monkeypatch)
+    window._open_assistant()
+    tab = _tab(window)
+    tab.note("a note")
+    light = tab._bubbles[0].styleSheet()
+
+    monkeypatch.setattr(theme, "_active", theme.DARK_THEME)
+    window._apply_theme()
+
+    assert tab._bubbles[0].styleSheet() != light
+    monkeypatch.setattr(theme, "_active", theme.LIGHT_THEME)
+    window.close()

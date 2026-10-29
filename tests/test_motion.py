@@ -88,3 +88,18 @@ def test_a_dialog_rises_when_it_opens_and_other_widgets_do_not() -> None:
     watcher.eventFilter(dialog, QEvent(QEvent.Type.Hide))
     assert plain.graphicsEffect() is None
     _wait(lambda: dialog.graphicsEffect() is None)
+
+
+def test_a_widget_with_nothing_to_draw_is_left_blank(monkeypatch) -> None:
+    from PySide6.QtGui import QPixmap
+
+    widget = QLabel("list")
+    effect = motion.SlideUpEffect(widget)
+    monkeypatch.setattr(effect, "sourcePixmap", lambda *_a: QPixmap())
+    canvas = QPixmap(40, 40)
+    painter = QPainter(canvas)
+
+    effect.draw(painter)  # no image of the widget yet
+
+    assert painter.opacity() == 1.0  # it did not even begin to draw
+    painter.end()
