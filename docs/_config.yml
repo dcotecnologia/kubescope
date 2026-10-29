@@ -4,7 +4,7 @@ description: Desktop IDE for Kubernetes.
 app_name: KubeScope
 app_icon: assets/icon.png
 app_screenshot: screenshots/overview.png
-app_description: A desktop IDE for Kubernetes, including Amazon EKS, Google GKE and Azure AKS. Read-only by default, with no kubectl needed.
+app_description: A desktop IDE for Kubernetes, including Amazon EKS, Google GKE and Azure AKS. Read-only by default, with no kubectl needed, and with Gabi, an AI assistant for your cluster.
 
 # Google Tag Manager container (GTM-XXXXXXX); empty leaves the tag out of the pages
 google_tag_manager_id: "GTM-NF8JJ4QQ"
@@ -19,6 +19,8 @@ company_url: https://dcotecnologia.com
 nav:
   - title: Install
     url: /install/
+  - title: Gabi
+    url: /assistant/
   - title: Guides
     url: https://github.com/dcotecnologia/kubescope/wiki
   - title: Source
@@ -38,6 +40,9 @@ features:
   - icon: "☁"
     title: Every cloud
     description: Amazon EKS, Google GKE and Azure AKS through your local kubeconfig, with the official Kubernetes Python client.
+  - icon: "❖"
+    title: Gabi, the assistant
+    description: An AI that sees what you see, looks into problems and takes you to the right screen. She uses the Claude Code or Codex already on your computer, asks for no credentials, and never changes a cluster without your confirmation.
   - icon: "✎"
     title: Write mode
     description: Off by default. Turn it on to delete or evict Pods, scale or restart Deployments, and forward ports, only where the cluster lets you.

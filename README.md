@@ -118,19 +118,10 @@ _The cluster overview, shown with sample data. Regenerate it with
 - **Details and logs:** JSON details of a Pod or workload, and live Pod logs,
   each in its own closable tab, colored like Monokai. **Save...** writes the open
   tab to a file you choose.
-- **Assistant:** the round button in the corner of the window opens a chat with
-  **Gabi**, the assistant of DCO Tecnologia, expert in Kubernetes and KubeScope.
-  She only talks about Kubernetes and KubeScope, and politely declines anything else.
-  She runs on a coding assistant that is already installed and signed in on your computer
-  (Claude Code or Codex; KubeScope asks for no credentials and stores none). It sees what you see, can read details, logs, lists
-  and events to look into a problem, answers in the language of the app, and
-  moves the window for you: a list, a page, a tab, the logs of a Pod. It never
-  changes a cluster by itself: a change is a card with **Run**, available only
-  with the write mode on; in the default read-only mode it cannot edit, update or
-  delete anything, and says so when you ask. Attach images and text files, resize the panel, or take
-  it out into a window of its own; conversations are kept for each context.
-  Nothing is sent until you open the chat and agree, and **Settings** turns it
-  off. What goes where is in [SECURITY.md](SECURITY.md).
+- **Assistant:** the round button in the corner opens a chat with **Gabi**, the
+  assistant of DCO Tecnologia and an expert in Kubernetes and KubeScope. She sees
+  what you see, looks into problems, takes you to the right screen, and never
+  changes a cluster without your confirmation. See [Gabi, the assistant](#gabi-the-assistant).
 - **Update check:** when it starts, KubeScope asks GitHub for the latest release
   and shows **Update available** next to an icon in the footer. The icon spins
   while it looks, and clicking it checks again. It sends only the app version;
@@ -160,6 +151,77 @@ _The cluster overview, shown with sample data. Regenerate it with
   Japanese, Korean, Thai, Hebrew, Persian, Arabic and Hindi**,
   selectable in Settings, where each language is listed by its own name and its English
   name, in alphabetical order.
+
+## Gabi, the assistant
+
+Gabi is an AI assistant for KubeScope, made by DCO Tecnologia. She knows Kubernetes
+and KubeScope, and she only talks about them: she politely declines anything else.
+She answers in the language of the app, in any of its 21 languages, unless you write
+to her in another one.
+
+### How it works
+
+Gabi does not run on a server of KubeScope. She runs on a coding assistant that is
+**already installed and signed in on your computer**: [Claude Code](https://claude.com/claude-code)
+(`claude`) or [Codex](https://github.com/openai/codex) (`codex`). KubeScope hands that
+program your question and shows its answer. It asks you for no credentials and stores
+none: the sign-in stays with the program, and in a Flatpak the program runs on the host.
+
+The program is started so that it can only answer, not act: Claude Code with no tools
+and Codex with its shell, file viewing, plugins, browser and web search switched off,
+both without a saved session. Gabi cannot read a file of your computer or run a command.
+
+### Set it up
+
+1. Install and sign in to Claude Code or Codex, as you would to use them in a terminal.
+2. Open the round button in the corner of the window and, the first time, agree that
+   what you ask and what she reads from the cluster go to that program and to its
+   service. Nothing is sent before that.
+3. In **Settings**, the **Assistant** card turns the button on or off, picks the program
+   (**Automatic** uses the first one it finds) and, if the system does not find a
+   program on its path, takes the path of it, which you can type or browse for.
+
+### What she can do
+
+- **See what you see.** With each question she gets a description of the window: the
+  list and its rows, the selected row, the namespace and the search, the text of the
+  open Details or Logs, the numbers of the overviews and the tabs you have open.
+- **Look into a problem.** She reads the details of a resource, the logs of a Pod, the
+  lists and the events of a namespace, up to five reads for a question, and tells you
+  what she checked, what the evidence shows and how sure she is.
+- **Take you there.** She changes the window as you would with a click: a list, the
+  Cluster or Workloads overview, Settings, a namespace, a context, a search, the details
+  of a resource, the logs of a Pod or a tab that is open.
+- **Propose a change.** Only with the **write mode** on: scale or restart a Deployment,
+  evict or delete a Pod, delete or replace a resource. A change is never done by her. It
+  appears as a card with the exact action and **Run** or **Cancel**, and runs through the
+  same code and limits as the buttons of the write mode.
+
+In the default **read-only mode** she cannot edit, update or delete anything, she is not
+even told that those actions exist, and she says so plainly when you ask. She may still
+explain a change and show the command or YAML for you to review and run yourself.
+
+### Using the chat
+
+- The panel opens over the button. Drag its left edge, top edge or corner to resize it,
+  or take it out into a window of its own with the button of its header. Its size and
+  place are kept.
+- **+** attaches images (up to 5 MiB) and text files such as logs and manifests (up to
+  200 KiB), four at most for a question; a picture can also be pasted into the field.
+  Images need a program that takes them, which both do.
+- Conversations are kept on your computer for each context, without the documents, logs
+  and files that were read or attached. **Clear history** forgets one context, and
+  **Settings** forgets them all.
+
+### What leaves your computer
+
+What you type and attach, a description of the window, and what Gabi asks the app to
+read: resource documents (Secret values are hidden), the last lines of a log, lists and
+events. Tokens and keys are redacted, but a password an application prints inside a
+sentence of a log can still go, so be careful on a cluster whose logs hold secrets.
+[SECURITY.md](SECURITY.md) has the whole account.
+
+She is an AI and can be wrong: read the commands she suggests before you run them.
 
 ## Requirements
 
