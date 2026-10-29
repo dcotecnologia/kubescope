@@ -566,6 +566,8 @@
             "The file could not be written: {reason}": "نوشتن پرونده ممکن نبود: {reason}",
             "The object must be a JSON object.": "شیء باید یک شیء JSON باشد.",
             "The sign-in command in row {row} is not valid.": "فرمان ورود در ردیف {row} نامعتبر است.",
+            "There is no Pod {name}.": "",
+            "There is no open tab {title}.": "",
             "There is no {what} {value}.": "",
             "Third-party notices": "اعلان‌های شخص ثالث",
             "This workload has no Pods.": "این بار کاری Pod ندارد.",

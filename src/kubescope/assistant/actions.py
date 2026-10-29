@@ -81,6 +81,35 @@ ACTIONS = (
         "change the cluster of the kubeconfig",
         (Param("context", str, "the name of the context"),),
     ),
+    Action(
+        "open_page",
+        "navigate",
+        "go to a page of the window that is not a list",
+        (
+            Param(
+                "page",
+                str,
+                "the page",
+                choices=("overview", "workloads_overview", "settings"),
+            ),
+        ),
+    ),
+    Action(
+        "switch_tab",
+        "navigate",
+        "show a Details or Logs tab that is already open, found by its title",
+        (Param("title", str, "a part of the title of the tab"),),
+    ),
+    Action(
+        "show_logs",
+        "navigate",
+        "open the logs of a Pod for the person, in a tab",
+        (
+            Param("namespace", str, "the namespace of the Pod"),
+            Param("pod", str, "the name of the Pod"),
+            Param("container", str, "the container", required=False, empty=True),
+        ),
+    ),
     Action("refresh", "navigate", "read the list again"),
     Action(
         "show_details",

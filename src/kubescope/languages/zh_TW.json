@@ -566,6 +566,8 @@
             "The file could not be written: {reason}": "無法寫入檔案：{reason}",
             "The object must be a JSON object.": "物件必須是 JSON 物件。",
             "The sign-in command in row {row} is not valid.": "第 {row} 列的登入指令無效。",
+            "There is no Pod {name}.": "",
+            "There is no open tab {title}.": "",
             "There is no {what} {value}.": "",
             "Third-party notices": "第三方聲明",
             "This workload has no Pods.": "此工作負載沒有 Pod。",

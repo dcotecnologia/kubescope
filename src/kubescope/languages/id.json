@@ -566,6 +566,8 @@
             "The file could not be written: {reason}": "Berkas tidak dapat ditulis: {reason}",
             "The object must be a JSON object.": "Objek harus berupa objek JSON.",
             "The sign-in command in row {row} is not valid.": "Perintah login di baris {row} tidak valid.",
+            "There is no Pod {name}.": "",
+            "There is no open tab {title}.": "",
             "There is no {what} {value}.": "",
             "Third-party notices": "Pemberitahuan pihak ketiga",
             "This workload has no Pods.": "Workload ini tidak memiliki Pod.",
