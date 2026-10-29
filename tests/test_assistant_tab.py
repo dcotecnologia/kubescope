@@ -369,3 +369,28 @@ def test_a_failure_after_half_an_answer_takes_both_bubbles_back(replies) -> None
     assert "cut off" in tab.status.text()
     assert tab._bubbles == [] and tab._labels == [] and tab.entries() == []
     assert tab.send_button.isEnabled()
+
+
+def test_the_chat_takes_its_colors_from_the_theme_and_follows_a_change(
+    replies, monkeypatch
+) -> None:
+    from kubescope import theme
+
+    tab = _tab()
+    tab.note("noted")
+    tab._add_entry("user", "hello")
+    tab._add_entry("assistant", "hi")
+    light = [bubble.styleSheet() for bubble in tab._bubbles]
+    wall = tab.thread_view.color.name()
+
+    monkeypatch.setattr(theme, "_active", theme.DARK_THEME)
+    tab.restyle()
+
+    dark = [bubble.styleSheet() for bubble in tab._bubbles]
+    assert dark != light and tab.thread_view.color.name() != wall
+    assert theme.themed("#e5f4eb") in dark[1]  # the bubble of the person
+    assert theme.themed("#ffffff") in dark[2]  # the bubble of the others
+    stamp = tab._bubble_info[1][1]
+    assert stamp is not None and theme.themed("#176b58") in stamp.text()
+    assert theme.themed("#3020a5") in tab.send_button.styleSheet()  # as Save changes
+    monkeypatch.setattr(theme, "_active", theme.LIGHT_THEME)
