@@ -123,7 +123,12 @@ from kubescope.cluster import (
 from kubescope.dialogs.changelog_dialog import ChangelogDialog
 from kubescope.dialogs.theme_editor import ThemeEditor
 from kubescope.dialogs.update_dialog import UpdateDialog
-from kubescope.i18n import apply_language, language_choices, language_name
+from kubescope.i18n import (
+    apply_language,
+    language_choices,
+    language_name,
+    resolve_language,
+)
 from kubescope.models import (
     EKS_VIEWS,
     RESOURCE_VIEWS,
@@ -4865,7 +4870,8 @@ class WorkloadWindow(QMainWindow):
             "KubeScope found neither of them on this computer. They are programs "
             "that you install and sign in to yourself, as you would in a terminal; "
             "KubeScope asks for no credentials and stores none.\n\n"
-            "1. Install Claude Code (claude) or Codex (codex) and sign in.\n"
+            "1. Install the Claude Code CLI (claude) or the Codex CLI (codex) and sign "
+            "in.\n"
             "2. If it is installed where the system does not look, tell KubeScope "
             "where in Settings.\n"
             "3. Open this button again."
@@ -4882,14 +4888,21 @@ class WorkloadWindow(QMainWindow):
         settings = box.addButton(
             self.tr("Open Settings"), QMessageBox.ButtonRole.AcceptRole
         )
-        guide = box.addButton(
-            self.tr("How to set it up"), QMessageBox.ButtonRole.ActionRole
-        )
+        language = resolve_language(self.settings.language)
+        for one in ASSISTANTS.values():
+            if one.guide is not None:
+                address = one.guide(language)
+                button = box.addButton(
+                    self.tr("{name} guide").format(name=one.name),
+                    QMessageBox.ButtonRole.ActionRole,
+                )
+                button.clicked.connect(
+                    lambda _checked=False, url=address: QDesktopServices.openUrl(
+                        QUrl(url)
+                    )
+                )
         box.addButton(self.tr("Close"), QMessageBox.ButtonRole.RejectRole)
         settings.clicked.connect(self._show_assistant_settings)
-        guide.clicked.connect(
-            lambda: QDesktopServices.openUrl(QUrl(f"{PROJECT_URL}#gabi-the-assistant"))
-        )
         self._style_box_buttons(box)
         box.exec()
 

@@ -105,16 +105,18 @@ def test_without_a_program_the_button_guides_to_the_setup(monkeypatch) -> None:
     steps = box.informativeText()
     for phrase in (
         "found neither of them",
-        "Install Claude Code (claude) or Codex (codex) and sign in",
+        "Install the Claude Code CLI (claude) or the Codex CLI (codex)",
         "tell KubeScope where in Settings",
         "asks for no credentials and stores none",
     ):
         assert phrase in steps
     assert {one.text() for one in box.buttons()} == {
         "Open Settings",
-        "How to set it up",
+        "Claude Code guide",
+        "Codex guide",
         "Close",
     }
+    assert "Install the Claude Code CLI (claude) or the Codex CLI (codex)" in steps
     assert window._assistant_tab is None and not window.assistant_dock.is_open
     assert window.pages.currentIndex() != 2
     window.close()
@@ -141,7 +143,7 @@ def test_the_guide_opens_the_settings_at_the_card_of_the_assistant(
     window.close()
 
 
-def test_the_guide_links_to_the_instructions(monkeypatch) -> None:
+def test_the_guide_links_to_how_each_program_is_installed(monkeypatch) -> None:
     window, _messages = _open(monkeypatch, found=())
     opened: list[str] = []
     monkeypatch.setattr(
@@ -149,11 +151,38 @@ def test_the_guide_links_to_the_instructions(monkeypatch) -> None:
         "openUrl",
         lambda url: opened.append(url.toString()),
     )
-    _answer_the_guide(monkeypatch, "How to set it up")
+
+    window.settings.language = "en"
+    _answer_the_guide(monkeypatch, "Claude Code guide")
+    window._open_assistant()
+    _answer_the_guide(monkeypatch, "Codex guide")
+    window._open_assistant()
+
+    assert opened == [
+        "https://code.claude.com/docs/en/quickstart",
+        "https://learn.chatgpt.com/docs/codex/cli#getting-started",
+    ]
+    window.close()
+
+
+def test_the_guide_of_claude_is_in_portuguese_for_a_portuguese_app(monkeypatch) -> None:
+    from kubescope.assistant import claude, codex
+
+    window, _messages = _open(monkeypatch, found=())
+    opened: list[str] = []
+    monkeypatch.setattr(
+        window_module.QDesktopServices,
+        "openUrl",
+        lambda url: opened.append(url.toString()),
+    )
+    window.settings.language = "pt"
+    _answer_the_guide(monkeypatch, "Claude Code guide")
 
     window._open_assistant()
 
-    assert opened == [f"{window_module.PROJECT_URL}#gabi-the-assistant"]
+    assert opened == ["https://code.claude.com/docs/pt/quickstart"]
+    assert claude.guide("de") == "https://code.claude.com/docs/en/quickstart"
+    assert codex.CODEX.guide is not None and codex.CODEX.guide("pt") == codex.GUIDE
     window.close()
 
 
@@ -170,7 +199,7 @@ def test_the_guide_says_when_a_path_that_was_set_is_no_longer_a_program(
 
     window._open_assistant()
 
-    assert "The path set for Claude is not a program that can be run." in (
+    assert "The path set for Claude Code is not a program that can be run." in (
         boxes[0].informativeText()
     )
     window.settings.assistant_programs = {}
@@ -688,9 +717,9 @@ def test_browsing_for_a_program_fills_its_path(monkeypatch, tmp_path) -> None:
         window_module.QFileDialog, "getOpenFileName", lambda *_a: (chosen.pop(0), "")
     )
 
-    window._browse_program(edit, "Claude")
+    window._browse_program(edit, "Claude Code")
     assert edit.text() == str(tmp_path / "claude")
-    window._browse_program(edit, "Claude")  # cancelled: nothing changes
+    window._browse_program(edit, "Claude Code")  # cancelled: nothing changes
     assert edit.text() == str(tmp_path / "claude")
     window.close()
 

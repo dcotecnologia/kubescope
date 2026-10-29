@@ -58,6 +58,8 @@ class Assistant:
     # with them, and the message to write to it, with the images in it
     image_options: Callable[[str | None, str], list[str]] | None = None
     image_payload: Callable[[str, Sequence[Attachment]], str] | None = None
+    # where its installation is explained, for a language code such as "pt"
+    guide: Callable[[str], str] | None = None
     # a program with no option for its instructions gets them before the question
     compose: Callable[[str, str], str] | None = None
     # a program that reads images from files: its options for the files

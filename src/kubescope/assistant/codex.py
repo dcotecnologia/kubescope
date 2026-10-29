@@ -91,12 +91,15 @@ def parse_line(line: str) -> tuple[str, str]:
     return "", ""
 
 
+GUIDE = "https://learn.chatgpt.com/docs/codex/cli#getting-started"
+
 CODEX = Assistant(
     "codex",
     "Codex",
     "codex",
     options,
     parse_line,
+    guide=lambda _language: GUIDE,
     compose=compose,
     image_files=image_files,
 )
