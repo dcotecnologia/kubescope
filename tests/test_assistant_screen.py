@@ -256,3 +256,24 @@ def test_the_scope_holds_in_both_modes_and_in_every_language() -> None:
         for language in ("English", "Portuguese", "Japanese"):
             told = knowledge.system_prompt(language, write_mode)
             assert knowledge.SCOPE in told
+
+
+def test_gabi_asks_which_container_when_there_are_several_and_does_not_guess() -> None:
+    told = knowledge.system_prompt()
+    rule = knowledge.CONTAINERS
+
+    assert rule in told
+    for phrase in (
+        "A Pod has one or more containers, and may have init containers besides",
+        "A workload (a Deployment, StatefulSet, DaemonSet, ReplicaSet, Job or "
+        "CronJob) has the same containers in its Pod template",
+        "if they name it or clearly point to it (the api, the worker), use that one",
+        "if there is only one main container use it without asking",
+        "Never take an init container unless they ask for it by name",
+        "do not guess and do not take the first one",
+        "ask which container they want, naming the options, and wait for the answer",
+        "The logs of a workload are the logs of its Pods",
+        "the lists show the owner of each Pod",
+    ):
+        assert phrase in rule
+    assert told.index(knowledge.DIAGNOSE) < told.index(knowledge.CONTAINERS)

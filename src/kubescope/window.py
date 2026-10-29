@@ -5004,10 +5004,31 @@ class WorkloadWindow(QMainWindow):
 
         def found(result: tuple[list[str], list[PodInfo]]) -> None:
             pod = next((p for p in result[1] if p.name == name), None)
-            choices = [*pod.init_containers, *pod.containers] if pod else []
-            container = args.get("container") or (choices[0] if choices else "")
-            if pod is None or not container:
+            if pod is None:
                 tab.note(self.tr("There is no Pod {name}.").format(name=name))
+                return
+            choices = [*pod.containers, *pod.init_containers]
+            container = args.get("container") or ""
+            if not container and len(pod.containers) == 1:
+                container = pod.containers[0]  # the main one, never an init one
+            elif not container and not pod.containers and len(choices) == 1:
+                container = choices[0]  # only a setup container: nothing to choose
+            elif not container:
+                # never the first of the list: the init containers (a migration, a
+                # setup) come first in it, and they are rarely what is wanted
+                tab.note(
+                    self.tr(
+                        "The Pod {name} has more than one container ({names}), and "
+                        "none was said. Tell Gabi which one you want."
+                    ).format(name=name, names=", ".join(choices))
+                )
+                return
+            if container not in choices:
+                tab.note(
+                    self.tr("The Pod {name} has no container {container}.").format(
+                        name=name, container=container
+                    )
+                )
                 return
             self._run_action(
                 get_pod_logs,

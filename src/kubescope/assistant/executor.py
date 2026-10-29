@@ -40,21 +40,42 @@ def _cut(text: str, keep_end: bool) -> str:
     return f"{text[:RESULT_LIMIT]}\n[the rest left out]"
 
 
+class ChooseContainer(Exception):
+    """The Pod has more than one container and none was named: the person has
+    to say which."""
+
+
 def _container(context: str, namespace: str, pod: str) -> str:
-    """The first container of a Pod, when the assistant named none."""
+    """The container of a Pod, when the assistant named none: its only main
+    container, never an init one that comes first in the list; with several
+    main containers, it is for the person to choose."""
     document: dict[str, Any] = cluster.get_resource_details(
         context, "Pod", namespace, pod
     )
-    containers = (document.get("spec") or {}).get("containers") or []
-    if not containers:
+    spec = document.get("spec") or {}
+    init = [str(item.get("name")) for item in spec.get("initContainers") or []]
+    regular = [str(item.get("name")) for item in spec.get("containers") or []]
+    if not init and not regular:
         raise ClusterError(f"The Pod {pod} has no container")
-    return str(containers[0].get("name"))
+    if len(regular) > 1:
+        listed = ", ".join(regular)
+        if init:
+            listed += f" (init containers, which run first and stop: {', '.join(init)})"
+        raise ChooseContainer(
+            f"The Pod {pod} has more than one container: {listed}. Nothing was read. "
+            "Ask the person which container they want, naming the options, and wait "
+            "for the answer before you read its logs."
+        )
+    return (regular or init)[0]
 
 
 def _pod_row(pod: PodInfo) -> str:
     return (
         f"{pod.namespace}/{pod.name} {pod.phase} ready {pod.ready}/{pod.total} "
-        f"restarts {pod.restarts} node {pod.node or '-'} age {pod.age}"
+        f"restarts {pod.restarts} node {pod.node or '-'} age {pod.age} "
+        f"containers {', '.join(pod.containers) or '-'}"
+        + (f" init {', '.join(pod.init_containers)}" if pod.init_containers else "")
+        + (f" owner {pod.owner[0]}/{pod.owner[1]}" if pod.owner else "")
     )
 
 
@@ -62,7 +83,12 @@ def _workload_row(workload: Workload) -> str:
     return (
         f"{workload.namespace}/{workload.kind}/{workload.name} {workload.status} "
         f"ready {workload.ready}/{workload.desired} restarts {workload.restarts} "
-        f"age {workload.age}"
+        f"age {workload.age} containers {', '.join(workload.containers) or '-'}"
+        + (
+            f" init {', '.join(workload.init_containers)}"
+            if workload.init_containers
+            else ""
+        )
     )
 
 
@@ -137,6 +163,8 @@ def fetch(request: Request, context: str) -> str:
         raise ValueError(f"{request.action.name} does not read for the assistant")
     try:
         body = redact(_read(request, context))
+    except ChooseContainer as question:
+        body = str(question)
     except (ClusterError, ValueError) as error:
         body = f"The cluster did not answer: {error}"
     return f"{_NOTE.format(name=request.action.name)}\n\n```\n{body}\n```"

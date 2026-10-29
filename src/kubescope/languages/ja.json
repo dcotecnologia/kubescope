@@ -601,6 +601,8 @@
             "Superseded": "置き換え済み",
             "Suspended": "一時停止中",
             "Terminated": "終了",
+            "The Pod {name} has more than one container ({names}), and none was said. Tell Gabi which one you want.": "Pod {name} には複数のコンテナー ({names}) がありますが、指定されていません。使用するコンテナーを Gabi に伝えてください。",
+            "The Pod {name} has no container {container}.": "Pod {name} にコンテナー {container} はありません。",
             "The file could not be written: {reason}": "ファイルを書き込めませんでした：{reason}",
             "The object must be a JSON object.": "オブジェクトは JSON オブジェクトである必要があります。",
             "The path set for {names} is not a program that can be run.": "{names} に設定されたパスは、実行できるプログラムではありません。",

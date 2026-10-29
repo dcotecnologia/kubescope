@@ -601,6 +601,8 @@
             "Superseded": "Yerine geçildi",
             "Suspended": "Askıya alındı",
             "Terminated": "Sonlandı",
+            "The Pod {name} has more than one container ({names}), and none was said. Tell Gabi which one you want.": "{name} Pod'u birden fazla kapsayıcı içeriyor ({names}) ve hiçbiri belirtilmedi. Hangisini istediğinizi Gabi'ye söyleyin.",
+            "The Pod {name} has no container {container}.": "{name} Pod'unda {container} adlı kapsayıcı yok.",
             "The file could not be written: {reason}": "Dosya yazılamadı: {reason}",
             "The object must be a JSON object.": "Nesne bir JSON nesnesi olmalı.",
             "The path set for {names} is not a program that can be run.": "{names} için ayarlanan yol, çalıştırılabilen bir program değil.",

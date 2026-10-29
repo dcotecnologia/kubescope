@@ -21,6 +21,8 @@ class Workload:
     state: str | None = None  # Jobs and CronJobs name their own state
     schedule: str | None = None  # CronJobs only
     node_selector: str = ""  # "key=value, ..." the Pods are placed by
+    containers: tuple[str, ...] = ()  # of the Pod template
+    init_containers: tuple[str, ...] = ()  # of the Pod template, which run first
 
     @property
     def status(self) -> str:

@@ -601,6 +601,8 @@
             "Superseded": "Remplacé",
             "Suspended": "Suspendu",
             "Terminated": "Terminé",
+            "The Pod {name} has more than one container ({names}), and none was said. Tell Gabi which one you want.": "Le Pod {name} contient plusieurs conteneurs ({names}), et aucun n'a été indiqué. Indiquez à Gabi lequel vous souhaitez.",
+            "The Pod {name} has no container {container}.": "Le Pod {name} n'a pas de conteneur {container}.",
             "The file could not be written: {reason}": "Le fichier n'a pas pu être écrit : {reason}",
             "The object must be a JSON object.": "L'objet doit être un objet JSON.",
             "The path set for {names} is not a program that can be run.": "Le chemin défini pour {names} n'est pas un programme exécutable.",

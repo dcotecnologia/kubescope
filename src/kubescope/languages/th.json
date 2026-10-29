@@ -601,6 +601,8 @@
             "Superseded": "ถูกแทนที่",
             "Suspended": "ระงับไว้",
             "Terminated": "สิ้นสุดแล้ว",
+            "The Pod {name} has more than one container ({names}), and none was said. Tell Gabi which one you want.": "Pod {name} มีคอนเทนเนอร์มากกว่าหนึ่งตัว ({names}) แต่ไม่ได้ระบุว่าต้องการตัวใด โปรดบอก Gabi ว่าต้องการตัวไหน",
+            "The Pod {name} has no container {container}.": "Pod {name} ไม่มีคอนเทนเนอร์ {container}",
             "The file could not be written: {reason}": "เขียนไฟล์ไม่ได้: {reason}",
             "The object must be a JSON object.": "ออบเจ็กต์ต้องเป็นออบเจ็กต์ JSON",
             "The path set for {names} is not a program that can be run.": "พาธที่ตั้งไว้สำหรับ {names} ไม่ใช่โปรแกรมที่เรียกใช้งานได้",

@@ -156,7 +156,13 @@ ACTIONS = (
         (
             Param("namespace", str, "the namespace of the Pod"),
             Param("pod", str, "the name of the Pod"),
-            Param("container", str, "the container", required=False, empty=True),
+            Param(
+                "container",
+                str,
+                "the container; leave it out only when the Pod has one",
+                required=False,
+                empty=True,
+            ),
             Param("lines", int, "how many lines", required=False, low=1, high=2000),
         ),
     ),

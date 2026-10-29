@@ -2996,3 +2996,31 @@ def test_in_a_flatpak_the_terminal_and_its_program_are_the_hosts(
     monkeypatch.setattr(cluster, "host_has", lambda _name: False)
     with pytest.raises(cluster.ClusterError, match="gcloud auth login"):
         cluster._open_terminal(["gcloud", "auth", "login"])
+
+
+def test_a_workload_carries_the_containers_of_its_pod_template() -> None:
+    now = datetime(2025, 1, 2, tzinfo=UTC)
+    pod_spec = {
+        "containers": [{"name": "api"}, {"name": "worker"}],
+        "initContainers": [{"name": "migrate"}],
+    }
+    base = {"metadata": {"name": "web", "namespace": "ns"}}
+
+    deployment = cluster._parse_workload(
+        {**base, "kind": "Deployment", "spec": {"template": {"spec": pod_spec}}}, now
+    )
+    cron = cluster._parse_workload(
+        {
+            **base,
+            "kind": "CronJob",
+            "spec": {"jobTemplate": {"spec": {"template": {"spec": pod_spec}}}},
+        },
+        now,
+    )
+    bare = cluster._parse_workload({**base, "kind": "Deployment", "spec": {}}, now)
+
+    assert deployment is not None and cron is not None and bare is not None
+    for workload in (deployment, cron):
+        assert workload.containers == ("api", "worker")
+        assert workload.init_containers == ("migrate",)
+    assert bare.containers == () and bare.init_containers == ()
