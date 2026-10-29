@@ -566,6 +566,8 @@
             "The file could not be written: {reason}": "เขียนไฟล์ไม่ได้: {reason}",
             "The object must be a JSON object.": "ออบเจ็กต์ต้องเป็นออบเจ็กต์ JSON",
             "The sign-in command in row {row} is not valid.": "คำสั่งลงชื่อเข้าใช้ในแถวที่ {row} ไม่ถูกต้อง",
+            "There is no Pod {name}.": "",
+            "There is no open tab {title}.": "",
             "There is no {what} {value}.": "",
             "Third-party notices": "ประกาศของบุคคลที่สาม",
             "This workload has no Pods.": "เวิร์กโหลดนี้ไม่มี Pod",

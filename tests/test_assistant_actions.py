@@ -152,3 +152,20 @@ def test_a_request_is_described_in_one_line_for_the_person_to_confirm() -> None:
     assert 'document={"a": 1}' in actions.describe(replace)
     refresh = _only(_block({"action": "refresh"}))
     assert isinstance(refresh, Request) and actions.describe(refresh) == "refresh()"
+
+
+def test_the_pages_the_tabs_and_the_logs_can_be_asked_for_and_nothing_else() -> None:
+    for document in (
+        {"action": "open_page", "page": "settings"},
+        {"action": "switch_tab", "title": "Pod: web"},
+        {"action": "show_logs", "namespace": "ns", "pod": "p"},
+        {"action": "show_logs", "namespace": "ns", "pod": "p", "container": ""},
+    ):
+        found = _only(_block(document))
+        assert isinstance(found, Request) and found.action.kind == "navigate"
+
+    refused = _only(_block({"action": "open_page", "page": "somewhere"}))
+    assert (
+        isinstance(refused, Invalid) and "not one of the known ones" in refused.reason
+    )
+    assert isinstance(_only(_block({"action": "switch_tab", "title": " "})), Invalid)

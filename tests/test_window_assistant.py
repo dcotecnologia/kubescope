@@ -407,3 +407,97 @@ def test_the_assistant_sees_the_numbers_of_the_overviews(monkeypatch) -> None:
     assert "Page: Workloads overview" in seen
     assert "Deployment: 3 in all, 2 healthy" in seen and "Pod: p in ns: crash" in seen
     window.close()
+
+
+def test_the_assistant_moves_to_a_page_an_open_tab_and_the_logs_of_a_pod(
+    monkeypatch,
+) -> None:
+    from kubescope.models import PodInfo
+
+    window, _messages = _open(monkeypatch)
+    window._open_assistant()
+    tab = _tab(window)
+
+    for page, index in (("settings", 2), ("workloads_overview", 4), ("overview", 0)):
+        tab.navigate.emit(_request("open_page", page=page))
+        assert window.pages.currentIndex() == index
+
+    window._show_json_dialog("Pod: web", {"a": 1})
+    window._show_json_dialog("Service: api", {"b": 2})
+    window._show_page(1)
+    tab.navigate.emit(_request("switch_tab", title="WEB"))
+    assert window.pages.currentIndex() == 3
+    assert window.viewer_tabs.tabText(window.viewer_tabs.currentIndex()) == "Pod: web"
+    tab.navigate.emit(_request("switch_tab", title="nothing"))
+    assert "There is no open tab nothing." in tab.markdown()
+
+    pods = [
+        PodInfo(
+            "ns",
+            "api-1",
+            "Running",
+            1,
+            2,
+            "1m",
+            ("app", "side"),
+            init_containers=("init",),
+        )
+    ]
+    runs: list = []
+
+    def run(function, ok, *args, on_error=None):
+        runs.append((function.__name__, args))
+        if function.__name__ == "get_pods":
+            ok((["ns"], pods))
+        elif function.__name__ == "get_pod_logs":
+            ok("a line")
+        elif on_error is not None:
+            on_error("boom")
+
+    shown: list = []
+    monkeypatch.setattr(window, "_run_action", run)
+    monkeypatch.setattr(window, "_show_logs_dialog", lambda *a: shown.append(a))
+
+    tab.navigate.emit(_request("show_logs", namespace="ns", pod="api-1"))
+    tab.navigate.emit(
+        _request("show_logs", namespace="ns", pod="api-1", container="side")
+    )
+    tab.navigate.emit(_request("show_logs", namespace="ns", pod="ghost"))
+
+    assert [(pod.name, container, text) for pod, container, text in shown] == [
+        ("api-1", "init", "a line"),
+        ("api-1", "side", "a line"),
+    ]
+    assert ("get_pod_logs", ("prod", "ns", "api-1", "side")) in runs
+    assert "There is no Pod ghost." in tab.markdown()
+    window.close()
+
+
+def test_a_failed_search_for_the_pod_is_said_in_the_chat(monkeypatch) -> None:
+    window, _messages = _open(monkeypatch)
+    window._open_assistant()
+    tab = _tab(window)
+    monkeypatch.setattr(
+        window,
+        "_run_action",
+        lambda function, ok, *args, on_error: on_error("forbidden"),
+    )
+
+    tab.navigate.emit(_request("show_logs", namespace="ns", pod="x"))
+
+    assert "forbidden" in tab.markdown()
+    window.close()
+
+
+def test_the_assistant_is_told_which_tabs_are_open(monkeypatch) -> None:
+    window, _messages = _open(monkeypatch)
+    assert "Open tabs" not in window._screen_snapshot()
+
+    window._show_json_dialog("Pod: web", {"a": 1})
+    window._show_json_dialog("Service: api", {"b": 2})
+    assert "Open tabs: Pod: web | Service: api (shown)" in window._screen_snapshot()
+
+    window._show_page(1)
+    assert "Open tabs: Pod: web | Service: api" in window._screen_snapshot()
+    assert "(shown)" not in window._screen_snapshot()
+    window.close()

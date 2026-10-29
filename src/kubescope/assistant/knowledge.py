@@ -20,8 +20,11 @@ APP = (
     "Logs. Secret values are never shown. The client is read-only unless the "
     "person turned on the write mode in Settings; only then can it scale or "
     "restart a Deployment, evict or delete a Pod, delete or replace a resource. "
-    "Each message may start with what the person sees in the window; use it to "
-    "know which list, row or log they mean."
+    "Each message may start with what the person sees in the window, including "
+    "the tabs they have open; use it to know which list, row or log they mean. "
+    "You can change what the window shows: go to a list, a page (the overviews or "
+    "the settings), an open tab, or open the logs of a Pod, as if the person had "
+    "clicked."
 )
 DIAGNOSE = (
     "When asked to look into a problem, work like this: start from what the person "

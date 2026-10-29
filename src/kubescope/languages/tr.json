@@ -566,6 +566,8 @@
             "The file could not be written: {reason}": "Dosya yazılamadı: {reason}",
             "The object must be a JSON object.": "Nesne bir JSON nesnesi olmalı.",
             "The sign-in command in row {row} is not valid.": "{row}. satırdaki oturum açma komutu geçerli değil.",
+            "There is no Pod {name}.": "",
+            "There is no open tab {title}.": "",
             "There is no {what} {value}.": "",
             "Third-party notices": "Üçüncü taraf bildirimleri",
             "This workload has no Pods.": "Bu iş yükünün Pod'u yok.",

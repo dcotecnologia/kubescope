@@ -566,6 +566,8 @@
             "The file could not be written: {reason}": "Impossibile scrivere il file: {reason}",
             "The object must be a JSON object.": "L'oggetto deve essere un oggetto JSON.",
             "The sign-in command in row {row} is not valid.": "Il comando di accesso della riga {row} non è valido.",
+            "There is no Pod {name}.": "",
+            "There is no open tab {title}.": "",
             "There is no {what} {value}.": "",
             "Third-party notices": "Avvisi di terze parti",
             "This workload has no Pods.": "Questo workload non ha Pod.",

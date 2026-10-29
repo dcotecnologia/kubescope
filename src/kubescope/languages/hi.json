@@ -566,6 +566,8 @@
             "The file could not be written: {reason}": "फ़ाइल लिखी नहीं जा सकी: {reason}",
             "The object must be a JSON object.": "ऑब्जेक्ट एक JSON ऑब्जेक्ट होना चाहिए।",
             "The sign-in command in row {row} is not valid.": "पंक्ति {row} का साइन-इन कमांड मान्य नहीं है।",
+            "There is no Pod {name}.": "",
+            "There is no open tab {title}.": "",
             "There is no {what} {value}.": "",
             "Third-party notices": "तृतीय-पक्ष सूचनाएँ",
             "This workload has no Pods.": "इस workload में कोई Pod नहीं है।",

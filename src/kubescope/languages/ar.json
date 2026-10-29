@@ -566,6 +566,8 @@
             "The file could not be written: {reason}": "تعذّرت كتابة الملف: {reason}",
             "The object must be a JSON object.": "يجب أن يكون الكائن كائن JSON.",
             "The sign-in command in row {row} is not valid.": "أمر تسجيل الدخول في الصف {row} غير صالح.",
+            "There is no Pod {name}.": "",
+            "There is no open tab {title}.": "",
             "There is no {what} {value}.": "",
             "Third-party notices": "إشعارات الجهات الخارجية",
             "This workload has no Pods.": "ليس لهذا workload أي Pods.",

@@ -566,6 +566,8 @@
             "The file could not be written: {reason}": "ファイルを書き込めませんでした：{reason}",
             "The object must be a JSON object.": "オブジェクトは JSON オブジェクトである必要があります。",
             "The sign-in command in row {row} is not valid.": "{row} 行目のサインインコマンドが正しくありません。",
+            "There is no Pod {name}.": "",
+            "There is no open tab {title}.": "",
             "There is no {what} {value}.": "",
             "Third-party notices": "サードパーティの通知",
             "This workload has no Pods.": "この workload には Pod がありません。",

@@ -566,6 +566,8 @@
             "The file could not be written: {reason}": "Не удалось записать файл: {reason}",
             "The object must be a JSON object.": "Объект должен быть JSON-объектом.",
             "The sign-in command in row {row} is not valid.": "Команда входа в строке {row} недействительна.",
+            "There is no Pod {name}.": "",
+            "There is no open tab {title}.": "",
             "There is no {what} {value}.": "",
             "Third-party notices": "Уведомления о стороннем ПО",
             "This workload has no Pods.": "У этого workload нет Pods.",

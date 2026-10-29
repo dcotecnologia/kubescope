@@ -566,6 +566,8 @@
             "The file could not be written: {reason}": "파일을 쓸 수 없습니다: {reason}",
             "The object must be a JSON object.": "오브젝트는 JSON 객체여야 합니다.",
             "The sign-in command in row {row} is not valid.": "{row}행의 로그인 명령이 올바르지 않습니다.",
+            "There is no Pod {name}.": "",
+            "There is no open tab {title}.": "",
             "There is no {what} {value}.": "",
             "Third-party notices": "서드파티 고지",
             "This workload has no Pods.": "이 워크로드에는 Pod가 없습니다.",

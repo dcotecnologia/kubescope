@@ -4716,10 +4716,18 @@ class WorkloadWindow(QMainWindow):
             elif isinstance(tab, DetailTab):
                 text = tab.editor.toPlainText()
         extra: tuple[str, ...] = ()
+        open_tabs = self._open_tabs()
+        if open_tabs:
+            current = self.viewer_tabs.currentIndex() if page == 3 else -1
+            names = [
+                f"{text}{' (shown)' if index == current else ''}"
+                for index, text in open_tabs
+            ]
+            extra = (f"Open tabs: {' | '.join(names)}",)
         if page == 0:
-            extra = describe_cluster_overview(self._overview)
+            extra += describe_cluster_overview(self._overview)
         elif page == 4:
-            extra = describe_workloads_overview(self._workloads_overview)
+            extra += describe_workloads_overview(self._workloads_overview)
         return describe_screen(
             Screen(
                 context=self._context(),
@@ -4823,10 +4831,71 @@ class WorkloadWindow(QMainWindow):
                     tab.context = self._context()  # the chat follows
             finally:
                 self._assistant_switching = False
+        elif name == "open_page":
+            {
+                "overview": self.nav_overview,
+                "workloads_overview": self.nav_workloads_overview,
+                "settings": self.ui.settingsButton,
+            }[args["page"]].click()  # as the person would
+        elif name == "switch_tab":
+            self._assistant_switch_tab(tab, args["title"])
+        elif name == "show_logs":
+            self._assistant_show_logs(tab, args)
         elif name == "refresh":
             self._press_refresh()
         else:
             self._open_resource(args["kind"], args["namespace"], args["name"])
+
+    def _open_tabs(self) -> list[tuple[int, str]]:
+        """The Details and Logs tabs of this context, with their index."""
+        return [
+            (index, self.viewer_tabs.tabText(index))
+            for index in range(self.viewer_tabs.count())
+            if self._viewer_contexts.get(self.viewer_tabs.widget(index))
+            == self._context()
+        ]
+
+    def _assistant_switch_tab(self, tab: AssistantTab, title: str) -> None:
+        """Show the open tab whose title has the words, or say there is
+        none."""
+        wanted = title.strip().lower()
+        found = next(
+            (i for i, text in self._open_tabs() if wanted in text.lower()), None
+        )
+        if found is None:
+            tab.note(self.tr("There is no open tab {title}.").format(title=title))
+            return
+        self.viewer_tabs.setCurrentIndex(found)
+        self._show_page(3)
+
+    def _assistant_show_logs(self, tab: AssistantTab, args: dict[str, Any]) -> None:
+        """Open the logs of a Pod, looking the Pod up as the lists do."""
+        context = self._context()
+        namespace, name = args["namespace"], args["pod"]
+
+        def found(result: tuple[list[str], list[PodInfo]]) -> None:
+            pod = next((p for p in result[1] if p.name == name), None)
+            choices = [*pod.init_containers, *pod.containers] if pod else []
+            container = args.get("container") or (choices[0] if choices else "")
+            if pod is None or not container:
+                tab.note(self.tr("There is no Pod {name}.").format(name=name))
+                return
+            self._run_action(
+                get_pod_logs,
+                lambda text: self._show_logs_dialog(pod, container, text),
+                context,
+                pod.namespace,
+                pod.name,
+                container,
+            )
+
+        self._run_action(
+            get_pods,
+            found,
+            context,
+            namespace,
+            on_error=lambda message: tab.note(message),
+        )
 
     def _assistant_write(
         self, tab: AssistantTab, request: assistant_actions.Request

@@ -566,6 +566,8 @@
             "The file could not be written: {reason}": "Không thể ghi tệp: {reason}",
             "The object must be a JSON object.": "Đối tượng phải là một đối tượng JSON.",
             "The sign-in command in row {row} is not valid.": "Lệnh đăng nhập ở dòng {row} không hợp lệ.",
+            "There is no Pod {name}.": "",
+            "There is no open tab {title}.": "",
             "There is no {what} {value}.": "",
             "Third-party notices": "Thông báo bên thứ ba",
             "This workload has no Pods.": "Workload này không có Pod.",
