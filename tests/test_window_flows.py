@@ -3948,6 +3948,20 @@ def test_events_are_filtered_by_type(monkeypatch) -> None:
 
     window.event_type_combo.setCurrentIndex(0)
     assert [window.table.isRowHidden(row) for row in range(2)] == [False, False]
+
+    reasons = window.event_reason_combo
+    assert [reasons.itemText(i) for i in range(reasons.count())] == [
+        "All reasons",
+        "BackOff",
+        "Started",
+    ]
+    reasons.setCurrentIndex(reasons.findData("Started"))
+    assert [window.table.isRowHidden(row) for row in range(2)] == [False, True]
+    window._show_resources(["ns"], events[:1])  # the chosen reason stays
+    assert reasons.currentData() == "Started"
+    window._show_resources(["ns"], events[1:])  # until it is gone
+    assert reasons.currentData() == ""
+    window._show_resources(["ns"], events)
     assert cell(window.table, 0, 3).data(BADGE_ROLE) == (
         themed("#176b58"),
         themed("#e5f4eb"),

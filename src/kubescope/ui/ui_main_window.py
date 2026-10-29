@@ -1402,7 +1402,7 @@ class Ui_MainWindow(object):
 #endif // QT_CONFIG(tooltip)
         self.filterLabel.setText(QCoreApplication.translate("MainWindow", u"NAMESPACE", None))
 
-        self.searchInput.setPlaceholderText(QCoreApplication.translate("MainWindow", u"Search by name or namespace...", None))
+        self.searchInput.setPlaceholderText(QCoreApplication.translate("MainWindow", u"Search all columns...", None))
 #if QT_CONFIG(tooltip)
         self.podsButton.setToolTip(QCoreApplication.translate("MainWindow", u"View Pods of the selected workload", None))
 #endif // QT_CONFIG(tooltip)

@@ -2030,7 +2030,7 @@ Resources in read-only mode</string>
                     </size>
                    </property>
                    <property name="placeholderText">
-                    <string>Search by name or namespace...</string>
+                    <string>Search all columns...</string>
                    </property>
                    <property name="clearButtonEnabled">
                     <bool>true</bool>

@@ -1574,7 +1574,7 @@ def test_events_use_whichever_timestamp_the_cluster_provides() -> None:
     )
     assert classic is not None
     seen, event = classic
-    assert seen == 3600 and event.type == "Warning" and event.count == 7
+    assert seen == 32400 and event.type == "Warning" and event.count == 7
     assert (event.source, event.namespace, event.involved) == (
         "kubelet",
         "ns",
@@ -1619,9 +1619,9 @@ def _overview_documents(extra_events=0):
             "message": f"event {i}",
             "metadata": {
                 "namespace": "ns",
-                "creationTimestamp": "2025-01-01T00:00:00Z",
+                "creationTimestamp": f"2025-01-01T{i % 24:02d}:00:00Z",
             },
-            "lastTimestamp": f"2025-01-02T{i % 24:02d}:00:00Z",
+            "lastTimestamp": "2025-01-02T00:00:00Z",
             "involvedObject": {"kind": "Pod", "name": "p"},
         }
         for i in range(2 + extra_events)
@@ -1673,7 +1673,7 @@ def test_workloads_overview_counts_every_kind_and_lists_recent_events(
     assert [e.message for e in overview.events] == [
         "event 1",
         "event 0",
-    ]  # newest first
+    ]  # youngest age first, whatever was last seen
     assert overview.unreadable == ()
 
 
@@ -2419,6 +2419,28 @@ def _fake_cluster_api(monkeypatch, secrets, calls=None):
         return {"items": secrets}
 
     monkeypatch.setattr(cluster, "_get_json", fake_get_json)
+
+
+def test_get_resources_lists_events_youngest_first(monkeypatch) -> None:
+    def event(name, created):
+        return {
+            "metadata": {
+                "name": name,
+                "namespace": "ops",
+                "creationTimestamp": created,
+            },
+            "message": name,
+        }
+
+    events = [
+        event("old", "2020-01-01T00:00:00Z"),
+        event("new", "2099-01-01T00:00:00Z"),
+    ]
+    _fake_cluster_api(monkeypatch, events)
+
+    _namespaces, resources = cluster.get_resources("ctx", None, "Event")
+
+    assert [resource.name for resource in resources] == ["new", "old"]
 
 
 def test_get_resources_lists_the_add_ons_of_eks_and_the_helm_releases(

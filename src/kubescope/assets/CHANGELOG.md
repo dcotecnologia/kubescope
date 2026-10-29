@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+### Added
+
+- A **Reason** filter in the Events list by @danilogco
+
+### Fixed
+
+- The events lists, in the Workloads overview and the Events view, are ordered by **Age**, youngest first, instead of by name or by when each event was last seen by @danilogco
+- The search bar looks through every column, not only the namespace, kind and name by @danilogco
+
 ## [1.1.1] - 2026-10-28
 
 ### Changed

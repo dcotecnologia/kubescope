@@ -35,6 +35,7 @@ from kubescope.models import (
     PodInfo,
     Workload,
     WorkloadsOverview,
+    age_seconds,
     format_age,
     parse_cpu,
     parse_memory,
@@ -1879,7 +1880,10 @@ def get_resources(
         for item in document.get("items", [])
         if (resource := _parse_resource(kind, item, now)) is not None
     ]
-    resources.sort(key=lambda row: (row.namespace, row.name))
+    if kind == "Event":  # youngest first, as the events of the overview
+        resources.sort(key=lambda row: (age_seconds(row.age), row.namespace, row.name))
+    else:
+        resources.sort(key=lambda row: (row.namespace, row.name))
     return namespaces, resources
 
 
@@ -2122,7 +2126,7 @@ def _seconds_since(timestamp: str | None, now: datetime) -> float | None:
 
 
 def _parse_event(item: dict[str, Any], now: datetime) -> tuple[float, EventInfo] | None:
-    """An event and how long ago it was last seen, for ordering."""
+    """An event and how long ago it was created (its age), for ordering."""
     metadata = item.get("metadata") or {}
     involved = item.get("involvedObject") or {}
     message = item.get("message")
@@ -2141,7 +2145,7 @@ def _parse_event(item: dict[str, Any], now: datetime) -> tuple[float, EventInfo]
         "reportingComponent"
     )
     return (
-        last_seen if last_seen is not None else float("inf"),
+        created if created is not None else float("inf"),
         EventInfo(
             type=item.get("type") or "Normal",
             source=source or "",

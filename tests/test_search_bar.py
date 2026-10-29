@@ -263,6 +263,10 @@ def test_the_list_filter_has_the_same_switches(monkeypatch) -> None:
     assert window.search_input.toolTip()
     window.search_input.setText("")
     assert window.search_input.toolTip() == ""
+    window.search_input.setText("clusterip")  # a value column, not the name
+    assert window.summary_label.text() == "3 of 3 Services"
+    window.search_input.setText("nothing-here")
+    assert window.summary_label.text() == "0 of 3 Services"
     window._retranslate()
     assert window.search_case_button.toolTip() == "Match case"
     window.close()

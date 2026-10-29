@@ -775,6 +775,12 @@ class WorkloadWindow(QMainWindow):
         self.event_type_combo.setVisible(False)
         self.event_type_combo.currentIndexChanged.connect(self._filter_rows)
         filters.insertWidget(at + 2, self.event_type_combo)
+        self.event_reason_combo = QComboBox()  # the reasons the events list shows
+        self.event_reason_combo.setProperty("variant", "filter")
+        self.event_reason_combo.addItem(self.tr("All reasons"), "")
+        self.event_reason_combo.setVisible(False)
+        self.event_reason_combo.currentIndexChanged.connect(self._filter_rows)
+        filters.insertWidget(at + 3, self.event_reason_combo)
         self.refresh_button = ui.refreshButton
         self.summary_label = ui.summaryLabel
         self.pods_button = ui.podsButton
@@ -2260,6 +2266,7 @@ class WorkloadWindow(QMainWindow):
         for widget in (self.nodes_heading, self.nodes_table):
             widget.setVisible(self._view == "nodegroups")
         self.event_type_combo.setVisible(self._view == "events")
+        self.event_reason_combo.setVisible(self._view == "events")
         self.pods_button.setVisible(self._view in WORKLOAD_VIEWS)
         self.logs_button.setVisible(self._view not in RESOURCE_VIEWS)
         self._update_write_buttons()
@@ -3008,12 +3015,28 @@ class WorkloadWindow(QMainWindow):
         )
         self._resources = resources
         self._apply_sort()
+        if self._view == "events":
+            self._fill_event_reasons(resources)
         if self._view not in EKS_VIEWS:  # not namespaced: keep the filter as it is
             self._fill_namespaces(namespaces)
         if self._view in RESOURCE_VIEWS:
             self._render_resources()
         if self._view == "nodegroups":
             self._load_nodes(self._context())
+
+    def _fill_event_reasons(self, resources: list) -> None:
+        """List the reasons of the events, keeping the chosen one while it is
+        still there."""
+        combo = self.event_reason_combo
+        chosen = combo.currentData()
+        reasons = sorted({row.values[1] for row in resources}, key=str.casefold)
+        combo.blockSignals(True)
+        combo.clear()
+        combo.addItem(self.tr("All reasons"), "")
+        for reason in reasons:
+            combo.addItem(reason, reason)
+        combo.setCurrentIndex(max(combo.findData(chosen), 0))
+        combo.blockSignals(False)
 
     def _show_workloads(self, namespaces: list, workloads: list) -> None:
         logger.info(
@@ -3454,6 +3477,13 @@ class WorkloadWindow(QMainWindow):
             )
         )
 
+    def _row_matches(self, row: int, pattern: re.Pattern[str]) -> bool:
+        """Whether any column of the row shows what the search looks for."""
+        return any(
+            pattern.search(self._cell_text(self.table.item(row, column)))
+            for column in range(self.table.columnCount())
+        )
+
     def _filter_rows(self, *_args: object) -> None:
         pattern = None
         self.search_input.setToolTip("")
@@ -3471,11 +3501,7 @@ class WorkloadWindow(QMainWindow):
         rows = self._current_rows()
         self.table.setUpdatesEnabled(False)  # hiding rows one by one relays out
         for row_index, row in enumerate(rows):
-            kind = "Pod" if isinstance(row, PodInfo) else row.kind
-            matches = (
-                pattern is None
-                or pattern.search(f"{row.namespace} {kind} {row.name}") is not None
-            )
+            matches = pattern is None or self._row_matches(row_index, pattern)
             event_type = self.event_type_combo.currentData()
             if (
                 matches
@@ -3484,6 +3510,14 @@ class WorkloadWindow(QMainWindow):
                 and isinstance(row, ClusterResource)
             ):
                 matches = row.values[0] == event_type
+            reason = self.event_reason_combo.currentData()
+            if (
+                matches
+                and self._view == "events"
+                and reason
+                and isinstance(row, ClusterResource)
+            ):
+                matches = row.values[1] == reason
             self.table.setRowHidden(row_index, not matches)
             visible_rows += matches
         self.table.setUpdatesEnabled(True)
