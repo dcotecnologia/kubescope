@@ -169,3 +169,15 @@ def test_the_pages_the_tabs_and_the_logs_can_be_asked_for_and_nothing_else() -> 
         isinstance(refused, Invalid) and "not one of the known ones" in refused.reason
     )
     assert isinstance(_only(_block({"action": "switch_tab", "title": " "})), Invalid)
+
+
+def test_the_live_usage_of_a_pod_can_be_asked_for_by_the_namespace_and_the_pod() -> (
+    None
+):
+    found = _only(_block({"action": "get_usage", "namespace": "ns", "pod": "web-1"}))
+
+    assert isinstance(found, Request) and found.action.kind == "fetch"
+    assert isinstance(
+        _only(_block({"action": "get_usage", "namespace": "ns"})), Invalid
+    )
+    assert "- get_usage [fetch]" in actions.instructions(write_mode=False)
