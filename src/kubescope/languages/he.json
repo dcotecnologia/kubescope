@@ -601,6 +601,8 @@
             "Superseded": "הוחלף",
             "Suspended": "מושהה",
             "Terminated": "הסתיים",
+            "The Pod {name} has more than one container ({names}), and none was said. Tell Gabi which one you want.": "ל-Pod‏ {name} יש יותר מקונטיינר אחד ({names}), ולא צוין איזה מהם. ספרו ל-Gabi איזה מהם תרצו.",
+            "The Pod {name} has no container {container}.": "ל-Pod‏ {name} אין קונטיינר בשם {container}.",
             "The file could not be written: {reason}": "לא ניתן לכתוב את הקובץ: {reason}",
             "The object must be a JSON object.": "האובייקט חייב להיות אובייקט JSON.",
             "The path set for {names} is not a program that can be run.": "הנתיב שהוגדר עבור {names} אינו תוכנה שאפשר להריץ.",

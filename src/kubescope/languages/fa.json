@@ -601,6 +601,8 @@
             "Superseded": "جایگزین‌شده",
             "Suspended": "معلق",
             "Terminated": "پایان‌یافته",
+            "The Pod {name} has more than one container ({names}), and none was said. Tell Gabi which one you want.": "Pod «{name}» بیش از یک کانتینر دارد ({names}) و هیچ‌کدام مشخص نشده است. به Gabi بگویید کدام را می‌خواهید.",
+            "The Pod {name} has no container {container}.": "Pod «{name}» کانتینری با نام {container} ندارد.",
             "The file could not be written: {reason}": "نوشتن پرونده ممکن نبود: {reason}",
             "The object must be a JSON object.": "شیء باید یک شیء JSON باشد.",
             "The path set for {names} is not a program that can be run.": "مسیر تعیین‌شده برای {names} یک برنامه قابل اجرا نیست.",

@@ -1071,9 +1071,12 @@ def _parse_workload(item: dict[str, Any], now: datetime) -> Workload | None:
         created = datetime.fromisoformat(creation_timestamp.replace("Z", "+00:00"))
         age = format_age((now - created).total_seconds())
     template = (spec.get("jobTemplate") or {}).get("spec") or spec
-    selector = ((template.get("template") or {}).get("spec") or {}).get(
-        "nodeSelector"
-    ) or {}
+    pod_spec = (template.get("template") or {}).get("spec") or {}
+    selector = pod_spec.get("nodeSelector") or {}
+    containers = tuple(str(c.get("name")) for c in pod_spec.get("containers") or [])
+    init_containers = tuple(
+        str(c.get("name")) for c in pod_spec.get("initContainers") or []
+    )
     return Workload(
         namespace=metadata.get("namespace") or "default",
         kind=kind,
@@ -1084,6 +1087,8 @@ def _parse_workload(item: dict[str, Any], now: datetime) -> Workload | None:
         state=state,
         schedule=schedule,
         node_selector=", ".join(f"{key}={value}" for key, value in selector.items()),
+        containers=containers,
+        init_containers=init_containers,
     )
 
 

@@ -601,6 +601,8 @@
             "Superseded": "已被取代",
             "Suspended": "已暫停",
             "Terminated": "已終止",
+            "The Pod {name} has more than one container ({names}), and none was said. Tell Gabi which one you want.": "Pod {name} 包含多個容器（{names}），但未指定要使用哪一個。請告訴 Gabi 您想使用哪一個。",
+            "The Pod {name} has no container {container}.": "Pod {name} 中沒有容器 {container}。",
             "The file could not be written: {reason}": "無法寫入檔案：{reason}",
             "The object must be a JSON object.": "物件必須是 JSON 物件。",
             "The path set for {names} is not a program that can be run.": "為 {names} 設定的路徑不是可執行的程式。",

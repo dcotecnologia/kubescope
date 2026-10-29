@@ -44,24 +44,79 @@ def test_the_details_of_a_resource_come_back_as_data(cluster_reads) -> None:
     assert '"name": "app"' in message and message.rstrip().endswith("```")
 
 
-def test_the_logs_are_read_from_the_container_named_or_the_first_one(
-    cluster_reads,
-) -> None:
+def test_the_logs_are_read_from_the_container_that_was_named(cluster_reads) -> None:
     calls, _answers = cluster_reads
 
     named = executor.fetch(
         _request("get_logs", namespace="ns", pod="web", container="side", lines=50),
         "ctx",
     )
-    first = executor.fetch(_request("get_logs", namespace="ns", pod="web"), "ctx")
 
     assert "line 1\nline 2" in named
-    assert calls[0] == ("logs", "ctx", "ns", "web", "side", {"tail_lines": 50})
-    assert calls[1:] == [
-        ("details", "ctx", "Pod", "ns", "web"),
-        ("logs", "ctx", "ns", "web", "app", {"tail_lines": executor.LOG_LINES}),
-    ]
-    assert "line 2" in first
+    assert calls == [("logs", "ctx", "ns", "web", "side", {"tail_lines": 50})]
+
+
+def test_with_several_containers_and_none_named_nothing_is_read_and_it_is_asked(
+    cluster_reads,
+) -> None:
+    calls, _answers = cluster_reads
+
+    message = executor.fetch(_request("get_logs", namespace="ns", pod="web"), "ctx")
+
+    assert "The Pod web has more than one container: app, side." in message
+    assert "Nothing was read." in message
+    assert "Ask the person which container they want" in message
+    assert calls == [("details", "ctx", "Pod", "ns", "web")]  # no logs call
+
+
+def test_an_init_container_is_never_chosen_for_the_person(cluster_reads) -> None:
+    calls, answers = cluster_reads
+    answers["details"] = {
+        "spec": {
+            "initContainers": [{"name": "migrate"}],
+            "containers": [{"name": "api"}],
+        }
+    }
+
+    message = executor.fetch(_request("get_logs", namespace="ns", pod="api-1"), "ctx")
+
+    assert "line 2" in message  # the main container, with no question
+    assert calls[-1] == ("logs", "ctx", "ns", "api-1", "api", {"tail_lines": 200})
+    assert all(call[4] != "migrate" for call in calls if call[0] == "logs")
+
+
+def test_the_init_containers_are_named_as_such_when_the_main_ones_are_several(
+    cluster_reads,
+) -> None:
+    calls, answers = cluster_reads
+    answers["details"] = {
+        "spec": {
+            "initContainers": [{"name": "migrate"}],
+            "containers": [{"name": "api"}, {"name": "worker"}],
+        }
+    }
+
+    message = executor.fetch(_request("get_logs", namespace="ns", pod="api-1"), "ctx")
+
+    assert (
+        "more than one container: api, worker (init containers, which run first and "
+        "stop: migrate)"
+    ) in message
+    assert all(call[0] != "logs" for call in calls)  # nothing was read
+
+
+def test_a_pod_with_one_container_is_read_without_asking(cluster_reads) -> None:
+    calls, answers = cluster_reads
+    answers["details"] = {"spec": {"containers": [{"name": "solo"}]}}
+
+    message = executor.fetch(_request("get_logs", namespace="ns", pod="web"), "ctx")
+
+    assert "line 2" in message
+    assert calls[-1] == ("logs", "ctx", "ns", "web", "solo", {"tail_lines": 200})
+
+    answers["details"] = {"spec": {"initContainers": [{"name": "only-init"}]}}
+    executor.fetch(_request("get_logs", namespace="ns", pod="web"), "ctx")
+    assert calls[-1][4] == "only-init"  # the only one there is
 
 
 def test_tokens_and_keys_are_redacted_before_they_go(cluster_reads) -> None:
@@ -129,8 +184,29 @@ def lists(monkeypatch):
     from kubescope.models import ClusterResource, PodInfo, Workload
 
     calls: list[tuple] = []
-    pod = PodInfo("ns", "web-1", "Running", 1, 2, "5m", ("app",), restarts=3, node="n1")
-    deployment = Workload("ns", "Deployment", "web", 1, 2, "1d", restarts=3)
+    pod = PodInfo(
+        "ns",
+        "web-1",
+        "Running",
+        1,
+        2,
+        "5m",
+        ("app",),
+        restarts=3,
+        node="n1",
+        owner=("ReplicaSet", "web-7d9"),
+    )
+    deployment = Workload(
+        "ns",
+        "Deployment",
+        "web",
+        1,
+        2,
+        "1d",
+        restarts=3,
+        containers=("api", "worker"),
+        init_containers=("migrate",),
+    )
     events = [
         ClusterResource(
             "ns", "Event", "e1", ("Warning", "BackOff", "Pod/web-1", "crash", "4"), "1m"
@@ -166,8 +242,12 @@ def test_a_list_is_read_as_the_app_shows_it(lists) -> None:
     )
     services = executor.fetch(_request("list", view="services", namespace=""), "ctx")
 
-    assert "ns/web-1 Running ready 1/2 restarts 3 node n1 age 5m" in pods
+    assert (
+        "ns/web-1 Running ready 1/2 restarts 3 node n1 age 5m containers app "
+        "owner ReplicaSet/web-7d9"
+    ) in pods
     assert "ns/Deployment/web" in workloads and "restarts 3" in workloads
+    assert "containers api, worker init migrate" in workloads  # of its Pod template
     assert "Node/n1 Ready age 9d" in services
     assert lists == [
         ("pods", "ctx", "ns"),

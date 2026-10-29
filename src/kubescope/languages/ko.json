@@ -601,6 +601,8 @@
             "Superseded": "대체됨",
             "Suspended": "일시 중지됨",
             "Terminated": "종료됨",
+            "The Pod {name} has more than one container ({names}), and none was said. Tell Gabi which one you want.": "Pod {name}에 컨테이너가 여러 개({names}) 있는데 지정되지 않았습니다. 원하는 컨테이너를 Gabi에게 알려 주세요.",
+            "The Pod {name} has no container {container}.": "Pod {name}에 컨테이너 {container}이(가) 없습니다.",
             "The file could not be written: {reason}": "파일을 쓸 수 없습니다: {reason}",
             "The object must be a JSON object.": "오브젝트는 JSON 객체여야 합니다.",
             "The path set for {names} is not a program that can be run.": "{names}에 지정된 경로는 실행할 수 있는 프로그램이 아닙니다.",

@@ -595,18 +595,101 @@ def test_the_assistant_moves_to_a_page_an_open_tab_and_the_logs_of_a_pod(
     monkeypatch.setattr(window, "_run_action", run)
     monkeypatch.setattr(window, "_show_logs_dialog", lambda *a: shown.append(a))
 
-    tab.navigate.emit(_request("show_logs", namespace="ns", pod="api-1"))
     tab.navigate.emit(
         _request("show_logs", namespace="ns", pod="api-1", container="side")
     )
     tab.navigate.emit(_request("show_logs", namespace="ns", pod="ghost"))
 
     assert [(pod.name, container, text) for pod, container, text in shown] == [
-        ("api-1", "init", "a line"),
         ("api-1", "side", "a line"),
     ]
     assert ("get_pod_logs", ("prod", "ns", "api-1", "side")) in runs
     assert "There is no Pod ghost." in tab.markdown()
+    window.close()
+
+
+def test_the_logs_are_the_main_container_and_never_a_migration(monkeypatch) -> None:
+    from kubescope.models import PodInfo
+
+    window, _messages = _open(monkeypatch)
+    window._open_assistant()
+    tab = _tab(window)
+    # a migration that runs first, then the container that is wanted
+    pods = [
+        PodInfo(
+            "ns", "api-1", "Running", 1, 1, "1m", ("api",), init_containers=("migrate",)
+        ),
+        PodInfo("ns", "solo-1", "Running", 1, 1, "1m", ("solo",)),
+        PodInfo("ns", "setup-1", "Running", 1, 1, "1m", (), init_containers=("only",)),
+    ]
+    shown: list = []
+
+    def run(function, ok, *args, on_error=None):
+        ok((["ns"], pods) if function.__name__ == "get_pods" else "a line")
+
+    monkeypatch.setattr(window, "_run_action", run)
+    monkeypatch.setattr(window, "_show_logs_dialog", lambda *a: shown.append(a))
+
+    tab.navigate.emit(_request("show_logs", namespace="ns", pod="api-1"))
+    tab.navigate.emit(_request("show_logs", namespace="ns", pod="solo-1"))
+    tab.navigate.emit(_request("show_logs", namespace="ns", pod="setup-1"))
+
+    assert [(pod.name, container) for pod, container, _text in shown] == [
+        ("api-1", "api"),  # the migration comes first in the list, and is not taken
+        ("solo-1", "solo"),
+        ("setup-1", "only"),  # a Pod with nothing but a setup container
+    ]
+    window.close()
+
+
+def test_with_several_main_containers_and_none_said_the_person_is_asked(
+    monkeypatch,
+) -> None:
+    from kubescope.models import PodInfo
+
+    window, _messages = _open(monkeypatch)
+    window._open_assistant()
+    tab = _tab(window)
+    pods = [
+        PodInfo(
+            "ns",
+            "api-1",
+            "Running",
+            2,
+            2,
+            "1m",
+            ("api", "worker"),
+            init_containers=("migrate",),
+        )
+    ]
+    runs: list = []
+    shown: list = []
+
+    def run(function, ok, *args, on_error=None):
+        runs.append(function.__name__)
+        ok((["ns"], pods) if function.__name__ == "get_pods" else "a line")
+
+    monkeypatch.setattr(window, "_run_action", run)
+    monkeypatch.setattr(window, "_show_logs_dialog", lambda *a: shown.append(a))
+
+    tab.navigate.emit(_request("show_logs", namespace="ns", pod="api-1"))
+
+    assert shown == [] and "get_pod_logs" not in runs  # not the first, not any
+    assert (
+        "The Pod api-1 has more than one container (api, worker, migrate), and none "
+        "was said. Tell Gabi which one you want."
+    ) in tab.markdown()
+
+    tab.navigate.emit(
+        _request("show_logs", namespace="ns", pod="api-1", container="worker")
+    )
+    tab.navigate.emit(
+        _request("show_logs", namespace="ns", pod="api-1", container="nope")
+    )
+    assert [(pod.name, container) for pod, container, _t in shown] == [
+        ("api-1", "worker")
+    ]
+    assert "The Pod api-1 has no container nope." in tab.markdown()
     window.close()
 
 

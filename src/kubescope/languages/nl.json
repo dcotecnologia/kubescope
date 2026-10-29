@@ -601,6 +601,8 @@
             "Superseded": "Vervangen",
             "Suspended": "Onderbroken",
             "Terminated": "Beëindigd",
+            "The Pod {name} has more than one container ({names}), and none was said. Tell Gabi which one you want.": "De Pod {name} heeft meer dan één container ({names}) en er is er geen opgegeven. Laat Gabi weten welke u wilt.",
+            "The Pod {name} has no container {container}.": "De Pod {name} heeft geen container {container}.",
             "The file could not be written: {reason}": "Het bestand kon niet worden geschreven: {reason}",
             "The object must be a JSON object.": "Het object moet een JSON-object zijn.",
             "The path set for {names} is not a program that can be run.": "Het ingestelde pad voor {names} is geen programma dat kan worden uitgevoerd.",

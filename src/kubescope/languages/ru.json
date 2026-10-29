@@ -601,6 +601,8 @@
             "Superseded": "Заменён",
             "Suspended": "Приостановлено",
             "Terminated": "Завершён",
+            "The Pod {name} has more than one container ({names}), and none was said. Tell Gabi which one you want.": "У Pod {name} несколько контейнеров ({names}), а нужный не указан. Скажите Gabi, какой из них вам нужен.",
+            "The Pod {name} has no container {container}.": "У Pod {name} нет контейнера {container}.",
             "The file could not be written: {reason}": "Не удалось записать файл: {reason}",
             "The object must be a JSON object.": "Объект должен быть JSON-объектом.",
             "The path set for {names} is not a program that can be run.": "Путь, указанный для {names}, не является исполняемой программой.",

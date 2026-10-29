@@ -601,6 +601,8 @@
             "Superseded": "تم استبداله",
             "Suspended": "معلّق مؤقتاً",
             "Terminated": "منتهي",
+            "The Pod {name} has more than one container ({names}), and none was said. Tell Gabi which one you want.": "يحتوي الـ Pod ‏{name} على أكثر من حاوية ({names}) ولم يتم تحديد أي منها. أخبر Gabi بالحاوية التي تريدها.",
+            "The Pod {name} has no container {container}.": "لا يحتوي الـ Pod ‏{name} على الحاوية {container}.",
             "The file could not be written: {reason}": "تعذّرت كتابة الملف: {reason}",
             "The object must be a JSON object.": "يجب أن يكون الكائن كائن JSON.",
             "The path set for {names} is not a program that can be run.": "المسار المحدد لـ {names} ليس برنامجًا قابلًا للتشغيل.",
