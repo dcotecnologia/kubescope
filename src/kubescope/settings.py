@@ -26,6 +26,8 @@ DEFAULTS: dict[str, Any] = {
     "check_updates": True,
     "wrap_log_lines": False,
     "last_update_notice": "",
+    "update_checked_at": 0.0,
+    "update_checked_for": "",
     "write_mode": False,
     "animations": True,
     "assistant_enabled": True,
@@ -239,6 +241,32 @@ class Settings:
     @last_update_notice.setter
     def last_update_notice(self, value: str) -> None:
         self._data["last_update_notice"] = str(value)
+
+    def record_update_check(self, version: str, now: float) -> None:
+        """Note that a check found `version` to be the newest, at `now`
+        (seconds since the epoch)."""
+        self._data["update_checked_at"] = float(now)
+        self._data["update_checked_for"] = str(version)
+
+    @property
+    def update_checked_at(self) -> float:
+        """When a check last found the running version to be the newest, in
+        seconds since the epoch; 0 when it never did."""
+        value = self._data["update_checked_at"]
+        valid = isinstance(value, int | float) and not isinstance(value, bool)
+        return float(value) if valid else 0.0
+
+    @property
+    def update_checked_for(self) -> str:
+        """The version that check found to be the newest."""
+        value = self._data["update_checked_for"]
+        return value if isinstance(value, str) else ""
+
+    def update_check_is_fresh(self, version: str, now: float, within: float) -> bool:
+        """Whether a check made less than `within` seconds ago found `version`
+        to be the newest, so asking GitHub again would only spend its limit."""
+        at = self.update_checked_at
+        return self.update_checked_for == version and at > 0 and 0 <= now - at < within
 
     @property
     def run_in_background(self) -> bool:

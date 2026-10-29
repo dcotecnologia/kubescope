@@ -2449,6 +2449,47 @@ def test_the_update_icon_checks_on_demand_and_reports_each_outcome(monkeypatch) 
     window.close()
 
 
+def test_a_start_that_follows_a_recent_up_to_date_does_not_ask_github(
+    monkeypatch,
+) -> None:
+    window, ran = _update_window(monkeypatch)
+    now = time.time()
+
+    window.start_update_check()  # nothing was checked before: it asks
+    assert len(ran) == 1
+    ran[0][1](UpdateCheck("current"))
+    _wait_until(lambda: window._update_state == "current")
+    assert window.settings.update_checked_for == window_module.__version__
+
+    window._set_update_state("idle")
+    window.start_update_check()  # an hour has not passed: it trusts the answer
+    assert len(ran) == 1 and window._update_state == "current"
+
+    window.settings.record_update_check(window_module.__version__, now - 7200)
+    window.start_update_check()  # it is old: it asks again
+    assert len(ran) == 2
+    window.close()
+
+
+def test_only_an_up_to_date_is_remembered_and_the_setting_can_turn_the_check_off(
+    monkeypatch,
+) -> None:
+    window, ran = _update_window(monkeypatch, search_ms=0)
+
+    window.check_updates()
+    ran[0][1](UpdateCheck("failed"))
+    assert window.settings.update_checked_at == 0.0  # a failure is tried again
+
+    window.check_updates()
+    ran[1][1](UpdateCheck("available", RELEASE))
+    assert window.settings.update_checked_at == 0.0
+
+    window.settings.check_updates = False
+    window.start_update_check()
+    assert len(ran) == 2
+    window.close()
+
+
 def test_a_check_looks_like_a_search_for_at_least_five_seconds(monkeypatch) -> None:
     window, ran = _update_window(monkeypatch, search_ms=300)
 

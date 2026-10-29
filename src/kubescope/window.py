@@ -236,6 +236,7 @@ LIST_REFRESH_MS = 5_000  # the list on screen is read again this often
 LIST_REFRESH_MAX_MS = 60_000  # ... and this rarely while the cluster keeps failing
 PERMISSIONS_TTL_S = 300  # what the cluster allows is asked again after this long
 UPDATE_RECHECK_MS = 60 * 60 * 1000  # look for a new version again every hour
+UPDATE_FRESH_SECONDS = 3600  # an "up to date" that a start trusts, in seconds
 UPDATE_SEARCH_MS = 5000  # an update check shows as searching for at least this long
 UPDATE_NOTICE_MS = 4000  # how long "Up to date" stays next to the icon
 
@@ -1908,8 +1909,16 @@ class WorkloadWindow(QMainWindow):
 
     def start_update_check(self) -> None:
         """Look for a new version when the app starts, if Settings allow it."""
-        if self.settings.check_updates:
-            self.check_updates()
+        if not self.settings.check_updates:
+            return
+        if self.settings.update_check_is_fresh(
+            __version__, time.time(), UPDATE_FRESH_SECONDS
+        ):
+            # GitHub limits what is asked without signing in: a start that follows
+            # a recent "up to date" does not ask again
+            self._set_update_state("current")
+            return
+        self.check_updates()
 
     def _recheck_updates(self) -> None:
         if self.settings.check_updates and self._update_state != "checking":
@@ -1941,6 +1950,9 @@ class WorkloadWindow(QMainWindow):
         result = self._update_result
         self._update_release = result.release
         self._set_update_state(result.status)
+        if result.status == "current":
+            self.settings.record_update_check(__version__, time.time())
+            self._save_settings()
         rechecking, self._rechecking = self._rechecking, False
         if result.release is not None:
             self._notify_update(result.release, daily=rechecking)
