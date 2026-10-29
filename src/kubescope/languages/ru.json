@@ -3,13 +3,11 @@
     "rtl": false,
     "strings": {
         "AssistantDock": {
-            "Ask the assistant": "Спросить ассистента",
-            "Assistant": "Ассистент",
+            "Ask Gabi": "Спросить Gabi",
             "Clear history": "Очистить историю",
             "Close": "Закрыть"
         },
         "AssistantPanel": {
-            "Assistant": "Ассистент",
             "Clear history": "Очистить историю",
             "Close": "Закрыть",
             "Open in a window of its own": "Открыть в отдельном окне",
@@ -19,11 +17,11 @@
             "(attached: {names})": "(вложено: {names})",
             "(read) {what}": "(чтение) {what}",
             "App": "Приложение",
-            "Ask about the cluster or ask for an action...": "Спросите о кластере или попросите выполнить действие...",
-            "Assistant": "Ассистент",
+            "Ask Gabi about the cluster or ask for an action...": "Спросите Gabi о кластере или попросите выполнить действие...",
             "At most {count} files go with a question.": "К вопросу можно приложить не более {count} файлов.",
             "Attach": "Вложить",
             "Cancel": "Отмена",
+            "Hi, I'm {name}, from {company}. I know Kubernetes and KubeScope well. Ask me about what you see on the screen, ask me to look into a problem, or ask me to take you somewhere in the app.": "Здравствуйте, я {name} из {company}. Я хорошо знаю Kubernetes и KubeScope. Спросите меня о том, что видите на экране, попросите разобраться с проблемой или проводить вас в нужный раздел приложения.",
             "Ignored an action: {why}": "Действие пропущено: {why}",
             "Read-only mode: nothing was changed. Turn on the write mode in Settings to allow {what}.": "Режим только для чтения: ничего не изменено. Включите режим записи в разделе Настройки, чтобы разрешить {what}.",
             "Run": "Запустить",
@@ -89,9 +87,6 @@
             "Your credentials may have expired. Sign in again (for example “aws sso login”, “gcloud auth login” or “az login”) and refresh.": "Срок действия ваших учётных данных мог истечь. Войдите снова (например, «aws sso login», «gcloud auth login» или «az login») и обновите.",
             "Your kubeconfig runs “{tool}” to sign in, but it is not installed or not on the PATH. Install it and refresh.": "Ваш kubeconfig запускает «{tool}» для входа, но программа не установлена или отсутствует в PATH. Установите её и обновите.",
             "Your user is not allowed to read this resource.": "Вашему пользователю не разрешено читать этот ресурс."
-        },
-        "FloatingFrame": {
-            "Assistant": "Ассистент"
         },
         "LogTab": {
             "Auto-refresh": "Автообновление",

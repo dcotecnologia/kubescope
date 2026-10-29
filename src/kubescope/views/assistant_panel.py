@@ -25,10 +25,12 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from kubescope.assistant.runner import NAME
 from kubescope.theme import themed
 from kubescope.views.chat_icons import dock_icon, popout_icon, sparkle_icon
 
-BUBBLE = 54  # the round button in the corner
+BUBBLE = 42  # the round button in the corner
+ICON = 28  # the drawing on it
 MARGIN = 20
 ANIMATION_MS = 220  # the panel slides up and down; 0 shows it at once
 SLIDE = 48  # how far below its place the panel starts and ends
@@ -118,7 +120,7 @@ class AssistantPanel(QFrame):
         self.restyle()
         header = QFrame()
         header.setObjectName("assistantHeader")
-        self.title = QLabel(self.tr("Assistant"))
+        self.title = QLabel(NAME)
         self.clear_button = QPushButton(self.tr("Clear history"))
         self.float_button = QPushButton()
         self.float_button.setFixedWidth(34)
@@ -203,7 +205,7 @@ class FloatingFrame(QWidget):
 
     def __init__(self, parent: QWidget) -> None:
         super().__init__(parent, Qt.WindowType.Window)
-        self.setWindowTitle(self.tr("Assistant"))
+        self.setWindowTitle(NAME)
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         self.holder = layout
@@ -236,10 +238,10 @@ class AssistantDock(QObject):
         super().__init__(host)
         self.host = host
         self.bubble = QPushButton(host)
-        self.bubble.setIconSize(QSize(34, 34))
+        self.bubble.setIconSize(QSize(ICON, ICON))
         self.bubble.setObjectName("assistantBubble")
         self.bubble.setFixedSize(BUBBLE, BUBBLE)
-        self.bubble.setToolTip(self.tr("Ask the assistant"))
+        self.bubble.setToolTip(self.tr("Ask Gabi"))
         self.panel = AssistantPanel(host)
         self._open = False
         self._size = QSize(
@@ -265,18 +267,17 @@ class AssistantDock(QObject):
         """Take the colors of the theme in use."""
         self.bubble.setStyleSheet(_bubble_style())
         self.bubble.setIcon(
-            sparkle_icon(themed("#ffffff", text=True), 34, themed("#3020a5"))
+            sparkle_icon(themed("#ffffff", text=True), ICON, themed("#3020a5"))
         )
         self.panel.restyle()
 
     def retranslate(self) -> None:
-        self.bubble.setToolTip(self.tr("Ask the assistant"))
-        self.panel.title.setText(self.tr("Assistant"))
+        self.bubble.setToolTip(self.tr("Ask Gabi"))
         self.panel.clear_button.setText(self.tr("Clear history"))
         self.panel.close_button.setToolTip(self.tr("Close"))
         self.panel.set_floating(self._floating)
         if self._frame is not None:
-            self._frame.setWindowTitle(self.tr("Assistant"))
+            self._frame.setWindowTitle(NAME)
 
     @property
     def is_open(self) -> bool:

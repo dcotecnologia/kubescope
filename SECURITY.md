@@ -93,8 +93,9 @@ prefer otherwise.
   project. It sends no identifier, only a `User-Agent` with the app version, and
   GitHub sees your IP address as in any request. Checking never downloads or
   installs anything. Turn the startup check off in Settings.
-- **The assistant sends what you ask to a program of your computer.** The chat in
-  the corner does nothing until you open it and agree, once, that what you type
+- **The assistant sends what you ask to a program of your computer.** Gabi, the
+  assistant of DCO Tecnologia, is an AI that runs on a coding assistant installed
+  on your computer; she tells you so if asked. The chat in the corner does nothing until you open it and agree, once, that what you type
   and attach, and what the assistant reads from the cluster to answer, are sent
   to the program (Claude Code or Codex, installed and signed in on your
   computer, which you choose in Settings) and from it to its service. KubeScope

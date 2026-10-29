@@ -3,13 +3,11 @@
     "rtl": false,
     "strings": {
         "AssistantDock": {
-            "Ask the assistant": "询问助手",
-            "Assistant": "助手",
+            "Ask Gabi": "问问 Gabi",
             "Clear history": "清除历史",
             "Close": "关闭"
         },
         "AssistantPanel": {
-            "Assistant": "助手",
             "Clear history": "清除历史",
             "Close": "关闭",
             "Open in a window of its own": "在新窗口中打开",
@@ -19,11 +17,11 @@
             "(attached: {names})": "（已附加：{names}）",
             "(read) {what}": "（读取）{what}",
             "App": "应用",
-            "Ask about the cluster or ask for an action...": "询问集群情况或请求执行操作...",
-            "Assistant": "助手",
+            "Ask Gabi about the cluster or ask for an action...": "向 Gabi 询问集群情况，或请求执行操作…",
             "At most {count} files go with a question.": "每个问题最多可附带 {count} 个文件。",
             "Attach": "附加",
             "Cancel": "取消",
+            "Hi, I'm {name}, from {company}. I know Kubernetes and KubeScope well. Ask me about what you see on the screen, ask me to look into a problem, or ask me to take you somewhere in the app.": "您好，我是来自 {company} 的 {name}。我非常了解 Kubernetes 和 KubeScope。您可以向我询问屏幕上的内容，请我排查问题，或请我带您前往应用中的某个位置。",
             "Ignored an action: {why}": "已忽略一项操作：{why}",
             "Read-only mode: nothing was changed. Turn on the write mode in Settings to allow {what}.": "只读模式：未做任何更改。请在设置中开启写入模式以允许 {what}。",
             "Run": "运行",
@@ -89,9 +87,6 @@
             "Your credentials may have expired. Sign in again (for example “aws sso login”, “gcloud auth login” or “az login”) and refresh.": "您的凭据可能已过期。请重新登录（例如使用“aws sso login”、“gcloud auth login”或“az login”）后刷新。",
             "Your kubeconfig runs “{tool}” to sign in, but it is not installed or not on the PATH. Install it and refresh.": "您的 kubeconfig 运行“{tool}”来登录，但它没有安装或不在 PATH 中。请安装后刷新。",
             "Your user is not allowed to read this resource.": "您的用户无权读取此资源。"
-        },
-        "FloatingFrame": {
-            "Assistant": "助手"
         },
         "LogTab": {
             "Auto-refresh": "自动刷新",

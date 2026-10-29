@@ -3,13 +3,11 @@
     "rtl": false,
     "strings": {
         "AssistantDock": {
-            "Ask the assistant": "Hỏi trợ lý",
-            "Assistant": "Trợ lý",
+            "Ask Gabi": "Hỏi Gabi",
             "Clear history": "Xóa lịch sử",
             "Close": "Đóng"
         },
         "AssistantPanel": {
-            "Assistant": "Trợ lý",
             "Clear history": "Xóa lịch sử",
             "Close": "Đóng",
             "Open in a window of its own": "Mở trong cửa sổ riêng",
@@ -19,11 +17,11 @@
             "(attached: {names})": "(đã đính kèm: {names})",
             "(read) {what}": "(đọc) {what}",
             "App": "Ứng dụng",
-            "Ask about the cluster or ask for an action...": "Hỏi về cụm hoặc yêu cầu một hành động...",
-            "Assistant": "Trợ lý",
+            "Ask Gabi about the cluster or ask for an action...": "Hỏi Gabi về cụm hoặc yêu cầu một hành động...",
             "At most {count} files go with a question.": "Mỗi câu hỏi đính kèm tối đa {count} tệp.",
             "Attach": "Đính kèm",
             "Cancel": "Hủy",
+            "Hi, I'm {name}, from {company}. I know Kubernetes and KubeScope well. Ask me about what you see on the screen, ask me to look into a problem, or ask me to take you somewhere in the app.": "Xin chào, tôi là {name} đến từ {company}. Tôi hiểu rõ Kubernetes và KubeScope. Bạn có thể hỏi tôi về những gì đang hiển thị trên màn hình, nhờ tôi tìm hiểu một vấn đề, hoặc nhờ tôi đưa bạn đến một nơi nào đó trong ứng dụng.",
             "Ignored an action: {why}": "Đã bỏ qua một hành động: {why}",
             "Read-only mode: nothing was changed. Turn on the write mode in Settings to allow {what}.": "Chế độ chỉ đọc: chưa có gì bị thay đổi. Hãy bật chế độ ghi trong Cài đặt để cho phép {what}.",
             "Run": "Chạy",
@@ -89,9 +87,6 @@
             "Your credentials may have expired. Sign in again (for example “aws sso login”, “gcloud auth login” or “az login”) and refresh.": "Thông tin xác thực của bạn có thể đã hết hạn. Hãy đăng nhập lại (ví dụ “aws sso login”, “gcloud auth login” hoặc “az login”) rồi làm mới.",
             "Your kubeconfig runs “{tool}” to sign in, but it is not installed or not on the PATH. Install it and refresh.": "kubeconfig của bạn chạy “{tool}” để đăng nhập, nhưng công cụ này chưa được cài đặt hoặc không có trong PATH. Hãy cài đặt rồi làm mới.",
             "Your user is not allowed to read this resource.": "Người dùng của bạn không được phép đọc tài nguyên này."
-        },
-        "FloatingFrame": {
-            "Assistant": "Trợ lý"
         },
         "LogTab": {
             "Auto-refresh": "Tự động làm mới",

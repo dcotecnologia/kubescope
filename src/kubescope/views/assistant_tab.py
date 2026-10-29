@@ -29,7 +29,7 @@ from kubescope.assistant import actions, attachments, executor
 from kubescope.assistant.actions import Invalid, Request
 from kubescope.assistant.attachments import Attachment, AttachmentError
 from kubescope.assistant.history import Entry
-from kubescope.assistant.runner import AssistantError
+from kubescope.assistant.runner import COMPANY, NAME, AssistantError
 from kubescope.assistant.session import ChatSession, Message
 from kubescope.theme import themed
 from kubescope.views.chat_icons import attach_icon, send_icon, stop_icon
@@ -187,6 +187,16 @@ class AssistantTab(QWidget):
         self.thread_view = ChatBackground()
         self.thread_layout = QVBoxLayout(self.thread_view)
         self.thread_layout.addStretch(1)
+        self.welcome = QLabel(
+            self.tr(
+                "Hi, I'm {name}, from {company}. I know Kubernetes and KubeScope "
+                "well. Ask me about what you see on the screen, ask me to look into "
+                "a problem, or ask me to take you somewhere in the app."
+            ).format(name=NAME, company=COMPANY)
+        )
+        self.welcome.setWordWrap(True)
+        self.welcome.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.thread_layout.insertWidget(0, self.welcome)  # until the first message
         self.thread_scroll.setWidget(self.thread_view)
         bar = self.thread_scroll.verticalScrollBar()
         bar.rangeChanged.connect(self._follow_the_end)
@@ -197,7 +207,7 @@ class AssistantTab(QWidget):
         self.input.setMaximumHeight(72)
         self.input.setMinimumHeight(40)
         self.input.setPlaceholderText(
-            self.tr("Ask about the cluster or ask for an action...")
+            self.tr("Ask Gabi about the cluster or ask for an action...")
         )
         self.send_button = self._round_button(self.tr("Send"))
         self.stop_button = self._round_button(self.tr("Stop"))
@@ -415,6 +425,10 @@ class AssistantTab(QWidget):
         self.composer.setStyleSheet(
             f"QFrame#assistantComposer {{ background: {background}; }}"
         )
+        self.welcome.setStyleSheet(
+            f"QLabel {{ background: {other}; color: {quiet}; border-radius: 10px;"
+            " padding: 12px 16px; }"
+        )
         self.input.setStyleSheet(
             f"QPlainTextEdit#assistantInput {{ background: {other}; color: {ink};"
             " border: 0; border-radius: 18px; padding: 6px 12px; }"
@@ -466,6 +480,7 @@ class AssistantTab(QWidget):
             line.addWidget(bubble)
             line.addStretch(1)
         self.thread_layout.insertLayout(self.thread_layout.count() - 1, line)
+        self.welcome.hide()
         self._bubbles.append(bubble)
         self._labels.append(label)
         self._bubble_info.append((role, stamp, clock))
@@ -582,6 +597,7 @@ class AssistantTab(QWidget):
             self._bubbles.pop().parentWidget()
             label = self._labels.pop()
             self._bubble_info.pop()
+            self.welcome.setVisible(not self._bubbles)
             frame = label.parentWidget()
             assert frame is not None
             line = self.thread_layout.itemAt(self.thread_layout.count() - 2)
@@ -702,7 +718,7 @@ class AssistantTab(QWidget):
         """The conversation, to read or to save."""
         who = {
             "user": self.tr("You"),
-            "assistant": self.tr("Assistant"),
+            "assistant": NAME,
             "app": self.tr("App"),
         }
         turns = list(self._entries)

@@ -385,9 +385,22 @@ def test_the_window_of_the_chat_follows_the_language_and_the_theme(monkeypatch) 
     assert frame is not None
 
     dock.retranslate()
-    assert frame.windowTitle() == "Assistant"
+    assert frame.windowTitle() == "Gabi"
     monkeypatch.setattr(theme, "_active", theme.DARK_THEME)
     dock.restyle()
     assert dock.panel.float_button.icon().isNull() is False
     monkeypatch.setattr(theme, "_active", theme.LIGHT_THEME)
+    host.close()
+
+
+def test_the_button_and_the_panel_carry_the_name_of_the_assistant() -> None:
+    host = _host()
+    dock = AssistantDock(host)
+
+    assert dock.panel.title.text() == "Gabi"
+    assert dock.bubble.toolTip() == "Ask Gabi"
+    dock.set_floating(True)
+    assert dock._frame is not None and dock._frame.windowTitle() == "Gabi"
+    dock.retranslate()
+    assert dock.panel.title.text() == "Gabi"  # a name is not translated
     host.close()

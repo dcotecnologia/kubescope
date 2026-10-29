@@ -118,8 +118,9 @@ _The cluster overview, shown with sample data. Regenerate it with
 - **Details and logs:** JSON details of a Pod or workload, and live Pod logs,
   each in its own closable tab, colored like Monokai. **Save...** writes the open
   tab to a file you choose.
-- **Assistant:** the round button in the corner of the window opens a chat with a
-  coding assistant that is already installed and signed in on your computer
+- **Assistant:** the round button in the corner of the window opens a chat with
+  **Gabi**, the assistant of DCO Tecnologia, expert in Kubernetes and KubeScope.
+  She runs on a coding assistant that is already installed and signed in on your computer
   (Claude Code or Codex; KubeScope asks for no credentials and stores none). It sees what you see, can read details, logs, lists
   and events to look into a problem, answers in the language of the app, and
   moves the window for you: a list, a page, a tab, the logs of a Pod. It never

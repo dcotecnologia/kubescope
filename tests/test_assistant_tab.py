@@ -75,7 +75,7 @@ def test_the_question_is_sent_and_the_answer_is_shown_as_it_comes(replies) -> No
 
     assert "what is x?" in prompts[0]
     assert "**You**\n\nwhat is x?" in tab.markdown()
-    assert "**Assistant**\n\nIt is a Pod." in tab.markdown()
+    assert "**Gabi**\n\nIt is a Pod." in tab.markdown()
     assert tab.input.toPlainText() == "" and tab.status.text() == ""
     assert tab.send_button.isEnabled() and not tab.stop_button.isEnabled()
     assert [label.text() for label in tab._labels] == ["what is x?", "It is a Pod."]
@@ -591,3 +591,43 @@ def test_the_chips_take_the_colors_of_the_theme(monkeypatch, tmp_path) -> None:
 
     assert _chip(tab).styleSheet() != light
     monkeypatch.setattr(theme, "_active", theme.LIGHT_THEME)
+
+
+def test_the_empty_chat_greets_with_the_name_and_the_company_and_gives_way(
+    replies,
+) -> None:
+    queue, _prompts = replies
+    queue.append(["Hello"])
+    tab = _tab()
+    tab.show()
+
+    assert tab.welcome.isVisible()
+    assert "Hi, I'm Gabi, from DCO Tecnologia" in tab.welcome.text()
+    assert tab.entries() == []  # the greeting is not a message: not kept, not sent
+
+    _say(tab, "hi")
+    assert not tab.welcome.isVisible()
+    assert all("Hi, I'm Gabi" not in text for _role, text in tab.entries())
+    tab.close()
+
+
+def test_the_greeting_is_back_when_a_question_is_taken_back(replies) -> None:
+    queue, _prompts = replies
+    queue.append(AssistantError("Not logged in"))
+    tab = _tab()
+    tab.show()
+
+    _say(tab, "why?")
+
+    assert tab.welcome.isVisible() and tab._bubbles == []
+    tab.close()
+
+
+def test_a_conversation_that_comes_from_the_history_has_no_greeting() -> None:
+    tab = AssistantTab(
+        ChatSession(FAKE), "ctx", lambda: True, history=[("user", "before")]
+    )
+    tab.show()
+
+    assert not tab.welcome.isVisible()
+    tab.close()

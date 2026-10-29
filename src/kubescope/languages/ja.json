@@ -3,13 +3,11 @@
     "rtl": false,
     "strings": {
         "AssistantDock": {
-            "Ask the assistant": "アシスタントに質問",
-            "Assistant": "アシスタント",
+            "Ask Gabi": "Gabiに聞く",
             "Clear history": "履歴を消去",
             "Close": "閉じる"
         },
         "AssistantPanel": {
-            "Assistant": "アシスタント",
             "Clear history": "履歴を消去",
             "Close": "閉じる",
             "Open in a window of its own": "別ウィンドウで開く",
@@ -19,11 +17,11 @@
             "(attached: {names})": "(添付: {names})",
             "(read) {what}": "(読み取り) {what}",
             "App": "アプリ",
-            "Ask about the cluster or ask for an action...": "クラスターについて質問、または操作を依頼...",
-            "Assistant": "アシスタント",
+            "Ask Gabi about the cluster or ask for an action...": "クラスターについて質問したり、操作を依頼したりできます...",
             "At most {count} files go with a question.": "1つの質問に添付できるファイルは最大{count}件です。",
             "Attach": "添付",
             "Cancel": "キャンセル",
+            "Hi, I'm {name}, from {company}. I know Kubernetes and KubeScope well. Ask me about what you see on the screen, ask me to look into a problem, or ask me to take you somewhere in the app.": "こんにちは、{company}の{name}です。Kubernetes と KubeScope に詳しいので、画面に表示されている内容についての質問、問題の調査、アプリ内の目的の場所への案内など、お気軽にご依頼ください。",
             "Ignored an action: {why}": "操作を無視しました: {why}",
             "Read-only mode: nothing was changed. Turn on the write mode in Settings to allow {what}.": "読み取り専用モード: 何も変更されていません。{what}を許可するには、設定で書き込みモードをオンにしてください。",
             "Run": "実行",
@@ -89,9 +87,6 @@
             "Your credentials may have expired. Sign in again (for example “aws sso login”, “gcloud auth login” or “az login”) and refresh.": "認証情報の有効期限が切れた可能性があります。もう一度サインインして（例：「aws sso login」「gcloud auth login」「az login」）、更新してください。",
             "Your kubeconfig runs “{tool}” to sign in, but it is not installed or not on the PATH. Install it and refresh.": "kubeconfig はサインインに「{tool}」を実行しますが、インストールされていないか PATH にありません。インストールしてから更新してください。",
             "Your user is not allowed to read this resource.": "このユーザーにはこのリソースを読み取る権限がありません。"
-        },
-        "FloatingFrame": {
-            "Assistant": "アシスタント"
         },
         "LogTab": {
             "Auto-refresh": "自動更新",

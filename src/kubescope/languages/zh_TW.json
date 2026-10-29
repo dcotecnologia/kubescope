@@ -3,13 +3,11 @@
     "rtl": false,
     "strings": {
         "AssistantDock": {
-            "Ask the assistant": "詢問助理",
-            "Assistant": "助理",
+            "Ask Gabi": "詢問 Gabi",
             "Clear history": "清除記錄",
             "Close": "關閉"
         },
         "AssistantPanel": {
-            "Assistant": "助理",
             "Clear history": "清除記錄",
             "Close": "關閉",
             "Open in a window of its own": "在獨立視窗中開啟",
@@ -19,11 +17,11 @@
             "(attached: {names})": "（已附加：{names}）",
             "(read) {what}": "（讀取）{what}",
             "App": "應用程式",
-            "Ask about the cluster or ask for an action...": "詢問叢集相關問題，或請求執行操作...",
-            "Assistant": "助理",
+            "Ask Gabi about the cluster or ask for an action...": "向 Gabi 詢問叢集相關問題，或請她執行操作...",
             "At most {count} files go with a question.": "每個問題最多可附上 {count} 個檔案。",
             "Attach": "附加",
             "Cancel": "取消",
+            "Hi, I'm {name}, from {company}. I know Kubernetes and KubeScope well. Ask me about what you see on the screen, ask me to look into a problem, or ask me to take you somewhere in the app.": "您好，我是來自 {company} 的 {name}。我對 Kubernetes 和 KubeScope 十分熟悉。您可以詢問我畫面上看到的內容、請我協助調查問題，或請我帶您前往應用程式中的任何位置。",
             "Ignored an action: {why}": "已略過一項操作：{why}",
             "Read-only mode: nothing was changed. Turn on the write mode in Settings to allow {what}.": "唯讀模式：未變更任何內容。請在「設定」中開啟寫入模式，以允許{what}。",
             "Run": "執行",
@@ -89,9 +87,6 @@
             "Your credentials may have expired. Sign in again (for example “aws sso login”, “gcloud auth login” or “az login”) and refresh.": "您的憑證可能已過期。請重新登入（例如「aws sso login」、「gcloud auth login」或「az login」），然後重新整理。",
             "Your kubeconfig runs “{tool}” to sign in, but it is not installed or not on the PATH. Install it and refresh.": "您的 kubeconfig 會執行「{tool}」來登入，但它尚未安裝或不在 PATH 中。請安裝後重新整理。",
             "Your user is not allowed to read this resource.": "您的使用者無權讀取此資源。"
-        },
-        "FloatingFrame": {
-            "Assistant": "助理"
         },
         "LogTab": {
             "Auto-refresh": "自動重新整理",

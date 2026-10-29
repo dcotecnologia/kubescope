@@ -3,13 +3,11 @@
     "rtl": true,
     "strings": {
         "AssistantDock": {
-            "Ask the assistant": "שאלו את העוזר",
-            "Assistant": "עוזר",
+            "Ask Gabi": "שאל את Gabi",
             "Clear history": "נקה היסטוריה",
             "Close": "סגור"
         },
         "AssistantPanel": {
-            "Assistant": "עוזר",
             "Clear history": "נקה היסטוריה",
             "Close": "סגור",
             "Open in a window of its own": "פתח בחלון נפרד",
@@ -19,11 +17,11 @@
             "(attached: {names})": "(מצורף: {names})",
             "(read) {what}": "(קריאה) {what}",
             "App": "אפליקציה",
-            "Ask about the cluster or ask for an action...": "שאלו על האשכול או בקשו פעולה...",
-            "Assistant": "עוזר",
+            "Ask Gabi about the cluster or ask for an action...": "שאל את Gabi על האשכול או בקש פעולה...",
             "At most {count} files go with a question.": "ניתן לצרף עד {count} קבצים לשאלה.",
             "Attach": "צרף",
             "Cancel": "ביטול",
+            "Hi, I'm {name}, from {company}. I know Kubernetes and KubeScope well. Ask me about what you see on the screen, ask me to look into a problem, or ask me to take you somewhere in the app.": "היי, אני {name} מ-{company}. אני מכיר היטב את Kubernetes ואת KubeScope. אפשר לשאול אותי על מה שמוצג במסך, לבקש ממני לבדוק בעיה, או לבקש שאוביל אותך למקום מסוים באפליקציה.",
             "Ignored an action: {why}": "פעולה התעלמה: {why}",
             "Read-only mode: nothing was changed. Turn on the write mode in Settings to allow {what}.": "מצב קריאה בלבד: דבר לא שונה. הפעילו את מצב הכתיבה בהגדרות כדי לאפשר {what}.",
             "Run": "הפעל",
@@ -89,9 +87,6 @@
             "Your credentials may have expired. Sign in again (for example “aws sso login”, “gcloud auth login” or “az login”) and refresh.": "ייתכן שפרטי הזיהוי שלכם פגו. התחברו שוב (למשל \"aws sso login\", ‏\"gcloud auth login\" או \"az login\") ורעננו.",
             "Your kubeconfig runs “{tool}” to sign in, but it is not installed or not on the PATH. Install it and refresh.": "ה-kubeconfig שלכם מריץ את \"{tool}\" כדי להתחבר, אך הוא אינו מותקן או שאינו ב-PATH. התקינו אותו ורעננו.",
             "Your user is not allowed to read this resource.": "למשתמש שלכם אין הרשאה לקרוא משאב זה."
-        },
-        "FloatingFrame": {
-            "Assistant": "עוזר"
         },
         "LogTab": {
             "Auto-refresh": "רענון אוטומטי",
