@@ -1518,14 +1518,14 @@ def test_the_theme_is_chosen_in_settings_and_applied_at_once(monkeypatch) -> Non
     assert [form.themeCombo.itemData(i) for i in range(2)] == ["light", "dark"]
     assert form.themeCombo.currentData() == "light"
     light_style = window.styleSheet()
-    assert "#f7f7fa" in light_style and "#11141a" not in light_style
+    assert "#dfe2e8" in light_style and "#11141a" not in light_style
     light_icon = window_module._chevron_icon_path()
 
     form.themeCombo.setCurrentIndex(form.themeCombo.findData("dark"))
     window._save_preferences()
 
     assert window.settings.theme == "dark"
-    assert "#11141a" in window.styleSheet() and "#f7f7fa" not in window.styleSheet()
+    assert "#11141a" in window.styleSheet() and "#dfe2e8" not in window.styleSheet()
     phase = window.table.item(0, 4)
     assert phase is not None
     badge = phase.data(BADGE_ROLE)  # the phase, as a badge

@@ -3,7 +3,8 @@
 The light colors are the source of truth: the style sheet and the code
 spell them out. A theme is a map from each light color to the color to
 draw instead, applied to the style sheet, the palette, the icons and
-every color the code picks. Light maps nothing; Dark maps every color.
+every color the code picks. Light softens the whites and the pale tints of the
+code into grays; Dark maps every color.
 
 To make colors easy to change, the light colors are grouped into named
 roles (page, text, accent, ...). A custom theme is a JSON file in the

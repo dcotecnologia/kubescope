@@ -132,7 +132,7 @@ def test_applying_a_theme_switches_the_palette() -> None:
     assert disabled.name() == "#6b7380"
 
     apply_theme(application, "light")
-    assert application.palette().color(QPalette.ColorRole.Window).name() == "#f7f7fa"
+    assert application.palette().color(QPalette.ColorRole.Window).name() == "#dfe2e8"
 
 
 def test_a_theme_always_runs_on_the_fusion_style() -> None:
@@ -170,7 +170,9 @@ def test_a_custom_theme_starts_from_its_base_and_changes_only_what_it_lists() ->
     )  # inherited from dark
 
     light_based = theme.parse_theme("plain", {"name": "Plain"})
-    assert light_based.base == "light" and light_based.colors == {}
+    # it starts from its base: the soft grays of Light, not the white of the code
+    assert light_based.base == "light"
+    assert light_based.colors == theme.LIGHT_THEME.colors
 
 
 def test_a_role_recolors_every_light_color_it_covers() -> None:
@@ -185,9 +187,11 @@ def test_on_accent_sets_the_color_of_text_that_is_white_in_the_light_theme() -> 
     theme._active = custom
 
     assert themed("#ffffff", text=True) == "#eeeeee"
-    assert themed("#ffffff") == "#ffffff"  # as a background it is untouched
+    assert (
+        themed("#ffffff") == "#eceef2"
+    )  # as a background it is the soft gray of Light
     assert "color: #eeeeee" in themed_stylesheet("QLabel { color: #ffffff; }")
-    assert "background: #ffffff" in themed_stylesheet("QLabel { background: #ffffff; }")
+    assert "background: #eceef2" in themed_stylesheet("QLabel { background: #ffffff; }")
 
 
 @pytest.mark.parametrize(
@@ -251,7 +255,7 @@ def test_theme_tokens_show_the_color_of_every_role() -> None:
     dark = theme.theme_tokens(theme.DARK_THEME)
 
     assert set(light) == set(theme.TOKENS) == set(dark)
-    assert light["page"] == "#f7f7fa" and dark["page"] == "#11141a"
+    assert light["page"] == "#dfe2e8" and dark["page"] == "#11141a"
     assert light["on_accent"] == dark["on_accent"] == "#ffffff"
     assert dark["bar_warning"] == "#e0a030"  # the same orange in both
 
@@ -428,8 +432,11 @@ def test_light_and_dark_come_from_their_json_files() -> None:
     light = json.loads((theme.BUNDLED_DIRECTORY / "light.json").read_text("utf-8"))
 
     assert theme.DARK_THEME.colors == dark["palette"] and theme.DARK_THEME.builtin
-    assert theme.LIGHT_THEME.colors == {} and "palette" not in light
+    assert theme.LIGHT_THEME.colors == light["palette"] and theme.LIGHT_THEME.builtin
     assert dark["palette"]["#ffffff"] == theme.SURFACE
+    # Light is gray, not white: no surface of it is brighter than a soft gray
+    for source in ("#f7f7fa", "#ffffff", "#f3f4f7", "#fbfbfc", "#f6f6fa"):
+        assert QColor(light["palette"][source]).lightness() <= 245
 
 
 def test_bundled_themes_keep_their_text_readable() -> None:
