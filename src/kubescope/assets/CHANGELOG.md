@@ -17,7 +17,7 @@ All notable changes to this project will be documented in this file. The format 
 
 ### Changed
 
-- The app updates only to **stable** releases: an alpha, a beta or a release candidate is never offered, and a release candidate is told about its own stable release when it comes by @danilogco
+- A stable installation updates only to **stable** releases, and an alpha, a beta or a release candidate updates to the next pre-release as well as to the stable release that follows it, never to an older one by @danilogco
 - The update check no longer asks GitHub again when the app starts within an hour of finding that it is up to date, so it spends less of the limit GitHub gives an address by @danilogco
 
 ## [1.2.0] - 2026-10-29

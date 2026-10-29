@@ -122,10 +122,11 @@ _The cluster overview, shown with sample data. Regenerate it with
   assistant of DCO Tecnologia and an expert in Kubernetes and KubeScope. She sees
   what you see, looks into problems, takes you to the right screen, and never
   changes a cluster without your confirmation. See [Gabi, the assistant](#gabi-the-assistant).
-- **Update check:** when it starts, KubeScope asks GitHub for the latest **stable**
-  release (an alpha, a beta or a release candidate is never offered) and shows **Update available** next to an icon in the footer. The icon spins
+- **Update check:** when it starts, KubeScope asks GitHub for the latest release and shows **Update available** next to an icon in the footer. The icon spins
   while it looks, and clicking it checks again. It sends only the app version;
-  **Settings** turns the startup check off. Clicking **Update available** asks you
+  **Settings** turns the startup check off. A stable installation is offered only
+  stable releases, while an alpha, a beta or a release candidate is offered the next
+  pre-release too, and the stable release that follows it. Clicking **Update available** asks you
   to confirm, shows the version change and the release notes, then updates the
   way KubeScope was installed (AppImage, `.deb` or the Windows installer) and
   restarts it. A Flatpak, a snap or a source checkout opens the release page instead; the Flatpak

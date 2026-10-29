@@ -151,7 +151,7 @@ def _updating(monkeypatch, kind="deb", release: Release | None = NEWER):
     """An installation that can update itself, and the calls it makes."""
     calls = []
     monkeypatch.setattr(cli, "detect_install", lambda: Install(kind, cli.Path("/app")))
-    monkeypatch.setattr(cli, "latest_release", lambda: release)
+    monkeypatch.setattr(cli, "latest_release_for", lambda: release)
     monkeypatch.setattr(cli, "release_of", lambda version: release)
     monkeypatch.setattr(
         cli,
