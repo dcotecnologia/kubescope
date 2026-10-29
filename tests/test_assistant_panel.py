@@ -2,12 +2,19 @@ import os
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
+import pytest
 from PySide6.QtWidgets import QApplication, QLabel, QWidget
 
 from kubescope.views import assistant_panel
 from kubescope.views.assistant_panel import AssistantDock
 
 application = QApplication.instance() or QApplication([])
+
+
+@pytest.fixture(autouse=True)
+def no_slide(monkeypatch):
+    """The panel appears and goes at once, but in the test of the slide."""
+    monkeypatch.setattr(assistant_panel, "ANIMATION_MS", 0)
 
 
 def _host(width=800, height=600) -> QWidget:
@@ -34,14 +41,15 @@ def test_the_button_sits_in_the_corner_and_follows_the_window() -> None:
     host.close()
 
 
-def test_the_panel_opens_above_the_button_and_never_outgrows_the_window() -> None:
+def test_the_panel_opens_over_the_button_and_never_outgrows_the_window() -> None:
     host = _host()
     dock = AssistantDock(host)
     assert not dock.is_open and dock.panel.isHidden()
 
     dock.open()
     panel = dock.panel.geometry()
-    assert dock.is_open and panel.bottom() < dock.bubble.y()
+    assert dock.is_open and panel.bottom() + 1 == dock.bubble.geometry().bottom() + 1
+    assert panel.contains(dock.bubble.geometry())  # it covers the button
     assert panel.width() == assistant_panel.PANEL.width()
     assert panel.right() + 1 == 800 - assistant_panel.MARGIN
 
@@ -107,3 +115,52 @@ def test_the_button_and_the_panel_take_the_colors_of_the_theme(monkeypatch) -> N
     assert theme.themed("#3020a5") in dock.bubble.styleSheet()  # as Save changes
     assert theme.themed("#f7f7fa") in dock.panel.styleSheet()
     host.close()
+
+
+def test_the_panel_slides_up_to_open_and_down_to_close(monkeypatch) -> None:
+    monkeypatch.setattr(assistant_panel, "ANIMATION_MS", 120)
+    host = _host()
+    dock = AssistantDock(host)
+
+    dock.open()
+    assert dock.is_open and not dock.panel.isHidden()
+    start = dock.panel.y()
+    assert start > dock._target().y()  # it starts below its place
+    assert dock.panel.graphicsEffect() is not None  # and fades in
+    _wait(lambda: dock.panel.graphicsEffect() is None)
+    assert dock.panel.geometry() == dock._target()
+
+    dock.close()
+    assert not dock.is_open and not dock.panel.isHidden()  # still sliding down
+    _wait(lambda: dock.panel.isHidden())
+    assert dock.panel.graphicsEffect() is None
+
+    dock.close()  # already away: nothing to do
+    dock.open()
+    dock.close()  # put away before it arrived
+    _wait(lambda: dock.panel.isHidden())
+    assert not dock.is_open
+    host.close()
+
+
+def test_resizing_while_open_keeps_the_panel_over_the_button() -> None:
+    host = _host()
+    dock = AssistantDock(host)
+    dock.open()
+
+    host.resize(1000, 700)
+    application.processEvents()
+
+    assert dock.panel.geometry() == dock._target()
+    assert dock.panel.geometry().contains(dock.bubble.geometry())
+    host.close()
+
+
+def _wait(condition, seconds: float = 3.0) -> None:
+    import time
+
+    deadline = time.monotonic() + seconds
+    while not condition() and time.monotonic() < deadline:
+        application.processEvents()
+        time.sleep(0.005)
+    assert condition()
