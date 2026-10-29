@@ -30,6 +30,8 @@ DEFAULTS: dict[str, Any] = {
     "update_checked_for": "",
     "write_mode": False,
     "animations": True,
+    "sidebar_width": 0,
+    "menu_collapsed": [],
     "assistant_enabled": True,
     "assistant_panel": {},
     "assistant_programs": {},
@@ -300,6 +302,36 @@ class Settings:
     @write_mode.setter
     def write_mode(self, value: bool) -> None:
         self._data["write_mode"] = bool(value)
+
+    @property
+    def menu_collapsed(self) -> list[str]:
+        """The sections of the side menu the person closed; every one is open
+        until they do.
+
+        Only the known ones are read.
+        """
+        value = self._data["menu_collapsed"]
+        known = ("workloads", "network", "config")
+        return (
+            sorted({name for name in value if name in known})
+            if isinstance(value, list)
+            else []
+        )
+
+    @menu_collapsed.setter
+    def menu_collapsed(self, value: list[str]) -> None:
+        self._data["menu_collapsed"] = list(value)
+
+    @property
+    def sidebar_width(self) -> int:
+        """The width the person gave the side menu; 0 when they gave none, so
+        it keeps its usual one."""
+        value = self._data["sidebar_width"]
+        return value if type(value) is int and 150 <= value <= 800 else 0
+
+    @sidebar_width.setter
+    def sidebar_width(self, value: int) -> None:
+        self._data["sidebar_width"] = int(value)
 
     @property
     def animations(self) -> bool:

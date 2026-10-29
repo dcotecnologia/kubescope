@@ -179,7 +179,7 @@ from kubescope.utils.json_view import restyle
 from kubescope.utils.selfupdate import detect_install, restart
 from kubescope.utils.updates import Release, UpdateCheck, check_for_update
 from kubescope.views import motion
-from kubescope.views.assistant_panel import AssistantDock
+from kubescope.views.assistant_panel import BUBBLE, MARGIN, AssistantDock
 from kubescope.views.assistant_tab import AssistantTab
 from kubescope.views.container_states import (
     BADGE_ROLE,
@@ -195,6 +195,7 @@ from kubescope.views.container_states import (
 from kubescope.views.detail_tab import USAGE_REFRESH_MS, DetailTab
 from kubescope.views.log_tab import LOG_REFRESH_MS, LogTab
 from kubescope.views.search_bar import compile_query, switch_button
+from kubescope.views.sidebar_resizer import SidebarResizer
 from kubescope.views.widgets import TabScrollArea
 from kubescope.views.window_frame import WindowFrame
 from kubescope.writes import (
@@ -237,6 +238,8 @@ LIST_DEBOUNCE_MS = 150
 LIST_REFRESH_MS = 5_000  # the list on screen is read again this often
 LIST_REFRESH_MAX_MS = 60_000  # ... and this rarely while the cluster keeps failing
 PERMISSIONS_TTL_S = 300  # what the cluster allows is asked again after this long
+MENU_OPEN = 16777215  # no limit: a section of the side menu that shows all its entries
+SIDEBAR_WIDTH = 240  # the usual width of the side menu, which can be dragged
 UPDATE_RECHECK_MS = 60 * 60 * 1000  # look for a new version again every hour
 UPDATE_FRESH_SECONDS = 3600  # an "up to date" that a start trusts, in seconds
 UPDATE_SEARCH_MS = 5000  # an update check shows as searching for at least this long
@@ -1014,6 +1017,15 @@ class WorkloadWindow(QMainWindow):
             animation.setDuration(180)
             animation.setEasingCurve(QEasingCurve.Type.InOutCubic)
             self._submenus[submenu] = animation
+        self._menu_names = {
+            self.submenu: "workloads",
+            self.network_submenu: "network",
+            self.config_submenu: "config",
+        }
+        closed = self.settings.menu_collapsed
+        for submenu, name in self._menu_names.items():
+            if name not in closed:  # every section starts open, unless it was closed
+                submenu.setMaximumHeight(MENU_OPEN)
         # The .ui files carry sample data for Qt Designer; the app starts empty.
         self.context_combo.clear()
         self.namespace_combo.clear()
@@ -1113,6 +1125,15 @@ class WorkloadWindow(QMainWindow):
         self.assistant_dock.panel.closed.connect(self.assistant_dock.close)
         self.assistant_dock.panel.clear_requested.connect(self._clear_assistant_chat)
         self.assistant_dock.bubble.setVisible(self.settings.assistant_enabled)
+        self.sidebar_resizer = SidebarResizer(ui.sidebar, SIDEBAR_WIDTH)
+        if self.settings.sidebar_width:
+            self.sidebar_resizer.set_width(self.settings.sidebar_width)
+        self.sidebar_resizer.width_changed.connect(self._keep_sidebar_width)
+        self._corner_margins = {
+            layout: layout.contentsMargins()
+            for layout in (ui.footerRow, ui.appFooterLayout)
+        }
+        self._make_room_for_assistant()
         self.assistant_dock.restore(self.settings.assistant_panel)
         self.assistant_dock.state_changed.connect(self._keep_assistant_panel)
         ui.settingsButton.setIcon(_gear_icon())
@@ -2148,9 +2169,18 @@ class WorkloadWindow(QMainWindow):
             and animation.endValue() == 0
         )
         animation.stop()
-        animation.setStartValue(submenu.maximumHeight())
+        animation.setStartValue(
+            min(submenu.maximumHeight(), submenu.sizeHint().height())
+        )
         animation.setEndValue(submenu.sizeHint().height() if expand else 0)
         animation.start()
+        closed = set(self.settings.menu_collapsed)
+        if expand:
+            closed.discard(self._menu_names[submenu])
+        else:
+            closed.add(self._menu_names[submenu])
+        self.settings.menu_collapsed = sorted(closed)  # kept for the next run
+        self._save_settings()
 
     def _open_list_view(self, view: str) -> None:
         """Show a Pods or workload list; they all share one table."""
@@ -4771,6 +4801,25 @@ class WorkloadWindow(QMainWindow):
             tab.shutdown()
             tab.deleteLater()
 
+    def _keep_sidebar_width(self, width: int) -> None:
+        """Write down the width the person gave the side menu; the usual width
+        is kept as none."""
+        self.settings.sidebar_width = 0 if width == SIDEBAR_WIDTH else width
+        self._save_settings()
+
+    def _make_room_for_assistant(self) -> None:
+        """Keep what is at the right of the footer and of the note under the
+        lists clear of the button of the assistant, which sits in that
+        corner."""
+        gutter = BUBBLE + MARGIN if self.settings.assistant_enabled else 0
+        for layout, margins in self._corner_margins.items():
+            layout.setContentsMargins(
+                margins.left(),
+                margins.top(),
+                margins.right() + gutter,
+                margins.bottom(),
+            )
+
     def _keep_assistant_panel(self) -> None:
         """Write down the size and the place of the chat panel."""
         self.settings.assistant_panel = self.assistant_dock.state()
@@ -5436,6 +5485,7 @@ class WorkloadWindow(QMainWindow):
         self.settings.assistant_enabled = form.assistantCheck.isChecked()
         self.settings.assistant = form.assistantCombo.currentData() or ""
         self.assistant_dock.bubble.setVisible(self.settings.assistant_enabled)
+        self._make_room_for_assistant()
         if not self.settings.assistant_enabled:
             self.assistant_dock.close()
         self._sync_tray()
