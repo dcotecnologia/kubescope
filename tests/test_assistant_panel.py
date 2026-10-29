@@ -3,6 +3,7 @@ import os
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 import pytest
+from PySide6.QtCore import QEvent
 from PySide6.QtWidgets import QApplication, QLabel, QWidget
 
 from kubescope.views import assistant_panel
@@ -17,8 +18,23 @@ def no_slide(monkeypatch):
     monkeypatch.setattr(assistant_panel, "ANIMATION_MS", 0)
 
 
+_HOSTS: list[QWidget] = []
+
+
+@pytest.fixture(autouse=True)
+def clear_hosts():
+    """Hosts and their docks live until the test ends, then go together."""
+    yield
+    for host in _HOSTS:
+        host.close()
+        host.deleteLater()
+    _HOSTS.clear()
+    application.sendPostedEvents(None, QEvent.Type.DeferredDelete)
+
+
 def _host(width=800, height=600) -> QWidget:
     host = QWidget()
+    _HOSTS.append(host)
     host.resize(width, height)
     host.show()
     application.processEvents()
@@ -164,3 +180,214 @@ def _wait(condition, seconds: float = 3.0) -> None:
         application.processEvents()
         time.sleep(0.005)
     assert condition()
+
+
+def _press(handle, x: int, y: int) -> None:
+    from PySide6.QtCore import QEvent, QPointF, Qt
+    from PySide6.QtGui import QMouseEvent
+
+    event = QMouseEvent(
+        QEvent.Type.MouseButtonPress,
+        QPointF(1, 1),
+        QPointF(x, y),
+        Qt.MouseButton.LeftButton,
+        Qt.MouseButton.LeftButton,
+        Qt.KeyboardModifier.NoModifier,
+    )
+    handle.mousePressEvent(event)
+
+
+def _drag(handle, x: int, y: int, kind: str = "move") -> None:
+    from PySide6.QtCore import QEvent, QPointF, Qt
+    from PySide6.QtGui import QMouseEvent
+
+    types = {
+        "move": QEvent.Type.MouseMove,
+        "release": QEvent.Type.MouseButtonRelease,
+    }
+    event = QMouseEvent(
+        types[kind],
+        QPointF(1, 1),
+        QPointF(x, y),
+        Qt.MouseButton.LeftButton,
+        Qt.MouseButton.LeftButton,
+        Qt.KeyboardModifier.NoModifier,
+    )
+    if kind == "move":
+        handle.mouseMoveEvent(event)
+    else:
+        handle.mouseReleaseEvent(event)
+
+
+def test_the_borders_of_the_panel_are_dragged_to_resize_it() -> None:
+    host = _host(1000, 800)
+    dock = AssistantDock(host)
+    dock.open()
+    states: list[int] = []
+    dock.state_changed.connect(lambda: states.append(1))
+    left, top, corner = dock.panel.handles
+    before = dock.panel.geometry()
+
+    _drag(left, 500, 500)  # a move with no press does nothing
+    _press(left, 500, 500)
+    _drag(left, 400, 500)  # 100 to the left: wider
+    assert dock.panel.width() == before.width() + 100
+    assert dock.panel.height() == before.height()
+    assert dock.panel.geometry().right() == before.right()  # the corner stays
+    _drag(left, 400, 500, "release")
+    assert states == [1]
+
+    _press(top, 500, 500)
+    _drag(top, 500, 450)  # 50 up: taller
+    assert dock.panel.height() == before.height() + 50
+    _drag(top, 500, 450, "release")
+
+    _press(corner, 500, 500)
+    _drag(corner, 0, 0)  # as far as it goes: the window limits it
+    room = dock._room()
+    assert dock.panel.width() == room.width() and dock.panel.height() == room.height()
+    _drag(corner, 900, 900)  # the other way: not smaller than the least
+    assert dock.panel.width() == assistant_panel.MIN_PANEL.width()
+    assert dock.panel.height() == assistant_panel.MIN_PANEL.height()
+    _drag(corner, 900, 900, "release")
+    _drag(corner, 0, 0, "release")  # nothing pressed: nothing happens
+    host.close()
+
+
+def test_the_size_chosen_is_kept_when_the_window_shrinks_and_grows() -> None:
+    host = _host(1000, 800)
+    dock = AssistantDock(host)
+    dock.open()
+    dock.panel.dragged.emit(-100, -80)
+    chosen = dock.panel.size()
+
+    host.resize(500, 450)
+    application.processEvents()
+    assert dock.panel.width() < chosen.width()  # the window has less room
+
+    host.resize(1000, 800)
+    application.processEvents()
+    assert dock.panel.size() == chosen  # and the choice is back with the room
+    host.close()
+
+
+def test_the_panel_leaves_the_window_for_one_of_its_own_and_comes_back() -> None:
+    host = _host(1000, 800)
+    dock = AssistantDock(host)
+    saved: list[dict] = []
+    dock.state_changed.connect(lambda: saved.append(dock.state()))
+    dock.open()
+
+    dock.panel.float_button.click()  # detach
+    frame = dock._frame
+    assert dock.is_floating and dock.is_open and frame is not None
+    assert frame.isVisible() and dock.panel.parent() is frame
+    assert not any(handle.isVisible() for handle in dock.panel.handles)
+    assert dock.panel.float_button.toolTip() == "Put it back in the window"
+    assert saved[-1]["floating"] is True
+
+    dock.close()  # the button of the corner puts it away
+    assert not frame.isVisible() and not dock.is_open
+    dock.open()  # and brings the same window back
+    assert frame.isVisible() and dock.is_open
+
+    dock.panel.float_button.click()  # attach again
+    assert not dock.is_floating and not frame.isVisible()
+    assert dock.panel.parent() is host and dock.is_open
+    assert dock.panel.float_button.toolTip() == "Detach"
+    assert saved[-1]["floating"] is False
+
+    dock.set_floating(False)  # already in the window
+    host.close()
+
+
+def test_the_window_of_the_chat_closes_to_a_place_it_remembers() -> None:
+    host = _host(1000, 800)
+    dock = AssistantDock(host)
+    dock.open()
+    dock.set_floating(True)
+    frame = dock._frame
+    assert frame is not None
+    frame.move(120, 90)
+    frame.resize(500, 520)
+    application.processEvents()
+    seen: list[int] = []
+    dock.state_changed.connect(lambda: seen.append(1))
+
+    frame.close()  # the cross of the window
+
+    assert not frame.isVisible() and not dock.is_open and seen == [1]
+    geometry = dock.state()["geometry"]
+    assert geometry and dock.state()["floating"] is True
+    dock.open()
+    assert frame.isVisible() and frame.width() == 500
+    host.close()
+
+
+def test_a_window_that_moves_is_written_down_after_a_pause(monkeypatch) -> None:
+    monkeypatch.setattr(assistant_panel, "SAVE_DELAY_MS", 30)
+    host = _host(1000, 800)
+    dock = AssistantDock(host)
+    dock.set_floating(True)
+    frame = dock._frame
+    assert frame is not None
+    frame.show()
+    seen: list[int] = []
+    dock.state_changed.connect(lambda: seen.append(1))
+
+    frame.move(200, 150)
+    frame.resize(480, 500)
+    _wait(lambda: len(seen) >= 1)
+
+    assert len(seen) == 1  # one write for the whole move
+    host.close()
+
+
+def test_the_state_comes_back_in_the_next_run() -> None:
+    host = _host(1000, 800)
+    first = AssistantDock(host)
+    first.open()
+    first.panel.dragged.emit(-90, -70)
+    first.set_floating(True)
+    assert first._frame is not None
+    first._frame.resize(470, 530)
+    kept = first.state()
+    first.close()
+    host.close()
+
+    other = _host(1000, 800)
+    second = AssistantDock(other)
+    second.restore(kept)
+
+    assert second.is_floating and not second.is_open  # it is there, but closed
+    assert second._size.width() == kept["width"]
+    second.open()
+    assert second._frame is not None and second._frame.width() == 470
+    other.close()
+
+    third_host = _host(1000, 800)
+    third = AssistantDock(third_host)
+    third.restore({"width": 500, "height": 520, "geometry": ""})
+    assert not third.is_floating and third._size.width() == 500
+    third.open()
+    assert third.panel.width() == 500
+    third.restore({})  # a state with nothing in it changes nothing about the mode
+    third_host.close()
+
+
+def test_the_window_of_the_chat_follows_the_language_and_the_theme(monkeypatch) -> None:
+    from kubescope import theme
+
+    host = _host(1000, 800)
+    dock = AssistantDock(host)
+    dock.set_floating(True)
+    frame = dock._frame
+    assert frame is not None
+
+    dock.retranslate()
+    assert frame.windowTitle() == "Assistant"
+    monkeypatch.setattr(theme, "_active", theme.DARK_THEME)
+    dock.restyle()
+    assert dock.panel.float_button.icon().isNull() is False
+    monkeypatch.setattr(theme, "_active", theme.LIGHT_THEME)
+    host.close()

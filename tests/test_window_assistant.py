@@ -501,3 +501,22 @@ def test_the_assistant_is_told_which_tabs_are_open(monkeypatch) -> None:
     assert "Open tabs: Pod: web | Service: api" in window._screen_snapshot()
     assert "(shown)" not in window._screen_snapshot()
     window.close()
+
+
+def test_the_panel_state_is_read_at_the_start_and_written_when_it_changes(
+    monkeypatch,
+) -> None:
+    from kubescope.settings import Settings
+
+    saved = Settings()
+    saved.assistant_panel = {"width": 500, "height": 520, "floating": True}
+    saved.save()
+    window, _messages = _open(monkeypatch)
+
+    dock = window.assistant_dock
+    assert dock.is_floating and dock._size.width() == 500
+
+    dock.set_floating(False)
+    assert "floating" not in window.settings.assistant_panel  # only "out" is kept
+    assert Settings().assistant_panel.get("width") == 500
+    window.close()

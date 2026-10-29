@@ -119,3 +119,32 @@ def sparkle_icon(
     _star(painter, 11, 9.7, 5.6)
     painter.end()
     return QIcon(pixmap)
+
+
+def popout_icon(color: str = "#ffffff") -> QIcon:
+    """A square with an arrow leaving it, for taking the chat out of the
+    window."""
+
+    def paint(painter: QPainter) -> None:
+        painter.setPen(_pen(color, 1.8))
+        painter.setBrush(Qt.BrushStyle.NoBrush)
+        painter.drawRoundedRect(QRectF(3, 7, 12, 12), 2, 2)
+        painter.drawLine(QPointF(10, 12), QPointF(19, 3))
+        painter.drawLine(QPointF(12, 3), QPointF(19, 3))
+        painter.drawLine(QPointF(19, 3), QPointF(19, 10))
+
+    return _draw(paint)
+
+
+def dock_icon(color: str = "#ffffff") -> QIcon:
+    """A square with an arrow entering it, for putting the chat back."""
+
+    def paint(painter: QPainter) -> None:
+        painter.setPen(_pen(color, 1.8))
+        painter.setBrush(Qt.BrushStyle.NoBrush)
+        painter.drawRoundedRect(QRectF(3, 3, 16, 16), 2, 2)
+        painter.drawLine(QPointF(8, 8), QPointF(15, 15))
+        painter.drawLine(QPointF(8, 14), QPointF(8, 8))
+        painter.drawLine(QPointF(8, 8), QPointF(14, 8))
+
+    return _draw(paint)
