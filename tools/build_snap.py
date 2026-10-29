@@ -48,6 +48,8 @@ def render_snapcraft(version: str) -> str:
     """snapcraft.yaml with the version of the app."""
     text = (PACKAGING / "snapcraft.yaml").read_text(encoding="utf-8")
     text = text.replace("@VERSION@", version)
+    if re.search(r"\d(a|b|rc)\d+$", version):  # the stable channels refuse a devel snap
+        text = text.replace("grade: stable", "grade: devel")
     leftover = PLACEHOLDER.search(text)
     if leftover:
         raise SystemExit(f"snapcraft.yaml has an unfilled value: {leftover.group(0)}")

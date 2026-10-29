@@ -4,14 +4,19 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+## [1.3.0-rc1] - 2026-10-29
+
 ### Added
 
 - **Gabi**, the assistant of DCO Tecnologia and an expert in Kubernetes and KubeScope: a chat in the corner of the window that only talks about Kubernetes and KubeScope, laid out like a phone chat, that asks a coding assistant that is already installed on your computer (Claude Code or Codex) about the cluster, without asking you for credentials or storing any. It sees what you see (the list, the selected row, the open Details or Logs, the numbers of the overviews and the open tabs), reads details, logs, lists and events to look into a problem, answers in the language of the app, and can change the window as you would: go to a list, a page, a tab or the logs of a Pod. A change to the cluster is only a card with **Run**, available with the write mode on; in the read-only mode it has no way to edit, update or delete anything and tells you so when you ask. You can attach images and text files, resize the panel, take it out into a window of its own, and the conversations are kept for each context, without the data that was read. It starts off until you open it and agree, and **Settings** turns it off by @danilogco
 - Windows, dialogs and lists rise into place as they first show, and **Settings** can turn it off by @danilogco
 - When GitHub limits the update checks, the footer says when to try again by @danilogco
+- A guide that opens when there is no Claude Code CLI or Codex CLI on the computer, with a button for the settings and one for the installation guide of each by @danilogco
+- The side menu opens with every section open, can be resized by its right edge, and remembers both by @danilogco
 
 ### Changed
 
+- The app updates only to **stable** releases: an alpha, a beta or a release candidate is never offered, and a release candidate is told about its own stable release when it comes by @danilogco
 - The update check no longer asks GitHub again when the app starts within an hour of finding that it is up to date, so it spends less of the limit GitHub gives an address by @danilogco
 
 ## [1.2.0] - 2026-10-29
@@ -391,7 +396,8 @@ The first release.
 
 - Pod logs and resource details are still never written to disk by the app on its own. **Save** is the only exception, and it writes only to the file the user chooses. SECURITY.md says so by @danilogco
 
-[Unreleased]: https://github.com/dcotecnologia/kubescope/compare/v1.2.0...HEAD
+[Unreleased]: https://github.com/dcotecnologia/kubescope/compare/v1.3.0-rc1...HEAD
+[1.3.0-rc1]: https://github.com/dcotecnologia/kubescope/compare/v1.2.0...v1.3.0-rc1
 [1.2.0]: https://github.com/dcotecnologia/kubescope/compare/v1.1.1...v1.2.0
 [1.1.1]: https://github.com/dcotecnologia/kubescope/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/dcotecnologia/kubescope/compare/v1.0.0...v1.1.0

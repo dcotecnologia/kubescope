@@ -3,6 +3,7 @@
 import gzip
 import hashlib
 import platform
+import re
 import shutil
 import subprocess
 import sys
@@ -108,6 +109,13 @@ def changelog_gz() -> bytes:
     return gzip.compress(text, mtime=0)
 
 
+def debian_version(version: str) -> str:
+    """The version as Debian orders it: a release candidate is before its
+    release (1.3.0~rc1 comes before 1.3.0, while 1.3.0rc1 would come after
+    it)."""
+    return re.sub(r"(\d)(a|b|rc)(\d+)$", r"\1~\2\3", version)
+
+
 def main() -> int:
     if sys.platform != "linux" or not shutil.which("dpkg-deb"):
         raise SystemExit("Building a .deb needs Linux with dpkg-deb installed")
@@ -175,7 +183,7 @@ def main() -> int:
     )
     control = (
         "Package: kubescope\n"
-        f"Version: {version}\n"
+        f"Version: {debian_version(version)}\n"
         "Section: devel\n"
         "Priority: optional\n"
         f"Architecture: {architecture}\n"
