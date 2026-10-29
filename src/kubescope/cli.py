@@ -11,7 +11,7 @@ from kubescope import __version__
 from kubescope.settings import Settings, config_directory, log_directory
 from kubescope.utils.diagnostics import MAX_AGE_DAYS, commit, log_files
 from kubescope.utils.selfupdate import UpdateError, detect_install, restart, run_update
-from kubescope.utils.updates import check_for_update, latest_release, release_of
+from kubescope.utils.updates import check_for_update, latest_release_for, release_of
 
 COMMANDS = ("info", "cleanup", "check-update", "update")
 FLAGS = ("--version", "-V", "--help", "-h")
@@ -83,7 +83,7 @@ def _update(version: str | None) -> int:
         )
         return 1
     try:
-        release = release_of(version) if version else latest_release()
+        release = release_of(version) if version else latest_release_for()
     except (OSError, ValueError) as error:
         print(f"Could not look for the release: {error}", file=sys.stderr)
         return 1

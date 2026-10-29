@@ -90,8 +90,9 @@ prefer otherwise.
   clusters, plus one optional call of the app's own: the update check. When the
   app starts (and when you press the update icon in the footer) it asks the public
   GitHub API (`api.github.com`, over HTTPS) for the latest release of the
-  project, and only a stable release counts: a pre-release (alpha, beta or release
-  candidate) is never offered. It sends no identifier, only a `User-Agent` with the app version, and
+  project. An installation of a stable version is offered only stable releases; one
+  of an alpha, a beta or a release candidate is also offered the next pre-release,
+  and the stable release that follows it, and never an older one. It sends no identifier, only a `User-Agent` with the app version, and
   GitHub sees your IP address as in any request. Checking never downloads or
   installs anything. Turn the startup check off in Settings.
 - **The assistant sends what you ask to a program of your computer.** Gabi, the
