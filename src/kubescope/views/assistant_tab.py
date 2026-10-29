@@ -1,5 +1,6 @@
 from collections.abc import Callable, Sequence
 from datetime import datetime
+from math import ceil
 from pathlib import Path
 
 from PySide6.QtCore import (
@@ -8,11 +9,21 @@ from PySide6.QtCore import (
     QIODevice,
     QMimeData,
     QPointF,
+    QSize,
     Qt,
     QThread,
     Signal,
 )
-from PySide6.QtGui import QColor, QImage, QImageWriter, QPainter, QPen, QPixmap
+from PySide6.QtGui import (
+    QColor,
+    QImage,
+    QImageWriter,
+    QPainter,
+    QPen,
+    QPixmap,
+    QResizeEvent,
+    QWheelEvent,
+)
 from PySide6.QtWidgets import (
     QFileDialog,
     QFrame,
@@ -21,6 +32,8 @@ from PySide6.QtWidgets import (
     QPlainTextEdit,
     QPushButton,
     QScrollArea,
+    QSizePolicy,
+    QTextBrowser,
     QVBoxLayout,
     QWidget,
 )
@@ -72,6 +85,68 @@ class ChatBackground(QWidget):
 
 THUMBNAIL = 220  # width of the picture of an attached image in a bubble
 FILE_FILTER = "Images and text files ({patterns});;All files (*)"
+
+
+class MessageText(QTextBrowser):
+    """The text of a message, as high as the text is and as wide as the text
+    needs up to the room it has.
+
+    A label that wraps its text guesses how wide to be and can draw the
+    text in a size other than the one it measured; this one measures and
+    draws the same document, and the person can select what is in it.
+    """
+
+    def __init__(self, markdown: bool) -> None:
+        super().__init__()
+        self._markdown = markdown
+        self._text = ""
+        self.setFrameShape(QFrame.Shape.NoFrame)
+        self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.setOpenExternalLinks(True)
+        self.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Fixed)
+        self.setMinimumWidth(24)
+        self.document().setDocumentMargin(0)
+        self.setStyleSheet("QTextBrowser { background: transparent; border: 0; }")
+
+    def text(self) -> str:
+        return self._text
+
+    def textFormat(self) -> Qt.TextFormat:
+        return Qt.TextFormat.MarkdownText if self._markdown else Qt.TextFormat.PlainText
+
+    def setText(self, text: str) -> None:
+        self._text = text
+        if self._markdown:
+            self.setMarkdown(text)
+        else:
+            self.setPlainText(text)
+        self._fit()
+        self.updateGeometry()
+
+    def _fit(self) -> None:
+        """Make it as high as its text is at the width it has."""
+        width = self.viewport().width()
+        document = self.document()
+        document.setTextWidth(width if width > 0 else -1)
+        self.setFixedHeight(max(ceil(document.size().height()), 1))
+
+    def sizeHint(self) -> QSize:
+        """As wide as the text is when it is not wrapped, and as high as it is
+        then."""
+        document = self.document()
+        document.setTextWidth(-1)
+        width = ceil(document.idealWidth()) + 1
+        height = ceil(document.size().height())
+        self._fit()  # back to the width it has
+        return QSize(width, height)
+
+    def resizeEvent(self, event: QResizeEvent) -> None:
+        super().resizeEvent(event)
+        self._fit()
+
+    def wheelEvent(self, event: QWheelEvent) -> None:
+        event.ignore()  # the conversation is the one that scrolls
 
 
 class ChatInput(QPlainTextEdit):
@@ -171,9 +246,9 @@ class AssistantTab(QWidget):
         self._pending: list[Attachment] = []  # attached, not sent yet
         self._entries: list[Entry] = []  # (role, text) of what is shown
         self._bubbles: list[QFrame] = []
-        self._labels: list[QLabel] = []
+        self._labels: list[MessageText] = []
         self._bubble_info: list[tuple[str, QLabel | None, str]] = []
-        self._stream: QLabel | None = None  # the bubble of the answer coming in
+        self._stream: MessageText | None = None  # the bubble of the answer coming in
         self._answer = ""
         self._follow_ups = 0
         self._failed = False
@@ -440,17 +515,10 @@ class AssistantTab(QWidget):
 
     def _add_bubble(
         self, role: str, text: str, files: tuple[Attachment, ...] = ()
-    ) -> QLabel:
+    ) -> MessageText:
         """Put a bubble at the end: the person's on the right, the others on
         the left."""
-        label = QLabel()
-        label.setWordWrap(True)
-        label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
-        label.setTextFormat(
-            Qt.TextFormat.MarkdownText
-            if role == "assistant"
-            else Qt.TextFormat.PlainText
-        )
+        label = MessageText(markdown=role == "assistant")
         label.setText(text)
         label.setVisible(bool(text) or not files)
         bubble = QFrame()
@@ -520,6 +588,7 @@ class AssistantTab(QWidget):
         bubble.setStyleSheet(
             f"{name} {{ background: {color}; {edge} border-radius: 10px; {tail} }}"
             f"{name} QLabel {{ color: {text_color}; background: transparent; }}"
+            f"{name} QTextBrowser {{ color: {text_color}; background: transparent; }}"
         )
         if stamp is not None:
             ticks = (
