@@ -110,3 +110,13 @@ def test_a_language_is_named_in_english_for_the_assistant() -> None:
     assert i18n.language_name("en") == "English"
     assert i18n.language_name("pt") == "Portuguese"
     assert i18n.language_name("zh_TW") == "Chinese (Taiwan)"
+
+
+def test_the_languages_of_the_app_have_an_english_name_each() -> None:
+    names = i18n.english_names()
+
+    assert names[0] == "English"
+    assert names[1:] == sorted(names[1:], key=str.casefold)
+    assert len(names) == len(i18n.available_languages())
+    for name in ("Portuguese", "Spanish", "Chinese (Taiwan)", "Hebrew", "Hindi"):
+        assert name in names

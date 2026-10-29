@@ -196,3 +196,36 @@ def test_the_assistant_is_gabi_of_dco_tecnologia_and_says_it_is_an_ai() -> None:
     assert "You are an AI assistant: say so if asked" in told
     assert "do not claim to be anything else" in told
     assert runner.NAME == "Gabi" and runner.COMPANY == "DCO Tecnologia"
+
+
+def test_gabi_is_a_woman_born_in_sao_paulo_who_says_she_is_an_ai_when_asked() -> None:
+    from datetime import date
+
+    text = knowledge.persona(date(2026, 10, 29))
+
+    assert "Gabi is a woman, born on 6 June 1992 in São Paulo, Brazil" in text
+    assert "she is 34 years old" in text
+    assert "speak of yourself in the feminine" in text
+    assert "if someone sincerely asks whether you are a person or an AI" in text
+    assert "say that you are an AI assistant with this persona" in text
+
+
+def test_her_age_counts_the_birthday_that_has_not_come_yet() -> None:
+    from datetime import date
+
+    assert "33 years old" in knowledge.persona(date(2026, 6, 5))  # the day before
+    assert "34 years old" in knowledge.persona(date(2026, 6, 6))  # the day itself
+    assert "34 years old" in knowledge.persona(date(2027, 1, 1))
+    assert "33 years old" in knowledge.persona(date(2025, 12, 31))
+
+
+def test_she_speaks_every_language_of_the_app() -> None:
+    told = knowledge.system_prompt("Portuguese")
+
+    assert "You speak every language of the client: English, " in told
+    for name in ("Portuguese", "Japanese", "Arabic", "Hebrew", "Thai", "Hindi"):
+        assert name in told
+    assert "Chinese (Taiwan)" in told
+    assert "Gabi is a woman" in told and told.index("Gabi is a woman") < told.index(
+        "Answer in Portuguese"
+    )
