@@ -16,7 +16,7 @@ def answers(monkeypatch):
     calls: list[tuple] = []
     plan: dict = {"pieces": [], "error": None}
 
-    def ask(assistant, prompt, model, system):
+    def ask(assistant, prompt, model, system, images=()):
         calls.append((assistant, prompt, model, system))
         yield from plan["pieces"]
         if plan["error"]:
@@ -114,3 +114,29 @@ def test_what_the_person_sees_goes_with_the_newest_question_only(answers) -> Non
     assert session.messages[0].screen == "Context: prod"
     list(session.send("again"))
     assert "[What the person sees" not in calls[2][1]
+
+
+def test_text_files_go_after_the_newest_question_and_images_to_the_program(
+    monkeypatch,
+) -> None:
+    from kubescope.assistant.attachments import Attachment
+
+    seen: list = []
+
+    def ask(assistant, prompt, model, system, images):
+        seen.append((prompt, [image.name for image in images]))
+        yield "ok"
+
+    monkeypatch.setattr(chat.runner, "ask", ask)
+    session = ChatSession(FAKE)
+    log = Attachment("app.log", "text", b"boom\n")
+    shot = Attachment("shot.png", "image", b"x", "image/png")
+
+    list(session.send("why?", "", (log, shot)))
+    list(session.send("and now?"))
+
+    first, second = seen
+    assert "Attached file app.log:\n```\nboom\n\n```" in first[0]
+    assert first[1] == ["shot.png"]
+    assert "boom" not in second[0] and second[1] == []  # sent once, not kept
+    assert session.messages[0].attachments == (log, shot)

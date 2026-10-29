@@ -589,7 +589,7 @@
             "WRITE MODE\nActions that change the cluster are on": "حالت نوشتن\nکارهای تغییردهنده خوشه فعال است",
             "Warning": "هشدار",
             "Welcome to KubeScope": "به KubeScope خوش آمدید",
-            "What you type, and what the assistant reads from the cluster to answer (resource documents and log lines), are sent to {name}, the program of this computer, and from it to its service. Secret values are hidden and tokens and keys are redacted, but other text of a log can still go. Changes to the cluster are asked of you before they run, and only with the write mode on.\n\nUse the assistant?": "",
+            "What you type and attach, and what the assistant reads from the cluster to answer (resource documents and log lines), are sent to {name}, the program of this computer, and from it to its service. Secret values are hidden and tokens and keys are redacted, but other text of a log can still go. Changes to the cluster are asked of you before they run, and only with the write mode on.\n\nUse the assistant?": "",
             "Workloads overview": "نمای کلی بارهای کاری",
             "Your user is not allowed to do this. Ask your cluster admin for access.": "کاربر شما اجازه انجام این کار را ندارد. از مدیر خوشه دسترسی بخواهید.",
             "Your user is not allowed to {action}. Ask your cluster admin for access.": "کاربر شما اجازه انجام این کار را ندارد: {action}. از مدیر خوشه دسترسی بخواهید.",

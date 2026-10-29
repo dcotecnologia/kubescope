@@ -589,7 +589,7 @@
             "WRITE MODE\nActions that change the cluster are on": "書き込みモード\nクラスターを変更する操作が有効",
             "Warning": "Warning",
             "Welcome to KubeScope": "KubeScope へようこそ",
-            "What you type, and what the assistant reads from the cluster to answer (resource documents and log lines), are sent to {name}, the program of this computer, and from it to its service. Secret values are hidden and tokens and keys are redacted, but other text of a log can still go. Changes to the cluster are asked of you before they run, and only with the write mode on.\n\nUse the assistant?": "",
+            "What you type and attach, and what the assistant reads from the cluster to answer (resource documents and log lines), are sent to {name}, the program of this computer, and from it to its service. Secret values are hidden and tokens and keys are redacted, but other text of a log can still go. Changes to the cluster are asked of you before they run, and only with the write mode on.\n\nUse the assistant?": "",
             "Workloads overview": "Workloads の概要",
             "Your user is not allowed to do this. Ask your cluster admin for access.": "このユーザーにはこの操作を行う権限がありません。クラスター管理者にアクセスを依頼してください。",
             "Your user is not allowed to {action}. Ask your cluster admin for access.": "このユーザーには次の操作を行う権限がありません（{action}）。クラスター管理者にアクセスを依頼してください。",

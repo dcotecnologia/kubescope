@@ -10,7 +10,9 @@ from collections.abc import Generator
 from dataclasses import dataclass
 from typing import Literal
 
+from kubescope.assistant import attachments as files
 from kubescope.assistant import runner
+from kubescope.assistant.attachments import Attachment
 from kubescope.assistant.runner import Assistant, AssistantError
 
 HISTORY_LIMIT = 40_000  # characters of the conversation that are sent
@@ -24,6 +26,7 @@ class Message:
     role: Role
     text: str
     screen: str = ""  # what the person saw when they asked; sent with the newest only
+    attachments: tuple[Attachment, ...] = ()  # sent with the newest only, never kept
 
 
 class ChatSession:
@@ -53,6 +56,9 @@ class ChatSession:
         turns = "\n\n".join(
             f"{_LABELS[message.role]}: {message.text}" for message in reversed(kept)
         )
+        newest = self.messages[-1] if self.messages else None
+        if newest is not None and (block := files.text_block(newest.attachments)):
+            turns += f"\n\n{block}"
         if self.messages and self.messages[-1].screen:
             turns += (
                 "\n\n[What the person sees in KubeScope right now]\n"
@@ -60,18 +66,27 @@ class ChatSession:
             )
         return f"{turns}\n\nAnswer the last message of the User as the Assistant."
 
-    def send(self, text: str, screen: str = "") -> Generator[str]:
+    def send(
+        self,
+        text: str,
+        screen: str = "",
+        attachments: tuple[Attachment, ...] = (),
+    ) -> Generator[str]:
         """Add the question and yield the answer in pieces.
 
         An answer that was stopped halfway is kept as it is; a failure
         takes the question back, so it can be sent again.
         """
-        self.messages.append(Message("user", text, screen))
+        self.messages.append(Message("user", text, screen, attachments))
         answer: list[str] = []
         failed = False
         try:
             for piece in runner.ask(
-                self.assistant, self.prompt(), self.model, self.system
+                self.assistant,
+                self.prompt(),
+                self.model,
+                self.system,
+                files.images(attachments),
             ):
                 answer.append(piece)
                 yield piece

@@ -4609,8 +4609,9 @@ class WorkloadWindow(QMainWindow):
             self,
             self.tr("Assistant"),
             self.tr(
-                "What you type, and what the assistant reads from the cluster to "
-                "answer (resource documents and log lines), are sent to {name}, "
+                "What you type and attach, and what the assistant reads from the "
+                "cluster to answer (resource documents and log lines), are sent to "
+                "{name}, "
                 "the program of this computer, and from it to its service. Secret "
                 "values are hidden and tokens and keys are redacted, but other "
                 "text of a log can still go. Changes to the cluster are asked of "
@@ -4668,6 +4669,7 @@ class WorkloadWindow(QMainWindow):
                 lambda: self.settings.write_mode,
                 screen=self._screen_snapshot,
                 history=self._assistant_history.entries(self._context()),
+                takes_images=assistant.takes_images,
             )
             tab.changed.connect(lambda: self._keep_assistant_chat(tab))
             tab.navigate.connect(lambda request: self._assistant_navigate(tab, request))
