@@ -26,23 +26,31 @@ def _options(model: str | None, system: str) -> list[str]:
 FAKE = Assistant("fake", "Fake", "fake-ai", _options, _parse)
 
 
+class Input(io.StringIO):
+    """What the program is written to: it keeps what was written, or fails."""
+
+    def __init__(self, error: Exception | None = None) -> None:
+        super().__init__()
+        self.error = error
+        self.written: list[str] = []
+
+    def write(self, text: str) -> int:
+        if self.error is not None:
+            raise self.error
+        self.written.append(text)
+        return super().write(text)
+
+
 class FakeProcess:
     def __init__(
         self, output="", stderr="", code=0, write_error: Exception | None = None
     ) -> None:
-        self.stdin = io.StringIO()
+        self.stdin = Input(write_error)
         self.stdout = io.StringIO(output)
         self.stderr = io.StringIO(stderr)
         self.code = code
         self.running = True
         self.terminated = False
-        self._write_error = write_error
-        if write_error:
-            self.stdin.write = self._broken  # type: ignore[method-assign]
-
-    def _broken(self, _text) -> None:
-        assert self._write_error is not None
-        raise self._write_error
 
     def wait(self) -> int:
         self.running = False
@@ -157,3 +165,43 @@ def test_closing_the_answer_early_stops_the_program(start) -> None:
     pieces.close()
 
     assert process.terminated
+
+
+def test_images_go_to_a_program_that_takes_them_as_a_message(start) -> None:
+    from kubescope.assistant.attachments import Attachment
+
+    seen: list = []
+
+    def payload(prompt, images) -> str:
+        seen.append((prompt, [image.name for image in images]))
+        return f"MESSAGE:{prompt}\n"
+
+    takes = Assistant(
+        "picky",
+        "Picky",
+        "picky-ai",
+        _options,
+        _parse,
+        lambda model, system: ["--structured", f"--system={system}"],
+        payload,
+    )
+    image = Attachment("a.png", "image", b"x", "image/png")
+    process = FakeProcess(_delta("seen"))
+    started = start(process)
+
+    assert list(runner.ask(takes, "look", None, "rules", [image])) == ["seen"]
+
+    assert started["arguments"] == ["picky-ai", "--structured", "--system=rules"]
+    assert seen == [("look", ["a.png"])]
+    assert process.stdin.written == ["MESSAGE:look\n"]
+
+
+def test_images_are_refused_by_a_program_that_does_not_take_them(start) -> None:
+    from kubescope.assistant.attachments import Attachment
+
+    start(FakeProcess())
+    image = Attachment("a.png", "image", b"x", "image/png")
+
+    assert not FAKE.takes_images
+    with pytest.raises(AssistantError, match="Fake does not take images"):
+        list(runner.ask(FAKE, "look", None, "rules", [image]))

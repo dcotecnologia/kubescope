@@ -1,9 +1,20 @@
 from collections.abc import Callable, Sequence
 from datetime import datetime
+from pathlib import Path
 
-from PySide6.QtCore import QPointF, Qt, QThread, Signal
-from PySide6.QtGui import QColor, QPainter, QPen
+from PySide6.QtCore import (
+    QBuffer,
+    QByteArray,
+    QIODevice,
+    QMimeData,
+    QPointF,
+    Qt,
+    QThread,
+    Signal,
+)
+from PySide6.QtGui import QColor, QImage, QImageWriter, QPainter, QPen, QPixmap
 from PySide6.QtWidgets import (
+    QFileDialog,
     QFrame,
     QHBoxLayout,
     QLabel,
@@ -14,8 +25,9 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from kubescope.assistant import actions, executor
+from kubescope.assistant import actions, attachments, executor
 from kubescope.assistant.actions import Invalid, Request
+from kubescope.assistant.attachments import Attachment, AttachmentError
 from kubescope.assistant.history import Entry
 from kubescope.assistant.runner import AssistantError
 from kubescope.assistant.session import ChatSession, Message
@@ -58,21 +70,48 @@ class ChatBackground(QWidget):
                     painter.drawRect(int(x + 9), int(y + 9), 10, 10)
 
 
+THUMBNAIL = 220  # width of the picture of an attached image in a bubble
+FILE_FILTER = "Images and text files ({patterns});;All files (*)"
+
+
+class ChatInput(QPlainTextEdit):
+    """The message field: a picture pasted into it is attached, not typed."""
+
+    image_pasted = Signal(QImage)
+
+    def canInsertFromMimeData(self, source: QMimeData) -> bool:
+        return source.hasImage() or super().canInsertFromMimeData(source)
+
+    def insertFromMimeData(self, source: QMimeData) -> None:
+        image = source.imageData() if source.hasImage() else None
+        if isinstance(image, QImage) and not image.isNull():
+            self.image_pasted.emit(image)
+        else:
+            super().insertFromMimeData(source)
+
+
 class AnswerWorker(QThread):
     """Ask the assistant and hand over the answer as it comes."""
 
     piece = Signal(str)
     failed = Signal(str)
 
-    def __init__(self, session: ChatSession, text: str, screen: str = "") -> None:
+    def __init__(
+        self,
+        session: ChatSession,
+        text: str,
+        screen: str = "",
+        files: tuple[Attachment, ...] = (),
+    ) -> None:
         super().__init__()
         self.session = session
         self.text = text
         self.screen = screen
+        self.files = files
         self.stopped = False
 
     def run(self) -> None:
-        stream = self.session.send(self.text, self.screen)
+        stream = self.session.send(self.text, self.screen, self.files)
         try:
             for piece in stream:
                 if self.stopped:
@@ -118,6 +157,7 @@ class AssistantTab(QWidget):
         fetch: Callable[[Request, str], str] = executor.fetch,
         screen: Callable[[], str] = lambda: "",
         history: Sequence[Entry] = (),
+        takes_images: bool = True,
     ) -> None:
         super().__init__()
         self.session = session
@@ -127,6 +167,8 @@ class AssistantTab(QWidget):
         self._write_mode = write_mode
         self._fetch = fetch
         self._screen = screen
+        self._takes_images = takes_images
+        self._pending: list[Attachment] = []  # attached, not sent yet
         self._entries: list[Entry] = []  # (role, text) of what is shown
         self._bubbles: list[QFrame] = []
         self._labels: list[QLabel] = []
@@ -150,7 +192,7 @@ class AssistantTab(QWidget):
         bar.rangeChanged.connect(self._follow_the_end)
         bar.valueChanged.connect(self._scrolled)
         self.cards = QVBoxLayout()
-        self.input = QPlainTextEdit()
+        self.input = ChatInput()
         self.input.setObjectName("assistantInput")
         self.input.setMaximumHeight(72)
         self.input.setMinimumHeight(40)
@@ -163,6 +205,13 @@ class AssistantTab(QWidget):
         self.stop_button.hide()
         self.attach_button = self._round_button(self.tr("Attach"))
         self.mic_button = self._round_button(self.tr("Record a voice message"))
+        self.attach_button.clicked.connect(self._choose_files)
+        self.input.image_pasted.connect(self.attach_image)
+        self.chips = QHBoxLayout()
+        self.chips.setSpacing(6)
+        self.chip_bar = QWidget()
+        self.chip_bar.setLayout(self.chips)
+        self.chip_bar.hide()
         self.status = QLabel("")
         self.status.hide()
         self.send_button.clicked.connect(self.submit)
@@ -183,6 +232,7 @@ class AssistantTab(QWidget):
         self.status.setWordWrap(True)
         self.cards.setSpacing(6)
         bar.addLayout(self.cards)
+        bar.addWidget(self.chip_bar)
         bar.addWidget(self.status)
         bar.addLayout(row)
         self.composer = composer
@@ -243,11 +293,101 @@ class AssistantTab(QWidget):
     def submit(self) -> None:
         """Send what was typed."""
         text = self.input.toPlainText().strip()
-        if not text or self.busy:
+        if (not text and not self._pending) or self.busy:
             return
+        files, self._pending = tuple(self._pending), []
+        self._refresh_chips()
         self.input.clear()
         self._follow_ups = 0
-        self._ask(text, "user", text)
+        self._ask(text or self.tr("See what is attached."), "user", text, files)
+
+    def _choose_files(self) -> None:
+        """Pick the files to attach."""
+        patterns = " ".join(
+            f"*{suffix}"
+            for suffix in (*attachments.IMAGE_TYPES, *attachments.TEXT_TYPES)
+        )
+        paths, _filter = QFileDialog.getOpenFileNames(
+            self,
+            self.tr("Attach"),
+            str(Path.home()),
+            self.tr(FILE_FILTER).format(patterns=patterns),
+        )
+        for path in paths:
+            self.attach(Path(path))
+
+    def attach(self, path: Path) -> None:
+        """Attach a file to the next question, saying why when it cannot be."""
+        try:
+            self._keep(attachments.load(path))
+        except AttachmentError as error:
+            self._show_status(str(error))
+
+    def attach_image(self, image: QImage) -> None:
+        """Attach a picture, such as one pasted from the clipboard."""
+        data = QByteArray()
+        buffer = QBuffer(data)
+        buffer.open(QIODevice.OpenModeFlag.WriteOnly)
+        QImageWriter(buffer, QByteArray(b"PNG")).write(image)
+        number = 1 + sum(item.name.startswith("pasted-") for item in self._pending)
+        try:
+            if data.size() > attachments.MAX_IMAGE_BYTES:
+                raise AttachmentError(self.tr("The picture is too large."))
+            self._keep(
+                Attachment(
+                    f"pasted-{number}.png", "image", bytes(data.data()), "image/png"
+                )
+            )
+        except AttachmentError as error:
+            self._show_status(str(error))
+
+    def _keep(self, item: Attachment) -> None:
+        if len(self._pending) >= attachments.MAX_ATTACHMENTS:
+            raise AttachmentError(
+                self.tr("At most {count} files go with a question.").format(
+                    count=attachments.MAX_ATTACHMENTS
+                )
+            )
+        if item.kind == "image" and not self._takes_images:
+            raise AttachmentError(
+                self.tr("This assistant takes text files only, not {name}.").format(
+                    name=item.name
+                )
+            )
+        self._pending.append(item)
+        self._refresh_chips()
+        self._show_status("")
+
+    def _refresh_chips(self) -> None:
+        """Show what is attached, each with a × to take it off."""
+        while (entry := self.chips.takeAt(0)) is not None:
+            if (widget := entry.widget()) is not None:
+                widget.deleteLater()
+        _wall, own, other, ink, quiet, _tick = self._palette()
+        for item in self._pending:
+            chip = QFrame()
+            chip.setStyleSheet(
+                f"QFrame {{ background: {other}; border: 1px solid {quiet};"
+                f" border-radius: 10px; }} QLabel {{ color: {ink}; border: 0; }}"
+            )
+            row = QHBoxLayout(chip)
+            row.setContentsMargins(8, 2, 4, 2)
+            row.setSpacing(4)
+            row.addWidget(QLabel(item.name))
+            remove = QPushButton("×")
+            remove.setFixedSize(18, 18)
+            remove.setStyleSheet(
+                f"QPushButton {{ color: {ink}; border: 0; background: transparent; }}"
+            )
+            remove.clicked.connect(lambda _checked=False, one=item: self._detach(one))
+            row.addWidget(remove)
+            self.chips.addWidget(chip)
+        self.chips.addStretch(1)
+        self.chip_bar.setVisible(bool(self._pending))
+
+    def _detach(self, item: Attachment) -> None:
+        self._pending.remove(item)
+        self._refresh_chips()
 
     def stop(self) -> None:
         if self._worker is not None:
@@ -290,7 +430,9 @@ class AssistantTab(QWidget):
         self._entries.append((role, text))
         self._add_bubble(role, text)
 
-    def _add_bubble(self, role: str, text: str) -> QLabel:
+    def _add_bubble(
+        self, role: str, text: str, files: tuple[Attachment, ...] = ()
+    ) -> QLabel:
         """Put a bubble at the end: the person's on the right, the others on
         the left."""
         label = QLabel()
@@ -302,11 +444,14 @@ class AssistantTab(QWidget):
             else Qt.TextFormat.PlainText
         )
         label.setText(text)
+        label.setVisible(bool(text) or not files)
         bubble = QFrame()
         bubble.setObjectName("assistantBubbleOf" + role)
         inside = QVBoxLayout(bubble)
         inside.setContentsMargins(10, 6, 10, 4)
         inside.setSpacing(2)
+        for item in files:
+            inside.addWidget(self._picture(item))
         inside.addWidget(label)
         stamp = None
         if role != "app":
@@ -332,6 +477,22 @@ class AssistantTab(QWidget):
         self._bubble_info.append((role, stamp, clock))
         self._fit()
         return label
+
+    def _picture(self, item: Attachment) -> QLabel:
+        """What an attachment looks like in a bubble: the image, or the name of
+        the file."""
+        picture = QLabel()
+        pixmap = QPixmap()
+        if item.kind == "image" and pixmap.loadFromData(item.data):
+            picture.setPixmap(
+                pixmap.scaledToWidth(
+                    min(THUMBNAIL, pixmap.width()),
+                    Qt.TransformationMode.SmoothTransformation,
+                )
+            )
+        else:
+            picture.setText(item.name)
+        return picture
 
     def _style_bubble(
         self, bubble: QFrame, role: str, stamp: QLabel | None, clock: str
@@ -364,6 +525,7 @@ class AssistantTab(QWidget):
         """Take the colors of the theme in use, for what is already shown."""
         self._restyle_thread()
         self._style_buttons()
+        self._refresh_chips()
         for bubble, (role, stamp, clock) in zip(
             self._bubbles, self._bubble_info, strict=True
         ):
@@ -389,13 +551,25 @@ class AssistantTab(QWidget):
     def _scrolled(self, value: int) -> None:
         self._at_end = value >= self.thread_scroll.verticalScrollBar().maximum() - 2
 
-    def _ask(self, text: str, role: str, shown: str) -> None:
-        self._add_entry(role, shown)
+    def _ask(
+        self,
+        text: str,
+        role: str,
+        shown: str,
+        files: tuple[Attachment, ...] = (),
+    ) -> None:
+        kept = shown
+        if files:
+            names = ", ".join(item.name for item in files)
+            kept = f"{shown}\n" if shown else ""
+            kept += self.tr("(attached: {names})").format(names=names)
+        self._entries.append((role, kept))  # the files themselves are not kept
+        self._add_bubble(role, shown, files)
         self._answer = ""
         self._stream = None
         self._failed = False
         self._set_busy(True)
-        self._worker = worker = AnswerWorker(self.session, text, self._screen())
+        self._worker = worker = AnswerWorker(self.session, text, self._screen(), files)
         worker.piece.connect(self._on_piece)
         worker.failed.connect(self._on_failed)
         worker.finished.connect(lambda: self._on_finished(worker))

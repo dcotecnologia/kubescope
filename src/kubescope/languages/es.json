@@ -589,7 +589,7 @@
             "WRITE MODE\nActions that change the cluster are on": "MODO DE ESCRITURA\nAcciones que modifican el clúster activadas",
             "Warning": "Advertencia",
             "Welcome to KubeScope": "Te damos la bienvenida a KubeScope",
-            "What you type, and what the assistant reads from the cluster to answer (resource documents and log lines), are sent to {name}, the program of this computer, and from it to its service. Secret values are hidden and tokens and keys are redacted, but other text of a log can still go. Changes to the cluster are asked of you before they run, and only with the write mode on.\n\nUse the assistant?": "",
+            "What you type and attach, and what the assistant reads from the cluster to answer (resource documents and log lines), are sent to {name}, the program of this computer, and from it to its service. Secret values are hidden and tokens and keys are redacted, but other text of a log can still go. Changes to the cluster are asked of you before they run, and only with the write mode on.\n\nUse the assistant?": "",
             "Workloads overview": "Resumen de workloads",
             "Your user is not allowed to do this. Ask your cluster admin for access.": "Su usuario no tiene permiso para hacer esto. Pida acceso al administrador de su clúster.",
             "Your user is not allowed to {action}. Ask your cluster admin for access.": "Su usuario no tiene permiso para realizar esta acción ({action}). Pida acceso al administrador de su clúster.",

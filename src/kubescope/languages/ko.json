@@ -589,7 +589,7 @@
             "WRITE MODE\nActions that change the cluster are on": "쓰기 모드\n클러스터를 변경하는 작업이 켜져 있음",
             "Warning": "Warning",
             "Welcome to KubeScope": "KubeScope에 오신 것을 환영합니다",
-            "What you type, and what the assistant reads from the cluster to answer (resource documents and log lines), are sent to {name}, the program of this computer, and from it to its service. Secret values are hidden and tokens and keys are redacted, but other text of a log can still go. Changes to the cluster are asked of you before they run, and only with the write mode on.\n\nUse the assistant?": "",
+            "What you type and attach, and what the assistant reads from the cluster to answer (resource documents and log lines), are sent to {name}, the program of this computer, and from it to its service. Secret values are hidden and tokens and keys are redacted, but other text of a log can still go. Changes to the cluster are asked of you before they run, and only with the write mode on.\n\nUse the assistant?": "",
             "Workloads overview": "워크로드 개요",
             "Your user is not allowed to do this. Ask your cluster admin for access.": "사용자에게 이 작업을 수행할 권한이 없습니다. 클러스터 관리자에게 접근 권한을 요청하세요.",
             "Your user is not allowed to {action}. Ask your cluster admin for access.": "사용자에게 {action} 권한이 없습니다. 클러스터 관리자에게 접근 권한을 요청하세요.",

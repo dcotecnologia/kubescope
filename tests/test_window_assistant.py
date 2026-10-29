@@ -89,9 +89,24 @@ def test_the_chat_asks_once_before_anything_can_leave_the_computer(monkeypatch) 
     window._open_assistant()
     assert window.settings.assistant_consent
     assert window._assistant_tab is not None and "sent to One" in asked[0]
+    assert "type and attach" in asked[0]
 
     window._open_assistant()  # agreed already: it does not ask again
     assert len(asked) == 2
+    window.close()
+
+
+def test_images_are_offered_only_to_a_program_that_takes_them(monkeypatch) -> None:
+    from kubescope.assistant.claude import CLAUDE
+
+    window, _messages = _open(monkeypatch, found=(ONE,))
+    window._open_assistant()
+    assert _tab(window)._takes_images is False
+    window._end_assistant_chat()
+
+    monkeypatch.setattr(window_module, "installed_assistants", lambda: [CLAUDE])
+    window._open_assistant()
+    assert _tab(window)._takes_images is True
     window.close()
 
 

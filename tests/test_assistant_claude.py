@@ -48,3 +48,28 @@ def test_the_installed_assistants_are_the_known_ones_the_system_has(
     assert assistant.installed() == [claude.CLAUDE]
     monkeypatch.setattr(assistant, "is_available", lambda one: False)
     assert assistant.installed() == []
+
+
+def test_claude_takes_images_as_one_message_with_the_question() -> None:
+    import base64
+
+    from kubescope.assistant.attachments import Attachment
+
+    image = Attachment("shot.png", "image", b"\x89PNGdata", "image/png")
+
+    options = runner.command(claude.CLAUDE, None, "rules", with_images=True)
+    line = claude.image_payload("what is this?", [image])
+
+    assert options[options.index("--input-format") + 1] == "stream-json"
+    assert options[options.index("--tools") + 1] == ""  # still no tools
+    assert "--input-format" not in runner.command(claude.CLAUDE)
+    assert claude.CLAUDE.takes_images and line.endswith("\n")
+    message = json.loads(line)["message"]
+    assert message["role"] == "user"
+    first, second = message["content"]
+    assert first["source"] == {
+        "type": "base64",
+        "media_type": "image/png",
+        "data": base64.b64encode(b"\x89PNGdata").decode(),
+    }
+    assert second == {"type": "text", "text": "what is this?"}

@@ -12,9 +12,10 @@ options and the shape of its output, is an `Assistant` of its own.
 import shutil
 import subprocess
 import tempfile
-from collections.abc import Callable, Generator
+from collections.abc import Callable, Generator, Sequence
 from dataclasses import dataclass
 
+from kubescope.assistant.attachments import Attachment
 from kubescope.utils.errors import first_line
 from kubescope.utils.flatpak import host_has, in_flatpak, on_host
 
@@ -41,6 +42,14 @@ class Assistant:
     options: Callable[[str | None, str], list[str]]
     # the text a line of its output adds, and the error it reports
     parse_line: Callable[[str], tuple[str, str]]
+    # for a program that takes images: its options for a question that comes
+    # with them, and the message to write to it, with the images in it
+    image_options: Callable[[str | None, str], list[str]] | None = None
+    image_payload: Callable[[str, Sequence[Attachment]], str] | None = None
+
+    @property
+    def takes_images(self) -> bool:
+        return self.image_options is not None and self.image_payload is not None
 
 
 def is_available(assistant: Assistant) -> bool:
@@ -51,10 +60,15 @@ def is_available(assistant: Assistant) -> bool:
 
 
 def command(
-    assistant: Assistant, model: str | None = None, system: str = SYSTEM_PROMPT
+    assistant: Assistant,
+    model: str | None = None,
+    system: str = SYSTEM_PROMPT,
+    with_images: bool = False,
 ) -> list[str]:
     """The program and the options that keep it from acting on the machine."""
-    return on_host([assistant.program, *assistant.options(model, system)])
+    options = assistant.image_options if with_images else assistant.options
+    assert options is not None
+    return on_host([assistant.program, *options(model, system)])
 
 
 def ask(
@@ -62,14 +76,18 @@ def ask(
     prompt: str,
     model: str | None = None,
     system: str = SYSTEM_PROMPT,
+    images: Sequence[Attachment] = (),
 ) -> Generator[str]:
-    """Send the question and yield the answer in pieces.
+    """Send the question, with the images that came with it, and yield the
+    answer in pieces.
 
     Closing the generator before the end stops the program.
     """
+    if images and (not assistant.takes_images or assistant.image_payload is None):
+        raise AssistantError(f"{assistant.name} does not take images")
     try:
         process = subprocess.Popen(
-            command(assistant, model, system),
+            command(assistant, model, system, bool(images)),
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
@@ -83,7 +101,10 @@ def ask(
     assert process.stderr is not None
     try:
         try:
-            process.stdin.write(prompt)
+            payload = assistant.image_payload
+            process.stdin.write(
+                payload(prompt, images) if images and payload else prompt
+            )
             process.stdin.close()
         except OSError as error:
             raise AssistantError(str(error)) from error

@@ -36,7 +36,7 @@ def replies(monkeypatch):
     queue: list = []
     prompts: list[str] = []
 
-    def ask(assistant, prompt, model, system):
+    def ask(assistant, prompt, model, system, images=()):
         prompts.append(prompt)
         reply = queue.pop(0)
         if isinstance(reply, Exception):
@@ -393,4 +393,169 @@ def test_the_chat_takes_its_colors_from_the_theme_and_follows_a_change(
     stamp = tab._bubble_info[1][1]
     assert stamp is not None and theme.themed("#176b58") in stamp.text()
     assert theme.themed("#3020a5") in tab.send_button.styleSheet()  # as Save changes
+    monkeypatch.setattr(theme, "_active", theme.LIGHT_THEME)
+
+
+def _picture(path, color="red") -> None:
+    from PySide6.QtGui import QColor, QImage
+
+    image = QImage(300, 200, QImage.Format.Format_RGB32)
+    image.fill(QColor(color))
+    assert image.save(str(path))
+
+
+def test_the_plus_picks_files_that_wait_as_chips_until_the_question_goes(
+    replies, monkeypatch, tmp_path
+) -> None:
+    queue, prompts = replies
+    queue.append(["I see."])
+    seen: list = []
+    monkeypatch.setattr(
+        assistant_tab.ChatInput, "canInsertFromMimeData", lambda *_a: True
+    )
+    log = tmp_path / "app.log"
+    log.write_text("boom\n", encoding="utf-8")
+    shot = tmp_path / "shot.png"
+    _picture(shot)
+    monkeypatch.setattr(
+        assistant_tab.QFileDialog,
+        "getOpenFileNames",
+        lambda *_a: ([str(log), str(shot)], ""),
+    )
+    tab = _tab()
+    tab.show()
+
+    tab.attach_button.click()
+
+    assert [item.name for item in tab._pending] == ["app.log", "shot.png"]
+    assert tab.chip_bar.isVisible() and tab.chips.count() == 3  # two chips, a stretch
+
+    tab.input.setPlainText("what is this?")
+    tab.send_button.click()
+    settle(tab)
+
+    assert "Attached file app.log" in prompts[0] and "boom" in prompts[0]
+    assert tab._pending == [] and not tab.chip_bar.isVisible()
+    # the bubble shows the picture and the question; the history holds only names
+    first = tab._bubbles[0]
+    assert any(
+        label.pixmap() is not None and not label.pixmap().isNull()
+        for label in first.findChildren(assistant_tab.QLabel)
+    )
+    assert tab.entries()[0] == (
+        "user",
+        "what is this?\n(attached: app.log, shot.png)",
+    )
+    del seen
+    tab.close()
+
+
+def test_a_chip_can_be_taken_off_and_a_question_can_be_only_the_files(
+    replies, tmp_path
+) -> None:
+    queue, prompts = replies
+    queue.append(["ok"])
+    a, b = tmp_path / "a.log", tmp_path / "b.log"
+    a.write_text("A", encoding="utf-8")
+    b.write_text("B", encoding="utf-8")
+    tab = _tab()
+    tab.attach(a)
+    tab.attach(b)
+
+    tab._detach(tab._pending[0])
+    assert [item.name for item in tab._pending] == ["b.log"]
+
+    tab.send_button.click()  # no text, one file
+    settle(tab)
+
+    assert "See what is attached." in prompts[0] and "B" in prompts[0]
+    assert tab.entries()[0] == ("user", "(attached: b.log)")
+    assert tab._labels[0].isHidden()  # no text to show, only the file
+
+
+def test_a_file_that_cannot_be_attached_says_why_and_is_left_out(tmp_path) -> None:
+    tab = _tab()
+    (tmp_path / "tool.exe").write_bytes(b"MZ")
+
+    tab.attach(tmp_path / "tool.exe")
+
+    assert "not an image or a text file" in tab.status.text()
+    assert tab._pending == [] and not tab.chip_bar.isVisible()
+
+
+def test_no_more_than_four_files_go_with_a_question(tmp_path) -> None:
+    tab = _tab()
+    for number in range(5):
+        path = tmp_path / f"f{number}.log"
+        path.write_text("x", encoding="utf-8")
+        tab.attach(path)
+
+    assert len(tab._pending) == 4
+    assert "At most 4 files" in tab.status.text()
+
+
+def test_an_assistant_that_takes_text_only_refuses_images(tmp_path) -> None:
+    tab = AssistantTab(ChatSession(FAKE), "ctx", lambda: True, takes_images=False)
+    shot = tmp_path / "shot.png"
+    _picture(shot)
+    note = tmp_path / "n.txt"
+    note.write_text("hello", encoding="utf-8")
+
+    tab.attach(shot)
+    assert tab._pending == [] and "takes text files only" in tab.status.text()
+    tab.attach(note)
+    assert [item.name for item in tab._pending] == ["n.txt"]
+    assert tab.status.isHidden()  # the notice went away with a good attachment
+
+
+def test_a_picture_pasted_into_the_field_is_attached_and_text_is_pasted_as_text(
+    monkeypatch,
+) -> None:
+    from PySide6.QtCore import QMimeData
+    from PySide6.QtGui import QColor, QImage
+
+    tab = _tab()
+    image = QImage(40, 30, QImage.Format.Format_RGB32)
+    image.fill(QColor("blue"))
+    picture = QMimeData()
+    picture.setImageData(image)
+
+    assert tab.input.canInsertFromMimeData(picture)
+    tab.input.insertFromMimeData(picture)
+    tab.input.insertFromMimeData(picture)
+    words = QMimeData()
+    words.setText("pasted words")
+    tab.input.insertFromMimeData(words)
+
+    assert [item.name for item in tab._pending] == ["pasted-1.png", "pasted-2.png"]
+    assert tab._pending[0].data.startswith(b"\x89PNG")
+    assert tab.input.toPlainText() == "pasted words"
+
+    monkeypatch.setattr(assistant_tab.attachments, "MAX_IMAGE_BYTES", 10)
+    tab.attach_image(image)
+    assert "The picture is too large." in tab.status.text()
+    assert len(tab._pending) == 2
+
+
+def _chip(tab: AssistantTab):
+    item = tab.chips.itemAt(0)
+    assert item is not None
+    widget = item.widget()
+    assert widget is not None
+    return widget
+
+
+def test_the_chips_take_the_colors_of_the_theme(monkeypatch, tmp_path) -> None:
+    from kubescope import theme
+
+    tab = _tab()
+    path = tmp_path / "a.log"
+    path.write_text("x", encoding="utf-8")
+    tab.attach(path)
+    light = _chip(tab).styleSheet()
+
+    monkeypatch.setattr(theme, "_active", theme.DARK_THEME)
+    tab.restyle()
+
+    assert _chip(tab).styleSheet() != light
     monkeypatch.setattr(theme, "_active", theme.LIGHT_THEME)
