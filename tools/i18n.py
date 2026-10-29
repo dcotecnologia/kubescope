@@ -23,6 +23,8 @@ SOURCES = [
         SOURCE / name
         for name in (
             "window.py",
+            "views/assistant_panel.py",
+            "views/assistant_tab.py",
             "views/log_tab.py",
             "views/detail_tab.py",
             "utils/errors.py",

@@ -32,7 +32,7 @@ BUBBLE = 54  # the round button in the corner
 MARGIN = 20
 ANIMATION_MS = 220  # the panel slides up and down; 0 shows it at once
 SLIDE = 48  # how far below its place the panel starts and ends
-BOTTOM = 56  # above the footer of the window, which has links
+BOTTOM = 6  # the button sits in the corner of the footer, which leaves room for it
 PANEL = QSize(430, 600)  # the size of the chat the first time
 MIN_PANEL = QSize(320, 360)  # the least the person can make it
 EDGE = 6  # the width of the strip that is grabbed to resize
@@ -163,7 +163,9 @@ class AssistantPanel(QFrame):
             else popout_icon(themed("#ffffff", text=True))
         )
         self.float_button.setToolTip(
-            self.tr("Put it back in the window") if floating else self.tr("Detach")
+            self.tr("Put it back in the window")
+            if floating
+            else self.tr("Open in a window of its own")
         )
         self._floating = floating
 
