@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+## [1.3.1] - 2026-10-30
+
 ### Fixed
 
 - The window no longer freezes with a full list: only an Age or Last seen under a minute counts the seconds live, older ones wait for the next reload by @danilogco
@@ -447,7 +449,8 @@ The first release.
 
 - Pod logs and resource details are still never written to disk by the app on its own. **Save** is the only exception, and it writes only to the file the user chooses. SECURITY.md says so by @danilogco
 
-[Unreleased]: https://github.com/dcotecnologia/kubescope/compare/v1.3.0...HEAD
+[Unreleased]: https://github.com/dcotecnologia/kubescope/compare/v1.3.1...HEAD
+[1.3.1]: https://github.com/dcotecnologia/kubescope/compare/v1.3.0...v1.3.1
 [1.3.0]: https://github.com/dcotecnologia/kubescope/compare/v1.2.0...v1.3.0
 [1.3.0-rc3]: https://github.com/dcotecnologia/kubescope/compare/v1.3.0-rc2...v1.3.0-rc3
 [1.3.0-rc2]: https://github.com/dcotecnologia/kubescope/compare/v1.3.0-rc1...v1.3.0-rc2
