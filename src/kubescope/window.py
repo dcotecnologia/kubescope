@@ -2979,7 +2979,6 @@ class WorkloadWindow(QMainWindow):
             and self.isVisible()
             and not self.isMinimized()
             and not self._loading(self._view)
-            and self._view not in EKS_VIEWS
         ):
             self.refresh(quiet=True)
 

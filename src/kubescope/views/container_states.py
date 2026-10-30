@@ -164,11 +164,14 @@ class ContainerStatesDelegate(BadgeDelegate):
         return True
 
 
+LIVE_AGE_SECONDS = 60  # only a young age is worth redrawing every second
+
+
 def stamp_age(item: QTableWidgetItem, age: str) -> None:
-    """Mark a cell as an age that keeps counting; unknown ages stay as they
-    are."""
+    """Mark a cell as an age that counts the seconds while it is under a
+    minute; older and unknown ages stay as they are, until the list reloads."""
     seconds = age_seconds(age)
-    if seconds != float("inf"):
+    if seconds < LIVE_AGE_SECONDS:
         item.setData(AGE_ROLE, (seconds, time.monotonic()))
 
 
@@ -182,6 +185,9 @@ def tick_ages(table: QTableWidget) -> None:
                 continue
             stamp = item.data(AGE_ROLE)
             if stamp is not None:
-                text = format_age(stamp[0] + now - stamp[1])
+                seconds = stamp[0] + now - stamp[1]
+                text = format_age(seconds)
                 if item.text() != text:
                     item.setText(text)
+                if seconds >= LIVE_AGE_SECONDS:
+                    item.setData(AGE_ROLE, None)  # a minute old: stop counting

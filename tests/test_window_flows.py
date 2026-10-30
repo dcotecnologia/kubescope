@@ -3726,13 +3726,15 @@ def test_the_list_on_screen_is_read_again_quietly_while_it_is_looked_at(
     assert calls == [{"quiet": True}]
 
     window._show_page(2)  # Settings: nothing to keep fresh
-    window._open_list_view("nodegroups")  # not a list of the namespaces
-    window._show_page(1)
     window._refresh_live()
+    window._show_page(1)
+    window._open_list_view("nodegroups")  # EKS lists are read again too
+    window._refresh_live()
+    assert len(calls) == 2
     window._open_list_view("pods")
     window.showMinimized()
     window._refresh_live()
-    assert len(calls) == 1
+    assert len(calls) == 2
     window.close()
 
 
@@ -4015,4 +4017,42 @@ def test_events_are_filtered_by_type(monkeypatch) -> None:
         themed("#176b58"),
         themed("#e5f4eb"),
     )
+    window.close()
+
+
+def test_quiet_reads_show_what_the_server_added_and_removed(monkeypatch) -> None:
+    window = _resource_window(monkeypatch)
+    window.context_combo.addItem("prod")
+    window._open_list_view("configmaps")
+
+    def config(name: str) -> ClusterResource:
+        return ClusterResource("ops", "ConfigMap", name, ("1",), "5s")
+
+    def names() -> list[str]:
+        return [
+            cell(window.table, row, 2).text() for row in range(window.table.rowCount())
+        ]
+
+    window._answered(
+        "prod", None, "configmaps", ["ops"], [config("a"), config("b")], True
+    )
+    assert names() == ["a", "b"]
+
+    window._answered(
+        "prod",
+        None,
+        "configmaps",
+        ["ops"],
+        [config("a"), config("b"), config("c")],
+        True,
+    )
+    assert names() == ["a", "b", "c"]  # added on the server
+
+    window._answered(
+        "prod", None, "configmaps", ["ops"], [config("a"), config("c")], True
+    )
+    assert names() == ["a", "c"]  # removed on the server
+
+    window._answered("prod", None, "configmaps", ["ops"], [], True)
+    assert names() == []  # the last one removed
     window.close()

@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+### Fixed
+
+- The window no longer freezes with a full list: only an Age or Last seen under a minute counts the seconds live, older ones wait for the next reload by @danilogco
+- The Node Groups list is read again in the background like the other lists, so what is added or removed on the cluster shows up by @danilogco
+
 ## [1.3.0] - 2026-10-29
 
 ### Added
