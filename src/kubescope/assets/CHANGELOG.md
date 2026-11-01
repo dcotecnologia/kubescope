@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+### Fixed
+
+- **Quit** in the menu of the tray icon now ends the app when its window is hidden in the tray, which on Windows left it running with the icon still there by @danilogco
+
 ## [1.3.1] - 2026-10-30
 
 ### Fixed

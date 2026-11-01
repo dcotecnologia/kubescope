@@ -122,6 +122,44 @@ def test_quit_in_the_tray_menu_closes_for_real(monkeypatch) -> None:
     assert not window.isVisible()
 
 
+def test_quit_in_the_tray_menu_ends_the_app_while_the_window_is_hidden(
+    monkeypatch,
+) -> None:
+    window = _with_tray(monkeypatch)
+    window._sync_tray()
+    window.show()
+    window.close()  # the X: it only goes into the tray
+    assert not window.isVisible()
+    ended = []
+    monkeypatch.setattr(QApplication, "quit", staticmethod(lambda: ended.append(1)))
+
+    window._quit()
+
+    assert ended == [1]  # closing a hidden window alone does not end the app
+
+
+def test_quit_waits_for_the_requests_in_flight_before_ending_the_app(
+    monkeypatch,
+) -> None:
+    window = _with_tray(monkeypatch)
+    window._sync_tray()
+    window.show()
+    ended = []
+    monkeypatch.setattr(QApplication, "quit", staticmethod(lambda: ended.append(1)))
+    monkeypatch.setattr(window, "_refresh_running", lambda: True)
+    monkeypatch.setattr(window_module, "cancel_running", lambda: None)
+
+    window._quit()
+
+    assert ended == []  # not yet: a request is still running
+    assert window._close_when_worker_stops
+
+    monkeypatch.setattr(window, "_refresh_running", lambda: False)
+    window._finish_deferred_close()
+
+    assert ended == [1]
+
+
 def test_the_tray_menu_opens_the_preferences_and_checks_for_updates(
     monkeypatch,
 ) -> None:

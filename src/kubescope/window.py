@@ -5876,6 +5876,11 @@ class WorkloadWindow(QMainWindow):
         self._quitting = True
         QApplication.setQuitOnLastWindowClosed(True)
         self.close()
+        # closing a window that is already hidden in the tray does not end the
+        # app on Windows, as hiding a visible one does; and with requests still
+        # running it quits when the last one is done
+        if not self._close_when_worker_stops:
+            QApplication.quit()
 
     def closeEvent(self, event: QCloseEvent) -> None:
         self._remember_geometry()
