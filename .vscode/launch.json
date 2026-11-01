@@ -6,13 +6,19 @@
             "linux": {
                 "env": {
                     "LD_LIBRARY_PATH": "${workspaceFolder}/vendor/linux/x86_64:${env:LD_LIBRARY_PATH}"
-                }
+                },
+                "python": "${workspaceFolder}/.venv/bin/python"
             },
             "name": "KubeScope",
+            "osx": {
+                "python": "${workspaceFolder}/.venv/bin/python"
+            },
             "program": "${workspaceFolder}/main.py",
-            "python": "${workspaceFolder}/.venv/bin/python",
             "request": "launch",
-            "type": "debugpy"
+            "type": "debugpy",
+            "windows": {
+                "python": "${workspaceFolder}/.venv/Scripts/python.exe"
+            }
         },
         {
             "cwd": "${workspaceFolder}",
@@ -20,26 +26,44 @@
             "linux": {
                 "env": {
                     "LD_LIBRARY_PATH": "${workspaceFolder}/vendor/linux/x86_64:${env:LD_LIBRARY_PATH}"
-                }
+                },
+                "python": "${workspaceFolder}/.venv/bin/python"
             },
             "name": "KubeScope preview (fake data)",
+            "osx": {
+                "python": "${workspaceFolder}/.venv/bin/python"
+            },
             "program": "${workspaceFolder}/tools/preview.py",
-            "python": "${workspaceFolder}/.venv/bin/python",
             "request": "launch",
-            "type": "debugpy"
+            "type": "debugpy",
+            "windows": {
+                "python": "${workspaceFolder}/.venv/Scripts/python.exe"
+            }
         },
         {
             "args": [
                 "${file}",
-                "-q"
+                "-q",
+                "--no-cov"
             ],
             "cwd": "${workspaceFolder}",
+            "env": {
+                "QT_QPA_PLATFORM": "offscreen"
+            },
             "justMyCode": false,
+            "linux": {
+                "python": "${workspaceFolder}/.venv/bin/python"
+            },
             "module": "pytest",
             "name": "Pytest: current file",
-            "python": "${workspaceFolder}/.venv/bin/python",
+            "osx": {
+                "python": "${workspaceFolder}/.venv/bin/python"
+            },
             "request": "launch",
-            "type": "debugpy"
+            "type": "debugpy",
+            "windows": {
+                "python": "${workspaceFolder}/.venv/Scripts/python.exe"
+            }
         }
     ],
     "version": "0.2.0"
