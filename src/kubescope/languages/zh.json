@@ -626,7 +626,6 @@
             "VPC": "VPC",
             "Validating Webhook Configurations": "Validating Webhook Configurations",
             "Validating Webhook Configurations of the cluster": "集群的 Validating Webhook Configurations",
-            "Version {version}": "版本 {version}",
             "Version {version} is available": "版本 {version} 已可用",
             "View logs": "查看日志",
             "WRITE MODE\nActions that change the cluster are on": "写入模式\n已启用更改集群的操作",

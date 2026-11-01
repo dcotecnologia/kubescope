@@ -626,7 +626,6 @@
             "VPC": "VPC",
             "Validating Webhook Configurations": "Validating Webhook Configurations",
             "Validating Webhook Configurations of the cluster": "Validating Webhook Configurations ของคลัสเตอร์",
-            "Version {version}": "เวอร์ชัน {version}",
             "Version {version} is available": "มีเวอร์ชัน {version} พร้อมใช้งาน",
             "View logs": "ดูบันทึก",
             "WRITE MODE\nActions that change the cluster are on": "โหมดเขียน\nเปิดใช้การกระทำที่เปลี่ยนแปลงคลัสเตอร์",

@@ -626,7 +626,6 @@
             "VPC": "VPC",
             "Validating Webhook Configurations": "Validating Webhook Configurations",
             "Validating Webhook Configurations of the cluster": "クラスターの Validating Webhook Configurations",
-            "Version {version}": "バージョン {version}",
             "Version {version} is available": "バージョン {version} が利用できます",
             "View logs": "ログを表示",
             "WRITE MODE\nActions that change the cluster are on": "書き込みモード\nクラスターを変更する操作が有効",

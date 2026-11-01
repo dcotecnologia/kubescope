@@ -6,6 +6,10 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [1.3.2] - 2026-11-01
 
+### Changed
+
+- The footer shows the version as `v1.3.2` instead of `Version 1.3.2` by @danilogco
+
 ### Fixed
 
 - **Quit** in the menu of the tray icon now ends the app when its window is hidden in the tray, which on Windows left it running with the icon still there by @danilogco

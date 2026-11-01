@@ -626,7 +626,6 @@
             "VPC": "VPC",
             "Validating Webhook Configurations": "Validating Webhook Configurations",
             "Validating Webhook Configurations of the cluster": "Validating Webhook Configurations của cụm",
-            "Version {version}": "Phiên bản {version}",
             "Version {version} is available": "Đã có phiên bản {version}",
             "View logs": "Xem nhật ký",
             "WRITE MODE\nActions that change the cluster are on": "CHẾ ĐỘ GHI\nCác hành động thay đổi cụm đang bật",

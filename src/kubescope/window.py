@@ -1933,9 +1933,7 @@ class WorkloadWindow(QMainWindow):
 
     def _show_version(self) -> None:
         """The version in the footer's corner; the link opens the project."""
-        self.ui.footerVersion.setText(
-            self.tr("Version {version}").format(version=__version__)
-        )
+        self.ui.footerVersion.setText(f"v{__version__}")
         self.ui.githubLink.setToolTip(
             self.tr("Open the project on GitHub") + f"\n{PROJECT_URL}"
         )

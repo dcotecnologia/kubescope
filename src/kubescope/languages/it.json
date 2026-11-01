@@ -626,7 +626,6 @@
             "VPC": "VPC",
             "Validating Webhook Configurations": "Validating Webhook Configurations",
             "Validating Webhook Configurations of the cluster": "Validating Webhook Configurations del cluster",
-            "Version {version}": "Versione {version}",
             "Version {version} is available": "La versione {version} è disponibile",
             "View logs": "Mostra i log",
             "WRITE MODE\nActions that change the cluster are on": "MODALITÀ SCRITTURA\nAzioni che modificano il cluster attive",

@@ -1682,7 +1682,7 @@ def test_the_footer_shows_the_version_and_links_to_the_project(monkeypatch) -> N
         staticmethod(lambda url: opened.append(url.toString())),
     )
 
-    assert window.ui.footerVersion.text() == f"Version {kubescope.__version__}"
+    assert window.ui.footerVersion.text() == f"v{kubescope.__version__}"
     assert kubescope.PROJECT_URL in window.ui.githubLink.toolTip()
 
     window.ui.githubLink.click()
@@ -1695,7 +1695,7 @@ def test_the_footer_shows_the_version_and_links_to_the_project(monkeypatch) -> N
     assert opened[-1] == f"{kubescope.PROJECT_URL}/blob/main/LICENSE"
 
     window._retranslate()  # a language change rewrites the .ui texts
-    assert window.ui.footerVersion.text() == f"Version {kubescope.__version__}"
+    assert window.ui.footerVersion.text() == f"v{kubescope.__version__}"
     window.close()
 
 

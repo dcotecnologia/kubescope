@@ -626,7 +626,6 @@
             "VPC": "VPC",
             "Validating Webhook Configurations": "Validating Webhook Configurations",
             "Validating Webhook Configurations of the cluster": "Validating Webhook Configurations кластера",
-            "Version {version}": "Версия {version}",
             "Version {version} is available": "Доступна версия {version}",
             "View logs": "Показать журналы",
             "WRITE MODE\nActions that change the cluster are on": "РЕЖИМ ЗАПИСИ\nДействия, изменяющие кластер, включены",
