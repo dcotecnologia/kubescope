@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+## [1.3.2] - 2026-11-01
+
 ### Fixed
 
 - **Quit** in the menu of the tray icon now ends the app when its window is hidden in the tray, which on Windows left it running with the icon still there by @danilogco
@@ -453,7 +455,8 @@ The first release.
 
 - Pod logs and resource details are still never written to disk by the app on its own. **Save** is the only exception, and it writes only to the file the user chooses. SECURITY.md says so by @danilogco
 
-[Unreleased]: https://github.com/dcotecnologia/kubescope/compare/v1.3.1...HEAD
+[Unreleased]: https://github.com/dcotecnologia/kubescope/compare/v1.3.2...HEAD
+[1.3.2]: https://github.com/dcotecnologia/kubescope/compare/v1.3.1...v1.3.2
 [1.3.1]: https://github.com/dcotecnologia/kubescope/compare/v1.3.0...v1.3.1
 [1.3.0]: https://github.com/dcotecnologia/kubescope/compare/v1.2.0...v1.3.0
 [1.3.0-rc3]: https://github.com/dcotecnologia/kubescope/compare/v1.3.0-rc2...v1.3.0-rc3
