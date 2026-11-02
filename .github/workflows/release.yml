@@ -86,6 +86,10 @@ jobs:
   flatpak:
     name: Flatpak
     if: github.event_name != 'workflow_dispatch' || inputs.target != 'windows'
+    # The Flatpak installs the app with the Python of its runtime, which is older than
+    # the 3.15 the app requires, so this build fails until the runtime has 3.15. It does
+    # not hold the release back: the Flatpak is not sent to a store from here anyway.
+    continue-on-error: true
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
@@ -156,7 +160,7 @@ jobs:
   publish:
     name: Publish GitHub release
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: [linux, flatpak, windows]
+    needs: [linux, windows]
     runs-on: ubuntu-latest
     permissions:
       contents: write
