@@ -167,7 +167,7 @@ def commit() -> str:
                 timeout=3,
                 check=False,
             )
-        except (OSError, subprocess.SubprocessError):
+        except OSError, subprocess.SubprocessError:
             return "unknown"
         return result.stdout.strip() or "unknown"
     return "unknown"

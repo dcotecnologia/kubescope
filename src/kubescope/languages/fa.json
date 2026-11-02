@@ -3,15 +3,14 @@
     "rtl": true,
     "strings": {
         "AssistantDock": {
-            "Ask Gabi": "از گابی بپرسید",
-            "Clear history": "پاک کردن تاریخچه",
-            "Close": "بستن"
+            "Ask Gabi": "از گابی بپرسید"
         },
         "AssistantPanel": {
             "Clear history": "پاک کردن تاریخچه",
             "Close": "بستن",
             "Open in a window of its own": "باز کردن در پنجره‌ای جداگانه",
-            "Put it back in the window": "بازگرداندن به پنجره"
+            "Put it back in the window": "بازگرداندن به پنجره",
+            "Settings": "تنظیمات"
         },
         "AssistantTab": {
             "(attached: {names})": "(پیوست‌شده: {names})",
@@ -256,6 +255,7 @@
             "All namespaces": "همه فضاهای نام",
             "Animate windows and lists as they open": "پویانمایی پنجره‌ها و فهرست‌ها هنگام باز شدن",
             "Asks the public GitHub API for the latest release and sends nothing but the app version. The icon in the footer checks on demand.": "از API عمومی GitHub آخرین انتشار را می‌پرسد و جز نسخه برنامه چیزی نمی‌فرستد. نماد پایین صفحه در صورت درخواست بررسی می‌کند.",
+            "Assistant": "دستیار",
             "CLUSTER ACCESS": "دسترسی به خوشه",
             "CONTEXT": "زمینه",
             "CONTEXT NAMES": "نام زمینه‌ها",
@@ -272,11 +272,15 @@
             "For a cloud KubeScope does not know, give the program your kubeconfig uses to sign in (for example oci) and the command that signs you in (for example oci session authenticate). The Sign in button then runs it, without a shell. Press Save to apply.": "برای ابری که KubeScope نمی‌شناسد، برنامه‌ای را که kubeconfig شما برای ورود به کار می‌برد (برای مثال oci) و فرمان ورود (برای مثال oci session authenticate) را بدهید. دکمه ورود آن را بدون پوسته اجرا می‌کند. برای اعمال، ذخیره را بزنید.",
             "Forgets the lists and overviews already loaded and the sign-in of every cluster, so the next request signs in and loads everything again. Your settings are kept.": "فهرست‌ها و نماهای کلی بارگیری‌شده و ورود به هر خوشه را فراموش می‌کند، بنابراین درخواست بعدی دوباره وارد می‌شود و همه چیز را از نو بارگیری می‌کند. تنظیمات شما حفظ می‌شود.",
             "GENERAL": "عمومی",
+            "General": "عمومی",
             "Give your contexts friendlier names. Leave a name empty to keep the original one.": "به زمینه‌های خود نام‌های دوستانه‌تری بدهید. برای حفظ نام اصلی، نام را خالی بگذارید.",
+            "Give your contexts friendlier names. Leave a name empty to use the end of the context name.": "به زمینه‌های خود نام‌های دوستانه‌تری بدهید. نام را خالی بگذارید تا از انتهای نام زمینه استفاده شود.",
             "KUBECONFIG FILES": "پرونده‌های KUBECONFIG",
             "Keep running in the background, with an icon in the system tray": "ادامهٔ اجرا در پس‌زمینه، با نمادی در سینی سیستم",
+            "Kube": "Kube",
             "KubeScope reads the files in the KUBECONFIG variable, or ~/.kube/config. Add files here to read those instead. Press Save to apply.": "KubeScope پرونده‌های متغیر KUBECONFIG یا ~/.kube/config را می‌خواند. برای خواندن پرونده‌های دیگر، آن‌ها را اینجا اضافه کنید. برای اعمال، ذخیره را بزنید.",
             "Language": "زبان",
+            "Model and effort of each program": "مدل و میزان تلاش هر برنامه",
             "New theme...": "پوسته جدید...",
             "Off by default: the window draws its own title bar in the top bar, which saves a row of space. Turn it on if moving or resizing the window misbehaves on your desktop.": "به‌طور پیش‌فرض خاموش است: پنجره نوار عنوان خود را در نوار بالا می‌کشد که یک ردیف فضا صرفه‌جویی می‌کند. اگر جابه‌جایی یا تغییر اندازهٔ پنجره در دسکتاپ شما درست کار نمی‌کند، آن را روشن کنید.",
             "On by default: a window or a list rises into place as it first shows. Turn it off to show everything at once.": "به‌طور پیش‌فرض روشن است: پنجره یا فهرست هنگام اولین نمایش، آرام در جای خود ظاهر می‌شود. برای نمایش یکجای همه‌چیز آن را خاموش کنید.",
@@ -424,6 +428,8 @@
             "DaemonSets": "DaemonSets",
             "DaemonSets of the cluster": "DaemonSets خوشه",
             "Dark": "تیره",
+            "Default effort": "تلاش پیش‌فرض",
+            "Default model": "مدل پیش‌فرض",
             "Degraded": "کارایی کاهش‌یافته",
             "Delete": "حذف",
             "Delete Pod": "حذف Pod",
@@ -572,6 +578,7 @@
             "Runtime Classes of the cluster": "Runtime Classes خوشه",
             "Save": "ذخیره",
             "Save to a file": "ذخیره در پرونده",
+            "Saved": "ذخیره شد",
             "Saved the {kind} {name}": "{kind} {name} ذخیره شد",
             "Scale": "مقیاس‌دهی",
             "Scale Deployment": "مقیاس‌دهی Deployment",
@@ -587,7 +594,6 @@
             "Services": "Services",
             "Services of the cluster": "Services خوشه",
             "Settings": "تنظیمات",
-            "Settings saved.": "تنظیمات ذخیره شد.",
             "Shell command": "دستور شل",
             "Show KubeScope": "نمایش KubeScope",
             "Sign in to {provider}": "ورود به {provider}",
@@ -637,6 +643,8 @@
             "Your user is not allowed to do this. Ask your cluster admin for access.": "کاربر شما اجازه انجام این کار را ندارد. از مدیر خوشه دسترسی بخواهید.",
             "Your user is not allowed to {action}. Ask your cluster admin for access.": "کاربر شما اجازه انجام این کار را ندارد: {action}. از مدیر خوشه دسترسی بخواهید.",
             "running · {pending} pending · {failed} failed": "در حال اجرا · {pending} در انتظار · {failed} ناموفق",
+            "unknown effort": "تلاش نامشخص",
+            "unknown model": "مدل نامشخص",
             "{count} Add-ons in the cluster": "{count} Add-ons در خوشه",
             "{count} Config Maps in {namespaces} namespaces": "{count} Config Maps در {namespaces} فضای نام",
             "{count} CronJobs in {namespaces} namespaces": "{count} CronJobs در {namespaces} فضای نام",

@@ -2,7 +2,9 @@
 
 import json
 import tempfile
+import tomllib
 from collections.abc import Sequence
+from pathlib import Path
 from typing import Any
 
 from kubescope.assistant.runner import Assistant
@@ -91,6 +93,38 @@ def parse_line(line: str) -> tuple[str, str]:
     return "", ""
 
 
+def defaults() -> tuple[str, str]:
+    """The model and the effort in the configuration of Codex, which it is not
+    allowed to read here (`--ignore-user-config`), so they are told to it."""
+    try:
+        data = tomllib.loads(
+            (Path.home() / ".codex" / "config.toml").read_text(encoding="utf-8")
+        )
+    except OSError, ValueError:
+        return "", ""
+    model, effort = data.get("model"), data.get("model_reasoning_effort")
+    return (
+        model if isinstance(model, str) else "",
+        effort if isinstance(effort, str) else "",
+    )
+
+
+def listed_models() -> tuple[str, ...]:
+    """The models Codex lists for the person, from the cache it keeps; none
+    when it has not been run yet or the cache cannot be read."""
+    try:
+        cache = json.loads(
+            (Path.home() / ".codex" / "models_cache.json").read_text(encoding="utf-8")
+        )
+        return tuple(
+            model["slug"]
+            for model in cache["models"]
+            if model.get("visibility") == "list" and isinstance(model["slug"], str)
+        )
+    except OSError, ValueError, KeyError, TypeError, AttributeError:
+        return ()
+
+
 GUIDE = "https://learn.chatgpt.com/docs/codex/cli#getting-started"
 
 CODEX = Assistant(
@@ -102,4 +136,8 @@ CODEX = Assistant(
     guide=lambda _language: GUIDE,
     compose=compose,
     image_files=image_files,
+    models=listed_models(),
+    efforts=("low", "medium", "high", "xhigh", "max", "ultra"),
+    effort_options=lambda effort: ["-c", f'model_reasoning_effort="{effort}"'],
+    defaults=defaults,
 )

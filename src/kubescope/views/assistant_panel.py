@@ -27,7 +27,15 @@ from PySide6.QtWidgets import (
 
 from kubescope.assistant.runner import NAME
 from kubescope.theme import themed
-from kubescope.views.chat_icons import dock_icon, popout_icon, sparkle_icon
+from kubescope.views.chat_icons import (
+    close_icon,
+    dock_icon,
+    gear_icon,
+    icon_only,
+    popout_icon,
+    sparkle_icon,
+    trash_icon,
+)
 
 BUBBLE = 42  # the round button in the corner
 ICON = 28  # the drawing on it
@@ -62,6 +70,8 @@ def _panel_style() -> str:
         f"QFrame#assistantHeader {{ background: {header};"
         " border-top-left-radius: 10px; border-top-right-radius: 10px; }"
         f"QFrame#assistantHeader QLabel {{ color: {ink}; font-weight: 700; }}"
+        f"QFrame#assistantHeader QLabel#assistantEngine {{ font-weight: 400;"
+        " font-size: 11px; }"
         f"QFrame#assistantHeader QPushButton {{ background: transparent; color: {ink};"
         f" border: 1px solid {edge}; border-radius: 4px; padding: 2px 8px; }}"
         "QFrame#assistantHeader QPushButton:hover "
@@ -109,6 +119,7 @@ class AssistantPanel(QFrame):
     """The chat as a panel over the window, with a header of its own."""
 
     clear_requested = Signal()
+    settings_requested = Signal()
     closed = Signal()
     float_requested = Signal()  # take it out of the window, or put it back
     dragged = Signal(int, int)  # the border was dragged: how far
@@ -121,15 +132,23 @@ class AssistantPanel(QFrame):
         header = QFrame()
         header.setObjectName("assistantHeader")
         self.title = QLabel(NAME)
-        self.clear_button = QPushButton(self.tr("Clear history"))
+        self.clear_button = QPushButton()
+        self.settings_button = QPushButton()
         self.float_button = QPushButton()
         self.float_button.setFixedWidth(34)
-        self.close_button = QPushButton("×")
-        self.close_button.setToolTip(self.tr("Close"))
+        self.close_button = QPushButton()
         row = QHBoxLayout(header)
         row.setContentsMargins(14, 8, 10, 8)
         row.setSpacing(8)
-        row.addWidget(self.title, 1)
+        self.engine = QLabel()
+        self.engine.setObjectName("assistantEngine")
+        names = QVBoxLayout()
+        names.setSpacing(0)
+        names.addWidget(self.title)
+        names.addWidget(self.engine)
+        self.engine.hide()
+        row.addLayout(names, 1)
+        row.addWidget(self.settings_button)
         row.addWidget(self.clear_button)
         row.addWidget(self.float_button)
         row.addWidget(self.close_button)
@@ -142,6 +161,7 @@ class AssistantPanel(QFrame):
         layout.addWidget(header)
         layout.addLayout(self.body, 1)
         self.clear_button.clicked.connect(self.clear_requested)
+        self.settings_button.clicked.connect(self.settings_requested)
         self.float_button.clicked.connect(self.float_requested)
         self.close_button.clicked.connect(self.closed)
         self.handles = [
@@ -153,6 +173,7 @@ class AssistantPanel(QFrame):
             handle.dragged.connect(self.dragged)
             handle.released.connect(self.released)
         self.set_floating(False)
+        self.retranslate()
         self.hide()
 
     def set_floating(self, floating: bool) -> None:
@@ -186,6 +207,24 @@ class AssistantPanel(QFrame):
         self.setStyleSheet(_panel_style())
         if hasattr(self, "float_button"):
             self.set_floating(self._floating)
+            self.retranslate()
+
+    def retranslate(self) -> None:
+        """The two buttons that are only an icon say their words as a tip."""
+        color = themed("#ffffff", text=True)
+        icon_only(self.settings_button, self.tr("Settings"), gear_icon(color))
+        icon_only(self.clear_button, self.tr("Clear history"), trash_icon(color))
+        icon_only(self.close_button, self.tr("Close"), close_icon(color))
+        for button in (self.settings_button, self.clear_button, self.close_button):
+            button.setMinimumHeight(0)  # as tall as the others of the header
+            button.setMaximumHeight(16777215)
+            button.setFixedWidth(34)
+
+    def set_engine(self, text: str) -> None:
+        """Say, under the name, what answers: the program, the model and the
+        effort."""
+        self.engine.setText(text)
+        self.engine.setVisible(bool(text))
 
     def show_chat(self, chat: QWidget | None) -> None:
         """Put a chat in the panel, in place of the one it had."""
@@ -273,8 +312,7 @@ class AssistantDock(QObject):
 
     def retranslate(self) -> None:
         self.bubble.setToolTip(self.tr("Ask Gabi"))
-        self.panel.clear_button.setText(self.tr("Clear history"))
-        self.panel.close_button.setToolTip(self.tr("Close"))
+        self.panel.retranslate()
         self.panel.set_floating(self._floating)
         if self._frame is not None:
             self._frame.setWindowTitle(NAME)

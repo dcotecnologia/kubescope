@@ -75,7 +75,7 @@ before you install it.
 
 ## macOS and other systems
 
-There is no package yet. Run it from source with Python 3.12 or newer; the steps
+There is no package yet. Run it from source with Python 3.15; the steps
 are in [Building from source](Building-from-source).
 
 ## Uninstall

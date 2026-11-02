@@ -757,3 +757,41 @@ def test_the_wheel_over_a_message_scrolls_the_conversation_not_the_message() -> 
     text.wheelEvent(event)
 
     assert not event.isAccepted()
+
+
+def test_debug_is_answered_by_the_app_and_only_when_it_has_a_report(replies) -> None:
+    queue, prompts = replies
+    queue.append(["ok"])
+    tab = _tab()
+    tab.debug_report = lambda: "the report"
+
+    _say(tab, "/debug")
+
+    assert prompts == [] and tab.entries()[-1] == ("app", "the report")
+    assert tab.input.toPlainText() == ""
+
+    plain = _tab()  # nothing to report: it is a question like any other
+    _say(plain, "/debug")
+    settle(plain)
+    assert len(prompts) == 1
+
+
+def test_enter_sends_and_shift_enter_goes_to_the_next_line(replies) -> None:
+    from PySide6.QtCore import Qt
+    from PySide6.QtTest import QTest
+
+    queue, prompts = replies
+    queue.append(["ok"])
+    tab = _tab()
+
+    tab.input.setPlainText("first line")
+    tab.input.moveCursor(tab.input.textCursor().MoveOperation.End)
+    QTest.keyClick(tab.input, Qt.Key.Key_Return, Qt.KeyboardModifier.ShiftModifier)
+    QTest.keyClicks(tab.input, "second")
+    assert tab.input.toPlainText() == "first line\nsecond" and prompts == []
+
+    QTest.keyClick(tab.input, Qt.Key.Key_Enter)  # the one of the numeric pad too
+    settle(tab)
+
+    assert len(prompts) == 1 and "first line\nsecond" in prompts[0]
+    assert tab.input.toPlainText() == ""

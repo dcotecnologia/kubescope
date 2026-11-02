@@ -117,8 +117,10 @@ def test_every_color_the_app_uses_has_a_dark_counterpart() -> None:
             r"#[0-9a-fA-F]{6}\b", source.read_text(encoding="utf-8")
         )
     }
-    # white is handled by themed(); the warning orange is the same in both themes
-    unmapped = used - set(theme.DARK_THEME.colors) - {"#ffffff", "#e0a030"}
+    # white is handled by themed(); the warning orange and the green of a button
+    # that did what was asked are the same in both themes
+    same_in_both = {"#ffffff", "#e0a030", "#1e8e4e", "#23a35a"}
+    unmapped = used - set(theme.DARK_THEME.colors) - same_in_both
 
     assert unmapped == set(), f"add dark counterparts for {sorted(unmapped)}"
 

@@ -1,8 +1,12 @@
 import json
+import os
+
+os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 from PySide6.QtCore import QCoreApplication
 
 from kubescope import i18n
+from tests.qt import get_application
 
 
 def _language(name="Teste", **strings) -> dict:
@@ -17,9 +21,10 @@ def _write(path, document) -> None:
 def test_a_file_in_the_languages_folder_adds_or_overrides_a_language(
     caplog,
 ) -> None:
+    get_application()  # the translators are installed on it
     directory = i18n.languages_directory()
     _write(directory / "zz.json", _language("Zeta", Ctx={"Hello": "Olá"}))
-    _write(directory / "pt.json", _language("Português meu"))
+    _write(directory / "pt_BR.json", _language("Português meu"))
     _write(directory / "en.json", _language("Not English"))  # English is the source
     (directory / "bad.json").write_text("not json")
     _write(directory / "worse.json", {"name": "", "strings": {}})
@@ -27,8 +32,8 @@ def test_a_file_in_the_languages_folder_adds_or_overrides_a_language(
 
     available = i18n.available_languages()
 
-    assert list(available)[0] == "en" and available["en"] == "English"
-    assert available["zz"] == "Zeta" and available["pt"] == "Português meu"
+    assert list(available)[0] == "en_US" and available["en_US"] == "English"
+    assert available["zz"] == "Zeta" and available["pt_BR"] == "Português meu"
     assert "Skipping language bad.json" in caplog.text
     assert "Skipping language worse.json" in caplog.text
     assert i18n.resolve_language("zz") == "zz"
@@ -71,7 +76,7 @@ def test_the_language_list_is_english_first_then_by_english_name() -> None:
 
     codes = [code for code, _ in choices]
     labels = dict(choices)
-    assert codes[0] == "en" and labels["en"] == "English"
+    assert codes[0] == "en_US" and labels["en_US"] == "English"
     assert labels["ko"] == "한국어 · Korean" and labels["xx"] == "Mine"
     named = [label.split(" · ")[-1] for code, label in choices[1:] if code != "xx"]
     assert named == sorted(named, key=str.casefold)
@@ -92,8 +97,16 @@ def test_a_system_locale_picks_the_language_of_its_territory(monkeypatch) -> Non
         ("zh_TW", "zh_TW"),
         ("zh_HK", "zh_TW"),  # Hong Kong reads the traditional characters too
         ("zh_CN", "zh"),
-        ("pt_BR", "pt"),
-        ("xx_YY", "en"),
+        ("pt_BR", "pt_BR"),
+        (
+            "pt_PT",
+            "pt_BR",
+        ),  # no file for Portugal: the one of Brazil is the same language
+        ("pt", "pt_BR"),
+        ("es_MX", "es"),
+        ("en_GB", "en_US"),
+        ("en", "en_US"),  # a choice of an older version
+        ("xx_YY", "en_US"),
     ):
         system(name)
         assert i18n.resolve_language("auto") == expected
@@ -108,7 +121,7 @@ def test_traditional_chinese_is_listed_apart_from_simplified() -> None:
 
 def test_a_language_is_named_in_english_for_the_assistant() -> None:
     assert i18n.language_name("en") == "English"
-    assert i18n.language_name("pt") == "Portuguese"
+    assert i18n.language_name("pt") == "Portuguese (Brazil)"  # an older choice
     assert i18n.language_name("zh_TW") == "Chinese (Taiwan)"
 
 
@@ -118,5 +131,11 @@ def test_the_languages_of_the_app_have_an_english_name_each() -> None:
     assert names[0] == "English"
     assert names[1:] == sorted(names[1:], key=str.casefold)
     assert len(names) == len(i18n.available_languages())
-    for name in ("Portuguese", "Spanish", "Chinese (Taiwan)", "Hebrew", "Hindi"):
+    for name in (
+        "Portuguese (Brazil)",
+        "Spanish",
+        "Chinese (Taiwan)",
+        "Hebrew",
+        "Hindi",
+    ):
         assert name in names

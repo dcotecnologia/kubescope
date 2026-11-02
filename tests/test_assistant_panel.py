@@ -97,7 +97,8 @@ def test_the_panel_swaps_the_chat_it_shows_and_can_show_none() -> None:
     assert dock.panel.body.count() == 0
 
     dock.retranslate()
-    assert dock.panel.clear_button.text() == "Clear history"
+    assert dock.panel.clear_button.toolTip() == "Clear history"
+    assert dock.panel.clear_button.text() == ""
     host.close()
 
 

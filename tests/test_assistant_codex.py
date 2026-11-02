@@ -83,3 +83,45 @@ def test_codex_is_one_of_the_assistants_to_choose_from(monkeypatch) -> None:
 
     monkeypatch.setattr(assistant, "is_available", lambda one: one.key == "codex")
     assert assistant.installed() == [codex.CODEX]
+
+
+def test_the_models_codex_lists_come_from_its_cache(monkeypatch, tmp_path) -> None:
+    monkeypatch.setattr(codex.Path, "home", lambda: tmp_path)
+    assert codex.listed_models() == ()  # never run: no cache
+
+    folder = tmp_path / ".codex"
+    folder.mkdir()
+    (folder / "models_cache.json").write_text(
+        json.dumps(
+            {
+                "models": [
+                    {"slug": "shown", "visibility": "list"},
+                    {"slug": "hidden", "visibility": "hide"},
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    assert codex.listed_models() == ("shown",)
+
+    (folder / "models_cache.json").write_text("[1]", encoding="utf-8")
+    assert codex.listed_models() == ()  # damaged
+
+
+def test_the_defaults_of_codex_come_from_its_configuration(
+    monkeypatch, tmp_path
+) -> None:
+    monkeypatch.setattr(codex.Path, "home", lambda: tmp_path)
+    assert codex.defaults() == ("", "")  # no configuration
+
+    folder = tmp_path / ".codex"
+    folder.mkdir()
+    (folder / "config.toml").write_text(
+        'model = "gpt-x"\nmodel_reasoning_effort = "low"\n', encoding="utf-8"
+    )
+    assert codex.defaults() == ("gpt-x", "low")
+
+    (folder / "config.toml").write_text("model = 3\n", encoding="utf-8")
+    assert codex.defaults() == ("", "")
+    (folder / "config.toml").write_text("= nonsense", encoding="utf-8")
+    assert codex.defaults() == ("", "")

@@ -3,15 +3,14 @@
     "rtl": false,
     "strings": {
         "AssistantDock": {
-            "Ask Gabi": "Gabi에게 질문",
-            "Clear history": "기록 지우기",
-            "Close": "닫기"
+            "Ask Gabi": "Gabi에게 질문"
         },
         "AssistantPanel": {
             "Clear history": "기록 지우기",
             "Close": "닫기",
             "Open in a window of its own": "별도 창에서 열기",
-            "Put it back in the window": "창에 다시 넣기"
+            "Put it back in the window": "창에 다시 넣기",
+            "Settings": "설정"
         },
         "AssistantTab": {
             "(attached: {names})": "(첨부됨: {names})",
@@ -256,6 +255,7 @@
             "All namespaces": "모든 네임스페이스",
             "Animate windows and lists as they open": "창과 목록을 열 때 애니메이션 표시",
             "Asks the public GitHub API for the latest release and sends nothing but the app version. The icon in the footer checks on demand.": "공개 GitHub API에 최신 릴리스를 요청하며 앱 버전 외에는 아무것도 보내지 않습니다. 하단의 아이콘으로 직접 확인할 수 있습니다.",
+            "Assistant": "어시스턴트",
             "CLUSTER ACCESS": "클러스터 접근",
             "CONTEXT": "컨텍스트",
             "CONTEXT NAMES": "컨텍스트 이름",
@@ -272,11 +272,15 @@
             "For a cloud KubeScope does not know, give the program your kubeconfig uses to sign in (for example oci) and the command that signs you in (for example oci session authenticate). The Sign in button then runs it, without a shell. Press Save to apply.": "KubeScope가 모르는 클라우드의 경우 kubeconfig가 로그인에 사용하는 프로그램(예: oci)과 로그인하는 명령(예: oci session authenticate)을 입력하세요. 그러면 로그인 버튼이 셸 없이 그 명령을 실행합니다. 적용하려면 저장을 누르세요.",
             "Forgets the lists and overviews already loaded and the sign-in of every cluster, so the next request signs in and loads everything again. Your settings are kept.": "이미 불러온 목록과 개요, 모든 클러스터의 로그인 정보를 지워서 다음 요청 때 다시 로그인하고 모두 새로 불러옵니다. 설정은 유지됩니다.",
             "GENERAL": "일반",
+            "General": "일반",
             "Give your contexts friendlier names. Leave a name empty to keep the original one.": "컨텍스트에 알기 쉬운 이름을 지정하세요. 이름을 비워 두면 원래 이름이 유지됩니다.",
+            "Give your contexts friendlier names. Leave a name empty to use the end of the context name.": "컨텍스트에 알아보기 쉬운 이름을 지정하세요. 비워 두면 컨텍스트 이름의 끝부분을 사용합니다.",
             "KUBECONFIG FILES": "KUBECONFIG 파일",
             "Keep running in the background, with an icon in the system tray": "백그라운드에서 계속 실행하고 시스템 트레이에 아이콘 표시",
+            "Kube": "Kube",
             "KubeScope reads the files in the KUBECONFIG variable, or ~/.kube/config. Add files here to read those instead. Press Save to apply.": "KubeScope는 KUBECONFIG 변수의 파일 또는 ~/.kube/config를 읽습니다. 대신 읽을 파일을 여기에 추가하세요. 적용하려면 저장을 누르세요.",
             "Language": "언어",
+            "Model and effort of each program": "프로그램별 모델과 노력 수준",
             "New theme...": "새 테마...",
             "Off by default: the window draws its own title bar in the top bar, which saves a row of space. Turn it on if moving or resizing the window misbehaves on your desktop.": "기본값은 꺼짐입니다. 창이 상단 바에 자체 제목 표시줄을 그려 한 줄의 공간을 절약합니다. 데스크톱에서 창 이동이나 크기 조절이 제대로 되지 않으면 켜세요.",
             "On by default: a window or a list rises into place as it first shows. Turn it off to show everything at once.": "기본값은 켜짐입니다. 창이나 목록이 처음 표시될 때 제자리로 부드럽게 올라옵니다. 끄면 모든 것이 한꺼번에 표시됩니다.",
@@ -424,6 +428,8 @@
             "DaemonSets": "DaemonSets",
             "DaemonSets of the cluster": "클러스터의 DaemonSets",
             "Dark": "다크",
+            "Default effort": "기본 노력 수준",
+            "Default model": "기본 모델",
             "Degraded": "성능 저하",
             "Delete": "삭제",
             "Delete Pod": "Pod 삭제",
@@ -572,6 +578,7 @@
             "Runtime Classes of the cluster": "클러스터의 Runtime Classes",
             "Save": "저장",
             "Save to a file": "파일로 저장",
+            "Saved": "저장됨",
             "Saved the {kind} {name}": "{kind} {name}을(를) 저장했습니다",
             "Scale": "스케일",
             "Scale Deployment": "Deployment 스케일",
@@ -587,7 +594,6 @@
             "Services": "Services",
             "Services of the cluster": "클러스터의 Services",
             "Settings": "설정",
-            "Settings saved.": "설정을 저장했습니다.",
             "Shell command": "셸 명령",
             "Show KubeScope": "KubeScope 표시",
             "Sign in to {provider}": "{provider}에 로그인",
@@ -637,6 +643,8 @@
             "Your user is not allowed to do this. Ask your cluster admin for access.": "사용자에게 이 작업을 수행할 권한이 없습니다. 클러스터 관리자에게 접근 권한을 요청하세요.",
             "Your user is not allowed to {action}. Ask your cluster admin for access.": "사용자에게 {action} 권한이 없습니다. 클러스터 관리자에게 접근 권한을 요청하세요.",
             "running · {pending} pending · {failed} failed": "실행 중 · 대기 {pending} · 실패 {failed}",
+            "unknown effort": "노력 수준 알 수 없음",
+            "unknown model": "모델 알 수 없음",
             "{count} Add-ons in the cluster": "클러스터의 Add-ons {count}개",
             "{count} Config Maps in {namespaces} namespaces": "{namespaces}개 네임스페이스의 Config Maps {count}개",
             "{count} CronJobs in {namespaces} namespaces": "{namespaces}개 네임스페이스의 CronJobs {count}개",

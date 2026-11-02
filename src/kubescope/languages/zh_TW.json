@@ -3,15 +3,14 @@
     "rtl": false,
     "strings": {
         "AssistantDock": {
-            "Ask Gabi": "詢問 Gabi",
-            "Clear history": "清除記錄",
-            "Close": "關閉"
+            "Ask Gabi": "詢問 Gabi"
         },
         "AssistantPanel": {
             "Clear history": "清除記錄",
             "Close": "關閉",
             "Open in a window of its own": "在獨立視窗中開啟",
-            "Put it back in the window": "放回視窗中"
+            "Put it back in the window": "放回視窗中",
+            "Settings": "設定"
         },
         "AssistantTab": {
             "(attached: {names})": "（已附加：{names}）",
@@ -256,6 +255,7 @@
             "All namespaces": "所有命名空間",
             "Animate windows and lists as they open": "開啟視窗和清單時顯示動畫",
             "Asks the public GitHub API for the latest release and sends nothing but the app version. The icon in the footer checks on demand.": "向公開的 GitHub API 查詢最新版本，除了應用程式版本之外不會傳送任何資料。頁尾的圖示可依需要檢查。",
+            "Assistant": "助理",
             "CLUSTER ACCESS": "叢集存取",
             "CONTEXT": "內容",
             "CONTEXT NAMES": "內容名稱",
@@ -272,11 +272,15 @@
             "For a cloud KubeScope does not know, give the program your kubeconfig uses to sign in (for example oci) and the command that signs you in (for example oci session authenticate). The Sign in button then runs it, without a shell. Press Save to apply.": "對於 KubeScope 不認識的雲端，請提供您的 kubeconfig 用來登入的程式（例如 oci）以及登入的指令（例如 oci session authenticate）。登入按鈕隨後會不透過 shell 執行該指令。按下儲存以套用。",
             "Forgets the lists and overviews already loaded and the sign-in of every cluster, so the next request signs in and loads everything again. Your settings are kept.": "清除已載入的清單與概覽以及每個叢集的登入資訊，因此下一次請求會重新登入並重新載入所有內容。您的設定會保留。",
             "GENERAL": "一般",
+            "General": "一般",
             "Give your contexts friendlier names. Leave a name empty to keep the original one.": "為您的內容取較易辨識的名稱。將名稱留空以保留原始名稱。",
+            "Give your contexts friendlier names. Leave a name empty to use the end of the context name.": "為內容替換成更友善的名稱。留空則使用內容名稱的末尾部分。",
             "KUBECONFIG FILES": "KUBECONFIG 檔案",
             "Keep running in the background, with an icon in the system tray": "在背景持續執行，並在系統匣顯示圖示",
+            "Kube": "Kube",
             "KubeScope reads the files in the KUBECONFIG variable, or ~/.kube/config. Add files here to read those instead. Press Save to apply.": "KubeScope 會讀取 KUBECONFIG 變數中的檔案，或 ~/.kube/config。在此加入檔案可改為讀取這些檔案。按下儲存以套用。",
             "Language": "語言",
+            "Model and effort of each program": "每個程式的模型與強度",
             "New theme...": "新增主題...",
             "Off by default: the window draws its own title bar in the top bar, which saves a row of space. Turn it on if moving or resizing the window misbehaves on your desktop.": "預設關閉:視窗會在頂端列中繪製自己的標題列,可節省一列空間。如果在您的桌面上移動或調整視窗大小發生問題,請開啟。",
             "On by default: a window or a list rises into place as it first shows. Turn it off to show everything at once.": "預設為開啟：視窗或清單在首次顯示時會以動畫浮現到位。關閉後將一次顯示所有內容。",
@@ -424,6 +428,8 @@
             "DaemonSets": "DaemonSets",
             "DaemonSets of the cluster": "叢集的 DaemonSets",
             "Dark": "深色",
+            "Default effort": "預設強度",
+            "Default model": "預設模型",
             "Degraded": "效能降低",
             "Delete": "刪除",
             "Delete Pod": "刪除 Pod",
@@ -572,6 +578,7 @@
             "Runtime Classes of the cluster": "叢集的 Runtime Classes",
             "Save": "儲存",
             "Save to a file": "儲存到檔案",
+            "Saved": "已儲存",
             "Saved the {kind} {name}": "已儲存 {kind} {name}",
             "Scale": "調整規模",
             "Scale Deployment": "調整 Deployment 規模",
@@ -587,7 +594,6 @@
             "Services": "Services",
             "Services of the cluster": "叢集的 Services",
             "Settings": "設定",
-            "Settings saved.": "已儲存設定。",
             "Shell command": "Shell 指令",
             "Show KubeScope": "顯示 KubeScope",
             "Sign in to {provider}": "登入 {provider}",
@@ -637,6 +643,8 @@
             "Your user is not allowed to do this. Ask your cluster admin for access.": "您的使用者無權執行此操作。請向叢集管理員要求存取權。",
             "Your user is not allowed to {action}. Ask your cluster admin for access.": "您的使用者無權{action}。請向叢集管理員要求存取權。",
             "running · {pending} pending · {failed} failed": "執行中 · {pending} 個等待中 · {failed} 個失敗",
+            "unknown effort": "強度未知",
+            "unknown model": "模型未知",
             "{count} Add-ons in the cluster": "叢集中的 {count} 個 Add-ons",
             "{count} Config Maps in {namespaces} namespaces": "{namespaces} 個命名空間中的 {count} 個 Config Maps",
             "{count} CronJobs in {namespaces} namespaces": "{namespaces} 個命名空間中的 {count} 個 CronJobs",

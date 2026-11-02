@@ -50,6 +50,7 @@ from PySide6.QtGui import (
 )
 from PySide6.QtWidgets import (
     QApplication,
+    QButtonGroup,
     QComboBox,
     QCompleter,
     QDialog,
@@ -98,6 +99,7 @@ from kubescope.cluster import (
     LoginAction,
     cancel_running,
     check_login,
+    describe_kube,
     forget_clients,
     get_cluster_info,
     get_cluster_overview,
@@ -149,7 +151,12 @@ from kubescope.models import (
     resource_sort_key,
     workload_sort_key,
 )
-from kubescope.settings import Settings, config_directory, log_directory
+from kubescope.settings import (
+    Settings,
+    config_directory,
+    default_context_name,
+    log_directory,
+)
 from kubescope.theme import (
     DEFAULT_THEME,
     Theme,
@@ -186,6 +193,7 @@ from kubescope.utils.updates import Release, UpdateCheck, check_for_update
 from kubescope.views import motion
 from kubescope.views.assistant_panel import BUBBLE, MARGIN, AssistantDock
 from kubescope.views.assistant_tab import AssistantTab
+from kubescope.views.chat_icons import check_icon, close_icon, icon_only, save_icon
 from kubescope.views.container_states import (
     BADGE_ROLE,
     LINK_ROLE,
@@ -380,6 +388,13 @@ def _restart_colors(restarts: int) -> tuple[str, str] | None:
     if restarts >= MANY_RESTARTS:
         return themed("#a33d45"), themed("#fce9ea")
     return themed("#985415"), themed("#fff2de")
+
+
+# a button that did what was asked, for a moment
+DONE_STYLE = (
+    "QPushButton { background: #1e8e4e; border-color: #1e8e4e; }"
+    "QPushButton:hover { background: #23a35a; border-color: #23a35a; }"
+)
 
 
 def _nav_icon(shape: str, colors: tuple[str, str] | None = None) -> QIcon:
@@ -977,6 +992,12 @@ class WorkloadWindow(QMainWindow):
         self.settings_ui.setupUi(ui.settingsHost)
         self.settings_ui.contextsTable.setRowCount(0)
         self.settings_ui.saveButton.clicked.connect(self._save_preferences)
+        self._settings_sections = QButtonGroup(self)
+        self._settings_sections.addButton(self.settings_ui.generalSectionButton, 0)
+        self._settings_sections.addButton(self.settings_ui.assistantSectionButton, 1)
+        self._settings_sections.addButton(self.settings_ui.kubeSectionButton, 2)
+        self._settings_sections.idClicked.connect(self._show_settings_section)
+        self._show_settings_section(0)
         self.settings_ui.openLogsButton.clicked.connect(self._open_log_folder)
         self.settings_ui.assistantClearButton.clicked.connect(
             self._clear_assistant_history
@@ -1097,6 +1118,10 @@ class WorkloadWindow(QMainWindow):
         self._spinner_angle = 0
         self._spinner_button: QPushButton | None = None
         self._spinner_saved: tuple[QIcon, str] | None = None
+        self._load_ok = True  # false once the work the spinner shows failed
+        self._done_buttons: dict[
+            QPushButton, QIcon
+        ] = {}  # green: the icon to go back to
         self._spinner_timer = QTimer(self)
         self._spinner_timer.setInterval(70)
         self._spinner_timer.timeout.connect(self._tick_spinner)
@@ -1120,6 +1145,7 @@ class WorkloadWindow(QMainWindow):
         motion.ENABLED = self.settings.animations
         runner.CUSTOM_PROGRAMS.clear()
         runner.CUSTOM_PROGRAMS.update(self.settings.assistant_programs)
+        self._sync_assistant_choices()
         self._shown_once = False
         self._assistant_history = History(config_directory() / "assistant_history.json")
         self._assistant_tab: AssistantTab | None = None
@@ -1130,6 +1156,9 @@ class WorkloadWindow(QMainWindow):
         self.assistant_dock.bubble.clicked.connect(self._toggle_assistant)
         self.assistant_dock.panel.closed.connect(self.assistant_dock.close)
         self.assistant_dock.panel.clear_requested.connect(self._clear_assistant_chat)
+        self.assistant_dock.panel.settings_requested.connect(
+            self._show_assistant_settings
+        )
         self.assistant_dock.bubble.setVisible(self.settings.assistant_enabled)
         self.sidebar_resizer = SidebarResizer(ui.sidebar, SIDEBAR_WIDTH)
         if self.settings.sidebar_width:
@@ -1146,6 +1175,9 @@ class WorkloadWindow(QMainWindow):
         ui.settingsButton.clicked.connect(lambda: self._show_page(2))
         for keys in ("Ctrl+R", "F5"):
             QShortcut(QKeySequence(keys), self).activated.connect(self._press_refresh)
+        ask = QShortcut(QKeySequence("Ctrl+G"), self)  # Gabi
+        ask.setContext(Qt.ShortcutContext.ApplicationShortcut)  # also from her window
+        ask.activated.connect(self._shortcut_assistant)
         self.nav_overview.clicked.connect(lambda: self._show_page(0))
         self.nav_workloads.clicked.connect(lambda: self._toggle_submenu(self.submenu))
         self.nav_network.clicked.connect(
@@ -2125,6 +2157,11 @@ class WorkloadWindow(QMainWindow):
         self.nav_network.setIcon(_nav_icon("network"))
         self.nav_config.setIcon(_nav_icon("config"))
         self.save_button.setIcon(_nav_icon("save"))
+        icon_only(
+            self.settings_ui.saveButton,
+            self.settings_ui.saveButton.toolTip(),
+            save_icon(themed("#ffffff", text=True)),
+        )
         self._set_update_state(self._update_state)  # redraw its icon in this theme
         light = _pair(themed("#ffffff", text=True))  # on the filled buttons
         for button in (
@@ -2907,7 +2944,9 @@ class WorkloadWindow(QMainWindow):
         The cursor is left alone so the window never looks frozen.
         """
         if button is not None and self._spinner_button is None:
+            self._end_flash(button)  # it must not keep the tick as its own icon
             self._spinner_button = button
+            self._load_ok = True
             self._spinner_saved = (button.icon(), button.text())
             if button.text():  # icon-only buttons just spin
                 button.setText(label)
@@ -2931,6 +2970,27 @@ class WorkloadWindow(QMainWindow):
                 button.setText(self._spinner_saved[1])
             self._spinner_button = None
             self._spinner_saved = None
+            if self._load_ok and button in (
+                self.refresh_button,
+                self.overview_refresh_button,
+                self.workloads_refresh_button,
+            ):
+                self._flash_done(button)
+
+    def _flash_done(self, button: QPushButton) -> None:
+        """Tell the reload ended well: the button is green, with a tick, for a
+        moment."""
+        self._done_buttons.setdefault(button, button.icon())
+        button.setIcon(check_icon(themed("#ffffff", text=True)))
+        button.setStyleSheet(DONE_STYLE)
+        QTimer.singleShot(1200, lambda: self._end_flash(button))
+
+    def _end_flash(self, button: QPushButton) -> None:
+        """Put a button back as it was before the tick."""
+        icon = self._done_buttons.pop(button, None)
+        if icon is not None and button is not self._spinner_button:
+            button.setStyleSheet("")
+            button.setIcon(icon)
 
     def _tick_spinner(self) -> None:
         if self._spinner_button is None:
@@ -2949,6 +3009,7 @@ class WorkloadWindow(QMainWindow):
         otherwise."""
         if self._loading(self._view):
             self._cancel_refreshes()
+            self._load_ok = False  # given up, not done
             self._set_status(lambda: self.tr("Loading cancelled"))
             self._sync_loading()
             return
@@ -3085,6 +3146,7 @@ class WorkloadWindow(QMainWindow):
     def _failed(self, message: str, quiet: bool) -> None:
         """A list could not be read; a background read that keeps failing is
         tried less and less often."""
+        self._load_ok = False
         if quiet:
             self._live_timer.setInterval(
                 min(self._live_timer.interval() * 2, LIST_REFRESH_MAX_MS)
@@ -4288,9 +4350,11 @@ class WorkloadWindow(QMainWindow):
         layout.addWidget(editor)
         buttons = QHBoxLayout()
         buttons.addStretch()
-        cancel = QPushButton(self.tr("Cancel"))
+        cancel = QPushButton()
+        icon_only(cancel, self.tr("Cancel"), close_icon(themed("#3220a0")))
         cancel.setProperty("variant", "secondary")
-        save = QPushButton(self.tr("Save"))
+        save = QPushButton()
+        icon_only(save, self.tr("Save"), save_icon(themed("#ffffff", text=True)))
         save.setProperty("variant", "primary")
         buttons.addWidget(cancel)
         buttons.addWidget(save)
@@ -4666,6 +4730,26 @@ class WorkloadWindow(QMainWindow):
         self._save_settings()
         return True
 
+    def _shortcut_assistant(self) -> None:
+        """Ctrl+G opens the chat and puts the cursor in it; when it is open and
+        has the cursor already, it puts it away.
+
+        Nothing happens while the assistant is off in Settings.
+        """
+        if not self.settings.assistant_enabled:
+            return
+        tab = self._assistant_tab
+        if self.assistant_dock.is_open and tab is not None:
+            if tab.input.hasFocus():
+                self.assistant_dock.close()
+                return
+        else:
+            self._open_assistant()
+            tab = self._assistant_tab
+        if tab is not None and self.assistant_dock.is_open:
+            tab.input.window().activateWindow()  # it may be in a window of its own
+            tab.input.setFocus()
+
     def _toggle_assistant(self) -> None:
         """The button of the corner: open the chat, or put it away."""
         if self.assistant_dock.is_open:
@@ -4701,13 +4785,111 @@ class WorkloadWindow(QMainWindow):
                 history=self._assistant_history.entries(self._context()),
                 takes_images=assistant.takes_images,
             )
+            tab.debug_report = self._assistant_debug_report
+            tab.kube_requested.connect(lambda: self._assistant_kube_report(tab))
             tab.changed.connect(lambda: self._keep_assistant_chat(tab))
             tab.navigate.connect(lambda request: self._assistant_navigate(tab, request))
             tab.write.connect(lambda request: self._assistant_write(tab, request))
             self._assistant_tab = tab
             self.assistant_dock.panel.show_chat(tab)
+            self._show_assistant_engine()
         self.assistant_dock.open()
         tab.input.setFocus()
+
+    def _assistant_engine(self, assistant: Assistant, model: str | None) -> str:
+        """What answers, in words: the program, its model and its effort."""
+        chosen = model or runner.CUSTOM_MODELS.get(assistant.key)
+        effort = runner.CUSTOM_EFFORTS.get(assistant.key)
+        if assistant.effort_options is None:
+            effort = None
+        return " · ".join(
+            (
+                assistant.name,
+                chosen or self.tr("unknown model"),
+                effort or self.tr("unknown effort"),
+            )
+        )
+
+    def _assistant_debug_report(self) -> str:
+        """What the /debug command says: the program that answers and all of
+        its configuration, from the settings and the program itself.
+
+        No credentials are in it, and neither is the long instruction
+        sent with each question.
+        """
+        tab = self._assistant_tab
+        assert tab is not None
+        assistant = tab.session.assistant
+        settings = self.settings
+        default_model, default_effort = (
+            assistant.defaults() if assistant.defaults else ("", "")
+        )
+
+        def source(chosen: str, default: str) -> str:
+            if chosen:
+                return f"{chosen} (set in Settings)"
+            if default:
+                return f"{default} (what {assistant.name} is set to use)"
+            return "not told: the program decides"
+
+        arguments = runner.command(assistant, tab.session.model, tab.session.system)
+        shown = [
+            f"<{len(arguments[index])} characters>"
+            if index and arguments[index - 1] == "--system-prompt"
+            else argument
+            for index, argument in enumerate(arguments)
+        ]
+        path = runner.program_of(assistant)
+        installed = ", ".join(one.name for one in installed_assistants()) or "none"
+        efforts = ", ".join(assistant.efforts) or "none"
+        models = ", ".join(assistant.models) or "none listed"
+        lines = [
+            "/debug",
+            f"Assistant: {NAME}",
+            f"Program: {assistant.name} ({assistant.key})",
+            f"Program file: {path}"
+            + (" (set in Settings)" if assistant.key in runner.CUSTOM_PROGRAMS else ""),
+            f"Chosen in Settings: {settings.assistant or 'automatic, the first found'}",
+            f"Installed: {installed}",
+            "Model: "
+            + source(settings.assistant_models.get(assistant.key, ""), default_model),
+            "Effort: "
+            + (
+                source(
+                    settings.assistant_efforts.get(assistant.key, ""), default_effort
+                )
+                if assistant.effort_options
+                else "this program cannot be told"
+            ),
+            f"Models it lists: {models}",
+            f"Efforts it allows: {efforts}",
+            f"Takes images: {'yes' if assistant.takes_images else 'no'}",
+            f"Write mode: {'on' if settings.write_mode else 'off'}",
+            f"Language: {resolve_language(settings.language)}",
+            f"Command: {' '.join(shown)}",
+        ]
+        return "\n".join(lines)
+
+    def _assistant_kube_report(self, tab: AssistantTab) -> None:
+        """What /kube says, read off the UI thread, and put in the chat."""
+        self._run_action(
+            describe_kube,
+            lambda text: tab.note(f"/kube\n{text}"),
+            quiet=True,
+            on_error=lambda message: tab.note(f"/kube\n{first_line(message)}"),
+        )
+
+    def _show_assistant_engine(self) -> None:
+        """Keep the header of the chat telling what answers it."""
+        tab = self._assistant_tab
+        if tab is None:
+            return
+        found = self._assistant_program()
+        if found is not None and found is not tab.session.assistant:
+            tab.use(found)  # the program chosen in the settings takes over
+        self.assistant_dock.panel.set_engine(
+            self._assistant_engine(tab.session.assistant, tab.session.model)
+        )
 
     def _assistant_system(self) -> str:
         """What the assistant is told: the language of the app and the mode it
@@ -4793,6 +4975,7 @@ class WorkloadWindow(QMainWindow):
         """Drop the conversation, stopping what it runs."""
         tab, self._assistant_tab = self._assistant_tab, None
         self.assistant_dock.panel.show_chat(None)
+        self.assistant_dock.panel.set_engine("")
         if tab is not None:
             tab.shutdown()
             tab.deleteLater()
@@ -4903,15 +5086,31 @@ class WorkloadWindow(QMainWindow):
         self._style_box_buttons(box)
         box.exec()
 
+    def _show_settings_section(self, section: int) -> None:
+        """Show the cards of one section of the Settings: 0 is General, 1 the
+        assistant and 2 Kube, the files and the contexts of the clusters."""
+        form = self.settings_ui
+        sections = {
+            form.assistantCard: 1,
+            form.kubeconfigCard: 2,
+            form.loginCard: 2,
+            form.contextsCard: 2,
+        }
+        for card in form.settingsContent.findChildren(
+            QFrame, options=Qt.FindChildOption.FindDirectChildrenOnly
+        ):
+            card.setVisible(sections.get(card, 0) == section)
+        form.generalSectionButton.setChecked(section == 0)
+        form.assistantSectionButton.setChecked(section == 1)
+        form.kubeSectionButton.setChecked(section == 2)
+        form.settingsScroll.verticalScrollBar().setValue(0)
+
     def _show_assistant_settings(self) -> None:
-        """Go to the Settings, to the card of the assistant."""
+        """Go to the Settings, to the section of the assistant."""
+        self.raise_()  # the chat may be in a window of its own
+        self.activateWindow()
         self._show_page(2)
-        QTimer.singleShot(
-            0,
-            lambda: self.settings_ui.settingsScroll.ensureWidgetVisible(
-                self.settings_ui.assistantCard, 0, 20
-            ),
-        )
+        self._show_settings_section(1)
 
     def _assistant_choose(
         self, tab: AssistantTab, combo: QComboBox, value: str, what: str
@@ -5210,9 +5409,10 @@ class WorkloadWindow(QMainWindow):
         form.languageCombo.addItem(self.tr("Automatic"), "auto")
         for code, label in language_choices():
             form.languageCombo.addItem(label, code)
-        form.languageCombo.setCurrentIndex(
-            max(form.languageCombo.findData(self.settings.language), 0)
-        )
+        chosen = self.settings.language
+        if chosen != "auto":  # a code from an older version is shown as its language
+            chosen = resolve_language(chosen)
+        form.languageCombo.setCurrentIndex(max(form.languageCombo.findData(chosen), 0))
         self._fill_theme_combo(self.settings.theme)
         self._fill_default_namespaces()
         form.rememberCheck.setChecked(self.settings.remember_last_context)
@@ -5222,15 +5422,7 @@ class WorkloadWindow(QMainWindow):
         form.backgroundCheck.setChecked(self.settings.run_in_background)
         form.titleBarCheck.setChecked(self.settings.system_title_bar)
         form.animationsCheck.setChecked(self.settings.animations)
-        form.assistantCheck.setChecked(self.settings.assistant_enabled)
-        self._fill_assistant_paths()
-        form.assistantCombo.clear()
-        form.assistantCombo.addItem(self.tr("Automatic: the first one found"), "")
-        for one in ASSISTANTS.values():
-            form.assistantCombo.addItem(one.name, one.key)
-        form.assistantCombo.setCurrentIndex(
-            max(form.assistantCombo.findData(self.settings.assistant), 0)
-        )
+        self._load_assistant_form()
         form.debugHint.setText(
             self.tr(
                 "Off by default. When on, KubeScope writes what it does, "
@@ -5253,14 +5445,15 @@ class WorkloadWindow(QMainWindow):
             name_item.setToolTip(context)
             name_item.setFlags(name_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
             table.setItem(row, 0, name_item)
-            table.setItem(row, 1, QTableWidgetItem(aliases.get(context, "")))
+            alias = aliases.get(context, default_context_name(context))
+            table.setItem(row, 1, QTableWidgetItem(alias))
         table.resizeColumnToContents(0)  # a starting width; the user can drag it
         if self._contexts:
             form.contextsHint.setText(
                 QCoreApplication.translate(
                     "SettingsPage",
                     "Give your contexts friendlier names. "
-                    "Leave a name empty to keep the original one.",
+                    "Leave a name empty to use the end of the context name.",
                 )
             )
         else:
@@ -5272,6 +5465,65 @@ class WorkloadWindow(QMainWindow):
             self._add_login_row(program, command)
         self._show_config_tables()
         form.noticeLabel.setText("")
+
+    def _load_assistant_form(self) -> None:
+        """Show the settings of the assistant in its card."""
+        form = self.settings_ui
+        form.assistantCheck.setChecked(self.settings.assistant_enabled)
+        self._fill_assistant_paths()
+        self._fill_assistant_models()
+        form.assistantCombo.clear()
+        form.assistantCombo.addItem(self.tr("Automatic: the first one found"), "")
+        for one in installed_assistants():  # only what this computer has
+            form.assistantCombo.addItem(one.name, one.key)
+        form.assistantCombo.setCurrentIndex(
+            max(form.assistantCombo.findData(self.settings.assistant), 0)
+        )
+
+    def _fill_assistant_models(self) -> None:
+        """One line for each assistant to choose its model and its effort, from
+        what that program allows."""
+        layout = self.settings_ui.assistantModelsLayout
+        while (item := layout.takeAt(0)) is not None:
+            if (widget := item.widget()) is not None:
+                widget.deleteLater()
+        self._assistant_models: dict[str, tuple[QComboBox, QComboBox]] = {}
+        found = installed_assistants()  # only the programs this computer has
+        self.settings_ui.assistantModelsLabel.setVisible(bool(found))
+        for one in found:
+            model = QComboBox()
+            model.addItem(self.tr("Default model"), "")
+            for name in one.models:
+                model.addItem(name, name)
+            kept = self.settings.assistant_models.get(one.key, "")
+            if kept and model.findData(kept) < 0:
+                model.addItem(kept, kept)  # a model the program no longer lists
+            model.setCurrentIndex(max(model.findData(kept), 0))
+            effort = QComboBox()
+            effort.addItem(self.tr("Default effort"), "")
+            for level in one.efforts:
+                effort.addItem(level, level)
+            saved = self.settings.assistant_efforts.get(one.key, "")
+            if saved and effort.findData(saved) < 0:
+                effort.addItem(saved, saved)  # a level the program no longer lists
+            effort.setCurrentIndex(max(effort.findData(saved), 0))
+            effort.setEnabled(one.effort_options is not None)
+            for box in (model, effort):
+                box.setProperty("variant", "filter")
+            model.setFixedWidth(240)
+            effort.setFixedWidth(170)
+            row = QHBoxLayout()
+            row.setContentsMargins(0, 0, 0, 0)
+            name = QLabel(one.name)
+            name.setFixedWidth(100)
+            row.addWidget(name)
+            row.addWidget(model)
+            row.addWidget(effort)
+            row.addStretch(1)
+            holder = QWidget()
+            holder.setLayout(row)
+            layout.addWidget(holder)
+            self._assistant_models[one.key] = (model, effort)
 
     def _fill_assistant_paths(self) -> None:
         """One line for each assistant to say where its program is, which the
@@ -5292,14 +5544,17 @@ class WorkloadWindow(QMainWindow):
                 self.tr("Found on the path of the system") if found else missing
             )
             browse = QPushButton(self.tr("Browse..."))
+            browse.setProperty("variant", "secondary")
+            edit.setProperty("variant", "filter")
             browse.clicked.connect(
                 lambda _checked=False, field=edit, name=one.name: self._browse_program(
                     field, name
                 )
             )
             row = QHBoxLayout()
+            row.setContentsMargins(0, 0, 0, 0)
             name = QLabel(one.name)
-            name.setMinimumWidth(60)
+            name.setFixedWidth(100)
             row.addWidget(name)
             row.addWidget(edit, 1)
             row.addWidget(browse)
@@ -5307,6 +5562,44 @@ class WorkloadWindow(QMainWindow):
             holder.setLayout(row)
             layout.addWidget(holder)
             self._assistant_paths[one.key] = edit
+
+    def _apply_assistant_settings(
+        self,
+        enabled: bool,
+        assistant: str,
+        programs: dict[str, str],
+        models: dict[str, str],
+        efforts: dict[str, str],
+    ) -> None:
+        """Keep the settings of the assistant and make the window follow
+        them."""
+        self.settings.assistant_programs = programs
+        runner.CUSTOM_PROGRAMS.clear()
+        runner.CUSTOM_PROGRAMS.update(programs)
+        self.settings.assistant_models = models
+        self.settings.assistant_efforts = efforts
+        self._sync_assistant_choices()
+        self.settings.assistant_enabled = enabled
+        self.settings.assistant = assistant
+        self.assistant_dock.bubble.setVisible(enabled)
+        self._make_room_for_assistant()
+        if not enabled:
+            self.assistant_dock.close()
+        self._show_assistant_engine()
+
+    def _sync_assistant_choices(self) -> None:
+        """Tell the runner the model and the effort of each assistant: the ones
+        in the settings, or else the ones its program is set to use."""
+        runner.CUSTOM_MODELS.clear()
+        runner.CUSTOM_EFFORTS.clear()
+        for one in ASSISTANTS.values():
+            model, effort = one.defaults() if one.defaults else ("", "")
+            model = self.settings.assistant_models.get(one.key, model)
+            effort = self.settings.assistant_efforts.get(one.key, effort)
+            if model:
+                runner.CUSTOM_MODELS[one.key] = model
+            if effort:
+                runner.CUSTOM_EFFORTS[one.key] = effort
 
     def _browse_program(self, edit: QLineEdit, name: str) -> None:
         path, _filter = QFileDialog.getOpenFileName(
@@ -5515,6 +5808,21 @@ class WorkloadWindow(QMainWindow):
         directory.mkdir(parents=True, exist_ok=True)
         QDesktopServices.openUrl(QUrl.fromLocalFile(str(directory)))
 
+    def _show_saved(self) -> None:
+        """Tell the save button worked: it shows a tick for a moment."""
+        button = self.settings_ui.saveButton
+        color = themed("#ffffff", text=True)
+        button.setIcon(check_icon(color))
+        button.setToolTip(self.tr("Saved"))
+        button.setStyleSheet(DONE_STYLE)
+        QTimer.singleShot(1500, self._show_save_again)
+
+    def _show_save_again(self) -> None:
+        button = self.settings_ui.saveButton
+        button.setStyleSheet("")
+        button.setIcon(save_icon(themed("#ffffff", text=True)))
+        button.setToolTip(QCoreApplication.translate("SettingsPage", "Save changes"))
+
     def _save_preferences(self) -> None:
         form = self.settings_ui
         commands = self._login_commands_from_form()
@@ -5540,7 +5848,10 @@ class WorkloadWindow(QMainWindow):
                 for row, context in enumerate(self._contexts)
             }
             kept = {c: a for c, a in aliases.items() if c not in edited}
-            self.settings.set_context_aliases({**kept, **edited})
+            given = {  # the name it has anyway is not an alias
+                c: a for c, a in edited.items() if a != default_context_name(c)
+            }
+            self.settings.set_context_aliases({**kept, **given})
         previous_language = self.settings.language
         previous_theme = self.settings.theme
         self.settings.language = form.languageCombo.currentData()
@@ -5555,15 +5866,25 @@ class WorkloadWindow(QMainWindow):
         self.settings.run_in_background = form.backgroundCheck.isChecked()
         self.settings.animations = form.animationsCheck.isChecked()
         motion.ENABLED = self.settings.animations
-        self.settings.assistant_programs = programs
-        runner.CUSTOM_PROGRAMS.clear()
-        runner.CUSTOM_PROGRAMS.update(programs)
-        self.settings.assistant_enabled = form.assistantCheck.isChecked()
-        self.settings.assistant = form.assistantCombo.currentData() or ""
-        self.assistant_dock.bubble.setVisible(self.settings.assistant_enabled)
-        self._make_room_for_assistant()
-        if not self.settings.assistant_enabled:
-            self.assistant_dock.close()
+        self._apply_assistant_settings(
+            form.assistantCheck.isChecked(),
+            form.assistantCombo.currentData() or "",
+            programs,
+            {  # what was chosen for a program that is not here now is kept
+                **self.settings.assistant_models,
+                **{
+                    key: box.currentData() or ""
+                    for key, (box, _) in self._assistant_models.items()
+                },
+            },
+            {
+                **self.settings.assistant_efforts,
+                **{
+                    key: box.currentData() or ""
+                    for key, (_, box) in self._assistant_models.items()
+                },
+            },
+        )
         self._sync_tray()
         self.settings.system_title_bar = form.titleBarCheck.isChecked()
         self._frame.set_custom(not self.settings.system_title_bar)
@@ -5588,7 +5909,8 @@ class WorkloadWindow(QMainWindow):
         if self.settings.theme != previous_theme:
             logger.info("Theme changed to %s", self.settings.theme)
             self._apply_theme()
-        form.noticeLabel.setText(self.tr("Settings saved."))
+        form.noticeLabel.setText("")
+        self._show_saved()
         if files_changed:
             self._load_contexts()  # the contexts come from other files now
 
@@ -5727,6 +6049,7 @@ class WorkloadWindow(QMainWindow):
             self._save_settings()
 
     def _show_action_error(self, message: str) -> None:
+        self._load_ok = False
         if self._close_when_worker_stops:
             return  # the window is closing; the cancelled request is no news
         if is_forbidden(message):
@@ -5742,6 +6065,7 @@ class WorkloadWindow(QMainWindow):
         )
 
     def _show_error(self, message: str) -> None:
+        self._load_ok = False
         logger.info("Refresh failed: %s", first_line(message))
         if is_auth_error(message):
             self._check_login()

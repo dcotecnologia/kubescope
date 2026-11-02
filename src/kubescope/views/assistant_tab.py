@@ -18,6 +18,7 @@ from PySide6.QtGui import (
     QColor,
     QImage,
     QImageWriter,
+    QKeyEvent,
     QPainter,
     QPen,
     QPixmap,
@@ -42,12 +43,14 @@ from kubescope.assistant import actions, attachments, executor
 from kubescope.assistant.actions import Invalid, Request
 from kubescope.assistant.attachments import Attachment, AttachmentError
 from kubescope.assistant.history import Entry
-from kubescope.assistant.runner import COMPANY, NAME, AssistantError
+from kubescope.assistant.runner import COMPANY, NAME, Assistant, AssistantError
 from kubescope.assistant.session import ChatSession, Message
 from kubescope.theme import themed
 from kubescope.views.chat_icons import attach_icon, send_icon, stop_icon
 
 SHUTDOWN_WAIT_MS = 3000
+DEBUG_COMMAND = "/debug"  # tells what answers, from the settings
+KUBE_COMMANDS = ("/kube", "/kubectl")  # tell what the computer has for kubectl
 MAX_FOLLOW_UPS = 5  # reads the assistant may ask for after one question
 BUBBLE_WIDTH = 0.82  # of the width of the conversation
 DOODLE = 56  # the size of a tile of the pattern behind the messages
@@ -150,9 +153,18 @@ class MessageText(QTextBrowser):
 
 
 class ChatInput(QPlainTextEdit):
-    """The message field: a picture pasted into it is attached, not typed."""
+    """The message field: a picture pasted into it is attached, not typed, and
+    Enter sends the message, while Shift+Enter goes to the next line."""
 
     image_pasted = Signal(QImage)
+    submitted = Signal()
+
+    def keyPressEvent(self, event: QKeyEvent) -> None:
+        enter = event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter)
+        if enter and not event.modifiers() & Qt.KeyboardModifier.ShiftModifier:
+            self.submitted.emit()
+            return
+        super().keyPressEvent(event)
 
     def canInsertFromMimeData(self, source: QMimeData) -> bool:
         return source.hasImage() or super().canInsertFromMimeData(source)
@@ -222,6 +234,7 @@ class AssistantTab(QWidget):
 
     navigate = Signal(object)  # a Request of the app, to show
     write = Signal(object)  # a Request the person confirmed
+    kube_requested = Signal()  # the person typed /kube: the window reads it
     changed = Signal()  # the conversation has a new entry to keep
 
     def __init__(
@@ -243,6 +256,7 @@ class AssistantTab(QWidget):
         self._fetch = fetch
         self._screen = screen
         self._takes_images = takes_images
+        self.debug_report: Callable[[], str] | None = None  # what /debug says
         self._pending: list[Attachment] = []  # attached, not sent yet
         self._entries: list[Entry] = []  # (role, text) of what is shown
         self._bubbles: list[QFrame] = []
@@ -291,6 +305,7 @@ class AssistantTab(QWidget):
         self.attach_button = self._round_button(self.tr("Attach"))
         self.attach_button.clicked.connect(self._choose_files)
         self.input.image_pasted.connect(self.attach_image)
+        self.input.submitted.connect(self.submit)
         self.chips = QHBoxLayout()
         self.chips.setSpacing(6)
         self.chip_bar = QWidget()
@@ -332,6 +347,11 @@ class AssistantTab(QWidget):
             if role in ("user", "assistant"):
                 self.session.messages.append(Message(role, text))  # type: ignore[arg-type]
 
+    def use(self, assistant: Assistant) -> None:
+        """Go on with the conversation on another assistant."""
+        self.session.assistant = assistant
+        self._takes_images = assistant.takes_images
+
     @staticmethod
     def _round_button(tip: str) -> QPushButton:
         button = QPushButton()
@@ -372,6 +392,14 @@ class AssistantTab(QWidget):
     def submit(self) -> None:
         """Send what was typed."""
         text = self.input.toPlainText().strip()
+        if text == DEBUG_COMMAND and self.debug_report is not None:
+            self.input.clear()  # answered here, from the settings, not by the program
+            self.note(self.debug_report())
+            return
+        if text in KUBE_COMMANDS:
+            self.input.clear()
+            self.kube_requested.emit()
+            return
         if (not text and not self._pending) or self.busy:
             return
         files, self._pending = tuple(self._pending), []

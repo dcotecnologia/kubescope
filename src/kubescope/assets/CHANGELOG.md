@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+### Added
+
+- **Settings** has three sections: General, Kube (the kubeconfig files, the sign-in commands and the names of the contexts) and Assistant, and the guide of the assistant opens the last by @danilogco
+- A context without a name of its own shows the end of its name, such as `shop-eks-hml-us-east-1` for the ARN of a cluster, in the list of contexts and in Settings by @danilogco
+- The refresh buttons turn green with a tick for a moment when a reload ends well by @danilogco
+- A computer set to Portuguese of Portugal (or to any territory the app has no translation for) reads the translation of the same language, which for Portuguese is the Brazilian one, `pt_BR`; a choice of `pt` saved by an older version still works by @danilogco
+- The default English is `en_US`, and a choice of `en` saved by an older version still works by @danilogco
+- **Settings** lets you choose the model and the effort each assistant program uses, from what Claude Code and Codex allow by @danilogco
+- The header of the assistant says which program, model and effort answer; when none is chosen it shows the ones the program is set to use, and Codex is told them explicitly by @danilogco
+- A gear button in the header of the assistant opens the **Assistant** section of Settings by @danilogco
+- **/debug** in the chat of the assistant answers, without asking the program, which assistant is in use and all of its configuration: program, file, model, effort, what it allows and the command by @danilogco
+- **/kube** (or **/kubectl**) in the chat of the assistant answers, without asking the program, what the computer has for kubectl: its version, the kubeconfig files and the contexts in them, with no token, certificate or server address by @danilogco
+- In the chat of the assistant, **Enter** sends the message and **Shift+Enter** goes to the next line by @danilogco
+- **Ctrl+G** opens the assistant with the cursor in the chat, and puts it away when the cursor is in it already by @danilogco
+
 ## [1.3.2] - 2026-11-01
 
 ### Changed

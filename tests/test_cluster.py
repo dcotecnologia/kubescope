@@ -3093,3 +3093,91 @@ def test_no_live_usage_is_none_without_metrics_server_or_a_sample(
     assert cluster.get_pod_container_usage("ctx", "ns", "web-1") is None
     monkeypatch.setattr(cluster, "_get_json", lambda _p, _c: {})
     assert cluster.get_pod_container_usage("ctx", "ns", "web-1") is None
+
+
+def _kube_document() -> dict:
+    return {
+        "current-context": "shop-prd",
+        "clusters": [{"name": "c1", "cluster": {"server": "https://secret-host"}}],
+        "users": [
+            {"name": "shop-prd", "user": {"exec": {"command": "/usr/bin/aws"}}},
+            {"name": "tok", "user": {"token": "SECRET-TOKEN"}},
+            {"name": "cert", "user": {"client-certificate-data": "SECRET"}},
+            {"name": "old", "user": {"auth-provider": {"name": "gcp"}}},
+            {"name": "none", "user": {}},
+        ],
+        "contexts": [
+            {"name": "shop-prd", "context": {"cluster": "c1", "user": "shop-prd"}},
+            {
+                "name": "a",
+                "context": {"cluster": "c1", "user": "tok", "namespace": "n"},
+            },
+            {"name": "b", "context": {"cluster": "c1", "user": "cert"}},
+            {"name": "c", "context": {"cluster": "c1", "user": "old"}},
+            {"name": "d", "context": {"cluster": "c1", "user": "none"}},
+        ],
+    }
+
+
+def test_describe_kube_tells_kubectl_and_the_kubeconfig_without_any_secret(
+    monkeypatch, tmp_path
+) -> None:
+    path = tmp_path / "config"
+    path.write_text(json.dumps(_kube_document()))
+    monkeypatch.setenv("KUBECONFIG", str(path))
+    monkeypatch.setattr(cluster, "find_program", lambda program: "/bin/kubectl")
+    version = {
+        "clientVersion": {"gitVersion": "v1.99.0", "platform": "linux/amd64"},
+        "kustomizeVersion": "v5.0.0",
+    }
+    monkeypatch.setattr(cluster, "_run_command", lambda c, t: json.dumps(version))
+
+    text = cluster.describe_kube()
+
+    assert "kubectl: /bin/kubectl" in text and "kubectl version: v1.99.0" in text
+    assert "kubectl platform: linux/amd64" in text and "kustomize: v5.0.0" in text
+    assert "kubeconfig from: KUBECONFIG" in text and f"{path} (found)" in text
+    assert "Current context: shop-prd" in text
+    assert "Contexts: 5, clusters: 1, users: 5" in text
+    assert "  shop-prd, cluster c1, sign-in program aws, namespace default" in text
+    assert "  a, cluster c1, user tok, token, namespace n" in text
+    assert "client certificate" in text and "auth provider" in text
+    assert "no credentials of its own" in text
+    assert "SECRET" not in text and "secret-host" not in text
+
+
+def test_describe_kube_says_what_is_missing_or_broken(monkeypatch, tmp_path) -> None:
+    monkeypatch.setenv("KUBECONFIG", str(tmp_path / "missing"))
+    monkeypatch.setattr(cluster, "find_program", lambda program: None)
+
+    text = cluster.describe_kube()
+    assert "kubectl: not found on the path" in text
+    assert "(missing)" in text and "Current context: none" in text
+
+    monkeypatch.setattr(cluster, "find_program", lambda program: "/bin/kubectl")
+    monkeypatch.setattr(
+        cluster,
+        "_run_command",
+        lambda c, t: (_ for _ in ()).throw(cluster.ClusterError("boom\nmore")),
+    )
+    assert "could not read it (boom)" in cluster.describe_kube()
+
+    monkeypatch.setattr(cluster, "_run_command", lambda c, t: "[]")
+    assert "could not read it" in cluster.describe_kube()  # not the document
+
+    monkeypatch.setenv("KUBECONFIG", str(tmp_path))  # a folder, not a file
+    assert "kubeconfig: Could not read" in cluster.describe_kube()
+
+
+def test_describe_kube_says_where_the_files_come_from(monkeypatch, tmp_path) -> None:
+    monkeypatch.delenv("KUBECONFIG", raising=False)
+    monkeypatch.setattr(cluster, "find_program", lambda program: None)
+    assert "kubeconfig from: default" in cluster.describe_kube()
+
+    path = tmp_path / "mine"
+    path.write_text("{}")
+    cluster.configure([str(path)])
+    try:
+        assert "kubeconfig from: set in Settings" in cluster.describe_kube()
+    finally:
+        cluster.configure([])

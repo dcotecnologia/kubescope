@@ -3,15 +3,14 @@
     "rtl": false,
     "strings": {
         "AssistantDock": {
-            "Ask Gabi": "问问 Gabi",
-            "Clear history": "清除历史",
-            "Close": "关闭"
+            "Ask Gabi": "问问 Gabi"
         },
         "AssistantPanel": {
             "Clear history": "清除历史",
             "Close": "关闭",
             "Open in a window of its own": "在新窗口中打开",
-            "Put it back in the window": "放回窗口"
+            "Put it back in the window": "放回窗口",
+            "Settings": "设置"
         },
         "AssistantTab": {
             "(attached: {names})": "（已附加：{names}）",
@@ -256,6 +255,7 @@
             "All namespaces": "所有 namespaces",
             "Animate windows and lists as they open": "打开窗口和列表时显示动画",
             "Asks the public GitHub API for the latest release and sends nothing but the app version. The icon in the footer checks on demand.": "向 GitHub 公共 API 查询最新版本，只发送应用版本号。页脚的图标可按需检查。",
+            "Assistant": "助手",
             "CLUSTER ACCESS": "集群访问",
             "CONTEXT": "上下文",
             "CONTEXT NAMES": "上下文名称",
@@ -272,11 +272,15 @@
             "For a cloud KubeScope does not know, give the program your kubeconfig uses to sign in (for example oci) and the command that signs you in (for example oci session authenticate). The Sign in button then runs it, without a shell. Press Save to apply.": "对于 KubeScope 不认识的云，请填写您的 kubeconfig 用来登录的程序（例如 oci）以及执行登录的命令（例如 oci session authenticate）。“登录”按钮会运行该命令，不使用 shell。点击“保存”以应用。",
             "Forgets the lists and overviews already loaded and the sign-in of every cluster, so the next request signs in and loads everything again. Your settings are kept.": "忘记已加载的列表和概览以及每个集群的登录状态，因此下次请求会重新登录并重新加载所有内容。您的设置会保留。",
             "GENERAL": "常规",
+            "General": "常规",
             "Give your contexts friendlier names. Leave a name empty to keep the original one.": "为您的上下文起更易读的名称。名称留空则保留原名。",
+            "Give your contexts friendlier names. Leave a name empty to use the end of the context name.": "为上下文起个更友好的名字。留空则使用上下文名称的末尾部分。",
             "KUBECONFIG FILES": "KUBECONFIG 文件",
             "Keep running in the background, with an icon in the system tray": "在后台继续运行，并在系统托盘显示图标",
+            "Kube": "Kube",
             "KubeScope reads the files in the KUBECONFIG variable, or ~/.kube/config. Add files here to read those instead. Press Save to apply.": "KubeScope 读取 KUBECONFIG 变量中的文件，或 ~/.kube/config。在此添加文件即可改为读取这些文件。点击“保存”以应用。",
             "Language": "语言",
+            "Model and effort of each program": "每个程序的模型和强度",
             "New theme...": "新建主题...",
             "Off by default: the window draws its own title bar in the top bar, which saves a row of space. Turn it on if moving or resizing the window misbehaves on your desktop.": "默认关闭:窗口在顶部栏中绘制自己的标题栏,可节省一行空间。如果在您的桌面上移动或调整窗口大小出现问题,请开启。",
             "On by default: a window or a list rises into place as it first shows. Turn it off to show everything at once.": "默认开启：窗口或列表首次显示时会渐渐升起到位。关闭后将立即显示全部内容。",
@@ -424,6 +428,8 @@
             "DaemonSets": "DaemonSets",
             "DaemonSets of the cluster": "集群的 DaemonSets",
             "Dark": "深色",
+            "Default effort": "默认强度",
+            "Default model": "默认模型",
             "Degraded": "降级",
             "Delete": "删除",
             "Delete Pod": "删除 Pod",
@@ -572,6 +578,7 @@
             "Runtime Classes of the cluster": "集群的 Runtime Classes",
             "Save": "保存",
             "Save to a file": "保存到文件",
+            "Saved": "已保存",
             "Saved the {kind} {name}": "已保存 {kind} {name}",
             "Scale": "扩缩容",
             "Scale Deployment": "扩缩容 Deployment",
@@ -587,7 +594,6 @@
             "Services": "Services",
             "Services of the cluster": "集群的 Services",
             "Settings": "设置",
-            "Settings saved.": "设置已保存。",
             "Shell command": "Shell 命令",
             "Show KubeScope": "显示 KubeScope",
             "Sign in to {provider}": "登录 {provider}",
@@ -637,6 +643,8 @@
             "Your user is not allowed to do this. Ask your cluster admin for access.": "您的用户无权执行此操作。请向集群管理员申请访问权限。",
             "Your user is not allowed to {action}. Ask your cluster admin for access.": "您的用户无权执行此操作（{action}）。请向集群管理员申请访问权限。",
             "running · {pending} pending · {failed} failed": "运行中 · {pending} 个等待中 · {failed} 个失败",
+            "unknown effort": "强度未知",
+            "unknown model": "模型未知",
             "{count} Add-ons in the cluster": "集群中共 {count} 个 Add-ons",
             "{count} Config Maps in {namespaces} namespaces": "{namespaces} 个 namespaces 中共 {count} 个 Config Maps",
             "{count} CronJobs in {namespaces} namespaces": "{namespaces} 个 namespaces 中共 {count} 个 CronJobs",

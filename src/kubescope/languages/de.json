@@ -3,15 +3,14 @@
     "rtl": false,
     "strings": {
         "AssistantDock": {
-            "Ask Gabi": "Gabi fragen",
-            "Clear history": "Verlauf löschen",
-            "Close": "Schließen"
+            "Ask Gabi": "Gabi fragen"
         },
         "AssistantPanel": {
             "Clear history": "Verlauf löschen",
             "Close": "Schließen",
             "Open in a window of its own": "In eigenem Fenster öffnen",
-            "Put it back in the window": "Zurück ins Fenster setzen"
+            "Put it back in the window": "Zurück ins Fenster setzen",
+            "Settings": "Einstellungen"
         },
         "AssistantTab": {
             "(attached: {names})": "(angehängt: {names})",
@@ -256,6 +255,7 @@
             "All namespaces": "Alle Namespaces",
             "Animate windows and lists as they open": "Fenster und Listen beim Öffnen animieren",
             "Asks the public GitHub API for the latest release and sends nothing but the app version. The icon in the footer checks on demand.": "Fragt die öffentliche GitHub-API nach dem neuesten Release und sendet nur die App-Version. Das Symbol in der Fußzeile prüft auf Abruf.",
+            "Assistant": "Assistent",
             "CLUSTER ACCESS": "CLUSTER-ZUGRIFF",
             "CONTEXT": "KONTEXT",
             "CONTEXT NAMES": "KONTEXTNAMEN",
@@ -272,11 +272,15 @@
             "For a cloud KubeScope does not know, give the program your kubeconfig uses to sign in (for example oci) and the command that signs you in (for example oci session authenticate). The Sign in button then runs it, without a shell. Press Save to apply.": "Für eine Cloud, die KubeScope nicht kennt, geben Sie das Programm an, das Ihre kubeconfig zur Anmeldung nutzt (zum Beispiel oci), und den Befehl, der Sie anmeldet (zum Beispiel oci session authenticate). Die Schaltfläche „Anmelden“ führt ihn dann ohne Shell aus. Zum Anwenden auf „Speichern“ klicken.",
             "Forgets the lists and overviews already loaded and the sign-in of every cluster, so the next request signs in and loads everything again. Your settings are kept.": "Vergisst die bereits geladenen Listen und Übersichten sowie die Anmeldung jedes Clusters, sodass die nächste Anfrage sich neu anmeldet und alles neu lädt. Ihre Einstellungen bleiben erhalten.",
             "GENERAL": "ALLGEMEIN",
+            "General": "Allgemein",
             "Give your contexts friendlier names. Leave a name empty to keep the original one.": "Geben Sie Ihren Kontexten freundlichere Namen. Lassen Sie einen Namen leer, um den ursprünglichen zu behalten.",
+            "Give your contexts friendlier names. Leave a name empty to use the end of the context name.": "Geben Sie Ihren Kontexten verständlichere Namen. Ein leerer Name verwendet das Ende des Kontextnamens.",
             "KUBECONFIG FILES": "KUBECONFIG-DATEIEN",
             "Keep running in the background, with an icon in the system tray": "Im Hintergrund weiterlaufen, mit einem Symbol im Infobereich",
+            "Kube": "Kube",
             "KubeScope reads the files in the KUBECONFIG variable, or ~/.kube/config. Add files here to read those instead. Press Save to apply.": "KubeScope liest die Dateien in der Variable KUBECONFIG oder ~/.kube/config. Fügen Sie hier Dateien hinzu, um stattdessen diese zu lesen. Zum Anwenden auf „Speichern“ klicken.",
             "Language": "Sprache",
+            "Model and effort of each program": "Modell und Aufwand je Programm",
             "New theme...": "Neues Theme...",
             "Off by default: the window draws its own title bar in the top bar, which saves a row of space. Turn it on if moving or resizing the window misbehaves on your desktop.": "Standardmäßig aus: Das Fenster zeichnet seine Titelleiste in der oberen Leiste, was eine Zeile Platz spart. Schalten Sie es ein, wenn das Verschieben oder Ändern der Fenstergröße auf Ihrem Desktop nicht richtig funktioniert.",
             "On by default: a window or a list rises into place as it first shows. Turn it off to show everything at once.": "Standardmäßig an: Ein Fenster oder eine Liste gleitet beim ersten Anzeigen an ihren Platz. Schalten Sie es aus, um alles sofort anzuzeigen.",
@@ -424,6 +428,8 @@
             "DaemonSets": "DaemonSets",
             "DaemonSets of the cluster": "DaemonSets des Clusters",
             "Dark": "Dunkel",
+            "Default effort": "Standardaufwand",
+            "Default model": "Standardmodell",
             "Degraded": "Beeinträchtigt",
             "Delete": "Löschen",
             "Delete Pod": "Pod löschen",
@@ -572,6 +578,7 @@
             "Runtime Classes of the cluster": "Runtime Classes des Clusters",
             "Save": "Speichern",
             "Save to a file": "In Datei speichern",
+            "Saved": "Gespeichert",
             "Saved the {kind} {name}": "{kind} {name} gespeichert",
             "Scale": "Skalieren",
             "Scale Deployment": "Deployment skalieren",
@@ -587,7 +594,6 @@
             "Services": "Services",
             "Services of the cluster": "Services des Clusters",
             "Settings": "Einstellungen",
-            "Settings saved.": "Einstellungen gespeichert.",
             "Shell command": "Shell-Befehl",
             "Show KubeScope": "KubeScope anzeigen",
             "Sign in to {provider}": "Bei {provider} anmelden",
@@ -637,6 +643,8 @@
             "Your user is not allowed to do this. Ask your cluster admin for access.": "Ihr Benutzer darf dies nicht tun. Bitten Sie Ihren Cluster-Administrator um Zugriff.",
             "Your user is not allowed to {action}. Ask your cluster admin for access.": "Ihr Benutzer darf nicht {action}. Bitten Sie Ihren Cluster-Administrator um Zugriff.",
             "running · {pending} pending · {failed} failed": "läuft · {pending} ausstehend · {failed} fehlgeschlagen",
+            "unknown effort": "Aufwand unbekannt",
+            "unknown model": "Modell unbekannt",
             "{count} Add-ons in the cluster": "{count} Add-ons im Cluster",
             "{count} Config Maps in {namespaces} namespaces": "{count} Config Maps in {namespaces} Namespaces",
             "{count} CronJobs in {namespaces} namespaces": "{count} CronJobs in {namespaces} Namespaces",

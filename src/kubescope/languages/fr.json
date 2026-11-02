@@ -3,15 +3,14 @@
     "rtl": false,
     "strings": {
         "AssistantDock": {
-            "Ask Gabi": "Demander à Gabi",
-            "Clear history": "Effacer l’historique",
-            "Close": "Fermer"
+            "Ask Gabi": "Demander à Gabi"
         },
         "AssistantPanel": {
             "Clear history": "Effacer l’historique",
             "Close": "Fermer",
             "Open in a window of its own": "Ouvrir dans une fenêtre séparée",
-            "Put it back in the window": "Remettre dans la fenêtre"
+            "Put it back in the window": "Remettre dans la fenêtre",
+            "Settings": "Paramètres"
         },
         "AssistantTab": {
             "(attached: {names})": "(joint : {names})",
@@ -256,6 +255,7 @@
             "All namespaces": "Tous les namespaces",
             "Animate windows and lists as they open": "Animer les fenêtres et les listes à l’ouverture",
             "Asks the public GitHub API for the latest release and sends nothing but the app version. The icon in the footer checks on demand.": "Interroge l'API publique de GitHub pour connaître la dernière version et n'envoie rien d'autre que la version de l'application. L'icône du pied de page vérifie à la demande.",
+            "Assistant": "Assistant",
             "CLUSTER ACCESS": "ACCÈS AU CLUSTER",
             "CONTEXT": "CONTEXTE",
             "CONTEXT NAMES": "NOMS DES CONTEXTES",
@@ -272,11 +272,15 @@
             "For a cloud KubeScope does not know, give the program your kubeconfig uses to sign in (for example oci) and the command that signs you in (for example oci session authenticate). The Sign in button then runs it, without a shell. Press Save to apply.": "Pour un cloud que KubeScope ne connaît pas, indiquez le programme que votre kubeconfig utilise pour se connecter (par exemple oci) et la commande qui vous connecte (par exemple oci session authenticate). Le bouton Se connecter l'exécute, sans shell. Cliquez sur Enregistrer pour appliquer.",
             "Forgets the lists and overviews already loaded and the sign-in of every cluster, so the next request signs in and loads everything again. Your settings are kept.": "Oublie les listes et vues d'ensemble déjà chargées ainsi que la connexion de chaque cluster : la prochaine requête se reconnecte et recharge tout. Vos paramètres sont conservés.",
             "GENERAL": "GÉNÉRAL",
+            "General": "Général",
             "Give your contexts friendlier names. Leave a name empty to keep the original one.": "Donnez des noms plus simples à vos contextes. Laissez un nom vide pour conserver l'original.",
+            "Give your contexts friendlier names. Leave a name empty to use the end of the context name.": "Donnez des noms plus parlants à vos contextes. Laissez un nom vide pour utiliser la fin du nom du contexte.",
             "KUBECONFIG FILES": "FICHIERS KUBECONFIG",
             "Keep running in the background, with an icon in the system tray": "Rester en arrière-plan, avec une icône dans la zone de notification",
+            "Kube": "Kube",
             "KubeScope reads the files in the KUBECONFIG variable, or ~/.kube/config. Add files here to read those instead. Press Save to apply.": "KubeScope lit les fichiers de la variable KUBECONFIG, ou ~/.kube/config. Ajoutez ici des fichiers pour lire ceux-là à la place. Cliquez sur Enregistrer pour appliquer.",
             "Language": "Langue",
+            "Model and effort of each program": "Modèle et effort de chaque programme",
             "New theme...": "Nouveau thème...",
             "Off by default: the window draws its own title bar in the top bar, which saves a row of space. Turn it on if moving or resizing the window misbehaves on your desktop.": "Désactivé par défaut : la fenêtre dessine sa propre barre de titre dans la barre du haut, ce qui économise une ligne d'espace. Activez-le si le déplacement ou le redimensionnement de la fenêtre pose problème sur votre bureau.",
             "On by default: a window or a list rises into place as it first shows. Turn it off to show everything at once.": "Activé par défaut : une fenêtre ou une liste glisse en place lors de sa première apparition. Désactivez cette option pour tout afficher d’un coup.",
@@ -424,6 +428,8 @@
             "DaemonSets": "DaemonSets",
             "DaemonSets of the cluster": "DaemonSets du cluster",
             "Dark": "Sombre",
+            "Default effort": "Effort par défaut",
+            "Default model": "Modèle par défaut",
             "Degraded": "Dégradé",
             "Delete": "Supprimer",
             "Delete Pod": "Supprimer le Pod",
@@ -572,6 +578,7 @@
             "Runtime Classes of the cluster": "Runtime Classes du cluster",
             "Save": "Enregistrer",
             "Save to a file": "Enregistrer dans un fichier",
+            "Saved": "Enregistré",
             "Saved the {kind} {name}": "{kind} {name} enregistré",
             "Scale": "Mettre à l'échelle",
             "Scale Deployment": "Mettre le Deployment à l'échelle",
@@ -587,7 +594,6 @@
             "Services": "Services",
             "Services of the cluster": "Services du cluster",
             "Settings": "Paramètres",
-            "Settings saved.": "Paramètres enregistrés.",
             "Shell command": "Commande du shell",
             "Show KubeScope": "Afficher KubeScope",
             "Sign in to {provider}": "Se connecter à {provider}",
@@ -637,6 +643,8 @@
             "Your user is not allowed to do this. Ask your cluster admin for access.": "Votre utilisateur n'est pas autorisé à faire cela. Demandez l'accès à l'administrateur de votre cluster.",
             "Your user is not allowed to {action}. Ask your cluster admin for access.": "Votre utilisateur n'est pas autorisé à effectuer cette action ({action}). Demandez l'accès à l'administrateur de votre cluster.",
             "running · {pending} pending · {failed} failed": "en cours d'exécution · {pending} en attente · {failed} en échec",
+            "unknown effort": "effort inconnu",
+            "unknown model": "modèle inconnu",
             "{count} Add-ons in the cluster": "{count} Add-ons dans le cluster",
             "{count} Config Maps in {namespaces} namespaces": "{count} Config Maps dans {namespaces} namespaces",
             "{count} CronJobs in {namespaces} namespaces": "{count} CronJobs dans {namespaces} namespaces",

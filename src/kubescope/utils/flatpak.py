@@ -48,6 +48,6 @@ def host_has(program: str) -> bool:
             capture_output=True,
             timeout=PROBE_TIMEOUT,
         )
-    except (OSError, subprocess.TimeoutExpired):
+    except OSError, subprocess.TimeoutExpired:
         return False
     return result.returncode == 0

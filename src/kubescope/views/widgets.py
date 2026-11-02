@@ -272,7 +272,7 @@ class UsageChart(QWidget):
 
 
 class _LineNumbers(QWidget):
-    def __init__(self, editor: "LineNumberEditor") -> None:
+    def __init__(self, editor: LineNumberEditor) -> None:
         super().__init__(editor)
         self._editor = editor
 

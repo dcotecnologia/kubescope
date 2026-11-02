@@ -16,7 +16,8 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from kubescope.theme import BUILTIN, DARK, LIGHT, theme_tokens
+from kubescope.theme import BUILTIN, DARK, LIGHT, theme_tokens, themed
+from kubescope.views.chat_icons import close_icon, icon_only, save_icon
 
 
 def token_labels() -> dict[str, str]:
@@ -143,10 +144,14 @@ class ThemeEditor(QDialog):
             self.tr("Undo the color changes made since this window opened")
         )
         self.reset_button.clicked.connect(self._reset)
-        cancel_button = QPushButton(self.tr("Cancel"))
+        cancel_button = QPushButton()
+        icon_only(cancel_button, self.tr("Cancel"), close_icon(themed("#3220a0")))
         cancel_button.setProperty("variant", "secondary")
         cancel_button.clicked.connect(self.reject)
-        self.save_button = QPushButton(self.tr("Save"))
+        self.save_button = QPushButton()
+        icon_only(
+            self.save_button, self.tr("Save"), save_icon(themed("#ffffff", text=True))
+        )
         self.save_button.setProperty("variant", "primary")
         self.save_button.setDefault(True)
         self.save_button.clicked.connect(self.accept)

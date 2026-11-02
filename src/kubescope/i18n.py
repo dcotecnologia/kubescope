@@ -20,10 +20,10 @@ from kubescope.settings import config_directory
 logger = logging.getLogger(__name__)
 
 BUNDLED_DIRECTORY = Path(__file__).resolve().parent / "languages"
-ENGLISH = "en"
+ENGLISH = "en_US"  # the language of the source texts
 
 _installed: list[QTranslator] = []
-_languages: dict[str, "Language"] | None = None
+_languages: dict[str, Language] | None = None
 
 
 @dataclass(frozen=True)
@@ -84,7 +84,7 @@ def parse_language(document: object) -> Language:
 
 def _read_languages(directory: Path, into: dict[str, Language]) -> None:
     for path in sorted(directory.glob("*.json")) if directory.is_dir() else []:
-        if path.stem == ENGLISH:
+        if path.stem.split("_")[0].lower() == "en":  # English is the source
             continue
         try:
             into[path.stem] = parse_language(
@@ -140,6 +140,8 @@ def language_name(choice: str) -> str:
     """The English name of the language in use for a stored choice, such as
     "Portuguese"; the name the language file gives when Qt does not know it."""
     code = resolve_language(choice)
+    if code == ENGLISH:
+        return "English"
     return _english_name(code) or available_languages()[code]
 
 
@@ -171,17 +173,35 @@ def english_names() -> list[str]:
     return ["English", *sorted(others, key=str.casefold)]
 
 
+def _same_language(code: str, available: dict[str, str]) -> str | None:
+    """A language of the app that is the language of a code in another
+    territory: `pt` and `pt_PT` read `pt_BR`."""
+    base = code.split("_")[0].lower()
+    return next(
+        (other for other in available if other.split("_")[0].lower() == base),
+        None,
+    )
+
+
 def resolve_language(choice: str) -> str:
-    """Map a stored choice ("auto", "en", "pt") to a supported language
-    code."""
+    """Map a stored choice ("auto", "en_US", "pt_BR", or a code from an older
+    version such as "en" or "pt") to a supported language code.
+
+    A language the app has only for another territory is used for the
+    territories it lacks, so a computer set to Portuguese of Portugal
+    reads Brazilian Portuguese.
+    """
     available = available_languages()
     if choice in available:
         return choice
+    if (same := _same_language(choice, available)) is not None:
+        return same
     system = QLocale.system().name()  # such as pt_BR
     for candidate in (
         system,
         _LOCALE_ALIASES.get(system, ""),
         system.split("_")[0].lower(),
+        _same_language(system, available) or "",
     ):
         if candidate in available:
             return candidate

@@ -74,3 +74,20 @@ def test_claude_takes_images_as_one_message_with_the_question() -> None:
         "data": base64.b64encode(b"\x89PNGdata").decode(),
     }
     assert second == {"type": "text", "text": "what is this?"}
+
+
+def test_the_defaults_of_claude_code_come_from_its_settings(
+    monkeypatch, tmp_path
+) -> None:
+    monkeypatch.setenv("CLAUDE_CONFIG_DIR", str(tmp_path))
+    assert claude.defaults() == ("", "")  # no settings
+
+    (tmp_path / "settings.json").write_text(
+        '{"model": "sonnet", "effortLevel": "low"}', encoding="utf-8"
+    )
+    assert claude.defaults() == ("sonnet", "low")
+
+    (tmp_path / "settings.json").write_text('{"model": 3}', encoding="utf-8")
+    assert claude.defaults() == ("", "")
+    (tmp_path / "settings.json").write_text("[", encoding="utf-8")
+    assert claude.defaults() == ("", "")

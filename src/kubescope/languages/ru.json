@@ -3,15 +3,14 @@
     "rtl": false,
     "strings": {
         "AssistantDock": {
-            "Ask Gabi": "Спросить Gabi",
-            "Clear history": "Очистить историю",
-            "Close": "Закрыть"
+            "Ask Gabi": "Спросить Gabi"
         },
         "AssistantPanel": {
             "Clear history": "Очистить историю",
             "Close": "Закрыть",
             "Open in a window of its own": "Открыть в отдельном окне",
-            "Put it back in the window": "Вернуть в окно"
+            "Put it back in the window": "Вернуть в окно",
+            "Settings": "Настройки"
         },
         "AssistantTab": {
             "(attached: {names})": "(вложено: {names})",
@@ -256,6 +255,7 @@
             "All namespaces": "Все namespaces",
             "Animate windows and lists as they open": "Анимировать окна и списки при открытии",
             "Asks the public GitHub API for the latest release and sends nothing but the app version. The icon in the footer checks on demand.": "Запрашивает у публичного API GitHub последний релиз и отправляет только версию приложения. Значок в нижней панели проверяет по запросу.",
+            "Assistant": "Ассистент",
             "CLUSTER ACCESS": "ДОСТУП К КЛАСТЕРУ",
             "CONTEXT": "КОНТЕКСТ",
             "CONTEXT NAMES": "ИМЕНА КОНТЕКСТОВ",
@@ -272,11 +272,15 @@
             "For a cloud KubeScope does not know, give the program your kubeconfig uses to sign in (for example oci) and the command that signs you in (for example oci session authenticate). The Sign in button then runs it, without a shell. Press Save to apply.": "Для облака, которого KubeScope не знает, укажите программу, которую ваш kubeconfig использует для входа (например, oci), и команду входа (например, oci session authenticate). Кнопка «Войти» запустит её без оболочки. Нажмите «Сохранить», чтобы применить.",
             "Forgets the lists and overviews already loaded and the sign-in of every cluster, so the next request signs in and loads everything again. Your settings are kept.": "Забывает уже загруженные списки и обзоры, а также вход в каждый кластер, поэтому следующий запрос снова выполнит вход и загрузит всё заново. Ваши настройки сохраняются.",
             "GENERAL": "ОБЩИЕ",
+            "General": "Общие",
             "Give your contexts friendlier names. Leave a name empty to keep the original one.": "Задайте контекстам понятные имена. Оставьте имя пустым, чтобы сохранить исходное.",
+            "Give your contexts friendlier names. Leave a name empty to use the end of the context name.": "Дайте контекстам более понятные имена. Оставьте имя пустым, чтобы использовать конец имени контекста.",
             "KUBECONFIG FILES": "ФАЙЛЫ KUBECONFIG",
             "Keep running in the background, with an icon in the system tray": "Работать в фоновом режиме со значком в системном трее",
+            "Kube": "Kube",
             "KubeScope reads the files in the KUBECONFIG variable, or ~/.kube/config. Add files here to read those instead. Press Save to apply.": "KubeScope читает файлы из переменной KUBECONFIG или ~/.kube/config. Добавьте файлы здесь, чтобы читать их вместо этого. Нажмите «Сохранить», чтобы применить.",
             "Language": "Язык",
+            "Model and effort of each program": "Модель и усилие каждой программы",
             "New theme...": "Новая тема...",
             "Off by default: the window draws its own title bar in the top bar, which saves a row of space. Turn it on if moving or resizing the window misbehaves on your desktop.": "По умолчанию выключено: окно рисует собственный заголовок в верхней панели, что экономит одну строку места. Включите, если перемещение или изменение размера окна работает неправильно на вашем рабочем столе.",
             "On by default: a window or a list rises into place as it first shows. Turn it off to show everything at once.": "Включено по умолчанию: окно или список плавно появляется на месте при первом показе. Выключите, чтобы всё показывалось сразу.",
@@ -424,6 +428,8 @@
             "DaemonSets": "DaemonSets",
             "DaemonSets of the cluster": "DaemonSets кластера",
             "Dark": "Тёмная",
+            "Default effort": "Усилие по умолчанию",
+            "Default model": "Модель по умолчанию",
             "Degraded": "Ухудшен",
             "Delete": "Удалить",
             "Delete Pod": "Удалить Pod",
@@ -572,6 +578,7 @@
             "Runtime Classes of the cluster": "Runtime Classes кластера",
             "Save": "Сохранить",
             "Save to a file": "Сохранить в файл",
+            "Saved": "Сохранено",
             "Saved the {kind} {name}": "{kind} {name} сохранён",
             "Scale": "Масштабировать",
             "Scale Deployment": "Масштабировать Deployment",
@@ -587,7 +594,6 @@
             "Services": "Services",
             "Services of the cluster": "Services кластера",
             "Settings": "Настройки",
-            "Settings saved.": "Настройки сохранены.",
             "Shell command": "Команда оболочки",
             "Show KubeScope": "Показать KubeScope",
             "Sign in to {provider}": "Войти в {provider}",
@@ -637,6 +643,8 @@
             "Your user is not allowed to do this. Ask your cluster admin for access.": "Вашему пользователю это не разрешено. Обратитесь к администратору кластера за доступом.",
             "Your user is not allowed to {action}. Ask your cluster admin for access.": "Вашему пользователю не разрешено: {action}. Обратитесь к администратору кластера за доступом.",
             "running · {pending} pending · {failed} failed": "запущено · ожидает: {pending} · сбоев: {failed}",
+            "unknown effort": "усилие неизвестно",
+            "unknown model": "модель неизвестна",
             "{count} Add-ons in the cluster": "Add-ons в кластере: {count}",
             "{count} Config Maps in {namespaces} namespaces": "Config Maps: {count}, namespaces: {namespaces}",
             "{count} CronJobs in {namespaces} namespaces": "CronJobs: {count}, namespaces: {namespaces}",

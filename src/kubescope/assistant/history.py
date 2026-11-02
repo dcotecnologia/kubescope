@@ -31,7 +31,7 @@ class History:
     def _load(self) -> None:
         try:
             document = json.loads(self.path.read_text(encoding="utf-8"))
-        except (OSError, ValueError):
+        except OSError, ValueError:
             return
         contexts = document.get("contexts") if isinstance(document, dict) else None
         for context, entries in (

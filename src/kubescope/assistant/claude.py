@@ -1,7 +1,9 @@
 """The `claude` program, as an assistant."""
 
 import json
+import os
 from collections.abc import Sequence
+from pathlib import Path
 from typing import Any
 
 from kubescope.assistant.attachments import Attachment
@@ -66,10 +68,25 @@ def parse_line(line: str) -> tuple[str, str]:
     return (text if isinstance(text, str) else ""), ""
 
 
+def defaults() -> tuple[str, str]:
+    """The model and the effort in the settings of Claude Code."""
+    folder = os.environ.get("CLAUDE_CONFIG_DIR") or str(Path.home() / ".claude")
+    try:
+        data = _dict(json.loads((Path(folder) / "settings.json").read_text("utf-8")))
+    except OSError, ValueError:
+        return "", ""
+    model, effort = data.get("model"), data.get("effortLevel")
+    return (
+        model if isinstance(model, str) else "",
+        effort if isinstance(effort, str) else "",
+    )
+
+
 def guide(language: str) -> str:
     """The quickstart of Claude Code, in Portuguese or English."""
     return (
-        f"https://code.claude.com/docs/{'pt' if language == 'pt' else 'en'}/quickstart"
+        f"https://code.claude.com/docs/{'pt' if language.startswith('pt') else 'en'}"
+        "/quickstart"
     )
 
 
@@ -82,4 +99,8 @@ CLAUDE = Assistant(
     image_options,
     image_payload,
     guide=guide,
+    models=("fable", "opus", "sonnet", "haiku"),
+    efforts=("low", "medium", "high", "xhigh", "max"),
+    effort_options=lambda effort: ["--effort", effort],
+    defaults=defaults,
 )

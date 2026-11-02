@@ -3,15 +3,14 @@
     "rtl": false,
     "strings": {
         "AssistantDock": {
-            "Ask Gabi": "Hỏi Gabi",
-            "Clear history": "Xóa lịch sử",
-            "Close": "Đóng"
+            "Ask Gabi": "Hỏi Gabi"
         },
         "AssistantPanel": {
             "Clear history": "Xóa lịch sử",
             "Close": "Đóng",
             "Open in a window of its own": "Mở trong cửa sổ riêng",
-            "Put it back in the window": "Đưa trở lại cửa sổ"
+            "Put it back in the window": "Đưa trở lại cửa sổ",
+            "Settings": "Cài đặt"
         },
         "AssistantTab": {
             "(attached: {names})": "(đã đính kèm: {names})",
@@ -256,6 +255,7 @@
             "All namespaces": "Tất cả namespace",
             "Animate windows and lists as they open": "Hiệu ứng khi mở cửa sổ và danh sách",
             "Asks the public GitHub API for the latest release and sends nothing but the app version. The icon in the footer checks on demand.": "Hỏi API GitHub công khai về bản phát hành mới nhất và không gửi gì ngoài phiên bản ứng dụng. Biểu tượng ở chân trang kiểm tra theo yêu cầu.",
+            "Assistant": "Trợ lý",
             "CLUSTER ACCESS": "TRUY CẬP CỤM",
             "CONTEXT": "CONTEXT",
             "CONTEXT NAMES": "TÊN CONTEXT",
@@ -272,11 +272,15 @@
             "For a cloud KubeScope does not know, give the program your kubeconfig uses to sign in (for example oci) and the command that signs you in (for example oci session authenticate). The Sign in button then runs it, without a shell. Press Save to apply.": "Với một đám mây KubeScope không biết, hãy nhập chương trình mà kubeconfig của bạn dùng để đăng nhập (ví dụ oci) và lệnh đăng nhập (ví dụ oci session authenticate). Nút Đăng nhập sẽ chạy lệnh đó mà không dùng shell. Nhấn Lưu để áp dụng.",
             "Forgets the lists and overviews already loaded and the sign-in of every cluster, so the next request signs in and loads everything again. Your settings are kept.": "Quên các danh sách và tổng quan đã tải cũng như phiên đăng nhập của mọi cụm, nên yêu cầu tiếp theo sẽ đăng nhập và tải lại mọi thứ. Cài đặt của bạn được giữ nguyên.",
             "GENERAL": "CHUNG",
+            "General": "Chung",
             "Give your contexts friendlier names. Leave a name empty to keep the original one.": "Đặt cho các context của bạn những cái tên dễ nhớ hơn. Để trống một tên để giữ tên gốc.",
+            "Give your contexts friendlier names. Leave a name empty to use the end of the context name.": "Đặt cho các ngữ cảnh những tên dễ nhớ hơn. Để trống tên để dùng phần cuối của tên ngữ cảnh.",
             "KUBECONFIG FILES": "TỆP KUBECONFIG",
             "Keep running in the background, with an icon in the system tray": "Tiếp tục chạy nền, với biểu tượng ở khay hệ thống",
+            "Kube": "Kube",
             "KubeScope reads the files in the KUBECONFIG variable, or ~/.kube/config. Add files here to read those instead. Press Save to apply.": "KubeScope đọc các tệp trong biến KUBECONFIG hoặc ~/.kube/config. Thêm tệp vào đây để đọc chúng thay thế. Nhấn Lưu để áp dụng.",
             "Language": "Ngôn ngữ",
+            "Model and effort of each program": "Mô hình và mức nỗ lực của từng chương trình",
             "New theme...": "Giao diện mới...",
             "Off by default: the window draws its own title bar in the top bar, which saves a row of space. Turn it on if moving or resizing the window misbehaves on your desktop.": "Mặc định tắt: cửa sổ tự vẽ thanh tiêu đề trong thanh trên cùng, giúp tiết kiệm một hàng không gian. Hãy bật nếu việc di chuyển hoặc đổi kích thước cửa sổ gặp lỗi trên máy tính của bạn.",
             "On by default: a window or a list rises into place as it first shows. Turn it off to show everything at once.": "Bật theo mặc định: cửa sổ hoặc danh sách sẽ trượt lên đúng vị trí khi hiện lần đầu. Hãy tắt để hiển thị mọi thứ ngay lập tức.",
@@ -424,6 +428,8 @@
             "DaemonSets": "DaemonSets",
             "DaemonSets of the cluster": "DaemonSets của cụm",
             "Dark": "Tối",
+            "Default effort": "Mức nỗ lực mặc định",
+            "Default model": "Mô hình mặc định",
             "Degraded": "Suy giảm",
             "Delete": "Xóa",
             "Delete Pod": "Xóa Pod",
@@ -572,6 +578,7 @@
             "Runtime Classes of the cluster": "Runtime Classes của cụm",
             "Save": "Lưu",
             "Save to a file": "Lưu vào tệp",
+            "Saved": "Đã lưu",
             "Saved the {kind} {name}": "Đã lưu {kind} {name}",
             "Scale": "Thay đổi quy mô",
             "Scale Deployment": "Thay đổi quy mô Deployment",
@@ -587,7 +594,6 @@
             "Services": "Services",
             "Services of the cluster": "Services của cụm",
             "Settings": "Cài đặt",
-            "Settings saved.": "Đã lưu cài đặt.",
             "Shell command": "Lệnh shell",
             "Show KubeScope": "Hiện KubeScope",
             "Sign in to {provider}": "Đăng nhập {provider}",
@@ -637,6 +643,8 @@
             "Your user is not allowed to do this. Ask your cluster admin for access.": "Người dùng của bạn không được phép làm điều này. Hãy nhờ quản trị viên cụm cấp quyền truy cập.",
             "Your user is not allowed to {action}. Ask your cluster admin for access.": "Người dùng của bạn không được phép {action}. Hãy nhờ quản trị viên cụm cấp quyền truy cập.",
             "running · {pending} pending · {failed} failed": "đang chạy · {pending} đang chờ · {failed} thất bại",
+            "unknown effort": "mức nỗ lực không rõ",
+            "unknown model": "mô hình không rõ",
             "{count} Add-ons in the cluster": "{count} Add-ons trong cụm",
             "{count} Config Maps in {namespaces} namespaces": "{count} Config Maps trong {namespaces} namespace",
             "{count} CronJobs in {namespaces} namespaces": "{count} CronJobs trong {namespaces} namespace",
