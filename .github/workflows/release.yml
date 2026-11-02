@@ -85,11 +85,11 @@ jobs:
 
   flatpak:
     name: Flatpak
-    if: github.event_name != 'workflow_dispatch' || inputs.target != 'windows'
-    # The Flatpak installs the app with the Python of its runtime, which is older than
-    # the 3.15 the app requires, so this build fails until the runtime has 3.15. It does
-    # not hold the release back: the Flatpak is not sent to a store from here anyway.
-    continue-on-error: true
+    # Off for now: the Flatpak installs the app with the Python of its runtime (3.13),
+    # which cannot run an app that requires Python 3.15. Set the repository variable
+    # BUILD_FLATPAK to true to build it again, once the Flatpak brings its own Python
+    # 3.15 or the runtime has it.
+    if: vars.BUILD_FLATPAK == 'true' && (github.event_name != 'workflow_dispatch' || inputs.target != 'windows')
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7

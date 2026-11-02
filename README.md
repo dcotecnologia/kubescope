@@ -59,7 +59,7 @@ not need `kubectl`.
 | Debian and Ubuntu | `kubescope_<version>_amd64.deb`             | `sudo apt install ./kubescope_<version>_amd64.deb`, then `kubescope`           |
 | Any Linux         | `KubeScope-<version>-x86_64.AppImage`       | `chmod +x` the file and run it                                                 |
 | Any Linux (snap)  | `dco-kubescope_<version>_amd64.snap`        | `sudo snap install dco-kubescope`                                              |
-| Linux (Flatpak)   | `KubeScope-<version>.flatpak`               | `flatpak install --user ./KubeScope-<version>.flatpak`                         |
+| Linux (Flatpak)   | none for now (needs Python 3.15)            | [run it from source](#run-from-source)                                         |
 | Windows           | `KubeScope-<version>-windows-x64-setup.exe` | run the installer; or unzip the portable `KubeScope-<version>-windows-x64.zip` |
 | macOS and others  | none yet                                    | [run it from source](#run-from-source)                                         |
 

@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+### Changed
+
+- The Flatpak is not built or published with the releases for now, because its runtime has Python 3.13 and the app needs 3.15 by @danilogco
+
 ## [1.4.0] - 2026-11-02
 
 ### Added
