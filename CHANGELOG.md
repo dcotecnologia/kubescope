@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-11-02
+
 ### Added
 
 - **Settings** has three sections: General, Kube (the kubeconfig files, the sign-in commands and the names of the contexts) and Assistant, and the guide of the assistant opens the last by @danilogco
@@ -18,6 +20,11 @@ All notable changes to this project will be documented in this file. The format 
 - **/kube** (or **/kubectl**) in the chat of the assistant answers, without asking the program, what the computer has for kubectl: its version, the kubeconfig files and the contexts in them, with no token, certificate or server address by @danilogco
 - In the chat of the assistant, **Enter** sends the message and **Shift+Enter** goes to the next line by @danilogco
 - **Ctrl+G** opens the assistant with the cursor in the chat, and puts it away when the cursor is in it already by @danilogco
+
+### Changed
+
+- Python 3.15 is the only version supported: `requires-python`, the CI, the pre-commit hooks and the documentation say so, and the Windows build installs Python into `Python315` by @danilogco
+- Save, cancel and close buttons are only an icon, with the words as a tip by @danilogco
 
 ## [1.3.2] - 2026-11-01
 
@@ -474,7 +481,8 @@ The first release.
 
 - Pod logs and resource details are still never written to disk by the app on its own. **Save** is the only exception, and it writes only to the file the user chooses. SECURITY.md says so by @danilogco
 
-[Unreleased]: https://github.com/dcotecnologia/kubescope/compare/v1.3.2...HEAD
+[Unreleased]: https://github.com/dcotecnologia/kubescope/compare/v1.4.0...HEAD
+[1.4.0]: https://github.com/dcotecnologia/kubescope/compare/v1.3.2...v1.4.0
 [1.3.2]: https://github.com/dcotecnologia/kubescope/compare/v1.3.1...v1.3.2
 [1.3.1]: https://github.com/dcotecnologia/kubescope/compare/v1.3.0...v1.3.1
 [1.3.0]: https://github.com/dcotecnologia/kubescope/compare/v1.2.0...v1.3.0
