@@ -319,3 +319,34 @@ def test_in_a_flatpak_the_host_says_whether_a_path_can_be_run(monkeypatch) -> No
     assert runner.is_available(FAKE)
     runner.CUSTOM_PROGRAMS["fake"] = "/nowhere/fake-ai"
     assert not runner.is_available(FAKE)
+
+
+def test_the_model_and_effort_the_person_chose_reach_the_program(monkeypatch) -> None:
+    from kubescope.assistant import claude, codex
+
+    monkeypatch.setattr(runner, "find_program", lambda program: None)
+    monkeypatch.setattr(runner, "CUSTOM_MODELS", {"claude": "opus", "codex": "gpt-x"})
+    monkeypatch.setattr(runner, "CUSTOM_EFFORTS", {"claude": "max", "codex": "high"})
+
+    arguments = runner.command(claude.CLAUDE)
+    assert arguments[arguments.index("--model") + 1] == "opus"
+    assert arguments[-2:] == ["--effort", "max"]
+
+    arguments = runner.command(codex.CODEX)
+    assert arguments[arguments.index("-m") + 1] == "gpt-x"
+    assert arguments[-2:] == ["-c", 'model_reasoning_effort="high"']
+
+    given = runner.command(claude.CLAUDE, "sonnet")  # a model given wins
+    assert given[given.index("--model") + 1] == "sonnet"
+
+
+def test_an_effort_is_left_out_for_a_program_that_cannot_set_it(monkeypatch) -> None:
+    from kubescope.assistant.runner import Assistant
+
+    plain = Assistant(
+        "plain", "Plain", "plain-ai", lambda m, s: ["x"], lambda line: ("", "")
+    )
+    monkeypatch.setattr(runner, "find_program", lambda program: None)
+    monkeypatch.setattr(runner, "CUSTOM_EFFORTS", {"plain": "high"})
+
+    assert runner.command(plain) == ["plain-ai", "x"]

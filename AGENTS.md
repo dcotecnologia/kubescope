@@ -4,7 +4,7 @@ Guide for agents (human and AI) working in this repository.
 Goal: keep the architecture, tests, translations, and commit history consistent.
 
 KubeScope is a desktop IDE for Kubernetes, built with
-Python 3.12+ and PySide6 (Qt). It talks to the cluster with the official `kubernetes` Python client. It is
+Python 3.15 and PySide6 (Qt). It talks to the cluster with the official `kubernetes` Python client. It is
 read-only by default; the few actions that change a cluster (delete or evict a
 Pod, scale or restart a Deployment, and the shell and port-forward commands) exist only behind the write
 mode, a user setting that is off by default.
@@ -76,7 +76,7 @@ Golden rule:
 
 - Write code that reads like the surrounding code: match its naming, comment
   density, and idioms.
-- Target Python 3.12+ (CI runs 3.12 to 3.15; releases are built with 3.15). Do not use APIs deprecated in 3.14.
+- Target Python 3.15, the only version supported (CI and the releases use it). Do not use APIs deprecated in 3.15.
 - Prefer simple functions and dataclasses over class hierarchies. Use classes
   only where Qt requires them (widgets, `QThread` workers).
 - Tests are plain `pytest` functions; avoid test classes unless clearly needed.

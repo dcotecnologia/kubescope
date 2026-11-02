@@ -3,15 +3,14 @@
     "rtl": true,
     "strings": {
         "AssistantDock": {
-            "Ask Gabi": "שאל את Gabi",
-            "Clear history": "נקה היסטוריה",
-            "Close": "סגור"
+            "Ask Gabi": "שאל את Gabi"
         },
         "AssistantPanel": {
             "Clear history": "נקה היסטוריה",
             "Close": "סגור",
             "Open in a window of its own": "פתח בחלון נפרד",
-            "Put it back in the window": "החזר לחלון"
+            "Put it back in the window": "החזר לחלון",
+            "Settings": "הגדרות"
         },
         "AssistantTab": {
             "(attached: {names})": "(מצורף: {names})",
@@ -256,6 +255,7 @@
             "All namespaces": "כל מרחבי השמות",
             "Animate windows and lists as they open": "הנפש חלונות ורשימות בעת הפתיחה",
             "Asks the public GitHub API for the latest release and sends nothing but the app version. The icon in the footer checks on demand.": "שואל את ה-API הציבורי של GitHub לגבי הגרסה האחרונה ואינו שולח דבר מלבד גרסת היישום. הסמל בכותרת התחתונה בודק לפי דרישה.",
+            "Assistant": "עוזר",
             "CLUSTER ACCESS": "גישה לאשכול",
             "CONTEXT": "הקשר",
             "CONTEXT NAMES": "שמות הקשרים",
@@ -272,11 +272,15 @@
             "For a cloud KubeScope does not know, give the program your kubeconfig uses to sign in (for example oci) and the command that signs you in (for example oci session authenticate). The Sign in button then runs it, without a shell. Press Save to apply.": "עבור ענן ש-KubeScope אינו מכיר, ציינו את התוכנית שבה ה-kubeconfig שלכם משתמש כדי להתחבר (למשל oci) ואת הפקודה שמחברת אתכם (למשל oci session authenticate). הכפתור התחבר יריץ אותה ללא מעטפת. לחצו על שמור כדי להחיל.",
             "Forgets the lists and overviews already loaded and the sign-in of every cluster, so the next request signs in and loads everything again. Your settings are kept.": "שוכח את הרשימות והסקירות שכבר נטענו ואת ההתחברות לכל אשכול, כך שהבקשה הבאה תתחבר ותטען הכול מחדש. ההגדרות שלכם נשמרות.",
             "GENERAL": "כללי",
+            "General": "כללי",
             "Give your contexts friendlier names. Leave a name empty to keep the original one.": "תנו להקשרים שלכם שמות ידידותיים יותר. השאירו שם ריק כדי לשמור על המקורי.",
+            "Give your contexts friendlier names. Leave a name empty to use the end of the context name.": "תנו להקשרים שלכם שמות ידידותיים יותר. השאירו שם ריק כדי להשתמש בסוף שם ההקשר.",
             "KUBECONFIG FILES": "קובצי KUBECONFIG",
             "Keep running in the background, with an icon in the system tray": "להמשיך לפעול ברקע, עם סמל במגש המערכת",
+            "Kube": "Kube",
             "KubeScope reads the files in the KUBECONFIG variable, or ~/.kube/config. Add files here to read those instead. Press Save to apply.": "KubeScope קורא את הקבצים שבמשתנה KUBECONFIG, או את ~/.kube/config. הוסיפו כאן קבצים כדי לקרוא אותם במקום זאת. לחצו על שמור כדי להחיל.",
             "Language": "שפה",
+            "Model and effort of each program": "מודל ורמת מאמץ לכל תוכנה",
             "New theme...": "ערכת נושא חדשה...",
             "Off by default: the window draws its own title bar in the top bar, which saves a row of space. Turn it on if moving or resizing the window misbehaves on your desktop.": "כבוי כברירת מחדל: החלון מצייר את שורת הכותרת שלו בסרגל העליון, וכך חוסך שורה של מקום. הפעילו זאת אם הזזה או שינוי גודל של החלון אינם פועלים כראוי בשולחן העבודה שלכם.",
             "On by default: a window or a list rises into place as it first shows. Turn it off to show everything at once.": "מופעל כברירת מחדל: חלון או רשימה עולים למקומם עם הופעתם הראשונה. כבו כדי להציג הכול בבת אחת.",
@@ -424,6 +428,8 @@
             "DaemonSets": "DaemonSets",
             "DaemonSets of the cluster": "DaemonSets של האשכול",
             "Dark": "כהה",
+            "Default effort": "מאמץ ברירת מחדל",
+            "Default model": "מודל ברירת מחדל",
             "Degraded": "ביצועים מופחתים",
             "Delete": "מחיקה",
             "Delete Pod": "מחיקת Pod",
@@ -572,6 +578,7 @@
             "Runtime Classes of the cluster": "Runtime Classes של האשכול",
             "Save": "שמירה",
             "Save to a file": "שמור לקובץ",
+            "Saved": "נשמר",
             "Saved the {kind} {name}": "{kind} {name} נשמר",
             "Scale": "שינוי קנה מידה",
             "Scale Deployment": "שינוי קנה מידה של Deployment",
@@ -587,7 +594,6 @@
             "Services": "Services",
             "Services of the cluster": "Services של האשכול",
             "Settings": "הגדרות",
-            "Settings saved.": "ההגדרות נשמרו.",
             "Shell command": "פקודת shell",
             "Show KubeScope": "הצג את KubeScope",
             "Sign in to {provider}": "התחבר אל {provider}",
@@ -637,6 +643,8 @@
             "Your user is not allowed to do this. Ask your cluster admin for access.": "למשתמש שלכם אין הרשאה לעשות זאת. בקשו גישה ממנהל האשכול.",
             "Your user is not allowed to {action}. Ask your cluster admin for access.": "למשתמש שלכם אין הרשאה: {action}. בקשו גישה ממנהל האשכול.",
             "running · {pending} pending · {failed} failed": "פועלים · {pending} ממתינים · {failed} נכשלו",
+            "unknown effort": "מאמץ לא ידוע",
+            "unknown model": "מודל לא ידוע",
             "{count} Add-ons in the cluster": "{count} Add-ons באשכול",
             "{count} Config Maps in {namespaces} namespaces": "{count} Config Maps ב-{namespaces} מרחבי שמות",
             "{count} CronJobs in {namespaces} namespaces": "{count} CronJobs ב-{namespaces} מרחבי שמות",

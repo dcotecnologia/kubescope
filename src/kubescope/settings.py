@@ -35,6 +35,8 @@ DEFAULTS: dict[str, Any] = {
     "assistant_enabled": True,
     "assistant_panel": {},
     "assistant_programs": {},
+    "assistant_models": {},
+    "assistant_efforts": {},
     "assistant": "",
     "assistant_consent": False,
     "run_in_background": True,
@@ -71,6 +73,13 @@ def log_directory() -> Path:
     return config_directory() / "logs"
 
 
+def default_context_name(context: str) -> str:
+    """The name a context shows with when it has no alias of its own: the last
+    part of it, so `arn:aws:eks:us-east-1:123:cluster/shop-prd` is `shop-
+    prd`."""
+    return context.rsplit("/", 1)[-1].rsplit(":", 1)[-1] or context
+
+
 class Settings:
     """Loads tolerant of missing or damaged files and saves atomically."""
 
@@ -85,7 +94,7 @@ class Settings:
             document = json.loads(self.path.read_text(encoding="utf-8"))
             if isinstance(document, dict):
                 stored = document
-        except (OSError, ValueError):
+        except OSError, ValueError:
             pass
         self._data = {**DEFAULTS, **{k: stored[k] for k in DEFAULTS if k in stored}}
         self._data["context_aliases"] = {
@@ -356,6 +365,39 @@ class Settings:
     def assistant_enabled(self, value: bool) -> None:
         self._data["assistant_enabled"] = bool(value)
 
+    def _assistant_map(self, name: str) -> dict[str, str]:
+        """A text for each assistant, by its key; what is not a key and a text
+        is left out."""
+        value = self._data[name]
+        return {
+            key.strip(): text.strip()
+            for key, text in (value.items() if isinstance(value, dict) else [])
+            if isinstance(key, str)
+            and isinstance(text, str)
+            and key.strip()
+            and text.strip()
+        }
+
+    @property
+    def assistant_models(self) -> dict[str, str]:
+        """The model each assistant answers with; an assistant not in it uses
+        the default of its program."""
+        return self._assistant_map("assistant_models")
+
+    @assistant_models.setter
+    def assistant_models(self, value: dict[str, str]) -> None:
+        self._data["assistant_models"] = dict(value)
+
+    @property
+    def assistant_efforts(self) -> dict[str, str]:
+        """How much each assistant thinks before it answers; an assistant not
+        in it uses the default of its program."""
+        return self._assistant_map("assistant_efforts")
+
+    @assistant_efforts.setter
+    def assistant_efforts(self, value: dict[str, str]) -> None:
+        self._data["assistant_efforts"] = dict(value)
+
     @property
     def assistant_programs(self) -> dict[str, str]:
         """The path of the program of each assistant, for the ones the system
@@ -486,4 +528,6 @@ class Settings:
         self._data["pinned_views"] = list(dict.fromkeys(views))
 
     def display_name(self, context: str) -> str:
-        return self._data["context_aliases"].get(context) or context
+        return self._data["context_aliases"].get(context) or default_context_name(
+            context
+        )

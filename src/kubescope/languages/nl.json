@@ -3,15 +3,14 @@
     "rtl": false,
     "strings": {
         "AssistantDock": {
-            "Ask Gabi": "Vraag het Gabi",
-            "Clear history": "Geschiedenis wissen",
-            "Close": "Sluiten"
+            "Ask Gabi": "Vraag het Gabi"
         },
         "AssistantPanel": {
             "Clear history": "Geschiedenis wissen",
             "Close": "Sluiten",
             "Open in a window of its own": "Openen in een eigen venster",
-            "Put it back in the window": "Terugzetten in het venster"
+            "Put it back in the window": "Terugzetten in het venster",
+            "Settings": "Instellingen"
         },
         "AssistantTab": {
             "(attached: {names})": "(bijgevoegd: {names})",
@@ -256,6 +255,7 @@
             "All namespaces": "Alle namespaces",
             "Animate windows and lists as they open": "Vensters en lijsten animeren bij het openen",
             "Asks the public GitHub API for the latest release and sends nothing but the app version. The icon in the footer checks on demand.": "Vraagt de openbare GitHub-API om de nieuwste release en verstuurt alleen de appversie. Het pictogram in de voettekst controleert op verzoek.",
+            "Assistant": "Assistent",
             "CLUSTER ACCESS": "CLUSTERTOEGANG",
             "CONTEXT": "CONTEXT",
             "CONTEXT NAMES": "CONTEXTNAMEN",
@@ -272,11 +272,15 @@
             "For a cloud KubeScope does not know, give the program your kubeconfig uses to sign in (for example oci) and the command that signs you in (for example oci session authenticate). The Sign in button then runs it, without a shell. Press Save to apply.": "Geef voor een cloud die KubeScope niet kent het programma op dat je kubeconfig gebruikt om aan te melden (bijvoorbeeld oci) en de opdracht die je aanmeldt (bijvoorbeeld oci session authenticate). De knop Aanmelden voert die dan uit, zonder shell. Druk op Opslaan om toe te passen.",
             "Forgets the lists and overviews already loaded and the sign-in of every cluster, so the next request signs in and loads everything again. Your settings are kept.": "Vergeet de al geladen lijsten en overzichten en de aanmelding van elk cluster, zodat de volgende aanvraag opnieuw aanmeldt en alles opnieuw laadt. Je instellingen blijven bewaard.",
             "GENERAL": "ALGEMEEN",
+            "General": "Algemeen",
             "Give your contexts friendlier names. Leave a name empty to keep the original one.": "Geef je contexten vriendelijkere namen. Laat een naam leeg om de oorspronkelijke te behouden.",
+            "Give your contexts friendlier names. Leave a name empty to use the end of the context name.": "Geef uw contexten vriendelijkere namen. Laat een naam leeg om het einde van de contextnaam te gebruiken.",
             "KUBECONFIG FILES": "KUBECONFIG-BESTANDEN",
             "Keep running in the background, with an icon in the system tray": "Op de achtergrond blijven draaien, met een pictogram in het systeemvak",
+            "Kube": "Kube",
             "KubeScope reads the files in the KUBECONFIG variable, or ~/.kube/config. Add files here to read those instead. Press Save to apply.": "KubeScope leest de bestanden in de variabele KUBECONFIG, of ~/.kube/config. Voeg hier bestanden toe om die te lezen. Druk op Opslaan om toe te passen.",
             "Language": "Taal",
+            "Model and effort of each program": "Model en inspanning per programma",
             "New theme...": "Nieuw thema...",
             "Off by default: the window draws its own title bar in the top bar, which saves a row of space. Turn it on if moving or resizing the window misbehaves on your desktop.": "Standaard uit: het venster tekent zijn eigen titelbalk in de bovenbalk, wat een rij ruimte bespaart. Zet dit aan als het verplaatsen of vergroten van het venster op uw bureaublad niet goed werkt.",
             "On by default: a window or a list rises into place as it first shows. Turn it off to show everything at once.": "Standaard aan: een venster of lijst schuift op zijn plaats wanneer het voor het eerst verschijnt. Zet dit uit om alles in één keer te tonen.",
@@ -424,6 +428,8 @@
             "DaemonSets": "DaemonSets",
             "DaemonSets of the cluster": "DaemonSets van het cluster",
             "Dark": "Donker",
+            "Default effort": "Standaardinspanning",
+            "Default model": "Standaardmodel",
             "Degraded": "Verminderd",
             "Delete": "Verwijderen",
             "Delete Pod": "Pod verwijderen",
@@ -572,6 +578,7 @@
             "Runtime Classes of the cluster": "Runtime Classes van het cluster",
             "Save": "Opslaan",
             "Save to a file": "Opslaan in een bestand",
+            "Saved": "Opgeslagen",
             "Saved the {kind} {name}": "{kind} {name} opgeslagen",
             "Scale": "Schalen",
             "Scale Deployment": "Deployment schalen",
@@ -587,7 +594,6 @@
             "Services": "Services",
             "Services of the cluster": "Services van het cluster",
             "Settings": "Instellingen",
-            "Settings saved.": "Instellingen opgeslagen.",
             "Shell command": "Shell-commando",
             "Show KubeScope": "KubeScope tonen",
             "Sign in to {provider}": "Aanmelden bij {provider}",
@@ -637,6 +643,8 @@
             "Your user is not allowed to do this. Ask your cluster admin for access.": "Je gebruiker mag dit niet doen. Vraag je clusterbeheerder om toegang.",
             "Your user is not allowed to {action}. Ask your cluster admin for access.": "Je gebruiker mag niet {action}. Vraag je clusterbeheerder om toegang.",
             "running · {pending} pending · {failed} failed": "actief · {pending} in behandeling · {failed} mislukt",
+            "unknown effort": "inspanning onbekend",
+            "unknown model": "model onbekend",
             "{count} Add-ons in the cluster": "{count} Add-ons in het cluster",
             "{count} Config Maps in {namespaces} namespaces": "{count} Config Maps in {namespaces} namespaces",
             "{count} CronJobs in {namespaces} namespaces": "{count} CronJobs in {namespaces} namespaces",

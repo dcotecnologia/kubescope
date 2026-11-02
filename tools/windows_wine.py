@@ -22,7 +22,7 @@ PYTHON_URL = (
     f"https://www.python.org/ftp/python/{PYTHON_VERSION}/"
     f"python-{PYTHON_VERSION}-amd64.exe"
 )
-PYTHON_DIR = r"C:\Python312"
+PYTHON_DIR = r"C:\Python315"
 INNO_URL = (
     "https://github.com/jrsoftware/issrc/releases/download/is-6_7_3/innosetup-6.7.3.exe"
 )
@@ -68,7 +68,7 @@ def download(url: str, name: str) -> Path:
 
 
 def ensure_python() -> str:
-    python = PREFIX / "drive_c" / "Python312" / "python.exe"
+    python = PREFIX / "drive_c" / "Python315" / "python.exe"
     if not python.is_file():
         installer = download(PYTHON_URL, "python-installer.exe")
         wine(
@@ -82,7 +82,7 @@ def ensure_python() -> str:
         )
     if not python.is_file():
         raise SystemExit("Could not install Python in the Wine prefix.")
-    # Wine 9 lacks CopyFile2, which shutil uses on Python 3.12+; hiding it makes
+    # Wine 9 lacks CopyFile2, which shutil uses; hiding it makes
     # shutil fall back to its portable copy.
     (python.parent / "Lib" / "site-packages" / "sitecustomize.py").write_text(
         "import _winapi\n"

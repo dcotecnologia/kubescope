@@ -3,15 +3,14 @@
     "rtl": false,
     "strings": {
         "AssistantDock": {
-            "Ask Gabi": "ถามกาบี",
-            "Clear history": "ล้างประวัติ",
-            "Close": "ปิด"
+            "Ask Gabi": "ถามกาบี"
         },
         "AssistantPanel": {
             "Clear history": "ล้างประวัติ",
             "Close": "ปิด",
             "Open in a window of its own": "เปิดในหน้าต่างแยก",
-            "Put it back in the window": "นำกลับเข้าไปในหน้าต่าง"
+            "Put it back in the window": "นำกลับเข้าไปในหน้าต่าง",
+            "Settings": "การตั้งค่า"
         },
         "AssistantTab": {
             "(attached: {names})": "(แนบแล้ว: {names})",
@@ -256,6 +255,7 @@
             "All namespaces": "เนมสเปซทั้งหมด",
             "Animate windows and lists as they open": "แสดงภาพเคลื่อนไหวของหน้าต่างและรายการเมื่อเปิด",
             "Asks the public GitHub API for the latest release and sends nothing but the app version. The icon in the footer checks on demand.": "ถาม GitHub API สาธารณะเกี่ยวกับรุ่นล่าสุด และไม่ส่งสิ่งใดนอกจากเวอร์ชันแอป ไอคอนที่ส่วนท้ายจะตรวจสอบเมื่อสั่ง",
+            "Assistant": "ผู้ช่วย",
             "CLUSTER ACCESS": "การเข้าถึงคลัสเตอร์",
             "CONTEXT": "คอนเท็กซ์",
             "CONTEXT NAMES": "ชื่อคอนเท็กซ์",
@@ -272,11 +272,15 @@
             "For a cloud KubeScope does not know, give the program your kubeconfig uses to sign in (for example oci) and the command that signs you in (for example oci session authenticate). The Sign in button then runs it, without a shell. Press Save to apply.": "สำหรับคลาวด์ที่ KubeScope ไม่รู้จัก ให้ระบุโปรแกรมที่ kubeconfig ของคุณใช้ลงชื่อเข้าใช้ (เช่น oci) และคำสั่งที่ลงชื่อเข้าใช้ให้คุณ (เช่น oci session authenticate) จากนั้นปุ่มลงชื่อเข้าใช้จะรันคำสั่งนั้นโดยไม่ผ่านเชลล์ กดบันทึกเพื่อใช้งาน",
             "Forgets the lists and overviews already loaded and the sign-in of every cluster, so the next request signs in and loads everything again. Your settings are kept.": "ลืมรายการและภาพรวมที่โหลดไว้แล้วและการลงชื่อเข้าใช้ของทุกคลัสเตอร์ ดังนั้นคำขอถัดไปจะลงชื่อเข้าใช้และโหลดทุกอย่างใหม่ การตั้งค่าของคุณจะยังคงอยู่",
             "GENERAL": "ทั่วไป",
+            "General": "ทั่วไป",
             "Give your contexts friendlier names. Leave a name empty to keep the original one.": "ตั้งชื่อคอนเท็กซ์ของคุณให้จำง่ายขึ้น เว้นชื่อว่างไว้เพื่อใช้ชื่อเดิม",
+            "Give your contexts friendlier names. Leave a name empty to use the end of the context name.": "ตั้งชื่อคอนเท็กซ์ให้อ่านง่ายขึ้น เว้นชื่อว่างไว้เพื่อใช้ส่วนท้ายของชื่อคอนเท็กซ์",
             "KUBECONFIG FILES": "ไฟล์ KUBECONFIG",
             "Keep running in the background, with an icon in the system tray": "ทำงานอยู่เบื้องหลัง พร้อมไอคอนในถาดระบบ",
+            "Kube": "Kube",
             "KubeScope reads the files in the KUBECONFIG variable, or ~/.kube/config. Add files here to read those instead. Press Save to apply.": "KubeScope อ่านไฟล์ในตัวแปร KUBECONFIG หรือ ~/.kube/config เพิ่มไฟล์ที่นี่เพื่ออ่านไฟล์เหล่านั้นแทน กดบันทึกเพื่อใช้งาน",
             "Language": "ภาษา",
+            "Model and effort of each program": "โมเดลและระดับความพยายามของแต่ละโปรแกรม",
             "New theme...": "ธีมใหม่...",
             "Off by default: the window draws its own title bar in the top bar, which saves a row of space. Turn it on if moving or resizing the window misbehaves on your desktop.": "ปิดไว้เป็นค่าเริ่มต้น: หน้าต่างจะวาดแถบชื่อเรื่องของตัวเองในแถบด้านบน ซึ่งช่วยประหยัดพื้นที่หนึ่งแถว เปิดใช้หากการย้ายหรือปรับขนาดหน้าต่างทำงานผิดปกติบนเดสก์ท็อปของคุณ",
             "On by default: a window or a list rises into place as it first shows. Turn it off to show everything at once.": "เปิดไว้เป็นค่าเริ่มต้น: หน้าต่างหรือรายการจะเลื่อนขึ้นสู่ตำแหน่งเมื่อแสดงครั้งแรก ปิดตัวเลือกนี้เพื่อแสดงทุกอย่างทันที",
@@ -424,6 +428,8 @@
             "DaemonSets": "DaemonSets",
             "DaemonSets of the cluster": "DaemonSets ของคลัสเตอร์",
             "Dark": "มืด",
+            "Default effort": "ระดับความพยายามเริ่มต้น",
+            "Default model": "โมเดลเริ่มต้น",
             "Degraded": "ประสิทธิภาพลดลง",
             "Delete": "ลบ",
             "Delete Pod": "ลบ Pod",
@@ -572,6 +578,7 @@
             "Runtime Classes of the cluster": "Runtime Classes ของคลัสเตอร์",
             "Save": "บันทึก",
             "Save to a file": "บันทึกลงไฟล์",
+            "Saved": "บันทึกแล้ว",
             "Saved the {kind} {name}": "บันทึก {kind} {name} แล้ว",
             "Scale": "ปรับขนาด",
             "Scale Deployment": "ปรับขนาด Deployment",
@@ -587,7 +594,6 @@
             "Services": "Services",
             "Services of the cluster": "Services ของคลัสเตอร์",
             "Settings": "การตั้งค่า",
-            "Settings saved.": "บันทึกการตั้งค่าแล้ว",
             "Shell command": "คำสั่งเชลล์",
             "Show KubeScope": "แสดง KubeScope",
             "Sign in to {provider}": "ลงชื่อเข้าใช้ {provider}",
@@ -637,6 +643,8 @@
             "Your user is not allowed to do this. Ask your cluster admin for access.": "ผู้ใช้ของคุณไม่ได้รับอนุญาตให้ทำสิ่งนี้ ขอสิทธิ์เข้าถึงจากผู้ดูแลคลัสเตอร์",
             "Your user is not allowed to {action}. Ask your cluster admin for access.": "ผู้ใช้ของคุณไม่ได้รับอนุญาตให้ {action} ขอสิทธิ์เข้าถึงจากผู้ดูแลคลัสเตอร์",
             "running · {pending} pending · {failed} failed": "กำลังทำงาน · {pending} รอดำเนินการ · {failed} ล้มเหลว",
+            "unknown effort": "ไม่ทราบระดับความพยายาม",
+            "unknown model": "ไม่ทราบโมเดล",
             "{count} Add-ons in the cluster": "{count} Add-ons ในคลัสเตอร์",
             "{count} Config Maps in {namespaces} namespaces": "{count} Config Maps ใน {namespaces} เนมสเปซ",
             "{count} CronJobs in {namespaces} namespaces": "{count} CronJobs ใน {namespaces} เนมสเปซ",

@@ -247,7 +247,7 @@ def test_settings_page_saves_preferences_and_switches_language(
         assert form.contextsTable.rowCount() == 1
 
         cell(form.contextsTable, 0, 1).setText("Prod ✓")
-        form.languageCombo.setCurrentIndex(form.languageCombo.findData("pt"))
+        form.languageCombo.setCurrentIndex(form.languageCombo.findData("pt_BR"))
         form.saveButton.click()
         application.processEvents()  # Qt delivers LanguageChange via the event loop
 
@@ -255,7 +255,7 @@ def test_settings_page_saves_preferences_and_switches_language(
         assert window.ui.pageTitle.text() == "Configurações"
         assert window.nav_overview.text() == "Cluster"
         saved = Settings(path)
-        assert saved.language == "pt"
+        assert saved.language == "pt_BR"
         assert saved.context_aliases == {"prod": "Prod ✓"}
     finally:
         i18n.apply_language("en")
@@ -267,10 +267,11 @@ def test_portuguese_translation_is_bundled() -> None:
 
     from kubescope import i18n
 
-    assert i18n.resolve_language("pt") == "pt"
+    assert i18n.resolve_language("pt_BR") == "pt_BR"
+    assert i18n.resolve_language("pt") == "pt_BR"  # a choice of an older version
     assert i18n.resolve_language("xx") in i18n.available_languages()
     try:
-        assert i18n.apply_language("pt") == "pt"
+        assert i18n.apply_language("pt_BR") == "pt_BR"
         assert QCoreApplication.translate("MainWindow", "Refresh") == "Atualizar"
     finally:
         i18n.apply_language("en")
@@ -723,7 +724,7 @@ def test_every_language_ships_a_complete_translation() -> None:
 
     from kubescope import i18n
 
-    codes = [code for code in i18n.available_languages() if code != "en"]
+    codes = [code for code in i18n.available_languages() if code != "en_US"]
     assert len(codes) >= 21
     for code in codes:
         document = json.loads(
@@ -961,4 +962,64 @@ def test_wrapping_the_logs_is_remembered_and_applies_to_every_open_log(
     first.ui.wrapCheck.setChecked(True)
     window._show_logs_dialog(pod, "third", "three")  # a new log starts as chosen
     assert tab_at(window.viewer_tabs, 3, LogTab).ui.logText.lineWrapMode() == wrap
+    window.close()
+
+
+def test_the_contexts_table_starts_with_the_end_of_each_name_and_keeps_no_alias_for_it(
+    monkeypatch, tmp_path
+) -> None:
+    arn = "arn:aws:eks:us-east-1:123456789012:cluster/shop-hml"
+    other = "arn:aws:eks:us-east-1:123456789012:cluster/shop-prd"
+    from kubescope.settings import Settings
+
+    path = tmp_path / "settings.json"
+    monkeypatch.setattr(window_module, "list_contexts", lambda: ([arn, other], arn))
+    monkeypatch.setattr(window_module.WorkloadWindow, "refresh", lambda *_a: None)
+    monkeypatch.setattr(window_module.WorkloadWindow, "_run_action", _inline_actions)
+    window = window_module.WorkloadWindow(Settings(path))
+
+    window.ui.settingsButton.click()
+    table = window.settings_ui.contextsTable
+    assert cell(table, 0, 1).text() == "shop-hml"
+    assert window.context_combo.itemText(0) == "shop-hml"
+
+    cell(table, 1, 1).setText("Production")
+    window.settings_ui.saveButton.click()
+
+    assert Settings(path).context_aliases == {other: "Production"}  # only the edit
+    window.close()
+
+
+def test_a_reload_that_ends_well_turns_its_button_green_for_a_moment(
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(window_module, "list_contexts", lambda: ([], None))
+    monkeypatch.setattr(window_module.WorkloadWindow, "refresh", lambda *_a: None)
+    window = window_module.WorkloadWindow()
+    button = window.overview_refresh_button
+    moments: list = []
+    monkeypatch.setattr(
+        window_module.QTimer, "singleShot", lambda _ms, call: moments.append(call)
+    )
+
+    window._begin_loading(button, "Loading...")
+    window._end_loading(button)
+    assert button.styleSheet() == window_module.DONE_STYLE
+    moments.pop()()  # the moment passes
+    assert button.styleSheet() == ""
+
+    window._begin_loading(button, "Loading...")  # it failed: no green
+    window._failed("boom", True)
+    window._end_loading(button)
+    assert button.styleSheet() == "" and not moments
+
+    resting = button.icon().cacheKey()
+    window._begin_loading(button, "Loading...")
+    window._end_loading(button)
+    assert button.icon().cacheKey() != resting  # the tick
+    window._begin_loading(button, "Loading...")  # loading again before it passes
+    moments.pop()()  # the old moment ends late: nothing left to undo
+    window._end_loading(button)
+    moments.pop()()
+    assert button.styleSheet() == "" and button.icon().cacheKey() == resting
     window.close()

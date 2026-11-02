@@ -152,7 +152,7 @@ def allowed_actions(context: str, namespace: str) -> frozenset[str]:
         try:
             if _may(context, namespace, permission):
                 allowed.add(shape)
-        except (ClusterError, ValueError, KeyError, TypeError):
+        except ClusterError, ValueError, KeyError, TypeError:
             logger.debug("Could not review %s; offering it", shape)
             allowed.add(shape)
     return frozenset(allowed)

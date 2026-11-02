@@ -3,15 +3,14 @@
     "rtl": false,
     "strings": {
         "AssistantDock": {
-            "Ask Gabi": "Gabiに聞く",
-            "Clear history": "履歴を消去",
-            "Close": "閉じる"
+            "Ask Gabi": "Gabiに聞く"
         },
         "AssistantPanel": {
             "Clear history": "履歴を消去",
             "Close": "閉じる",
             "Open in a window of its own": "別ウィンドウで開く",
-            "Put it back in the window": "ウィンドウに戻す"
+            "Put it back in the window": "ウィンドウに戻す",
+            "Settings": "設定"
         },
         "AssistantTab": {
             "(attached: {names})": "(添付: {names})",
@@ -256,6 +255,7 @@
             "All namespaces": "すべての namespaces",
             "Animate windows and lists as they open": "ウィンドウやリストを開くときにアニメーションを表示",
             "Asks the public GitHub API for the latest release and sends nothing but the app version. The icon in the footer checks on demand.": "GitHub の公開 API に最新リリースを問い合わせ、アプリのバージョン以外は何も送信しません。フッターのアイコンでいつでも確認できます。",
+            "Assistant": "アシスタント",
             "CLUSTER ACCESS": "クラスターへのアクセス",
             "CONTEXT": "コンテキスト",
             "CONTEXT NAMES": "コンテキスト名",
@@ -272,11 +272,15 @@
             "For a cloud KubeScope does not know, give the program your kubeconfig uses to sign in (for example oci) and the command that signs you in (for example oci session authenticate). The Sign in button then runs it, without a shell. Press Save to apply.": "KubeScope が知らないクラウドの場合は、kubeconfig がサインインに使うプログラム（例：oci）と、サインインするコマンド（例：oci session authenticate）を指定します。「サインイン」ボタンがシェルを使わずに実行します。「保存」を押して適用します。",
             "Forgets the lists and overviews already loaded and the sign-in of every cluster, so the next request signs in and loads everything again. Your settings are kept.": "読み込み済みの一覧と概要、および各クラスターのサインイン情報を破棄します。次のリクエストで再度サインインし、すべてを読み込み直します。設定は保持されます。",
             "GENERAL": "一般",
+            "General": "一般",
             "Give your contexts friendlier names. Leave a name empty to keep the original one.": "コンテキストに分かりやすい名前を付けます。名前を空にすると元の名前のままになります。",
+            "Give your contexts friendlier names. Leave a name empty to use the end of the context name.": "コンテキストにわかりやすい名前を付けます。空のままにすると、コンテキスト名の末尾が使われます。",
             "KUBECONFIG FILES": "KUBECONFIG ファイル",
             "Keep running in the background, with an icon in the system tray": "バックグラウンドで実行し、システムトレイにアイコンを表示する",
+            "Kube": "Kube",
             "KubeScope reads the files in the KUBECONFIG variable, or ~/.kube/config. Add files here to read those instead. Press Save to apply.": "KubeScope は KUBECONFIG 変数のファイル、または ~/.kube/config を読み込みます。ここにファイルを追加すると、代わりにそれらを読み込みます。「保存」を押して適用します。",
             "Language": "言語",
+            "Model and effort of each program": "各プログラムのモデルと思考の深さ",
             "New theme...": "新しいテーマ...",
             "Off by default: the window draws its own title bar in the top bar, which saves a row of space. Turn it on if moving or resizing the window misbehaves on your desktop.": "既定ではオフ: ウィンドウは上部バーに独自のタイトルバーを描画し、1 行分の領域を節約します。お使いのデスクトップでウィンドウの移動やサイズ変更がうまく動作しない場合はオンにしてください。",
             "On by default: a window or a list rises into place as it first shows. Turn it off to show everything at once.": "デフォルトでオンです。ウィンドウやリストは、最初に表示されるときに所定の位置へせり上がります。オフにすると、すべてが一度に表示されます。",
@@ -424,6 +428,8 @@
             "DaemonSets": "DaemonSets",
             "DaemonSets of the cluster": "クラスターの DaemonSets",
             "Dark": "ダーク",
+            "Default effort": "既定の思考の深さ",
+            "Default model": "既定のモデル",
             "Degraded": "低下",
             "Delete": "削除",
             "Delete Pod": "Pod を削除",
@@ -572,6 +578,7 @@
             "Runtime Classes of the cluster": "クラスターの Runtime Classes",
             "Save": "保存",
             "Save to a file": "ファイルに保存",
+            "Saved": "保存しました",
             "Saved the {kind} {name}": "{kind} {name} を保存しました",
             "Scale": "スケール",
             "Scale Deployment": "Deployment をスケール",
@@ -587,7 +594,6 @@
             "Services": "Services",
             "Services of the cluster": "クラスターの Services",
             "Settings": "設定",
-            "Settings saved.": "設定を保存しました。",
             "Shell command": "シェルコマンド",
             "Show KubeScope": "KubeScope を表示",
             "Sign in to {provider}": "{provider} にサインイン",
@@ -637,6 +643,8 @@
             "Your user is not allowed to do this. Ask your cluster admin for access.": "このユーザーにはこの操作を行う権限がありません。クラスター管理者にアクセスを依頼してください。",
             "Your user is not allowed to {action}. Ask your cluster admin for access.": "このユーザーには次の操作を行う権限がありません（{action}）。クラスター管理者にアクセスを依頼してください。",
             "running · {pending} pending · {failed} failed": "実行中 · 保留 {pending} · 失敗 {failed}",
+            "unknown effort": "思考の深さ不明",
+            "unknown model": "モデル不明",
             "{count} Add-ons in the cluster": "クラスターに {count} 個の Add-ons",
             "{count} Config Maps in {namespaces} namespaces": "{namespaces} 個の namespaces に {count} 個の Config Maps",
             "{count} CronJobs in {namespaces} namespaces": "{namespaces} 個の namespaces に {count} 個の CronJobs",

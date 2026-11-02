@@ -29,27 +29,52 @@ class Ui_SettingsPage(object):
         self.settingsLayout.setSpacing(14)
         self.settingsLayout.setObjectName(u"settingsLayout")
         self.settingsLayout.setContentsMargins(32, 24, 32, 22)
-        self.settingsHeader = QHBoxLayout()
-        self.settingsHeader.setObjectName(u"settingsHeader")
+        self.settingsSections = QHBoxLayout()
+        self.settingsSections.setObjectName(u"settingsSections")
+        self.settingsSections.setContentsMargins(-1, -1, 16, -1)
+        self.generalSectionButton = QPushButton(SettingsPage)
+        self.generalSectionButton.setObjectName(u"generalSectionButton")
+        self.generalSectionButton.setCheckable(True)
+        self.generalSectionButton.setChecked(True)
+        self.generalSectionButton.setProperty(u"variant", u"secondary")
+
+        self.settingsSections.addWidget(self.generalSectionButton)
+
+        self.kubeSectionButton = QPushButton(SettingsPage)
+        self.kubeSectionButton.setObjectName(u"kubeSectionButton")
+        self.kubeSectionButton.setCheckable(True)
+        self.kubeSectionButton.setChecked(False)
+        self.kubeSectionButton.setProperty(u"variant", u"secondary")
+
+        self.settingsSections.addWidget(self.kubeSectionButton)
+
+        self.assistantSectionButton = QPushButton(SettingsPage)
+        self.assistantSectionButton.setObjectName(u"assistantSectionButton")
+        self.assistantSectionButton.setCheckable(True)
+        self.assistantSectionButton.setChecked(False)
+        self.assistantSectionButton.setProperty(u"variant", u"secondary")
+
+        self.settingsSections.addWidget(self.assistantSectionButton)
+
+        self.settingsSectionsSpacer = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+
+        self.settingsSections.addItem(self.settingsSectionsSpacer)
+
         self.noticeLabel = QLabel(SettingsPage)
         self.noticeLabel.setObjectName(u"noticeLabel")
         self.noticeLabel.setText(u"")
         self.noticeLabel.setProperty(u"variant", u"muted")
 
-        self.settingsHeader.addWidget(self.noticeLabel)
-
-        self.settingsHeaderSpacer = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
-
-        self.settingsHeader.addItem(self.settingsHeaderSpacer)
+        self.settingsSections.addWidget(self.noticeLabel)
 
         self.saveButton = QPushButton(SettingsPage)
         self.saveButton.setObjectName(u"saveButton")
         self.saveButton.setProperty(u"variant", u"primary")
 
-        self.settingsHeader.addWidget(self.saveButton)
+        self.settingsSections.addWidget(self.saveButton)
 
 
-        self.settingsLayout.addLayout(self.settingsHeader)
+        self.settingsLayout.addLayout(self.settingsSections)
 
         self.settingsScroll = QScrollArea(SettingsPage)
         self.settingsScroll.setObjectName(u"settingsScroll")
@@ -237,7 +262,7 @@ class Ui_SettingsPage(object):
         self.assistantCard.setObjectName(u"assistantCard")
         self.assistantCard.setProperty(u"card", u"true")
         self.assistantCardLayout = QVBoxLayout(self.assistantCard)
-        self.assistantCardLayout.setSpacing(10)
+        self.assistantCardLayout.setSpacing(14)
         self.assistantCardLayout.setObjectName(u"assistantCardLayout")
         self.assistantCardLayout.setContentsMargins(16, 14, 16, 14)
         self.assistantHeading = QLabel(self.assistantCard)
@@ -253,11 +278,28 @@ class Ui_SettingsPage(object):
 
         self.assistantCombo = QComboBox(self.assistantCard)
         self.assistantCombo.setObjectName(u"assistantCombo")
+        self.assistantCombo.setProperty(u"variant", u"filter")
 
         self.assistantCardLayout.addWidget(self.assistantCombo)
 
+        self.assistantModelsLabel = QLabel(self.assistantCard)
+        self.assistantModelsLabel.setObjectName(u"assistantModelsLabel")
+        self.assistantModelsLabel.setProperty(u"variant", u"muted")
+
+        self.assistantCardLayout.addWidget(self.assistantModelsLabel)
+
+        self.assistantModelsHost = QWidget(self.assistantCard)
+        self.assistantModelsHost.setObjectName(u"assistantModelsHost")
+        self.assistantModelsLayout = QVBoxLayout(self.assistantModelsHost)
+        self.assistantModelsLayout.setSpacing(6)
+        self.assistantModelsLayout.setObjectName(u"assistantModelsLayout")
+        self.assistantModelsLayout.setContentsMargins(0, 0, 0, 0)
+
+        self.assistantCardLayout.addWidget(self.assistantModelsHost)
+
         self.assistantPathsLabel = QLabel(self.assistantCard)
         self.assistantPathsLabel.setObjectName(u"assistantPathsLabel")
+        self.assistantPathsLabel.setProperty(u"variant", u"muted")
 
         self.assistantCardLayout.addWidget(self.assistantPathsLabel)
 
@@ -280,6 +322,7 @@ class Ui_SettingsPage(object):
 
         self.assistantClearButton = QPushButton(self.assistantCard)
         self.assistantClearButton.setObjectName(u"assistantClearButton")
+        self.assistantClearButton.setProperty(u"variant", u"secondary")
 
         self.assistantCardLayout.addWidget(self.assistantClearButton)
 
@@ -506,6 +549,10 @@ class Ui_SettingsPage(object):
 
         self.settingsContentLayout.addWidget(self.contextsCard)
 
+        self.settingsContentSpacer = QSpacerItem(20, 0, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
+
+        self.settingsContentLayout.addItem(self.settingsContentSpacer)
+
         self.settingsScroll.setWidget(self.settingsContent)
 
         self.settingsLayout.addWidget(self.settingsScroll)
@@ -517,7 +564,12 @@ class Ui_SettingsPage(object):
     # setupUi
 
     def retranslateUi(self, SettingsPage):
-        self.saveButton.setText(QCoreApplication.translate("SettingsPage", u"Save changes", None))
+        self.generalSectionButton.setText(QCoreApplication.translate("SettingsPage", u"General", None))
+        self.kubeSectionButton.setText(QCoreApplication.translate("SettingsPage", u"Kube", None))
+        self.assistantSectionButton.setText(QCoreApplication.translate("SettingsPage", u"Assistant", None))
+#if QT_CONFIG(tooltip)
+        self.saveButton.setToolTip(QCoreApplication.translate("SettingsPage", u"Save changes", None))
+#endif // QT_CONFIG(tooltip)
         self.generalHeading.setText(QCoreApplication.translate("SettingsPage", u"GENERAL", None))
         self.languageLabel.setText(QCoreApplication.translate("SettingsPage", u"Language", None))
 
@@ -563,6 +615,7 @@ class Ui_SettingsPage(object):
 #if QT_CONFIG(tooltip)
         self.assistantCombo.setToolTip(QCoreApplication.translate("SettingsPage", u"The program of this computer that answers. Automatic uses the first one the system has.", None))
 #endif // QT_CONFIG(tooltip)
+        self.assistantModelsLabel.setText(QCoreApplication.translate("SettingsPage", u"Model and effort of each program", None))
         self.assistantPathsLabel.setText(QCoreApplication.translate("SettingsPage", u"Where the programs are, when the system does not find them", None))
         self.assistantHint.setText(QCoreApplication.translate("SettingsPage", u"The assistant uses the client that is already installed on this computer, such as Claude Code or Codex, signed in the way you already are. KubeScope asks you for no credentials and stores none: the sign-in stays with that program. What you ask, attach and what it reads from the cluster go to that program and to its service. The conversations are kept on this computer, without the documents and logs that were read.", None))
         self.assistantClearButton.setText(QCoreApplication.translate("SettingsPage", u"Clear the chat history", None))

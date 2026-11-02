@@ -21,8 +21,8 @@ jobs:
 
       - uses: astral-sh/setup-uv@v10.3.2
         with:
-          # the pre-commit config pins Python 3.12 for its hook environments
-          python-version: "3.12"
+          # the pre-commit config pins Python 3.15 for its hook environments
+          python-version: "3.15"
           enable-cache: true
 
       - name: Install dependencies
@@ -61,7 +61,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.12", "3.13", "3.14", "3.15"]
+        python-version: ["3.15"]
     env:
       QT_QPA_PLATFORM: offscreen
     steps:
@@ -85,7 +85,7 @@ jobs:
         run: uv run pytest -q
 
       - name: Keep the coverage report for the badge
-        if: matrix.python-version == '3.14'
+        if: matrix.python-version == '3.15'
         uses: actions/upload-artifact@v7
         with:
           name: coverage-report

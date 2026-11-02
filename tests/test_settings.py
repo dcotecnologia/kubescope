@@ -451,3 +451,41 @@ def test_the_sections_of_the_menu_the_person_closed_are_kept(tmp_path) -> None:
     assert Settings(path).menu_collapsed == ["network"]
     path.write_text('{"menu_collapsed": "config"}', encoding="utf-8")
     assert Settings(path).menu_collapsed == []
+
+
+def test_the_model_and_effort_of_each_assistant_keep_only_names_and_texts(
+    tmp_path,
+) -> None:
+    path = tmp_path / "settings.json"
+    settings = Settings(path)
+    assert settings.assistant_models == {} and settings.assistant_efforts == {}
+
+    settings.assistant_models = {"claude": "opus"}
+    settings.assistant_efforts = {"codex": "high"}
+    settings.save()
+    saved = Settings(path)
+    assert saved.assistant_models == {"claude": "opus"}
+    assert saved.assistant_efforts == {"codex": "high"}
+
+    path.write_text(
+        '{"assistant_models": {"codex": " gpt ", "": "x", "a": "", "b": 3}, '
+        '"assistant_efforts": ["low"]}',
+        encoding="utf-8",
+    )
+    damaged = Settings(path)
+    assert damaged.assistant_models == {"codex": "gpt"}
+    assert damaged.assistant_efforts == {}
+
+
+def test_a_context_without_an_alias_shows_the_end_of_its_name(tmp_path) -> None:
+    settings = Settings(tmp_path / "settings.json")
+    arn = "arn:aws:eks:us-east-1:123456789012:cluster/shop-eks-hml-us-east-1"
+
+    assert settings.display_name(arn) == "shop-eks-hml-us-east-1"
+    assert settings.display_name("arn:aws:eks:us-east-1:123:eks-arm64") == "eks-arm64"
+    assert settings.display_name("gke_proj_zone_cluster") == "gke_proj_zone_cluster"
+    assert settings.display_name("minikube") == "minikube"
+    assert settings.display_name("ends/") == "ends/"  # nothing after it: all of it
+
+    settings.set_context_aliases({arn: "Hml"})
+    assert settings.display_name(arn) == "Hml"

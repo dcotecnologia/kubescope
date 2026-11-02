@@ -122,7 +122,7 @@ def test_without_a_program_the_button_guides_to_the_setup(monkeypatch) -> None:
     window.close()
 
 
-def test_the_guide_opens_the_settings_at_the_card_of_the_assistant(
+def test_the_guide_opens_the_settings_at_the_section_of_the_assistant(
     monkeypatch,
 ) -> None:
     window, _messages = _open(monkeypatch, found=())
@@ -130,16 +130,10 @@ def test_the_guide_opens_the_settings_at_the_card_of_the_assistant(
     _answer_the_guide(monkeypatch, "Open Settings")
 
     window._open_assistant()
-    for _ in range(5):
-        window_module.QApplication.processEvents()
 
     assert window.pages.currentIndex() == 2
-    card = window.settings_ui.assistantCard
-    scroll = window.settings_ui.settingsScroll
-    content = scroll.widget()
-    assert content is not None
-    top = card.mapTo(content, card.rect().topLeft()).y()
-    assert scroll.verticalScrollBar().value() <= top  # the card is in view
+    assert window.settings_ui.assistantCard.isVisibleTo(window)
+    assert window.settings_ui.assistantSectionButton.isChecked()
     window.close()
 
 
@@ -175,12 +169,13 @@ def test_the_guide_of_claude_is_in_portuguese_for_a_portuguese_app(monkeypatch) 
         "openUrl",
         lambda url: opened.append(url.toString()),
     )
-    window.settings.language = "pt"
+    window.settings.language = "pt_BR"
     _answer_the_guide(monkeypatch, "Claude Code guide")
 
     window._open_assistant()
 
     assert opened == ["https://code.claude.com/docs/pt/quickstart"]
+    assert claude.guide("pt") == "https://code.claude.com/docs/pt/quickstart"
     assert claude.guide("de") == "https://code.claude.com/docs/en/quickstart"
     assert codex.CODEX.guide is not None and codex.CODEX.guide("pt") == codex.GUIDE
     window.close()
@@ -307,9 +302,7 @@ def test_the_settings_turn_the_chat_on_or_off_and_choose_the_program(
         window
     )
     assert form.assistantCombo.itemData(0) == ""
-    monkeypatch.setattr(window_module, "ASSISTANTS", {"two": TWO, "one": ONE})
-    window._load_settings_form()
-    assert [form.assistantCombo.itemText(i) for i in range(3)][1:] == ["Two", "One"]
+    assert [form.assistantCombo.itemText(i) for i in range(3)][1:] == ["One", "Two"]
 
     window._open_assistant()
     form.assistantCheck.setChecked(False)
@@ -1007,4 +1000,364 @@ def test_changing_the_theme_repaints_the_chat_that_is_open(monkeypatch) -> None:
 
     assert tab._bubbles[0].styleSheet() != light
     monkeypatch.setattr(theme, "_active", theme.LIGHT_THEME)
+    window.close()
+
+
+def test_the_settings_button_of_the_chat_opens_the_assistant_section(
+    monkeypatch,
+) -> None:
+    window, _messages = _open(monkeypatch)
+    window.show()
+    window._show_page(0)
+
+    window.assistant_dock.panel.settings_button.click()
+
+    assert window.pages.currentIndex() == 2
+    assert window.settings_ui.assistantSectionButton.isChecked()
+    assert window.settings_ui.assistantCard.isVisibleTo(window)
+    window.close()
+
+
+def test_the_settings_split_into_general_and_assistant(monkeypatch) -> None:
+    window, _messages = _open(monkeypatch)
+    window.show()
+    form = window.settings_ui
+    window._show_page(2)
+
+    assert form.generalCard.isVisibleTo(window) and not form.assistantCard.isVisibleTo(
+        window
+    )
+
+    form.assistantSectionButton.click()
+    assert form.assistantCard.isVisibleTo(window)
+    assert not form.generalCard.isVisibleTo(window)
+    assert not form.generalSectionButton.isChecked()
+
+    form.generalSectionButton.click()
+    assert form.generalCard.isVisibleTo(window)
+    assert not form.assistantCard.isVisibleTo(window)
+    window.close()
+
+
+def test_the_model_and_effort_are_chosen_for_each_program(monkeypatch) -> None:
+    from kubescope.assistant import runner
+
+    monkeypatch.setattr(runner, "CUSTOM_MODELS", {})
+    monkeypatch.setattr(runner, "CUSTOM_EFFORTS", {})
+    many = Assistant(
+        "many",
+        "Many",
+        "many-ai",
+        lambda m, s: [],
+        lambda line: ("", ""),
+        models=("big", "small"),
+        efforts=("low", "high"),
+        effort_options=lambda effort: ["--effort", effort],
+    )
+    window, _messages = _open(monkeypatch, found=(many, ONE))
+    monkeypatch.setattr(window_module, "ASSISTANTS", {"many": many, "one": ONE})
+    window.settings.assistant_efforts = {"many": "old"}  # no longer listed
+    window._load_settings_form()
+    model, effort = window._assistant_models["many"]
+    assert [model.itemText(i) for i in range(3)] == ["Default model", "big", "small"]
+    assert effort.currentData() == "old"
+    assert not window._assistant_models["one"][1].isEnabled()  # it cannot set it
+
+    model.setCurrentIndex(model.findData("small"))
+    effort.setCurrentIndex(effort.findData("high"))
+    window._save_preferences()
+    assert window.settings.assistant_models == {"many": "small"}
+    assert window.settings.assistant_efforts == {"many": "high"}
+    assert runner.CUSTOM_MODELS == {"many": "small"}
+    assert runner.CUSTOM_EFFORTS == {"many": "high"}
+
+    window._load_settings_form()
+    assert window._assistant_models["many"][0].currentData() == "small"
+    window.close()
+
+
+def test_the_header_of_the_chat_says_what_answers(monkeypatch) -> None:
+    from kubescope.assistant import runner
+
+    monkeypatch.setattr(runner, "CUSTOM_MODELS", {})
+    monkeypatch.setattr(runner, "CUSTOM_EFFORTS", {})
+    window, _messages = _open(monkeypatch)
+    monkeypatch.setattr(window_module, "ASSISTANTS", {"one": ONE})
+    window.show()
+    panel = window.assistant_dock.panel
+    assert not panel.engine.isVisibleTo(panel)
+
+    window._open_assistant()
+    assert panel.engine.text() == "One · unknown model · unknown effort"
+
+    window._apply_assistant_settings(True, "", {}, {"one": "big"}, {"one": "high"})
+    assert panel.engine.text() == "One · big · unknown effort"  # ONE sets no effort
+
+    many = Assistant(
+        "many",
+        "Many",
+        "many-ai",
+        lambda m, s: [],
+        lambda line: ("", ""),
+        effort_options=lambda effort: [],
+    )
+    runner.CUSTOM_EFFORTS["many"] = "low"
+    assert window._assistant_engine(many, "m") == "Many · m · low"
+
+    window._end_assistant_chat()
+    assert not panel.engine.isVisibleTo(panel)
+    window.close()
+
+
+def test_what_the_program_is_set_to_use_is_told_to_it_and_shown(monkeypatch) -> None:
+    from kubescope.assistant import runner
+
+    monkeypatch.setattr(runner, "CUSTOM_MODELS", {})
+    monkeypatch.setattr(runner, "CUSTOM_EFFORTS", {})
+    set_up = Assistant(
+        "up",
+        "Up",
+        "up-ai",
+        lambda m, s: [],
+        lambda line: ("", ""),
+        effort_options=lambda effort: [],
+        defaults=lambda: ("big", "low"),
+    )
+    window, _messages = _open(monkeypatch, found=(set_up,))
+    monkeypatch.setattr(window_module, "ASSISTANTS", {"up": set_up})
+
+    window._sync_assistant_choices()
+    assert window._assistant_engine(set_up, None) == "Up · big · low"
+
+    window.settings.assistant_models = {"up": "small"}  # the settings win
+    window._sync_assistant_choices()
+    assert window._assistant_engine(set_up, None) == "Up · small · low"
+    window.close()
+
+
+def test_the_open_chat_goes_on_with_the_program_chosen_in_the_settings(
+    monkeypatch,
+) -> None:
+    window, _messages = _open(monkeypatch, found=(ONE, TWO))
+    window.show()
+    window._open_assistant()
+    tab = _tab(window)
+    assert tab.session.assistant is ONE
+    assert window.assistant_dock.panel.engine.text().startswith("One")
+
+    window._apply_assistant_settings(True, "two", {}, {}, {})
+
+    assert tab.session.assistant is TWO
+    assert window.assistant_dock.panel.engine.text().startswith("Two")
+    window.close()
+
+
+def test_the_save_button_shows_a_tick_for_a_moment_and_goes_back(monkeypatch) -> None:
+    window, _messages = _open(monkeypatch)
+    window._load_settings_form()
+    button = window.settings_ui.saveButton
+    before = button.toolTip()
+
+    window._save_preferences()
+    assert button.toolTip() == "Saved" and "#1e8e4e" in button.styleSheet()
+
+    window._show_save_again()
+    assert button.toolTip() == before == "Save changes"
+    assert button.styleSheet() == ""
+    window.close()
+
+
+def test_debug_tells_what_answers_and_all_of_its_configuration(monkeypatch) -> None:
+    from kubescope.assistant import runner
+
+    monkeypatch.setattr(runner, "CUSTOM_MODELS", {})
+    monkeypatch.setattr(runner, "CUSTOM_EFFORTS", {})
+    monkeypatch.setattr(runner, "CUSTOM_PROGRAMS", {})
+    set_up = Assistant(
+        "up",
+        "Up",
+        "up-ai",
+        lambda m, s: ["--system-prompt", s, *(["--model", m] if m else [])],
+        lambda line: ("", ""),
+        models=("big",),
+        efforts=("low", "high"),
+        effort_options=lambda effort: ["--effort", effort],
+        defaults=lambda: ("big", "low"),
+    )
+    window, _messages = _open(monkeypatch, found=(set_up,))
+    monkeypatch.setattr(window_module, "ASSISTANTS", {"up": set_up})
+    window.settings.assistant_efforts = {"up": "high"}
+    window._sync_assistant_choices()
+    window._open_assistant()
+    tab = _tab(window)
+    calls: list[str] = []
+    monkeypatch.setattr(tab, "_ask", lambda *a: calls.append("asked"))
+
+    tab.input.setPlainText("/debug")
+    tab.submit()
+
+    report = tab.entries()[-1][1]
+    assert not calls and tab.input.toPlainText() == ""  # the program is not asked
+    assert "Program: Up (up)" in report
+    assert "Model: big (what Up is set to use)" in report
+    assert "Effort: high (set in Settings)" in report
+    assert "Efforts it allows: low, high" in report
+    assert "Takes images: no" in report
+    assert "--system-prompt <" in report and "characters>" in report
+    assert "--effort high" in report
+
+    tab.session.assistant = ONE  # no way to tell an effort
+    assert "Effort: this program cannot be told" in window._assistant_debug_report()
+    assert "Model: not told: the program decides" in window._assistant_debug_report()
+    window.close()
+
+
+def test_the_kube_section_holds_the_files_the_sign_in_and_the_contexts(
+    monkeypatch,
+) -> None:
+    window, _messages = _open(monkeypatch)
+    window.show()
+    form = window.settings_ui
+    window._show_page(2)
+    cards = (form.kubeconfigCard, form.loginCard, form.contextsCard)
+    assert not any(card.isVisibleTo(window) for card in cards)
+
+    form.kubeSectionButton.click()
+    assert all(card.isVisibleTo(window) for card in cards)
+    assert not form.generalCard.isVisibleTo(window)
+    assert not form.assistantCard.isVisibleTo(window)
+
+    form.generalSectionButton.click()
+    assert form.generalCard.isVisibleTo(window)
+    assert not any(card.isVisibleTo(window) for card in cards)
+    window.close()
+
+
+def test_kube_reports_the_local_kubectl_setup_without_asking_the_program(
+    monkeypatch,
+) -> None:
+    window, _messages = _open(monkeypatch)
+    window.show()
+    window._open_assistant()
+    tab = _tab(window)
+    calls: list[str] = []
+    monkeypatch.setattr(tab, "_ask", lambda *a: calls.append("asked"))
+
+    def inline(operation, on_success, *arguments, on_error=None, quiet=False):
+        try:
+            on_success(operation(*arguments))
+        except Exception as error:
+            assert on_error is not None
+            on_error(str(error))
+
+    monkeypatch.setattr(window, "_run_action", inline)
+    monkeypatch.setattr(window_module, "describe_kube", lambda: "kubectl: /bin/kubectl")
+
+    tab.input.setPlainText("/kube")
+    tab.submit()
+    assert not calls and tab.input.toPlainText() == ""
+    assert tab.entries()[-1] == ("app", "/kube\nkubectl: /bin/kubectl")
+
+    def broken() -> str:
+        raise RuntimeError("no way\nmore")
+
+    monkeypatch.setattr(window_module, "describe_kube", broken)
+    tab.input.setPlainText("/kubectl")  # the same command, by its other name
+    tab.submit()
+    assert tab.entries()[-1] == ("app", "/kube\nno way")
+    window.close()
+
+
+def test_ctrl_g_opens_the_chat_with_the_cursor_in_it(monkeypatch) -> None:
+    from PySide6.QtGui import QShortcut
+
+    window, _messages = _open(monkeypatch)
+    window.show()
+    window.activateWindow()
+    window_module.QApplication.processEvents()
+    dock = window.assistant_dock
+    shortcut = next(
+        one
+        for one in window.findChildren(QShortcut)
+        if one.key().toString() == "Ctrl+G"
+    )
+
+    shortcut.activated.emit()
+    window_module.QApplication.processEvents()
+    tab = _tab(window)
+    assert dock.is_open and tab.input.hasFocus()
+
+    central = window.centralWidget()
+    assert central is not None
+    central.setFocus()  # open, but the cursor is elsewhere
+    shortcut.activated.emit()
+    assert dock.is_open and tab.input.hasFocus()
+
+    shortcut.activated.emit()  # with the cursor in it already: put it away
+    assert not dock.is_open
+
+    window.settings.assistant_enabled = False
+    shortcut.activated.emit()
+    assert not dock.is_open
+    window.close()
+
+
+def test_a_program_this_computer_does_not_have_is_not_offered(monkeypatch) -> None:
+    from kubescope.assistant import runner
+
+    monkeypatch.setattr(runner, "CUSTOM_MODELS", {})
+    monkeypatch.setattr(runner, "CUSTOM_EFFORTS", {})
+    window, _messages = _open(monkeypatch, found=(ONE,))
+    monkeypatch.setattr(window_module, "ASSISTANTS", {"one": ONE, "two": TWO})
+    window.settings.assistant_models = {"two": "kept"}  # chosen when it was here
+    window._load_settings_form()
+    form = window.settings_ui
+
+    assert [form.assistantCombo.itemText(i) for i in range(2)] == [
+        "Automatic: the first one found",
+        "One",
+    ]
+    assert set(window._assistant_models) == {"one"}
+
+    window._save_preferences()
+    assert window.settings.assistant_models["two"] == "kept"  # not lost on saving
+
+    monkeypatch.setattr(window_module, "installed_assistants", lambda: [])
+    window._load_settings_form()
+    assert window._assistant_models == {}
+    assert not form.assistantModelsLabel.isVisibleTo(window)
+    window.close()
+
+
+def test_a_model_the_program_no_longer_lists_stays_in_its_select(monkeypatch) -> None:
+    many = Assistant(
+        "many",
+        "Many",
+        "many-ai",
+        lambda m, s: [],
+        lambda line: ("", ""),
+        models=("big",),
+    )
+    window, _messages = _open(monkeypatch, found=(many,))
+    monkeypatch.setattr(window_module, "ASSISTANTS", {"many": many})
+    window.settings.assistant_models = {"many": "gone"}
+
+    window._load_settings_form()
+
+    model, _effort = window._assistant_models["many"]
+    assert [model.itemText(i) for i in range(model.count())][1:] == ["big", "gone"]
+    assert model.currentData() == "gone"
+    window.close()
+
+
+def test_settings_show_a_language_of_an_older_version_as_its_current_code(
+    monkeypatch,
+) -> None:
+    window, _messages = _open(monkeypatch)
+    form = window.settings_ui
+
+    for old, current in (("en", "en_US"), ("pt", "pt_BR"), ("auto", "auto")):
+        window.settings.language = old
+        window._load_settings_form()
+        assert form.languageCombo.currentData() == current
     window.close()

@@ -4,10 +4,10 @@
 
 KubeScope is young, so only the latest release receives security fixes.
 
-| Version | Supported |
-| ------- | --------- |
-| latest `0.x` release | Yes |
-| anything older | No |
+| Version              | Supported |
+| -------------------- | --------- |
+| latest `1.x` release | Yes       |
+| anything older       | No        |
 
 ## Reporting a vulnerability
 
@@ -30,7 +30,7 @@ prefer otherwise.
 - **Cluster access goes through the official Kubernetes Python client.** The app
   uses the `kubernetes` library with the context you chose, and the library reads
   your kubeconfig and runs its credential plugins (for example `aws eks
-  get-token`). The app never stores tokens, certificates, or cloud credentials,
+get-token`). The app never stores tokens, certificates, or cloud credentials,
   and it never writes the kubeconfig: refreshed credentials are not saved back to
   it. Certificate data that sits inline in a kubeconfig is written by the library
   to a temporary file readable only by you, which is removed when the app quits.
@@ -42,7 +42,7 @@ prefer otherwise.
   offers: delete a Pod (`DELETE`), evict a Pod (`POST` of an Eviction, which
   respects its disruption budget), scale a Deployment (`PATCH` of its scale),
   restart a Deployment (`PATCH` that stamps the Pod template, as `kubectl rollout
-  restart` does). Each of these asks for confirmation first (Cancel is the
+restart` does). Each of these asks for confirmation first (Cancel is the
   default), uses the credentials of the context you chose,
   and nothing else is ever written: the code for these requests lives apart from
   the read paths, in `writes.py`. The cluster's RBAC still decides: without the
@@ -78,11 +78,11 @@ prefer otherwise.
   want the Secrets list.
 - **The sign-in check and button run the cloud CLIs, not the app.** To tell whether
   you are signed in, the app runs `aws sts get-caller-identity` and `aws configure
-  get` for the profile your kubeconfig names, and reads that profile from the
+get` for the profile your kubeconfig names, and reads that profile from the
   sign-in command of your kubeconfig entry, never its credentials. The **Sign in
   to AWS** button runs `aws sso login` for you to approve in the browser. For an
   access-key profile, **Configure AWS credentials** opens a terminal running `aws
-  configure` so you type the keys there. The app never sees, asks for, or stores
+configure` so you type the keys there. The app never sees, asks for, or stores
   keys or tokens, and it does not change the cluster. For Google Cloud the button
   runs `gcloud auth login`, and for Azure `az login`; both open the browser, and
   the app only reads which sign-in program your kubeconfig names.
@@ -124,6 +124,13 @@ prefer otherwise.
   ask for a change it is told to say plainly that KubeScope is in read-only mode,
   that nothing was changed and that the write mode is in Settings. It reads
   at most five times for a question. **Settings** turns the chat off.
+- **`/kube` (or `/kubectl`) and `/debug` in the chat are answered by the app, not by the AI.**
+  `/debug` tells which program, model and effort the assistant uses, and its
+  command line (without its long instruction). `/kube` runs `kubectl version
+--client` (read-only, no cluster is asked) and reads the kubeconfig to list its
+  files, the contexts and the kind of sign-in each uses. Neither one puts a token,
+  certificate, key or server address in the chat, and neither sends anything to
+  the assistant. Their answers are notes of the app, kept like the others below.
 - **The assistant's conversations are kept on your computer.** For each context,
   `assistant_history.json` in the configuration directory holds what you said,
   what the assistant answered and the notes of the app, with tokens and keys

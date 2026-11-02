@@ -270,7 +270,7 @@ def _limited_until(error: Exception) -> float | None:
         return None
     try:
         return float(headers["X-RateLimit-Reset"])
-    except (KeyError, TypeError, ValueError):
+    except KeyError, TypeError, ValueError:
         return None
 
 

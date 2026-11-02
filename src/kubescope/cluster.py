@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import contextlib
 import importlib
+import importlib.metadata
 import json
 import logging
 import os
@@ -409,7 +410,7 @@ def _status_message(status: int, reason: str | None, body: bytes) -> str:
     it."""
     try:
         message = json.loads(body).get("message")
-    except (ValueError, AttributeError):  # not a Status document
+    except ValueError, AttributeError:  # not a Status document
         message = None
     return message or f"{status} {reason or 'Error'}"
 
@@ -586,6 +587,88 @@ def list_contexts() -> tuple[list[str], str | None]:
     current = document.get("current-context")
     logger.info("Found %d kubeconfig context(s)", len(contexts))
     return contexts, current if current in contexts else None
+
+
+KUBECTL_TIMEOUT = 10  # seconds
+
+
+def describe_kube() -> str:
+    """What the computer has for talking to clusters, in lines: kubectl and its
+    version, the kubeconfig files and what is in them.
+
+    Names and kinds only: no token, certificate, key or server address is
+    read into it, since it is shown in a conversation that is kept.
+    """
+    lines: list[str] = []
+    program = find_program("kubectl")
+    lines.append(f"kubectl: {program or 'not found on the path'}")
+    if program is not None:
+        try:
+            client = json.loads(
+                _run_command(
+                    ["kubectl", "version", "--client", "-o", "json"], KUBECTL_TIMEOUT
+                )
+            )
+            version = client.get("clientVersion") or {}
+            lines.append(f"kubectl version: {version.get('gitVersion', 'unknown')}")
+            lines.append(f"kubectl platform: {version.get('platform', 'unknown')}")
+            if client.get("kustomizeVersion"):
+                lines.append(f"kustomize: {client['kustomizeVersion']}")
+        except (ClusterError, ValueError, AttributeError) as error:
+            lines.append(
+                f"kubectl version: could not read it ({first_line(str(error))})"
+            )
+    kubernetes_version = importlib.metadata.version("kubernetes")
+    lines.append(f"Python client of Kubernetes: {kubernetes_version}")
+    source = (
+        "set in Settings"
+        if _kubeconfig_files
+        else ("KUBECONFIG" if os.environ.get("KUBECONFIG") else "default")
+    )
+    lines.append(f"kubeconfig from: {source}")
+    for path in _kubeconfig_paths().split(os.pathsep):
+        found = Path(path).expanduser().is_file()
+        lines.append(f"kubeconfig file: {path} ({'found' if found else 'missing'})")
+    try:
+        document = _kubeconfig()
+    except ClusterError as error:
+        lines.append(f"kubeconfig: {error}")
+        return "\n".join(lines)
+    contexts = [_plain(entry) for entry in document.get("contexts") or []]
+    users = {
+        entry.get("name"): entry.get("user") or {}
+        for entry in map(_plain, document.get("users") or [])
+    }
+    lines.append(f"Current context: {document.get('current-context') or 'none'}")
+    lines.append(
+        f"Contexts: {len(contexts)}, clusters: {len(document.get('clusters') or [])}, "
+        f"users: {len(users)}"
+    )
+    for entry in contexts:
+        context = entry.get("context") or {}
+        user = users.get(context.get("user"), {})
+        if user.get("exec"):
+            program_name = Path(str(user["exec"].get("command") or "?")).name
+            kind = f"sign-in program {program_name}"
+        elif user.get("auth-provider"):
+            kind = "auth provider"
+        elif user.get("token") or user.get("tokenFile"):
+            kind = "token"
+        elif user.get("client-certificate") or user.get("client-certificate-data"):
+            kind = "client certificate"
+        else:
+            kind = "no credentials of its own"
+        parts = [f"  {entry.get('name')}"]
+        for label, value in (
+            ("cluster", context.get("cluster")),
+            ("user", context.get("user")),
+        ):
+            if value != entry.get("name"):  # the same name is not told again
+                parts.append(f"{label} {value}")
+        parts.append(kind)
+        parts.append(f"namespace {context.get('namespace') or 'default'}")
+        lines.append(", ".join(parts))
+    return "\n".join(lines)
 
 
 LOGIN_TIMEOUT = 300  # seconds; the sign-in waits for the person in the browser

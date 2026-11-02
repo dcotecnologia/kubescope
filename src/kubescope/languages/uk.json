@@ -3,15 +3,14 @@
     "rtl": false,
     "strings": {
         "AssistantDock": {
-            "Ask Gabi": "Запитати Gabi",
-            "Clear history": "Очистити історію",
-            "Close": "Закрити"
+            "Ask Gabi": "Запитати Gabi"
         },
         "AssistantPanel": {
             "Clear history": "Очистити історію",
             "Close": "Закрити",
             "Open in a window of its own": "Відкрити в окремому вікні",
-            "Put it back in the window": "Повернути у вікно"
+            "Put it back in the window": "Повернути у вікно",
+            "Settings": "Налаштування"
         },
         "AssistantTab": {
             "(attached: {names})": "(додано: {names})",
@@ -256,6 +255,7 @@
             "All namespaces": "Усі простори імен",
             "Animate windows and lists as they open": "Анімувати вікна та списки під час відкриття",
             "Asks the public GitHub API for the latest release and sends nothing but the app version. The icon in the footer checks on demand.": "Запитує в публічного API GitHub останній випуск і не надсилає нічого, крім версії застосунку. Значок у нижньому колонтитулі перевіряє на вимогу.",
+            "Assistant": "Асистент",
             "CLUSTER ACCESS": "ДОСТУП ДО КЛАСТЕРА",
             "CONTEXT": "КОНТЕКСТ",
             "CONTEXT NAMES": "НАЗВИ КОНТЕКСТІВ",
@@ -272,11 +272,15 @@
             "For a cloud KubeScope does not know, give the program your kubeconfig uses to sign in (for example oci) and the command that signs you in (for example oci session authenticate). The Sign in button then runs it, without a shell. Press Save to apply.": "Для хмари, якої KubeScope не знає, вкажіть програму, яку ваш kubeconfig використовує для входу (наприклад, oci), і команду входу (наприклад, oci session authenticate). Кнопка «Увійти» виконає її без оболонки. Натисніть «Зберегти», щоб застосувати.",
             "Forgets the lists and overviews already loaded and the sign-in of every cluster, so the next request signs in and loads everything again. Your settings are kept.": "Забуває вже завантажені списки й огляди та вхід у кожен кластер, тож наступний запит увійде знову й завантажить усе заново. Ваші налаштування зберігаються.",
             "GENERAL": "ЗАГАЛЬНІ",
+            "General": "Загальні",
             "Give your contexts friendlier names. Leave a name empty to keep the original one.": "Дайте своїм контекстам зручніші назви. Залиште назву порожньою, щоб зберегти оригінальну.",
+            "Give your contexts friendlier names. Leave a name empty to use the end of the context name.": "Дайте контекстам зрозуміліші імена. Залиште ім'я порожнім, щоб використати кінець імені контексту.",
             "KUBECONFIG FILES": "ФАЙЛИ KUBECONFIG",
             "Keep running in the background, with an icon in the system tray": "Працювати у фоновому режимі зі значком у системному треї",
+            "Kube": "Kube",
             "KubeScope reads the files in the KUBECONFIG variable, or ~/.kube/config. Add files here to read those instead. Press Save to apply.": "KubeScope читає файли зі змінної KUBECONFIG або ~/.kube/config. Додайте файли сюди, щоб читати їх натомість. Натисніть «Зберегти», щоб застосувати.",
             "Language": "Мова",
+            "Model and effort of each program": "Модель і зусилля кожної програми",
             "New theme...": "Нова тема...",
             "Off by default: the window draws its own title bar in the top bar, which saves a row of space. Turn it on if moving or resizing the window misbehaves on your desktop.": "За замовчуванням вимкнено: вікно малює власний рядок заголовка у верхній панелі, що економить один рядок місця. Увімкніть, якщо переміщення або зміна розміру вікна працює неправильно на вашому робочому столі.",
             "On by default: a window or a list rises into place as it first shows. Turn it off to show everything at once.": "Увімкнено за замовчуванням: вікно або список плавно з’являється на місці під час першого показу. Вимкніть, щоб усе показувалося одразу.",
@@ -424,6 +428,8 @@
             "DaemonSets": "DaemonSets",
             "DaemonSets of the cluster": "DaemonSets кластера",
             "Dark": "Темна",
+            "Default effort": "Зусилля за замовчуванням",
+            "Default model": "Модель за замовчуванням",
             "Degraded": "Погіршений стан",
             "Delete": "Видалити",
             "Delete Pod": "Видалити Pod",
@@ -572,6 +578,7 @@
             "Runtime Classes of the cluster": "Runtime Classes кластера",
             "Save": "Зберегти",
             "Save to a file": "Зберегти у файл",
+            "Saved": "Збережено",
             "Saved the {kind} {name}": "{kind} {name} збережено",
             "Scale": "Масштабувати",
             "Scale Deployment": "Масштабувати Deployment",
@@ -587,7 +594,6 @@
             "Services": "Services",
             "Services of the cluster": "Services кластера",
             "Settings": "Налаштування",
-            "Settings saved.": "Налаштування збережено.",
             "Shell command": "Команда оболонки",
             "Show KubeScope": "Показати KubeScope",
             "Sign in to {provider}": "Увійти в {provider}",
@@ -637,6 +643,8 @@
             "Your user is not allowed to do this. Ask your cluster admin for access.": "Ваш користувач не має права це робити. Попросіть адміністратора кластера надати доступ.",
             "Your user is not allowed to {action}. Ask your cluster admin for access.": "Ваш користувач не має права: {action}. Попросіть адміністратора кластера надати доступ.",
             "running · {pending} pending · {failed} failed": "запущено · {pending} очікує · {failed} збоїв",
+            "unknown effort": "зусилля невідомі",
+            "unknown model": "модель невідома",
             "{count} Add-ons in the cluster": "{count} Add-ons у кластері",
             "{count} Config Maps in {namespaces} namespaces": "{count} Config Maps у просторах імен: {namespaces}",
             "{count} CronJobs in {namespaces} namespaces": "{count} CronJobs у просторах імен: {namespaces}",

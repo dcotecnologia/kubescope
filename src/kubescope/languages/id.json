@@ -3,15 +3,14 @@
     "rtl": false,
     "strings": {
         "AssistantDock": {
-            "Ask Gabi": "Tanya Gabi",
-            "Clear history": "Hapus riwayat",
-            "Close": "Tutup"
+            "Ask Gabi": "Tanya Gabi"
         },
         "AssistantPanel": {
             "Clear history": "Hapus riwayat",
             "Close": "Tutup",
             "Open in a window of its own": "Buka di jendela tersendiri",
-            "Put it back in the window": "Kembalikan ke jendela"
+            "Put it back in the window": "Kembalikan ke jendela",
+            "Settings": "Pengaturan"
         },
         "AssistantTab": {
             "(attached: {names})": "(terlampir: {names})",
@@ -256,6 +255,7 @@
             "All namespaces": "Semua namespace",
             "Animate windows and lists as they open": "Animasikan jendela dan daftar saat dibuka",
             "Asks the public GitHub API for the latest release and sends nothing but the app version. The icon in the footer checks on demand.": "Meminta rilis terbaru ke API GitHub publik dan tidak mengirim apa pun selain versi aplikasi. Ikon di footer memeriksa sesuai permintaan.",
+            "Assistant": "Asisten",
             "CLUSTER ACCESS": "AKSES KLASTER",
             "CONTEXT": "KONTEKS",
             "CONTEXT NAMES": "NAMA KONTEKS",
@@ -272,11 +272,15 @@
             "For a cloud KubeScope does not know, give the program your kubeconfig uses to sign in (for example oci) and the command that signs you in (for example oci session authenticate). The Sign in button then runs it, without a shell. Press Save to apply.": "Untuk cloud yang tidak dikenal KubeScope, berikan program yang digunakan kubeconfig Anda untuk masuk (misalnya oci) dan perintah yang membuat Anda masuk (misalnya oci session authenticate). Tombol Masuk kemudian menjalankannya tanpa shell. Tekan Simpan untuk menerapkan.",
             "Forgets the lists and overviews already loaded and the sign-in of every cluster, so the next request signs in and loads everything again. Your settings are kept.": "Melupakan daftar dan ringkasan yang sudah dimuat serta login setiap klaster, sehingga permintaan berikutnya masuk lagi dan memuat semuanya kembali. Pengaturan Anda tetap tersimpan.",
             "GENERAL": "UMUM",
+            "General": "Umum",
             "Give your contexts friendlier names. Leave a name empty to keep the original one.": "Beri konteks Anda nama yang lebih mudah dikenali. Kosongkan nama untuk mempertahankan nama asli.",
+            "Give your contexts friendlier names. Leave a name empty to use the end of the context name.": "Beri konteks Anda nama yang lebih mudah dikenali. Kosongkan nama untuk memakai bagian akhir nama konteks.",
             "KUBECONFIG FILES": "BERKAS KUBECONFIG",
             "Keep running in the background, with an icon in the system tray": "Tetap berjalan di latar belakang, dengan ikon di baki sistem",
+            "Kube": "Kube",
             "KubeScope reads the files in the KUBECONFIG variable, or ~/.kube/config. Add files here to read those instead. Press Save to apply.": "KubeScope membaca berkas dalam variabel KUBECONFIG, atau ~/.kube/config. Tambahkan berkas di sini untuk membaca berkas tersebut. Tekan Simpan untuk menerapkan.",
             "Language": "Bahasa",
+            "Model and effort of each program": "Model dan upaya tiap program",
             "New theme...": "Tema baru...",
             "Off by default: the window draws its own title bar in the top bar, which saves a row of space. Turn it on if moving or resizing the window misbehaves on your desktop.": "Nonaktif secara default: jendela menggambar bilah judulnya sendiri di bilah atas, yang menghemat satu baris ruang. Aktifkan jika memindahkan atau mengubah ukuran jendela bermasalah di desktop Anda.",
             "On by default: a window or a list rises into place as it first shows. Turn it off to show everything at once.": "Aktif secara bawaan: jendela atau daftar naik ke tempatnya saat pertama kali tampil. Nonaktifkan untuk menampilkan semuanya sekaligus.",
@@ -424,6 +428,8 @@
             "DaemonSets": "DaemonSets",
             "DaemonSets of the cluster": "DaemonSets di klaster",
             "Dark": "Gelap",
+            "Default effort": "Upaya bawaan",
+            "Default model": "Model bawaan",
             "Degraded": "Menurun",
             "Delete": "Hapus",
             "Delete Pod": "Hapus Pod",
@@ -572,6 +578,7 @@
             "Runtime Classes of the cluster": "Runtime Classes di klaster",
             "Save": "Simpan",
             "Save to a file": "Simpan ke berkas",
+            "Saved": "Tersimpan",
             "Saved the {kind} {name}": "{kind} {name} disimpan",
             "Scale": "Skalakan",
             "Scale Deployment": "Skalakan Deployment",
@@ -587,7 +594,6 @@
             "Services": "Services",
             "Services of the cluster": "Services di klaster",
             "Settings": "Pengaturan",
-            "Settings saved.": "Pengaturan disimpan.",
             "Shell command": "Perintah shell",
             "Show KubeScope": "Tampilkan KubeScope",
             "Sign in to {provider}": "Masuk ke {provider}",
@@ -637,6 +643,8 @@
             "Your user is not allowed to do this. Ask your cluster admin for access.": "Pengguna Anda tidak diizinkan melakukan ini. Minta akses ke admin klaster Anda.",
             "Your user is not allowed to {action}. Ask your cluster admin for access.": "Pengguna Anda tidak diizinkan untuk {action}. Minta akses ke admin klaster Anda.",
             "running · {pending} pending · {failed} failed": "berjalan · {pending} tertunda · {failed} gagal",
+            "unknown effort": "upaya tidak diketahui",
+            "unknown model": "model tidak diketahui",
             "{count} Add-ons in the cluster": "{count} Add-ons di klaster",
             "{count} Config Maps in {namespaces} namespaces": "{count} Config Maps di {namespaces} namespace",
             "{count} CronJobs in {namespaces} namespaces": "{count} CronJobs di {namespaces} namespace",

@@ -2050,6 +2050,7 @@ def test_the_menu_scrolls_when_both_lists_do_not_fit(monkeypatch) -> None:
     scroll = window.ui.sidebarScroll
     assert scroll.verticalScrollBar().maximum() > 0  # more menu than room
     assert not window.ui.settingsButton.isHidden()  # Settings stays in view
+    window.close()  # a window left open takes the mouse from the tests that follow
 
 
 FORBIDDEN = (
@@ -2381,7 +2382,7 @@ def test_ctrl_r_and_f5_press_the_refresh_button_of_the_page_on_screen(
         for shortcut in window.findChildren(QShortcut)
         if shortcut.key().toString() != "Ctrl+F"  # the search of the tab
     )
-    assert keys == ["Ctrl+R", "F5"]
+    assert keys == ["Ctrl+G", "Ctrl+R", "F5"]  # G is for Gabi
 
     for page in (0, 1, 4, 3):
         window.pages.setCurrentIndex(page)
@@ -2817,7 +2818,8 @@ def test_sign_in_commands_are_edited_in_the_settings_page(monkeypatch) -> None:
     window._add_login_row()  # an empty row is ignored
     window._save_preferences()
     assert window.settings.sign_in_commands == {"oci": "oci session authenticate"}
-    assert form.noticeLabel.text() == "Settings saved."
+    assert form.noticeLabel.text() == ""
+    assert form.saveButton.toolTip() == "Saved"  # a tick shows on the button
 
     form.loginTable.setCurrentCell(0, 0)
     window._remove_login_row()

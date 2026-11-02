@@ -3,15 +3,14 @@
     "rtl": false,
     "strings": {
         "AssistantDock": {
-            "Ask Gabi": "Gabi'ye sor",
-            "Clear history": "Geçmişi temizle",
-            "Close": "Kapat"
+            "Ask Gabi": "Gabi'ye sor"
         },
         "AssistantPanel": {
             "Clear history": "Geçmişi temizle",
             "Close": "Kapat",
             "Open in a window of its own": "Ayrı bir pencerede aç",
-            "Put it back in the window": "Pencereye geri koy"
+            "Put it back in the window": "Pencereye geri koy",
+            "Settings": "Ayarlar"
         },
         "AssistantTab": {
             "(attached: {names})": "(eklendi: {names})",
@@ -256,6 +255,7 @@
             "All namespaces": "Tüm ad alanları",
             "Animate windows and lists as they open": "Pencereleri ve listeleri açılırken canlandır",
             "Asks the public GitHub API for the latest release and sends nothing but the app version. The icon in the footer checks on demand.": "Genel GitHub API'sinden en son sürümü ister ve uygulama sürümünden başka bir şey göndermez. Alt bilgideki simge isteğe bağlı denetler.",
+            "Assistant": "Asistan",
             "CLUSTER ACCESS": "KÜME ERİŞİMİ",
             "CONTEXT": "BAĞLAM",
             "CONTEXT NAMES": "BAĞLAM ADLARI",
@@ -272,11 +272,15 @@
             "For a cloud KubeScope does not know, give the program your kubeconfig uses to sign in (for example oci) and the command that signs you in (for example oci session authenticate). The Sign in button then runs it, without a shell. Press Save to apply.": "KubeScope'un tanımadığı bir bulut için, kubeconfig dosyanızın oturum açmak için kullandığı programı (örneğin oci) ve oturum açan komutu (örneğin oci session authenticate) girin. Oturum aç düğmesi bunu kabuk kullanmadan çalıştırır. Uygulamak için Kaydet'e basın.",
             "Forgets the lists and overviews already loaded and the sign-in of every cluster, so the next request signs in and loads everything again. Your settings are kept.": "Yüklenmiş listeleri, genel bakışları ve her kümenin oturum bilgisini unutur; böylece sonraki istek yeniden oturum açar ve her şeyi yeniden yükler. Ayarlarınız korunur.",
             "GENERAL": "GENEL",
+            "General": "Genel",
             "Give your contexts friendlier names. Leave a name empty to keep the original one.": "Bağlamlarınıza daha anlaşılır adlar verin. Özgün adı korumak için adı boş bırakın.",
+            "Give your contexts friendlier names. Leave a name empty to use the end of the context name.": "Bağlamlarınıza daha anlaşılır adlar verin. Bağlam adının son bölümünü kullanmak için adı boş bırakın.",
             "KUBECONFIG FILES": "KUBECONFIG DOSYALARI",
             "Keep running in the background, with an icon in the system tray": "Arka planda çalışmaya devam et, sistem tepsisinde bir simgeyle",
+            "Kube": "Kube",
             "KubeScope reads the files in the KUBECONFIG variable, or ~/.kube/config. Add files here to read those instead. Press Save to apply.": "KubeScope, KUBECONFIG değişkenindeki dosyaları veya ~/.kube/config dosyasını okur. Bunların yerine okunacak dosyaları buraya ekleyin. Uygulamak için Kaydet'e basın.",
             "Language": "Dil",
+            "Model and effort of each program": "Her programın modeli ve eforu",
             "New theme...": "Yeni tema...",
             "Off by default: the window draws its own title bar in the top bar, which saves a row of space. Turn it on if moving or resizing the window misbehaves on your desktop.": "Varsayılan olarak kapalı: pencere kendi başlık çubuğunu üst çubukta çizer ve bir satırlık yer kazandırır. Masaüstünüzde pencereyi taşımak veya yeniden boyutlandırmak düzgün çalışmıyorsa açın.",
             "On by default: a window or a list rises into place as it first shows. Turn it off to show everything at once.": "Varsayılan olarak açık: bir pencere veya liste ilk göründüğünde yerine yükselir. Her şeyi bir anda göstermek için kapatın.",
@@ -424,6 +428,8 @@
             "DaemonSets": "DaemonSets",
             "DaemonSets of the cluster": "Kümenin DaemonSets",
             "Dark": "Koyu",
+            "Default effort": "Varsayılan efor",
+            "Default model": "Varsayılan model",
             "Degraded": "Bozulmuş",
             "Delete": "Sil",
             "Delete Pod": "Pod'u sil",
@@ -572,6 +578,7 @@
             "Runtime Classes of the cluster": "Kümenin Runtime Classes",
             "Save": "Kaydet",
             "Save to a file": "Dosyaya kaydet",
+            "Saved": "Kaydedildi",
             "Saved the {kind} {name}": "{kind} {name} kaydedildi",
             "Scale": "Ölçekle",
             "Scale Deployment": "Deployment'ı ölçekle",
@@ -587,7 +594,6 @@
             "Services": "Services",
             "Services of the cluster": "Kümenin Services",
             "Settings": "Ayarlar",
-            "Settings saved.": "Ayarlar kaydedildi.",
             "Shell command": "Kabuk komutu",
             "Show KubeScope": "KubeScope'u göster",
             "Sign in to {provider}": "{provider} oturumu aç",
@@ -637,6 +643,8 @@
             "Your user is not allowed to do this. Ask your cluster admin for access.": "Kullanıcınızın bunu yapma izni yok. Erişim için küme yöneticinize başvurun.",
             "Your user is not allowed to {action}. Ask your cluster admin for access.": "Kullanıcınızın şunu yapma izni yok: {action}. Erişim için küme yöneticinize başvurun.",
             "running · {pending} pending · {failed} failed": "çalışıyor · {pending} bekliyor · {failed} başarısız",
+            "unknown effort": "efor bilinmiyor",
+            "unknown model": "model bilinmiyor",
             "{count} Add-ons in the cluster": "Kümede {count} Add-ons",
             "{count} Config Maps in {namespaces} namespaces": "{namespaces} ad alanında {count} Config Maps",
             "{count} CronJobs in {namespaces} namespaces": "{namespaces} ad alanında {count} CronJobs",

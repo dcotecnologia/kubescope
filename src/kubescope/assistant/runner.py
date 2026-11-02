@@ -68,6 +68,13 @@ class Assistant:
     compose: Callable[[str, str], str] | None = None
     # a program that reads images from files: its options for the files
     image_files: Callable[[Sequence[str]], list[str]] | None = None
+    # the models it can suggest, how much it can think, and the options that set it
+    models: tuple[str, ...] = ()
+    efforts: tuple[str, ...] = ()
+    effort_options: Callable[[str], list[str]] | None = None
+    # the model and the effort the program uses when it is told none, from its own
+    # configuration; empty when it does not say
+    defaults: Callable[[], tuple[str, str]] | None = None
 
     @property
     def takes_images(self) -> bool:
@@ -78,6 +85,10 @@ class Assistant:
 # where the person says a program is, by the key of its assistant, for the ones the
 # system does not find on its path
 CUSTOM_PROGRAMS: dict[str, str] = {}
+
+# the model and the effort the person chose, by the key of the assistant
+CUSTOM_MODELS: dict[str, str] = {}
+CUSTOM_EFFORTS: dict[str, str] = {}
 
 
 def program_of(assistant: Assistant) -> str:
@@ -118,7 +129,12 @@ def command(
     if sys.platform == "win32" and not in_flatpak():
         # CreateProcess adds only ".exe" to a name, so a ".cmd" must be given whole
         program = find_program(program) or program
-    return on_host([program, *options(model, system)])
+    model = model or CUSTOM_MODELS.get(assistant.key)
+    arguments = [program, *options(model, system)]
+    effort = CUSTOM_EFFORTS.get(assistant.key)
+    if effort and assistant.effort_options is not None:
+        arguments += assistant.effort_options(effort)
+    return on_host(arguments)
 
 
 def ask(

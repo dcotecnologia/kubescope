@@ -3,15 +3,14 @@
     "rtl": false,
     "strings": {
         "AssistantDock": {
-            "Ask Gabi": "गैबी से पूछें",
-            "Clear history": "इतिहास साफ़ करें",
-            "Close": "बंद करें"
+            "Ask Gabi": "गैबी से पूछें"
         },
         "AssistantPanel": {
             "Clear history": "इतिहास साफ़ करें",
             "Close": "बंद करें",
             "Open in a window of its own": "अलग विंडो में खोलें",
-            "Put it back in the window": "इसे वापस विंडो में रखें"
+            "Put it back in the window": "इसे वापस विंडो में रखें",
+            "Settings": "सेटिंग्स"
         },
         "AssistantTab": {
             "(attached: {names})": "(संलग्न: {names})",
@@ -256,6 +255,7 @@
             "All namespaces": "सभी namespaces",
             "Animate windows and lists as they open": "खुलते समय विंडो और सूचियों को एनिमेट करें",
             "Asks the public GitHub API for the latest release and sends nothing but the app version. The icon in the footer checks on demand.": "सार्वजनिक GitHub API से नवीनतम रिलीज़ पूछता है और ऐप के संस्करण के अलावा कुछ नहीं भेजता। फ़ुटर का आइकन माँगने पर जाँच करता है।",
+            "Assistant": "सहायक",
             "CLUSTER ACCESS": "क्लस्टर एक्सेस",
             "CONTEXT": "कॉन्टेक्स्ट",
             "CONTEXT NAMES": "कॉन्टेक्स्ट के नाम",
@@ -272,11 +272,15 @@
             "For a cloud KubeScope does not know, give the program your kubeconfig uses to sign in (for example oci) and the command that signs you in (for example oci session authenticate). The Sign in button then runs it, without a shell. Press Save to apply.": "ऐसे क्लाउड के लिए जिसे KubeScope नहीं जानता, वह प्रोग्राम बताएँ जिसे आपका kubeconfig साइन इन के लिए इस्तेमाल करता है (उदाहरण के लिए oci) और साइन इन करने वाला कमांड (उदाहरण के लिए oci session authenticate)। साइन इन बटन उसे बिना शेल के चलाता है। लागू करने के लिए सहेजें दबाएँ।",
             "Forgets the lists and overviews already loaded and the sign-in of every cluster, so the next request signs in and loads everything again. Your settings are kept.": "अब तक लोड की गई सूचियाँ और ओवरव्यू तथा हर क्लस्टर का साइन-इन भूल जाता है, इसलिए अगला अनुरोध फिर साइन इन करके सब कुछ दोबारा लोड करेगा। आपकी सेटिंग्स बनी रहती हैं।",
             "GENERAL": "सामान्य",
+            "General": "सामान्य",
             "Give your contexts friendlier names. Leave a name empty to keep the original one.": "अपने कॉन्टेक्स्ट को आसान नाम दें। मूल नाम रखने के लिए नाम खाली छोड़ें।",
+            "Give your contexts friendlier names. Leave a name empty to use the end of the context name.": "अपने कॉन्टेक्स्ट को आसान नाम दें। कॉन्टेक्स्ट के नाम का अंतिम भाग इस्तेमाल करने के लिए नाम खाली छोड़ें।",
             "KUBECONFIG FILES": "KUBECONFIG फ़ाइलें",
             "Keep running in the background, with an icon in the system tray": "सिस्टम ट्रे में आइकन के साथ पृष्ठभूमि में चलता रहे",
+            "Kube": "Kube",
             "KubeScope reads the files in the KUBECONFIG variable, or ~/.kube/config. Add files here to read those instead. Press Save to apply.": "KubeScope KUBECONFIG वेरिएबल की फ़ाइलें, या ~/.kube/config पढ़ता है। उनकी जगह इन्हें पढ़ने के लिए यहाँ फ़ाइलें जोड़ें। लागू करने के लिए सहेजें दबाएँ।",
             "Language": "भाषा",
+            "Model and effort of each program": "हर प्रोग्राम का मॉडल और प्रयास",
             "New theme...": "नई थीम...",
             "Off by default: the window draws its own title bar in the top bar, which saves a row of space. Turn it on if moving or resizing the window misbehaves on your desktop.": "डिफ़ॉल्ट रूप से बंद: विंडो ऊपरी बार में अपना शीर्षक बार खुद बनाती है, जिससे एक पंक्ति की जगह बचती है। यदि आपके डेस्कटॉप पर विंडो को हिलाना या उसका आकार बदलना ठीक से काम नहीं करता, तो इसे चालू करें।",
             "On by default: a window or a list rises into place as it first shows. Turn it off to show everything at once.": "डिफ़ॉल्ट रूप से चालू: कोई विंडो या सूची पहली बार दिखते समय अपनी जगह पर उभरती है। सब कुछ एक साथ दिखाने के लिए इसे बंद करें।",
@@ -424,6 +428,8 @@
             "DaemonSets": "DaemonSets",
             "DaemonSets of the cluster": "क्लस्टर के DaemonSets",
             "Dark": "गहरी",
+            "Default effort": "डिफ़ॉल्ट प्रयास",
+            "Default model": "डिफ़ॉल्ट मॉडल",
             "Degraded": "बिगड़ा हुआ",
             "Delete": "हटाएँ",
             "Delete Pod": "Pod हटाएँ",
@@ -572,6 +578,7 @@
             "Runtime Classes of the cluster": "क्लस्टर के Runtime Classes",
             "Save": "सहेजें",
             "Save to a file": "फ़ाइल में सहेजें",
+            "Saved": "सहेजा गया",
             "Saved the {kind} {name}": "{kind} {name} सहेजा गया",
             "Scale": "स्केल करें",
             "Scale Deployment": "Deployment स्केल करें",
@@ -587,7 +594,6 @@
             "Services": "Services",
             "Services of the cluster": "क्लस्टर के Services",
             "Settings": "सेटिंग्स",
-            "Settings saved.": "सेटिंग्स सहेजी गईं।",
             "Shell command": "शेल कमांड",
             "Show KubeScope": "KubeScope दिखाएँ",
             "Sign in to {provider}": "{provider} में साइन इन करें",
@@ -637,6 +643,8 @@
             "Your user is not allowed to do this. Ask your cluster admin for access.": "आपके उपयोगकर्ता को यह करने की अनुमति नहीं है। पहुँच के लिए अपने क्लस्टर एडमिन से कहें।",
             "Your user is not allowed to {action}. Ask your cluster admin for access.": "आपके उपयोगकर्ता को यह करने की अनुमति नहीं है: {action}। पहुँच के लिए अपने क्लस्टर एडमिन से कहें।",
             "running · {pending} pending · {failed} failed": "चल रहे · {pending} लंबित · {failed} विफल",
+            "unknown effort": "प्रयास अज्ञात",
+            "unknown model": "मॉडल अज्ञात",
             "{count} Add-ons in the cluster": "क्लस्टर में {count} Add-ons",
             "{count} Config Maps in {namespaces} namespaces": "{namespaces} namespaces में {count} Config Maps",
             "{count} CronJobs in {namespaces} namespaces": "{namespaces} namespaces में {count} CronJobs",
