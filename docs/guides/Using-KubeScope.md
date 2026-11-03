@@ -1,4 +1,8 @@
-# Using KubeScope
+---
+layout: page
+title: Using KubeScope
+permalink: /guides/using-kubescope/
+---
 
 ## Command line
 
@@ -198,7 +202,7 @@ and macOS).
 Evict, Delete, Scale and Restart ask for confirmation (the two commands only show text), and the cluster's own permissions still apply:
 without the right, the cluster refuses and the message is shown. With the mode off,
 none of these entries is shown. The rights they need are in
-[Connecting to clusters](Connecting-to-clusters#write-mode).
+[Connecting to clusters]({{ '/guides/connecting-to-clusters/' | relative_url }}#write-mode).
 
 ### Updates
 

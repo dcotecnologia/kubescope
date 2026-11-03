@@ -1,4 +1,8 @@
-# Connecting to clusters
+---
+layout: page
+title: Connecting to clusters
+permalink: /guides/connecting-to-clusters/
+---
 
 ## Which kubeconfig is used
 

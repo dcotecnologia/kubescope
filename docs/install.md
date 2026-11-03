@@ -31,12 +31,12 @@ elsewhere it puts the AppImage in `~/.local/share/kubescope`. You can read
 [install.sh](https://github.com/dcotecnologia/kubescope/blob/main/install.sh) and
 [install.ps1](https://github.com/dcotecnologia/kubescope/blob/main/install.ps1) first.
 
-The [installation guide](https://github.com/dcotecnologia/kubescope/wiki/Installation)
+The [installation guide]({{ '/guides/installation/' | relative_url }})
 has the steps for each package.
 
 ## Learn more
 
-- [Connecting to clusters](https://github.com/dcotecnologia/kubescope/wiki/Connecting-to-clusters)
-- [Using KubeScope](https://github.com/dcotecnologia/kubescope/wiki/Using-KubeScope)
-- [Troubleshooting](https://github.com/dcotecnologia/kubescope/wiki/Troubleshooting)
+- [Connecting to clusters]({{ '/guides/connecting-to-clusters/' | relative_url }})
+- [Using KubeScope]({{ '/guides/using-kubescope/' | relative_url }})
+- [Troubleshooting]({{ '/guides/troubleshooting/' | relative_url }})
 - [Source code](https://github.com/dcotecnologia/kubescope) (MIT license)

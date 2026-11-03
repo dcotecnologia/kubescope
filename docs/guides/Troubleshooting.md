@@ -1,4 +1,8 @@
-# Troubleshooting
+---
+layout: page
+title: Troubleshooting
+permalink: /guides/troubleshooting/
+---
 
 KubeScope turns common cluster failures into a short message with a hint. The
 original text is always available: hover the message, or press **Show details** in
@@ -8,7 +12,7 @@ an error dialog.
 | ------- | ------------- | ---------- |
 | Login tool not found | The kubeconfig runs a program (usually `aws`, `gke-gcloud-auth-plugin` or `kubelogin`) that is not installed or not on the `PATH` | Install it, make sure it is on the `PATH`, then Refresh |
 | Authentication failed | The credentials are missing or expired | Use the **Sign in** button of your cloud, or run `aws sso login`, `gcloud auth login` or `az login` yourself, then Refresh. For access keys, use **Configure AWS credentials** or run `aws configure` |
-| Access denied | Your user cannot read that resource | Ask for a read-only role; see [Connecting to clusters](Connecting-to-clusters#permissions) |
+| Access denied | Your user cannot read that resource | Ask for a read-only role; see [Connecting to clusters]({{ site.baseurl }}/guides/connecting-to-clusters/#permissions) |
 | Cluster unreachable | The API server did not answer | Check the network or VPN and that the cluster is running |
 | Context not found | The context is not in your kubeconfig | Check `~/.kube/config` or `KUBECONFIG` |
 

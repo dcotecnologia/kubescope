@@ -22,7 +22,7 @@ nav:
   - title: Gabi
     url: /assistant/
   - title: Guides
-    url: https://github.com/dcotecnologia/kubescope/wiki
+    url: /guides/
   - title: Source
     url: https://github.com/dcotecnologia/kubescope
 
@@ -51,7 +51,6 @@ features:
     description: Short messages with a hint, with the original error one click away, in 20 languages.
 
 exclude:
-  - wiki
   - README.md
 
 sass:

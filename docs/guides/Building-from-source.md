@@ -1,4 +1,8 @@
-# Building from source
+---
+layout: page
+title: Building from source
+permalink: /guides/building-from-source/
+---
 
 The full workflow lives in the repository:
 [CONTRIBUTING.md](https://github.com/dcotecnologia/kubescope/blob/main/CONTRIBUTING.md)

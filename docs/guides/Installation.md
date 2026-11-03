@@ -1,4 +1,8 @@
-# Installation
+---
+layout: page
+title: Installation
+permalink: /guides/installation/
+---
 
 ## The install script (recommended)
 
@@ -36,7 +40,7 @@ irm https://raw.githubusercontent.com/dcotecnologia/kubescope/main/install.ps1 |
 ## Install by hand
 
 Download the package for your system from the
-[releases page](https://github.com/dcotecnologia/kubescope/releases). You do
+[releases page]({{ '/install/' | relative_url }}). You do
 not need `kubectl`.
 
 ## Debian and Ubuntu (.deb)
@@ -91,7 +95,7 @@ right-click it and choose **Open**.
 ## Other systems
 
 There is no package. Run it from source with Python 3.15; the steps
-are in [Building from source](Building-from-source).
+are in [Building from source]({{ '/guides/building-from-source/' | relative_url }}).
 
 ## Uninstall
 
@@ -101,4 +105,4 @@ are in [Building from source](Building-from-source).
 - macOS: delete `KubeScope.app`.
 
 Your preferences are kept separately in `settings.json`; see
-[Troubleshooting](Troubleshooting#where-are-the-settings).
+[Troubleshooting]({{ '/guides/troubleshooting/' | relative_url }}#where-are-the-settings).
