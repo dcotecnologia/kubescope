@@ -6,7 +6,7 @@ All notable changes to this project will be documented in this file. The format 
 
 ### Added
 
-- The Release workflow builds a macOS app (`KubeScope.app` in a zip, Apple silicon) on the `macos-14` runner by @danilogco
+- The Release workflow builds a macOS app (`KubeScope.app` in a zip) for Apple silicon (`macos-14`) and Intel (`macos-15-intel`) by @danilogco
 
 ### Changed
 

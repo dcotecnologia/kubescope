@@ -162,9 +162,16 @@ jobs:
           if-no-files-found: error
 
   macos:
-    name: macOS (.app in a zip)
+    name: macOS ${{ matrix.arch }} (.app in a zip)
     if: github.event_name != 'workflow_dispatch' || inputs.target == 'all' || inputs.target == 'macos'
-    runs-on: macos-14
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # a build runs only on the CPU of its runner: Apple silicon and Intel
+          - {runner: macos-14, arch: arm64}
+          - {runner: macos-15-intel, arch: x86_64}
     steps:
       - uses: actions/checkout@v7
 
@@ -188,12 +195,12 @@ jobs:
       - name: Zip the app
         run: |
           VERSION=$(uv run python -c "import tomllib;print(tomllib.load(open('pyproject.toml','rb'))['project']['version'])")
-          ditto -c -k --sequesterRsrc --keepParent dist/KubeScope.app "dist/KubeScope-${VERSION}-macos-arm64.zip"
+          ditto -c -k --sequesterRsrc --keepParent dist/KubeScope.app "dist/KubeScope-${VERSION}-macos-${{ matrix.arch }}.zip"
 
       - uses: actions/upload-artifact@v7
         with:
-          name: macos-packages
-          path: dist/*-macos-arm64.zip
+          name: macos-packages-${{ matrix.arch }}
+          path: dist/*-macos-${{ matrix.arch }}.zip
           if-no-files-found: error
 
   publish:
