@@ -29,6 +29,12 @@ TOOL_URL = (
     f"{TOOL_VERSION}/appimagetool-x86_64.AppImage"
 )
 
+# Written into the AppImage, so AppImageUpdate fetches only what changed from the
+# GitHub release; appimagetool also writes the .zsync file it reads (needs zsyncmake).
+UPDATE_INFORMATION = (
+    "gh-releases-zsync|dcotecnologia|kubescope|latest|KubeScope-*-x86_64.AppImage.zsync"
+)
+
 APP_RUN = """#!/bin/sh
 HERE="$(dirname "$(readlink -f "$0")")"
 exec "$HERE/usr/lib/kubescope/KubeScope" "$@"
@@ -94,7 +100,12 @@ def main() -> int:
     output = ROOT / "dist" / f"KubeScope-{project_version()}-x86_64.AppImage"
     # extract-and-run lets appimagetool work on machines without FUSE
     environment = {**os.environ, "ARCH": "x86_64", "APPIMAGE_EXTRACT_AND_RUN": "1"}
-    subprocess.run([str(tool), str(APPDIR), str(output)], check=True, env=environment)
+    command = [str(tool)]
+    if shutil.which("zsyncmake"):
+        command += ["--updateinformation", UPDATE_INFORMATION]
+    else:
+        print("zsyncmake not found: the AppImage is built without update information")
+    subprocess.run([*command, str(APPDIR), str(output)], check=True, env=environment)
     print(f"Created {output} ({output.stat().st_size / 2**20:.0f} MiB)")
     return 0
 
