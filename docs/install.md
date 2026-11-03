@@ -6,7 +6,7 @@ permalink: /install/
 
 ## Direct downloads
 
-The packages of the [latest release](https://github.com/dcotecnologia/kubescope/releases/latest): a `.deb` for Debian and Ubuntu, an AppImage for any Linux, and a Windows installer and portable `.zip`.
+The packages of the [latest release](https://github.com/dcotecnologia/kubescope/releases/latest): a `.deb` for Debian and Ubuntu, an AppImage and a snap for any Linux, a Windows installer and portable `.zip`, and a macOS `.zip` for Apple silicon and another for Intel Macs.
 
 ## Install or update from the command line
 

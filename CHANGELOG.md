@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file. The format 
 ### Added
 
 - The Release workflow builds a macOS app (`KubeScope.app` in a zip) for Apple silicon (`macos-14`) and Intel (`macos-15-intel`) by @danilogco
+- The download buttons of the site, the install page and the installation guide list every package of the latest release, macOS and snap included by @danilogco
 
 ### Changed
 

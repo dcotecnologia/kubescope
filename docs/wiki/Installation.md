@@ -53,6 +53,14 @@ chmod +x KubeScope-<version>-x86_64.AppImage
 ./KubeScope-<version>-x86_64.AppImage
 ```
 
+## Any Linux (snap)
+
+```bash
+sudo snap install --dangerous dco-kubescope_<version>_amd64.snap
+```
+
+`--dangerous` is needed because the file comes from the release and not from the Snap Store.
+
 ## Flatpak
 
 ```bash
@@ -73,9 +81,16 @@ before you install it.
 - **Portable:** unzip `KubeScope-<version>-windows-x64.zip` and run
   `KubeScope\KubeScope.exe`.
 
-## macOS and other systems
+## macOS
 
-There is no package yet. Run it from source with Python 3.15; the steps
+Download the zip for your Mac: `KubeScope-<version>-macos-arm64.zip` for Apple silicon
+(M1 and newer) or `KubeScope-<version>-macos-x86_64.zip` for Intel. Unzip it and move
+`KubeScope.app` to Applications. The app is not signed yet, so the first time,
+right-click it and choose **Open**.
+
+## Other systems
+
+There is no package. Run it from source with Python 3.15; the steps
 are in [Building from source](Building-from-source).
 
 ## Uninstall
@@ -83,6 +98,7 @@ are in [Building from source](Building-from-source).
 - `.deb`: `sudo apt remove kubescope`
 - Flatpak: `flatpak --user uninstall com.dcotecnologia.KubeScope`
 - AppImage and portable zip: delete the file or folder.
+- macOS: delete `KubeScope.app`.
 
 Your preferences are kept separately in `settings.json`; see
 [Troubleshooting](Troubleshooting#where-are-the-settings).

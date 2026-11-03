@@ -5,7 +5,7 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Python 3.15](https://img.shields.io/badge/python-3.15-3776AB.svg?logo=python&logoColor=white)](pyproject.toml)
 [![Qt for Python](https://img.shields.io/badge/Qt-PySide6-41CD52.svg?logo=qt&logoColor=white)](https://doc.qt.io/qtforpython-6/)
-[![Platforms](https://img.shields.io/badge/platforms-Linux%20%7C%20Windows-lightgrey.svg)](#packaging)
+[![Platforms](https://img.shields.io/badge/platforms-Linux%20%7C%20Windows%20%7C%20macOS-lightgrey.svg)](#packaging)
 [![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-D7FF64.svg?logo=ruff&logoColor=black)](https://docs.astral.sh/ruff/)
 [![Kubernetes](https://img.shields.io/badge/Kubernetes-EKS%20ready-326CE5.svg?logo=kubernetes&logoColor=white)](https://kubernetes.io/)
 
@@ -46,7 +46,7 @@ shell runs with your rights, so read it first if you prefer:
 damaged or swapped download; it trusts GitHub and this repository, as any download
 from them does.
 
-There is no macOS package yet; see [run it from source](#run-from-source).
+On macOS, download the zip for your Mac from the [latest release](https://github.com/dcotecnologia/kubescope/releases/latest) (see the table below).
 
 ### Install by hand
 
@@ -54,14 +54,16 @@ Download the package for your system from the
 [latest release](https://github.com/dcotecnologia/kubescope/releases/latest). You do
 not need `kubectl`.
 
-| System            | Package                                     | How to install                                                                 |
-| ----------------- | ------------------------------------------- | ------------------------------------------------------------------------------ |
-| Debian and Ubuntu | `kubescope_<version>_amd64.deb`             | `sudo apt install ./kubescope_<version>_amd64.deb`, then `kubescope`           |
-| Any Linux         | `KubeScope-<version>-x86_64.AppImage`       | `chmod +x` the file and run it                                                 |
-| Any Linux (snap)  | `dco-kubescope_<version>_amd64.snap`        | `sudo snap install dco-kubescope`                                              |
-| Linux (Flatpak)   | none for now (needs Python 3.15)            | [run it from source](#run-from-source)                                         |
-| Windows           | `KubeScope-<version>-windows-x64-setup.exe` | run the installer; or unzip the portable `KubeScope-<version>-windows-x64.zip` |
-| macOS and others  | none yet                                    | [run it from source](#run-from-source)                                         |
+| System                | Package                                     | How to install                                                                 |
+| --------------------- | ------------------------------------------- | ------------------------------------------------------------------------------ |
+| Debian and Ubuntu     | `kubescope_<version>_amd64.deb`             | `sudo apt install ./kubescope_<version>_amd64.deb`, then `kubescope`           |
+| Any Linux             | `KubeScope-<version>-x86_64.AppImage`       | `chmod +x` the file and run it                                                 |
+| Any Linux (snap)      | `dco-kubescope_<version>_amd64.snap`        | `sudo snap install dco-kubescope`                                              |
+| Linux (Flatpak)       | none for now (needs Python 3.15)            | [run it from source](#run-from-source)                                         |
+| Windows               | `KubeScope-<version>-windows-x64-setup.exe` | run the installer; or unzip the portable `KubeScope-<version>-windows-x64.zip` |
+| macOS (Apple silicon) | `KubeScope-<version>-macos-arm64.zip`       | unzip, then right-click `KubeScope.app` and choose Open (it is not signed)     |
+| macOS (Intel)         | `KubeScope-<version>-macos-x86_64.zip`      | unzip, then right-click `KubeScope.app` and choose Open (it is not signed)     |
+| Other systems         | none yet                                    | [run it from source](#run-from-source)                                         |
 
 For the Flatpak and the snap, how to remove the app, and the details of each system, read the
 [installation guide](https://github.com/dcotecnologia/kubescope/wiki/Installation)
