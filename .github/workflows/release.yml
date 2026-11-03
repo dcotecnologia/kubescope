@@ -11,6 +11,10 @@ on:
         type: choice
         options: [all, linux, windows, macos]
         default: all
+      flatpak:
+        description: Also build the Flatpak (off by default, see its job)
+        type: boolean
+        default: false
   push:
     tags: ["v*"]
 
@@ -86,10 +90,10 @@ jobs:
   flatpak:
     name: Flatpak
     # Off for now: the Flatpak installs the app with the Python of its runtime (3.13),
-    # which cannot run an app that requires Python 3.15. Set the repository variable
-    # BUILD_FLATPAK to true to build it again, once the Flatpak brings its own Python
-    # 3.15 or the runtime has it.
-    if: vars.BUILD_FLATPAK == 'true' && (github.event_name != 'workflow_dispatch' || inputs.target == 'all' || inputs.target == 'linux')
+    # which cannot run an app that requires Python 3.15. It builds only when asked by
+    # hand ("Run workflow" with the flatpak box ticked), until the Flatpak brings its
+    # own Python 3.15 or the runtime has it.
+    if: github.event_name == 'workflow_dispatch' && inputs.flatpak
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
