@@ -8,6 +8,8 @@ All notable changes to this project will be documented in this file. The format 
 
 - The Release workflow builds a macOS app (`KubeScope.app` in a zip) for Apple silicon (`macos-14`) and Intel (`macos-15-intel`) by @danilogco
 - The download buttons of the site, the install page and the installation guide list every package of the latest release, macOS and snap included by @danilogco
+- `make docker-build` builds the `.deb` and the AppImage in a clean Ubuntu 22.04 container with Docker Compose, so only Docker is needed, and `make docker-flatpak` builds the Flatpak the same way, only when asked by @danilogco
+- The AppImage carries update information and the release has its `.zsync` file, so AppImageUpdate downloads only what changed by @danilogco
 - The guides are pages of the site (`/guides/`) and no longer send you to the GitHub wiki by @danilogco
 
 ### Changed

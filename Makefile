@@ -2,7 +2,7 @@
 
 UV ?= uv
 
-.PHONY: help setup run changelog dev debug preview language screenshot store-screenshots designer ui i18n appimage deb snap flatpak flatpak-lint flathub-submission windows windows-remote lint format test qt-libs build clean
+.PHONY: help setup run changelog dev debug preview language screenshot store-screenshots designer ui i18n appimage deb snap docker-build docker-flatpak flatpak flatpak-lint flathub-submission windows windows-remote lint format test qt-libs build clean
 
 help: ## List the available commands
 	@awk 'BEGIN { FS = ":.*##" } /^[a-zA-Z_-]+:.*##/ { printf "  %-12s %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
@@ -64,6 +64,12 @@ deb: build ## Package the bundle as a .deb in dist/ (Debian/Ubuntu)
 
 snap: build ## Package the bundle as a Snap in dist/ (needs snapcraft; Linux x86_64)
 	$(UV) run python tools/build_snap.py
+
+docker-build: ## Build the .deb and the AppImage in a clean Ubuntu 22.04 container into dist/ (needs Docker)
+	UID=$$(id -u) GID=$$(id -g) docker compose run --rm --build linux-packages
+
+docker-flatpak: ## Build the Flatpak in a container into dist/ (needs Docker; runs privileged for bubblewrap)
+	UID=$$(id -u) GID=$$(id -g) docker compose --profile flatpak run --rm --build flatpak
 
 flatpak: changelog ## Build the Flatpak from this working tree into dist/ (needs flatpak-builder)
 	$(UV) run python tools/build_flatpak.py

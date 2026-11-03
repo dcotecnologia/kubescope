@@ -1,0 +1,9 @@
+.git
+.venv
+build
+dist
+__pycache__
+*.pyc
+.pytest_cache
+.ruff_cache
+.wine

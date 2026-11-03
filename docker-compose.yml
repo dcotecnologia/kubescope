@@ -1,0 +1,47 @@
+# Builds the Linux packages without installing anything on your computer but Docker:
+#   make docker-build        (or: docker compose run --rm linux-packages)
+# The .deb and the AppImage land in ./dist, owned by your user.
+# The Flatpak is optional, in its own profile: `make docker-flatpak`.
+services:
+  linux-packages:
+    build:
+      context: .
+      target: linux
+    image: kubescope-build:ubuntu-22.04
+    # your own user, so the files in dist/ are not owned by root
+    user: "${UID:-1000}:${GID:-1000}"
+    environment:
+      HOME: /tmp/home
+      UV_CACHE_DIR: /tmp/uv-cache
+    working_dir: /work
+    volumes:
+      - .:/work
+      - uv-cache:/tmp/uv-cache
+      - venv:/opt/venv
+
+  # Only with `make docker-flatpak` (profile "flatpak"): not part of the default build.
+  flatpak:
+    profiles: [flatpak]
+    build:
+      context: .
+      target: flatpak
+    image: kubescope-build:flatpak-ubuntu-24.04
+    # flatpak-builder runs each build step in a sandbox (bubblewrap), which Docker
+    # blocks by default
+    privileged: true
+    user: "${UID:-1000}:${GID:-1000}"
+    environment:
+      HOME: /tmp/home
+      UV_CACHE_DIR: /tmp/uv-cache
+    working_dir: /work
+    volumes:
+      - .:/work
+      - uv-cache:/tmp/uv-cache
+      - venv-flatpak:/opt/venv
+      - flatpak-home:/tmp/home
+
+volumes:
+  flatpak-home:
+  uv-cache:
+  venv:
+  venv-flatpak:
