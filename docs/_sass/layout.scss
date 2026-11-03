@@ -92,25 +92,49 @@ nav > ul li a:hover, nav > ul li a:active {
 	font-size: 1.6rem;
 	line-height: 1.5;
 
-	ul {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 12px;
-		list-style-type: none;
-		margin-top: 16px;
-	}
+	a:link, a:visited { color: #fff; }
 
-	li a:link, li a:visited {
-		display: block;
-		padding: 12px 18px;
-		border-radius: 10px;
+	.downloadMain:link, .downloadMain:visited {
+		display: inline-block;
+		padding: 14px 28px;
+		border-radius: 12px;
 		background: $accent-color;
-		color: #fff;
+		font-size: 1.8rem;
 		font-weight: 600;
 	}
 
-	li a:hover { background: #4a80f0; }
-	p a:link, p a:visited { color: #fff; text-decoration: underline; }
+	.downloadMain:hover { background: #4a80f0; }
+	.downloadVersion { margin-top: 12px; font-size: 1.4rem; }
+	.downloadVersion a { text-decoration: underline; }
+
+	.downloadOthers { margin-top: 14px; }
+
+	summary {
+		cursor: pointer;
+		font-size: 1.4rem;
+		width: fit-content;
+	}
+
+	summary:hover { color: #fff; }
+
+	dl {
+		display: grid;
+		grid-template-columns: max-content 1fr;
+		gap: 8px 20px;
+		margin-top: 12px;
+		font-size: 1.4rem;
+	}
+
+	dt { color: rgba(#fff, 0.55); }
+
+	dd {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 6px 16px;
+		margin: 0;
+	}
+
+	dd a { text-decoration: underline; text-underline-offset: 3px; }
 }
 
 // The screenshot in a desktop window
@@ -214,7 +238,8 @@ footer {
 	}
 
 	.appInfo { text-align: center; padding-bottom: 40px; }
-	.downloads ul { justify-content: center; }
+	.downloads dl { text-align: left; justify-content: center; }
+	.downloadOthers summary { margin: 0 auto; }
 	.windowPreview { margin-bottom: 10px; }
 	.feature { width: 100%; }
 }
