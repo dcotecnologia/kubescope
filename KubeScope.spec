@@ -166,7 +166,7 @@ executable = EXE(
     codesign_identity=None,
     entitlements_file=None,
 )
-COLLECT(
+collected = COLLECT(
     executable,
     analysis.binaries,
     analysis.datas,
@@ -175,3 +175,12 @@ COLLECT(
     upx_exclude=[],
     name="KubeScope",
 )
+if sys.platform == "darwin":
+    # a double-clickable app; the CI zips it for the release
+    BUNDLE(
+        collected,
+        name="KubeScope.app",
+        icon=None,
+        bundle_identifier="io.github.danilogco.kubescope",
+        info_plist={"NSHighResolutionCapable": True},
+    )

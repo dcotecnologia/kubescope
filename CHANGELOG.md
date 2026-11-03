@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+### Added
+
+- The Release workflow builds a macOS app (`KubeScope.app` in a zip, Apple silicon) on the `macos-14` runner by @danilogco
+
 ### Changed
 
 - The Flatpak is not built or published with the releases for now, because its runtime has Python 3.13 and the app needs 3.15 by @danilogco
