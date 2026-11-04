@@ -1,0 +1,106 @@
+---
+layout: page
+title: Contributing
+permalink: /guides/contributing/
+---
+
+Thanks for helping. KubeScope is a desktop IDE for Kubernetes
+written in Python with PySide6. This page gets you from a clone to a pull request;
+the details live in two other files:
+
+- [AGENTS.md](https://github.com/dcotecnologia/kubescope/blob/main/AGENTS.md): architecture, code standards, UI and translations,
+  packaging, and the quality bar. It applies to people and AI assistants alike.
+- [COMMITING.md]({{ '/guides/commit-guidelines/' | relative_url }}): the commit message format (Conventional Commits).
+
+## Set up
+
+```bash
+git clone https://github.com/dcotecnologia/kubescope.git
+cd kubescope
+make setup          # uv sync with the dev and build extras, and the pre-commit hook
+```
+
+Run the app against a cluster with `make run`, or without any cluster using fake
+data with `make preview`. `make dev` runs the app and restarts it every time you
+save a source, `.ui` or language file.
+
+## Workflow
+
+1. Pull the latest `main` and create a branch. Do not commit to `main` directly.
+2. Make one focused change per commit, with its tests.
+3. Run the checks below.
+4. Open a pull request that says what changed and why. Link the issue if there is
+   one.
+
+## Checks
+
+```bash
+make lint     # every pre-commit hook on all files, as CI runs them
+make test     # pytest, must stay at 100% coverage (headless: QT_QPA_PLATFORM=offscreen)
+make ui       # leaves no diff in src/kubescope/ui
+make i18n     # leaves no untranslated texts in src/kubescope/languages
+```
+
+CI runs the same pre-commit hooks, the generated-UI check, and the tests on
+Python 3.15. A pull request must be green.
+
+## Commit messages
+
+Follow [COMMITING.md]({{ '/guides/commit-guidelines/' | relative_url }}):
+
+```text
+feat(pods): show CPU, memory and restarts columns
+fix(cluster): ignore Pod metrics when metrics-server is missing
+docs: describe the Flatpak build in the README
+```
+
+English, imperative mood, no trailing period, and no AI assistant as co-author.
+
+## Changelog
+
+Every user-visible change adds a line to the `[Unreleased]` section of
+[CHANGELOG.md](https://github.com/dcotecnologia/kubescope/blob/main/CHANGELOG.md), and each line ends with the GitHub user who wrote
+the commit, like GitHub's own release notes do:
+
+```text
+- The window opens at the size it had when it was closed by @danilogco
+```
+
+The release workflow publishes the section of the tag as the release notes.
+
+## Where changes go
+
+| Change | Place |
+| ------ | ----- |
+| Cluster queries and parsing of the API responses | `src/kubescope/cluster.py` |
+| Data shapes, formatters, sort and highlight rules | `src/kubescope/models.py` |
+| Widgets, pages and interactions | `src/kubescope/window.py` and the `.ui` files |
+| Preferences | `src/kubescope/settings.py` |
+| Friendly error messages | `src/kubescope/utils/errors.py` |
+| Colors, themes and the theme editor | `src/kubescope/theme.py`, `theme_editor.py` |
+| The changelog the app shows | edit `CHANGELOG.md`, then run `make changelog` to copy it into the package |
+| A theme to share with everyone | `src/kubescope/themes/` (see its README) |
+
+Edit layouts in the `.ui` files and run `make ui`; never edit `ui_*.py` by hand.
+Wrap user-visible text in `self.tr(...)` and run `make i18n` to add
+the new text to every language file, then translate it there.
+
+## Themes and languages
+
+- **A theme:** build it in Settings > New theme..., copy its JSON file into
+  `src/kubescope/themes/` and run `make test`. The folder's README has the
+  rules.
+- **A language:** `make language CODE=<code> NAME=<name in that language>`, translate
+  `src/kubescope/languages/<code>.json`. `make test` fails while any text is
+  untranslated.
+
+The steps are in the "Contribute a theme or a language" section of the README.
+
+## Security
+
+Report vulnerabilities privately as described in [SECURITY.md]({{ '/guides/security/' | relative_url }}), not
+in a public issue.
+
+## License
+
+By contributing you agree that your work is released under the [MIT License](https://github.com/dcotecnologia/kubescope/blob/main/LICENSE).

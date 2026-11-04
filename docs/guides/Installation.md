@@ -76,7 +76,7 @@ The Flatpak reads `~/.kube` (read-only) and carries no cloud CLI. To sign in to 
 GKE, AKS or OCI it asks the host to run the tools of your system (`aws`, `gcloud`,
 `az`, `kubelogin`, `oci`...), so install them there as usual. It does this through the
 `org.freedesktop.Flatpak` permission, which lets the app run programs outside the
-sandbox; read [SECURITY.md](https://github.com/dcotecnologia/kubescope/blob/main/SECURITY.md)
+sandbox; read the [security policy]({{ '/guides/security/' | relative_url }})
 before you install it.
 
 ## Windows

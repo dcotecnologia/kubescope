@@ -23,5 +23,5 @@ details and live logs. It uses the official Kubernetes Python client, so it need
 
 - [Source code](https://github.com/dcotecnologia/kubescope) and
   [downloads]({{ '/install/' | relative_url }})
-- [Contributing](https://github.com/dcotecnologia/kubescope/blob/main/CONTRIBUTING.md)
-- [Security policy](https://github.com/dcotecnologia/kubescope/blob/main/SECURITY.md)
+- [Contributing]({{ '/guides/contributing/' | relative_url }})
+- [Security policy]({{ '/guides/security/' | relative_url }})

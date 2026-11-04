@@ -53,5 +53,5 @@ everything.
 Open an [issue](https://github.com/dcotecnologia/kubescope/issues) with your
 version, platform and the error text. Remove cluster names, account IDs and tokens
 first. For security problems, follow the
-[security policy](https://github.com/dcotecnologia/kubescope/blob/main/SECURITY.md)
+[security policy]({{ '/guides/security/' | relative_url }})
 instead.

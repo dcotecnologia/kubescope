@@ -5,7 +5,7 @@ permalink: /guides/building-from-source/
 ---
 
 The full workflow lives in the repository:
-[CONTRIBUTING.md](https://github.com/dcotecnologia/kubescope/blob/main/CONTRIBUTING.md)
+the [contributing guide]({{ '/guides/contributing/' | relative_url }})
 and [README.md](https://github.com/dcotecnologia/kubescope/blob/main/README.md).
 The short version:
 
@@ -104,4 +104,4 @@ To move to a new release, change the `tag` and `commit` of the `kubescope` modul
 regenerate `python3-kubernetes.json` if `uv.lock` changed, and run `make flatpak-lint`, which
 checks that the tag exists and points at that commit.
 Commit messages follow
-[COMMITING.md](https://github.com/dcotecnologia/kubescope/blob/main/COMMITING.md).
+the [commit guidelines]({{ '/guides/commit-guidelines/' | relative_url }}).
