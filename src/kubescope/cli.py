@@ -7,7 +7,7 @@ import sys
 from collections.abc import Sequence
 from pathlib import Path
 
-from kubescope import __version__, cli_cluster
+from kubescope import __version__, cli_chat, cli_cluster
 from kubescope.settings import Settings, config_directory, log_directory
 from kubescope.utils.diagnostics import MAX_AGE_DAYS, commit, log_files
 from kubescope.utils.selfupdate import UpdateError, detect_install, restart, run_update
@@ -19,6 +19,8 @@ COMMANDS = (
     "check-update",
     "update",
     "help",
+    "chat",
+    "assistant",
     *cli_cluster.CLUSTER_COMMANDS,
 )
 FLAGS = ("--version", "-V", "--help", "-h")
@@ -146,6 +148,7 @@ def _parser() -> argparse.ArgumentParser:
         "--version", metavar="X.Y.Z", help="the version to install (default: latest)"
     )
     cli_cluster.add_commands(commands)
+    cli_chat.add_command(commands)
     help_command = commands.add_parser("help", help="show the help of a command")
     help_command.add_argument("topic", nargs="?", metavar="command")
     return parser
@@ -170,6 +173,8 @@ def run(arguments: Sequence[str]) -> int | None:
         return _cleanup(namespace.all, namespace.dry_run)
     if namespace.command == "update":
         return _update(namespace.version)
+    if namespace.command in ("chat", "assistant"):
+        return cli_chat.run(namespace)
     if namespace.command in cli_cluster.CLUSTER_COMMANDS:
         return cli_cluster.run(namespace)
     return _check_update()
