@@ -3181,3 +3181,41 @@ def test_describe_kube_says_where_the_files_come_from(monkeypatch, tmp_path) -> 
         assert "kubeconfig from: set in Settings" in cluster.describe_kube()
     finally:
         cluster.configure([])
+
+
+def test_run_login_here_keeps_the_terminal(monkeypatch):
+    calls = []
+    forgotten = []
+    monkeypatch.setattr(
+        cluster.subprocess, "call", lambda command: calls.append(command) or 0
+    )
+    monkeypatch.setattr(cluster, "forget_clients", lambda: forgotten.append(True))
+    cluster.run_login_here(cluster.LoginAction(["aws", "sso", "login"], None, False))
+    assert calls == [["aws", "sso", "login"]]
+    assert forgotten == [True]
+
+
+def test_run_login_here_failures(monkeypatch):
+    action = cluster.LoginAction(["gcloud", "auth", "login"], None, False)
+    monkeypatch.setattr(cluster.subprocess, "call", lambda command: 2)
+    with pytest.raises(cluster.SignInFailed, match="exited with 2"):
+        cluster.run_login_here(action)
+
+    def missing(command):
+        raise OSError("not found")
+
+    monkeypatch.setattr(cluster.subprocess, "call", missing)
+    with pytest.raises(cluster.SignInFailed, match="Could not start gcloud"):
+        cluster.run_login_here(action)
+
+
+def test_run_login_here_on_windows_finds_the_program(monkeypatch):
+    calls = []
+    monkeypatch.setattr(cluster.sys, "platform", "win32")
+    monkeypatch.setattr(cluster, "find_program", lambda name: f"C:\\{name}.cmd")
+    monkeypatch.setattr(
+        cluster.subprocess, "call", lambda command: calls.append(command) or 0
+    )
+    monkeypatch.setattr(cluster, "forget_clients", lambda: None)
+    cluster.run_login_here(cluster.LoginAction(["az", "login"], None, False))
+    assert calls == [["C:\\az.cmd", "login"]]

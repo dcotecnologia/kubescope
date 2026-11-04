@@ -7,13 +7,20 @@ import sys
 from collections.abc import Sequence
 from pathlib import Path
 
-from kubescope import __version__
+from kubescope import __version__, cli_cluster
 from kubescope.settings import Settings, config_directory, log_directory
 from kubescope.utils.diagnostics import MAX_AGE_DAYS, commit, log_files
 from kubescope.utils.selfupdate import UpdateError, detect_install, restart, run_update
 from kubescope.utils.updates import check_for_update, latest_release_for, release_of
 
-COMMANDS = ("info", "cleanup", "check-update", "update")
+COMMANDS = (
+    "info",
+    "cleanup",
+    "check-update",
+    "update",
+    "help",
+    *cli_cluster.CLUSTER_COMMANDS,
+)
 FLAGS = ("--version", "-V", "--help", "-h")
 
 
@@ -138,6 +145,9 @@ def _parser() -> argparse.ArgumentParser:
     update.add_argument(
         "--version", metavar="X.Y.Z", help="the version to install (default: latest)"
     )
+    cli_cluster.add_commands(commands)
+    help_command = commands.add_parser("help", help="show the help of a command")
+    help_command.add_argument("topic", nargs="?", metavar="command")
     return parser
 
 
@@ -147,11 +157,19 @@ def run(arguments: Sequence[str]) -> int | None:
     to it)."""
     if not arguments or arguments[0] not in (*COMMANDS, *FLAGS):
         return None
-    namespace = _parser().parse_args(arguments)
+    parser = _parser()
+    namespace = parser.parse_args(arguments)
+    if namespace.command == "help":
+        # `kubescope help pods` is `kubescope pods --help`
+        parser.parse_args(
+            [namespace.topic, "--help"] if namespace.topic else ["--help"]
+        )
     if namespace.command == "info":
         return _info()
     if namespace.command == "cleanup":
         return _cleanup(namespace.all, namespace.dry_run)
     if namespace.command == "update":
         return _update(namespace.version)
+    if namespace.command in cli_cluster.CLUSTER_COMMANDS:
+        return cli_cluster.run(namespace)
     return _check_update()

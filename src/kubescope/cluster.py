@@ -1046,6 +1046,24 @@ def _open_terminal(command: list[str]) -> None:
         raise ClusterError(f"Could not open a terminal: {error}") from error
 
 
+def run_login_here(action: LoginAction) -> None:
+    """Sign in on the terminal the app was started from: the program keeps the
+    terminal, so its prompts, links and codes are seen and answered there, and
+    the app never reads what is typed."""
+    logger.info("Starting sign-in: %s", _describe(action.command))
+    command = action.command
+    if sys.platform == "win32":  # az and gcloud are .cmd files there
+        command = [find_program(command[0]) or command[0], *command[1:]]
+    try:
+        code = subprocess.call(on_host(command))
+    except OSError as error:
+        raise SignInFailed(f"Could not start {command[0]}: {error}") from error
+    if code != 0:
+        raise SignInFailed(f"{command[0]} exited with {code}")
+    forget_clients()  # the new credentials are picked up by the next request
+    logger.info("Sign-in finished for profile %s", action.profile or "default")
+
+
 def run_login(action: LoginAction) -> None:
     """Start the sign-in.
 
