@@ -64,6 +64,7 @@
             "Overview": "ภาพรวม",
             "Properties": "คุณสมบัติ",
             "Raw JSON": "JSON ดิบ",
+            "Raw YAML": "YAML ดิบ",
             "Spec": "Spec",
             "Status": "สถานะ"
         },

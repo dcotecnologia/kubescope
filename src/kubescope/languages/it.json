@@ -64,6 +64,7 @@
             "Overview": "Panoramica",
             "Properties": "Proprietà",
             "Raw JSON": "JSON grezzo",
+            "Raw YAML": "YAML grezzo",
             "Spec": "Spec",
             "Status": "Stato"
         },

@@ -270,3 +270,29 @@ def test_the_list_filter_has_the_same_switches(monkeypatch) -> None:
     window._retranslate()
     assert window.search_case_button.toolTip() == "Match case"
     window.close()
+
+
+def test_the_details_show_the_raw_yaml_too() -> None:
+    from kubescope.views.detail_tab import DetailTab
+
+    tab = _made_here(
+        DetailTab("pod: api", {"metadata": {"name": "api"}, "spec": {"ports": [80]}})
+    )
+    assert tab.save_name == "pod-api.json"
+
+    tab.yaml_button.click()
+
+    assert tab.showing_raw
+    assert tab.editor.toPlainText() == (
+        "metadata:\n  name: api\nspec:\n  ports:\n  - 80\n"
+    )
+    assert tab.highlighter.yaml
+    assert tab.save_name == "pod-api.yaml"
+
+    tab.search.input.setText("api")
+    assert tab.search.count_label.text() == "1 of 1"
+
+    tab.raw_button.click()
+    assert tab.editor.toPlainText().startswith("{")
+    assert not tab.highlighter.yaml
+    assert tab.save_name == "pod-api.json"

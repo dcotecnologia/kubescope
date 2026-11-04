@@ -64,6 +64,7 @@
             "Overview": "Tổng quan",
             "Properties": "Thuộc tính",
             "Raw JSON": "JSON thô",
+            "Raw YAML": "YAML thô",
             "Spec": "Spec",
             "Status": "Trạng thái"
         },

@@ -117,7 +117,7 @@ _The cluster overview, shown with sample data. Regenerate it with
   types, nodes (desired, min and max), AMI type and AMI version, read through the
   AWS CLI, with the cluster's nodes (status, role, version, CPU, memory, Pods) in
   the same view. It has no namespace filter, since node groups are not namespaced.
-- **Details and logs:** JSON details of a Pod or workload, and live Pod logs,
+- **Details and logs:** JSON or YAML details of a Pod or workload, and live Pod logs,
   each in its own closable tab, colored like Monokai. **Save...** writes the open
   tab to a file you choose.
 - **Assistant:** the round button in the corner opens a chat with **Gabi**, the

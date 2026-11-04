@@ -64,6 +64,7 @@
             "Overview": "Übersicht",
             "Properties": "Eigenschaften",
             "Raw JSON": "Roh-JSON",
+            "Raw YAML": "Roh-YAML",
             "Spec": "Spec",
             "Status": "Status"
         },

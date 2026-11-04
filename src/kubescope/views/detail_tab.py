@@ -2,6 +2,7 @@ import html
 import json
 from typing import Any
 
+import yaml
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QColor, QKeySequence, QShortcut
 from PySide6.QtWidgets import (
@@ -46,7 +47,7 @@ QFrame#rowLine { background: #e1e3e9; max-height: 1px; border: none; }
 
 class DetailTab(QWidget):
     """The details of a resource: an overview laid out in sections (with the
-    live usage of a Pod) and the raw JSON, one click apart."""
+    live usage of a Pod) and the raw JSON or YAML, one click apart."""
 
     link_clicked = Signal(str, str, str)  # kind, namespace and name to open
 
@@ -55,7 +56,12 @@ class DetailTab(QWidget):
     ) -> None:
         super().__init__()
         self.document = document
-        self.save_name = safe_file_name(title, ".json")
+        self.title = title
+        self.json_text = json.dumps(document, ensure_ascii=False, indent=2)
+        self.yaml_text = yaml.safe_dump(
+            document, allow_unicode=True, sort_keys=False, default_flow_style=False
+        )
+        self.raw_format = "json"
         self.busy = False
         self.closed = False
 
@@ -64,7 +70,7 @@ class DetailTab(QWidget):
         self.editor.setFont(code_font())
         self.editor.setLineWrapMode(LineNumberEditor.LineWrapMode.NoWrap)
         self.highlighter = style_json_view(self.editor)
-        self.editor.setPlainText(json.dumps(document, ensure_ascii=False, indent=2))
+        self.editor.setPlainText(self.json_text)
 
         self.cpu_chart = UsageChart(self.tr("CPU"), format_cpu)
         self.memory_chart = UsageChart(self.tr("Memory"), format_memory)
@@ -85,7 +91,10 @@ class DetailTab(QWidget):
 
         self.overview_button = QPushButton(self.tr("Overview"))
         self.raw_button = QPushButton(self.tr("Raw JSON"))
-        for index, button in enumerate((self.overview_button, self.raw_button)):
+        self.yaml_button = QPushButton(self.tr("Raw YAML"))
+        for index, button in enumerate(
+            (self.overview_button, self.raw_button, self.yaml_button)
+        ):
             button.setCheckable(True)
             button.setAutoExclusive(True)
             button.setProperty("variant", "secondary")
@@ -93,6 +102,7 @@ class DetailTab(QWidget):
         header = QHBoxLayout()
         header.addWidget(self.overview_button)
         header.addWidget(self.raw_button)
+        header.addWidget(self.yaml_button)
         header.addStretch()
         # the search looks in the raw JSON, which it shows when something is typed
         self.search = SearchBar(self.editor)
@@ -109,12 +119,30 @@ class DetailTab(QWidget):
         self.restyle()
 
     def _show_raw(self) -> None:
-        self.show_page(1)
+        # a search in the overview looks in the format shown last
+        self.show_page(2 if self.raw_format == "yaml" else 1)
+
+    @property
+    def save_name(self) -> str:
+        """The file name the shown text is saved under."""
+        return safe_file_name(
+            self.title, ".yaml" if self.raw_format == "yaml" else ".json"
+        )
 
     def show_page(self, index: int) -> None:
-        self.stack.setCurrentIndex(index)
+        """Show the overview (0), the raw JSON (1) or the raw YAML (2)."""
+        if index:
+            self.raw_format = "yaml" if index == 2 else "json"
+            text = self.yaml_text if index == 2 else self.json_text
+            if self.editor.toPlainText() != text:
+                self.editor.setPlainText(text)
+                self.highlighter.yaml = index == 2
+                self.highlighter.rehighlight()
+                self.search.refresh()
+        self.stack.setCurrentIndex(1 if index else 0)
         self.overview_button.setChecked(index == 0)
         self.raw_button.setChecked(index == 1)
+        self.yaml_button.setChecked(index == 2)
 
     @property
     def showing_raw(self) -> bool:

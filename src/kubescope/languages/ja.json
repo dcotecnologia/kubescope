@@ -64,6 +64,7 @@
             "Overview": "概要",
             "Properties": "プロパティ",
             "Raw JSON": "生の JSON",
+            "Raw YAML": "生の YAML",
             "Spec": "Spec",
             "Status": "ステータス"
         },

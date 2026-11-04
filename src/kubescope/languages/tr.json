@@ -64,6 +64,7 @@
             "Overview": "Genel bakış",
             "Properties": "Özellikler",
             "Raw JSON": "Ham JSON",
+            "Raw YAML": "Ham YAML",
             "Spec": "Spec",
             "Status": "Durum"
         },

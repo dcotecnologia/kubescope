@@ -64,6 +64,7 @@
             "Overview": "نمای کلی",
             "Properties": "ویژگی‌ها",
             "Raw JSON": "JSON خام",
+            "Raw YAML": "YAML خام",
             "Spec": "Spec",
             "Status": "وضعیت"
         },

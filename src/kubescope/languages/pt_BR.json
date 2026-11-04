@@ -64,6 +64,7 @@
             "Overview": "Visão geral",
             "Properties": "Propriedades",
             "Raw JSON": "JSON bruto",
+            "Raw YAML": "YAML bruto",
             "Spec": "Spec",
             "Status": "Status"
         },

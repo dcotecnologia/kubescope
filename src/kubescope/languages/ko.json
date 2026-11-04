@@ -64,6 +64,7 @@
             "Overview": "개요",
             "Properties": "속성",
             "Raw JSON": "원본 JSON",
+            "Raw YAML": "원본 YAML",
             "Spec": "Spec",
             "Status": "상태"
         },

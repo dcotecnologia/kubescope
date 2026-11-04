@@ -141,7 +141,7 @@ them with `aws eks list-nodegroups` and `aws eks describe-nodegroup` (and the
 `addon` equivalents) using the profile and region of your kubeconfig. **Details**
 shows the JSON that `describe-nodegroup` returns.
 
-Select a row, then use **Details** (the JSON of the resource) or **Logs**. From a
+Select a row, then use **Details** (an overview of the resource, and its raw JSON or YAML) or **Logs**. From a
 workload you can also open **Pods** to list its Pods. Double-click a row for
 details.
 

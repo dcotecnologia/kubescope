@@ -64,6 +64,7 @@
             "Overview": "Ikhtisar",
             "Properties": "Properti",
             "Raw JSON": "JSON mentah",
+            "Raw YAML": "YAML mentah",
             "Spec": "Spec",
             "Status": "Status"
         },

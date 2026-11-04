@@ -87,6 +87,7 @@ _NUMBER = re.compile(r"-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?")
 _LITERAL = re.compile(r"\b(?:true|false|null)\b")
 _STRING = re.compile(r'"(?:\\.|[^"\\])*"')
 _KEY = re.compile(r'"(?:\\.|[^"\\])*"(?=\s*:)')
+_YAML_KEY = re.compile(r"^[ -]*[^\s\-#:'\"][^:#]*?(?=:(?:\s|$))")
 
 
 def text_format(color: str) -> QTextCharFormat:
@@ -104,6 +105,7 @@ class JsonHighlighter(QSyntaxHighlighter):
 
     def __init__(self, parent) -> None:
         super().__init__(parent)
+        self.yaml = False  # YAML keys have no quotes; the rest is colored alike
         self.set_palette(current_palette())
 
     def set_palette(self, palette: Palette) -> None:
@@ -118,11 +120,14 @@ class JsonHighlighter(QSyntaxHighlighter):
             (_LITERAL, literal),
             (_STRING, string),
             (_KEY, key),
+            (_YAML_KEY, key),
         ]
         self.rehighlight()
 
     def highlightBlock(self, text: str) -> None:
         for pattern, fmt in self._rules:
+            if pattern is _YAML_KEY and not self.yaml:
+                continue
             for match in pattern.finditer(text):
                 self.setFormat(match.start(), match.end() - match.start(), fmt)
 

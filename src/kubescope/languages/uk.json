@@ -64,6 +64,7 @@
             "Overview": "Огляд",
             "Properties": "Властивості",
             "Raw JSON": "Необроблений JSON",
+            "Raw YAML": "Необроблений YAML",
             "Spec": "Spec",
             "Status": "Статус"
         },

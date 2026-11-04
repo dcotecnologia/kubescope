@@ -64,6 +64,7 @@
             "Overview": "Обзор",
             "Properties": "Свойства",
             "Raw JSON": "Исходный JSON",
+            "Raw YAML": "Исходный YAML",
             "Spec": "Spec",
             "Status": "Статус"
         },

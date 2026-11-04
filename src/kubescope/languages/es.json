@@ -64,6 +64,7 @@
             "Overview": "Resumen",
             "Properties": "Propiedades",
             "Raw JSON": "JSON sin procesar",
+            "Raw YAML": "YAML sin procesar",
             "Spec": "Spec",
             "Status": "Estado"
         },

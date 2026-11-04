@@ -64,6 +64,7 @@
             "Overview": "概览",
             "Properties": "属性",
             "Raw JSON": "原始 JSON",
+            "Raw YAML": "原始 YAML",
             "Spec": "Spec",
             "Status": "状态"
         },
