@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+### Added
+
+- `kubescope chat` (or `kubescope assistant`) opens a conversation with Gabi on the terminal, with the same program, reads and limits as the chat of the window, or asks one question and leaves when you give it words; on a terminal the answer is in color (bold, code, headings, lists and code blocks) and the line can be edited, and `NO_COLOR` turns the colors off by @danilogco
+- `kubescope help` lists the commands and `kubescope help COMMAND` shows the options of one by @danilogco
+- `kubescope` works as a command line for the cluster: `contexts`, `pods`, `workloads`, `nodes`, `events`, `get KIND NAME` and `logs POD` read what the window shows (`-o json` and `-o yaml` for scripts), and without `--context` it asks which context on a terminal by @danilogco
+- `kubescope login --context NAME` (also `kubescope auth`) signs in to a context (AWS SSO or access keys, Google Cloud, Azure, or the command set in Settings) on the terminal, and a command that fails for an expired sign-in points to it by @danilogco
+- `kubescope delete`, `evict`, `scale` and `restart` change a cluster from the terminal, only while the write mode is on, and ask for confirmation unless `--yes` is given by @danilogco
+
 ## [1.5.0] - 2026-11-04
 
 ### Added

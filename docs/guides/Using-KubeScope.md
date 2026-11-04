@@ -8,7 +8,7 @@ permalink: /guides/using-kubescope/
 
 `kubescope` opens the window. These commands answer on the terminal instead:
 
-- `kubescope --version` prints the version.
+- `kubescope --version` prints the version. `kubescope help` lists the commands and `kubescope help COMMAND` (or `COMMAND --help`) shows the options of one.
 - `kubescope info` prints the version, the commit and where the settings and
   logs are kept.
 - `kubescope cleanup` deletes the debug and crash logs older than 30 days;
@@ -19,6 +19,37 @@ permalink: /guides/using-kubescope/
   `--version X.Y.Z`, checking the file against the sha256 GitHub published. It
   works for the AppImage, the .deb and Windows installations; a Flatpak is
   updated by Flathub.
+- `kubescope contexts` lists the kubeconfig contexts. The commands below take
+  `--context NAME`; without it, on a terminal, the program lists the contexts and
+  asks which one (with no terminal it stops and asks you to pass `--context`).
+  They read what the window reads, and `-o json` or `-o yaml` prints it for
+  scripts: `kubescope pods --context NAME [-n NAMESPACE]`, `kubescope workloads
+  [--kind Deployment]`, `kubescope nodes`, `kubescope events`, `kubescope get KIND
+  NAME [-n NAMESPACE]` (YAML by default) and `kubescope logs POD [-c CONTAINER]
+  [--tail N]`. Without `-n` the lists cover every namespace; `get` and `logs` use
+  `default`.
+- `kubescope login --context NAME` (also `kubescope auth`) signs in to the context the way the window's
+  **Sign in** button does (`aws sso login`, `aws configure`, `gcloud auth login`,
+  `az login` or the command you set in Settings), on your terminal, so you see
+  and answer its prompts. When a command fails because the sign-in expired, it
+  tells you to run this.
+- `kubescope delete KIND NAME`, `evict POD`, `scale DEPLOYMENT --replicas N` and
+  `restart DEPLOYMENT`, all with `-n NAMESPACE`, change the cluster. They work
+  only while the write mode is on in Settings, and ask for confirmation first;
+  `--yes` answers it, and is needed when there is no terminal.
+
+- `kubescope chat` (or `kubescope assistant`) opens a conversation with Gabi on the
+  terminal, for the context given with `--context` (asked if absent). It is the chat
+  of the window: the same program (Claude Code or Codex, as chosen in Settings, or
+  `--assistant claude|codex`), started with no tools, the same reads of the cluster
+  and the same limits. The first time it asks you to agree to what it sends, as the
+  window does; it does nothing while the assistant is off in Settings. Type
+  `/help`, `/clear` (forget the conversation of the context) or `/exit` (Ctrl-D
+  too). The conversation is kept like the window's, per context. With words after
+  it, as in `kubescope chat --context NAME why is web-0 restarting?`, it asks that
+  once and leaves. A change Gabi asks for runs only with the write mode on and
+  after you confirm it on the terminal; an action that only moves the window is
+  told to you and nothing else.
 
 ## The window
 
