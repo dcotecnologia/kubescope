@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+## [1.6.0] - 2026-11-04
+
 ### Added
 
 - `kubescope chat` (or `kubescope assistant`) opens a conversation with Gabi on the terminal, with the same program, reads and limits as the chat of the window, or asks one question and leaves when you give it words; on a terminal the answer is in color (bold, code, headings, lists and code blocks) and the line can be edited, and `NO_COLOR` turns the colors off by @danilogco
@@ -508,7 +510,8 @@ The first release.
 
 - Pod logs and resource details are still never written to disk by the app on its own. **Save** is the only exception, and it writes only to the file the user chooses. SECURITY.md says so by @danilogco
 
-[Unreleased]: https://github.com/dcotecnologia/kubescope/compare/v1.5.0...HEAD
+[Unreleased]: https://github.com/dcotecnologia/kubescope/compare/v1.6.0...HEAD
+[1.6.0]: https://github.com/dcotecnologia/kubescope/compare/v1.5.0...v1.6.0
 [1.5.0]: https://github.com/dcotecnologia/kubescope/compare/v1.4.0...v1.5.0
 [1.4.0]: https://github.com/dcotecnologia/kubescope/compare/v1.3.2...v1.4.0
 [1.3.2]: https://github.com/dcotecnologia/kubescope/compare/v1.3.1...v1.3.2
