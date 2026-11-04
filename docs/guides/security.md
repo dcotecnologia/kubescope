@@ -61,6 +61,9 @@ restart` does). Each of these asks for confirmation first (Cancel is the
   the write mode also sends the cluster a `SelfSubjectAccessReview` for each
   action, in the namespace of the selected row. It asks and changes nothing, and
   carries no data of yours besides the namespace.
+  The command line (`kubescope delete`, `evict`, `scale` and `restart`) is bound by
+  the same rule: it refuses while the write mode is off, asks for confirmation
+  unless you pass `--yes`, and uses the same code in `writes.py`.
 - **Cluster info, Node Groups and Add-ons use the AWS CLI.** On an Amazon EKS
   context the app also runs `aws eks describe-cluster` (the Cluster info and
   Networking cards of the Overview), `list-nodegroups`, `describe-nodegroup`,
@@ -128,6 +131,10 @@ configure` so you type the keys there. The app never sees, asks for, or stores
   ask for a change it is told to say plainly that KubeScope is in read-only mode,
   that nothing was changed and that the write mode is in Settings. It reads
   at most five times for a question. **Settings** turns the chat off.
+  `kubescope chat` is the same assistant on the terminal: it needs the same
+  agreement, the same program with no tools, and its changes wait for the write mode and
+  for your confirmation on the terminal. It keeps the conversation in the same
+  `assistant_history.json`.
 - **`/kube` (or `/kubectl`) and `/debug` in the chat are answered by the app, not by the AI.**
   `/debug` tells which program, model and effort the assistant uses, and its
   command line (without its long instruction). `/kube` runs `kubectl version
