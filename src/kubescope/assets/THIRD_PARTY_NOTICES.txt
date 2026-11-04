@@ -34,7 +34,7 @@ Packages
   requests-oauthlib 2.0.0 - BSD License
   shiboken6 6.12.0 - LGPL-3.0-only (Qt for Python and Qt)
   typing-extensions 4.16.0 - PSF-2.0
-  typing-inspection 0.4.4 - MIT
+  typing-inspection 0.4.5 - MIT
   tzdata 2026.6 - Apache-2.0
   urllib3 2.8.0 - MIT
   websocket-client 1.9.2 - Apache-2.0
@@ -3235,7 +3235,7 @@ typing-extensions 4.16.0
 LICENSE: the same text as aiohappyeyeballs 2.7.1 above.
 
 ==============================================================================
-typing-inspection 0.4.4
+typing-inspection 0.4.5
 ==============================================================================
 
 LICENSE:
