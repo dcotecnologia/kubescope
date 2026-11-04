@@ -125,10 +125,6 @@ def _context(given: str | None) -> str:
     raise ClusterError(f"There is no context {answer!r}")
 
 
-def _namespace(namespace: str | None, everywhere: bool) -> str | None:
-    return None if everywhere else namespace
-
-
 def _contexts(output: str) -> int:
     names, current = cluster.list_contexts()
     document = [{"name": name, "current": name == current} for name in names]
