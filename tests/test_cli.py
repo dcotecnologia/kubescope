@@ -245,3 +245,17 @@ def test_update_reports_a_failed_lookup_and_a_failed_install(
     monkeypatch.setattr(cli, "run_update", broken)
     assert cli.run(["update"]) == 1
     assert "does not match" in capsys.readouterr().err
+
+
+def test_help_shows_the_general_help(capsys):
+    with pytest.raises(SystemExit) as stop:
+        cli.run(["help"])
+    assert stop.value.code == 0
+    assert "pods" in capsys.readouterr().out
+
+
+def test_help_of_a_command(capsys):
+    with pytest.raises(SystemExit) as stop:
+        cli.run(["help", "pods"])
+    assert stop.value.code == 0
+    assert "usage: kubescope pods" in capsys.readouterr().out
