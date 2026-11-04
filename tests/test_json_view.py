@@ -85,3 +85,19 @@ def test_restyle_follows_a_theme_change(dark) -> None:
 
     assert _colors(editor, 0)['"name"'] == "#0451a5"
     assert "#1e1e1e" not in editor.styleSheet()
+
+
+def test_yaml_keys_are_colored_with_colons_and_list_dashes(dark) -> None:
+    editor = QPlainTextEdit()
+    highlighter = json_view.style_json_view(editor)
+    highlighter.yaml = True
+    editor.setPlainText(
+        "kind: Pod\n- name: api\n    f:metadata:\n  uid: '81'\n  ready: true\n"
+    )
+    highlighter.rehighlight()
+
+    assert _colors(editor, 0) == {"kind": "#9cdcfe"}
+    assert _colors(editor, 1) == {"name": "#9cdcfe"}  # not the dash of the list
+    assert _colors(editor, 2) == {"f:metadata": "#9cdcfe"}
+    assert _colors(editor, 3) == {"uid": "#9cdcfe", "'81'": "#ce9178"}
+    assert _colors(editor, 4)["true"] == "#569cd6"

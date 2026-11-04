@@ -87,7 +87,9 @@ _NUMBER = re.compile(r"-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?")
 _LITERAL = re.compile(r"\b(?:true|false|null)\b")
 _STRING = re.compile(r'"(?:\\.|[^"\\])*"')
 _KEY = re.compile(r'"(?:\\.|[^"\\])*"(?=\s*:)')
-_YAML_KEY = re.compile(r"^[ -]*[^\s\-#:'\"][^:#]*?(?=:(?:\s|$))")
+_YAML_STRING = re.compile(r"'(?:''|[^'])*'")
+# a key can hold colons (`f:metadata`); only a colon before a space or the end closes it
+_YAML_KEY = re.compile(r"^[ -]*([^\s\-#'\"](?:[^:#]|:(?!\s|$))*?)(?=:(?:\s|$))")
 
 
 def text_format(color: str) -> QTextCharFormat:
@@ -119,6 +121,7 @@ class JsonHighlighter(QSyntaxHighlighter):
             (_NUMBER, number),
             (_LITERAL, literal),
             (_STRING, string),
+            (_YAML_STRING, string),
             (_KEY, key),
             (_YAML_KEY, key),
         ]
@@ -126,10 +129,11 @@ class JsonHighlighter(QSyntaxHighlighter):
 
     def highlightBlock(self, text: str) -> None:
         for pattern, fmt in self._rules:
-            if pattern is _YAML_KEY and not self.yaml:
+            if pattern in (_YAML_KEY, _YAML_STRING) and not self.yaml:
                 continue
             for match in pattern.finditer(text):
-                self.setFormat(match.start(), match.end() - match.start(), fmt)
+                start, end = match.span(1) if pattern.groups else match.span()
+                self.setFormat(start, end - start, fmt)
 
 
 def style_json_view(editor: QPlainTextEdit) -> JsonHighlighter:
