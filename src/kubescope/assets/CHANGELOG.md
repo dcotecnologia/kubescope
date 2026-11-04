@@ -13,6 +13,10 @@ All notable changes to this project will be documented in this file. The format 
 - The AppImage carries update information and the release has its `.zsync` file, so AppImageUpdate downloads only what changed by @danilogco
 - The guides are pages of the site (`/guides/`) and no longer send you to the GitHub wiki, and the security policy, the contributing guide and the commit guidelines are pages of the site too by @danilogco
 
+### Fixed
+
+- Starting a second KubeScope no longer prints `QAbstractSocket::waitForBytesWritten() is not allowed in UnconnectedState` by @danilogco
+
 ### Changed
 
 - The Flatpak is not built or published with the releases for now, because its runtime has Python 3.13 and the app needs 3.15 by @danilogco

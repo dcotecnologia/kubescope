@@ -33,8 +33,11 @@ class SingleInstance(QObject):
             return False
         socket.write(b"show")
         socket.flush()
-        socket.waitForBytesWritten(CONNECT_TIMEOUT_MS)
-        socket.disconnectFromServer()
+        # the first instance may close its end at once: waiting on a socket that is
+        # no longer connected is an error in Qt
+        if socket.state() == QLocalSocket.LocalSocketState.ConnectedState:
+            socket.waitForBytesWritten(CONNECT_TIMEOUT_MS)
+            socket.disconnectFromServer()
         return True
 
     def listen(self) -> bool:
