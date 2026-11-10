@@ -171,7 +171,7 @@ jobs:
       matrix:
         include:
           # a build runs only on the CPU of its runner: Apple silicon and Intel
-          - {runner: macos-14, arch: arm64}
+          - {runner: macos-15, arch: arm64}
           - {runner: macos-15-intel, arch: x86_64}
     steps:
       - uses: actions/checkout@v7
