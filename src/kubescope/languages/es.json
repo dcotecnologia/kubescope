@@ -22,6 +22,7 @@
             "Cancel": "Cancelar",
             "Hi, I'm {name}, from {company}. I know Kubernetes and KubeScope well. Ask me about what you see on the screen, ask me to look into a problem, or ask me to take you somewhere in the app.": "Hola, soy {name}, de {company}. Conozco bien Kubernetes y KubeScope. Pregúntame sobre lo que ves en la pantalla, pídeme que investigue un problema o que te lleve a algún lugar de la aplicación.",
             "Ignored an action: {why}": "Se ignoró una acción: {why}",
+            "Open {name}": "Abrir {name}",
             "Read-only mode: nothing was changed. Turn on the write mode in Settings to allow {what}.": "Modo de solo lectura: no se cambió nada. Active el modo de escritura en Ajustes para permitir {what}.",
             "Run": "Ejecutar",
             "See what is attached.": "Ver lo adjunto.",
@@ -29,10 +30,12 @@
             "Stop": "Detener",
             "Stopped reading: too many reads for one question.": "Lectura detenida: demasiadas lecturas para una sola pregunta.",
             "The assistant could not answer: {message}": "El asistente no pudo responder: {message}",
+            "The pasted text is too large.": "El texto pegado es demasiado grande.",
             "The picture is too large.": "La imagen es demasiado grande.",
             "Thinking...": "Pensando...",
             "This assistant takes text files only, not {name}.": "Este asistente solo admite archivos de texto, no {name}.",
-            "You": "Usted"
+            "You": "Usted",
+            "{count} lines": "{count} líneas"
         },
         "ChangelogDialog": {
             "ADDED": "AÑADIDO",

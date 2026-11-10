@@ -22,6 +22,7 @@
             "Cancel": "ביטול",
             "Hi, I'm {name}, from {company}. I know Kubernetes and KubeScope well. Ask me about what you see on the screen, ask me to look into a problem, or ask me to take you somewhere in the app.": "היי, אני {name} מ-{company}. אני מכיר היטב את Kubernetes ואת KubeScope. אפשר לשאול אותי על מה שמוצג במסך, לבקש ממני לבדוק בעיה, או לבקש שאוביל אותך למקום מסוים באפליקציה.",
             "Ignored an action: {why}": "פעולה התעלמה: {why}",
+            "Open {name}": "פתיחת {name}",
             "Read-only mode: nothing was changed. Turn on the write mode in Settings to allow {what}.": "מצב קריאה בלבד: דבר לא שונה. הפעילו את מצב הכתיבה בהגדרות כדי לאפשר {what}.",
             "Run": "הפעל",
             "See what is attached.": "הצגת הקבצים המצורפים.",
@@ -29,10 +30,12 @@
             "Stop": "עצור",
             "Stopped reading: too many reads for one question.": "הקריאה הופסקה: יותר מדי קריאות לשאלה אחת.",
             "The assistant could not answer: {message}": "העוזר לא הצליח לענות: {message}",
+            "The pasted text is too large.": "הטקסט שהודבק גדול מדי.",
             "The picture is too large.": "התמונה גדולה מדי.",
             "Thinking...": "חושב...",
             "This assistant takes text files only, not {name}.": "עוזר זה מקבל קובצי טקסט בלבד, לא {name}.",
-            "You": "אתם"
+            "You": "אתם",
+            "{count} lines": "{count} שורות"
         },
         "ChangelogDialog": {
             "ADDED": "נוסף",

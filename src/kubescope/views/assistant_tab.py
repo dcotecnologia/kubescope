@@ -1,5 +1,5 @@
+import tempfile
 from collections.abc import Callable, Sequence
-from datetime import datetime
 from math import ceil
 from pathlib import Path
 
@@ -12,14 +12,18 @@ from PySide6.QtCore import (
     QSize,
     Qt,
     QThread,
+    QUrl,
     Signal,
 )
 from PySide6.QtGui import (
     QColor,
+    QDesktopServices,
     QImage,
     QImageWriter,
     QKeyEvent,
+    QMouseEvent,
     QPainter,
+    QPainterPath,
     QPen,
     QPixmap,
     QResizeEvent,
@@ -46,6 +50,7 @@ from kubescope.assistant.history import Entry
 from kubescope.assistant.runner import COMPANY, NAME, Assistant, AssistantError
 from kubescope.assistant.session import ChatSession, Message
 from kubescope.theme import themed
+from kubescope.utils.timezone import zone_now
 from kubescope.views.chat_icons import attach_icon, send_icon, stop_icon
 
 SHUTDOWN_WAIT_MS = 3000
@@ -86,7 +91,9 @@ class ChatBackground(QWidget):
                     painter.drawRect(int(x + 9), int(y + 9), 10, 10)
 
 
-THUMBNAIL = 220  # width of the picture of an attached image in a bubble
+CARD = 88  # the side of the card of an attachment, above the message field
+PILL_THUMB = 18  # the side of the small picture in the pill of a sent message
+LONG_PASTE = 2000  # a pasted text this long is attached as a file, not typed
 FILE_FILTER = "Images and text files ({patterns});;All files (*)"
 
 
@@ -152,11 +159,30 @@ class MessageText(QTextBrowser):
         event.ignore()  # the conversation is the one that scrolls
 
 
+class ClickableFrame(QFrame):
+    """A frame that can be clicked, like an attachment."""
+
+    clicked = Signal()
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.setCursor(Qt.CursorShape.PointingHandCursor)
+
+    def mouseReleaseEvent(self, event: QMouseEvent) -> None:
+        if event.button() == Qt.MouseButton.LeftButton and self.rect().contains(
+            event.position().toPoint()
+        ):
+            self.clicked.emit()
+        super().mouseReleaseEvent(event)
+
+
 class ChatInput(QPlainTextEdit):
     """The message field: a picture pasted into it is attached, not typed, and
     Enter sends the message, while Shift+Enter goes to the next line."""
 
     image_pasted = Signal(QImage)
+    files_pasted = Signal(list)  # the paths of files pasted from a file manager
+    text_pasted = Signal(str)  # a long text, to attach instead of typing
     submitted = Signal()
 
     def keyPressEvent(self, event: QKeyEvent) -> None:
@@ -167,12 +193,21 @@ class ChatInput(QPlainTextEdit):
         super().keyPressEvent(event)
 
     def canInsertFromMimeData(self, source: QMimeData) -> bool:
-        return source.hasImage() or super().canInsertFromMimeData(source)
+        return (
+            source.hasImage()
+            or source.hasUrls()
+            or super().canInsertFromMimeData(source)
+        )
 
     def insertFromMimeData(self, source: QMimeData) -> None:
         image = source.imageData() if source.hasImage() else None
+        paths = [Path(url.toLocalFile()) for url in source.urls() if url.isLocalFile()]
         if isinstance(image, QImage) and not image.isNull():
             self.image_pasted.emit(image)
+        elif paths:
+            self.files_pasted.emit(paths)
+        elif source.hasText() and len(source.text()) >= LONG_PASTE:
+            self.text_pasted.emit(source.text())
         else:
             super().insertFromMimeData(source)
 
@@ -258,6 +293,7 @@ class AssistantTab(QWidget):
         self._takes_images = takes_images
         self.debug_report: Callable[[], str] | None = None  # what /debug says
         self._pending: list[Attachment] = []  # attached, not sent yet
+        self._opened: tempfile.TemporaryDirectory[str] | None = None
         self._entries: list[Entry] = []  # (role, text) of what is shown
         self._bubbles: list[QFrame] = []
         self._labels: list[MessageText] = []
@@ -305,6 +341,10 @@ class AssistantTab(QWidget):
         self.attach_button = self._round_button(self.tr("Attach"))
         self.attach_button.clicked.connect(self._choose_files)
         self.input.image_pasted.connect(self.attach_image)
+        self.input.files_pasted.connect(
+            lambda paths: [self.attach(path) for path in paths]
+        )
+        self.input.text_pasted.connect(self.attach_text)
         self.input.submitted.connect(self.submit)
         self.chips = QHBoxLayout()
         self.chips.setSpacing(6)
@@ -448,6 +488,18 @@ class AssistantTab(QWidget):
         except AttachmentError as error:
             self._show_status(str(error))
 
+    def attach_text(self, text: str) -> None:
+        """Attach a long pasted text as a file, so it does not fill the
+        field."""
+        number = 1 + sum(item.name.startswith("pasted-") for item in self._pending)
+        data = text.encode("utf-8")
+        try:
+            if len(data) > attachments.MAX_TEXT_BYTES:
+                raise AttachmentError(self.tr("The pasted text is too large."))
+            self._keep(Attachment(f"pasted-{number}.txt", "text", data))
+        except AttachmentError as error:
+            self._show_status(str(error))
+
     def _keep(self, item: Attachment) -> None:
         if len(self._pending) >= attachments.MAX_ATTACHMENTS:
             raise AttachmentError(
@@ -472,25 +524,90 @@ class AssistantTab(QWidget):
                 widget.deleteLater()
         _wall, own, other, ink, quiet, _tick = self._palette()
         for item in self._pending:
-            chip = QFrame()
-            chip.setStyleSheet(
-                f"QFrame {{ background: {other}; border: 1px solid {quiet};"
-                f" border-radius: 10px; }} QLabel {{ color: {ink}; border: 0; }}"
-            )
-            row = QHBoxLayout(chip)
-            row.setContentsMargins(8, 2, 4, 2)
-            row.setSpacing(4)
-            row.addWidget(QLabel(item.name))
-            remove = QPushButton("×")
-            remove.setFixedSize(18, 18)
-            remove.setStyleSheet(
-                f"QPushButton {{ color: {ink}; border: 0; background: transparent; }}"
-            )
-            remove.clicked.connect(lambda _checked=False, one=item: self._detach(one))
-            row.addWidget(remove)
-            self.chips.addWidget(chip)
+            self.chips.addWidget(self._card(item))
         self.chips.addStretch(1)
         self.chip_bar.setVisible(bool(self._pending))
+
+    def _open_attachment(self, item: Attachment) -> None:
+        """Open an attachment with the program the system uses for its kind.
+
+        Attachments are not kept, so a copy goes to a folder that lives
+        as long as this chat.
+        """
+        if self._opened is None:
+            self._opened = tempfile.TemporaryDirectory(prefix="kubescope-")
+        path = Path(self._opened.name) / Path(item.name).name
+        try:
+            path.write_bytes(item.data)
+            path.chmod(0o600)
+        except OSError as error:
+            self._show_status(str(error.strerror or error))
+            return
+        QDesktopServices.openUrl(QUrl.fromLocalFile(str(path)))
+
+    @staticmethod
+    def _rounded(pixmap: QPixmap, side: int, radius: int) -> QPixmap:
+        """The picture cropped to a square with rounded corners."""
+        scaled = pixmap.scaled(
+            side,
+            side,
+            Qt.AspectRatioMode.KeepAspectRatioByExpanding,
+            Qt.TransformationMode.SmoothTransformation,
+        )
+        result = QPixmap(side, side)
+        result.fill(Qt.GlobalColor.transparent)
+        painter = QPainter(result)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        clip = QPainterPath()
+        clip.addRoundedRect(0, 0, side, side, radius, radius)
+        painter.setClipPath(clip)
+        painter.drawPixmap(
+            (side - scaled.width()) // 2, (side - scaled.height()) // 2, scaled
+        )
+        painter.end()
+        return result
+
+    def _card(self, item: Attachment) -> QFrame:
+        """An attachment above the message field: the picture of an image, or
+        the first lines of a text, with a × to take it off."""
+        _wall, _own, other, ink, quiet, _tick = self._palette()
+        card = ClickableFrame()
+        card.clicked.connect(lambda one=item: self._open_attachment(one))
+        card.setFixedSize(CARD, CARD)
+        card.setToolTip(self.tr("Open {name}").format(name=item.name))
+        card.setStyleSheet(
+            f"QFrame {{ background: {other}; border: 1px solid {quiet};"
+            f" border-radius: 10px; }} QLabel {{ color: {ink}; border: 0;"
+            " background: transparent; }"
+        )
+        pixmap = QPixmap()
+        if item.kind == "image" and pixmap.loadFromData(item.data):
+            picture = QLabel(card)
+            picture.setPixmap(self._rounded(pixmap, CARD, 10))
+            picture.setGeometry(0, 0, CARD, CARD)
+        else:
+            lines = item.text.splitlines()[:5]
+            preview = QLabel("\n".join(line[:18] for line in lines), card)
+            preview.setStyleSheet(f"color: {quiet}; font-size: 8px;")
+            preview.setGeometry(8, 6, CARD - 16, CARD - 30)
+            preview.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
+            name = QLabel(
+                card.fontMetrics().elidedText(
+                    item.name, Qt.TextElideMode.ElideMiddle, CARD - 16
+                ),
+                card,
+            )
+            name.setStyleSheet("font-size: 10px; font-weight: bold;")
+            name.setGeometry(8, CARD - 22, CARD - 16, 16)
+        remove = QPushButton("×", card)
+        remove.setFixedSize(18, 18)
+        remove.move(CARD - 22, 4)
+        remove.setStyleSheet(
+            f"QPushButton {{ color: {ink}; background: {other}; border: 1px solid"
+            f" {quiet}; border-radius: 9px; padding: 0; }}"
+        )
+        remove.clicked.connect(lambda _checked=False, one=item: self._detach(one))
+        return card
 
     def _detach(self, item: Attachment) -> None:
         self._pending.remove(item)
@@ -565,7 +682,7 @@ class AssistantTab(QWidget):
                 Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
             )
             inside.addWidget(stamp)
-        clock = datetime.now().strftime("%H:%M")
+        clock = zone_now().strftime("%H:%M")
         self._style_bubble(bubble, role, stamp, clock)
         line = QHBoxLayout()
         line.setContentsMargins(8, 2, 8, 2)
@@ -583,21 +700,37 @@ class AssistantTab(QWidget):
         self._fit()
         return label
 
-    def _picture(self, item: Attachment) -> QLabel:
-        """What an attachment looks like in a bubble: the image, or the name of
-        the file."""
-        picture = QLabel()
+    def _picture(self, item: Attachment) -> QFrame:
+        """What an attachment looks like in a sent message: a pill with a small
+        picture, the name and what it holds (the size of an image, the lines of
+        a text)."""
+        pill = ClickableFrame()
+        pill.clicked.connect(lambda one=item: self._open_attachment(one))
+        pill.setObjectName("attachmentPill")
+        row = QHBoxLayout(pill)
+        row.setContentsMargins(6, 3, 8, 3)
+        row.setSpacing(6)
         pixmap = QPixmap()
+        icon = QLabel()
         if item.kind == "image" and pixmap.loadFromData(item.data):
-            picture.setPixmap(
-                pixmap.scaledToWidth(
-                    min(THUMBNAIL, pixmap.width()),
-                    Qt.TransformationMode.SmoothTransformation,
-                )
-            )
+            icon.setPixmap(self._rounded(pixmap, PILL_THUMB, 4))
+            detail = f"{pixmap.width()}×{pixmap.height()}"
         else:
-            picture.setText(item.name)
-        return picture
+            icon.setPixmap(
+                self.style()
+                .standardIcon(self.style().StandardPixmap.SP_FileIcon)
+                .pixmap(PILL_THUMB, PILL_THUMB)
+            )
+            detail = self.tr("{count} lines").format(count=len(item.data.splitlines()))
+        name = QLabel(item.name)
+        name.setStyleSheet("font-weight: bold;")
+        meta = QLabel(detail)
+        meta.setObjectName("attachmentMeta")
+        for widget in (icon, name, meta):
+            row.addWidget(widget)
+        pill.setToolTip(self.tr("Open {name}").format(name=item.name))
+        pill.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Fixed)
+        return pill
 
     def _style_bubble(
         self, bubble: QFrame, role: str, stamp: QLabel | None, clock: str
@@ -617,6 +750,9 @@ class AssistantTab(QWidget):
             f"{name} {{ background: {color}; {edge} border-radius: 10px; {tail} }}"
             f"{name} QLabel {{ color: {text_color}; background: transparent; }}"
             f"{name} QTextBrowser {{ color: {text_color}; background: transparent; }}"
+            f"{name} QFrame#attachmentPill {{ background: rgba(0, 0, 0, 40);"
+            f" border: 1px solid {quiet}; border-radius: 6px; }}"
+            f"{name} QLabel#attachmentMeta {{ color: {quiet}; }}"
         )
         if stamp is not None:
             ticks = (

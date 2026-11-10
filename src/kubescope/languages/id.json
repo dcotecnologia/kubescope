@@ -22,6 +22,7 @@
             "Cancel": "Batal",
             "Hi, I'm {name}, from {company}. I know Kubernetes and KubeScope well. Ask me about what you see on the screen, ask me to look into a problem, or ask me to take you somewhere in the app.": "Halo, saya {name} dari {company}. Saya memahami Kubernetes dan KubeScope dengan baik. Tanyakan kepada saya tentang apa yang Anda lihat di layar, minta saya menyelidiki suatu masalah, atau minta saya mengantar Anda ke bagian tertentu di aplikasi.",
             "Ignored an action: {why}": "Satu tindakan diabaikan: {why}",
+            "Open {name}": "Buka {name}",
             "Read-only mode: nothing was changed. Turn on the write mode in Settings to allow {what}.": "Mode baca saja: tidak ada yang diubah. Aktifkan mode tulis di Pengaturan untuk mengizinkan {what}.",
             "Run": "Jalankan",
             "See what is attached.": "Lihat yang terlampir.",
@@ -29,10 +30,12 @@
             "Stop": "Berhenti",
             "Stopped reading: too many reads for one question.": "Pembacaan dihentikan: terlalu banyak pembacaan untuk satu pertanyaan.",
             "The assistant could not answer: {message}": "Asisten tidak dapat menjawab: {message}",
+            "The pasted text is too large.": "Teks yang ditempel terlalu besar.",
             "The picture is too large.": "Gambar terlalu besar.",
             "Thinking...": "Berpikir...",
             "This assistant takes text files only, not {name}.": "Asisten ini hanya menerima berkas teks, bukan {name}.",
-            "You": "Anda"
+            "You": "Anda",
+            "{count} lines": "{count} baris"
         },
         "ChangelogDialog": {
             "ADDED": "DITAMBAHKAN",

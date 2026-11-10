@@ -22,6 +22,7 @@
             "Cancel": "취소",
             "Hi, I'm {name}, from {company}. I know Kubernetes and KubeScope well. Ask me about what you see on the screen, ask me to look into a problem, or ask me to take you somewhere in the app.": "안녕하세요, {company}의 {name}입니다. Kubernetes와 KubeScope를 잘 알고 있어요. 화면에 보이는 내용을 물어보시거나, 문제 조사를 요청하시거나, 앱 안에서 원하는 곳으로 안내해 달라고 하셔도 됩니다.",
             "Ignored an action: {why}": "작업을 무시했습니다: {why}",
+            "Open {name}": "{name} 열기",
             "Read-only mode: nothing was changed. Turn on the write mode in Settings to allow {what}.": "읽기 전용 모드: 변경된 내용이 없습니다. {what}을(를) 허용하려면 설정에서 쓰기 모드를 켜세요.",
             "Run": "실행",
             "See what is attached.": "첨부된 항목 보기",
@@ -29,10 +30,12 @@
             "Stop": "중지",
             "Stopped reading: too many reads for one question.": "읽기를 중단했습니다: 질문 하나에 읽기 횟수가 너무 많습니다.",
             "The assistant could not answer: {message}": "어시스턴트가 답변하지 못했습니다: {message}",
+            "The pasted text is too large.": "붙여넣은 텍스트가 너무 큽니다.",
             "The picture is too large.": "이미지가 너무 큽니다.",
             "Thinking...": "생각 중...",
             "This assistant takes text files only, not {name}.": "이 어시스턴트는 텍스트 파일만 지원하며 {name}은(는) 지원하지 않습니다.",
-            "You": "나"
+            "You": "나",
+            "{count} lines": "{count}줄"
         },
         "ChangelogDialog": {
             "ADDED": "추가",

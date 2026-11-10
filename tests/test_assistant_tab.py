@@ -569,6 +569,71 @@ def test_a_picture_pasted_into_the_field_is_attached_and_text_is_pasted_as_text(
     assert len(tab._pending) == 2
 
 
+def test_files_and_long_text_pasted_into_the_field_are_attached(
+    tmp_path, monkeypatch
+) -> None:
+    from PySide6.QtCore import QMimeData, QUrl
+
+    tab = _tab()
+    log = tmp_path / "app.log"
+    log.write_text("one\ntwo\n")
+    files = QMimeData()
+    files.setUrls([QUrl.fromLocalFile(str(log))])
+    assert tab.input.canInsertFromMimeData(files)
+    tab.input.insertFromMimeData(files)
+    long = QMimeData()
+    long.setText("x" * assistant_tab.LONG_PASTE)
+    tab.input.insertFromMimeData(long)
+
+    assert [item.name for item in tab._pending] == ["app.log", "pasted-1.txt"]
+    assert tab.input.toPlainText() == ""
+    assert tab.chips.count() >= 2  # a card for each, then the stretch
+    opened = []
+    monkeypatch.setattr(
+        assistant_tab.QDesktopServices, "openUrl", lambda url: opened.append(url)
+    )
+    tab._open_attachment(tab._pending[0])
+    assert opened[0].toLocalFile().endswith("app.log")
+    tab._pending.clear()
+    huge = "x" * (assistant_tab.attachments.MAX_TEXT_BYTES + 1)
+    tab.attach_text(huge)
+    assert "too large" in tab.status.text()
+
+
+def test_clicking_an_attachment_opens_it_and_a_failed_copy_is_told(
+    monkeypatch, tmp_path
+) -> None:
+    from PySide6.QtCore import QPoint, Qt
+    from PySide6.QtTest import QTest
+
+    tab = _tab()
+    opened = []
+    monkeypatch.setattr(
+        assistant_tab.QDesktopServices, "openUrl", lambda url: opened.append(url)
+    )
+    card = assistant_tab.ClickableFrame()
+    card.resize(40, 40)
+    clicked = []
+    card.clicked.connect(lambda: clicked.append(1))
+
+    QTest.mouseClick(card, Qt.MouseButton.LeftButton, pos=QPoint(5, 5))
+    QTest.mouseRelease(card, Qt.MouseButton.LeftButton, pos=QPoint(500, 500))
+    QTest.mouseClick(card, Qt.MouseButton.RightButton, pos=QPoint(5, 5))
+    assert clicked == [1]
+
+    item = assistant_tab.Attachment("a.log", "text", b"x")
+    tab._open_attachment(item)
+    assert opened[-1].toLocalFile().endswith("a.log")
+
+    def broken(_self, _data):
+        raise OSError(13, "Permission denied")
+
+    monkeypatch.setattr(assistant_tab.Path, "write_bytes", broken)
+    tab._open_attachment(item)
+    assert "Permission denied" in tab.status.text()
+    assert len(opened) == 1
+
+
 def _chip(tab: AssistantTab):
     item = tab.chips.itemAt(0)
     assert item is not None

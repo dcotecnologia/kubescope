@@ -22,6 +22,7 @@
             "Cancel": "Annuleren",
             "Hi, I'm {name}, from {company}. I know Kubernetes and KubeScope well. Ask me about what you see on the screen, ask me to look into a problem, or ask me to take you somewhere in the app.": "Hallo, ik ben {name} van {company}. Ik ken Kubernetes en KubeScope goed. Vraag me gerust naar wat u op het scherm ziet, laat me een probleem onderzoeken, of vraag me u ergens naartoe te brengen in de app.",
             "Ignored an action: {why}": "Een actie genegeerd: {why}",
+            "Open {name}": "{name} openen",
             "Read-only mode: nothing was changed. Turn on the write mode in Settings to allow {what}.": "Alleen-lezenmodus: er is niets gewijzigd. Schakel de schrijfmodus in bij Instellingen om {what} toe te staan.",
             "Run": "Uitvoeren",
             "See what is attached.": "Bekijk wat is bijgevoegd.",
@@ -29,10 +30,12 @@
             "Stop": "Stoppen",
             "Stopped reading: too many reads for one question.": "Lezen gestopt: te veel leesacties voor één vraag.",
             "The assistant could not answer: {message}": "De assistent kon niet antwoorden: {message}",
+            "The pasted text is too large.": "De geplakte tekst is te groot.",
             "The picture is too large.": "De afbeelding is te groot.",
             "Thinking...": "Aan het denken...",
             "This assistant takes text files only, not {name}.": "Deze assistent accepteert alleen tekstbestanden, geen {name}.",
-            "You": "U"
+            "You": "U",
+            "{count} lines": "{count} regels"
         },
         "ChangelogDialog": {
             "ADDED": "TOEGEVOEGD",

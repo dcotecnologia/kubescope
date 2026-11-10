@@ -22,6 +22,7 @@
             "Cancel": "ยกเลิก",
             "Hi, I'm {name}, from {company}. I know Kubernetes and KubeScope well. Ask me about what you see on the screen, ask me to look into a problem, or ask me to take you somewhere in the app.": "สวัสดีค่ะ ฉันคือ {name} จาก {company} ฉันเชี่ยวชาญ Kubernetes และ KubeScope ถามฉันได้เลยเกี่ยวกับสิ่งที่คุณเห็นบนหน้าจอ ให้ฉันช่วยตรวจสอบปัญหา หรือให้ฉันพาไปยังส่วนต่าง ๆ ในแอปค่ะ",
             "Ignored an action: {why}": "ข้ามการกระทำหนึ่งรายการ: {why}",
+            "Open {name}": "เปิด {name}",
             "Read-only mode: nothing was changed. Turn on the write mode in Settings to allow {what}.": "โหมดอ่านอย่างเดียว: ไม่มีการเปลี่ยนแปลงใด ๆ เปิดโหมดเขียนในการตั้งค่าเพื่ออนุญาต {what}",
             "Run": "เรียกใช้",
             "See what is attached.": "ดูสิ่งที่แนบไว้",
@@ -29,10 +30,12 @@
             "Stop": "หยุด",
             "Stopped reading: too many reads for one question.": "หยุดอ่านแล้ว: อ่านมากเกินไปสำหรับหนึ่งคำถาม",
             "The assistant could not answer: {message}": "ผู้ช่วยไม่สามารถตอบได้: {message}",
+            "The pasted text is too large.": "ข้อความที่วางใหญ่เกินไป",
             "The picture is too large.": "รูปภาพมีขนาดใหญ่เกินไป",
             "Thinking...": "กำลังคิด...",
             "This assistant takes text files only, not {name}.": "ผู้ช่วยนี้รับเฉพาะไฟล์ข้อความ ไม่รับ {name}",
-            "You": "คุณ"
+            "You": "คุณ",
+            "{count} lines": "{count} บรรทัด"
         },
         "ChangelogDialog": {
             "ADDED": "เพิ่ม",

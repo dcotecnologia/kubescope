@@ -22,6 +22,7 @@
             "Cancel": "Hủy",
             "Hi, I'm {name}, from {company}. I know Kubernetes and KubeScope well. Ask me about what you see on the screen, ask me to look into a problem, or ask me to take you somewhere in the app.": "Xin chào, tôi là {name} đến từ {company}. Tôi hiểu rõ Kubernetes và KubeScope. Bạn có thể hỏi tôi về những gì đang hiển thị trên màn hình, nhờ tôi tìm hiểu một vấn đề, hoặc nhờ tôi đưa bạn đến một nơi nào đó trong ứng dụng.",
             "Ignored an action: {why}": "Đã bỏ qua một hành động: {why}",
+            "Open {name}": "Mở {name}",
             "Read-only mode: nothing was changed. Turn on the write mode in Settings to allow {what}.": "Chế độ chỉ đọc: chưa có gì bị thay đổi. Hãy bật chế độ ghi trong Cài đặt để cho phép {what}.",
             "Run": "Chạy",
             "See what is attached.": "Xem nội dung đã đính kèm.",
@@ -29,10 +30,12 @@
             "Stop": "Dừng",
             "Stopped reading: too many reads for one question.": "Đã dừng đọc: một câu hỏi có quá nhiều lượt đọc.",
             "The assistant could not answer: {message}": "Trợ lý không thể trả lời: {message}",
+            "The pasted text is too large.": "Văn bản đã dán quá lớn.",
             "The picture is too large.": "Ảnh quá lớn.",
             "Thinking...": "Đang suy nghĩ...",
             "This assistant takes text files only, not {name}.": "Trợ lý này chỉ nhận tệp văn bản, không nhận {name}.",
-            "You": "Bạn"
+            "You": "Bạn",
+            "{count} lines": "{count} dòng"
         },
         "ChangelogDialog": {
             "ADDED": "ĐÃ THÊM",

@@ -22,6 +22,7 @@
             "Cancel": "إلغاء",
             "Hi, I'm {name}, from {company}. I know Kubernetes and KubeScope well. Ask me about what you see on the screen, ask me to look into a problem, or ask me to take you somewhere in the app.": "مرحبًا، أنا {name} من {company}. أعرف Kubernetes وKubeScope جيدًا. اسألني عمّا تراه على الشاشة، أو اطلب مني البحث في مشكلة، أو اطلب مني أن آخذك إلى مكان ما في التطبيق.",
             "Ignored an action: {why}": "تم تجاهل إجراء: {why}",
+            "Open {name}": "فتح {name}",
             "Read-only mode: nothing was changed. Turn on the write mode in Settings to allow {what}.": "وضع القراءة فقط: لم يتم تغيير أي شيء. فعّل وضع الكتابة في الإعدادات للسماح بـ {what}.",
             "Run": "تشغيل",
             "See what is attached.": "عرض المرفقات.",
@@ -29,10 +30,12 @@
             "Stop": "إيقاف",
             "Stopped reading: too many reads for one question.": "توقفت القراءة: عدد عمليات القراءة كبير جدًا لسؤال واحد.",
             "The assistant could not answer: {message}": "تعذّر على المساعد الإجابة: {message}",
+            "The pasted text is too large.": "النص الملصق كبير جدًا.",
             "The picture is too large.": "الصورة كبيرة جدًا.",
             "Thinking...": "جارٍ التفكير...",
             "This assistant takes text files only, not {name}.": "يقبل هذا المساعد الملفات النصية فقط، وليس {name}.",
-            "You": "أنت"
+            "You": "أنت",
+            "{count} lines": "{count} أسطر"
         },
         "ChangelogDialog": {
             "ADDED": "مضاف",

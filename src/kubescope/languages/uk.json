@@ -22,6 +22,7 @@
             "Cancel": "Скасувати",
             "Hi, I'm {name}, from {company}. I know Kubernetes and KubeScope well. Ask me about what you see on the screen, ask me to look into a problem, or ask me to take you somewhere in the app.": "Вітаю, я {name} із {company}. Я добре знаю Kubernetes і KubeScope. Запитайте мене про те, що бачите на екрані, попросіть розібратися з проблемою або відвести вас у потрібне місце в застосунку.",
             "Ignored an action: {why}": "Дію проігноровано: {why}",
+            "Open {name}": "Відкрити {name}",
             "Read-only mode: nothing was changed. Turn on the write mode in Settings to allow {what}.": "Режим лише читання: нічого не змінено. Увімкніть режим запису в розділі «Налаштування», щоб дозволити {what}.",
             "Run": "Запустити",
             "See what is attached.": "Переглянути додане.",
@@ -29,10 +30,12 @@
             "Stop": "Зупинити",
             "Stopped reading: too many reads for one question.": "Читання зупинено: забагато читань для одного запитання.",
             "The assistant could not answer: {message}": "Асистент не зміг відповісти: {message}",
+            "The pasted text is too large.": "Вставлений текст завеликий.",
             "The picture is too large.": "Зображення завелике.",
             "Thinking...": "Думаю...",
             "This assistant takes text files only, not {name}.": "Цей асистент приймає лише текстові файли, а не {name}.",
-            "You": "Ви"
+            "You": "Ви",
+            "{count} lines": "Рядків: {count}"
         },
         "ChangelogDialog": {
             "ADDED": "ДОДАНО",
