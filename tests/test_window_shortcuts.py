@@ -1,3 +1,4 @@
+import pytest
 from PySide6.QtGui import QKeySequence
 from PySide6.QtWidgets import QKeySequenceEdit
 
@@ -8,6 +9,15 @@ from kubescope.utils.timezone import set_timezone
 from tests.test_window_flows import _ready_window
 
 
+@pytest.fixture
+def window(monkeypatch):
+    """A window that is closed afterwards, so no worker outlives the test."""
+    shown = _ready_window(monkeypatch)
+    yield shown
+    shown._close_when_worker_stops = False
+    shown.close()
+
+
 def _edit(window, action: str) -> QKeySequenceEdit:
     table = window.settings_ui.shortcutsTable
     for row in range(table.rowCount()):
@@ -16,8 +26,7 @@ def _edit(window, action: str) -> QKeySequenceEdit:
     raise AssertionError(action)
 
 
-def test_the_shortcuts_go_to_their_screens(monkeypatch) -> None:
-    window = _ready_window(monkeypatch)
+def test_the_shortcuts_go_to_their_screens(window, monkeypatch) -> None:
     monkeypatch.setattr(window, "_open_list_view", lambda view: opened.append(view))
     opened: list[str] = []
 
@@ -37,8 +46,7 @@ def test_the_shortcuts_go_to_their_screens(monkeypatch) -> None:
     )
 
 
-def test_the_filter_and_the_cluster_switch_take_the_focus(monkeypatch) -> None:
-    window = _ready_window(monkeypatch)
+def test_the_filter_and_the_cluster_switch_take_the_focus(window, monkeypatch) -> None:
     popups = []
     monkeypatch.setattr(window.context_combo, "showPopup", lambda: popups.append(1))
     window.show()
@@ -52,8 +60,7 @@ def test_the_filter_and_the_cluster_switch_take_the_focus(monkeypatch) -> None:
     assert popups == [1]
 
 
-def test_the_shortcuts_are_edited_saved_and_applied(monkeypatch) -> None:
-    window = _ready_window(monkeypatch)
+def test_the_shortcuts_are_edited_saved_and_applied(window, monkeypatch) -> None:
     window._load_settings_form()
     assert _edit(window, "search").keySequence().toString() == "/"
 
@@ -67,8 +74,7 @@ def test_the_shortcuts_are_edited_saved_and_applied(monkeypatch) -> None:
     assert _edit(window, "search").keySequence().toString() == "/"
 
 
-def test_two_actions_cannot_share_a_key(monkeypatch) -> None:
-    window = _ready_window(monkeypatch)
+def test_two_actions_cannot_share_a_key(window, monkeypatch) -> None:
     window._load_settings_form()
     _edit(window, "pods").setKeySequence(QKeySequence("Ctrl+G"))
 
@@ -78,8 +84,9 @@ def test_two_actions_cannot_share_a_key(monkeypatch) -> None:
     assert window.settings.shortcuts == shortcuts.DEFAULTS  # nothing was saved
 
 
-def test_a_zone_that_is_typed_wrong_goes_back_to_the_chosen_one(monkeypatch) -> None:
-    window = _ready_window(monkeypatch)
+def test_a_zone_that_is_typed_wrong_goes_back_to_the_chosen_one(
+    window, monkeypatch
+) -> None:
     window._load_settings_form()
     combo = window.settings_ui.timezoneCombo
     line = combo.lineEdit()
@@ -101,9 +108,8 @@ def test_a_zone_that_is_typed_wrong_goes_back_to_the_chosen_one(monkeypatch) -> 
 
 
 def test_the_search_lists_the_screens_and_opens_the_resource_found(
-    monkeypatch,
+    window, monkeypatch
 ) -> None:
-    window = _ready_window(monkeypatch)
     opened = []
     monkeypatch.setattr(window, "_open_resource", lambda *args: opened.append(args))
     monkeypatch.setattr(
@@ -137,9 +143,8 @@ def test_the_search_lists_the_screens_and_opens_the_resource_found(
 
 
 def test_the_search_without_a_cluster_says_nothing_and_does_not_ask(
-    monkeypatch,
+    window, monkeypatch
 ) -> None:
-    window = _ready_window(monkeypatch)
     window.context_combo.clear()
     asked = []
     monkeypatch.setattr(window, "_run_action", lambda *args, **kw: asked.append(args))
@@ -154,9 +159,8 @@ def test_the_search_without_a_cluster_says_nothing_and_does_not_ask(
 
 
 def test_a_screen_reached_by_a_shortcut_opens_its_section_of_the_menu(
-    monkeypatch,
+    window, monkeypatch
 ) -> None:
-    window = _ready_window(monkeypatch)
     window.show()
     submenu = window.network_submenu
     submenu.setMaximumHeight(0)  # the section is closed

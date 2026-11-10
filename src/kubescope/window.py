@@ -2251,7 +2251,8 @@ class WorkloadWindow(QMainWindow):
         while scroll is not None and not isinstance(scroll, QScrollArea):
             scroll = scroll.parentWidget()
         if scroll is not None:
-            QTimer.singleShot(0, lambda: scroll.ensureWidgetVisible(button))
+            # with the scroll area as receiver, the call is dropped with it
+            QTimer.singleShot(0, scroll, partial(scroll.ensureWidgetVisible, button))
 
     def _toggle_submenu(
         self,

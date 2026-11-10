@@ -1,4 +1,5 @@
-from PySide6.QtCore import QEvent, Qt
+import pytest
+from PySide6.QtCore import QCoreApplication, QEvent, Qt
 from PySide6.QtGui import QKeyEvent
 from PySide6.QtWidgets import QWidget
 
@@ -7,6 +8,18 @@ from kubescope.models import SearchHit, match_rank
 from tests.qt import get_application
 
 application = get_application()
+
+
+@pytest.fixture(autouse=True)
+def _delete_the_windows():
+    """Delete what a test shows before the application goes away: a window that
+    outlives it crashes the run when it ends."""
+    before = set(application.topLevelWidgets())
+    yield
+    for widget in set(application.topLevelWidgets()) - before:
+        widget.close()
+        widget.deleteLater()
+    QCoreApplication.sendPostedEvents(None, QEvent.Type.DeferredDelete)
 
 
 def test_every_word_must_match_in_any_order():
