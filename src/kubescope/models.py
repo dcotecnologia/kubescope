@@ -4,6 +4,8 @@ from dataclasses import dataclass, field, replace
 from datetime import datetime
 from typing import Any
 
+from kubescope.utils.timezone import to_zone
+
 MAX_REPLICA_SQUARES = 5
 
 
@@ -558,7 +560,7 @@ def _created_text(timestamp: str, now: float) -> str:
     if created.tzinfo is None:
         return timestamp
     age = format_age(max(now - created.timestamp(), 0))
-    return f"{age} ago ({created.astimezone():%b %d, %Y, %H:%M:%S %Z})"
+    return f"{age} ago ({to_zone(created):%b %d, %Y, %H:%M:%S %Z})"
 
 
 def _properties(document: dict[str, Any], now: float) -> list[DetailRow]:
@@ -689,3 +691,29 @@ def _detail_sections(document: dict[str, Any], now: float) -> list[DetailSection
             sections.append(DetailSection(str(key).capitalize(), tuple(rows)))
         sections.extend(subsections)
     return sections
+
+
+@dataclass(frozen=True, slots=True)
+class SearchHit:
+    """A resource the global search found by its name."""
+
+    kind: str
+    namespace: str  # empty for the kinds that belong to the whole cluster
+    name: str
+
+
+def match_rank(query: str, text: str) -> int | None:
+    """How well `text` answers `query`, lower is better, None for no match.
+
+    Every word of the query has to be in the text, in any order,
+    ignoring case; a text that starts with the query comes first, then
+    one that has it as a word.
+    """
+    words = query.lower().split()
+    lowered = text.lower()
+    if not words or not all(word in lowered for word in words):
+        return None
+    whole = " ".join(words)
+    if lowered.startswith(whole):
+        return 0
+    return 1 if re.search(rf"(?<![a-z0-9]){re.escape(whole)}", lowered) else 2

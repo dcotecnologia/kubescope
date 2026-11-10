@@ -7,6 +7,9 @@ import sys
 from pathlib import Path
 from typing import Any
 
+from kubescope.utils import shortcuts
+from kubescope.utils.timezone import is_timezone
+
 CONFIG_DIR_ENV = "KUBESCOPE_CONFIG_DIR"
 # A language is a JSON file named by its code (see kubescope.i18n); "auto" follows
 # the system. The choice is checked when it is applied, so a file can add one.
@@ -14,6 +17,7 @@ _LANGUAGE_CODE = re.compile(r"[a-z]{2,3}(_[A-Za-z0-9]+)?")
 
 DEFAULTS: dict[str, Any] = {
     "language": "auto",
+    "timezone": "auto",
     "theme": "dark",
     "remember_last_context": True,
     "last_context": None,
@@ -45,6 +49,7 @@ DEFAULTS: dict[str, Any] = {
     "window_geometry": "",
     "kubeconfig_files": [],
     "sign_in_commands": {},
+    "shortcuts": {},
 }
 
 
@@ -140,10 +145,12 @@ class Settings:
             and program.strip()
             and command.strip()
         }
+        self._data["shortcuts"] = shortcuts.clean(self._data["shortcuts"])
         namespace = self._data["default_namespace"]
         if not (isinstance(namespace, str) and is_namespace_name(namespace)):
             self._data["default_namespace"] = ""  # empty means all namespaces
         self.language = self._data["language"]
+        self.timezone = self._data["timezone"]
         self.theme = self._data["theme"]
 
     def save(self) -> None:
@@ -163,6 +170,15 @@ class Settings:
     def language(self, value: str) -> None:
         valid = isinstance(value, str) and _LANGUAGE_CODE.fullmatch(value)
         self._data["language"] = value if valid or value == "auto" else "auto"
+
+    @property
+    def timezone(self) -> str:
+        """The local time ("auto") or an IANA zone name."""
+        return self._data["timezone"]
+
+    @timezone.setter
+    def timezone(self, value: str) -> None:
+        self._data["timezone"] = value if is_timezone(value) else "auto"
 
     @property
     def theme(self) -> str:
@@ -216,6 +232,15 @@ class Settings:
             for program, command in value.items()
             if program.strip() and command.strip()
         }
+
+    @property
+    def shortcuts(self) -> dict[str, str]:
+        """Action -> key, every action present; an empty key turns it off."""
+        return dict(self._data["shortcuts"])
+
+    @shortcuts.setter
+    def shortcuts(self, value: dict[str, str]) -> None:
+        self._data["shortcuts"] = shortcuts.clean(value)
 
     @property
     def window_geometry(self) -> str:

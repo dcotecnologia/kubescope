@@ -59,6 +59,7 @@ from PySide6.QtWidgets import (
     QGraphicsOpacityEffect,
     QHBoxLayout,
     QHeaderView,
+    QKeySequenceEdit,
     QLabel,
     QLineEdit,
     QMainWindow,
@@ -118,11 +119,13 @@ from kubescope.cluster import (
     parse_command,
     retry_sign_in,
     run_login,
+    search_resources,
 )
 from kubescope.cluster import (
     configure as configure_cluster,
 )
 from kubescope.dialogs.changelog_dialog import ChangelogDialog
+from kubescope.dialogs.global_search import GlobalSearch, SearchEntry
 from kubescope.dialogs.theme_editor import ThemeEditor
 from kubescope.dialogs.update_dialog import UpdateDialog
 from kubescope.i18n import (
@@ -177,6 +180,7 @@ from kubescope.ui.ui_pods_dialog import Ui_PodsDialog
 from kubescope.ui.ui_settings_page import Ui_SettingsPage
 from kubescope.ui.ui_viewer_page import Ui_ViewerPage
 from kubescope.ui.ui_workloads_overview_page import Ui_WorkloadsOverviewPage
+from kubescope.utils import shortcuts
 from kubescope.utils.diagnostics import configure_logging, log_file
 from kubescope.utils.errors import (
     ErrorInfo,
@@ -189,6 +193,7 @@ from kubescope.utils.errors import (
 from kubescope.utils.fonts import code_font
 from kubescope.utils.json_view import restyle
 from kubescope.utils.selfupdate import detect_install, restart
+from kubescope.utils.timezone import set_timezone, timezone_choices, to_zone
 from kubescope.utils.updates import Release, UpdateCheck, check_for_update
 from kubescope.views import motion
 from kubescope.views.assistant_panel import BUBBLE, MARGIN, AssistantDock
@@ -996,6 +1001,10 @@ class WorkloadWindow(QMainWindow):
         self._settings_sections.addButton(self.settings_ui.generalSectionButton, 0)
         self._settings_sections.addButton(self.settings_ui.assistantSectionButton, 1)
         self._settings_sections.addButton(self.settings_ui.kubeSectionButton, 2)
+        self._settings_sections.addButton(self.settings_ui.shortcutsSectionButton, 3)
+        self.settings_ui.shortcutsResetButton.clicked.connect(
+            lambda: self._fill_shortcuts(shortcuts.DEFAULTS)
+        )
         self._settings_sections.idClicked.connect(self._show_settings_section)
         self._show_settings_section(0)
         self.settings_ui.openLogsButton.clicked.connect(self._open_log_folder)
@@ -1173,11 +1182,31 @@ class WorkloadWindow(QMainWindow):
         self.assistant_dock.state_changed.connect(self._keep_assistant_panel)
         ui.settingsButton.setIcon(_gear_icon())
         ui.settingsButton.clicked.connect(lambda: self._show_page(2))
-        for keys in ("Ctrl+R", "F5"):
-            QShortcut(QKeySequence(keys), self).activated.connect(self._press_refresh)
-        ask = QShortcut(QKeySequence("Ctrl+G"), self)  # Gabi
-        ask.setContext(Qt.ShortcutContext.ApplicationShortcut)  # also from her window
-        ask.activated.connect(self._shortcut_assistant)
+        # "/" is left to the text fields: typing in one does not open the search
+        actions = {
+            "refresh": self._press_refresh,
+            "refresh_alt": self._press_refresh,
+            "search": self._open_global_search,
+            "search_alt": self._open_global_search,
+            "assistant": self._shortcut_assistant,
+            "overview": lambda: self._show_page(0),
+            "pods": lambda: self._open_list_view("pods"),
+            "deployments": lambda: self._open_list_view("deployments"),
+            "services": lambda: self._open_list_view("services"),
+            "settings": lambda: self._show_page(2),
+            "filter": self._focus_filter,
+            "context": self._focus_context,
+            "help": self._show_shortcuts,
+        }
+        self._shortcuts: dict[str, QShortcut] = {}
+        self._global_search: GlobalSearch | None = None
+        for action, run in actions.items():
+            shortcut = QShortcut(self)
+            if action == "assistant":  # Gabi, also from her window
+                shortcut.setContext(Qt.ShortcutContext.ApplicationShortcut)
+            shortcut.activated.connect(run)
+            self._shortcuts[action] = shortcut
+        self._apply_shortcuts()
         self.nav_overview.clicked.connect(lambda: self._show_page(0))
         self.nav_workloads.clicked.connect(lambda: self._toggle_submenu(self.submenu))
         self.nav_network.clicked.connect(
@@ -1821,9 +1850,14 @@ class WorkloadWindow(QMainWindow):
         self.pages.setCurrentIndex(index)
         self.nav_overview.setChecked(index == 0)
         for view, button in self._nav_views.items():
-            button.setChecked(index == 1 and self._view == view)
+            active = index == 1 and self._view == view
+            button.setChecked(active)
+            if active:
+                self._reveal_in_menu(button)
         self.ui.settingsButton.setChecked(index == 2)
         self.nav_workloads_overview.setChecked(index == 4)
+        if index == 4:
+            self._reveal_in_menu(self.nav_workloads_overview)
         self._apply_page_titles()
         self._render_pinned()
         self._remember_screen()
@@ -2024,9 +2058,9 @@ class WorkloadWindow(QMainWindow):
             "failed": self.tr("Could not check"),
         }.get(result.status)
         if result.limited_until is not None:
-            when = datetime.datetime.fromtimestamp(result.limited_until).strftime(
-                "%H:%M"
-            )
+            when = to_zone(
+                datetime.datetime.fromtimestamp(result.limited_until)
+            ).strftime("%H:%M")
             notice = self.tr("GitHub limited the checks; try again at {time}").format(
                 time=when
             )
@@ -2201,20 +2235,50 @@ class WorkloadWindow(QMainWindow):
         if self._workloads_overview is not None:
             self._render_workloads_overview(self._workloads_overview)
 
-    def _toggle_submenu(self, submenu: QFrame) -> None:
-        """Slide a menu's entries open or closed, whatever the other one
-        does."""
+    def _reveal_in_menu(self, button: QWidget) -> None:
+        """Open the section of the side menu that holds an entry and scroll to
+        it, so a screen reached by a shortcut or by the search shows where it
+        is.
+
+        Unlike a click on the section, it is not kept for the next run.
+        """
+        parent = button.parentWidget()
+        while parent is not None and parent not in self._submenus:
+            parent = parent.parentWidget()
+        if isinstance(parent, QFrame):
+            self._toggle_submenu(parent, expand=True, remember=False)
+        scroll = button.parentWidget()
+        while scroll is not None and not isinstance(scroll, QScrollArea):
+            scroll = scroll.parentWidget()
+        if scroll is not None:
+            QTimer.singleShot(0, lambda: scroll.ensureWidgetVisible(button))
+
+    def _toggle_submenu(
+        self,
+        submenu: QFrame,
+        expand: bool | None = None,
+        remember: bool = True,
+    ) -> None:
+        """Slide a menu's entries open or closed, whatever the other one does.
+
+        `expand` says which way instead of flipping it.
+        """
         animation = self._submenus[submenu]
-        expand = submenu.maximumHeight() == 0 or (
+        opening = submenu.maximumHeight() == 0 or (
             animation.state() == QPropertyAnimation.State.Running
             and animation.endValue() == 0
         )
+        if expand is not None and expand != opening:
+            return  # already as asked
+        expand = opening
         animation.stop()
         animation.setStartValue(
             min(submenu.maximumHeight(), submenu.sizeHint().height())
         )
         animation.setEndValue(submenu.sizeHint().height() if expand else 0)
         animation.start()
+        if not remember:
+            return
         closed = set(self.settings.menu_collapsed)
         if expand:
             closed.discard(self._menu_names[submenu])
@@ -3904,6 +3968,62 @@ class WorkloadWindow(QMainWindow):
             return
         self._open_resource(*link)
 
+    def _search_entries(self) -> list[SearchEntry]:
+        """The screens and actions the global search goes to."""
+        entries = [
+            SearchEntry(
+                self.tr("Cluster overview"),
+                self.tr("Screen"),
+                lambda: self._show_page(0),
+            ),
+            SearchEntry(
+                self.tr("Workloads overview"),
+                self.tr("Screen"),
+                lambda: self._show_page(4),
+            ),
+            SearchEntry(
+                self.tr("Settings"), self.tr("Screen"), lambda: self._show_page(2)
+            ),
+        ]
+        for view, button in self._nav_views.items():
+            label = button.text().strip()
+            if label:
+                entries.append(
+                    SearchEntry(
+                        label,
+                        self.tr("Screen"),
+                        lambda view=view: self._open_list_view(view),
+                    )
+                )
+        return entries
+
+    def _open_global_search(self) -> None:
+        """/ or Ctrl+K: find a screen, an action or a resource of any
+        namespace."""
+        if self._close_when_worker_stops:
+            return
+        if self._global_search is None:
+            self._global_search = GlobalSearch(self)
+        dialog = self._global_search
+        dialog.open_with(self._search_entries())
+        context = self._context()
+        if not context:
+            dialog.resources_failed("")
+            return
+
+        def found(hits: list) -> None:
+            dialog.set_resources(
+                hits, lambda hit: self._open_resource(hit.kind, hit.namespace, hit.name)
+            )
+
+        self._run_action(
+            search_resources,
+            found,
+            context,
+            on_error=dialog.resources_failed,
+            quiet=True,
+        )
+
     def _open_resource(self, kind: str, namespace: str, name: str) -> None:
         self._run_action(
             get_resource_details,
@@ -5086,15 +5206,87 @@ class WorkloadWindow(QMainWindow):
         self._style_box_buttons(box)
         box.exec()
 
+    def _focus_context(self) -> None:
+        """Open the list of clusters, to switch to another."""
+        self.context_combo.setFocus()
+        self.context_combo.showPopup()
+
+    def _show_shortcuts(self) -> None:
+        """Go to the shortcuts of the Settings, the cheat sheet of the app."""
+        self._show_page(2)
+        self._show_settings_section(3)
+
+    def _focus_filter(self) -> None:
+        """Go to the list and type in its filter."""
+        if self.pages.currentIndex() != 1:
+            self._open_list_view(self._view)
+        self.search_input.setFocus()
+        self.search_input.selectAll()
+
+    def _apply_shortcuts(self) -> None:
+        for action, key in self.settings.shortcuts.items():
+            self._shortcuts[action].setKey(QKeySequence(key))
+
+    def _shortcut_labels(self) -> dict[str, str]:
+        return {
+            "refresh": self.tr("Refresh"),
+            "refresh_alt": self.tr("Refresh (second shortcut)"),
+            "search": self.tr("Global search"),
+            "search_alt": self.tr("Global search (second shortcut)"),
+            "assistant": self.tr("Ask the assistant"),
+            "overview": self.tr("Go to the cluster overview"),
+            "pods": self.tr("Go to Pods"),
+            "deployments": self.tr("Go to Deployments"),
+            "services": self.tr("Go to Services"),
+            "settings": self.tr("Go to Settings"),
+            "filter": self.tr("Filter the list"),
+            "context": self.tr("Switch cluster"),
+            "help": self.tr("Show the shortcuts"),
+        }
+
+    def _fill_shortcuts(self, shortcuts: dict[str, str]) -> None:
+        table = self.settings_ui.shortcutsTable
+        table.setRowCount(0)
+        for row, (action, label) in enumerate(self._shortcut_labels().items()):
+            table.insertRow(row)
+            item = QTableWidgetItem(label)
+            item.setData(Qt.ItemDataRole.UserRole, action)
+            item.setFlags(Qt.ItemFlag.ItemIsEnabled)
+            table.setItem(row, 0, item)
+            edit = QKeySequenceEdit(QKeySequence(shortcuts.get(action, "")))
+            edit.setMaximumSequenceLength(2)  # a chord, like G then P
+            table.setCellWidget(row, 1, edit)
+
+    def _shortcuts_from_form(self) -> dict[str, str] | None:
+        """The shortcuts in the table; None (with a notice) when two actions
+        share a key."""
+        table = self.settings_ui.shortcutsTable
+        chosen = {}
+        for row in range(table.rowCount()):
+            item = table.item(row, 0)
+            edit = table.cellWidget(row, 1)
+            if item is not None and isinstance(edit, QKeySequenceEdit):
+                action = item.data(Qt.ItemDataRole.UserRole)
+                chosen[action] = edit.keySequence().toString()
+        key = shortcuts.duplicate(chosen)
+        if key is not None:
+            self.settings_ui.noticeLabel.setText(
+                self.tr("{key} is used by two shortcuts.").format(key=key)
+            )
+            return None
+        return chosen
+
     def _show_settings_section(self, section: int) -> None:
         """Show the cards of one section of the Settings: 0 is General, 1 the
-        assistant and 2 Kube, the files and the contexts of the clusters."""
+        assistant, 2 Kube, the files and the contexts of the clusters, and 3
+        the keyboard shortcuts."""
         form = self.settings_ui
         sections = {
             form.assistantCard: 1,
             form.kubeconfigCard: 2,
             form.loginCard: 2,
             form.contextsCard: 2,
+            form.shortcutsCard: 3,
         }
         for card in form.settingsContent.findChildren(
             QFrame, options=Qt.FindChildOption.FindDirectChildrenOnly
@@ -5103,6 +5295,7 @@ class WorkloadWindow(QMainWindow):
         form.generalSectionButton.setChecked(section == 0)
         form.assistantSectionButton.setChecked(section == 1)
         form.kubeSectionButton.setChecked(section == 2)
+        form.shortcutsSectionButton.setChecked(section == 3)
         form.settingsScroll.verticalScrollBar().setValue(0)
 
     def _show_assistant_settings(self) -> None:
@@ -5402,6 +5595,36 @@ class WorkloadWindow(QMainWindow):
         except OSError as error:
             logger.warning("Could not save settings: %s", error)
 
+    def _fill_timezone_combo(self, chosen: str) -> None:
+        """The zones, the common ones first.
+
+        The combo is typed into and shows only the zones that match,
+        five at a time, so it never fills the screen.
+        """
+        combo = self.settings_ui.timezoneCombo
+        combo.clear()
+        combo.addItem(self.tr("Local time"), "auto")
+        for name in timezone_choices():
+            combo.addItem(name, name)
+        combo.setMaxVisibleItems(5)
+        combo.setEditable(True)
+        combo.setInsertPolicy(QComboBox.InsertPolicy.NoInsert)
+        completer = QCompleter(combo.model(), combo)
+        completer.setFilterMode(Qt.MatchFlag.MatchContains)
+        completer.setCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
+        completer.setMaxVisibleItems(5)
+        combo.setCompleter(completer)
+        combo.setCurrentIndex(max(combo.findData(chosen), 0))
+        line = cast(QLineEdit, combo.lineEdit())  # it is editable just above
+
+        def settle() -> None:
+            # Text that is not a zone goes back to the one chosen.
+            found = combo.findText(line.text(), Qt.MatchFlag.MatchFixedString)
+            combo.setCurrentIndex(found if found >= 0 else combo.currentIndex())
+            line.setText(combo.currentText())
+
+        line.editingFinished.connect(settle)
+
     def _load_settings_form(self) -> None:
         """Fill the settings page from the saved preferences."""
         form = self.settings_ui
@@ -5413,6 +5636,8 @@ class WorkloadWindow(QMainWindow):
         if chosen != "auto":  # a code from an older version is shown as its language
             chosen = resolve_language(chosen)
         form.languageCombo.setCurrentIndex(max(form.languageCombo.findData(chosen), 0))
+        self._fill_timezone_combo(self.settings.timezone)
+        self._fill_shortcuts(self.settings.shortcuts)
         self._fill_theme_combo(self.settings.theme)
         self._fill_default_namespaces()
         form.rememberCheck.setChecked(self.settings.remember_last_context)
@@ -5831,6 +6056,9 @@ class WorkloadWindow(QMainWindow):
         programs = self._assistant_programs_from_form()
         if programs is None:
             return  # nor until every path of an assistant is a program
+        keys = self._shortcuts_from_form()
+        if keys is None:
+            return  # nor while two shortcuts share a key
         files = [
             form.kubeconfigList.item(row).text()
             for row in range(form.kubeconfigList.count())
@@ -5838,6 +6066,8 @@ class WorkloadWindow(QMainWindow):
         files_changed = files != self.settings.kubeconfig_files
         self.settings.kubeconfig_files = files
         self.settings.sign_in_commands = commands
+        self.settings.shortcuts = keys
+        self._apply_shortcuts()
         self._apply_cluster_settings()
         self.settings.default_namespace = form.defaultNamespaceEdit.text().strip()
         table = form.contextsTable
@@ -5856,6 +6086,8 @@ class WorkloadWindow(QMainWindow):
         previous_theme = self.settings.theme
         self.settings.language = form.languageCombo.currentData()
         self.settings.theme = form.themeCombo.currentData()
+        self.settings.timezone = form.timezoneCombo.currentData()
+        set_timezone(self.settings.timezone)
         self.settings.remember_last_context = form.rememberCheck.isChecked()
         if self.settings.remember_last_context:
             self.settings.last_context = self._context()

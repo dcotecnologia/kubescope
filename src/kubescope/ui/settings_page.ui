@@ -72,6 +72,22 @@
       </widget>
      </item>
      <item>
+      <widget class="QPushButton" name="shortcutsSectionButton">
+       <property name="text">
+        <string>Shortcuts</string>
+       </property>
+       <property name="checkable">
+        <bool>true</bool>
+       </property>
+       <property name="checked">
+        <bool>false</bool>
+       </property>
+       <property name="variant" stdset="0">
+        <string notr="true">secondary</string>
+       </property>
+      </widget>
+     </item>
+     <item>
       <spacer name="settingsSectionsSpacer">
        <property name="orientation">
         <enum>Qt::Horizontal</enum>
@@ -209,13 +225,33 @@
              </widget>
             </item>
             <item row="1" column="0">
+             <widget class="QLabel" name="timezoneLabel">
+              <property name="text">
+               <string>Time zone</string>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="1">
+             <widget class="QComboBox" name="timezoneCombo">
+              <property name="minimumSize">
+               <size>
+                <width>200</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="variant" stdset="0">
+               <string notr="true">filter</string>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="0">
              <widget class="QLabel" name="defaultNamespaceLabel">
               <property name="text">
                <string>Default namespace</string>
               </property>
              </widget>
             </item>
-            <item row="1" column="1">
+            <item row="2" column="1">
              <widget class="QLineEdit" name="defaultNamespaceEdit">
               <property name="minimumSize">
                <size>
@@ -234,7 +270,7 @@
               </property>
              </widget>
             </item>
-            <item row="2" column="0" colspan="2">
+            <item row="3" column="0" colspan="2">
              <widget class="QCheckBox" name="rememberCheck">
               <property name="text">
                <string>Remember the last used context</string>
@@ -244,7 +280,7 @@
               </property>
              </widget>
             </item>
-            <item row="3" column="0" colspan="2">
+            <item row="4" column="0" colspan="2">
              <widget class="QCheckBox" name="updatesCheck">
               <property name="text">
                <string>Check GitHub for a new version when the app starts and every hour</string>
@@ -257,7 +293,7 @@
               </property>
              </widget>
             </item>
-            <item row="4" column="0" colspan="2">
+            <item row="5" column="0" colspan="2">
              <widget class="QCheckBox" name="backgroundCheck">
               <property name="text">
                <string>Keep running in the background, with an icon in the system tray</string>
@@ -270,7 +306,7 @@
               </property>
              </widget>
             </item>
-            <item row="5" column="0" colspan="2">
+            <item row="6" column="0" colspan="2">
              <widget class="QCheckBox" name="titleBarCheck">
               <property name="text">
                <string>Use the title bar of the system</string>
@@ -280,7 +316,7 @@
               </property>
              </widget>
             </item>
-            <item row="6" column="0" colspan="2">
+            <item row="7" column="0" colspan="2">
              <widget class="QCheckBox" name="animationsCheck">
               <property name="text">
                <string>Animate windows and lists as they open</string>
@@ -921,6 +957,112 @@
             </item>
             <item>
              <spacer name="loginButtonsRowSpacer">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+           </layout>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QFrame" name="shortcutsCard">
+         <property name="card" stdset="0">
+          <string notr="true">true</string>
+         </property>
+         <layout class="QVBoxLayout" name="shortcutsCardLayout">
+          <property name="spacing">
+           <number>10</number>
+          </property>
+          <property name="leftMargin">
+           <number>16</number>
+          </property>
+          <property name="topMargin">
+           <number>14</number>
+          </property>
+          <property name="rightMargin">
+           <number>16</number>
+          </property>
+          <property name="bottomMargin">
+           <number>14</number>
+          </property>
+          <item>
+           <widget class="QLabel" name="shortcutsHeading">
+            <property name="text">
+             <string>KEYBOARD SHORTCUTS</string>
+            </property>
+            <property name="variant" stdset="0">
+             <string notr="true">cardTitle</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="shortcutsHint">
+            <property name="text">
+             <string>Click a shortcut and press the keys you want (two keys one after the other, like G then P, work too); Backspace clears it, and a shortcut left empty is off. Press Save to apply.</string>
+            </property>
+            <property name="wordWrap">
+             <bool>true</bool>
+            </property>
+            <property name="variant" stdset="0">
+             <string notr="true">muted</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QTableWidget" name="shortcutsTable">
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>300</height>
+             </size>
+            </property>
+            <property name="selectionMode">
+             <enum>QAbstractItemView::NoSelection</enum>
+            </property>
+            <attribute name="verticalHeaderVisible">
+             <bool>false</bool>
+            </attribute>
+            <attribute name="horizontalHeaderStretchLastSection">
+             <bool>true</bool>
+            </attribute>
+            <column>
+             <property name="text">
+              <string>ACTION</string>
+             </property>
+            </column>
+            <column>
+             <property name="text">
+              <string>SHORTCUT</string>
+             </property>
+            </column>
+            <property name="variant" stdset="0">
+             <string notr="true">data</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="shortcutsButtonsRow">
+            <item>
+             <widget class="QPushButton" name="shortcutsResetButton">
+              <property name="text">
+               <string>Restore defaults</string>
+              </property>
+              <property name="variant" stdset="0">
+               <string notr="true">secondary</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <spacer name="shortcutsButtonsSpacer">
               <property name="orientation">
                <enum>Qt::Horizontal</enum>
               </property>

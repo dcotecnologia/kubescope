@@ -1,5 +1,4 @@
 import re
-from datetime import datetime
 
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QKeySequence, QShortcut
@@ -9,6 +8,7 @@ from kubescope.models import PodInfo, safe_file_name
 from kubescope.ui.ui_log_tab import Ui_LogTab
 from kubescope.utils.fonts import code_font
 from kubescope.utils.log_view import style_log_view
+from kubescope.utils.timezone import zone_now
 from kubescope.views.search_bar import SearchBar
 
 LOG_REFRESH_MS = 3000
@@ -117,9 +117,7 @@ class LogTab(QWidget):
 
     def _show_updated(self) -> None:
         self.ui.logStatus.setText(
-            self.tr("Updated at {time}").format(
-                time=datetime.now().strftime("%H:%M:%S")
-            )
+            self.tr("Updated at {time}").format(time=zone_now().strftime("%H:%M:%S"))
         )
 
     def set_error(self, message: str) -> None:

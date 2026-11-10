@@ -602,6 +602,28 @@ def test_list_adds_the_kind_the_cluster_leaves_out_of_a_list(monkeypatch) -> Non
     assert cluster._list("pods", "dev") == {}
 
 
+def test_search_resources_names_every_namespace_and_skips_what_is_forbidden(
+    monkeypatch,
+) -> None:
+    def fake_list(resource, _context, *_rest):
+        if resource == "services":
+            raise cluster.ClusterError("forbidden")
+        if resource == "nodes":
+            return {"items": [{"metadata": {"name": "n1", "namespace": "x"}}]}
+        if resource == "pods":
+            return {"items": [{"metadata": {"name": "api", "namespace": "ns"}}, {}]}
+        return {}
+
+    monkeypatch.setattr(cluster, "_list", fake_list)
+
+    hits = cluster.search_resources("dev")
+
+    assert [(hit.kind, hit.namespace, hit.name) for hit in hits] == [
+        ("Pod", "ns", "api"),
+        ("Node", "", "n1"),  # a node belongs to no namespace
+    ]
+
+
 def test_resource_paths_encode_the_names_that_come_from_the_cluster() -> None:
     assert cluster._resource_path("nodes") == "/api/v1/nodes"
     assert (

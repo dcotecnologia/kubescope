@@ -25,6 +25,7 @@ from kubescope.utils.diagnostics import (
 )
 from kubescope.utils.fonts import apply_fonts
 from kubescope.utils.single_instance import SingleInstance
+from kubescope.utils.timezone import set_timezone
 from kubescope.utils.wheel_guard import install_wheel_guard
 from kubescope.views.motion import DialogSlide
 from kubescope.window import WorkloadWindow
@@ -114,6 +115,7 @@ def main() -> int:
     install_bundled_themes()
     apply_theme(application, settings.theme)
     apply_language(settings.language)
+    set_timezone(settings.timezone)
     window = WorkloadWindow(settings)
     instance.activated.connect(window.bring_to_front)
     window.show()

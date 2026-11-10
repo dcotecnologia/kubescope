@@ -56,6 +56,14 @@ class Ui_SettingsPage(object):
 
         self.settingsSections.addWidget(self.assistantSectionButton)
 
+        self.shortcutsSectionButton = QPushButton(SettingsPage)
+        self.shortcutsSectionButton.setObjectName(u"shortcutsSectionButton")
+        self.shortcutsSectionButton.setCheckable(True)
+        self.shortcutsSectionButton.setChecked(False)
+        self.shortcutsSectionButton.setProperty(u"variant", u"secondary")
+
+        self.settingsSections.addWidget(self.shortcutsSectionButton)
+
         self.settingsSectionsSpacer = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
 
         self.settingsSections.addItem(self.settingsSectionsSpacer)
@@ -119,45 +127,57 @@ class Ui_SettingsPage(object):
 
         self.generalForm.setWidget(0, QFormLayout.ItemRole.FieldRole, self.languageCombo)
 
+        self.timezoneLabel = QLabel(self.generalCard)
+        self.timezoneLabel.setObjectName(u"timezoneLabel")
+
+        self.generalForm.setWidget(1, QFormLayout.ItemRole.LabelRole, self.timezoneLabel)
+
+        self.timezoneCombo = QComboBox(self.generalCard)
+        self.timezoneCombo.setObjectName(u"timezoneCombo")
+        self.timezoneCombo.setMinimumSize(QSize(200, 0))
+        self.timezoneCombo.setProperty(u"variant", u"filter")
+
+        self.generalForm.setWidget(1, QFormLayout.ItemRole.FieldRole, self.timezoneCombo)
+
         self.defaultNamespaceLabel = QLabel(self.generalCard)
         self.defaultNamespaceLabel.setObjectName(u"defaultNamespaceLabel")
 
-        self.generalForm.setWidget(1, QFormLayout.ItemRole.LabelRole, self.defaultNamespaceLabel)
+        self.generalForm.setWidget(2, QFormLayout.ItemRole.LabelRole, self.defaultNamespaceLabel)
 
         self.defaultNamespaceEdit = QLineEdit(self.generalCard)
         self.defaultNamespaceEdit.setObjectName(u"defaultNamespaceEdit")
         self.defaultNamespaceEdit.setMinimumSize(QSize(200, 0))
         self.defaultNamespaceEdit.setProperty(u"variant", u"filter")
 
-        self.generalForm.setWidget(1, QFormLayout.ItemRole.FieldRole, self.defaultNamespaceEdit)
+        self.generalForm.setWidget(2, QFormLayout.ItemRole.FieldRole, self.defaultNamespaceEdit)
 
         self.rememberCheck = QCheckBox(self.generalCard)
         self.rememberCheck.setObjectName(u"rememberCheck")
         self.rememberCheck.setChecked(True)
 
-        self.generalForm.setWidget(2, QFormLayout.ItemRole.SpanningRole, self.rememberCheck)
+        self.generalForm.setWidget(3, QFormLayout.ItemRole.SpanningRole, self.rememberCheck)
 
         self.updatesCheck = QCheckBox(self.generalCard)
         self.updatesCheck.setObjectName(u"updatesCheck")
         self.updatesCheck.setChecked(True)
 
-        self.generalForm.setWidget(3, QFormLayout.ItemRole.SpanningRole, self.updatesCheck)
+        self.generalForm.setWidget(4, QFormLayout.ItemRole.SpanningRole, self.updatesCheck)
 
         self.backgroundCheck = QCheckBox(self.generalCard)
         self.backgroundCheck.setObjectName(u"backgroundCheck")
         self.backgroundCheck.setChecked(True)
 
-        self.generalForm.setWidget(4, QFormLayout.ItemRole.SpanningRole, self.backgroundCheck)
+        self.generalForm.setWidget(5, QFormLayout.ItemRole.SpanningRole, self.backgroundCheck)
 
         self.titleBarCheck = QCheckBox(self.generalCard)
         self.titleBarCheck.setObjectName(u"titleBarCheck")
 
-        self.generalForm.setWidget(5, QFormLayout.ItemRole.SpanningRole, self.titleBarCheck)
+        self.generalForm.setWidget(6, QFormLayout.ItemRole.SpanningRole, self.titleBarCheck)
 
         self.animationsCheck = QCheckBox(self.generalCard)
         self.animationsCheck.setObjectName(u"animationsCheck")
 
-        self.generalForm.setWidget(6, QFormLayout.ItemRole.SpanningRole, self.animationsCheck)
+        self.generalForm.setWidget(7, QFormLayout.ItemRole.SpanningRole, self.animationsCheck)
 
 
         self.generalCardLayout.addLayout(self.generalForm)
@@ -494,6 +514,60 @@ class Ui_SettingsPage(object):
 
         self.settingsContentLayout.addWidget(self.loginCard)
 
+        self.shortcutsCard = QFrame(self.settingsContent)
+        self.shortcutsCard.setObjectName(u"shortcutsCard")
+        self.shortcutsCard.setProperty(u"card", u"true")
+        self.shortcutsCardLayout = QVBoxLayout(self.shortcutsCard)
+        self.shortcutsCardLayout.setSpacing(10)
+        self.shortcutsCardLayout.setObjectName(u"shortcutsCardLayout")
+        self.shortcutsCardLayout.setContentsMargins(16, 14, 16, 14)
+        self.shortcutsHeading = QLabel(self.shortcutsCard)
+        self.shortcutsHeading.setObjectName(u"shortcutsHeading")
+        self.shortcutsHeading.setProperty(u"variant", u"cardTitle")
+
+        self.shortcutsCardLayout.addWidget(self.shortcutsHeading)
+
+        self.shortcutsHint = QLabel(self.shortcutsCard)
+        self.shortcutsHint.setObjectName(u"shortcutsHint")
+        self.shortcutsHint.setWordWrap(True)
+        self.shortcutsHint.setProperty(u"variant", u"muted")
+
+        self.shortcutsCardLayout.addWidget(self.shortcutsHint)
+
+        self.shortcutsTable = QTableWidget(self.shortcutsCard)
+        if (self.shortcutsTable.columnCount() < 2):
+            self.shortcutsTable.setColumnCount(2)
+        __qtablewidgetitem2 = QTableWidgetItem()
+        self.shortcutsTable.setHorizontalHeaderItem(0, __qtablewidgetitem2)
+        __qtablewidgetitem3 = QTableWidgetItem()
+        self.shortcutsTable.setHorizontalHeaderItem(1, __qtablewidgetitem3)
+        self.shortcutsTable.setObjectName(u"shortcutsTable")
+        self.shortcutsTable.setMinimumSize(QSize(0, 300))
+        self.shortcutsTable.setSelectionMode(QAbstractItemView.NoSelection)
+        self.shortcutsTable.setProperty(u"variant", u"data")
+        self.shortcutsTable.horizontalHeader().setStretchLastSection(True)
+        self.shortcutsTable.verticalHeader().setVisible(False)
+
+        self.shortcutsCardLayout.addWidget(self.shortcutsTable)
+
+        self.shortcutsButtonsRow = QHBoxLayout()
+        self.shortcutsButtonsRow.setObjectName(u"shortcutsButtonsRow")
+        self.shortcutsResetButton = QPushButton(self.shortcutsCard)
+        self.shortcutsResetButton.setObjectName(u"shortcutsResetButton")
+        self.shortcutsResetButton.setProperty(u"variant", u"secondary")
+
+        self.shortcutsButtonsRow.addWidget(self.shortcutsResetButton)
+
+        self.shortcutsButtonsSpacer = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+
+        self.shortcutsButtonsRow.addItem(self.shortcutsButtonsSpacer)
+
+
+        self.shortcutsCardLayout.addLayout(self.shortcutsButtonsRow)
+
+
+        self.settingsContentLayout.addWidget(self.shortcutsCard)
+
         self.contextsCard = QFrame(self.settingsContent)
         self.contextsCard.setObjectName(u"contextsCard")
         self.contextsCard.setProperty(u"card", u"true")
@@ -517,24 +591,24 @@ class Ui_SettingsPage(object):
         self.contextsTable = QTableWidget(self.contextsCard)
         if (self.contextsTable.columnCount() < 2):
             self.contextsTable.setColumnCount(2)
-        __qtablewidgetitem2 = QTableWidgetItem()
-        self.contextsTable.setHorizontalHeaderItem(0, __qtablewidgetitem2)
-        __qtablewidgetitem3 = QTableWidgetItem()
-        self.contextsTable.setHorizontalHeaderItem(1, __qtablewidgetitem3)
+        __qtablewidgetitem4 = QTableWidgetItem()
+        self.contextsTable.setHorizontalHeaderItem(0, __qtablewidgetitem4)
+        __qtablewidgetitem5 = QTableWidgetItem()
+        self.contextsTable.setHorizontalHeaderItem(1, __qtablewidgetitem5)
         if (self.contextsTable.rowCount() < 2):
             self.contextsTable.setRowCount(2)
-        __qtablewidgetitem4 = QTableWidgetItem()
-        __qtablewidgetitem4.setText(u"prod-eks")
-        self.contextsTable.setItem(0, 0, __qtablewidgetitem4)
-        __qtablewidgetitem5 = QTableWidgetItem()
-        __qtablewidgetitem5.setText(u"Production")
-        self.contextsTable.setItem(0, 1, __qtablewidgetitem5)
         __qtablewidgetitem6 = QTableWidgetItem()
-        __qtablewidgetitem6.setText(u"staging-eks")
-        self.contextsTable.setItem(1, 0, __qtablewidgetitem6)
+        __qtablewidgetitem6.setText(u"prod-eks")
+        self.contextsTable.setItem(0, 0, __qtablewidgetitem6)
         __qtablewidgetitem7 = QTableWidgetItem()
-        __qtablewidgetitem7.setText(u"Staging")
-        self.contextsTable.setItem(1, 1, __qtablewidgetitem7)
+        __qtablewidgetitem7.setText(u"Production")
+        self.contextsTable.setItem(0, 1, __qtablewidgetitem7)
+        __qtablewidgetitem8 = QTableWidgetItem()
+        __qtablewidgetitem8.setText(u"staging-eks")
+        self.contextsTable.setItem(1, 0, __qtablewidgetitem8)
+        __qtablewidgetitem9 = QTableWidgetItem()
+        __qtablewidgetitem9.setText(u"Staging")
+        self.contextsTable.setItem(1, 1, __qtablewidgetitem9)
         self.contextsTable.setObjectName(u"contextsTable")
         self.contextsTable.setMinimumSize(QSize(0, 260))
         self.contextsTable.setSelectionMode(QAbstractItemView.SingleSelection)
@@ -567,12 +641,14 @@ class Ui_SettingsPage(object):
         self.generalSectionButton.setText(QCoreApplication.translate("SettingsPage", u"General", None))
         self.kubeSectionButton.setText(QCoreApplication.translate("SettingsPage", u"Kube", None))
         self.assistantSectionButton.setText(QCoreApplication.translate("SettingsPage", u"Assistant", None))
+        self.shortcutsSectionButton.setText(QCoreApplication.translate("SettingsPage", u"Shortcuts", None))
 #if QT_CONFIG(tooltip)
         self.saveButton.setToolTip(QCoreApplication.translate("SettingsPage", u"Save changes", None))
 #endif // QT_CONFIG(tooltip)
         self.generalHeading.setText(QCoreApplication.translate("SettingsPage", u"GENERAL", None))
         self.languageLabel.setText(QCoreApplication.translate("SettingsPage", u"Language", None))
 
+        self.timezoneLabel.setText(QCoreApplication.translate("SettingsPage", u"Time zone", None))
         self.defaultNamespaceLabel.setText(QCoreApplication.translate("SettingsPage", u"Default namespace", None))
 #if QT_CONFIG(tooltip)
         self.defaultNamespaceEdit.setToolTip(QCoreApplication.translate("SettingsPage", u"The namespace each context opens on. Leave empty to show all of them.", None))
@@ -638,12 +714,19 @@ class Ui_SettingsPage(object):
         ___qtablewidgetitem1.setText(QCoreApplication.translate("SettingsPage", u"SIGN-IN COMMAND", None))
         self.loginAddButton.setText(QCoreApplication.translate("SettingsPage", u"Add row", None))
         self.loginRemoveButton.setText(QCoreApplication.translate("SettingsPage", u"Remove", None))
+        self.shortcutsHeading.setText(QCoreApplication.translate("SettingsPage", u"KEYBOARD SHORTCUTS", None))
+        self.shortcutsHint.setText(QCoreApplication.translate("SettingsPage", u"Click a shortcut and press the keys you want (two keys one after the other, like G then P, work too); Backspace clears it, and a shortcut left empty is off. Press Save to apply.", None))
+        ___qtablewidgetitem2 = self.shortcutsTable.horizontalHeaderItem(0)
+        ___qtablewidgetitem2.setText(QCoreApplication.translate("SettingsPage", u"ACTION", None))
+        ___qtablewidgetitem3 = self.shortcutsTable.horizontalHeaderItem(1)
+        ___qtablewidgetitem3.setText(QCoreApplication.translate("SettingsPage", u"SHORTCUT", None))
+        self.shortcutsResetButton.setText(QCoreApplication.translate("SettingsPage", u"Restore defaults", None))
         self.contextsHeading.setText(QCoreApplication.translate("SettingsPage", u"CONTEXT NAMES", None))
         self.contextsHint.setText(QCoreApplication.translate("SettingsPage", u"Give your contexts friendlier names. Leave a name empty to keep the original one.", None))
-        ___qtablewidgetitem2 = self.contextsTable.horizontalHeaderItem(0)
-        ___qtablewidgetitem2.setText(QCoreApplication.translate("SettingsPage", u"CONTEXT", None))
-        ___qtablewidgetitem3 = self.contextsTable.horizontalHeaderItem(1)
-        ___qtablewidgetitem3.setText(QCoreApplication.translate("SettingsPage", u"DISPLAY NAME", None))
+        ___qtablewidgetitem4 = self.contextsTable.horizontalHeaderItem(0)
+        ___qtablewidgetitem4.setText(QCoreApplication.translate("SettingsPage", u"CONTEXT", None))
+        ___qtablewidgetitem5 = self.contextsTable.horizontalHeaderItem(1)
+        ___qtablewidgetitem5.setText(QCoreApplication.translate("SettingsPage", u"DISPLAY NAME", None))
 
         __sortingEnabled = self.contextsTable.isSortingEnabled()
         self.contextsTable.setSortingEnabled(False)

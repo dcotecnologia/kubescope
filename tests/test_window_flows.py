@@ -62,7 +62,7 @@ from kubescope.models import (
 )
 from kubescope.settings import Settings
 from kubescope.theme import themed
-from kubescope.utils import json_view
+from kubescope.utils import json_view, shortcuts
 from kubescope.utils.updates import Release, UpdateCheck
 from kubescope.views.container_states import (
     BADGE_ROLE,
@@ -2382,7 +2382,7 @@ def test_ctrl_r_and_f5_press_the_refresh_button_of_the_page_on_screen(
         for shortcut in window.findChildren(QShortcut)
         if shortcut.key().toString() != "Ctrl+F"  # the search of the tab
     )
-    assert keys == ["Ctrl+G", "Ctrl+R", "F5"]  # G is for Gabi
+    assert keys == sorted(shortcuts.DEFAULTS.values())  # Ctrl+G is for Gabi
 
     for page in (0, 1, 4, 3):
         window.pages.setCurrentIndex(page)

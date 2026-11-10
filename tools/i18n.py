@@ -30,6 +30,7 @@ SOURCES = [
             "utils/errors.py",
             "dialogs/changelog_dialog.py",
             "dialogs/crash_dialog.py",
+            "dialogs/global_search.py",
             "dialogs/update_dialog.py",
         )
     ),

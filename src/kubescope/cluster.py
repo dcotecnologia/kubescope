@@ -34,6 +34,7 @@ from kubescope.models import (
     KindSummary,
     NodeInfo,
     PodInfo,
+    SearchHit,
     Workload,
     WorkloadsOverview,
     age_seconds,
@@ -44,6 +45,7 @@ from kubescope.models import (
 from kubescope.utils.errors import first_line, is_auth_error
 from kubescope.utils.flatpak import HOST, host_has, in_flatpak, on_host
 from kubescope.utils.programs import find_program
+from kubescope.utils.timezone import to_zone
 
 if TYPE_CHECKING:
     from kubernetes import client
@@ -753,7 +755,7 @@ def get_cluster_info(context: str) -> ClusterInfo:
     cluster = cluster or {}
     try:
         created = datetime.fromisoformat(str(cluster.get("createdAt")))
-        created_text = created.astimezone().strftime("%Y-%m-%d %H:%M")
+        created_text = to_zone(created).strftime("%Y-%m-%d %H:%M")
     except ValueError:
         created_text = _NO_VALUE
     oidc = (cluster.get("identity") or {}).get("oidc") or {}
@@ -1984,6 +1986,48 @@ def get_forward_sources(
         partial(get_resource_details, context, kind, namespace, name), services
     )
     return document, items
+
+
+_SEARCHED = {
+    **_RESOURCES,
+    "Service": "services",
+    "Ingress": "ingresses",
+    "ConfigMap": "configmaps",
+    "Pod": "pods",
+    "Node": "nodes",
+    "Namespace": "namespaces",
+}
+_SEARCH_CLUSTER_WIDE = frozenset({"Node", "Namespace"})
+
+
+def search_resources(context: str) -> list[SearchHit]:
+    """The name of the main resources of every namespace, for the global
+    search.
+
+    A kind the user may not list is left out instead of failing it all.
+    """
+
+    def names(kind: str, resource: str) -> list[SearchHit]:
+        try:
+            document = _list(resource, context)
+        except ClusterError as error:
+            logger.debug("The search skips %s in %s: %s", kind, context, error)
+            return []
+        hits = []
+        for item in document.get("items") or []:
+            metadata = item.get("metadata") or {}
+            if name := metadata.get("name"):
+                namespace = (
+                    "" if kind in _SEARCH_CLUSTER_WIDE else metadata.get("namespace")
+                )
+                hits.append(SearchHit(kind, namespace or "", name))
+        return hits
+
+    found = _together(*(partial(names, kind, res) for kind, res in _SEARCHED.items()))
+    return sorted(
+        (hit for hits in found for hit in hits),
+        key=lambda hit: (hit.name, hit.kind, hit.namespace),
+    )
 
 
 def get_resources(

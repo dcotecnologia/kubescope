@@ -18,6 +18,7 @@ from PySide6.QtWidgets import QPlainTextEdit, QScrollArea, QSizePolicy, QWidget
 
 from kubescope.theme import themed
 from kubescope.utils.json_view import current_palette
+from kubescope.utils.timezone import zone_now
 
 TRACK = "#e8eaee"
 OK = "#3d9a6d"
@@ -137,7 +138,7 @@ class UsageChart(QWidget):
 
     def add_sample(self, value: float, when: datetime | None = None) -> None:
         self._samples = [*self._samples, value][-self.MAX_SAMPLES :]
-        self._times = [*self._times, when or datetime.now()][-self.MAX_SAMPLES :]
+        self._times = [*self._times, when or zone_now()][-self.MAX_SAMPLES :]
         self.update()
 
     def _plot(self) -> tuple[QRectF, float, float]:
