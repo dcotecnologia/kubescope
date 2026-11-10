@@ -181,7 +181,7 @@ class ChatInput(QPlainTextEdit):
     Enter sends the message, while Shift+Enter goes to the next line."""
 
     image_pasted = Signal(QImage)
-    files_pasted = Signal(list)  # the paths of files pasted from a file manager
+    files_pasted = Signal(object)  # the paths of files pasted from a file manager
     text_pasted = Signal(str)  # a long text, to attach instead of typing
     submitted = Signal()
 
@@ -341,9 +341,7 @@ class AssistantTab(QWidget):
         self.attach_button = self._round_button(self.tr("Attach"))
         self.attach_button.clicked.connect(self._choose_files)
         self.input.image_pasted.connect(self.attach_image)
-        self.input.files_pasted.connect(
-            lambda paths: [self.attach(path) for path in paths]
-        )
+        self.input.files_pasted.connect(self.attach_all)
         self.input.text_pasted.connect(self.attach_text)
         self.input.submitted.connect(self.submit)
         self.chips = QHBoxLayout()
@@ -462,6 +460,11 @@ class AssistantTab(QWidget):
         )
         for path in paths:
             self.attach(Path(path))
+
+    def attach_all(self, paths: list[Path]) -> None:
+        """Attach every file pasted, each saying why when it cannot be."""
+        for path in paths:
+            self.attach(path)
 
     def attach(self, path: Path) -> None:
         """Attach a file to the next question, saying why when it cannot be."""
