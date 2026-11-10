@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+## [1.7.0] - 2026-11-10
+
+### Added
+
+- Paste (`Ctrl+V`) into the chat of the assistant to attach a picture, files copied from a file manager or a long text; each shows as a card above the message field and as a pill (picture, name and size) in the sent message, and a click on either opens it by @danilogco
+- **Settings** has a **Shortcuts** section to choose the keys of refresh, the global search, the assistant, the main screens, the filter of the list and the cluster switch, with keys like Headlamp's (`G` then `P` for Pods, `?` for the list), and to turn one off by @danilogco
+- **Global search**: press `/` (or `Ctrl+K`) to find a screen, a setting or a resource of any namespace by its name, and open it by @danilogco
+- **Settings** has a **Time zone** option to show dates and times in the zone you prefer; the default is the local time of the computer by @danilogco
+
 ## [1.6.0] - 2026-11-04
 
 ### Added
@@ -510,7 +519,8 @@ The first release.
 
 - Pod logs and resource details are still never written to disk by the app on its own. **Save** is the only exception, and it writes only to the file the user chooses. SECURITY.md says so by @danilogco
 
-[Unreleased]: https://github.com/dcotecnologia/kubescope/compare/v1.6.0...HEAD
+[Unreleased]: https://github.com/dcotecnologia/kubescope/compare/v1.7.0...HEAD
+[1.7.0]: https://github.com/dcotecnologia/kubescope/compare/v1.6.0...v1.7.0
 [1.6.0]: https://github.com/dcotecnologia/kubescope/compare/v1.5.0...v1.6.0
 [1.5.0]: https://github.com/dcotecnologia/kubescope/compare/v1.4.0...v1.5.0
 [1.4.0]: https://github.com/dcotecnologia/kubescope/compare/v1.3.2...v1.4.0

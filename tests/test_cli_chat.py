@@ -1,3 +1,4 @@
+import io
 import sys
 from typing import cast
 
@@ -384,6 +385,9 @@ def test_the_prompt_is_painted_for_readline(monkeypatch):
     monkeypatch.setattr(cli_chat, "_READLINE", False)
     assert cli_chat._prompt() == "\x1b[1;32myou>\x1b[0m "
     monkeypatch.delenv("FORCE_COLOR")
+    monkeypatch.setattr(
+        sys, "stdout", io.StringIO()
+    )  # pytest runs with -s: not a terminal
     assert cli_chat._prompt() == "you> "
 
 
