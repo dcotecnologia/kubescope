@@ -220,6 +220,7 @@ from kubescope.views.container_states import (
     tick_ages,
 )
 from kubescope.views.detail_tab import USAGE_REFRESH_MS, DetailTab
+from kubescope.views.dialog_frame import frames
 from kubescope.views.log_tab import LOG_REFRESH_MS, LogTab
 from kubescope.views.search_bar import compile_query, switch_button
 from kubescope.views.sidebar_resizer import SidebarResizer
@@ -877,6 +878,9 @@ class WorkloadWindow(QMainWindow):
             ui.windowCloseButton,
         )
         self._frame.set_custom(not self.settings.system_title_bar)
+        frames(
+            cast(QObject, QApplication.instance())
+        ).custom = not self.settings.system_title_bar
         self.no_contexts_banner = ui.noContextsBanner
         self.permission_banner = ui.permissionBanner
         ui.permissionDismiss.clicked.connect(self._hide_permission_banner)
@@ -6371,6 +6375,9 @@ class WorkloadWindow(QMainWindow):
         self._sync_tray()
         self.settings.system_title_bar = form.titleBarCheck.isChecked()
         self._frame.set_custom(not self.settings.system_title_bar)
+        frames(
+            cast(QObject, QApplication.instance())
+        ).custom = not self.settings.system_title_bar
         was_writing = self.settings.write_mode
         self.settings.write_mode = form.writeModeCheck.isChecked()
         if self.settings.write_mode != was_writing:
