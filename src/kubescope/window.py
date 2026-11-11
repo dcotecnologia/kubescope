@@ -222,6 +222,7 @@ from kubescope.views.container_states import (
 from kubescope.views.detail_tab import USAGE_REFRESH_MS, DetailTab
 from kubescope.views.dialog_frame import frames
 from kubescope.views.log_tab import LOG_REFRESH_MS, LogTab
+from kubescope.views.nav_chevron import NavChevron
 from kubescope.views.search_bar import compile_query, switch_button
 from kubescope.views.sidebar_resizer import SidebarResizer
 from kubescope.views.widgets import TabScrollArea
@@ -1090,9 +1091,18 @@ class WorkloadWindow(QMainWindow):
             self.config_submenu: "config",
         }
         closed = self.settings.menu_collapsed
+        headers = {
+            self.submenu: self.nav_workloads,
+            self.network_submenu: self.nav_network,
+            self.config_submenu: self.nav_config,
+        }
+        self._chevrons = {
+            submenu: NavChevron(header) for submenu, header in headers.items()
+        }
         for submenu, name in self._menu_names.items():
             if name not in closed:  # every section starts open, unless it was closed
                 submenu.setMaximumHeight(MENU_OPEN)
+            self._chevrons[submenu].set_open(name not in closed)
         # The .ui files carry sample data for Qt Designer; the app starts empty.
         self.context_combo.clear()
         self.namespace_combo.clear()
@@ -2216,6 +2226,8 @@ class WorkloadWindow(QMainWindow):
             .replace("CLOSE_ICON_HOVER", _close_icon_path("#3220a0", "close-hover"))
             .replace("CLOSE_ICON", _close_icon_path("#6b7380", "close"))
         )
+        for chevron in self._chevrons.values():
+            chevron.refresh()  # the colors of the theme
         self.nav_overview.setIcon(_nav_icon("overview"))
         self.nav_workloads.setIcon(_nav_icon("workloads"))
         self.ui.navEvents.setIcon(_nav_icon("events"))
@@ -2310,6 +2322,7 @@ class WorkloadWindow(QMainWindow):
         )
         animation.setEndValue(submenu.sizeHint().height() if expand else 0)
         animation.start()
+        self._chevrons[submenu].set_open(expand)
         if not remember:
             return
         closed = set(self.settings.menu_collapsed)

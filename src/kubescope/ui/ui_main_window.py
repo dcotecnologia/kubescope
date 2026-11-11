@@ -207,6 +207,9 @@ class Ui_MainWindow(object):
 "    padding: 0 12px; font-size: 12px; font-weight: 600;\n"
 "}\n"
 "QPushButton[nav=\"true\"]:hover { background: #f6f6fa; }\n"
+"QFrame#workloadsSubmenu, QFrame#networkSubmenu, QFrame#configSubmenu {\n"
+"    border: 0; border-left: 1px solid #d9dce4; margin-left: 19px;\n"
+"}\n"
 "QPushButton[nav=\"true\"]:checked {\n"
 "    color: #3220a0; background: #f3f1f9; border-right: 3px solid #3220a0;\n"
 "    font-weight: 700;\n"
@@ -215,10 +218,10 @@ class Ui_MainWindow(object):
 "    background: #ffffff; border: 1px solid #dfe2e9; border-radius: 8px;\n"
 "}\n"
 "QFrame[card=\"true\"] QLabel { background: transparent; border: 0; }\n"
-"QLabel[variant=\"cardTitle\"] { color: #535d69; font-size: 9px; font-weight: 700; }\n"
+"QLabel[variant=\"cardTitle\"] { colo"
+                        "r: #535d69; font-size: 9px; font-weight: 700; }\n"
 "QLabel[variant=\"cardValue\"] { color: #17191e; font-size: 20px; font-weight: 700; }\n"
-"QLabel[var"
-                        "iant=\"cardCaption\"] { color: #4f5966; font-size: 10px; }\n"
+"QLabel[variant=\"cardCaption\"] { color: #4f5966; font-size: 10px; }\n"
 "QProgressBar {\n"
 "    background: #eceef3; border: 0; border-radius: 3px;\n"
 "    min-height: 6px; max-height: 6px;\n"
@@ -236,10 +239,10 @@ class Ui_MainWindow(object):
 "    font-weight: 600; max-width: 260px;\n"
 "}\n"
 "QTabBar::tab:hover { color: #3220a0; }\n"
-"QTabBar::tab:selected { color: #3220a0; border-bottom: 2px solid #3220a0; }\n"
+"QTabBar::tab:selec"
+                        "ted { color: #3220a0; border-bottom: 2px solid #3220a0; }\n"
 "QTabBar::close-button {\n"
-"    image: url(CLOSE_ICON); subcontrol-position: right; margi"
-                        "n-left: 6px;\n"
+"    image: url(CLOSE_ICON); subcontrol-position: right; margin-left: 6px;\n"
 "    width: 10px; height: 10px; padding: 3px; border-radius: 4px;\n"
 "}\n"
 "QTabBar::close-button:hover { image: url(CLOSE_ICON_HOVER); background: #eee9f7; }\n"
@@ -253,9 +256,9 @@ class Ui_MainWindow(object):
 "QFrame#permissionBanner { background: #fce9ea; border-bottom: 1px solid #a33d45; }\n"
 "QFrame#permissionBanner QLabel { color: #a33d45; font-size: 11px; background: transparent; }\n"
 "QFrame#permissionBanner QPushButton { color: #a33d45; font-size: 11px; padding: 0 0 0 12px; }\n"
-"QFrame#appFooter { background: #ffffff; border-top: 1px solid #e4e5eb; }\n"
-"QLabel#footerLicense, QLabel#footerDot, QLabel#updateNotice { color: #6b7380; font-size: 10"
-                        "px; }\n"
+"QFrame#appFooter "
+                        "{ background: #ffffff; border-top: 1px solid #e4e5eb; }\n"
+"QLabel#footerLicense, QLabel#footerDot, QLabel#updateNotice { color: #6b7380; font-size: 10px; }\n"
 "QFrame#appFooter QPushButton[variant=\"link\"] { font-size: 10px; padding: 0 0 0 6px; }\n"
 "QPushButton#companyLink, QPushButton#licenseLink { padding: 0; }\n"
 "QPushButton#updateButton { border: none; background: transparent; padding: 0; border-radius: 4px; }\n"
@@ -502,10 +505,10 @@ class Ui_MainWindow(object):
         self.workloadsSubmenuLayout = QVBoxLayout(self.workloadsSubmenu)
         self.workloadsSubmenuLayout.setSpacing(0)
         self.workloadsSubmenuLayout.setObjectName(u"workloadsSubmenuLayout")
-        self.workloadsSubmenuLayout.setContentsMargins(16, 0, 0, 0)
+        self.workloadsSubmenuLayout.setContentsMargins(4, 0, 0, 0)
         self.navWorkloadsOverview = QPushButton(self.workloadsSubmenu)
         self.navWorkloadsOverview.setObjectName(u"navWorkloadsOverview")
-        self.navWorkloadsOverview.setMinimumSize(QSize(0, 22))
+        self.navWorkloadsOverview.setMinimumSize(QSize(0, 20))
         self.navWorkloadsOverview.setIconSize(QSize(16, 16))
         self.navWorkloadsOverview.setCheckable(True)
         self.navWorkloadsOverview.setChecked(False)
@@ -516,7 +519,7 @@ class Ui_MainWindow(object):
 
         self.navCronJobs = QPushButton(self.workloadsSubmenu)
         self.navCronJobs.setObjectName(u"navCronJobs")
-        self.navCronJobs.setMinimumSize(QSize(0, 22))
+        self.navCronJobs.setMinimumSize(QSize(0, 20))
         self.navCronJobs.setIconSize(QSize(16, 16))
         self.navCronJobs.setCheckable(True)
         self.navCronJobs.setChecked(False)
@@ -527,7 +530,7 @@ class Ui_MainWindow(object):
 
         self.navDaemonSets = QPushButton(self.workloadsSubmenu)
         self.navDaemonSets.setObjectName(u"navDaemonSets")
-        self.navDaemonSets.setMinimumSize(QSize(0, 22))
+        self.navDaemonSets.setMinimumSize(QSize(0, 20))
         self.navDaemonSets.setIconSize(QSize(16, 16))
         self.navDaemonSets.setCheckable(True)
         self.navDaemonSets.setChecked(False)
@@ -538,7 +541,7 @@ class Ui_MainWindow(object):
 
         self.navDeployments = QPushButton(self.workloadsSubmenu)
         self.navDeployments.setObjectName(u"navDeployments")
-        self.navDeployments.setMinimumSize(QSize(0, 22))
+        self.navDeployments.setMinimumSize(QSize(0, 20))
         self.navDeployments.setIconSize(QSize(16, 16))
         self.navDeployments.setCheckable(True)
         self.navDeployments.setChecked(False)
@@ -549,7 +552,7 @@ class Ui_MainWindow(object):
 
         self.navJobs = QPushButton(self.workloadsSubmenu)
         self.navJobs.setObjectName(u"navJobs")
-        self.navJobs.setMinimumSize(QSize(0, 22))
+        self.navJobs.setMinimumSize(QSize(0, 20))
         self.navJobs.setIconSize(QSize(16, 16))
         self.navJobs.setCheckable(True)
         self.navJobs.setChecked(False)
@@ -560,7 +563,7 @@ class Ui_MainWindow(object):
 
         self.navPods = QPushButton(self.workloadsSubmenu)
         self.navPods.setObjectName(u"navPods")
-        self.navPods.setMinimumSize(QSize(0, 22))
+        self.navPods.setMinimumSize(QSize(0, 20))
         self.navPods.setIconSize(QSize(16, 16))
         self.navPods.setCheckable(True)
         self.navPods.setChecked(False)
@@ -571,7 +574,7 @@ class Ui_MainWindow(object):
 
         self.navReplicaSets = QPushButton(self.workloadsSubmenu)
         self.navReplicaSets.setObjectName(u"navReplicaSets")
-        self.navReplicaSets.setMinimumSize(QSize(0, 22))
+        self.navReplicaSets.setMinimumSize(QSize(0, 20))
         self.navReplicaSets.setIconSize(QSize(16, 16))
         self.navReplicaSets.setCheckable(True)
         self.navReplicaSets.setChecked(False)
@@ -582,7 +585,7 @@ class Ui_MainWindow(object):
 
         self.navReplicationControllers = QPushButton(self.workloadsSubmenu)
         self.navReplicationControllers.setObjectName(u"navReplicationControllers")
-        self.navReplicationControllers.setMinimumSize(QSize(0, 22))
+        self.navReplicationControllers.setMinimumSize(QSize(0, 20))
         self.navReplicationControllers.setIconSize(QSize(16, 16))
         self.navReplicationControllers.setCheckable(True)
         self.navReplicationControllers.setChecked(False)
@@ -593,7 +596,7 @@ class Ui_MainWindow(object):
 
         self.navStatefulSets = QPushButton(self.workloadsSubmenu)
         self.navStatefulSets.setObjectName(u"navStatefulSets")
-        self.navStatefulSets.setMinimumSize(QSize(0, 22))
+        self.navStatefulSets.setMinimumSize(QSize(0, 20))
         self.navStatefulSets.setIconSize(QSize(16, 16))
         self.navStatefulSets.setCheckable(True)
         self.navStatefulSets.setChecked(False)
@@ -621,10 +624,10 @@ class Ui_MainWindow(object):
         self.networkSubmenuLayout = QVBoxLayout(self.networkSubmenu)
         self.networkSubmenuLayout.setSpacing(0)
         self.networkSubmenuLayout.setObjectName(u"networkSubmenuLayout")
-        self.networkSubmenuLayout.setContentsMargins(16, 0, 0, 0)
+        self.networkSubmenuLayout.setContentsMargins(4, 0, 0, 0)
         self.navEndpointSlices = QPushButton(self.networkSubmenu)
         self.navEndpointSlices.setObjectName(u"navEndpointSlices")
-        self.navEndpointSlices.setMinimumSize(QSize(0, 22))
+        self.navEndpointSlices.setMinimumSize(QSize(0, 20))
         self.navEndpointSlices.setIconSize(QSize(16, 16))
         self.navEndpointSlices.setCheckable(True)
         self.navEndpointSlices.setChecked(False)
@@ -635,7 +638,7 @@ class Ui_MainWindow(object):
 
         self.navEndpoints = QPushButton(self.networkSubmenu)
         self.navEndpoints.setObjectName(u"navEndpoints")
-        self.navEndpoints.setMinimumSize(QSize(0, 22))
+        self.navEndpoints.setMinimumSize(QSize(0, 20))
         self.navEndpoints.setIconSize(QSize(16, 16))
         self.navEndpoints.setCheckable(True)
         self.navEndpoints.setChecked(False)
@@ -646,7 +649,7 @@ class Ui_MainWindow(object):
 
         self.navIngressClasses = QPushButton(self.networkSubmenu)
         self.navIngressClasses.setObjectName(u"navIngressClasses")
-        self.navIngressClasses.setMinimumSize(QSize(0, 22))
+        self.navIngressClasses.setMinimumSize(QSize(0, 20))
         self.navIngressClasses.setIconSize(QSize(16, 16))
         self.navIngressClasses.setCheckable(True)
         self.navIngressClasses.setChecked(False)
@@ -657,7 +660,7 @@ class Ui_MainWindow(object):
 
         self.navIngresses = QPushButton(self.networkSubmenu)
         self.navIngresses.setObjectName(u"navIngresses")
-        self.navIngresses.setMinimumSize(QSize(0, 22))
+        self.navIngresses.setMinimumSize(QSize(0, 20))
         self.navIngresses.setIconSize(QSize(16, 16))
         self.navIngresses.setCheckable(True)
         self.navIngresses.setChecked(False)
@@ -668,7 +671,7 @@ class Ui_MainWindow(object):
 
         self.navNetworkPolicies = QPushButton(self.networkSubmenu)
         self.navNetworkPolicies.setObjectName(u"navNetworkPolicies")
-        self.navNetworkPolicies.setMinimumSize(QSize(0, 22))
+        self.navNetworkPolicies.setMinimumSize(QSize(0, 20))
         self.navNetworkPolicies.setIconSize(QSize(16, 16))
         self.navNetworkPolicies.setCheckable(True)
         self.navNetworkPolicies.setChecked(False)
@@ -679,7 +682,7 @@ class Ui_MainWindow(object):
 
         self.navServices = QPushButton(self.networkSubmenu)
         self.navServices.setObjectName(u"navServices")
-        self.navServices.setMinimumSize(QSize(0, 22))
+        self.navServices.setMinimumSize(QSize(0, 20))
         self.navServices.setIconSize(QSize(16, 16))
         self.navServices.setCheckable(True)
         self.navServices.setChecked(False)
@@ -707,10 +710,10 @@ class Ui_MainWindow(object):
         self.configSubmenuLayout = QVBoxLayout(self.configSubmenu)
         self.configSubmenuLayout.setSpacing(0)
         self.configSubmenuLayout.setObjectName(u"configSubmenuLayout")
-        self.configSubmenuLayout.setContentsMargins(16, 0, 0, 0)
+        self.configSubmenuLayout.setContentsMargins(4, 0, 0, 0)
         self.navAddons = QPushButton(self.configSubmenu)
         self.navAddons.setObjectName(u"navAddons")
-        self.navAddons.setMinimumSize(QSize(0, 22))
+        self.navAddons.setMinimumSize(QSize(0, 20))
         self.navAddons.setIconSize(QSize(16, 16))
         self.navAddons.setCheckable(True)
         self.navAddons.setChecked(False)
@@ -721,7 +724,7 @@ class Ui_MainWindow(object):
 
         self.navConfigMaps = QPushButton(self.configSubmenu)
         self.navConfigMaps.setObjectName(u"navConfigMaps")
-        self.navConfigMaps.setMinimumSize(QSize(0, 22))
+        self.navConfigMaps.setMinimumSize(QSize(0, 20))
         self.navConfigMaps.setIconSize(QSize(16, 16))
         self.navConfigMaps.setCheckable(True)
         self.navConfigMaps.setChecked(False)
@@ -732,7 +735,7 @@ class Ui_MainWindow(object):
 
         self.navHorizontalPodAutoscalers = QPushButton(self.configSubmenu)
         self.navHorizontalPodAutoscalers.setObjectName(u"navHorizontalPodAutoscalers")
-        self.navHorizontalPodAutoscalers.setMinimumSize(QSize(0, 22))
+        self.navHorizontalPodAutoscalers.setMinimumSize(QSize(0, 20))
         self.navHorizontalPodAutoscalers.setIconSize(QSize(16, 16))
         self.navHorizontalPodAutoscalers.setCheckable(True)
         self.navHorizontalPodAutoscalers.setChecked(False)
@@ -743,7 +746,7 @@ class Ui_MainWindow(object):
 
         self.navLeases = QPushButton(self.configSubmenu)
         self.navLeases.setObjectName(u"navLeases")
-        self.navLeases.setMinimumSize(QSize(0, 22))
+        self.navLeases.setMinimumSize(QSize(0, 20))
         self.navLeases.setIconSize(QSize(16, 16))
         self.navLeases.setCheckable(True)
         self.navLeases.setChecked(False)
@@ -754,7 +757,7 @@ class Ui_MainWindow(object):
 
         self.navLimitRanges = QPushButton(self.configSubmenu)
         self.navLimitRanges.setObjectName(u"navLimitRanges")
-        self.navLimitRanges.setMinimumSize(QSize(0, 22))
+        self.navLimitRanges.setMinimumSize(QSize(0, 20))
         self.navLimitRanges.setIconSize(QSize(16, 16))
         self.navLimitRanges.setCheckable(True)
         self.navLimitRanges.setChecked(False)
@@ -765,7 +768,7 @@ class Ui_MainWindow(object):
 
         self.navMutatingWebhooks = QPushButton(self.configSubmenu)
         self.navMutatingWebhooks.setObjectName(u"navMutatingWebhooks")
-        self.navMutatingWebhooks.setMinimumSize(QSize(0, 22))
+        self.navMutatingWebhooks.setMinimumSize(QSize(0, 20))
         self.navMutatingWebhooks.setIconSize(QSize(16, 16))
         self.navMutatingWebhooks.setCheckable(True)
         self.navMutatingWebhooks.setChecked(False)
@@ -776,7 +779,7 @@ class Ui_MainWindow(object):
 
         self.navPodDisruptionBudgets = QPushButton(self.configSubmenu)
         self.navPodDisruptionBudgets.setObjectName(u"navPodDisruptionBudgets")
-        self.navPodDisruptionBudgets.setMinimumSize(QSize(0, 22))
+        self.navPodDisruptionBudgets.setMinimumSize(QSize(0, 20))
         self.navPodDisruptionBudgets.setIconSize(QSize(16, 16))
         self.navPodDisruptionBudgets.setCheckable(True)
         self.navPodDisruptionBudgets.setChecked(False)
@@ -787,7 +790,7 @@ class Ui_MainWindow(object):
 
         self.navPriorityClasses = QPushButton(self.configSubmenu)
         self.navPriorityClasses.setObjectName(u"navPriorityClasses")
-        self.navPriorityClasses.setMinimumSize(QSize(0, 22))
+        self.navPriorityClasses.setMinimumSize(QSize(0, 20))
         self.navPriorityClasses.setIconSize(QSize(16, 16))
         self.navPriorityClasses.setCheckable(True)
         self.navPriorityClasses.setChecked(False)
@@ -798,7 +801,7 @@ class Ui_MainWindow(object):
 
         self.navResourceQuotas = QPushButton(self.configSubmenu)
         self.navResourceQuotas.setObjectName(u"navResourceQuotas")
-        self.navResourceQuotas.setMinimumSize(QSize(0, 22))
+        self.navResourceQuotas.setMinimumSize(QSize(0, 20))
         self.navResourceQuotas.setIconSize(QSize(16, 16))
         self.navResourceQuotas.setCheckable(True)
         self.navResourceQuotas.setChecked(False)
@@ -809,7 +812,7 @@ class Ui_MainWindow(object):
 
         self.navRuntimeClasses = QPushButton(self.configSubmenu)
         self.navRuntimeClasses.setObjectName(u"navRuntimeClasses")
-        self.navRuntimeClasses.setMinimumSize(QSize(0, 22))
+        self.navRuntimeClasses.setMinimumSize(QSize(0, 20))
         self.navRuntimeClasses.setIconSize(QSize(16, 16))
         self.navRuntimeClasses.setCheckable(True)
         self.navRuntimeClasses.setChecked(False)
@@ -820,7 +823,7 @@ class Ui_MainWindow(object):
 
         self.navSecrets = QPushButton(self.configSubmenu)
         self.navSecrets.setObjectName(u"navSecrets")
-        self.navSecrets.setMinimumSize(QSize(0, 22))
+        self.navSecrets.setMinimumSize(QSize(0, 20))
         self.navSecrets.setIconSize(QSize(16, 16))
         self.navSecrets.setCheckable(True)
         self.navSecrets.setChecked(False)
@@ -831,7 +834,7 @@ class Ui_MainWindow(object):
 
         self.navValidatingWebhooks = QPushButton(self.configSubmenu)
         self.navValidatingWebhooks.setObjectName(u"navValidatingWebhooks")
-        self.navValidatingWebhooks.setMinimumSize(QSize(0, 22))
+        self.navValidatingWebhooks.setMinimumSize(QSize(0, 20))
         self.navValidatingWebhooks.setIconSize(QSize(16, 16))
         self.navValidatingWebhooks.setCheckable(True)
         self.navValidatingWebhooks.setChecked(False)
