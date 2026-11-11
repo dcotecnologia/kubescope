@@ -21,6 +21,7 @@ license: MIT
 website: https://github.com/dcotecnologia/kubescope
 source-code: https://github.com/dcotecnologia/kubescope
 issues: https://github.com/dcotecnologia/kubescope/issues
+contact: https://github.com/dcotecnologia/kubescope/issues
 grade: stable
 confinement: classic
 platforms:
