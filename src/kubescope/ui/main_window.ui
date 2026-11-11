@@ -66,6 +66,16 @@ QLabel#sidebarNote { color: #4d5866; font-size: 10px; line-height: 1.4; }
 QWidget#pageHeader { background: #ffffff; border-bottom: 1px solid #e4e5eb; }
 QLabel#pageTitle { color: #17191e; font-size: 16px; font-weight: 700; }
 QLabel[variant="muted"] { color: #4f5966; font-size: 11px; }
+QCheckBox { spacing: 10px; }
+QCheckBox::indicator {
+    width: 16px; height: 16px; border: 2px solid #8a919c; border-radius: 5px;
+    background: #ffffff;
+}
+QCheckBox::indicator:hover { border-color: #6252b5; }
+QCheckBox::indicator:checked {
+    background: #6252b5; border-color: #6252b5; image: url(CHECK_ICON);
+}
+QCheckBox::indicator:disabled { border-color: #d9dce4; background: #f3f4f7; }
 QComboBox[variant="filter"], QLineEdit#searchInput, QLineEdit[variant="filter"],
 QPushButton[variant="primary"] {
     background: #ffffff; border: 1px solid #d9dce4; border-radius: 5px;

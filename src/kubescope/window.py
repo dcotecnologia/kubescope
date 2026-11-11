@@ -334,6 +334,22 @@ def _close_icon_path(color: str, name: str) -> str:
     return _icon_path(name, draw, QSize(10, 10))
 
 
+def _check_icon_path() -> str:
+    """The tick inside a checked box: white, on the accent color of every
+    theme."""
+
+    def draw(painter: QPainter) -> None:
+        pen = QPen(QColor("#ffffff"), 2.0)
+        pen.setCapStyle(Qt.PenCapStyle.RoundCap)
+        pen.setJoinStyle(Qt.PenJoinStyle.RoundJoin)
+        painter.setPen(pen)
+        painter.drawPolyline(
+            [QPointF(2.5, 7.0), QPointF(5.5, 10.0), QPointF(11.5, 3.5)]
+        )
+
+    return _icon_path("check", draw, QSize(14, 14))
+
+
 def _gear_icon() -> QIcon:
     """A white gear for the top bar, which is dark in every theme."""
     scale, teeth = 3, 8  # drawn three times larger so the edges stay smooth
@@ -2196,6 +2212,7 @@ class WorkloadWindow(QMainWindow):
             .replace("SORT_DOWN", _sort_icon_path(up=False))
             .replace("CHEVRON_LIGHT", _chevron_icon_path("#b8c7dc", "chevron-light"))
             .replace("CHEVRON", _chevron_icon_path())
+            .replace("CHECK_ICON", _check_icon_path())
             .replace("CLOSE_ICON_HOVER", _close_icon_path("#3220a0", "close-hover"))
             .replace("CLOSE_ICON", _close_icon_path("#6b7380", "close"))
         )
