@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+## [1.8.0] - 2026-11-11
+
 ### Added
 
 - **Settings** has an **Integrations** section, in the style of Lens, to plug the clusters of AWS (EKS), Azure (AKS) and Google Cloud (GKE) with as many accounts as you like: an AWS profile or keys, found and added from a dialog; the secret keys stay in memory until the app quits and the clusters go to a kubeconfig of KubeScope for each account, apart from yours by @danilogco
@@ -526,7 +528,8 @@ The first release.
 
 - Pod logs and resource details are still never written to disk by the app on its own. **Save** is the only exception, and it writes only to the file the user chooses. SECURITY.md says so by @danilogco
 
-[Unreleased]: https://github.com/dcotecnologia/kubescope/compare/v1.7.0...HEAD
+[Unreleased]: https://github.com/dcotecnologia/kubescope/compare/v1.8.0...HEAD
+[1.8.0]: https://github.com/dcotecnologia/kubescope/compare/v1.7.0...v1.8.0
 [1.7.0]: https://github.com/dcotecnologia/kubescope/compare/v1.6.0...v1.7.0
 [1.6.0]: https://github.com/dcotecnologia/kubescope/compare/v1.5.0...v1.6.0
 [1.5.0]: https://github.com/dcotecnologia/kubescope/compare/v1.4.0...v1.5.0
