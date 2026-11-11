@@ -2989,17 +2989,135 @@ def test_in_a_flatpak_the_sign_in_plugins_of_the_kubeconfig_run_on_the_host(
     assert options == {"stdout": cluster.subprocess.PIPE, "shell": False}
 
 
-def test_outside_a_flatpak_the_sign_in_plugins_are_left_alone(monkeypatch) -> None:
-    import subprocess
-
+def test_outside_a_flatpak_the_sign_in_plugins_start_as_they_are(monkeypatch) -> None:
     exec_provider = importlib.import_module("kubernetes.config.exec_provider")
-
-    monkeypatch.setattr(exec_provider, "subprocess", subprocess)
+    monkeypatch.setattr(exec_provider, "subprocess", exec_provider.subprocess)
     monkeypatch.setattr(cluster.sys, "platform", "linux")
+    monkeypatch.setattr(cluster, "in_flatpak", lambda: False)
+    started = []
+    monkeypatch.setattr(
+        cluster.subprocess,
+        "Popen",
+        lambda command, **options: started.append((command, options)),
+    )
 
     cluster._route_exec_to_host()
+    exec_provider.subprocess.Popen(["aws"], env={"A": "1"}, stdout=-1)
+    exec_provider.subprocess.Popen(["aws"], stdout=-1)
 
-    assert exec_provider.subprocess is subprocess
+    assert started[0] == (["aws"], {"env": {"A": "1"}, "stdout": -1})
+    assert started[1][1]["env"] is None
+
+
+def test_the_sign_in_plugin_of_an_integration_account_gets_its_keys(
+    monkeypatch,
+) -> None:
+    from kubescope import integrations
+
+    exec_provider = importlib.import_module("kubernetes.config.exec_provider")
+    monkeypatch.setattr(exec_provider, "subprocess", exec_provider.subprocess)
+    monkeypatch.setattr(cluster, "in_flatpak", lambda: False)
+    monkeypatch.setattr(cluster.sys, "platform", "linux")
+    account = integrations.Account("aws-1", "aws", "work", {"profile": "work"})
+    monkeypatch.setattr(integrations, "_accounts", {"aws-1": account})
+    started = []
+    monkeypatch.setattr(
+        cluster.subprocess,
+        "Popen",
+        lambda command, **options: started.append(options),
+    )
+
+    cluster._route_exec_to_host()
+    exec_provider.subprocess.Popen(
+        ["aws", "eks", "get-token"], env={integrations.ACCOUNT_VARIABLE: "aws-1"}
+    )
+
+    assert started[0]["env"]["AWS_PROFILE"] == "work"
+
+
+def test_a_context_of_an_integration_account_runs_the_cloud_with_its_keys(
+    monkeypatch,
+) -> None:
+    from kubescope import integrations
+
+    account = integrations.Account("aws-1", "aws", "work", {"profile": "work"})
+    monkeypatch.setattr(integrations, "_accounts", {"aws-1": account})
+    plain = {"command": "aws", "env": [{"name": "A", "value": "1"}, "odd"]}
+    named = {
+        "command": "aws",
+        "env": [{"name": integrations.ACCOUNT_VARIABLE, "value": "aws-1"}],
+    }
+    signs_in = {"plain": plain, "named": named}
+    monkeypatch.setattr(cluster, "_sign_in_program", lambda context: signs_in[context])
+
+    assert cluster._context_env("plain") is None
+    named_env = cluster._context_env("named")
+    assert named_env is not None and named_env["AWS_PROFILE"] == "work"
+    assert cluster._integration_account("named") is account
+    assert cluster._integration_account("plain") is None
+
+    def broken(_context):
+        raise cluster.ClusterError("no kubeconfig")
+
+    monkeypatch.setattr(cluster, "_sign_in_program", broken)
+    assert cluster._sign_in_variables("x") == {}
+
+
+def test_an_account_of_a_profile_signs_in_with_sso_and_one_of_keys_in_settings(
+    monkeypatch,
+) -> None:
+    from kubescope import integrations
+
+    profile = integrations.Account("aws-1", "aws", "work", {"profile": "work"})
+    keys = integrations.Account("aws-2", "aws", "keys", {"profile": ""})
+    monkeypatch.setattr(integrations, "_accounts", {"aws-1": profile, "aws-2": keys})
+    monkeypatch.setattr(cluster, "_custom_logins", {})
+
+    def named(account):
+        return lambda _c: {
+            "env": [{"name": integrations.ACCOUNT_VARIABLE, "value": account}]
+        }
+
+    monkeypatch.setattr(cluster, "_sign_in_program", named("aws-1"))
+    action = cluster.login_action("ctx")
+    assert action is not None
+    assert action.command == ["aws", "sso", "login", "--profile", "work"]
+    monkeypatch.setattr(cluster, "_sign_in_program", named("aws-2"))
+    assert cluster.login_action("ctx") is None
+
+
+def test_the_aws_cli_gets_the_keys_only_when_there_are_some(monkeypatch) -> None:
+    seen = []
+    monkeypatch.setattr(cluster, "_run_command", lambda *args: seen.append(args) or "")
+
+    cluster._run_aws(["aws", "x"], None)
+    cluster._run_aws(["aws", "x"], {"A": "1"})
+
+    assert seen[0] == (["aws", "x"], cluster.AWS_TIMEOUT)
+    assert seen[1] == (["aws", "x"], cluster.AWS_TIMEOUT, {"A": "1"})
+
+
+def test_a_process_is_started_with_the_keys_added_to_its_environment(
+    monkeypatch,
+) -> None:
+    options = []
+
+    class Process:
+        returncode = 0
+
+        def communicate(self, timeout=None):
+            return "", ""
+
+    monkeypatch.setattr(
+        cluster.subprocess, "Popen", lambda _c, **kw: options.append(kw) or Process()
+    )
+    monkeypatch.setattr(cluster.sys, "platform", "linux")
+
+    cluster._run_process(["aws"], 5, {"AWS_PROFILE": "work"})
+    cluster._run_process(["aws"], 5)
+
+    assert options[0]["env"]["AWS_PROFILE"] == "work"
+    assert options[1]["env"] is None
 
 
 def test_on_windows_the_sign_in_plugins_of_the_kubeconfig_start_without_a_console(

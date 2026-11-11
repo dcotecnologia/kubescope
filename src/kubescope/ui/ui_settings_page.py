@@ -64,6 +64,14 @@ class Ui_SettingsPage(object):
 
         self.settingsSections.addWidget(self.shortcutsSectionButton)
 
+        self.integrationsSectionButton = QPushButton(SettingsPage)
+        self.integrationsSectionButton.setObjectName(u"integrationsSectionButton")
+        self.integrationsSectionButton.setCheckable(True)
+        self.integrationsSectionButton.setChecked(False)
+        self.integrationsSectionButton.setProperty(u"variant", u"secondary")
+
+        self.settingsSections.addWidget(self.integrationsSectionButton)
+
         self.settingsSectionsSpacer = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
 
         self.settingsSections.addItem(self.settingsSectionsSpacer)
@@ -514,6 +522,16 @@ class Ui_SettingsPage(object):
 
         self.settingsContentLayout.addWidget(self.loginCard)
 
+        self.integrationsCard = QFrame(self.settingsContent)
+        self.integrationsCard.setObjectName(u"integrationsCard")
+        self.integrationsCard.setProperty(u"card", u"true")
+        self.integrationsLayout = QVBoxLayout(self.integrationsCard)
+        self.integrationsLayout.setSpacing(14)
+        self.integrationsLayout.setObjectName(u"integrationsLayout")
+        self.integrationsLayout.setContentsMargins(16, 14, 16, 14)
+
+        self.settingsContentLayout.addWidget(self.integrationsCard)
+
         self.shortcutsCard = QFrame(self.settingsContent)
         self.shortcutsCard.setObjectName(u"shortcutsCard")
         self.shortcutsCard.setProperty(u"card", u"true")
@@ -642,6 +660,7 @@ class Ui_SettingsPage(object):
         self.kubeSectionButton.setText(QCoreApplication.translate("SettingsPage", u"Kube", None))
         self.assistantSectionButton.setText(QCoreApplication.translate("SettingsPage", u"Assistant", None))
         self.shortcutsSectionButton.setText(QCoreApplication.translate("SettingsPage", u"Shortcuts", None))
+        self.integrationsSectionButton.setText(QCoreApplication.translate("SettingsPage", u"Integrations", None))
 #if QT_CONFIG(tooltip)
         self.saveButton.setToolTip(QCoreApplication.translate("SettingsPage", u"Save changes", None))
 #endif // QT_CONFIG(tooltip)

@@ -50,11 +50,44 @@ DEFAULTS: dict[str, Any] = {
     "kubeconfig_files": [],
     "sign_in_commands": {},
     "shortcuts": {},
+    "integration_accounts": [],
 }
 
 
 # What Kubernetes accepts as a namespace name: a DNS label.
 _NAMESPACE_NAME = re.compile(r"[a-z0-9]([-a-z0-9]*[a-z0-9])?")
+
+
+def _clean_accounts(stored: object) -> list[dict[str, Any]]:
+    """The cloud accounts saved, each with an id, a cloud, a name and the
+    fields that are not secret; what cannot be read is left out."""
+    accounts: list[dict[str, Any]] = []
+    for item in stored if isinstance(stored, list) else []:
+        if not isinstance(item, dict):
+            continue
+        account, provider, name = item.get("id"), item.get("provider"), item.get("name")
+        fields = item.get("fields")
+        if not all(
+            isinstance(text, str) and text for text in (account, provider, name)
+        ):
+            continue
+        if any(saved["id"] == account for saved in accounts):
+            continue
+        accounts.append(
+            {
+                "id": account,
+                "provider": provider,
+                "name": name,
+                "fields": {
+                    str(key): value
+                    for key, value in (
+                        fields if isinstance(fields, dict) else {}
+                    ).items()
+                    if isinstance(value, str)
+                },
+            }
+        )
+    return accounts
 
 
 def is_namespace_name(value: str) -> bool:
@@ -146,6 +179,9 @@ class Settings:
             and command.strip()
         }
         self._data["shortcuts"] = shortcuts.clean(self._data["shortcuts"])
+        self._data["integration_accounts"] = _clean_accounts(
+            self._data["integration_accounts"]
+        )
         namespace = self._data["default_namespace"]
         if not (isinstance(namespace, str) and is_namespace_name(namespace)):
             self._data["default_namespace"] = ""  # empty means all namespaces
@@ -241,6 +277,19 @@ class Settings:
     @shortcuts.setter
     def shortcuts(self, value: dict[str, str]) -> None:
         self._data["shortcuts"] = shortcuts.clean(value)
+
+    @property
+    def integration_accounts(self) -> list[dict[str, Any]]:
+        """The cloud accounts plugged in: id, cloud, name and the fields that
+        are not secret.
+
+        The secrets are never saved.
+        """
+        return [dict(account) for account in self._data["integration_accounts"]]
+
+    @integration_accounts.setter
+    def integration_accounts(self, value: list[dict[str, Any]]) -> None:
+        self._data["integration_accounts"] = _clean_accounts(value)
 
     @property
     def window_geometry(self) -> str:

@@ -88,6 +88,22 @@
       </widget>
      </item>
      <item>
+      <widget class="QPushButton" name="integrationsSectionButton">
+       <property name="text">
+        <string>Integrations</string>
+       </property>
+       <property name="checkable">
+        <bool>true</bool>
+       </property>
+       <property name="checked">
+        <bool>false</bool>
+       </property>
+       <property name="variant" stdset="0">
+        <string notr="true">secondary</string>
+       </property>
+      </widget>
+     </item>
+     <item>
       <spacer name="settingsSectionsSpacer">
        <property name="orientation">
         <enum>Qt::Horizontal</enum>
@@ -970,6 +986,30 @@
             </item>
            </layout>
           </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QFrame" name="integrationsCard">
+         <property name="card" stdset="0">
+          <string notr="true">true</string>
+         </property>
+         <layout class="QVBoxLayout" name="integrationsLayout">
+          <property name="spacing">
+           <number>14</number>
+          </property>
+          <property name="leftMargin">
+           <number>16</number>
+          </property>
+          <property name="topMargin">
+           <number>14</number>
+          </property>
+          <property name="rightMargin">
+           <number>16</number>
+          </property>
+          <property name="bottomMargin">
+           <number>14</number>
+          </property>
          </layout>
         </widget>
        </item>

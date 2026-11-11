@@ -11,7 +11,7 @@ from typing import Any
 
 import yaml
 
-from kubescope import cluster, writes
+from kubescope import cluster, integrations, writes
 from kubescope.cluster import ClusterError
 from kubescope.settings import Settings
 from kubescope.utils import ansi
@@ -433,7 +433,12 @@ def run(namespace: argparse.Namespace) -> int:
 def _dispatch(namespace: argparse.Namespace) -> int:
     command = namespace.command
     settings = Settings()
-    cluster.configure(settings.kubeconfig_files, settings.sign_in_commands)
+    integrations.load(settings.integration_accounts)
+    cluster.configure(
+        settings.kubeconfig_files,
+        settings.sign_in_commands,
+        integrations.kubeconfig_files(),
+    )
     if command == "contexts":
         return _contexts(namespace.output)
     if command in WRITE_COMMANDS and not settings.write_mode:

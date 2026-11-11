@@ -22,6 +22,7 @@ class FakeSettings:
     language = "auto"
     kubeconfig_files: list[str] = []
     sign_in_commands: dict[str, str] = {}
+    integration_accounts: list[dict] = []
     assistant_programs: dict[str, str] = {}
     assistant_models: dict[str, str] = {}
     assistant_efforts: dict[str, str] = {}

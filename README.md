@@ -145,6 +145,17 @@ _The cluster overview, shown with sample data. Regenerate it with
   terminal with `aws configure` for that profile. Google GKE and Azure AKS
   contexts get a **Sign in to Google Cloud** button (`gcloud auth login`) or a
   **Sign in to Azure** button (`az login`) when their credentials have expired.
+- **Cloud integrations:** **Settings → Integrations** plugs the clusters of AWS
+  (EKS), Azure (AKS) and Google Cloud (GKE), as many accounts of each as you
+  like. Press **Add AWS account** (or Azure, or Google Cloud), pick an AWS profile
+  of the AWS CLI or type the keys (for Google Cloud, pick the service account key
+  file), press **Find clusters**, select the ones to add and press **Add
+  clusters**. Each account shows in a table with a menu to find more clusters, to
+  sign in again (AWS profiles) or to remove it. Secret keys stay in the memory of
+  the app until it quits and are never written to a file, so type them again after
+  a restart; the clusters go to a kubeconfig of KubeScope, apart from yours. It
+  needs the cloud's command line program: `aws`, `az` with `kubelogin`, or
+  `gcloud`.
 - **Windows and lists rise into place** as they first show; **Settings** turns the
   animations off.
 - **Always responsive:** every cluster call runs in the background, so the window

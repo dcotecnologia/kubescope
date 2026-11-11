@@ -23,6 +23,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 from urllib.parse import quote
 
+from kubescope import integrations
 from kubescope.models import (
     BAD_STATUSES,
     OK_STATUSES,
@@ -109,7 +110,9 @@ def _stop(process: subprocess.Popen) -> None:
             os.killpg(process.pid, signal.SIGTERM)
 
 
-def _run_process(command: list[str], timeout: float) -> subprocess.CompletedProcess:
+def _run_process(
+    command: list[str], timeout: float, env: dict[str, str] | None = None
+) -> subprocess.CompletedProcess:
     """Run a command and capture its output, keeping it listed while it runs so
     closing the app can stop it."""
     label = _describe(command)
@@ -127,6 +130,7 @@ def _run_process(command: list[str], timeout: float) -> subprocess.CompletedProc
         text=True,
         start_new_session=sys.platform != "win32",  # its own group, to stop it whole
         creationflags=_NO_WINDOW,
+        env={**os.environ, **env} if env else None,
     )
     with _running_lock:
         _running.add(process)
@@ -185,19 +189,23 @@ def _in_background[T](call: Callable[[], T], timeout: float) -> T:
 
 
 _kubeconfig_files: list[str] = []
+_integration_files: list[str] = []
 _custom_logins: dict[str, str] = {}
 
 
 def configure(
     kubeconfig_files: list[str] | None = None,
     sign_in_commands: dict[str, str] | None = None,
+    integration_files: list[str] | None = None,
 ) -> None:
     """Apply the preferences that change how clusters are reached: the
-    kubeconfig files to read (none means KUBECONFIG, or ~/.kube/config) and the
-    commands that sign in for sign-in programs the app does not know."""
-    global _kubeconfig_files, _custom_logins
+    kubeconfig files to read (none means KUBECONFIG, or ~/.kube/config), the
+    commands that sign in for sign-in programs the app does not know and the
+    kubeconfigs the integrations wrote, which are read besides the others."""
+    global _kubeconfig_files, _custom_logins, _integration_files
     _kubeconfig_files = list(kubeconfig_files or [])
     _custom_logins = dict(sign_in_commands or {})
+    _integration_files = list(integration_files or [])
     forget_clients()  # they were made from the previous files
 
 
@@ -214,10 +222,41 @@ def parse_command(text: str) -> list[str]:
     return arguments
 
 
+def _sign_in_variables(context: str) -> dict[str, str]:
+    """The environment variables the kubeconfig sets for the sign-in program of
+    a context."""
+    try:
+        entries = _sign_in_program(context).get("env") or []
+    except ClusterError:
+        return {}
+    return {
+        str(entry.get("name")): str(entry.get("value"))
+        for entry in entries
+        if isinstance(entry, dict)
+    }
+
+
+def _integration_account(context: str) -> integrations.Account | None:
+    """The cloud account whose clusters include this context, if one does."""
+    name = _sign_in_variables(context).get(integrations.ACCOUNT_VARIABLE)
+    return integrations.account_named(name) if name else None
+
+
+def _context_env(context: str) -> dict[str, str] | None:
+    """The environment the cloud's programs get for this context: the keys of
+    its integration account, or nothing for any other context."""
+    variables = _sign_in_variables(context)
+    if integrations.ACCOUNT_VARIABLE not in variables:
+        return None
+    return integrations.exec_environment(variables)
+
+
 def _kubeconfig_paths() -> str:
     if _kubeconfig_files:
-        return os.pathsep.join(_kubeconfig_files)
-    return os.environ.get("KUBECONFIG") or "~/.kube/config"
+        files = list(_kubeconfig_files)
+    else:
+        files = [os.environ.get("KUBECONFIG") or "~/.kube/config"]
+    return os.pathsep.join([*files, *_integration_files])
 
 
 def _plain(node: Any) -> Any:
@@ -295,6 +334,24 @@ class _HostSubprocess:
         return subprocess.Popen(on_host(args, env), **options)
 
 
+class _AccountSubprocess:
+    """Stands in for `subprocess` in the exec provider of the Kubernetes
+    client, to hand the keys of an integration account to the sign-in program
+    of its clusters, and then start it the way the system asks: on the host in
+    a Flatpak, without a console window on Windows."""
+
+    PIPE = subprocess.PIPE
+
+    @staticmethod
+    def Popen(args: list[str], env: dict[str, str] | None = None, **options: Any):
+        env = integrations.exec_environment(env)
+        if in_flatpak():
+            return _HostSubprocess.Popen(args, env=env, **options)
+        if sys.platform == "win32":
+            return _QuietSubprocess.Popen(args, env=env, **options)
+        return subprocess.Popen(args, env=env, **options)
+
+
 class _QuietSubprocess:
     """Stands in for `subprocess` in the exec provider of the Kubernetes client
     on Windows, so that the sign-in programs of the kubeconfig (such as `aws
@@ -311,16 +368,12 @@ class _QuietSubprocess:
 
 
 def _route_exec_to_host() -> None:
-    """In a Flatpak, make the `exec` credential plugins of the kubeconfig (such
-    as gke-gcloud-auth-plugin or kubelogin) run on the host; on Windows, make
-    them run without a console window; elsewhere nothing changes."""
-    if not in_flatpak() and sys.platform != "win32":
-        return
+    """Make the `exec` credential plugins of the kubeconfig (such as gke-
+    gcloud-auth-plugin or kubelogin) get the keys of their integration account;
+    in a Flatpak, run on the host; on Windows, without a console window."""
     from kubernetes.config import exec_provider
 
-    exec_provider.subprocess = (  # type: ignore[assignment]
-        _HostSubprocess if in_flatpak() else _QuietSubprocess
-    )
+    exec_provider.subprocess = _AccountSubprocess  # type: ignore[assignment]
 
 
 def _api_client(context: str) -> client.ApiClient:
@@ -677,9 +730,11 @@ LOGIN_TIMEOUT = 300  # seconds; the sign-in waits for the person in the browser
 AWS_TIMEOUT = 30
 
 
-def _run_command(command: list[str], timeout: float) -> str:
+def _run_command(
+    command: list[str], timeout: float, env: dict[str, str] | None = None
+) -> str:
     try:
-        result = _run_process(command, timeout=timeout)
+        result = _run_process(command, timeout=timeout, env=env)
     except subprocess.TimeoutExpired as error:
         raise ClusterError(f"{command[0]} timed out") from error
     except OSError as error:
@@ -749,9 +804,9 @@ def _eks_target(context: str, name_flag: str = "--cluster-name") -> list[str]:
 
 def get_cluster_info(context: str) -> ClusterInfo:
     """What `aws eks describe-cluster` says about the context's EKS cluster."""
-    cluster = _eks_json("describe-cluster", _eks_target(context, "--name")).get(
-        "cluster"
-    )
+    cluster = _eks_json(
+        "describe-cluster", _eks_target(context, "--name"), env=_context_env(context)
+    ).get("cluster")
     cluster = cluster or {}
     try:
         created = datetime.fromisoformat(str(cluster.get("createdAt")))
@@ -800,9 +855,22 @@ def is_eks_context(context: str) -> bool:
     return True
 
 
-def _eks_json(subcommand: str, target: list[str], *extra: str) -> dict[str, Any]:
-    output = _run_command(
-        ["aws", "eks", subcommand, *target, *extra, "--output", "json"], AWS_TIMEOUT
+def _run_aws(command: list[str], env: dict[str, str] | None) -> str:
+    """Run the AWS CLI, with the keys of an integration account when the
+    context has one."""
+    if env:
+        return _run_command(command, AWS_TIMEOUT, env)
+    return _run_command(command, AWS_TIMEOUT)
+
+
+def _eks_json(
+    subcommand: str,
+    target: list[str],
+    *extra: str,
+    env: dict[str, str] | None = None,
+) -> dict[str, Any]:
+    output = _run_aws(
+        ["aws", "eks", subcommand, *target, *extra, "--output", "json"], env
     )
     try:
         document = json.loads(output)
@@ -821,20 +889,26 @@ _EKS_KINDS = {
 }
 
 
-def _describe_eks(kind: str, target: list[str], name: str) -> dict[str, Any]:
+def _describe_eks(
+    kind: str, target: list[str], name: str, env: dict[str, str] | None = None
+) -> dict[str, Any]:
     one = _EKS_KINDS[kind][0]
-    return _eks_json(f"describe-{one}", target, f"--{one}-name", name).get(one) or {}
+    document = _eks_json(f"describe-{one}", target, f"--{one}-name", name, env=env)
+    return document.get(one) or {}
 
 
 def _list_eks(kind: str, context: str) -> list[dict[str, Any]]:
     """Every Node Group or Add-on of the context's EKS cluster, described at
     the same time."""
     target = _eks_target(context)
+    env = _context_env(context)
     many = _EKS_KINDS[kind][1]
-    names = _eks_json(f"list-{many}", target).get(many) or []
+    names = _eks_json(f"list-{many}", target, env=env).get(many) or []
     if not names:
         return []
-    return _together(*(partial(_describe_eks, kind, target, name) for name in names))
+    return _together(
+        *(partial(_describe_eks, kind, target, name, env) for name in names)
+    )
 
 
 def _eks_age(item: dict[str, Any], now: datetime) -> str:
@@ -942,6 +1016,13 @@ def login_action(context: str) -> LoginAction | None:
                 "Context %s signs in with the command set for %s", context, program
             )
             return LoginAction(command, None, False, program)
+    account = _integration_account(context)
+    if account is not None:  # its keys are asked for in Settings, but a profile
+        profile = account.fields.get("profile")  # of the AWS CLI signs in here
+        if account.provider == "aws" and profile:
+            command = ["aws", "sso", "login", "--profile", profile]
+            return LoginAction(command, profile, False)
+        return None
     uses_aws, profile = _aws_profile(context)
     if not uses_aws:
         program = Path(_sign_in_program(context).get("command") or "").stem
@@ -983,9 +1064,9 @@ def check_login(context: str) -> tuple[bool, LoginAction | None]:
         _request("/version", context)
         uses_aws, profile = _aws_profile(context)
         if uses_aws:
-            _run_command(
+            _run_aws(
                 ["aws", "sts", "get-caller-identity", *_profile_arguments(profile)],
-                AWS_TIMEOUT,
+                _context_env(context),
             )
     except ClusterError as error:
         if not (is_auth_error(str(error)) or _custom_sign_in_failed(error, context)):
@@ -1267,7 +1348,7 @@ def get_resource_details(
     if kind == "HelmRelease":
         return _helm_release_details(context, namespace, name)
     if kind in _EKS_KINDS:
-        return _describe_eks(kind, _eks_target(context), name)
+        return _describe_eks(kind, _eks_target(context), name, _context_env(context))
     resource = {
         **_RESOURCES,
         **_LISTED_RESOURCES,

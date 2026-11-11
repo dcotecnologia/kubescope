@@ -73,11 +73,19 @@ from PySide6.QtWidgets import (
     QSystemTrayIcon,
     QTableWidget,
     QTableWidgetItem,
+    QToolButton,
     QVBoxLayout,
     QWidget,
 )
 
-from kubescope import COMPANY_URL, LICENSE_URL, PROJECT_URL, SPONSOR_URL, __version__
+from kubescope import (
+    COMPANY_URL,
+    LICENSE_URL,
+    PROJECT_URL,
+    SPONSOR_URL,
+    __version__,
+    integrations,
+)
 from kubescope.assistant import ASSISTANTS, runner
 from kubescope.assistant import actions as assistant_actions
 from kubescope.assistant import installed as installed_assistants
@@ -124,6 +132,7 @@ from kubescope.cluster import (
 from kubescope.cluster import (
     configure as configure_cluster,
 )
+from kubescope.dialogs.account_dialog import AccountDialog
 from kubescope.dialogs.changelog_dialog import ChangelogDialog
 from kubescope.dialogs.global_search import GlobalSearch, SearchEntry
 from kubescope.dialogs.theme_editor import ThemeEditor
@@ -796,6 +805,7 @@ class WorkloadWindow(QMainWindow):
         self._update_notice_timer = QTimer(self)  # hides "Up to date" again
         self._update_notice_timer.setSingleShot(True)
         self._update_notice_timer.setInterval(UPDATE_NOTICE_MS)
+        integrations.load(self.settings.integration_accounts)
         self._apply_cluster_settings()
         self._build_ui()
         self._restore_geometry()
@@ -1002,6 +1012,7 @@ class WorkloadWindow(QMainWindow):
         self._settings_sections.addButton(self.settings_ui.assistantSectionButton, 1)
         self._settings_sections.addButton(self.settings_ui.kubeSectionButton, 2)
         self._settings_sections.addButton(self.settings_ui.shortcutsSectionButton, 3)
+        self._settings_sections.addButton(self.settings_ui.integrationsSectionButton, 4)
         self.settings_ui.shortcutsResetButton.clicked.connect(
             lambda: self._fill_shortcuts(shortcuts.DEFAULTS)
         )
@@ -5277,6 +5288,240 @@ class WorkloadWindow(QMainWindow):
             return None
         return chosen
 
+    def _render_integrations(self) -> None:
+        """The Integrations section: a part for each cloud, with its accounts,
+        and the local kubeconfig files."""
+        layout = self.settings_ui.integrationsLayout
+        while (item := layout.takeAt(0)) is not None:
+            if (widget := item.widget()) is not None:
+                widget.deleteLater()
+        heading = QLabel(self.tr("Kubernetes Environments"))
+        heading.setProperty("variant", "cardTitle")
+        layout.addWidget(heading)
+        for provider in integrations.PROVIDERS.values():
+            layout.addWidget(self._provider_section(provider))
+        layout.addWidget(self._local_section())
+        layout.addStretch(1)
+
+    def _status_label(self, text: str, connected: bool) -> QLabel:
+        label = QLabel(("● " if connected else "○ ") + text)
+        color = themed("#176b58", text=True) if connected else themed("#6b7380")
+        label.setStyleSheet(f"color: {color};")
+        return label
+
+    def _section_head(self, title: str, description: str) -> QVBoxLayout:
+        box = QVBoxLayout()
+        box.setSpacing(8)
+        name = QLabel(title)
+        name.setProperty("variant", "cardTitle")
+        text = QLabel(description)
+        text.setWordWrap(True)
+        text.setProperty("variant", "muted")
+        box.addWidget(name)
+        box.addWidget(text)
+        return box
+
+    def _provider_section(self, provider: integrations.Provider) -> QWidget:
+        texts = {
+            "aws": (
+                self.tr("AMAZON EKS"),
+                self.tr(
+                    "Automatically discover and connect to Kubernetes clusters "
+                    "across your AWS accounts."
+                ),
+                self.tr("Add AWS account"),
+            ),
+            "azure": (
+                self.tr("AZURE AKS"),
+                self.tr(
+                    "Automatically discover and connect to Kubernetes clusters "
+                    "across your Azure accounts."
+                ),
+                self.tr("Add Azure account"),
+            ),
+            "gcp": (
+                self.tr("GOOGLE GKE"),
+                self.tr(
+                    "Automatically discover and connect to Kubernetes clusters "
+                    "across your Google Cloud projects."
+                ),
+                self.tr("Add Google Cloud project"),
+            ),
+        }
+        title, description, add = texts[provider.id]
+        accounts = integrations.accounts(provider.id)
+        section = QWidget()
+        box = self._section_head(title, description)
+        section.setLayout(box)
+        row = QHBoxLayout()
+        button = QPushButton(add)
+        button.setProperty("variant", "secondary")
+        button.clicked.connect(partial(self._open_account_dialog, provider.id, None))
+        row.addWidget(button)
+        row.addStretch(1)
+        row.addWidget(
+            self._status_label(
+                self.tr("{count} accounts").format(count=len(accounts))
+                if accounts
+                else self.tr("Not connected"),
+                bool(accounts),
+            )
+        )
+        box.addLayout(row)
+        if accounts:
+            box.addWidget(self._accounts_table(accounts))
+        return section
+
+    def _account_detail(self, account: integrations.Account) -> str:
+        fields = account.fields
+        if account.provider == "aws":
+            profile = fields.get("profile", "")
+            number = dict(integrations.aws_profiles()).get(profile, "")
+            detail = (
+                f"{profile}  {number}".strip()
+                if profile
+                else fields.get("access_key_id", "")
+            )
+        elif account.provider == "azure":
+            detail = fields.get("subscription_id", "")
+        else:
+            detail = fields.get("project_id", "")
+        if not integrations.has_keys(account):
+            detail += "  " + self.tr("(type the keys again)")
+        return detail.strip()
+
+    def _accounts_table(self, accounts: list[integrations.Account]) -> QTableWidget:
+        table = QTableWidget(len(accounts), 3)
+        table.setHorizontalHeaderLabels([self.tr("NAME"), self.tr("ACCOUNT"), ""])
+        table.setProperty("variant", "data")
+        table.verticalHeader().setVisible(False)
+        table.setSelectionMode(QTableWidget.SelectionMode.NoSelection)
+        table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+        header = table.horizontalHeader()
+        header.setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
+        header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
+        header.setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
+        for row, account in enumerate(accounts):
+            table.setItem(row, 0, QTableWidgetItem(account.name))
+            table.setItem(row, 1, QTableWidgetItem(self._account_detail(account)))
+            table.setCellWidget(row, 2, self._account_menu(account))
+        height = table.horizontalHeader().height() + 36 * len(accounts) + 4
+        table.setFixedHeight(height)
+        table.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        return table
+
+    def _account_menu(self, account: integrations.Account) -> QToolButton:
+        button = QToolButton()
+        button.setText("⋮")
+        button.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
+        menu = QMenu(button)
+        menu.addAction(self.tr("Find and add clusters")).triggered.connect(
+            partial(self._open_account_dialog, account.provider, account)
+        )
+        if account.provider == "aws" and account.fields.get("profile"):
+            menu.addAction(self.tr("Sign in")).triggered.connect(
+                partial(self._sign_in_account, account)
+            )
+        menu.addAction(self.tr("Remove")).triggered.connect(
+            partial(self._remove_account, account)
+        )
+        button.setMenu(menu)
+        return button
+
+    def _local_section(self) -> QWidget:
+        section = QWidget()
+        box = self._section_head(
+            self.tr("LOCAL KUBECONFIGS"),
+            self.tr(
+                "Discover and manage Kubernetes clusters from kubeconfig files "
+                "on your local filesystem."
+            ),
+        )
+        section.setLayout(box)
+        row = QHBoxLayout()
+        manage = QPushButton(self.tr("Manage kubeconfig files"))
+        manage.setProperty("variant", "secondary")
+        manage.clicked.connect(partial(self._show_settings_section, 2))
+        row.addWidget(manage)
+        row.addStretch(1)
+        count = max(len(self.settings.kubeconfig_files), 1)
+        row.addWidget(
+            self._status_label(self.tr("{count} sources").format(count=count), True)
+        )
+        box.addLayout(row)
+        return section
+
+    def _integration_failed(self, message: str) -> None:
+        self.settings_ui.noticeLabel.setText(message)
+
+    def _open_account_dialog(
+        self, provider: str, account: integrations.Account | None
+    ) -> None:
+        """Add a cloud account, or type the keys of one again, and plug the
+        clusters chosen."""
+        dialog = AccountDialog(provider, account, self)
+        if dialog.exec() != QDialog.DialogCode.Accepted:
+            return
+        values = dialog.values()
+        if account is None:
+            account = integrations.add_account(
+                provider, dialog.name(), values, dialog.account.id
+            )
+        else:
+            account = integrations.update_account(account, values)
+        self._save_accounts()
+        chosen = dialog.chosen()
+        if not chosen:
+            self._render_integrations()
+            return
+        self._run_action(
+            integrations.plug,
+            self._clusters_added,
+            chosen,
+            account,
+            integrations.values_of(account),
+            on_error=self._integration_failed,
+            quiet=True,
+        )
+
+    def _save_accounts(self) -> None:
+        self.settings.integration_accounts = [
+            account.saved() for account in integrations.accounts()
+        ]
+        self._save_settings()
+
+    def _clusters_added(self, plugged: list[integrations.Found]) -> None:
+        self._apply_cluster_settings()
+        self._load_contexts()
+        self._render_integrations()
+        self.settings_ui.noticeLabel.setText(
+            self.tr("{count} clusters added to the contexts.").format(
+                count=len(plugged)
+            )
+        )
+
+    def _sign_in_account(self, account: integrations.Account) -> None:
+        profile = account.fields.get("profile", "")
+        action = LoginAction(
+            ["aws", "sso", "login", "--profile", profile], profile, False
+        )
+        self._run_action(
+            run_login,
+            self._integration_signed_in,
+            action,
+            on_error=self._integration_failed,
+        )
+
+    def _integration_signed_in(self, _result: object) -> None:
+        self.settings_ui.noticeLabel.setText(self.tr("Signed in."))
+
+    def _remove_account(self, account: integrations.Account) -> None:
+        integrations.remove(account)
+        self._save_accounts()
+        self._apply_cluster_settings()
+        self._load_contexts()
+        self._render_integrations()
+
     def _show_settings_section(self, section: int) -> None:
         """Show the cards of one section of the Settings: 0 is General, 1 the
         assistant, 2 Kube, the files and the contexts of the clusters, and 3
@@ -5288,6 +5533,7 @@ class WorkloadWindow(QMainWindow):
             form.loginCard: 2,
             form.contextsCard: 2,
             form.shortcutsCard: 3,
+            form.integrationsCard: 4,
         }
         for card in form.settingsContent.findChildren(
             QFrame, options=Qt.FindChildOption.FindDirectChildrenOnly
@@ -5297,6 +5543,7 @@ class WorkloadWindow(QMainWindow):
         form.assistantSectionButton.setChecked(section == 1)
         form.kubeSectionButton.setChecked(section == 2)
         form.shortcutsSectionButton.setChecked(section == 3)
+        form.integrationsSectionButton.setChecked(section == 4)
         form.settingsScroll.verticalScrollBar().setValue(0)
 
     def _show_assistant_settings(self) -> None:
@@ -5639,6 +5886,7 @@ class WorkloadWindow(QMainWindow):
         form.languageCombo.setCurrentIndex(max(form.languageCombo.findData(chosen), 0))
         self._fill_timezone_combo(self.settings.timezone)
         self._fill_shortcuts(self.settings.shortcuts)
+        self._render_integrations()
         self._fill_theme_combo(self.settings.theme)
         self._fill_default_namespaces()
         form.rememberCheck.setChecked(self.settings.remember_last_context)
@@ -5872,7 +6120,9 @@ class WorkloadWindow(QMainWindow):
         """Tell the cluster layer which kubeconfig files to read and which
         commands sign in for programs the app does not know."""
         configure_cluster(
-            self.settings.kubeconfig_files, self.settings.sign_in_commands
+            self.settings.kubeconfig_files,
+            self.settings.sign_in_commands,
+            integrations.kubeconfig_files(),
         )
 
     def _add_kubeconfig_file(self) -> None:

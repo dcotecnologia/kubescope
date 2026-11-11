@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+### Added
+
+- **Settings** has an **Integrations** section, in the style of Lens, to plug the clusters of AWS (EKS), Azure (AKS) and Google Cloud (GKE) with as many accounts as you like: an AWS profile or keys, found and added from a dialog; the secret keys stay in memory until the app quits and the clusters go to a kubeconfig of KubeScope for each account, apart from yours by @danilogco
+
 ## [1.7.0] - 2026-11-10
 
 ### Added

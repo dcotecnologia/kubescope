@@ -1,7 +1,7 @@
 import json
 import sys
 from pathlib import Path
-from typing import cast
+from typing import Any, cast
 
 from kubescope.settings import (
     Settings,
@@ -489,3 +489,35 @@ def test_a_context_without_an_alias_shows_the_end_of_its_name(tmp_path) -> None:
 
     settings.set_context_aliases({arn: "Hml"})
     assert settings.display_name(arn) == "Hml"
+
+
+def test_the_cloud_accounts_are_saved_without_what_cannot_be_read(tmp_path) -> None:
+    good = {"id": "aws-1", "provider": "aws", "name": "work", "fields": {"a": "b"}}
+    settings = Settings(tmp_path / "s.json")
+    assert settings.integration_accounts == []
+
+    saved: list[Any] = [
+        good,
+        "not a dict",
+        {"id": "aws-1", "provider": "aws", "name": "again", "fields": {}},  # same id
+        {"id": "x", "provider": "aws", "name": "", "fields": {}},  # no name
+        {"id": 3, "provider": "aws", "name": "n", "fields": {}},  # not text
+        {"id": "gcp-1", "provider": "gcp", "name": "g", "fields": ["not", "a dict"]},
+        {"id": "az-1", "provider": "azure", "name": "z", "fields": {"k": 1, "t": "v"}},
+    ]
+    settings.integration_accounts = saved
+
+    assert [account["id"] for account in settings.integration_accounts] == [
+        "aws-1",
+        "gcp-1",
+        "az-1",
+    ]
+    assert settings.integration_accounts[0] == good
+    assert settings.integration_accounts[1]["fields"] == {}
+    assert settings.integration_accounts[2]["fields"] == {"t": "v"}
+
+    settings.save()
+    assert Settings(tmp_path / "s.json").integration_accounts[0] == good
+    damaged: Any = "damaged"
+    settings.integration_accounts = damaged
+    assert settings.integration_accounts == []

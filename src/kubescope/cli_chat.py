@@ -13,7 +13,7 @@ import importlib
 import sys
 from collections.abc import Callable
 
-from kubescope import cluster
+from kubescope import cluster, integrations
 from kubescope.assistant import ASSISTANTS, actions, executor, runner
 from kubescope.assistant import installed as installed_assistants
 from kubescope.assistant.actions import Invalid, Request
@@ -333,7 +333,12 @@ def run(namespace: argparse.Namespace) -> int:
         _sync_choices(settings)
         assistant = _choose(settings, namespace.assistant)
         _consent(settings, assistant)
-        cluster.configure(settings.kubeconfig_files, settings.sign_in_commands)
+        integrations.load(settings.integration_accounts)
+        cluster.configure(
+            settings.kubeconfig_files,
+            settings.sign_in_commands,
+            integrations.kubeconfig_files(),
+        )
         context = _context(namespace.context)
         session = ChatSession(
             assistant,

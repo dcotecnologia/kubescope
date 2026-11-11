@@ -30,9 +30,10 @@ prefer otherwise.
 - **Cluster access goes through the official Kubernetes Python client.** The app
   uses the `kubernetes` library with the context you chose, and the library reads
   your kubeconfig and runs its credential plugins (for example `aws eks
-get-token`). The app never stores tokens, certificates, or cloud credentials,
-  and it never writes the kubeconfig: refreshed credentials are not saved back to
-  it. Certificate data that sits inline in a kubeconfig is written by the library
+get-token`). The app never stores tokens, certificates, or cloud credentials
+  on disk, and it never writes your kubeconfig: refreshed credentials are not
+  saved back to it. The only files it writes are the kubeconfigs of the **cloud
+  integrations** below, which are its own and hold no key. Certificate data that sits inline in a kubeconfig is written by the library
   to a temporary file readable only by you, which is removed when the app quits.
 - **It is read-only unless you turn on the write mode.** By default the app only
   sends `GET` requests to the cluster (lists, single objects, Pod logs,
@@ -85,10 +86,35 @@ get` for the profile your kubeconfig names, and reads that profile from the
   sign-in command of your kubeconfig entry, never its credentials. The **Sign in
   to AWS** button runs `aws sso login` for you to approve in the browser. For an
   access-key profile, **Configure AWS credentials** opens a terminal running `aws
-configure` so you type the keys there. The app never sees, asks for, or stores
+configure` so you type the keys there. Apart from the integrations below, the app never sees, asks for, or stores
   keys or tokens, and it does not change the cluster. For Google Cloud the button
   runs `gcloud auth login`, and for Azure `az login`; both open the browser, and
   the app only reads which sign-in program your kubeconfig names.
+- **Cloud integrations keep the keys in memory and write clusters, not keys.**
+  **Settings → Integrations** plugs the clusters of as many Amazon Web Services,
+  Microsoft Azure and Google Cloud accounts as you add. An AWS account signs in
+  with a **profile** of the AWS CLI, which stays in the files of the AWS CLI (the
+  app reads only the names of the profiles and their account numbers, never a
+  key), or with **access keys** you type; an Azure account with a tenant, a client
+  and its secret; a Google Cloud account with the path of a service account key
+  file, which stays where it is. What is secret (a secret access key, a session
+  token, a client secret) is kept in the memory of the app only: it is not
+  written to a file, not logged and not sent anywhere but to the cloud's own
+  command line program (`aws`, `az` with `kubelogin`, or `gcloud`), which the app
+  starts with the keys in its environment; it is forgotten when the app quits, so
+  type it again after a restart. The rest (the name of the account, the regions,
+  the profile, the project) is saved in the settings. The clusters the program
+  lists are written, with the program's own commands (`aws eks update-kubeconfig`,
+  `az aks get-credentials`, `gcloud container clusters get-credentials`), to a
+  kubeconfig of KubeScope for each account, in `integrations/<account>/` of the
+  configuration folder, which the app reads besides yours. That kubeconfig names
+  the sign-in program and the account (`KUBESCOPE_ACCOUNT`) and holds no key: the
+  app hands the keys of an account only to the sign-in programs and the AWS
+  commands of the clusters that name it. **Remove** in the menu of an account
+  deletes its folder, which also holds what `az` and `gcloud` keep of their own
+  sign-in for it. One limit to know: `az login --service-principal` takes the
+  client secret as an argument, which another process of your computer can see
+  while it runs.
 - **No telemetry.** The traffic is what the Kubernetes client sends to your
   clusters, plus one optional call of the app's own: the update check. When the
   app starts (and when you press the update icon in the footer) it asks the public
