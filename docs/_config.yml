@@ -4,7 +4,7 @@ description: Desktop IDE for Kubernetes.
 app_name: KubeScope
 app_icon: assets/icon.png
 app_screenshot: screenshots/overview.png
-app_description: A desktop IDE for Kubernetes, including Amazon EKS, Google GKE and Azure AKS. Read-only by default, with no kubectl needed, and with Gabi, an AI assistant for your cluster.
+app_description: A desktop IDE for Kubernetes, including Amazon EKS, Google GKE and Azure AKS, with cloud accounts you plug in with a login. Read-only by default, with no kubectl needed, and with Gabi, an AI assistant for your cluster.
 
 # Google Tag Manager container (GTM-XXXXXXX); empty leaves the tag out of the pages
 google_tag_manager_id: "GTM-NF8JJ4QQ"
@@ -40,12 +40,21 @@ features:
   - icon: "☁"
     title: Every cloud
     description: Amazon EKS, Google GKE and Azure AKS through your local kubeconfig, with the official Kubernetes Python client.
+  - icon: "⊕"
+    title: Cloud integrations
+    description: Plug the clusters of as many AWS, Azure and Google Cloud accounts as you like from Settings. Pick an AWS profile or type the keys, find the clusters and add the ones you want. Secret keys stay in memory and are never written to a file.
+  - icon: "⌕"
+    title: Search and shortcuts
+    description: Press / or Ctrl+K to find a screen or a resource of any namespace, and G then P to go to Pods. Every shortcut can be changed or turned off in Settings.
   - icon: "❖"
     title: Gabi, the assistant
-    description: An AI that sees what you see, looks into problems and takes you to the right screen. She uses the Claude Code or Codex already on your computer, asks for no credentials, and never changes a cluster without your confirmation.
+    description: An AI that sees what you see, looks into problems and takes you to the right screen. Paste a picture, a file or a long log into the chat with Ctrl+V. She uses the Claude Code or Codex already on your computer, asks for no credentials, and never changes a cluster without your confirmation.
   - icon: "✎"
     title: Write mode
     description: Off by default. Turn it on to delete or evict Pods, scale or restart Deployments, and forward ports, only where the cluster lets you.
+  - icon: "◷"
+    title: Your time zone
+    description: Dates and times in the zone you choose, or in the local time of your computer by default.
   - icon: "✦"
     title: Readable errors
     description: Short messages with a hint, with the original error one click away, in 20 languages.
