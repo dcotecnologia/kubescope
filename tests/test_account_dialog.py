@@ -166,3 +166,10 @@ def test_closing_waits_for_a_search_that_is_running(monkeypatch) -> None:
     dialog.done(0)
     assert dialog._worker is not None and dialog._worker.isFinished()
     assert QEvent.Type.Close
+
+
+def test_a_profile_picked_elsewhere_is_chosen_and_names_the_account() -> None:
+    dialog = AccountDialog("aws", None, None, "work")
+
+    assert dialog.name() == "work" and dialog.mode.currentData() == "profile"
+    assert dialog.values()["profile"] == "work"

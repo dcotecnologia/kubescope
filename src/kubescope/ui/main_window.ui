@@ -58,7 +58,7 @@ QComboBox#contextCombo {
 }
 QWidget#sidebar { background: #ffffff; border-right: 1px solid #e1e3e9; }
 QScrollArea#sidebarScroll, QWidget#sidebarNav { background: transparent; border: 0; }
-QLabel#navSection, QLabel#filterLabel {
+QLabel#navSection, QLabel#navAwsSection, QLabel#filterLabel {
     color: #535d69; font-size: 9px; font-weight: 700;
 }
 QFrame#sidebarRule { color: #e6e7ed; }
@@ -192,7 +192,8 @@ QPushButton[nav="true"] {
     padding: 0 12px; font-size: 12px; font-weight: 600;
 }
 QPushButton[nav="true"]:hover { background: #f6f6fa; }
-QFrame#workloadsSubmenu, QFrame#networkSubmenu, QFrame#configSubmenu {
+QFrame#workloadsSubmenu, QFrame#networkSubmenu, QFrame#configSubmenu,
+QFrame#rdsSubmenu {
     border: 0; border-left: 1px solid #d9dce4; margin-left: 19px;
 }
 QPushButton[nav="true"]:checked {
@@ -236,9 +237,16 @@ QPlainTextEdit {
 }
 QFrame#noContextsBanner { background: #fff2de; border-bottom: 1px solid #985415; }
 QFrame#noContextsBanner QLabel { color: #985415; font-size: 11px; background: transparent; }
-QFrame#permissionBanner { background: #fce9ea; border-bottom: 1px solid #a33d45; }
-QFrame#permissionBanner QLabel { color: #a33d45; font-size: 11px; background: transparent; }
-QFrame#permissionBanner QPushButton { color: #a33d45; font-size: 11px; padding: 0 0 0 12px; }
+QFrame#permissionBanner, QFrame#rdsBanner {
+    background: #fce9ea; border-bottom: 1px solid #a33d45;
+}
+QFrame#rdsBanner { border: 1px solid #a33d45; border-radius: 6px; }
+QFrame#permissionBanner QLabel, QFrame#rdsBanner QLabel {
+    color: #a33d45; font-size: 11px; background: transparent;
+}
+QFrame#permissionBanner QPushButton, QFrame#rdsBanner QPushButton {
+    color: #a33d45; font-size: 11px; padding: 0 0 0 12px;
+}
 QFrame#appFooter { background: #ffffff; border-top: 1px solid #e4e5eb; }
 QLabel#footerLicense, QLabel#footerDot, QLabel#updateNotice { color: #6b7380; font-size: 10px; }
 QFrame#appFooter QPushButton[variant="link"] { font-size: 10px; padding: 0 0 0 6px; }
@@ -586,7 +594,10 @@ QPushButton#updateButton:hover { background: #f6f6fa; }
       <property name="visible">
        <bool>false</bool>
       </property>
-      <layout class="QHBoxLayout" name="permissionLayout" stretch="1,0">
+      <layout class="QVBoxLayout" name="permissionLayout">
+       <property name="spacing">
+        <number>4</number>
+       </property>
        <property name="leftMargin">
         <number>18</number>
        </property>
@@ -600,25 +611,58 @@ QPushButton#updateButton:hover { background: #f6f6fa; }
         <number>8</number>
        </property>
        <item>
-        <widget class="QLabel" name="permissionLabel">
+        <layout class="QHBoxLayout" name="permissionRow" stretch="1,0,0">
+         <item>
+          <widget class="QLabel" name="permissionLabel">
+           <property name="text">
+            <string notr="true">permission</string>
+           </property>
+           <property name="wordWrap">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="permissionDetails">
+           <property name="text">
+            <string>Details</string>
+           </property>
+           <property name="flat">
+            <bool>true</bool>
+           </property>
+           <property name="variant" stdset="0">
+            <string notr="true">link</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="permissionDismiss">
+           <property name="text">
+            <string>Dismiss</string>
+           </property>
+           <property name="flat">
+            <bool>true</bool>
+           </property>
+           <property name="variant" stdset="0">
+            <string notr="true">link</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <widget class="QLabel" name="permissionDetailsText">
+         <property name="visible">
+          <bool>false</bool>
+         </property>
          <property name="text">
-          <string notr="true">permission</string>
+          <string notr="true" />
          </property>
          <property name="wordWrap">
           <bool>true</bool>
          </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QPushButton" name="permissionDismiss">
-         <property name="text">
-          <string>Dismiss</string>
-         </property>
-         <property name="flat">
-          <bool>true</bool>
-         </property>
-         <property name="variant" stdset="0">
-          <string notr="true">link</string>
+         <property name="textInteractionFlags">
+          <set>Qt::TextSelectableByMouse</set>
          </property>
         </widget>
        </item>
@@ -773,6 +817,37 @@ QPushButton#updateButton:hover { background: #f6f6fa; }
               <widget class="QPushButton" name="navNodeGroups">
                <property name="text">
                 <string>Node Groups</string>
+               </property>
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>24</height>
+                </size>
+               </property>
+               <property name="iconSize">
+                <size>
+                 <width>16</width>
+                 <height>16</height>
+                </size>
+               </property>
+               <property name="checkable">
+                <bool>true</bool>
+               </property>
+               <property name="checked">
+                <bool>false</bool>
+               </property>
+               <property name="autoExclusive">
+                <bool>true</bool>
+               </property>
+               <property name="nav" stdset="0">
+                <string notr="true">true</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="navForwards">
+               <property name="text">
+                <string>Forwards</string>
                </property>
                <property name="minimumSize">
                 <size>
@@ -1804,6 +1879,96 @@ QPushButton#updateButton:hover { background: #f6f6fa; }
              </item>
 
              <item>
+              <widget class="QLabel" name="navAwsSection">
+               <property name="text">
+                <string>AWS</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="navRds">
+               <property name="text">
+                <string>RDS</string>
+               </property>
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>24</height>
+                </size>
+               </property>
+               <property name="iconSize">
+                <size>
+                 <width>16</width>
+                 <height>16</height>
+                </size>
+               </property>
+               <property name="checkable">
+                <bool>false</bool>
+               </property>
+               <property name="checked">
+                <bool>false</bool>
+               </property>
+               <property name="nav" stdset="0">
+                <string notr="true">true</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QFrame" name="rdsSubmenu">
+               <property name="maximumSize">
+                <size>
+                 <width>16777215</width>
+                 <height>0</height>
+                </size>
+               </property>
+               <layout class="QVBoxLayout" name="rdsSubmenuLayout">
+                <property name="spacing">
+                 <number>0</number>
+                </property>
+                <property name="leftMargin">
+                 <number>4</number>
+                </property>
+                <property name="topMargin">
+                 <number>0</number>
+                </property>
+                <property name="rightMargin">
+                 <number>0</number>
+                </property>
+                <property name="bottomMargin">
+                 <number>0</number>
+                </property>
+                  <item>
+                   <widget class="QPushButton" name="navRdsInstances">
+                    <property name="text">
+                     <string>Instances</string>
+                    </property>
+                    <property name="minimumSize">
+                     <size>
+                      <width>0</width>
+                      <height>20</height>
+                     </size>
+                    </property>
+                    <property name="iconSize">
+                     <size>
+                      <width>16</width>
+                      <height>16</height>
+                     </size>
+                    </property>
+                    <property name="checkable">
+                     <bool>true</bool>
+                    </property>
+                    <property name="checked">
+                     <bool>false</bool>
+                    </property>
+                    <property name="nav" stdset="0">
+                     <string notr="true">true</string>
+                    </property>
+                   </widget>
+                  </item>
+               </layout>
+              </widget>
+             </item>
+             <item>
               <spacer name="sidebarNavSpacer">
                <property name="orientation">
                 <enum>Qt::Orientation::Vertical</enum>
@@ -1923,6 +2088,19 @@ Resources in read-only mode</string>
             </item>
             <item>
              <widget class="QPushButton" name="workloadsRefreshButton">
+              <property name="toolTip">
+               <string>Refresh</string>
+              </property>
+              <property name="iconOnly" stdset="0">
+               <string notr="true">true</string>
+              </property>
+              <property name="variant" stdset="0">
+               <string notr="true">primary</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="rdsRefreshButton">
               <property name="toolTip">
                <string>Refresh</string>
               </property>
@@ -2792,6 +2970,8 @@ Resources in read-only mode</string>
            <widget class="QWidget" name="settingsHost" />
            <widget class="QWidget" name="viewerHost" />
            <widget class="QWidget" name="workloadsOverviewHost" />
+           <widget class="QWidget" name="rdsHost" />
+           <widget class="QWidget" name="forwardsHost" />
           </widget>
          </item>
         </layout>

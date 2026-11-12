@@ -1,3 +1,4 @@
+import json
 import os
 import subprocess
 from types import SimpleNamespace
@@ -331,3 +332,97 @@ def test_run_gives_the_output_and_tells_a_failure_without_the_command(
     monkeypatch.setattr(integrations, "find_program", lambda name: None)
     with pytest.raises(IntegrationError, match="not installed"):
         integrations._run(["az"])
+
+
+def _sso_files(monkeypatch, tmp_path, cached_until: str = "2999-01-01T00:00:00Z"):
+    """An AWS config with SSO profiles of both styles and the cache of the
+    portals."""
+    monkeypatch.setenv("HOME", str(tmp_path))
+    config = tmp_path / ".aws" / "config"
+    cache = tmp_path / ".aws" / "sso" / "cache"
+    cache.mkdir(parents=True)
+    config.write_text(
+        "[default]\nregion = us-east-1\n"
+        "[profile modern]\nsso_session = shared\nsso_account_id = 111122223333\n"
+        "region = sa-east-1\n"
+        "[profile legacy]\nsso_start_url = https://old.awsapps.com/start\n"
+        "sso_account_id = 444455556666\n"
+        "[profile renewed]\nsso_session = renewing\nsso_account_id = 777788889999\n"
+        "[profile lapsed]\nsso_session = lapsing\nsso_account_id = 000011112222\n"
+        "[sso-session shared]\nsso_start_url = https://new.awsapps.com/start\n"
+        "[sso-session renewing]\nsso_start_url = https://renew.awsapps.com/start\n"
+        "[sso-session lapsing]\nsso_start_url = https://lapse.awsapps.com/start\n"
+        "[profile plain]\nregion = eu-west-1\n"
+        "[services other]\nx = 1\n"
+    )
+    past, future = "2001-01-01T00:00:00Z", "2999-01-01T00:00:00Z"
+    portals = {
+        "a.json": ("https://new.awsapps.com/start", cached_until, {}),
+        "old.json": ("https://old.awsapps.com/start", past, {}),
+        # the access token ran out, but the CLI renews it by itself
+        "renew.json": (
+            "https://renew.awsapps.com/start",
+            past,
+            {"refreshToken": "x", "registrationExpiresAt": future},
+        ),
+        # and here the registration with the portal ran out too
+        "lapse.json": (
+            "https://lapse.awsapps.com/start",
+            past,
+            {"refreshToken": "x", "registrationExpiresAt": past},
+        ),
+    }
+    for name, (url, expires, more) in portals.items():
+        document = {"startUrl": url, "expiresAt": expires, **more}
+        (cache / name).write_text(json.dumps(document))
+    for name, text in (
+        ("broken.json", "{not json"),
+        ("list.json", "[]"),
+        ("nourl.json", '{"expiresAt": "2999-01-01T00:00:00Z"}'),
+    ):
+        (cache / name).write_text(text)
+    return config
+
+
+def test_the_sso_profiles_are_found_with_whether_they_are_signed_in(
+    monkeypatch, tmp_path
+) -> None:
+    config = _sso_files(monkeypatch, tmp_path)
+    monkeypatch.setenv("AWS_CONFIG_FILE", str(config))
+
+    assert integrations.sso_profiles() == [
+        integrations.SsoProfile("lapsed", "000011112222", "", False),
+        integrations.SsoProfile("legacy", "444455556666", "", False),  # expired
+        integrations.SsoProfile("modern", "111122223333", "sa-east-1", True),
+        integrations.SsoProfile("renewed", "777788889999", "", True),  # renewable
+    ]
+
+    monkeypatch.setenv("AWS_CONFIG_FILE", str(tmp_path / "missing"))
+    assert integrations.sso_profiles() == []
+    broken = tmp_path / "broken"
+    broken.write_text("no = section\n")
+    monkeypatch.setenv("AWS_CONFIG_FILE", str(broken))
+    assert integrations.sso_profiles() == []
+
+
+def test_a_sign_in_that_expired_or_has_no_date_is_not_a_sign_in() -> None:
+    assert integrations._expired(None) and integrations._expired("soon")
+    assert integrations._expired("2001-01-01T00:00:00UTC")
+    assert not integrations._expired("2999-01-01T00:00:00")  # no zone: UTC
+
+
+def test_the_signed_in_sso_profiles_count_as_accounts_unless_one_uses_them(
+    monkeypatch, tmp_path
+) -> None:
+    config = _sso_files(monkeypatch, tmp_path)
+    monkeypatch.setenv("AWS_CONFIG_FILE", str(config))
+
+    found = integrations.sso_accounts()
+
+    assert [(a.id, a.name, a.fields) for a in found] == [
+        ("sso-modern", "modern", {"profile": "modern", "regions": "sa-east-1"}),
+        ("sso-renewed", "renewed", {"profile": "renewed", "regions": "us-east-1"}),
+    ]
+    assert integrations.has_keys(found[0])  # a profile needs no keys typed
+    integrations.add_account("aws", "mine", {"profile": "modern"})
+    assert [a.name for a in integrations.sso_accounts()] == ["renewed"]  # not "modern"

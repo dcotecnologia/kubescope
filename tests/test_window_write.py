@@ -194,20 +194,17 @@ def test_a_finished_write_says_so_and_refreshes(monkeypatch) -> None:
     assert refreshed == [True]
 
 
-def test_a_failed_write_shows_the_cluster_message(monkeypatch) -> None:
+def test_a_failed_write_shows_the_cluster_message_in_the_banner(monkeypatch) -> None:
     window, _ran = _window(monkeypatch)
-    shown = []
-    monkeypatch.setattr(
-        QMessageBox,
-        "exec",
-        lambda box: shown.append((box.text(), box.detailedText())),
-    )
 
     window._show_write_error("pods is forbidden\nmore detail")
-    window._close_when_worker_stops = True
-    window._show_write_error("cancelled")  # the window is closing: no box
+    assert "not allowed to do this" in window.ui.permissionLabel.text()
+    assert window.ui.permissionDetailsText.text() == "pods is forbidden\nmore detail"
 
-    assert shown == [("pods is forbidden", "pods is forbidden\nmore detail")]
+    window.permission_banner.hide()
+    window._close_when_worker_stops = True
+    window._show_write_error("cancelled")  # the window is closing: nothing shown
+    assert window.permission_banner.isHidden()
     window._close_when_worker_stops = False
     window.close()
 

@@ -42,7 +42,7 @@ features:
     description: Amazon EKS, Google GKE and Azure AKS through your local kubeconfig, with the official Kubernetes Python client.
   - icon: "⊕"
     title: Cloud integrations
-    description: Plug the clusters of as many AWS, Azure and Google Cloud accounts as you like from Settings. Pick an AWS profile or type the keys, find the clusters and add the ones you want. Secret keys stay in memory and are never written to a file.
+    description: Plug the clusters of as many AWS, Azure and Google Cloud accounts as you like from Settings. Pick an AWS profile or type the keys, find the clusters and add the ones you want. Secret keys stay in memory and are never written to a file. An AWS account also lists its RDS database instances.
   - icon: "⌕"
     title: Search and shortcuts
     description: Press / or Ctrl+K to find a screen or a resource of any namespace, and G then P to go to Pods. Every shortcut can be changed or turned off in Settings.

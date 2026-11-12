@@ -43,7 +43,7 @@ def test_parse_deployment_workload() -> None:
     assert (workload.ready, workload.desired, workload.age, workload.status) == (
         2,
         3,
-        "2m0s",
+        "2m",
         "Degraded",
     )
 
@@ -295,7 +295,7 @@ def test_build_overview_aggregates_nodes_pods_and_usage() -> None:
     assert [node.name for node in overview.nodes] == ["a", "b"]
     assert (overview.nodes_ready, overview.pods_capacity) == (1, 116)
     assert overview.nodes[0].roles == "—" and overview.nodes[1].roles == "worker"
-    assert overview.nodes[0].age == "24h0m0s"
+    assert overview.nodes[0].age == "1d"
     assert overview.nodes[0].pods_running == 2
     assert overview.nodes[0].cpu_requests == 0.75
     assert overview.nodes[1].pods_running == 1  # Succeeded/Failed pods are skipped
@@ -855,7 +855,7 @@ def test_parse_pod_handles_missing_names_and_ages() -> None:
     )
     assert pod is not None
     assert (pod.age, pod.containers, pod.phase, pod.namespace) == (
-        "1h0m0s",
+        "1h",
         ("app",),
         "Unknown",
         "default",
@@ -1220,7 +1220,7 @@ def test_open_terminal_uses_the_first_terminal_found(monkeypatch) -> None:
     )
 
     cluster._open_terminal(["aws", "configure"])
-    assert launched == [["/usr/bin/konsole", "-e", "aws", "configure"]]
+    assert launched == [["/usr/bin/konsole", "-e", "sh", "-c", "aws configure"]]
 
     monkeypatch.setattr(cluster.shutil, "which", lambda _name: None)
     with pytest.raises(cluster.ClusterError, match="aws configure"):
@@ -1603,7 +1603,7 @@ def test_events_use_whichever_timestamp_the_cluster_provides() -> None:
         "ns",
         "Pod: api-1",
     )
-    assert (event.age, event.last_seen) == ("9h0m0s", "1h0m0s")
+    assert (event.age, event.last_seen) == ("9h", "1h")
 
     modern = cluster._parse_event(
         {
@@ -1790,7 +1790,7 @@ def test_parse_network_reads_a_service() -> None:
         "lb.example",
         "80:30080/TCP, 53/UDP",
     )
-    assert resource.age == "48h0m0s"
+    assert resource.age == "2d"
 
 
 def test_parse_network_shows_a_pending_load_balancer_and_plain_services() -> None:
@@ -2386,7 +2386,7 @@ def test_parse_nodegroup_tolerates_missing_fields() -> None:
 
     assert bare is not None and naive is not None and no_max is not None
     assert bare.values == ("—",) * 5 and bare.age == "unknown"
-    assert naive.age == "48h0m0s"
+    assert naive.age == "2d"
     assert no_max.values[2] == "3 (0–3)"
     assert cluster._parse_eks("NodeGroup", {}, now) is None
 
@@ -3159,8 +3159,8 @@ def test_in_a_flatpak_the_terminal_and_its_program_are_the_hosts(
     cluster._open_terminal(["aws", "configure"])
 
     assert launched == [
-        ["flatpak-spawn", "--host", "konsole", "-e", "gcloud", "auth", "login"],
-        ["flatpak-spawn", "--host", "konsole", "-e", "aws", "configure"],
+        ["flatpak-spawn", "--host", "konsole", "-e", "sh", "-c", "gcloud auth login"],
+        ["flatpak-spawn", "--host", "konsole", "-e", "sh", "-c", "aws configure"],
     ]
 
     monkeypatch.setattr(cluster, "host_has", lambda _name: False)
@@ -3359,3 +3359,341 @@ def test_run_login_here_on_windows_finds_the_program(monkeypatch):
     monkeypatch.setattr(cluster, "forget_clients", lambda: None)
     cluster.run_login_here(cluster.LoginAction(["az", "login"], None, False))
     assert calls == [["C:\\az.cmd", "login"]]
+
+
+def test_the_rds_instances_are_those_of_the_account_of_the_context(
+    monkeypatch,
+) -> None:
+    arn = "arn:aws:eks:us-east-1:107616205814:cluster/shop"
+    target = ["--name", "shop", "--profile", "work"]  # the region is in the ARN
+    seen = []
+    monkeypatch.setattr(cluster, "_eks_target", lambda _c: target)
+    monkeypatch.setattr(cluster, "_context_env", lambda _c: {"AWS_PROFILE": "work"})
+    document = {
+        "DBInstances": [
+            {
+                "DBInstanceIdentifier": "zeta",
+                "Engine": "postgres",
+                "EngineVersion": "15.4",
+                "DBInstanceClass": "db.t3.small",
+                "DBInstanceStatus": "available",
+                "AllocatedStorage": 20,
+                "MultiAZ": True,
+                "Endpoint": {"Address": "zeta.example.com", "Port": 5432},
+                "DBSubnetGroup": {"VpcId": "vpc-1"},
+            },
+            {"DBInstanceIdentifier": "alpha", "AllocatedStorage": "x"},
+            "not an instance",
+        ]
+    }
+    monkeypatch.setattr(
+        cluster,
+        "_run_aws",
+        lambda command, env: seen.append((command, env)) or json.dumps(document),
+    )
+
+    rows = cluster.get_rds_instances(arn)
+
+    assert seen[0][0] == [
+        "aws", "rds", "describe-db-instances", "--region", "us-east-1",
+        "--profile", "work", "--output", "json",
+    ]  # fmt: skip
+    assert seen[0][1] == {"AWS_PROFILE": "work"}
+    assert [row.identifier for row in rows] == ["alpha", "zeta"]
+    assert rows[1] == cluster.RdsInstance(
+        "107616205814", "us-east-1", "zeta", "postgres", "15.4", "db.t3.small",
+        "available", 20, True, "zeta.example.com", 5432, "work", "vpc-1",
+    )  # fmt: skip
+    assert rows[0].endpoint == "" and rows[0].storage == 0 and not rows[0].multi_az
+
+
+def test_the_rds_instances_of_a_context_that_names_its_region_and_has_no_arn(
+    monkeypatch,
+) -> None:
+    seen = []
+    monkeypatch.setattr(
+        cluster, "_eks_target", lambda _c: ["--name", "shop", "--region", "sa-east-1"]
+    )
+    monkeypatch.setattr(cluster, "_context_env", lambda _c: None)
+    monkeypatch.setattr(
+        cluster, "_run_aws", lambda command, env: seen.append(command) or "{}"
+    )
+
+    assert cluster.get_rds_instances("prod") == []
+
+    assert seen[0] == [
+        "aws", "rds", "describe-db-instances", "--region", "sa-east-1",
+        "--output", "json",
+    ]  # fmt: skip
+
+
+def test_the_rds_instances_without_a_region_or_with_a_bad_answer(monkeypatch) -> None:
+    monkeypatch.setattr(cluster, "_eks_target", lambda _c: ["--name", "shop"])
+    monkeypatch.setattr(cluster, "_context_env", lambda _c: None)
+    seen = []
+    monkeypatch.setattr(cluster, "_run_aws", lambda c, e: seen.append(c) or "[]")
+    assert cluster.get_rds_instances("prod") == []
+    assert "--region" not in seen[0]
+
+    monkeypatch.setattr(cluster, "_run_aws", lambda c, e: "not json")
+    with pytest.raises(cluster.ClusterError, match="unexpected"):
+        cluster.get_rds_instances("prod")
+
+    def not_eks(_context):
+        raise cluster.ClusterError("This list is only available for Amazon EKS")
+
+    monkeypatch.setattr(cluster, "_eks_target", not_eks)
+    with pytest.raises(cluster.ClusterError, match="only available"):
+        cluster.get_rds_instances("prod")
+
+
+def test_the_details_of_an_rds_instance_are_what_the_cli_says_about_it(
+    monkeypatch,
+) -> None:
+    seen = []
+    monkeypatch.setattr(cluster, "_eks_target", lambda _c: ["--name", "shop"])
+    monkeypatch.setattr(cluster, "_context_env", lambda _c: None)
+    monkeypatch.setattr(
+        cluster,
+        "_run_aws",
+        lambda command, env: (
+            seen.append(command)
+            or json.dumps({"DBInstances": ["odd", {"DBInstanceIdentifier": "orders"}]})
+        ),
+    )
+
+    assert cluster.get_rds_details("prod", "orders") == {
+        "DBInstanceIdentifier": "orders"
+    }
+    assert "--db-instance-identifier" in seen[0] and "orders" in seen[0]
+
+    monkeypatch.setattr(cluster, "_run_aws", lambda c, e: "[]")  # not an object
+    with pytest.raises(cluster.ClusterError, match="was not found"):
+        cluster.get_rds_details("prod", "orders")
+
+
+def test_the_instances_systems_manager_reaches_come_with_the_ones_of_the_vpc_first(
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(cluster, "_eks_target", lambda _c: ["--name", "shop"])
+    monkeypatch.setattr(cluster, "_context_env", lambda _c: None)
+    asked = []
+    answers = {
+        "describe-instance-information": {
+            "InstanceInformationList": [
+                {"InstanceId": "i-0far", "PingStatus": "Online"},
+                {"InstanceId": "i-0near", "PingStatus": "Online"},
+                {"InstanceId": "i-0off", "PingStatus": "ConnectionLost"},
+                {"InstanceId": "mi-0hybrid", "PingStatus": "Online"},
+                "odd",
+            ]
+        },
+        "describe-instances": {
+            "Reservations": [
+                {
+                    "Instances": [
+                        {"InstanceId": "i-0far", "VpcId": "vpc-9"},
+                        {
+                            "InstanceId": "i-0near",
+                            "VpcId": "vpc-1",
+                            "Tags": [{"Key": "Name", "Value": "bastion"}, "odd"],
+                        },
+                    ]
+                },
+                None,
+            ]
+        },
+    }
+
+    def run(command, env):
+        asked.append(command)
+        return json.dumps(answers[command[2]])
+
+    monkeypatch.setattr(cluster, "_run_aws", run)
+
+    targets = cluster.get_ssm_targets("prod", "vpc-1")
+
+    assert [(t.instance_id, t.name, t.same_vpc) for t in targets] == [
+        ("i-0near", "bastion", True),
+        ("i-0far", "", False),
+    ]
+    assert asked[1][asked[1].index("--instance-ids") + 1 :][:2] == ["i-0far", "i-0near"]
+    assert cluster.get_ssm_targets("prod", "")[0].same_vpc is False  # no VPC known
+
+    answers["describe-instance-information"] = {"InstanceInformationList": []}
+    assert cluster.get_ssm_targets("prod", "vpc-1") == []
+
+
+def test_the_log_files_of_an_rds_instance_come_newest_first_and_a_log_is_read(
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(cluster, "_eks_target", lambda _c: ["--name", "shop"])
+    monkeypatch.setattr(cluster, "_context_env", lambda _c: None)
+    seen = []
+    answers = {
+        "describe-db-log-files": {
+            "DescribeDBLogFiles": [
+                {"LogFileName": "old.log", "Size": 10, "LastWritten": 1},
+                {"LogFileName": "new.log", "Size": "x", "LastWritten": 9},
+                {"LogFileName": "", "Size": 1},
+                "odd",
+            ]
+        },
+        "download-db-log-file-portion": {"LogFileData": "line one\nline two\n"},
+    }
+
+    def run(command, env):
+        seen.append(command)
+        return json.dumps(answers[command[2]])
+
+    monkeypatch.setattr(cluster, "_run_aws", run)
+
+    files = cluster.get_rds_log_files("prod", "orders")
+
+    assert [(f.name, f.size, f.written) for f in files] == [
+        ("new.log", 0, 9),
+        ("old.log", 10, 1),
+    ]
+    assert cluster.get_rds_log("prod", "orders", "new.log") == "line one\nline two\n"
+    assert "--log-file-name" in seen[1] and "new.log" in seen[1]
+    assert str(cluster.RDS_LOG_LINES) in seen[1] and "--no-paginate" in seen[1]
+    answers["download-db-log-file-portion"] = {}
+    assert cluster.get_rds_log("prod", "orders", "x") == ""
+
+
+def test_a_terminal_is_opened_with_the_extra_environment_only_when_there_is_some(
+    monkeypatch,
+) -> None:
+    started = []
+    monkeypatch.setattr(
+        cluster, "_terminal_launcher", lambda command: ["term", *command]
+    )
+    monkeypatch.setattr(
+        cluster.subprocess,
+        "Popen",
+        lambda launcher, **options: started.append((launcher, options)),
+    )
+
+    cluster.open_in_terminal(["kubectl", "exec"])
+    cluster.open_in_terminal(["aws", "ssm"], {"AWS_PROFILE": "work"})
+
+    assert started[0] == (["term", "kubectl", "exec"], {})
+    assert started[1][0] == ["term", "aws", "ssm"]
+    assert started[1][1]["env"]["AWS_PROFILE"] == "work"
+
+    def broken(launcher, **options):
+        raise OSError("no")
+
+    monkeypatch.setattr(cluster.subprocess, "Popen", broken)
+    with pytest.raises(cluster.ClusterError, match="Could not open a terminal"):
+        cluster.open_in_terminal(["x"], {"A": "1"})
+
+
+def test_the_instance_of_a_node_comes_from_its_provider_id(monkeypatch) -> None:
+    documents = {
+        "ec2": {"spec": {"providerID": "aws:///us-east-1a/i-0abc123"}},
+        "fargate": {"spec": {"providerID": "aws:///us-east-1a/fargate-ip-10"}},
+        "none": {},
+    }
+    monkeypatch.setattr(
+        cluster, "get_resource_details", lambda context, kind, ns, name: documents[name]
+    )
+    monkeypatch.setattr(cluster, "_aws_scope", lambda _c: ("sa-east-1", "work", "1"))
+
+    assert cluster.get_node_instance("prod", "ec2") == (
+        "i-0abc123",
+        "sa-east-1",
+        "work",
+    )
+    with pytest.raises(cluster.ClusterError, match="not an EC2 instance"):
+        cluster.get_node_instance("prod", "fargate")
+    with pytest.raises(cluster.ClusterError, match="not an EC2 instance"):
+        cluster.get_node_instance("prod", "none")
+
+    def not_eks(_context):
+        raise cluster.ClusterError("not EKS")
+
+    monkeypatch.setattr(cluster, "_aws_scope", not_eks)  # the zone gives the region
+    assert cluster.get_node_instance("prod", "ec2") == ("i-0abc123", "us-east-1", "")
+
+
+def test_a_command_with_a_double_dash_goes_to_the_terminal_in_one_argument(
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(cluster.sys, "platform", "linux")
+    monkeypatch.setattr(cluster, "in_flatpak", lambda: False)
+    monkeypatch.setattr(cluster.shutil, "which", lambda name: f"/bin/{name}")
+    command = [
+        "kubectl",
+        "exec",
+        "-it",
+        "api-1",
+        "-c",
+        "app",
+        "--",
+        "sh",
+        "-c",
+        "a && b",
+    ]
+
+    launcher = cluster._terminal_launcher(command)
+
+    assert launcher is not None and launcher[:3] == [
+        "/bin/x-terminal-emulator",
+        "-e",
+        "sh",
+    ]
+    assert launcher[3] == "-c" and "--" in launcher[4] and len(launcher) == 5
+    assert "'a && b'" in launcher[4]  # quoted: the terminal never reads it
+
+
+def test_the_environment_of_a_context_is_its_keys_or_nothing(monkeypatch) -> None:
+    monkeypatch.setattr(cluster, "_context_env", lambda _c: {"AWS_PROFILE": "work"})
+    assert cluster.context_environment("prod") == {"AWS_PROFILE": "work"}
+    monkeypatch.setattr(cluster, "_context_env", lambda _c: None)
+    assert cluster.context_environment("prod") == {}
+
+
+def test_a_region_chosen_replaces_the_one_of_the_context_in_every_aws_call(
+    monkeypatch,
+) -> None:
+    arn = "arn:aws:eks:us-east-1:107616205814:cluster/shop"
+    monkeypatch.setattr(cluster, "_eks_target", lambda _c: ["--name", "shop"])
+    monkeypatch.setattr(cluster, "_context_env", lambda _c: None)
+    seen = []
+    monkeypatch.setattr(
+        cluster, "_run_aws", lambda command, env: seen.append(command) or "{}"
+    )
+
+    cluster.get_rds_instances(arn)  # the region of the context
+    cluster.get_rds_instances(arn, "eu-west-1")  # the one chosen
+    with pytest.raises(cluster.ClusterError):
+        cluster.get_rds_details(arn, "orders", "sa-east-1")
+    cluster.get_rds_log_files(arn, "orders", "sa-east-1")
+    cluster.get_rds_log(arn, "orders", "x.log", "sa-east-1")
+    cluster.get_ssm_targets(arn, "vpc-1", "sa-east-1")
+
+    regions = [command[command.index("--region") + 1] for command in seen]
+    assert regions == [
+        "us-east-1",
+        "eu-west-1",
+        "sa-east-1",
+        "sa-east-1",
+        "sa-east-1",
+        "sa-east-1",
+    ]
+
+
+def test_the_region_of_a_context_is_known_or_empty_and_the_list_of_regions_has_it(
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(cluster, "_aws_scope", lambda _c: ("sa-east-1", "work", "1"))
+    assert cluster.context_region("prod") == "sa-east-1"
+
+    def not_eks(_context):
+        raise cluster.ClusterError("not EKS")
+
+    monkeypatch.setattr(cluster, "_aws_scope", not_eks)
+    assert cluster.context_region("prod") == ""
+    assert "us-east-1" in cluster.AWS_REGIONS and "sa-east-1" in cluster.AWS_REGIONS
+    assert len(set(cluster.AWS_REGIONS)) == len(cluster.AWS_REGIONS)

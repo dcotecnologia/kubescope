@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>ForwardsPage</class>
+ <widget class="QWidget" name="ForwardsPage">
+  <layout class="QVBoxLayout" name="forwardsLayout" stretch="0,1">
+   <property name="spacing">
+    <number>14</number>
+   </property>
+   <property name="leftMargin">
+    <number>32</number>
+   </property>
+   <property name="topMargin">
+    <number>24</number>
+   </property>
+   <property name="rightMargin">
+    <number>32</number>
+   </property>
+   <property name="bottomMargin">
+    <number>22</number>
+   </property>
+   <item>
+    <layout class="QHBoxLayout" name="forwardsHeaderRow">
+     <property name="spacing">
+      <number>8</number>
+     </property>
+     <item>
+      <widget class="QPushButton" name="stopButton">
+       <property name="text">
+        <string>Stop</string>
+       </property>
+       <property name="variant" stdset="0">
+        <string notr="true">secondary</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="stopAllButton">
+       <property name="text">
+        <string>Stop all</string>
+       </property>
+       <property name="variant" stdset="0">
+        <string notr="true">secondary</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="clearButton">
+       <property name="text">
+        <string>Clear finished</string>
+       </property>
+       <property name="variant" stdset="0">
+        <string notr="true">secondary</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLabel" name="noticeLabel">
+       <property name="text">
+        <string notr="true" />
+       </property>
+       <property name="variant" stdset="0">
+        <string notr="true">muted</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <spacer name="forwardsHeaderSpacer">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <widget class="QTableWidget" name="forwardsTable">
+     <property name="editTriggers">
+      <set>QAbstractItemView::NoEditTriggers</set>
+     </property>
+     <property name="selectionMode">
+      <enum>QAbstractItemView::SingleSelection</enum>
+     </property>
+     <property name="selectionBehavior">
+      <enum>QAbstractItemView::SelectRows</enum>
+     </property>
+     <property name="showGrid">
+      <bool>false</bool>
+     </property>
+     <attribute name="verticalHeaderVisible">
+      <bool>false</bool>
+     </attribute>
+     <attribute name="horizontalHeaderStretchLastSection">
+      <bool>true</bool>
+     </attribute>
+     <column>
+      <property name="text">
+       <string>NAME</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>TYPE</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>LOCAL</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>TARGET</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>STATUS</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>DETAIL</string>
+      </property>
+     </column>
+     <property name="variant" stdset="0">
+      <string notr="true">data</string>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

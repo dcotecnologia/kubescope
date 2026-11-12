@@ -84,6 +84,7 @@ from kubescope import (
     PROJECT_URL,
     SPONSOR_URL,
     __version__,
+    forwards,
     integrations,
 )
 from kubescope.assistant import ASSISTANTS, runner
@@ -104,26 +105,36 @@ from kubescope.assistant.screen import (
 )
 from kubescope.assistant.session import ChatSession
 from kubescope.cluster import (
+    AWS_REGIONS,
     ClusterError,
     LoginAction,
     cancel_running,
     check_login,
+    context_environment,
+    context_region,
     describe_kube,
     forget_clients,
     get_cluster_info,
     get_cluster_overview,
     get_forward_sources,
+    get_node_instance,
     get_pod_logs,
     get_pod_usage,
     get_pods,
+    get_rds_details,
+    get_rds_instances,
+    get_rds_log,
+    get_rds_log_files,
     get_resource_details,
     get_resources,
+    get_ssm_targets,
     get_usage,
     get_workload_pods,
     get_workloads,
     get_workloads_overview,
     is_eks_context,
     list_contexts,
+    open_in_terminal,
     parse_command,
     retry_sign_in,
     run_login,
@@ -137,6 +148,7 @@ from kubescope.dialogs.changelog_dialog import ChangelogDialog
 from kubescope.dialogs.global_search import GlobalSearch, SearchEntry
 from kubescope.dialogs.theme_editor import ThemeEditor
 from kubescope.dialogs.update_dialog import UpdateDialog
+from kubescope.forwards import Forward
 from kubescope.i18n import (
     apply_language,
     language_choices,
@@ -151,6 +163,9 @@ from kubescope.models import (
     ClusterOverview,
     ClusterResource,
     PodInfo,
+    RdsInstance,
+    RdsLogFile,
+    SsmTarget,
     Workload,
     WorkloadsOverview,
     event_link,
@@ -183,16 +198,17 @@ from kubescope.theme import (
     themed_stylesheet,
     themes_directory,
 )
+from kubescope.ui.ui_forwards_page import Ui_ForwardsPage
 from kubescope.ui.ui_main_window import Ui_MainWindow
 from kubescope.ui.ui_overview_page import Ui_OverviewPage
 from kubescope.ui.ui_pods_dialog import Ui_PodsDialog
+from kubescope.ui.ui_rds_page import Ui_RdsPage
 from kubescope.ui.ui_settings_page import Ui_SettingsPage
 from kubescope.ui.ui_viewer_page import Ui_ViewerPage
 from kubescope.ui.ui_workloads_overview_page import Ui_WorkloadsOverviewPage
 from kubescope.utils import shortcuts
 from kubescope.utils.diagnostics import configure_logging, log_file
 from kubescope.utils.errors import (
-    ErrorInfo,
     describe_error,
     first_line,
     forbidden_action,
@@ -221,6 +237,8 @@ from kubescope.views.container_states import (
 )
 from kubescope.views.detail_tab import USAGE_REFRESH_MS, DetailTab
 from kubescope.views.dialog_frame import frames
+from kubescope.views.error_banner import ErrorBanner
+from kubescope.views.forward_runner import ForwardRunner
 from kubescope.views.log_tab import LOG_REFRESH_MS, LogTab
 from kubescope.views.nav_chevron import NavChevron
 from kubescope.views.search_bar import compile_query, switch_button
@@ -235,11 +253,17 @@ from kubescope.writes import (
     delete_resource,
     evict_pod,
     forward_commands,
+    forward_run,
+    node_shell_arguments,
+    node_shell_commands,
     replace_resource,
     restart_deployment,
     scale_deployment,
     service_ports,
     shell_commands,
+    shell_run,
+    ssm_forward_arguments,
+    ssm_forward_commands,
 )
 
 # The buttons of the write mode that each list view shows.
@@ -390,9 +414,22 @@ def _pair(color: str) -> tuple[str, str]:
     return color, color
 
 
-_GOOD_STATUSES = {"NORMAL", "ACTIVE", "DEPLOYED"}
-_WARNING_STATUSES = {"WARNING", "CREATING", "UPDATING", "DELETING", "UNINSTALLING"}
-_BAD_WORDS = ("FAIL", "ERROR", "DEGRADED")
+_GOOD_STATUSES = {"NORMAL", "ACTIVE", "DEPLOYED", "AVAILABLE", "RUNNING"}
+_WARNING_STATUSES = {
+    "WARNING",
+    "CREATING",
+    "UPDATING",
+    "DELETING",
+    "UNINSTALLING",
+    "MODIFYING",
+    "BACKING-UP",
+    "REBOOTING",
+    "STARTING",
+    "STOPPING",
+    "UPGRADING",
+    "RENAMING",
+}
+_BAD_WORDS = ("FAIL", "ERROR", "DEGRADED", "INCOMPATIBLE")
 
 
 def _badge_colors(status: str) -> tuple[str, str]:
@@ -507,6 +544,12 @@ def _nav_icon(shape: str, colors: tuple[str, str] | None = None) -> QIcon:
             painter.drawRoundedRect(QRectF(3, 10, 12, 5), 1.2, 1.2)
             painter.drawPoint(QPointF(5.8, 5.5))
             painter.drawPoint(QPointF(5.8, 12.5))
+        elif shape == "database":  # a cylinder
+            painter.drawEllipse(QRectF(3.5, 2.5, 11, 4))
+            painter.drawLine(QPointF(3.5, 4.5), QPointF(3.5, 13.5))
+            painter.drawLine(QPointF(14.5, 4.5), QPointF(14.5, 13.5))
+            painter.drawArc(QRectF(3.5, 11.5, 11, 4), 180 * 16, 180 * 16)
+            painter.drawArc(QRectF(3.5, 7, 11, 4), 180 * 16, 180 * 16)
         elif shape == "config":  # two sliders
             painter.drawLine(QPointF(3, 6), QPointF(15, 6))
             painter.drawLine(QPointF(3, 12), QPointF(15, 12))
@@ -900,7 +943,13 @@ class WorkloadWindow(QMainWindow):
         ).custom = not self.settings.system_title_bar
         self.no_contexts_banner = ui.noContextsBanner
         self.permission_banner = ui.permissionBanner
-        ui.permissionDismiss.clicked.connect(self._hide_permission_banner)
+        self.error_banner = ErrorBanner(
+            ui.permissionBanner,
+            ui.permissionLabel,
+            ui.permissionDetails,
+            ui.permissionDismiss,
+            ui.permissionDetailsText,
+        )
         self.pages = ui.pages
         self.nav_overview = ui.navOverview
         self.nav_workloads = ui.navWorkloads
@@ -942,6 +991,9 @@ class WorkloadWindow(QMainWindow):
         self._drop_marker.setObjectName("dropMarker")
         self._drop_marker.hide()
         self.config_submenu = ui.configSubmenu
+        self.nav_rds = ui.navRds
+        self.rds_submenu = ui.rdsSubmenu
+        self.nav_rds_instances = ui.navRdsInstances
         # the two overview pages pin like a list does, by the page they show
         self._nav_pages = {
             "cluster-overview": (self.nav_overview, 0),
@@ -997,7 +1049,70 @@ class WorkloadWindow(QMainWindow):
         self.nodes_heading = ui.nodesHeading
         self.workloads_ui = Ui_WorkloadsOverviewPage()
         self.workloads_ui.setupUi(ui.workloadsOverviewHost)
+        self.forwards_ui = Ui_ForwardsPage()
+        self.forwards_ui.setupUi(ui.forwardsHost)
+        self.forward_runner = ForwardRunner(self)
+        self.nav_forwards = ui.navForwards
+        self.forwards_ui.forwardsTable.setItemDelegateForColumn(
+            4,
+            BadgeDelegate(self.forwards_ui.forwardsTable),  # the status, as a badge
+        )
+        for column, width in enumerate((200, 80, 150, 280, 110)):
+            self.forwards_ui.forwardsTable.setColumnWidth(column, width)
+        self.forward_runner.changed.connect(self._render_forwards)
+        self.forward_runner.failed.connect(self._forward_failed)
+        self.nav_forwards.clicked.connect(lambda: self._show_page(6))
+        self.forwards_ui.stopButton.clicked.connect(self._stop_selected_forward)
+        self.forwards_ui.stopAllButton.clicked.connect(self.forward_runner.stop_all)
+        self.forwards_ui.clearButton.clicked.connect(self.forward_runner.clear_finished)
+        self.forwards_ui.forwardsTable.itemSelectionChanged.connect(
+            self._render_forwards_buttons
+        )
+        self.forward_runner.adopt()  # the ones an earlier run left running
+        self._render_forwards()
+        self.nodes_table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.nodes_table.customContextMenuRequested.connect(self._show_node_menu)
+        self.rds_ui = Ui_RdsPage()
+        self.rds_ui.setupUi(ui.rdsHost)
+        self.rds_case_button = switch_button("Aa", self.tr("Match case"))
+        self.rds_regex_button = switch_button(".*", self.tr("Regular expression"))
+        header_row = self.rds_ui.rdsHeaderRow
+        after_search = header_row.indexOf(self.rds_ui.searchInput) + 1
+        for button in (self.rds_regex_button, self.rds_case_button):
+            header_row.insertWidget(after_search, button)
+        self.rds_ui.searchInput.textChanged.connect(self._filter_rds)
+        self.rds_case_button.toggled.connect(self._filter_rds)
+        self.rds_regex_button.toggled.connect(self._filter_rds)
+        self._rds: list[RdsInstance] | None = None
+        self._aws_accounts: tuple[str, ...] = ()  # the ones the Integrations show
+        self._rds_context = ""
+        self._rds_region = ""
+        region_combo = self.rds_ui.regionCombo
+        for code in AWS_REGIONS:
+            region_combo.addItem(code, code)
+        region_combo.currentIndexChanged.connect(self._rds_region_changed)
+        self.rds_banner = ErrorBanner(
+            self.rds_ui.rdsBanner,
+            self.rds_ui.bannerLabel,
+            self.rds_ui.detailsButton,
+            self.rds_ui.dismissButton,
+            self.rds_ui.bannerDetails,
+        )
+        self.rds_ui.instancesTable.setContextMenuPolicy(
+            Qt.ContextMenuPolicy.CustomContextMenu
+        )
+        self.rds_ui.instancesTable.customContextMenuRequested.connect(
+            self._show_rds_menu
+        )
+        self.rds_ui.instancesTable.cellDoubleClicked.connect(self._rds_row_details)
+        for column, width in enumerate((300, 100, 80, 120, 100, 90, 90, 100, 150)):
+            self.rds_ui.instancesTable.setColumnWidth(column, width)  # NAME is wide
+        self.rds_ui.instancesTable.setItemDelegateForColumn(
+            4,
+            BadgeDelegate(self.rds_ui.instancesTable),  # the status, as a badge
+        )
         self.workloads_refresh_button = ui.workloadsRefreshButton
+        self.rds_refresh_button = ui.rdsRefreshButton
         self.workloads_table = self.workloads_ui.eventsTable
         self.workloads_table.setItemDelegateForColumn(
             0, BadgeDelegate(self.workloads_table)
@@ -1066,6 +1181,9 @@ class WorkloadWindow(QMainWindow):
             self.nav_workloads,
             self.nav_network,
             self.nav_config,
+            self.nav_rds,
+            self.nav_rds_instances,
+            self.nav_forwards,
             self.nav_workloads_overview,
             *self._nav_views.values(),
             ui.settingsButton,
@@ -1074,12 +1192,22 @@ class WorkloadWindow(QMainWindow):
         self.nav_workloads.setCheckable(False)
         self.nav_network.setCheckable(False)
         self.nav_config.setCheckable(False)
+        self.nav_rds.setCheckable(False)
         ui.navNodeGroups.setVisible(False)  # only EKS contexts have Node Groups
-        for button in (self.refresh_button, self.workloads_refresh_button):
+        for button in (
+            self.refresh_button,
+            self.workloads_refresh_button,
+            self.rds_refresh_button,
+        ):
             button.setVisible(False)  # the Overview opens first
         self._render_pinned()
         self._submenus = {}
-        for submenu in (self.submenu, self.network_submenu, self.config_submenu):
+        for submenu in (
+            self.submenu,
+            self.network_submenu,
+            self.config_submenu,
+            self.rds_submenu,
+        ):
             animation = QPropertyAnimation(submenu, b"maximumHeight")
             animation.setDuration(180)
             animation.setEasingCurve(QEasingCurve.Type.InOutCubic)
@@ -1089,16 +1217,19 @@ class WorkloadWindow(QMainWindow):
             self.submenu: "workloads",
             self.network_submenu: "network",
             self.config_submenu: "config",
+            self.rds_submenu: "rds",
         }
         closed = self.settings.menu_collapsed
         headers = {
             self.submenu: self.nav_workloads,
             self.network_submenu: self.nav_network,
             self.config_submenu: self.nav_config,
+            self.rds_submenu: self.nav_rds,
         }
         self._chevrons = {
             submenu: NavChevron(header) for submenu, header in headers.items()
         }
+        self._sync_aws_menu()
         for submenu, name in self._menu_names.items():
             if name not in closed:  # every section starts open, unless it was closed
                 submenu.setMaximumHeight(MENU_OPEN)
@@ -1256,6 +1387,9 @@ class WorkloadWindow(QMainWindow):
         self.nav_config.clicked.connect(
             lambda: self._toggle_submenu(self.config_submenu)
         )
+        self.nav_rds.clicked.connect(lambda: self._toggle_submenu(self.rds_submenu))
+        self.nav_rds_instances.clicked.connect(lambda: self._show_page(5))
+        self.rds_refresh_button.clicked.connect(self._load_rds)
         for view, button in self._nav_views.items():
             button.clicked.connect(
                 lambda _checked=False, view=view: self._open_list_view(view)
@@ -1302,6 +1436,7 @@ class WorkloadWindow(QMainWindow):
             1: self.refresh_button,
             3: tab.ui.refreshButton if isinstance(tab, LogTab) else None,
             4: self.workloads_refresh_button,
+            5: self.rds_refresh_button,
         }.get(page)
         if button is not None:
             button.click()
@@ -1897,8 +2032,12 @@ class WorkloadWindow(QMainWindow):
                 self._reveal_in_menu(button)
         self.ui.settingsButton.setChecked(index == 2)
         self.nav_workloads_overview.setChecked(index == 4)
+        self.nav_rds_instances.setChecked(index == 5)
+        self.nav_forwards.setChecked(index == 6)
         if index == 4:
             self._reveal_in_menu(self.nav_workloads_overview)
+        if index == 5:
+            self._reveal_in_menu(self.nav_rds_instances)
         self._apply_page_titles()
         self._render_pinned()
         self._remember_screen()
@@ -1906,12 +2045,15 @@ class WorkloadWindow(QMainWindow):
             (0, self.overview_refresh_button),
             (1, self.refresh_button),
             (4, self.workloads_refresh_button),
+            (5, self.rds_refresh_button),
         ):
             button.setVisible(index == page)  # the page's own, next to its title
         if index == 0:
             self._ensure_overview()
         elif index == 4:
             self._ensure_workloads_overview()
+        elif index == 5:
+            self._ensure_rds()
         elif index == 2:
             self._load_settings_form()
 
@@ -1927,6 +2069,14 @@ class WorkloadWindow(QMainWindow):
         elif self.pages.currentIndex() == 2:
             self.ui.pageTitle.setText(self.tr("Settings"))
             self.ui.pageSubtitle.setText(self.tr("Preferences and context names"))
+        elif self.pages.currentIndex() == 6:
+            self.ui.pageTitle.setText(self.tr("Port forwards"))
+            self.ui.pageSubtitle.setText(self.tr("The forwards started from KubeScope"))
+        elif self.pages.currentIndex() == 5:
+            self.ui.pageTitle.setText(self.tr("RDS instances"))
+            self.ui.pageSubtitle.setText(
+                self.tr("Databases of the AWS account of the selected context")
+            )
         elif self.pages.currentIndex() == 4:
             self.ui.pageTitle.setText(self.tr("Workloads overview"))
             self.ui.pageSubtitle.setText(
@@ -2234,6 +2384,8 @@ class WorkloadWindow(QMainWindow):
         self.ui.navNodeGroups.setIcon(_nav_icon("nodegroups"))
         self.nav_network.setIcon(_nav_icon("network"))
         self.nav_config.setIcon(_nav_icon("config"))
+        self.nav_rds.setIcon(_nav_icon("database"))
+        self.nav_forwards.setIcon(_nav_icon("forward"))
         self.save_button.setIcon(_nav_icon("save"))
         icon_only(
             self.settings_ui.saveButton,
@@ -2246,6 +2398,7 @@ class WorkloadWindow(QMainWindow):
             self.workloads_refresh_button,
             self.overview_refresh_button,
             self.refresh_button,
+            self.rds_refresh_button,
         ):
             button.setIcon(_nav_icon("reload", light))
         accent = _pair(themed("#3220a0"))
@@ -2599,6 +2752,11 @@ class WorkloadWindow(QMainWindow):
         ):
             self._end_assistant_chat()
             self.assistant_dock.close()
+        self._rds = None  # the instances are those of the context
+        self._sync_aws_menu()  # an EKS context brings the AWS part of the menu
+        if self.pages.currentIndex() == 5:
+            self._sync_rds_region()  # and its region is the one to look in
+            self._load_rds()
         self._select_default_namespace()
         self._hide_permission_banner()
         self._overview_context = None
@@ -2749,11 +2907,8 @@ class WorkloadWindow(QMainWindow):
         self._workloads_overview_busy = False
         if is_auth_error(message):
             self._check_login()
-        info = describe_error(message)
-        label = self.workloads_ui.noticeLabel
-        label.setTextFormat(Qt.TextFormat.RichText)
-        label.setText(self._error_html(info))
-        label.setToolTip(info.details)
+        self.workloads_ui.noticeLabel.setText("")
+        self._show_error_banner(message)
 
     def _show_workloads_overview(
         self, context: str, overview: WorkloadsOverview
@@ -2872,24 +3027,13 @@ class WorkloadWindow(QMainWindow):
             on_error=self._show_overview_error,
         )
 
-    @staticmethod
-    def _error_html(info: ErrorInfo) -> str:
-        color = themed("#a33d45")
-        return (
-            f'<span style="color:{color}"><b>{html.escape(info.title)}</b></span>'
-            f"<br>{html.escape(info.hint)}"
-        )
-
     def _show_overview_error(self, message: str) -> None:
         logger.info("Overview failed: %s", first_line(message))
         self._overview_busy = False
         if is_auth_error(message):
             self._check_login()
-        info = describe_error(message)
-        label = self.overview_ui.noticeLabel
-        label.setTextFormat(Qt.TextFormat.RichText)
-        label.setText(self._error_html(info))
-        label.setToolTip(info.details)
+        self.overview_ui.noticeLabel.setText("")
+        self._show_error_banner(message)
 
     def _reset_overview(self) -> None:
         overview = self.overview_ui
@@ -3084,6 +3228,7 @@ class WorkloadWindow(QMainWindow):
                 self.refresh_button,
                 self.overview_refresh_button,
                 self.workloads_refresh_button,
+                self.rds_refresh_button,
             ):
                 self._flash_done(button)
 
@@ -3110,6 +3255,7 @@ class WorkloadWindow(QMainWindow):
             self.refresh_button,
             self.overview_refresh_button,
             self.workloads_refresh_button,
+            self.rds_refresh_button,
         )
         color = "#ffffff" if self._spinner_button in primary else themed("#3220a0")
         self._spinner_button.setIcon(_spinner_icon(self._spinner_angle, color))
@@ -4394,18 +4540,12 @@ class WorkloadWindow(QMainWindow):
         icon: QMessageBox.Icon,
         title: str,
         text: str,
-        hint: str = "",
-        details: str = "",
     ) -> None:
         """Tell the person something, in a box styled like the window."""
         box = QMessageBox(self)
         box.setIcon(icon)
         box.setWindowTitle(title)
         box.setText(text)
-        if hint:
-            box.setInformativeText(hint)
-        if details:
-            box.setDetailedText(details)
         ok = box.addButton(self.tr("OK"), QMessageBox.ButtonRole.AcceptRole)
         box.setDefaultButton(ok)
         self._style_box_buttons(box)
@@ -4445,12 +4585,7 @@ class WorkloadWindow(QMainWindow):
     def _show_write_error(self, message: str) -> None:
         if self._close_when_worker_stops:
             return
-        self._show_message(
-            QMessageBox.Icon.Warning,
-            self.tr("Action failed"),
-            first_line(message),
-            details=message,
-        )
+        self._show_error_banner(message)
 
     def _delete_pod(self, pod: PodInfo) -> None:
         question = self.tr("Delete the Pod {name} in {namespace}?").format(
@@ -4589,17 +4724,104 @@ class WorkloadWindow(QMainWindow):
         combo.setProperty("variant", "filter")
         combo.addItems(pod.containers)
         layout.addWidget(combo)
-        text = QLabel(self.tr("Run this in a terminal to open a shell:"))
+        text = QLabel(self.tr("Open a terminal with this shell, or run it in one:"))
         text.setWordWrap(True)
         layout.addWidget(text)
+
+        def open_here() -> None:
+            command, env = shell_run(
+                context, pod.namespace, pod.name, combo.currentText()
+            )
+            self._open_terminal(dialog, command, env)
+
         refresh = self._add_command_views(
             dialog,
             layout,
             lambda: shell_commands(
                 context, pod.namespace, pod.name, combo.currentText()
             ),
+            open_here,
+            self.tr("Open in terminal"),
         )
         combo.currentIndexChanged.connect(refresh)
+        dialog.exec()
+
+    def _open_terminal(
+        self, dialog: QDialog, command: list[str], env: dict[str, str]
+    ) -> None:
+        """Open the terminal of the system with a command; the program is the
+        person's and the app sees nothing of what is typed."""
+        try:
+            open_in_terminal(command, env)
+        except ClusterError as error:
+            self._show_error_banner(str(error))
+            return
+        dialog.accept()
+
+    def _show_node_menu(self, position: QPoint) -> None:
+        """Right-click on a node: with the write mode on, a shell on it through
+        AWS Systems Manager."""
+        table = self.nodes_table
+        row = table.rowAt(position.y())
+        item = table.item(row, 0) if row >= 0 else None
+        if item is None or not self.settings.write_mode:
+            return
+        table.selectRow(row)
+        menu = QMenu(self)
+        self._add_entries(
+            menu,
+            [
+                (
+                    "shell",
+                    self.tr("Shell (SSM)"),
+                    partial(self._node_shell, item.text()),
+                )
+            ],
+        )
+        menu.exec(table.viewport().mapToGlobal(position))
+
+    def _node_shell(self, name: str) -> None:
+        """Find the EC2 instance of a node, then show the command that opens a
+        shell on it."""
+        self._run_action(
+            get_node_instance,
+            partial(self._show_node_shell, name),
+            self._context(),
+            name,
+        )
+
+    def _show_node_shell(self, name: str, found: tuple[str, str, str]) -> None:
+        instance, region, profile = found
+        context = self._context()
+        dialog = QDialog(self)
+        dialog.setWindowTitle(self.tr("Shell (SSM)"))
+        dialog.setMinimumWidth(560)
+        layout = QVBoxLayout(dialog)
+        layout.setContentsMargins(16, 16, 16, 16)
+        layout.setSpacing(10)
+        intro = self.tr("Node {name} is the EC2 instance {instance}.")
+        layout.addWidget(QLabel(intro.format(name=name, instance=instance)))
+        text = QLabel(
+            self.tr(
+                "Open a terminal with this shell, or run it in one. It needs the "
+                "Session Manager plugin of the AWS CLI, and the node has to be "
+                "managed by Systems Manager."
+            )
+        )
+        text.setWordWrap(True)
+        layout.addWidget(text)
+
+        def open_here() -> None:
+            command = node_shell_arguments(instance, region, profile)
+            self._open_terminal(dialog, command, context_environment(context))
+
+        self._add_command_views(
+            dialog,
+            layout,
+            lambda: node_shell_commands(instance, region, profile),
+            open_here,
+            self.tr("Open in terminal"),
+        )
         dialog.exec()
 
     def _add_command_views(
@@ -4607,16 +4829,20 @@ class WorkloadWindow(QMainWindow):
         dialog: QDialog,
         layout: QVBoxLayout,
         build: Callable[[], list[tuple[str, str]]],
+        run: Callable[[], None] | None = None,
+        run_label: str | None = None,
     ) -> Callable[[], None]:
         """Show the commands that `build` returns as (shell, command) pairs: a
         box for each, named by its shell when there is more than one
-        (PowerShell and cmd on Windows), with its own Copy button, and a Close
-        button at the foot.
+        (PowerShell and cmd on Windows), with a Copy button, and at the foot
+        the buttons of the dialog, all alike: Copy (when there is one command),
+        Run in KubeScope (when `run` is given) and Close.
 
         Returns the function that shows them again after a choice
         changed.
         """
         boxes = []
+        copies = []
         for shell, _command in build():
             if shell:
                 layout.addWidget(QLabel(shell))
@@ -4625,32 +4851,47 @@ class WorkloadWindow(QMainWindow):
             box.setFont(code_font())
             box.setFixedHeight(96 if not shell else 64)
             layout.addWidget(box)
-            copy_button = QPushButton(self.tr("Copy"))
-            copy_button.setProperty("variant", "primary")
+            copy_button = self._dialog_button(self.tr("Copy"))
             copy_button.clicked.connect(
                 lambda _checked=False, box=box: QApplication.clipboard().setText(
                     box.toPlainText()
                 )
             )
-            row = QHBoxLayout()
-            row.addStretch()
-            row.addWidget(copy_button)
-            layout.addLayout(row)
+            copies.append(copy_button)
             boxes.append(box)
 
         def refresh() -> None:
             for box, (_shell, command) in zip(boxes, build(), strict=True):
                 box.setPlainText(command)
 
-        close_button = QPushButton(self.tr("Close"))
-        close_button.setProperty("variant", "secondary")
-        close_button.clicked.connect(dialog.accept)
         footer = QHBoxLayout()
         footer.addStretch()
+        if len(copies) == 1:  # one command: its Copy joins the other buttons
+            footer.addWidget(copies[0])
+        else:  # a box for each shell: each has its Copy under it
+            for box, copy_button in zip(boxes, copies, strict=True):
+                row = QHBoxLayout()
+                row.addStretch()
+                row.addWidget(copy_button)
+                layout.insertLayout(layout.indexOf(box) + 1, row)
+        if run is not None:
+            run_button = self._dialog_button(run_label or self.tr("Run in KubeScope"))
+            run_button.clicked.connect(run)
+            footer.addWidget(run_button)
+        close_button = self._dialog_button(self.tr("Close"))
+        close_button.clicked.connect(dialog.accept)
         footer.addWidget(close_button)
         layout.addLayout(footer)
         refresh()
         return refresh
+
+    def _dialog_button(self, text: str) -> QPushButton:
+        """A button of a dialog: every one looks alike and is as wide as the
+        others."""
+        button = QPushButton(text)
+        button.setProperty("variant", "secondary")
+        button.setMinimumWidth(120)
+        return button
 
     def _forward_service(self, service: ClusterResource) -> None:
         self._forward("Service", service)
@@ -4744,6 +4985,26 @@ class WorkloadWindow(QMainWindow):
         )
         text.setWordWrap(True)
         layout.addWidget(text)
+
+        def run_here() -> None:
+            command, env = forward_run(
+                context,
+                service.namespace,
+                service.name,
+                remote_port(),
+                local.value(),
+                kind.lower(),
+            )
+            self._start_forward(
+                dialog,
+                f"{kind} {service.name}",
+                "kubectl",
+                command,
+                env,
+                local.value(),
+                f"{service.name}:{remote_port()}",
+            )
+
         refresh = self._add_command_views(
             dialog,
             layout,
@@ -4755,6 +5016,7 @@ class WorkloadWindow(QMainWindow):
                 local.value(),
                 kind.lower(),
             ),
+            run_here,
         )
 
         def suggest_local_port() -> None:
@@ -5336,6 +5598,7 @@ class WorkloadWindow(QMainWindow):
             layout.addWidget(self._provider_section(provider))
         layout.addWidget(self._local_section())
         layout.addStretch(1)
+        self._aws_accounts = self._aws_account_ids()
 
     def _status_label(self, text: str, connected: bool) -> QLabel:
         label = QLabel(("● " if connected else "○ ") + text)
@@ -5384,6 +5647,8 @@ class WorkloadWindow(QMainWindow):
         }
         title, description, add = texts[provider.id]
         accounts = integrations.accounts(provider.id)
+        if provider.id == "aws":  # the SSO profiles signed in count as plugged in
+            accounts = [*accounts, *integrations.sso_accounts()]
         section = QWidget()
         box = self._section_head(title, description)
         section.setLayout(box)
@@ -5416,6 +5681,8 @@ class WorkloadWindow(QMainWindow):
                 if profile
                 else fields.get("access_key_id", "")
             )
+            if account.id.startswith("sso-"):
+                detail += "  " + self.tr("(SSO)")
         elif account.provider == "azure":
             detail = fields.get("subscription_id", "")
         else:
@@ -5449,6 +5716,15 @@ class WorkloadWindow(QMainWindow):
         button.setText("⋮")
         button.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
         menu = QMenu(button)
+        if account.id.startswith("sso-"):  # found on this computer, not added
+            menu.addAction(self.tr("Find and add clusters")).triggered.connect(
+                partial(self._open_account_dialog, "aws", None, account.name)
+            )
+            menu.addAction(self.tr("Sign in")).triggered.connect(
+                partial(self._sign_in_account, account)
+            )
+            button.setMenu(menu)
+            return button
         menu.addAction(self.tr("Find and add clusters")).triggered.connect(
             partial(self._open_account_dialog, account.provider, account)
         )
@@ -5489,11 +5765,14 @@ class WorkloadWindow(QMainWindow):
         self.settings_ui.noticeLabel.setText(message)
 
     def _open_account_dialog(
-        self, provider: str, account: integrations.Account | None
+        self,
+        provider: str,
+        account: integrations.Account | None,
+        profile: str = "",
     ) -> None:
         """Add a cloud account, or type the keys of one again, and plug the
         clusters chosen."""
-        dialog = AccountDialog(provider, account, self)
+        dialog = AccountDialog(provider, account, self, profile)
         if dialog.exec() != QDialog.DialogCode.Accepted:
             return
         values = dialog.values()
@@ -5523,6 +5802,528 @@ class WorkloadWindow(QMainWindow):
             account.saved() for account in integrations.accounts()
         ]
         self._save_settings()
+        self._rds = None  # the accounts changed: ask again
+        self._sync_aws_menu()
+
+    @staticmethod
+    def _aws_account_ids() -> tuple[str, ...]:
+        """The AWS accounts the Integrations list, the SSO profiles that are
+        signed in included."""
+        return tuple(
+            account.id
+            for account in (*integrations.accounts("aws"), *integrations.sso_accounts())
+        )
+
+    def _uses_aws(self) -> bool:
+        """Whether this computer works with AWS: an account plugged in, a
+        profile of the AWS CLI that signs in with SSO, whether the sign-in is
+        still good or not, or an EKS cluster selected.
+
+        The AWS part of the menu stays while any of them holds, so an
+        expired sign-in never takes it away just when it has to be made
+        again.
+        """
+        if (
+            integrations.accounts("aws")
+            or integrations.sso_accounts()
+            or integrations.sso_profiles()
+        ):
+            return True
+        context = self._context()
+        return bool(context) and is_eks_context(context)
+
+    def _sync_aws_menu(self) -> None:
+        """The AWS part of the side menu shows while AWS is in use, and leaves
+        with the last sign of it."""
+        has_aws = self._uses_aws()
+        for widget in (self.ui.navAwsSection, self.nav_rds, self.rds_submenu):
+            widget.setVisible(has_aws)
+        if self._aws_account_ids() != self._aws_accounts:
+            self._render_integrations()  # a sign-in came or went: the page follows
+        if not has_aws and self.pages.currentIndex() == 5:
+            self._show_page(0)
+
+    def _sync_rds_region(self) -> None:
+        """Choose in the region select the region of the selected context,
+        which is where the instances are looked for until another is chosen."""
+        combo = self.rds_ui.regionCombo
+        region = context_region(self._context()) or combo.currentData() or "us-east-1"
+        combo.blockSignals(True)
+        if combo.findData(region) < 0:  # a region the list does not know
+            combo.insertItem(0, region, region)
+        combo.setCurrentIndex(combo.findData(region))
+        combo.blockSignals(False)
+
+    def _rds_region_changed(self, _index: int) -> None:
+        self._rds = None
+        self._load_rds()
+
+    def _ensure_rds(self) -> None:
+        context = self._context()
+        if self._rds_context != context:  # another context: its region comes first
+            self._sync_rds_region()
+        if self._rds is None or self._rds_context != context:
+            self._load_rds()
+
+    def _load_rds(self) -> None:
+        """Ask for the RDS instances of the AWS account of the selected context
+        in the region chosen, off the UI thread."""
+        context = self._context()
+        region = self.rds_ui.regionCombo.currentData() or ""
+        table = self.rds_ui.instancesTable
+        if not context:
+            table.setRowCount(0)
+            self.rds_ui.noticeLabel.setText(self.tr("Select a context."))
+            return
+        self._hide_rds_banner()
+        self.rds_ui.noticeLabel.setText(self.tr("Loading RDS instances..."))
+        self._run_action(
+            get_rds_instances,
+            partial(self._rds_loaded, context, region),
+            context,
+            region,
+            on_error=partial(self._rds_failed, context, region),
+        )
+
+    def _show_rds_menu(self, position: QPoint) -> None:
+        """Right-click on an instance: its details and, with the write mode on,
+        a forward through AWS Systems Manager."""
+        table = self.rds_ui.instancesTable
+        row = table.rowAt(position.y())
+        if row < 0 or self._rds is None:
+            return
+        table.selectRow(row)
+        instance = self._rds[row]
+        entries = [
+            ("details", self.tr("Details"), partial(self._rds_details, instance)),
+            ("document", self.tr("Logs"), partial(self._rds_logs, instance)),
+        ]
+        if self.settings.write_mode:
+            entries.append(
+                (
+                    "forward",
+                    self.tr("Forward with SSM"),
+                    partial(self._forward_rds, instance),
+                )
+            )
+        menu = QMenu(self)
+        self._add_entries(menu, entries)
+        menu.exec(table.viewport().mapToGlobal(position))
+
+    def _rds_row_details(self, row: int, _column: int) -> None:
+        if self._rds is not None and 0 <= row < len(self._rds):
+            self._rds_details(self._rds[row])
+
+    def _rds_details(self, instance: RdsInstance) -> None:
+        """Everything the AWS CLI says about an instance, in a Details tab."""
+        self._run_action(
+            get_rds_details,
+            partial(self._show_json_dialog, f"RDS: {instance.identifier}"),
+            self._context(),
+            instance.identifier,
+            instance.region,
+        )
+
+    def _render_forwards(self) -> None:
+        """The table of the forwards, their status, and the count in the
+        menu."""
+        table = self.forwards_ui.forwardsTable
+        selected = table.currentRow()
+        items = self.forward_runner.items
+        table.setRowCount(len(items))
+        for row, item in enumerate(items):
+            cells = (
+                item.title,
+                "kubectl" if item.kind == "kubectl" else "SSM",
+                f"127.0.0.1:{item.local}",
+                item.target,
+                self._forward_status_text(item.status),
+                item.detail,
+            )
+            for column, text in enumerate(cells):
+                cell = QTableWidgetItem(text)
+                if column == 4:
+                    cell.setData(BADGE_ROLE, _badge_colors(item.status))
+                table.setItem(row, column, cell)
+        if 0 <= selected < len(items):
+            table.selectRow(selected)
+        active = self.forward_runner.active_count()
+        self.nav_forwards.setText(
+            self.tr("Forwards ({count})").format(count=active)
+            if active
+            else self.tr("Forwards")
+        )
+        self._render_forwards_buttons()
+
+    def _filter_rds(self, *_args: object) -> None:
+        """Show the instances that have what the search looks for in some
+        column, and count them."""
+        ui = self.rds_ui
+        ui.searchInput.setToolTip("")
+        pattern = None
+        text = ui.searchInput.text()
+        try:
+            pattern = compile_query(
+                text if self.rds_regex_button.isChecked() else text.strip(),
+                self.rds_case_button.isChecked(),
+                self.rds_regex_button.isChecked(),
+            )
+        except re.error as error:  # every row stays until it compiles
+            ui.searchInput.setToolTip(str(error))
+        table = ui.instancesTable
+        visible = 0
+        for row in range(table.rowCount()):
+            matches = pattern is None or any(
+                pattern.search(self._cell_text(table.item(row, column)))
+                for column in range(table.columnCount())
+            )
+            table.setRowHidden(row, not matches)
+            visible += matches
+        total = table.rowCount()
+        ui.noticeLabel.setText(
+            self.tr("{count} instances").format(count=total)
+            if pattern is None
+            else self.tr("{visible} of {total} instances").format(
+                visible=visible, total=total
+            )
+        )
+
+    def _forward_failed(self, forward: Forward) -> None:
+        """A forward ended in an error: what its program said, in the
+        banner."""
+        self._show_error_banner(f"{forward.title}: {forward.detail}")
+
+    def _forward_status_text(self, status: str) -> str:
+        return {
+            forwards.STARTING: self.tr("Starting"),
+            forwards.RUNNING: self.tr("Running"),
+            forwards.FAILED: self.tr("Failed"),
+            forwards.STOPPED: self.tr("Stopped"),
+        }.get(status, status)
+
+    def _render_forwards_buttons(self) -> None:
+        ui = self.forwards_ui
+        row = ui.forwardsTable.currentRow()
+        items = self.forward_runner.items
+        ui.stopButton.setEnabled(0 <= row < len(items) and items[row].active)
+        ui.stopAllButton.setEnabled(self.forward_runner.active_count() > 0)
+        ui.clearButton.setEnabled(any(not item.active for item in items))
+
+    def _stop_selected_forward(self) -> None:
+        row = self.forwards_ui.forwardsTable.currentRow()
+        if 0 <= row < len(self.forward_runner.items):
+            self.forward_runner.stop(self.forward_runner.items[row])
+
+    def _start_forward(
+        self,
+        dialog: QDialog,
+        title: str,
+        kind: str,
+        command: list[str],
+        env: dict[str, str],
+        local: int,
+        target: str,
+    ) -> None:
+        """Run a forward from its dialog and show it on the Forwards page."""
+        if forwards.port_in_use(local):
+            self._show_message(
+                QMessageBox.Icon.Warning,
+                self.tr("Forward"),
+                self.tr("The local port {port} is already in use.").format(port=local),
+            )
+            return
+        self.forward_runner.start(title, kind, command, env, local, target)
+        dialog.accept()
+        self._show_page(6)
+
+    def _rds_logs(self, instance: RdsInstance) -> None:
+        """The log files of an instance, to pick one to read."""
+        self._run_action(
+            get_rds_log_files,
+            partial(self._choose_rds_log, instance),
+            self._context(),
+            instance.identifier,
+            instance.region,
+        )
+
+    def _choose_rds_log(self, instance: RdsInstance, files: list[RdsLogFile]) -> None:
+        if not files:
+            self._show_message(
+                QMessageBox.Icon.Information,
+                self.tr("Logs"),
+                self.tr("{name} has no log files.").format(name=instance.identifier),
+            )
+            return
+        names = [
+            f"{item.name}  ({item.size // 1024} KiB, {self._rds_log_time(item)})"
+            for item in files
+        ]
+        chosen, accepted = self._pick_item(
+            self.tr("Logs"), self.tr("Select the log file:"), names
+        )
+        if accepted:
+            self._open_rds_log(instance, files[names.index(chosen)].name)
+
+    @staticmethod
+    def _rds_log_time(item: RdsLogFile) -> str:
+        """When a log file was last written, in the time zone of the
+        settings."""
+        moment = datetime.datetime.fromtimestamp(item.written / 1000, datetime.UTC)
+        return to_zone(moment).strftime("%Y-%m-%d %H:%M")
+
+    def _open_rds_log(self, instance: RdsInstance, name: str) -> None:
+        """Read the end of a log file and show it in a Logs tab; the refresh
+        button reads it again."""
+        context = self._context()
+        stub = PodInfo("", instance.identifier, "", 0, 0, "", ())  # a log has no Pod
+        tab = LogTab(context, stub, name, self.settings.wrap_log_lines)
+        tab.ui.wrapCheck.toggled.connect(self._wrap_logs)
+        tab.ui.refreshButton.setIcon(_nav_icon("reload", _pair(themed("#3220a0"))))
+        tab.ui.refreshButton.clicked.connect(
+            partial(self._read_rds_log, tab, name, instance.region)
+        )
+        title = self.tr("Logs: {pod} / {container}").format(
+            pod=instance.identifier, container=name
+        )
+        self._add_viewer_tab(tab, title)
+        self._read_rds_log(tab, name, instance.region)
+
+    def _read_rds_log(
+        self, tab: LogTab, name: str, region: str, _checked: bool = False
+    ) -> None:
+        if tab.closed or tab.busy:
+            return
+        tab.busy = True
+
+        def done(text: str) -> None:
+            tab.busy = False
+            if not tab.closed:
+                tab.set_logs(text)
+
+        def failed(message: str) -> None:
+            tab.busy = False
+            if not tab.closed:
+                tab.set_error(message)
+
+        self._run_action(
+            get_rds_log,
+            done,
+            tab.context,
+            tab.pod.name,
+            name,
+            region,
+            on_error=failed,
+            quiet=True,
+        )
+
+    def _forward_rds(self, instance: RdsInstance) -> None:
+        """The AWS CLI command that forwards a local port to the database
+        through an EC2 instance with Systems Manager, ready to paste in a
+        terminal; the app runs nothing itself.
+
+        The instance, the region and the profile come filled in.
+        """
+        dialog = QDialog(self)
+        dialog.setWindowTitle(self.tr("Forward with SSM"))
+        dialog.setMinimumWidth(560)
+        layout = QVBoxLayout(dialog)
+        layout.setContentsMargins(16, 16, 16, 16)
+        layout.setSpacing(10)
+        intro = self.tr("Forward a local port to {name} through AWS Systems Manager.")
+        layout.addWidget(QLabel(intro.format(name=instance.identifier)))
+        layout.addWidget(QLabel(self.tr("EC2 instance that reaches the database:")))
+        target = QComboBox()
+        target.setEditable(True)
+        target.setProperty("variant", "filter")
+        target.lineEdit().setPlaceholderText("i-0123456789abcdef0")  # type: ignore[union-attr]
+        layout.addWidget(target)
+        hint = QLabel(self.tr("Looking for an instance Systems Manager can reach..."))
+        hint.setProperty("variant", "muted")
+        hint.setWordWrap(True)
+        layout.addWidget(hint)
+        row = QHBoxLayout()
+        region = QLineEdit(instance.region)
+        profile = QLineEdit(instance.profile)
+        profile.setPlaceholderText(self.tr("default"))
+        for label, edit in (
+            (self.tr("Region:"), region),
+            (self.tr("Profile:"), profile),
+        ):
+            edit.setProperty("variant", "filter")
+            column = QVBoxLayout()
+            column.addWidget(QLabel(label))
+            column.addWidget(edit)
+            row.addLayout(column)
+        layout.addLayout(row)
+        layout.addWidget(QLabel(self.tr("Database port:")))
+        remote = QSpinBox()
+        remote.setProperty("variant", "filter")
+        remote.setRange(1, 65535)
+        remote.setValue(instance.port or 5432)
+        layout.addWidget(remote)
+        layout.addWidget(QLabel(self.tr("Local port:")))
+        local = QSpinBox()
+        local.setProperty("variant", "filter")
+        local.setRange(1, 65535)
+        local.setValue(min(remote.value() + 10000, 65535))  # clear of a local server
+        layout.addWidget(local)
+        text = QLabel(
+            self.tr(
+                "Run this in a terminal and keep it open while you use the port. "
+                "It needs the Session Manager plugin of the AWS CLI."
+            )
+        )
+        text.setWordWrap(True)
+        layout.addWidget(text)
+
+        def chosen() -> str:
+            typed = target.currentText().strip()
+            index = target.findText(typed)
+            return str(target.itemData(index)) if index >= 0 else typed
+
+        def run_here() -> None:
+            if not chosen().startswith(("i-", "mi-")):
+                self._show_message(
+                    QMessageBox.Icon.Warning,
+                    self.tr("Forward with SSM"),
+                    self.tr(
+                        "Type the ID of the EC2 instance, such as i-0123456789abcdef0."
+                    ),
+                )
+                return
+            command = ssm_forward_arguments(
+                chosen(),
+                instance.endpoint,
+                remote.value(),
+                local.value(),
+                region.text().strip(),
+                profile.text().strip(),
+            )
+            self._start_forward(
+                dialog,
+                f"RDS {instance.identifier}",
+                "ssm",
+                command,
+                context_environment(self._context()),
+                local.value(),
+                f"{instance.endpoint}:{remote.value()}",
+            )
+
+        refresh = self._add_command_views(
+            dialog,
+            layout,
+            lambda: ssm_forward_commands(
+                chosen(),
+                instance.endpoint,
+                remote.value(),
+                local.value(),
+                region.text().strip(),
+                profile.text().strip(),
+            ),
+            run_here,
+        )
+        target.editTextChanged.connect(refresh)
+        region.textChanged.connect(refresh)
+        profile.textChanged.connect(refresh)
+        remote.valueChanged.connect(refresh)
+        local.valueChanged.connect(refresh)
+        self._run_action(
+            get_ssm_targets,
+            partial(self._fill_ssm_targets, target, hint),
+            self._context(),
+            instance.vpc,
+            instance.region,
+            on_error=partial(self._ssm_targets_failed, hint),
+            quiet=True,
+        )
+        dialog.exec()
+
+    def _fill_ssm_targets(
+        self, combo: QComboBox, hint: QLabel, targets: list[SsmTarget]
+    ) -> None:
+        """Offer the instances found, the best one first and already chosen
+        unless something was typed meanwhile."""
+        typed = combo.currentText().strip()
+        for found in targets:
+            label = (
+                f"{found.name}  ({found.instance_id})"
+                if found.name
+                else found.instance_id
+            )
+            combo.addItem(label, found.instance_id)
+        if typed:
+            combo.setEditText(typed)  # adding the first item replaced what was typed
+        elif targets:
+            combo.setCurrentIndex(0)
+        if any(found.same_vpc for found in targets):
+            hint.setText(
+                self.tr(
+                    "{count} instances can be reached; the first is in the VPC of "
+                    "the database."
+                ).format(count=len(targets))
+            )
+        else:
+            hint.setText(
+                self.tr(
+                    "No instance in the VPC of the database can be reached by "
+                    "Systems Manager; type the ID of one."
+                )
+            )
+
+    def _ssm_targets_failed(self, hint: QLabel, message: str) -> None:
+        hint.setText(message)
+
+    def _rds_failed(self, context: str, region: str, message: str) -> None:
+        if not self._rds_is_current(context, region):
+            return  # the answer of a context or a region that is no longer chosen
+        self.rds_ui.instancesTable.setRowCount(0)
+        self.rds_ui.noticeLabel.setText("")
+        self._show_rds_banner(message)
+
+    def _show_rds_banner(self, message: str) -> None:
+        """Say what went wrong above the table: a short line with the hint, and
+        the original error one click away."""
+        self.rds_banner.show_error(
+            self._banner_text(message), message.strip(), self._banner_words()
+        )
+
+    def _hide_rds_banner(self) -> None:
+        self.rds_banner.dismiss()
+
+    def _rds_is_current(self, context: str, region: str) -> bool:
+        return context == self._context() and region == (
+            self.rds_ui.regionCombo.currentData() or ""
+        )
+
+    def _rds_loaded(
+        self, context: str, region: str, instances: list[RdsInstance]
+    ) -> None:
+        if not self._rds_is_current(context, region):
+            return  # the answer of a context or a region that is no longer chosen
+        self._rds = instances
+        self._rds_context = context
+        self._rds_region = region
+        table = self.rds_ui.instancesTable
+        table.setRowCount(len(instances))
+        for row, item in enumerate(instances):
+            cells = (
+                item.identifier,
+                item.engine,
+                item.version,
+                item.size,
+                item.status,
+                f"{item.storage} GiB",
+                self.tr("Yes") if item.multi_az else self.tr("No"),
+                item.region,
+                item.account,
+                item.endpoint,
+            )
+            for column, text in enumerate(cells):
+                cell = QTableWidgetItem(text)
+                if column == 4:  # the status, as the other tables show one
+                    cell.setData(BADGE_ROLE, _badge_colors(text))
+                table.setItem(row, column, cell)
+        self._filter_rds()
 
     def _clusters_added(self, plugged: list[integrations.Found]) -> None:
         self._apply_cluster_settings()
@@ -6447,6 +7248,12 @@ class WorkloadWindow(QMainWindow):
             self._retranslate()
         elif event.type() == QEvent.Type.WindowStateChange and hasattr(self, "_frame"):
             self._frame.refresh()
+        elif (
+            event.type() == QEvent.Type.ActivationChange
+            and self.isActiveWindow()
+            and hasattr(self, "_rds")
+        ):
+            self._sync_aws_menu()  # an SSO sign-in may have been made meanwhile
         super().changeEvent(event)
 
     def _show_access_note(self) -> None:
@@ -6488,12 +7295,17 @@ class WorkloadWindow(QMainWindow):
         self.assistant_dock.retranslate()
         self.search_case_button.setToolTip(self.tr("Match case"))
         self.search_regex_button.setToolTip(self.tr("Regular expression"))
+        self.rds_case_button.setToolTip(self.tr("Match case"))
+        self.rds_regex_button.setToolTip(self.tr("Regular expression"))
         self.viewer_ui.retranslateUi(self.ui.viewerHost)
         self._show_version()
         self.overview_ui.retranslateUi(self.ui.overviewHost)
         self._render_cluster_info()
         self.settings_ui.retranslateUi(self.ui.settingsHost)
         self.workloads_ui.retranslateUi(self.ui.workloadsOverviewHost)
+        self.rds_ui.retranslateUi(self.ui.rdsHost)
+        self.forwards_ui.retranslateUi(self.ui.forwardsHost)
+        self._render_forwards()
         if self._workloads_overview is not None:
             self._render_workloads_overview(self._workloads_overview)
         if self.pages.currentIndex() == 2:
@@ -6511,24 +7323,36 @@ class WorkloadWindow(QMainWindow):
         if self._status_message is not None:
             self.status_label.setText(self._status_message())
 
-    def _show_permission_banner(self, message: str) -> None:
-        action = forbidden_action(message)
-        text = (
-            self.tr(
-                "Your user is not allowed to {action}. "
-                "Ask your cluster admin for access."
-            ).format(action=action)
-            if action
-            else self.tr(
+    def _banner_words(self) -> tuple[str, str]:
+        return self.tr("Details"), self.tr("Hide")
+
+    def _banner_text(self, message: str) -> str:
+        """The line of a banner for an error of the cluster, the AWS CLI or
+        kubectl: what the user may not do when it is a permission, else the
+        title and the hint of the error."""
+        if is_forbidden(message):
+            action = forbidden_action(message)
+            if action:
+                return self.tr(
+                    "Your user is not allowed to {action}. "
+                    "Ask your cluster admin for access."
+                ).format(action=action)
+            return self.tr(
                 "Your user is not allowed to do this. "
                 "Ask your cluster admin for access."
             )
+        info = describe_error(message)
+        return f"{info.title}. {info.hint}" if info.hint else info.title
+
+    def _show_error_banner(self, message: str) -> None:
+        """Show an error of the cluster, the AWS CLI or kubectl in the banner
+        at the top of the window, with the original text one click away."""
+        self.error_banner.show_error(
+            self._banner_text(message), message.strip(), self._banner_words()
         )
-        self.ui.permissionLabel.setText(text)
-        self.permission_banner.show()
 
     def _hide_permission_banner(self) -> None:
-        self.permission_banner.hide()
+        self.error_banner.dismiss()
 
     def show_welcome(self) -> None:
         """Greet the person on opening the app and invite them to contribute,
@@ -6572,25 +7396,14 @@ class WorkloadWindow(QMainWindow):
         self._load_ok = False
         if self._close_when_worker_stops:
             return  # the window is closing; the cancelled request is no news
-        if is_forbidden(message):
-            self._show_permission_banner(message)
-            return
-        info = describe_error(message)
-        self._show_message(
-            QMessageBox.Icon.Warning,
-            self.tr("Query failed"),
-            info.title,
-            info.hint,
-            info.details,
-        )
+        self._show_error_banner(message)
 
     def _show_error(self, message: str) -> None:
         self._load_ok = False
         logger.info("Refresh failed: %s", first_line(message))
         if is_auth_error(message):
             self._check_login()
-        if is_forbidden(message):
-            self._show_permission_banner(message)
+        self._show_error_banner(message)
         self._workloads = []
         self._pods = []
         self._resources = []
@@ -6733,6 +7546,8 @@ class WorkloadWindow(QMainWindow):
             self.hide()
             event.ignore()
             return
+        self.forward_runner.stop_all()  # the forwards end with the app
+        self.forward_runner.wait()
         refresh_running = self._refresh_running()
         actions_running = any(worker.isRunning() for worker in self._action_workers)
         if refresh_running or actions_running:

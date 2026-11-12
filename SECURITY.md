@@ -48,13 +48,29 @@ restart` does). Each of these asks for confirmation first (Cancel is the
   and nothing else is ever written: the code for these requests lives apart from
   the read paths, in `writes.py`. The cluster's RBAC still decides: without the
   right, it refuses and the app shows its message. For a shell in a Pod the
-  menu only shows the complete `kubectl exec` command (with the context, the
-  namespace and the container) for you to copy and run in your own terminal. The
+  menu shows the complete `kubectl exec` command (with the context, the
+  namespace and the container) for you to copy and run in your own terminal, or
+  to open in the terminal of the system with **Open in terminal**; the same
+  button opens `aws ssm start-session` on a node. The terminal and the shell are
+  yours: the app starts the terminal with the command and sees nothing of what
+  is typed or printed. The
   same goes for **Forward** on a Service, a Pod or a StatefulSet, which shows the
   complete `kubectl port-forward` command for a port it exposes (or its
   containers declare, or a Service that selects it sends to; for that the app
-  reads the Services of the namespace) and a local port you pick. The
-  app runs neither, and does not need `kubectl`. To show only what you may do,
+  reads the Services of the namespace) and a local port you pick. The app does
+  not run the shell command. The forward it can run for you, when you press
+  **Run in KubeScope** in the dialog of a **Forward** (a Service, a Pod, a
+  StatefulSet or, with the **AWS** block, an RDS instance through AWS Systems
+  Manager), is the same `kubectl port-forward` or `aws ssm start-session`
+  command shown there, started as a program of your computer (`kubectl` or the
+  AWS CLI with its Session Manager plugin has to be installed), with the
+  credentials of the context and nothing else. It listens on `127.0.0.1` only,
+  is listed on the **Forwards** page with its status and stops when you press
+  **Stop**, and all of them stop when you quit the app. If the app dies or is
+  restarted first, they keep running and the next start lists them again: only the
+  command, the local port, the target and the process number are kept for that,
+  in `forwards.json` of the configuration folder, never the environment or any
+  key. To show only what you may do,
   the write mode also sends the cluster a `SelfSubjectAccessReview` for each
   action, in the namespace of the selected row. It asks and changes nothing, and
   carries no data of yours besides the namespace.
@@ -110,7 +126,12 @@ configure` so you type the keys there. Apart from the integrations below, the ap
   configuration folder, which the app reads besides yours. That kubeconfig names
   the sign-in program and the account (`KUBESCOPE_ACCOUNT`) and holds no key: the
   app hands the keys of an account only to the sign-in programs and the AWS
-  commands of the clusters that name it. **Remove** in the menu of an account
+  commands of the clusters that name it. The **AWS** block of the side menu, shown
+  while an AWS account is plugged in or an SSO profile of the AWS CLI is signed in
+  (the app reads only the address, the expiry and whether it can be renewed of
+  the cached SSO sign-ins in `~/.aws/sso/cache`, never the value of a token), lists its RDS instances with `aws rds
+  describe-db-instances` for each region of the account, with the keys of that
+  account; it only reads. **Remove** in the menu of an account
   deletes its folder, which also holds what `az` and `gcloud` keep of their own
   sign-in for it. One limit to know: `az login --service-principal` takes the
   client secret as an argument, which another process of your computer can see

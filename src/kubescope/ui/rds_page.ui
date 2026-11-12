@@ -1,0 +1,248 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>RdsPage</class>
+ <widget class="QWidget" name="RdsPage">
+  <layout class="QVBoxLayout" name="rdsLayout" stretch="0,0,1">
+   <property name="spacing">
+    <number>14</number>
+   </property>
+   <property name="leftMargin">
+    <number>32</number>
+   </property>
+   <property name="topMargin">
+    <number>24</number>
+   </property>
+   <property name="rightMargin">
+    <number>32</number>
+   </property>
+   <property name="bottomMargin">
+    <number>22</number>
+   </property>
+   <item>
+    <layout class="QHBoxLayout" name="rdsHeaderRow">
+     <property name="spacing">
+      <number>12</number>
+     </property>
+     <item>
+      <widget class="QComboBox" name="regionCombo">
+       <property name="minimumSize">
+        <size>
+         <width>170</width>
+         <height>38</height>
+        </size>
+       </property>
+       <property name="toolTip">
+        <string>Region</string>
+       </property>
+       <property name="variant" stdset="0">
+        <string notr="true">filter</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLineEdit" name="searchInput">
+       <property name="minimumSize">
+        <size>
+         <width>240</width>
+         <height>38</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>300</width>
+         <height>16777215</height>
+        </size>
+       </property>
+       <property name="placeholderText">
+        <string>Search all columns...</string>
+       </property>
+       <property name="clearButtonEnabled">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLabel" name="noticeLabel">
+       <property name="text">
+        <string notr="true" />
+       </property>
+       <property name="wordWrap">
+        <bool>true</bool>
+       </property>
+       <property name="variant" stdset="0">
+        <string notr="true">muted</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <spacer name="rdsHeaderSpacer">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <widget class="QFrame" name="rdsBanner">
+     <property name="visible">
+      <bool>false</bool>
+     </property>
+     <layout class="QVBoxLayout" name="rdsBannerLayout">
+      <property name="spacing">
+       <number>6</number>
+      </property>
+      <property name="leftMargin">
+       <number>14</number>
+      </property>
+      <property name="topMargin">
+       <number>8</number>
+      </property>
+      <property name="rightMargin">
+       <number>14</number>
+      </property>
+      <property name="bottomMargin">
+       <number>8</number>
+      </property>
+      <item>
+       <layout class="QHBoxLayout" name="rdsBannerRow" stretch="1,0,0">
+        <item>
+         <widget class="QLabel" name="bannerLabel">
+          <property name="text">
+           <string notr="true" />
+          </property>
+          <property name="wordWrap">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="detailsButton">
+          <property name="text">
+           <string>Details</string>
+          </property>
+          <property name="flat">
+           <bool>true</bool>
+          </property>
+          <property name="variant" stdset="0">
+           <string notr="true">link</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="dismissButton">
+          <property name="text">
+           <string>Dismiss</string>
+          </property>
+          <property name="flat">
+           <bool>true</bool>
+          </property>
+          <property name="variant" stdset="0">
+           <string notr="true">link</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <widget class="QLabel" name="bannerDetails">
+        <property name="visible">
+         <bool>false</bool>
+        </property>
+        <property name="text">
+         <string notr="true" />
+        </property>
+        <property name="wordWrap">
+         <bool>true</bool>
+        </property>
+        <property name="textInteractionFlags">
+         <set>Qt::TextSelectableByMouse</set>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QTableWidget" name="instancesTable">
+     <property name="editTriggers">
+      <set>QAbstractItemView::NoEditTriggers</set>
+     </property>
+     <property name="selectionBehavior">
+      <enum>QAbstractItemView::SelectRows</enum>
+     </property>
+     <property name="showGrid">
+      <bool>false</bool>
+     </property>
+     <attribute name="verticalHeaderVisible">
+      <bool>false</bool>
+     </attribute>
+     <attribute name="horizontalHeaderStretchLastSection">
+      <bool>true</bool>
+     </attribute>
+     <column>
+      <property name="text">
+       <string>NAME</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>ENGINE</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>VERSION</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>CLASS</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>STATUS</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>STORAGE</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>MULTI-AZ</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>REGION</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>ACCOUNT</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>ENDPOINT</string>
+      </property>
+     </column>
+     <property name="variant" stdset="0">
+      <string notr="true">data</string>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

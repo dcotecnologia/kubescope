@@ -114,14 +114,27 @@ def describe_error(message: str) -> ErrorInfo:
             details,
         )
     if "accessdenied" in lowered or "not authorized to perform" in lowered:
-        return ErrorInfo(
-            QCoreApplication.translate("Errors", "Access denied"),
-            QCoreApplication.translate(
+        action = re.search(r"to perform: ([\w:*]+)", details)
+        if action is None:
+            hint = QCoreApplication.translate(
                 "Errors",
                 "Your AWS identity is not allowed to read this. The wiki lists the "
                 "eks: permissions KubeScope needs.",
-            ),
-            details,
+            )
+        elif "service control policy" in lowered:
+            hint = QCoreApplication.translate(
+                "Errors",
+                "Your AWS identity is not allowed to perform {action}: a service "
+                "control policy of your organization denies it. Ask your AWS admin.",
+            ).format(action=action.group(1))
+        else:
+            hint = QCoreApplication.translate(
+                "Errors",
+                "Your AWS identity is not allowed to perform {action}. Ask your AWS "
+                "admin for access.",
+            ).format(action=action.group(1))
+        return ErrorInfo(
+            QCoreApplication.translate("Errors", "Access denied"), hint, details
         )
     if "forbidden" in lowered:
         return ErrorInfo(

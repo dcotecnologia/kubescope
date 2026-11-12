@@ -263,6 +263,27 @@ def _command_lines(arguments: list[str]) -> list[tuple[str, str]]:
     return [("PowerShell", powershell), ("cmd", cmd)]
 
 
+def _shell_arguments(
+    context: str, namespace: str, pod: str, container: str
+) -> list[str]:
+    return [
+        "kubectl",
+        "--context",
+        context,
+        "--namespace",
+        namespace,
+        "exec",
+        "-it",
+        pod,
+        "-c",
+        container,
+        "--",
+        "sh",
+        "-c",
+        _SHELL,
+    ]
+
+
 def shell_commands(
     context: str, namespace: str, pod: str, container: str
 ) -> list[tuple[str, str]]:
@@ -272,24 +293,58 @@ def shell_commands(
     They name the context, the namespace and the container. Nothing is
     run here.
     """
-    return _command_lines(
-        [
-            "kubectl",
-            "--context",
-            context,
-            "--namespace",
-            namespace,
-            "exec",
-            "-it",
-            pod,
-            "-c",
-            container,
-            "--",
-            "sh",
-            "-c",
-            _SHELL,
-        ]
-    )
+    return _command_lines(_shell_arguments(context, namespace, pod, container))
+
+
+def shell_run(
+    context: str, namespace: str, pod: str, container: str
+) -> tuple[list[str], dict[str, str]]:
+    """The kubectl command that opens a shell in a container, as the program
+    and its arguments, with the environment it needs to read the kubeconfig
+    files the app was set to read: what the app opens in a terminal when the
+    person asks."""
+    return _with_kubeconfig(_shell_arguments(context, namespace, pod, container))
+
+
+def _with_kubeconfig(arguments: list[str]) -> tuple[list[str], dict[str, str]]:
+    files = cluster._kubeconfig_files
+    if len(files) == 1:
+        return [arguments[0], "--kubeconfig", files[0], *arguments[1:]], {}
+    if len(files) > 1:
+        return arguments, {"KUBECONFIG": os.pathsep.join(files)}
+    return arguments, {}
+
+
+def node_shell_arguments(instance: str, region: str, profile: str = "") -> list[str]:
+    """The AWS CLI command that opens a shell on an EC2 instance, a node, with
+    AWS Systems Manager."""
+    return [
+        "aws",
+        "ssm",
+        "start-session",
+        "--target",
+        instance,
+        "--region",
+        region,
+        *(["--profile", profile] if profile else []),
+    ]
+
+
+def node_shell_commands(
+    instance: str, region: str, profile: str = ""
+) -> list[tuple[str, str]]:
+    """The complete AWS CLI commands that open a shell on a node, for the
+    person to run in their own terminal, as (shell, command) pairs."""
+    return _plain_lines(node_shell_arguments(instance, region, profile))
+
+
+def _plain_lines(arguments: list[str]) -> list[tuple[str, str]]:
+    """A command that is not kubectl, quoted for each shell of the person's
+    system."""
+    if sys.platform != "win32":
+        return [("", shlex.join(arguments))]
+    powershell = " ".join(_powershell_quote(argument) for argument in arguments)
+    return [("PowerShell", powershell), ("cmd", subprocess.list2cmdline(arguments))]
 
 
 def service_ports(document: dict[str, Any]) -> list[tuple[int, str]]:
@@ -345,6 +400,83 @@ def container_ports(
     return list(ports.items())
 
 
+def ssm_forward_arguments(
+    instance: str,
+    host: str,
+    remote: int,
+    local: int,
+    region: str,
+    profile: str = "",
+) -> list[str]:
+    """The AWS CLI command that forwards a local port to a database (`host`,
+    `remote`) through an EC2 instance with AWS Systems Manager."""
+    parameters = json.dumps(
+        {"host": [host], "portNumber": [str(remote)], "localPortNumber": [str(local)]},
+        separators=(",", ":"),
+    )
+    return [
+        "aws",
+        "ssm",
+        "start-session",
+        "--target",
+        instance or "<EC2-INSTANCE-ID>",
+        "--document-name",
+        "AWS-StartPortForwardingSessionToRemoteHost",
+        "--parameters",
+        parameters,
+        "--region",
+        region,
+        *(["--profile", profile] if profile else []),
+    ]
+
+
+def ssm_forward_commands(
+    instance: str,
+    host: str,
+    remote: int,
+    local: int,
+    region: str,
+    profile: str = "",
+) -> list[tuple[str, str]]:
+    """The complete AWS CLI commands that forward a local port to a database
+    through an EC2 instance with AWS Systems Manager, for the person to run in
+    their own terminal, as (shell, command) pairs."""
+    return _plain_lines(
+        ssm_forward_arguments(instance, host, remote, local, region, profile)
+    )
+
+
+def _forward_arguments(
+    context: str, namespace: str, service: str, remote: int, local: int, kind: str
+) -> list[str]:
+    return [
+        "kubectl",
+        "--context",
+        context,
+        "--namespace",
+        namespace,
+        "port-forward",
+        f"{kind}/{service}",
+        f"{local}:{remote}",
+    ]
+
+
+def forward_run(
+    context: str,
+    namespace: str,
+    service: str,
+    remote: int,
+    local: int,
+    kind: str = "service",
+) -> tuple[list[str], dict[str, str]]:
+    """The kubectl command that forwards a local port, as the program and its
+    arguments, with the environment it needs to read the kubeconfig files the
+    app was set to read: what the app runs when the person presses Run."""
+    return _with_kubeconfig(
+        _forward_arguments(context, namespace, service, remote, local, kind)
+    )
+
+
 def forward_commands(
     context: str,
     namespace: str,
@@ -360,14 +492,5 @@ def forward_commands(
     Nothing is run here.
     """
     return _command_lines(
-        [
-            "kubectl",
-            "--context",
-            context,
-            "--namespace",
-            namespace,
-            "port-forward",
-            f"{kind}/{service}",
-            f"{local}:{remote}",
-        ]
+        _forward_arguments(context, namespace, service, remote, local, kind)
     )

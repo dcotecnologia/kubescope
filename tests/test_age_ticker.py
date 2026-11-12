@@ -36,7 +36,7 @@ def test_an_age_stops_counting_at_a_minute(monkeypatch) -> None:
     tick_ages(table)
     tick_ages(table)
 
-    assert young.text() == "1m5s"  # crossed the minute on this tick
+    assert young.text() == "1m"  # crossed the minute on this tick
     assert old.text() == "1m0s"  # never counted
 
 

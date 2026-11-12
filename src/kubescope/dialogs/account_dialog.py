@@ -79,6 +79,7 @@ class AccountDialog(QDialog):
         provider: str,
         account: Account | None = None,
         parent: QWidget | None = None,
+        profile: str = "",
     ) -> None:
         super().__init__(parent)
         self.provider = integrations.PROVIDERS[provider]
@@ -93,8 +94,10 @@ class AccountDialog(QDialog):
         self.setModal(True)
         self.resize(520, 560)
         saved = integrations.values_of(self.account)
+        if profile and account is None:  # an AWS profile the person picked
+            saved = {**saved, "profile": profile}
 
-        self.name_edit = QLineEdit(self.account.name or self.provider.name)
+        self.name_edit = QLineEdit(self.account.name or profile or self.provider.name)
         self.name_edit.setProperty("variant", "filter")
         self.name_edit.setEnabled(not self.editing)
         self.mode = QComboBox()

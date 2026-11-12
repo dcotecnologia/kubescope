@@ -67,7 +67,7 @@ class Ui_MainWindow(object):
 "QWidget#sidebar { background: #ffffff; border-right: 1px solid #e1e3e"
                         "9; }\n"
 "QScrollArea#sidebarScroll, QWidget#sidebarNav { background: transparent; border: 0; }\n"
-"QLabel#navSection, QLabel#filterLabel {\n"
+"QLabel#navSection, QLabel#navAwsSection, QLabel#filterLabel {\n"
 "    color: #535d69; font-size: 9px; font-weight: 700;\n"
 "}\n"
 "QFrame#sidebarRule { color: #e6e7ed; }\n"
@@ -85,8 +85,8 @@ class Ui_MainWindow(object):
 "    background: #6252b5; border-color: #6252b5; image: url(CHECK_ICON);\n"
 "}\n"
 "QCheckBox::indicator:disabled { border-color: #d9dce4; background: #f3f4f7; }\n"
-"QComboBox[variant=\"filter\"], QLineEd"
-                        "it#searchInput, QLineEdit[variant=\"filter\"],\n"
+"QComboBox[varian"
+                        "t=\"filter\"], QLineEdit#searchInput, QLineEdit[variant=\"filter\"],\n"
 "QPushButton[variant=\"primary\"] {\n"
 "    background: #ffffff; border: 1px solid #d9dce4; border-radius: 5px;\n"
 "    min-height: 36px; padding: 0 10px; font-size: 11px;\n"
@@ -106,8 +106,8 @@ class Ui_MainWindow(object):
 "    width: 26px; border: 0; background: transparent;\n"
 "}\n"
 "QComboBox[variant=\"filter\"]::down-arrow {\n"
-"    image: url(CHEVRON); width: 10px; height: 6px; margin-ri"
-                        "ght: 8px;\n"
+"    image: url(CHEVRON); width: 10px; "
+                        "height: 6px; margin-right: 8px;\n"
 "}\n"
 "QComboBox[variant=\"filter\"] QAbstractItemView {\n"
 "    background: #ffffff; color: #20232a; border: 1px solid #d9dce4;\n"
@@ -126,8 +126,8 @@ class Ui_MainWindow(object):
 "}\n"
 "QSpinBox[variant=\"filter\"]::up-button { subcontrol-position: top right; }\n"
 "QSpinBox[variant=\"filter\"]::down-button { subcontrol-position: bottom right; }\n"
-"QSpinBox[variant=\"filte"
-                        "r\"]::up-arrow { image: url(SORT_UP); width: 9px; height: 6px; }\n"
+"QS"
+                        "pinBox[variant=\"filter\"]::up-arrow { image: url(SORT_UP); width: 9px; height: 6px; }\n"
 "QSpinBox[variant=\"filter\"]::down-arrow {\n"
 "    image: url(SORT_DOWN); width: 9px; height: 6px;\n"
 "}\n"
@@ -149,8 +149,8 @@ class Ui_MainWindow(object):
 "    outline: 0; padding: 2px;\n"
 "}\n"
 "QPushButton[variant=\"primary\"] {\n"
-"    background: #3020a5; color: #ffffff; border: 0"
-                        ";\n"
+"    background: #3020a5; col"
+                        "or: #ffffff; border: 0;\n"
 "    font-weight: 700; padding: 0 16px;\n"
 "}\n"
 "QPushButton[variant=\"primary\"]:hover { background: #4030b8; }\n"
@@ -169,10 +169,10 @@ class Ui_MainWindow(object):
 "    font-size: 11px; font-weight: 600;\n"
 "}\n"
 "QPushButton[variant=\"secondary\"]:hover:enabled {\n"
-"    background: #f3f1f9; border-color: #a9a0d6;\n"
+"    background: #f3f1f9; border-color: #"
+                        "a9a0d6;\n"
 "}\n"
-"QPus"
-                        "hButton[variant=\"secondary\"]:disabled { color: #7b8089; }\n"
+"QPushButton[variant=\"secondary\"]:disabled { color: #7b8089; }\n"
 "QPushButton[variant=\"secondary\"]:checked {\n"
 "    background: #3020a5; color: #ffffff; border-color: #3020a5;\n"
 "}\n"
@@ -193,9 +193,9 @@ class Ui_MainWindow(object):
 "QHeaderView::up-arrow { image: url(SORT_UP); width: 9px; height: 6px; }\n"
 "QHeaderView::down-arrow { image: url(SORT_DOWN); width: 9px; height: 6px; }\n"
 "QHeaderView::section {\n"
-"    background: #fbfbfc; color: #3c4149; border: 0;\n"
-"    border-bot"
-                        "tom: 1px solid #dfe2e9; padding: 10px 11px;\n"
+"    background: #fbfbfc; color: #3c4149; border:"
+                        " 0;\n"
+"    border-bottom: 1px solid #dfe2e9; padding: 10px 11px;\n"
 "    font-size: 9px; font-weight: 700;\n"
 "}\n"
 "QTableWidget[variant=\"data\"]::item {\n"
@@ -207,7 +207,8 @@ class Ui_MainWindow(object):
 "    padding: 0 12px; font-size: 12px; font-weight: 600;\n"
 "}\n"
 "QPushButton[nav=\"true\"]:hover { background: #f6f6fa; }\n"
-"QFrame#workloadsSubmenu, QFrame#networkSubmenu, QFrame#configSubmenu {\n"
+"QFrame#workloadsSubmenu, QFrame#networkSubmenu, QFrame#configSubmenu,\n"
+"QFrame#rdsSubmenu {\n"
 "    border: 0; border-left: 1px solid #d9dce4; margin-left: 19px;\n"
 "}\n"
 "QPushButton[nav=\"true\"]:checked {\n"
@@ -217,9 +218,9 @@ class Ui_MainWindow(object):
 "QFrame[card=\"true\"] {\n"
 "    background: #ffffff; border: 1px solid #dfe2e9; border-radius: 8px;\n"
 "}\n"
-"QFrame[card=\"true\"] QLabel { background: transparent; border: 0; }\n"
-"QLabel[variant=\"cardTitle\"] { colo"
-                        "r: #535d69; font-size: 9px; font-weight: 700; }\n"
+"QFrame[card=\"true\"] QLabel { background: transparent; border: "
+                        "0; }\n"
+"QLabel[variant=\"cardTitle\"] { color: #535d69; font-size: 9px; font-weight: 700; }\n"
 "QLabel[variant=\"cardValue\"] { color: #17191e; font-size: 20px; font-weight: 700; }\n"
 "QLabel[variant=\"cardCaption\"] { color: #4f5966; font-size: 10px; }\n"
 "QProgressBar {\n"
@@ -238,9 +239,9 @@ class Ui_MainWindow(object):
 "    border: 0; border-bottom: 2px solid transparent; font-size: 11px;\n"
 "    font-weight: 600; max-width: 260px;\n"
 "}\n"
-"QTabBar::tab:hover { color: #3220a0; }\n"
-"QTabBar::tab:selec"
-                        "ted { color: #3220a0; border-bottom: 2px solid #3220a0; }\n"
+"QTabBar::tab:hov"
+                        "er { color: #3220a0; }\n"
+"QTabBar::tab:selected { color: #3220a0; border-bottom: 2px solid #3220a0; }\n"
 "QTabBar::close-button {\n"
 "    image: url(CLOSE_ICON); subcontrol-position: right; margin-left: 6px;\n"
 "    width: 10px; height: 10px; padding: 3px; border-radius: 4px;\n"
@@ -253,11 +254,18 @@ class Ui_MainWindow(object):
 "}\n"
 "QFrame#noContextsBanner { background: #fff2de; border-bottom: 1px solid #985415; }\n"
 "QFrame#noContextsBanner QLabel { color: #985415; font-size: 11px; background: transparent; }\n"
-"QFrame#permissionBanner { background: #fce9ea; border-bottom: 1px solid #a33d45; }\n"
-"QFrame#permissionBanner QLabel { color: #a33d45; font-size: 11px; background: transparent; }\n"
-"QFrame#permissionBanner QPushButton { color: #a33d45; font-size: 11px; padding: 0 0 0 12px; }\n"
-"QFrame#appFooter "
-                        "{ background: #ffffff; border-top: 1px solid #e4e5eb; }\n"
+"QFrame#permissionBanner, QFrame#rdsBanner {\n"
+"    background: #fce9ea; border-bottom: 1px solid #a33d45;\n"
+"}\n"
+"QFrame#rdsBanner { border: 1px solid #a33d45; border-radius: 6px; }\n"
+"QFrame#permissionBanner QLabel, QFrame#rdsBanner QLabel {\n"
+"   "
+                        " color: #a33d45; font-size: 11px; background: transparent;\n"
+"}\n"
+"QFrame#permissionBanner QPushButton, QFrame#rdsBanner QPushButton {\n"
+"    color: #a33d45; font-size: 11px; padding: 0 0 0 12px;\n"
+"}\n"
+"QFrame#appFooter { background: #ffffff; border-top: 1px solid #e4e5eb; }\n"
 "QLabel#footerLicense, QLabel#footerDot, QLabel#updateNotice { color: #6b7380; font-size: 10px; }\n"
 "QFrame#appFooter QPushButton[variant=\"link\"] { font-size: 10px; padding: 0 0 0 6px; }\n"
 "QPushButton#companyLink, QPushButton#licenseLink { padding: 0; }\n"
@@ -407,24 +415,46 @@ class Ui_MainWindow(object):
         self.permissionBanner = QFrame(self.centralwidget)
         self.permissionBanner.setObjectName(u"permissionBanner")
         self.permissionBanner.setVisible(False)
-        self.permissionLayout = QHBoxLayout(self.permissionBanner)
+        self.permissionLayout = QVBoxLayout(self.permissionBanner)
+        self.permissionLayout.setSpacing(4)
         self.permissionLayout.setObjectName(u"permissionLayout")
         self.permissionLayout.setContentsMargins(18, 8, 18, 8)
+        self.permissionRow = QHBoxLayout()
+        self.permissionRow.setObjectName(u"permissionRow")
         self.permissionLabel = QLabel(self.permissionBanner)
         self.permissionLabel.setObjectName(u"permissionLabel")
         self.permissionLabel.setText(u"permission")
         self.permissionLabel.setWordWrap(True)
 
-        self.permissionLayout.addWidget(self.permissionLabel)
+        self.permissionRow.addWidget(self.permissionLabel)
+
+        self.permissionDetails = QPushButton(self.permissionBanner)
+        self.permissionDetails.setObjectName(u"permissionDetails")
+        self.permissionDetails.setFlat(True)
+        self.permissionDetails.setProperty(u"variant", u"link")
+
+        self.permissionRow.addWidget(self.permissionDetails)
 
         self.permissionDismiss = QPushButton(self.permissionBanner)
         self.permissionDismiss.setObjectName(u"permissionDismiss")
         self.permissionDismiss.setFlat(True)
         self.permissionDismiss.setProperty(u"variant", u"link")
 
-        self.permissionLayout.addWidget(self.permissionDismiss)
+        self.permissionRow.addWidget(self.permissionDismiss)
 
-        self.permissionLayout.setStretch(0, 1)
+        self.permissionRow.setStretch(0, 1)
+
+        self.permissionLayout.addLayout(self.permissionRow)
+
+        self.permissionDetailsText = QLabel(self.permissionBanner)
+        self.permissionDetailsText.setObjectName(u"permissionDetailsText")
+        self.permissionDetailsText.setVisible(False)
+        self.permissionDetailsText.setText(u"")
+        self.permissionDetailsText.setWordWrap(True)
+        self.permissionDetailsText.setTextInteractionFlags(Qt.TextSelectableByMouse)
+
+        self.permissionLayout.addWidget(self.permissionDetailsText)
+
 
         self.rootLayout.addWidget(self.permissionBanner)
 
@@ -488,6 +518,17 @@ class Ui_MainWindow(object):
         self.navNodeGroups.setProperty(u"nav", u"true")
 
         self.sidebarNavLayout.addWidget(self.navNodeGroups)
+
+        self.navForwards = QPushButton(self.sidebarNav)
+        self.navForwards.setObjectName(u"navForwards")
+        self.navForwards.setMinimumSize(QSize(0, 24))
+        self.navForwards.setIconSize(QSize(16, 16))
+        self.navForwards.setCheckable(True)
+        self.navForwards.setChecked(False)
+        self.navForwards.setAutoExclusive(True)
+        self.navForwards.setProperty(u"nav", u"true")
+
+        self.sidebarNavLayout.addWidget(self.navForwards)
 
         self.navWorkloads = QPushButton(self.sidebarNav)
         self.navWorkloads.setObjectName(u"navWorkloads")
@@ -846,6 +887,41 @@ class Ui_MainWindow(object):
 
         self.sidebarNavLayout.addWidget(self.configSubmenu)
 
+        self.navAwsSection = QLabel(self.sidebarNav)
+        self.navAwsSection.setObjectName(u"navAwsSection")
+
+        self.sidebarNavLayout.addWidget(self.navAwsSection)
+
+        self.navRds = QPushButton(self.sidebarNav)
+        self.navRds.setObjectName(u"navRds")
+        self.navRds.setMinimumSize(QSize(0, 24))
+        self.navRds.setIconSize(QSize(16, 16))
+        self.navRds.setCheckable(False)
+        self.navRds.setChecked(False)
+        self.navRds.setProperty(u"nav", u"true")
+
+        self.sidebarNavLayout.addWidget(self.navRds)
+
+        self.rdsSubmenu = QFrame(self.sidebarNav)
+        self.rdsSubmenu.setObjectName(u"rdsSubmenu")
+        self.rdsSubmenu.setMaximumSize(QSize(16777215, 0))
+        self.rdsSubmenuLayout = QVBoxLayout(self.rdsSubmenu)
+        self.rdsSubmenuLayout.setSpacing(0)
+        self.rdsSubmenuLayout.setObjectName(u"rdsSubmenuLayout")
+        self.rdsSubmenuLayout.setContentsMargins(4, 0, 0, 0)
+        self.navRdsInstances = QPushButton(self.rdsSubmenu)
+        self.navRdsInstances.setObjectName(u"navRdsInstances")
+        self.navRdsInstances.setMinimumSize(QSize(0, 20))
+        self.navRdsInstances.setIconSize(QSize(16, 16))
+        self.navRdsInstances.setCheckable(True)
+        self.navRdsInstances.setChecked(False)
+        self.navRdsInstances.setProperty(u"nav", u"true")
+
+        self.rdsSubmenuLayout.addWidget(self.navRdsInstances)
+
+
+        self.sidebarNavLayout.addWidget(self.rdsSubmenu)
+
         self.sidebarNavSpacer = QSpacerItem(20, 0, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
 
         self.sidebarNavLayout.addItem(self.sidebarNavSpacer)
@@ -913,6 +989,13 @@ class Ui_MainWindow(object):
         self.workloadsRefreshButton.setProperty(u"variant", u"primary")
 
         self.pageHeaderLayout.addWidget(self.workloadsRefreshButton)
+
+        self.rdsRefreshButton = QPushButton(self.pageHeader)
+        self.rdsRefreshButton.setObjectName(u"rdsRefreshButton")
+        self.rdsRefreshButton.setProperty(u"iconOnly", u"true")
+        self.rdsRefreshButton.setProperty(u"variant", u"primary")
+
+        self.pageHeaderLayout.addWidget(self.rdsRefreshButton)
 
         self.refreshButton = QPushButton(self.pageHeader)
         self.refreshButton.setObjectName(u"refreshButton")
@@ -1250,6 +1333,12 @@ class Ui_MainWindow(object):
         self.workloadsOverviewHost = QWidget()
         self.workloadsOverviewHost.setObjectName(u"workloadsOverviewHost")
         self.pages.addWidget(self.workloadsOverviewHost)
+        self.rdsHost = QWidget()
+        self.rdsHost.setObjectName(u"rdsHost")
+        self.pages.addWidget(self.rdsHost)
+        self.forwardsHost = QWidget()
+        self.forwardsHost.setObjectName(u"forwardsHost")
+        self.pages.addWidget(self.forwardsHost)
 
         self.pageLayout.addWidget(self.pages)
 
@@ -1366,11 +1455,13 @@ class Ui_MainWindow(object):
         self.settingsButton.setToolTip(QCoreApplication.translate("MainWindow", u"Settings", None))
 #endif // QT_CONFIG(tooltip)
         self.noContextsLabel.setText(QCoreApplication.translate("MainWindow", u"No cluster contexts were found in your kubeconfig. Add a cluster to your kubeconfig (for example with the AWS CLI: aws eks update-kubeconfig) and reload.", None))
+        self.permissionDetails.setText(QCoreApplication.translate("MainWindow", u"Details", None))
         self.permissionDismiss.setText(QCoreApplication.translate("MainWindow", u"Dismiss", None))
         self.navSection.setText(QCoreApplication.translate("MainWindow", u"MONITORING", None))
         self.navOverview.setText(QCoreApplication.translate("MainWindow", u"Cluster", None))
         self.navEvents.setText(QCoreApplication.translate("MainWindow", u"Events", None))
         self.navNodeGroups.setText(QCoreApplication.translate("MainWindow", u"Node Groups", None))
+        self.navForwards.setText(QCoreApplication.translate("MainWindow", u"Forwards", None))
         self.navWorkloads.setText(QCoreApplication.translate("MainWindow", u"Workloads", None))
         self.navWorkloadsOverview.setText(QCoreApplication.translate("MainWindow", u"Overview", None))
         self.navCronJobs.setText(QCoreApplication.translate("MainWindow", u"CronJobs", None))
@@ -1401,6 +1492,9 @@ class Ui_MainWindow(object):
         self.navRuntimeClasses.setText(QCoreApplication.translate("MainWindow", u"Runtime Classes", None))
         self.navSecrets.setText(QCoreApplication.translate("MainWindow", u"Secrets", None))
         self.navValidatingWebhooks.setText(QCoreApplication.translate("MainWindow", u"Validating Webhook Configurations", None))
+        self.navAwsSection.setText(QCoreApplication.translate("MainWindow", u"AWS", None))
+        self.navRds.setText(QCoreApplication.translate("MainWindow", u"RDS", None))
+        self.navRdsInstances.setText(QCoreApplication.translate("MainWindow", u"Instances", None))
         self.sidebarNote.setText(QCoreApplication.translate("MainWindow", u"SECURE ACCESS\n"
 "Resources in read-only mode", None))
         self.pageTitle.setText(QCoreApplication.translate("MainWindow", u"Overview", None))
@@ -1410,6 +1504,9 @@ class Ui_MainWindow(object):
 #endif // QT_CONFIG(tooltip)
 #if QT_CONFIG(tooltip)
         self.workloadsRefreshButton.setToolTip(QCoreApplication.translate("MainWindow", u"Refresh", None))
+#endif // QT_CONFIG(tooltip)
+#if QT_CONFIG(tooltip)
+        self.rdsRefreshButton.setToolTip(QCoreApplication.translate("MainWindow", u"Refresh", None))
 #endif // QT_CONFIG(tooltip)
 #if QT_CONFIG(tooltip)
         self.refreshButton.setToolTip(QCoreApplication.translate("MainWindow", u"Refresh", None))

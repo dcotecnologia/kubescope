@@ -35,7 +35,10 @@ from kubescope.models import (
     KindSummary,
     NodeInfo,
     PodInfo,
+    RdsInstance,
+    RdsLogFile,
     SearchHit,
+    SsmTarget,
     Workload,
     WorkloadsOverview,
     age_seconds,
@@ -249,6 +252,12 @@ def _context_env(context: str) -> dict[str, str] | None:
     if integrations.ACCOUNT_VARIABLE not in variables:
         return None
     return integrations.exec_environment(variables)
+
+
+def context_environment(context: str) -> dict[str, str]:
+    """What a program the app starts for a context needs in its environment:
+    the keys of its integration account, or nothing."""
+    return _context_env(context) or {}
 
 
 def _kubeconfig_paths() -> str:
@@ -863,6 +872,242 @@ def _run_aws(command: list[str], env: dict[str, str] | None) -> str:
     return _run_command(command, AWS_TIMEOUT)
 
 
+_EKS_ARN = re.compile(r"arn:aws[a-z-]*:eks:([^:]+):(\d+):cluster/")
+
+
+def _aws_scope(context: str) -> tuple[str, str, str]:
+    """The region, the profile and the account of an EKS context, the account
+    from the ARN that names it; raises when it is not an EKS context."""
+    target = _eks_target(context)
+    arn = _EKS_ARN.match(context)
+    region = _flag(target, "--region") or (arn.group(1) if arn else "")
+    profile = _flag(target, "--profile") or ""
+    return region, profile, arn.group(2) if arn else profile
+
+
+AWS_REGIONS = (
+    "us-east-1",
+    "us-east-2",
+    "us-west-1",
+    "us-west-2",
+    "af-south-1",
+    "ap-east-1",
+    "ap-south-1",
+    "ap-south-2",
+    "ap-southeast-1",
+    "ap-southeast-2",
+    "ap-southeast-3",
+    "ap-southeast-4",
+    "ap-northeast-1",
+    "ap-northeast-2",
+    "ap-northeast-3",
+    "ca-central-1",
+    "eu-central-1",
+    "eu-central-2",
+    "eu-west-1",
+    "eu-west-2",
+    "eu-west-3",
+    "eu-north-1",
+    "eu-south-1",
+    "eu-south-2",
+    "il-central-1",
+    "me-south-1",
+    "me-central-1",
+    "sa-east-1",
+)
+
+
+def context_region(context: str) -> str:
+    """The AWS region of an EKS context, empty when it is not one."""
+    try:
+        return _aws_scope(context)[0]
+    except ClusterError:
+        return ""
+
+
+def _aws_json(
+    context: str, service_command: list[str], region: str = ""
+) -> dict[str, Any]:
+    """The JSON answer of an AWS CLI command with the profile or keys of the
+    context, in the region given or else in the one of the context."""
+    scope_region, profile, _account = _aws_scope(context)
+    region = region or scope_region
+    command = ["aws", *service_command]
+    if region:
+        command += ["--region", region]
+    output = _run_aws(
+        [*command, *_profile_arguments(profile or None), "--output", "json"],
+        _context_env(context),
+    )
+    try:
+        document = json.loads(output)
+    except ValueError as error:
+        raise ClusterError("The AWS CLI answered with something unexpected") from error
+    return document if isinstance(document, dict) else {}
+
+
+def get_rds_instances(context: str, region: str = "") -> list[RdsInstance]:
+    """The RDS instances of the AWS account of an EKS context in a region (the
+    one of the context unless another is given), from `aws rds describe-db-
+    instances`; only that account is asked, with the profile or the keys the
+    context signs in with."""
+    scope_region, profile, account = _aws_scope(context)
+    region = region or scope_region
+    document = _aws_json(context, ["rds", "describe-db-instances"], region)
+    instances = []
+    for item in document.get("DBInstances") or []:
+        if not isinstance(item, dict):
+            continue
+        endpoint = item.get("Endpoint")
+        port = endpoint.get("Port") if isinstance(endpoint, dict) else None
+        storage = item.get("AllocatedStorage")
+        group = item.get("DBSubnetGroup")
+        instances.append(
+            RdsInstance(
+                account,
+                region,
+                str(item.get("DBInstanceIdentifier", "")),
+                str(item.get("Engine", "")),
+                str(item.get("EngineVersion", "")),
+                str(item.get("DBInstanceClass", "")),
+                str(item.get("DBInstanceStatus", "")),
+                storage if isinstance(storage, int) else 0,
+                item.get("MultiAZ") is True,
+                str(endpoint.get("Address") or "")
+                if isinstance(endpoint, dict)
+                else "",
+                port if isinstance(port, int) else 0,
+                profile,
+                str(group.get("VpcId") or "") if isinstance(group, dict) else "",
+            )
+        )
+    return sorted(instances, key=lambda row: row.identifier)
+
+
+def get_rds_details(context: str, identifier: str, region: str = "") -> dict[str, Any]:
+    """Everything `aws rds describe-db-instances` says about one instance."""
+    document = _aws_json(
+        context,
+        ["rds", "describe-db-instances", "--db-instance-identifier", identifier],
+        region,
+    )
+    items = [
+        item for item in document.get("DBInstances") or [] if isinstance(item, dict)
+    ]
+    if not items:
+        raise ClusterError(f"RDS instance {identifier} was not found")
+    return items[0]
+
+
+def get_rds_log_files(
+    context: str, identifier: str, region: str = ""
+) -> list[RdsLogFile]:
+    """The log files of an RDS instance, the one written last first."""
+    document = _aws_json(
+        context,
+        ["rds", "describe-db-log-files", "--db-instance-identifier", identifier],
+        region,
+    )
+    files = []
+    for item in document.get("DescribeDBLogFiles") or []:
+        if not (isinstance(item, dict) and item.get("LogFileName")):
+            continue
+        size, written = item.get("Size"), item.get("LastWritten")
+        files.append(
+            RdsLogFile(
+                str(item["LogFileName"]),
+                size if isinstance(size, int) else 0,
+                written if isinstance(written, int) else 0,
+            )
+        )
+    return sorted(files, key=lambda row: (-row.written, row.name))
+
+
+RDS_LOG_LINES = 1000  # what is read of the end of a log file
+
+
+def get_rds_log(context: str, identifier: str, name: str, region: str = "") -> str:
+    """The last lines of a log file of an RDS instance."""
+    document = _aws_json(
+        context,
+        [
+            "rds",
+            "download-db-log-file-portion",
+            "--db-instance-identifier",
+            identifier,
+            "--log-file-name",
+            name,
+            "--number-of-lines",
+            str(RDS_LOG_LINES),
+            "--no-paginate",
+        ],
+        region,
+    )
+    return str(document.get("LogFileData") or "")
+
+
+_PROVIDER_ID = re.compile(r"aws:///([a-z0-9-]+)/(i-[0-9a-f]+)")
+
+
+def get_node_instance(context: str, node: str) -> tuple[str, str, str]:
+    """The EC2 instance of a node, its region and the AWS CLI profile of the
+    context, from the provider ID the cluster keeps for the node; raises when
+    the node is not an EC2 instance."""
+    document = get_resource_details(context, "Node", "", node)
+    provider = str((document.get("spec") or {}).get("providerID") or "")
+    found = _PROVIDER_ID.match(provider)
+    if found is None:
+        raise ClusterError(f"Node {node} is not an EC2 instance")
+    try:
+        region, profile, _account = _aws_scope(context)
+    except ClusterError:
+        region, profile = "", ""
+    return (
+        found.group(2),
+        region or found.group(1)[:-1],
+        profile,
+    )  # zone, less its letter
+
+
+def get_ssm_targets(context: str, vpc: str, region: str = "") -> list[SsmTarget]:
+    """The EC2 instances of the account that Systems Manager can reach, the
+    ones in the `vpc` of a database first: the ones a port can be forwarded
+    through."""
+    information = _aws_json(context, ["ssm", "describe-instance-information"], region)
+    online = [
+        str(item["InstanceId"])
+        for item in information.get("InstanceInformationList") or []
+        if isinstance(item, dict)
+        and item.get("PingStatus") == "Online"
+        and str(item.get("InstanceId", "")).startswith("i-")  # not a hybrid server
+    ]
+    if not online:
+        return []
+    reservations = _aws_json(
+        context, ["ec2", "describe-instances", "--instance-ids", *online], region
+    ).get("Reservations")
+    targets = []
+    for reservation in reservations or []:
+        for item in (reservation or {}).get("Instances") or []:
+            tags = {
+                tag.get("Key"): tag.get("Value")
+                for tag in item.get("Tags") or []
+                if isinstance(tag, dict)
+            }
+            where = str(item.get("VpcId") or "")
+            targets.append(
+                SsmTarget(
+                    str(item.get("InstanceId", "")),
+                    str(tags.get("Name") or ""),
+                    where,
+                    bool(vpc) and where == vpc,
+                )
+            )
+    return sorted(
+        targets, key=lambda row: (not row.same_vpc, row.name, row.instance_id)
+    )
+
+
 def _eks_json(
     subcommand: str,
     target: list[str],
@@ -1092,6 +1337,12 @@ _TERMINALS = (
 )
 
 
+def _in_a_shell(command: list[str]) -> list[str]:
+    """The command as one argument of `sh -c`: some terminals read a `--`
+    inside the command as the end of their own options, and refuse the rest."""
+    return ["sh", "-c", shlex.join(command)]
+
+
 def _terminal_launcher(command: list[str]) -> list[str] | None:
     """The command that opens a terminal running `command`, or None when there
     is no terminal to open."""
@@ -1100,7 +1351,7 @@ def _terminal_launcher(command: list[str]) -> list[str] | None:
     if in_flatpak():  # the terminals and the programs are the host's
         return next(
             (
-                [*HOST, name, flag, *command]
+                [*HOST, name, flag, *_in_a_shell(command)]
                 for name, flag in _TERMINALS
                 if host_has(name)
             ),
@@ -1108,7 +1359,7 @@ def _terminal_launcher(command: list[str]) -> list[str] | None:
         )
     return next(
         (
-            [path, flag, *command]
+            [path, flag, *_in_a_shell(command)]
             for name, flag in _TERMINALS
             if (path := shutil.which(name))
         ),
@@ -1116,7 +1367,14 @@ def _terminal_launcher(command: list[str]) -> list[str] | None:
     )
 
 
-def _open_terminal(command: list[str]) -> None:
+def open_in_terminal(command: list[str], env: dict[str, str] | None = None) -> None:
+    """Open the terminal of the system running a command, with the extra
+    environment it needs, and return without waiting; the terminal and the
+    program are the person's, the app does not see what is typed."""
+    _open_terminal(command, env)
+
+
+def _open_terminal(command: list[str], env: dict[str, str] | None = None) -> None:
     """Run a command in a new terminal window and return without waiting."""
     launcher = _terminal_launcher(command)
     if launcher is None:
@@ -1124,7 +1382,10 @@ def _open_terminal(command: list[str]) -> None:
             "No terminal found. Run this in a terminal: " + " ".join(command)
         )
     try:
-        subprocess.Popen(launcher)
+        if env:
+            subprocess.Popen(launcher, env={**os.environ, **env})
+        else:
+            subprocess.Popen(launcher)
     except OSError as error:
         raise ClusterError(f"Could not open a terminal: {error}") from error
 

@@ -40,11 +40,23 @@ def test_workload_status(ready: int, desired: int, expected: str) -> None:
     ("seconds", "expected"),
     [
         (0, "0s"),
+        (-5, "0s"),
         (59, "59s"),
-        (60, "1m0s"),
-        (1325, "22m5s"),
-        (3603, "1h0m3s"),
-        (90000, "25h0m0s"),
+        (60, "1m"),  # seconds only while it is under a minute
+        (1325, "22m"),
+        (3599, "59m"),
+        (3600, "1h"),
+        (3603, "1h"),
+        (14661, "4h4m"),
+        (39913, "11h5m"),
+        (86399, "23h59m"),
+        (90000, "1d1h"),
+        (86400 * 3, "3d"),
+        (86400 * 3 + 4 * 3600 + 59, "3d4h"),
+        (86400 * 364, "364d"),
+        (86400 * 365, "1a"),
+        (86400 * 365 + 45 * 86400 + 3600, "1a45d"),
+        (86400 * 365 * 3 + 7200, "3a"),
     ],
 )
 def test_format_age(seconds: int, expected: str) -> None:
@@ -71,12 +83,17 @@ def test_age_seconds_inverts_format_age() -> None:
     from kubescope.models import age_seconds
 
     assert age_seconds("0h0m0s") == 0
-    assert age_seconds("5m0s") == 300
+    assert age_seconds("5m0s") == 300  # the old shape still reads
+    assert age_seconds("5m") == 300
+    assert age_seconds("4h4m") == 4 * 3600 + 4 * 60
+    assert age_seconds("1a45d") == 365 * 86400 + 45 * 86400
+    assert age_seconds("3d") == 3 * 86400
     assert age_seconds("3h0m4s") == 3 * 3600 + 4
     assert age_seconds("12d0h0m0s") == 12 * 86400
     assert age_seconds("12x") == float("inf")
     assert age_seconds("unknown") == float("inf")
     assert age_seconds("2d0h0m0s") > age_seconds("47h0m0s")
+    assert age_seconds("1a") > age_seconds("364d23h")
 
 
 def test_workload_sort_keys_rank_status_worst_first_and_ready_by_fraction() -> None:
@@ -271,7 +288,7 @@ def test_detail_sections_lay_out_properties_spec_and_status() -> None:
     ]
     properties = {row.label: row.values for row in sections["Properties"]}
     assert properties["Kind"] == ("Pod",)
-    assert properties["Created"][0].startswith("2h40m0s ago (")
+    assert properties["Created"][0].startswith("2h40m ago (")
     assert properties["Name"] == ("api-1",)
     assert properties["Labels"] == ("app=api", "tier=back")
     assert properties["Annotations"][0].endswith("...")

@@ -21,6 +21,7 @@ import shutil
 import subprocess
 from collections.abc import Mapping
 from dataclasses import dataclass, field
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -254,6 +255,109 @@ def aws_profiles() -> list[tuple[str, str]]:
     return sorted(found.items())
 
 
+@dataclass(frozen=True, slots=True)
+class SsoProfile:
+    """A profile of the AWS CLI that signs in with SSO."""
+
+    name: str
+    account: str  # the account number, when the file says
+    region: str
+    signed_in: bool  # its sign-in has not expired
+
+
+def _expired(text: object) -> bool:
+    """Whether the `expiresAt` of a cached SSO sign-in is past."""
+    if not isinstance(text, str):
+        return True
+    try:
+        moment = datetime.fromisoformat(
+            text.replace("Z", "+00:00").replace("UTC", "+00:00")
+        )
+    except ValueError:
+        return True
+    if moment.tzinfo is None:
+        moment = moment.replace(tzinfo=UTC)
+    return moment <= datetime.now(UTC)
+
+
+def _renewable(document: dict[str, Any]) -> bool:
+    """Whether the AWS CLI renews this sign-in by itself: the sessions of a
+    profile with an `sso-session` carry a refresh token, good while the
+    registration of the CLI with the portal lasts."""
+    return bool(document.get("refreshToken")) and not _expired(
+        document.get("registrationExpiresAt")
+    )
+
+
+def _signed_in_urls() -> set[str]:
+    """The SSO portals this computer is signed in to: only the address, the
+    expiry and whether it can be renewed are read from each cached sign-in,
+    never a token."""
+    cache = Path.home() / ".aws" / "sso" / "cache"
+    urls: set[str] = set()
+    for path in cache.glob("*.json"):
+        try:
+            document = json.loads(path.read_text(encoding="utf-8"))
+        except OSError, ValueError:
+            continue
+        if isinstance(document, dict) and (
+            not _expired(document.get("expiresAt")) or _renewable(document)
+        ):
+            url = document.get("startUrl")
+            if isinstance(url, str):
+                urls.add(url)
+    return urls
+
+
+def sso_profiles() -> list[SsoProfile]:
+    """The profiles of the AWS CLI that sign in with SSO, and whether each one
+    is signed in now."""
+    path = Path(os.environ.get("AWS_CONFIG_FILE") or Path.home() / ".aws" / "config")
+    parser = configparser.RawConfigParser()
+    try:
+        parser.read(path, encoding="utf-8")
+    except configparser.Error:
+        return []
+    urls = _signed_in_urls()
+    found: list[SsoProfile] = []
+    for section in parser.sections():
+        if section != "default" and not section.startswith("profile "):
+            continue
+        name = section.removeprefix("profile ")
+        url = parser.get(section, "sso_start_url", fallback="")
+        session = parser.get(section, "sso_session", fallback="")
+        if session and not url:
+            url = parser.get(f"sso-session {session}", "sso_start_url", fallback="")
+        if not url:
+            continue  # not an SSO profile
+        found.append(
+            SsoProfile(
+                name,
+                parser.get(section, "sso_account_id", fallback=""),
+                parser.get(section, "region", fallback=""),
+                url in urls,
+            )
+        )
+    return sorted(found, key=lambda profile: profile.name)
+
+
+def sso_accounts() -> list[Account]:
+    """The SSO profiles that are signed in, as accounts of the integrations
+    without having been added: they count as plugged in, unless an account
+    already uses the profile."""
+    used = {account.fields.get("profile") for account in accounts("aws")}
+    return [
+        Account(
+            f"sso-{profile.name}",
+            "aws",
+            profile.name,
+            {"profile": profile.name, "regions": profile.region or "us-east-1"},
+        )
+        for profile in sso_profiles()
+        if profile.signed_in and profile.name not in used
+    ]
+
+
 def integrations_directory() -> Path:
     return config_directory() / "integrations"
 
@@ -279,16 +383,16 @@ def environment(account: Account, values: Mapping[str, str]) -> dict[str, str]:
     """The variables the cloud's programs need to act with these keys."""
     base = account_directory(account.id)
     if account.provider == "aws":
-        regions = _regions(values)
+        first = regions(values)[0]
         if values.get("profile"):  # the keys stay in the files of the AWS CLI
             return {
                 "AWS_PROFILE": values["profile"],
-                "AWS_DEFAULT_REGION": regions[0],
+                "AWS_DEFAULT_REGION": first,
             }
         env = {
             "AWS_ACCESS_KEY_ID": values["access_key_id"],
             "AWS_SECRET_ACCESS_KEY": values["secret_access_key"],
-            "AWS_DEFAULT_REGION": regions[0],
+            "AWS_DEFAULT_REGION": first,
         }
         if values.get("session_token"):
             env["AWS_SESSION_TOKEN"] = values["session_token"]
@@ -320,7 +424,7 @@ def exec_environment(env: Mapping[str, str] | None) -> dict[str, str] | None:
     return {**env, **environment(account, values_of(account))}
 
 
-def _regions(values: Mapping[str, str]) -> list[str]:
+def regions(values: Mapping[str, str]) -> list[str]:
     regions = [part.strip() for part in values.get("regions", "").split(",")]
     return [region for region in regions if region] or ["us-east-1"]
 
@@ -403,7 +507,7 @@ def discover(account: Account, values: Mapping[str, str]) -> list[Found]:
     env = environment(account, values)
     if provider == "aws":
         found: list[Found] = []
-        for region in _regions(values):
+        for region in regions(values):
             command = ["aws", "eks", "list-clusters", "--region", region]
             document = _json(_run([*command, "--output", "json"], env))
             names = document.get("clusters") if isinstance(document, dict) else None

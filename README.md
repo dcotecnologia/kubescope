@@ -151,7 +151,9 @@ _The cluster overview, shown with sample data. Regenerate it with
   of the AWS CLI or type the keys (for Google Cloud, pick the service account key
   file), press **Find clusters**, select the ones to add and press **Add
   clusters**. Each account shows in a table with a menu to find more clusters, to
-  sign in again (AWS profiles) or to remove it. Secret keys stay in the memory of
+  sign in again (AWS profiles) or to remove it. While an AWS account is plugged
+  in, or an AWS SSO profile of the AWS CLI is signed in, the side menu has an **AWS** block with **RDS → Instances**, a read-only
+  list of the database instances of your AWS accounts. Secret keys stay in the memory of
   the app until it quits and are never written to a file, so type them again after
   a restart; the clusters go to a kubeconfig of KubeScope, apart from yours. It
   needs the cloud's command line program: `aws`, `az` with `kubelogin`, or

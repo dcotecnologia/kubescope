@@ -110,3 +110,23 @@ def test_forbidden_is_told_apart_from_a_sign_in_problem() -> None:
     assert not is_forbidden("connection refused")
     assert forbidden_action(message) == "list services"
     assert forbidden_action("pods is forbidden") is None
+
+
+def test_an_aws_denial_names_the_action_and_the_policy_that_denies_it() -> None:
+    from kubescope.utils.errors import describe_error
+
+    policy = (
+        "AccessDenied calling DescribeDBInstances: User: arn:aws:sts::1:x is not "
+        "authorized to perform: rds:DescribeDBInstances on resource: db:* with an "
+        "explicit deny in a service control policy: arn:aws:organizations::1:p"
+    )
+    plain = "AccessDenied: User x is not authorized to perform: ec2:DescribeInstances"
+    bare = "AccessDenied: something else"
+
+    denied = describe_error(policy)
+    assert denied.title == "Access denied" and denied.details == policy
+    assert "perform rds:DescribeDBInstances" in denied.hint
+    assert "service control policy" in denied.hint
+    assert "perform ec2:DescribeInstances" in describe_error(plain).hint
+    assert "service control" not in describe_error(plain).hint
+    assert "eks: permissions" in describe_error(bare).hint

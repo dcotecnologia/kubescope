@@ -482,3 +482,69 @@ def test_the_review_goes_through_the_write_path(monkeypatch) -> None:
 
     assert writes._write("POST", "/p", "dev", {}) == b"{}"
     assert len(calls) == 1
+
+
+def test_the_ssm_forward_command_names_the_instance_the_database_and_the_ports(
+    monkeypatch,
+) -> None:
+    _on(monkeypatch, "linux")
+    [(shell, command)] = writes.ssm_forward_commands(
+        "i-0abc", "db.example.com", 5432, 15432, "us-east-1", "work"
+    )
+    assert shell == ""
+    assert command.startswith("aws ssm start-session --target i-0abc ")
+    assert "--document-name AWS-StartPortForwardingSessionToRemoteHost" in command
+    assert (
+        '\'{"host":["db.example.com"],"portNumber":["5432"],'
+        '"localPortNumber":["15432"]}\'' in command
+    )
+    assert command.endswith("--region us-east-1 --profile work")
+
+    [(_, bare)] = writes.ssm_forward_commands("", "h", 3306, 13306, "sa-east-1")
+    assert "'<EC2-INSTANCE-ID>'" in bare and "--profile" not in bare
+
+
+def test_the_ssm_forward_command_is_quoted_for_each_shell_on_windows(
+    monkeypatch,
+) -> None:
+    _on(monkeypatch, "win32")
+    versions = dict(
+        writes.ssm_forward_commands(
+            "i-0abc", "db.example.com", 5432, 15432, "us-east-1"
+        )
+    )
+    assert versions["PowerShell"].startswith("aws ssm start-session --target i-0abc")
+    assert versions["cmd"].startswith("aws ssm start-session --target i-0abc")
+    assert "db.example.com" in versions["PowerShell"] and "15432" in versions["cmd"]
+
+
+def test_the_shell_is_run_with_the_kubeconfig_files_the_app_reads(monkeypatch) -> None:
+    _on(monkeypatch, "linux")
+    command, env = writes.shell_run("dev", "ops", "api-1", "app")
+    assert command[:3] == ["kubectl", "--context", "dev"]
+    assert command[-5:-2] == ["app", "--", "sh"] and env == {}
+
+    cluster.configure(kubeconfig_files=["/k/one"])
+    command, env = writes.shell_run("dev", "ops", "api-1", "app")
+    assert command[:3] == ["kubectl", "--kubeconfig", "/k/one"] and env == {}
+
+    cluster.configure(kubeconfig_files=["/k/one", "/k/two"])
+    command, env = writes.shell_run("dev", "ops", "api-1", "app")
+    assert command[1] == "--context" and env == {"KUBECONFIG": "/k/one:/k/two"}
+
+
+def test_the_shell_of_a_node_is_an_ssm_session_on_its_instance(monkeypatch) -> None:
+    arguments = writes.node_shell_arguments("i-0abc", "us-east-1", "work")
+    assert arguments == [
+        "aws", "ssm", "start-session", "--target", "i-0abc",
+        "--region", "us-east-1", "--profile", "work",
+    ]  # fmt: skip
+    assert "--profile" not in writes.node_shell_arguments("i-0abc", "us-east-1")
+
+    _on(monkeypatch, "linux")
+    [(shell, command)] = writes.node_shell_commands("i-0abc", "us-east-1", "work")
+    assert shell == "" and command.startswith("aws ssm start-session --target i-0abc")
+
+    _on(monkeypatch, "win32")
+    versions = dict(writes.node_shell_commands("i-0abc", "us-east-1"))
+    assert set(versions) == {"PowerShell", "cmd"}

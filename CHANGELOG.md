@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+### Added
+
+- The **Shell command** dialog of a Pod has an **Open in terminal** button that opens the terminal of the system already in the container, and a node of the Node Groups list has a **Shell (SSM)** entry that opens a shell on its EC2 instance through AWS Systems Manager, in the terminal of the system by @danilogco
+- **Forward** dialogs (Service, Pod, StatefulSet and RDS) have a **Run in KubeScope** button: the forward runs from the app and is listed on the new **Forwards** page of the side menu, with its status (starting, running, failed or stopped) and a **Stop** button; they all stop when the app quits, and the ones left running by an app that died or was restarted are listed again by @danilogco
+- **Forward with SSM** on an RDS instance builds the `aws ssm start-session` command for a port of the database through an EC2 instance of the VPC, already filled with the instance, the region and the profile by @danilogco
+- The **RDS instances** page has a **Region** select, which starts in the region of the selected context, to look for the instances of the account in another region by @danilogco
+- **Details** and **Logs** on an RDS instance: everything the AWS CLI says about it, and the end of any of its log files, such as the ones of PostgreSQL, in a Logs tab by @danilogco
+- While an AWS account is plugged in, or an AWS SSO profile of this computer is signed in, the side menu has an **AWS** block, under the Kubernetes ones, with **RDS → Instances**: the database instances of every region of your AWS accounts, with engine, version, class, status, storage, Multi-AZ, region, account and endpoint by @danilogco
+
+### Changed
+
+- The errors of `kubectl`, the AWS CLI and the cluster, permissions included, show in a red banner with a short line and the original text one click away (**Details**), at the top of the window and above the table of the RDS instances, instead of dialogs and of a line of the status bar by @danilogco
+- Ages show seconds only while they are under a minute, and then their two biggest units (`22m`, `4h4m`, `3d4h`), with days (`d`) and years (`a`) when they are that old by @danilogco
+
 ## [1.8.0] - 2026-11-11
 
 ### Added

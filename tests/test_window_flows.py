@@ -510,18 +510,16 @@ def test_closing_hides_the_window_and_stops_the_running_requests(
     assert event.isAccepted()
 
 
-def test_no_error_box_while_the_window_is_closing(monkeypatch) -> None:
+def test_no_error_banner_while_the_window_is_closing(monkeypatch) -> None:
     window = _ready_window(monkeypatch)
-    shown = []
-    monkeypatch.setattr(QMessageBox, "exec", lambda box: shown.append(box.text()))
 
     window._close_when_worker_stops = True
     window._show_action_error("kubectl exited with -15")
-    assert shown == []
+    assert window.permission_banner.isHidden()
 
     window._close_when_worker_stops = False
     window._show_action_error("kubectl exited with 1")
-    assert shown
+    assert not window.permission_banner.isHidden()
     window.close()
 
 
@@ -701,17 +699,26 @@ def test_item_picker_is_a_filter_styled_select(monkeypatch) -> None:
     window.close()
 
 
-def test_errors_are_shown_in_a_message_box_and_in_the_status(monkeypatch) -> None:
+def test_errors_are_shown_in_the_banner_and_in_the_status(monkeypatch) -> None:
     window = _ready_window(monkeypatch)
-    executed = []
-    monkeypatch.setattr(QMessageBox, "exec", lambda box: executed.append(box.text()))
+    boxes = []
+    monkeypatch.setattr(QMessageBox, "exec", lambda box: boxes.append(box.text()))
+    ui = window.ui
 
     window._show_action_error("Unable to connect to the server")
-    window._show_error("Unable to connect to the server")
-    window._show_overview_error("Unable to connect to the server")
+    assert not window.permission_banner.isHidden()
+    assert ui.permissionLabel.text().startswith("Cluster unreachable")
+    assert ui.permissionDetailsText.text() == "Unable to connect to the server"
+    window.permission_banner.hide()
 
-    assert executed and window.table.rowCount() == 0
-    assert "Unable to connect" in window.overview_ui.noticeLabel.toolTip()
+    window._show_error("Unable to connect to the server")
+    assert not window.permission_banner.isHidden() and window.table.rowCount() == 0
+    window.permission_banner.hide()
+
+    window._show_overview_error("Unable to connect to the server")
+    assert not window.permission_banner.isHidden()
+    assert window.overview_ui.noticeLabel.text() == ""
+    assert boxes == []  # no dialog: the banner says it
     window.close()
 
 
@@ -1482,7 +1489,8 @@ def test_overview_errors_are_explained_and_authentication_is_rechecked(
     window.nav_workloads_overview.click()
 
     ran[0][3]["on_error"]("Unable to connect: i/o timeout")
-    assert "Cluster unreachable" in window.workloads_ui.noticeLabel.text()
+    assert "Cluster unreachable" in window.ui.permissionLabel.text()
+    assert not window.permission_banner.isHidden()
     assert not window._workloads_overview_busy
     assert [name for name, *_rest in ran] == ["get_workloads_overview"]
 
@@ -2071,12 +2079,13 @@ def test_a_forbidden_list_shows_the_permission_banner(monkeypatch) -> None:
     window.ui.permissionDismiss.click()
     assert window.permission_banner.isHidden()
 
-    window._show_error("connection refused")  # not a permission problem
-    assert window.permission_banner.isHidden()
+    window._show_error("connection refused")  # another problem, in the same banner
+    assert not window.permission_banner.isHidden()
+    assert "not allowed" not in window.ui.permissionLabel.text()
     window.close()
 
 
-def test_a_forbidden_action_shows_the_banner_instead_of_a_dialog(monkeypatch) -> None:
+def test_an_action_error_shows_the_banner_instead_of_a_dialog(monkeypatch) -> None:
     window = _ready_window(monkeypatch)
     window.show()
     boxes = []
@@ -2087,7 +2096,8 @@ def test_a_forbidden_action_shows_the_banner_instead_of_a_dialog(monkeypatch) ->
     assert boxes == []
     assert "not allowed to do this" in window.ui.permissionLabel.text()
     window._show_action_error("connection refused")
-    assert boxes  # other failures still get their dialog
+    assert boxes == []  # other failures use the banner too
+    assert "not allowed" not in window.ui.permissionLabel.text()
     window.close()
 
 

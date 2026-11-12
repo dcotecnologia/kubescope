@@ -119,19 +119,27 @@ def safe_file_name(title: str, suffix: str) -> str:
     return f"{stem or 'kubescope'}{suffix}"
 
 
-def format_age(seconds: float) -> str:
-    """Age down to the second, from the first unit that is not zero:
+DAY = 86400
+YEAR = 365 * DAY
+# (the size of the biggest unit, its letter, the size of the next one, its letter)
+_AGE_STEPS = ((YEAR, "a", DAY, "d"), (DAY, "d", 3600, "h"), (3600, "h", 60, "m"))
 
-    "5s", "22m5s", "27h0m3s".
+
+def format_age(seconds: float) -> str:
+    """An age with its two biggest units, seconds only while it is under a
+    minute, and days and years only when it is that old:
+
+    "45s", "22m", "4h4m", "5h", "3d4h", "1a45d".
     """
     total = int(max(seconds, 0))
-    hours, rest = divmod(total, 3600)
-    minutes, secs = divmod(rest, 60)
-    if hours:
-        return f"{hours}h{minutes}m{secs}s"
-    if minutes:
-        return f"{minutes}m{secs}s"
-    return f"{secs}s"
+    if total < 60:
+        return f"{total}s"
+    for size, big, unit, small in _AGE_STEPS:
+        if total >= size:
+            first, rest = divmod(total, size)
+            second = rest // unit
+            return f"{first}{big}{second}{small}" if second else f"{first}{big}"
+    return f"{total // 60}m"
 
 
 _BINARY_UNITS = {"Ki": 2**10, "Mi": 2**20, "Gi": 2**30, "Ti": 2**40, "Pi": 2**50}
@@ -367,16 +375,16 @@ SORT_COLUMNS = (
 )
 
 
-_AGE_PATTERN = re.compile(r"(?:(\d+)d)?(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?")
+_AGE_PATTERN = re.compile(r"(?:(\d+)a)?(?:(\d+)d)?(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?")
 
 
 def age_seconds(age: str) -> float:
-    """Inverse of format_age(): "1h5m3s" -> seconds, unknown ages sort last."""
+    """Inverse of format_age(): "1h5m" -> seconds, unknown ages sort last."""
     match = _AGE_PATTERN.fullmatch(age.strip())
     if match is None or not any(match.groups()):
         return float("inf")
-    days, hours, minutes, secs = (int(part or 0) for part in match.groups())
-    return float(days * 86400 + hours * 3600 + minutes * 60 + secs)
+    years, days, hours, minutes, secs = (int(part or 0) for part in match.groups())
+    return float(years * YEAR + days * DAY + hours * 3600 + minutes * 60 + secs)
 
 
 def workload_sort_key(workload: Workload, column: int) -> tuple:
@@ -717,3 +725,42 @@ def match_rank(query: str, text: str) -> int | None:
     if lowered.startswith(whole):
         return 0
     return 1 if re.search(rf"(?<![a-z0-9]){re.escape(whole)}", lowered) else 2
+
+
+@dataclass(frozen=True, slots=True)
+class RdsInstance:
+    """A database instance of Amazon RDS."""
+
+    account: str  # the account number of the context, or its profile
+    region: str
+    identifier: str
+    engine: str
+    version: str
+    size: str  # the instance class, such as db.t3.micro
+    status: str
+    storage: int  # GiB
+    multi_az: bool
+    endpoint: str
+    port: int = 0  # the one the endpoint listens on
+    profile: str = ""  # the AWS CLI profile of the context, if it has one
+    vpc: str = ""  # the VPC of its subnet group
+
+
+@dataclass(frozen=True, slots=True)
+class SsmTarget:
+    """An EC2 instance that Systems Manager can open a session on."""
+
+    instance_id: str
+    name: str
+    vpc: str
+    same_vpc: bool  # in the VPC of the database it is meant to reach
+
+
+@dataclass(frozen=True, slots=True)
+class RdsLogFile:
+    """A log file of an RDS instance, such as
+    `error/postgresql.log.2026-11-12-03`."""
+
+    name: str
+    size: int  # bytes
+    written: int  # when it was last written, in milliseconds since 1970
