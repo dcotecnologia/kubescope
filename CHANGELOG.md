@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+## [1.9.0] - 2026-11-12
+
 ### Added
 
 - The **Shell command** dialog of a Pod has an **Open in terminal** button that opens the terminal of the system already in the container, and a node of the Node Groups list has a **Shell (SSM)** entry that opens a shell on its EC2 instance through AWS Systems Manager, in the terminal of the system by @danilogco
@@ -542,7 +544,8 @@ The first release.
 
 - Pod logs and resource details are still never written to disk by the app on its own. **Save** is the only exception, and it writes only to the file the user chooses. SECURITY.md says so by @danilogco
 
-[Unreleased]: https://github.com/dcotecnologia/kubescope/compare/v1.8.0...HEAD
+[Unreleased]: https://github.com/dcotecnologia/kubescope/compare/v1.9.0...HEAD
+[1.9.0]: https://github.com/dcotecnologia/kubescope/compare/v1.8.0...v1.9.0
 [1.8.0]: https://github.com/dcotecnologia/kubescope/compare/v1.7.0...v1.8.0
 [1.7.0]: https://github.com/dcotecnologia/kubescope/compare/v1.6.0...v1.7.0
 [1.6.0]: https://github.com/dcotecnologia/kubescope/compare/v1.5.0...v1.6.0
