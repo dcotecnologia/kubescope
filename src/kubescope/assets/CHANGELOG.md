@@ -4,9 +4,15 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+## [1.9.1] - 2026-11-13
+
 ### Fixed
 
 - Gabi reads a log of a window of time that it always asks for, from how many minutes ago (`since_minutes`, and `until_minutes` to end it earlier) or from a date and time with its time zone (`since` and `until`), the whole window and not only the last lines, with `search` to keep the lines with some terms; an answer that is too long stops and says where, to ask again from there, and it is told the range of every number of an action (it asked for 5000 lines when the limit was 500). When it asks for two reads at once both are made, instead of only the first by @danilogco
+
+### Changed
+
+- Gabi reads a log that is short enough for one answer whole, with no window to ask for; the window (`since_minutes` or `since`) is asked only for a longer one by @danilogco
 
 ## [1.9.0] - 2026-11-12
 
@@ -548,7 +554,8 @@ The first release.
 
 - Pod logs and resource details are still never written to disk by the app on its own. **Save** is the only exception, and it writes only to the file the user chooses. SECURITY.md says so by @danilogco
 
-[Unreleased]: https://github.com/dcotecnologia/kubescope/compare/v1.9.0...HEAD
+[Unreleased]: https://github.com/dcotecnologia/kubescope/compare/v1.9.1...HEAD
+[1.9.1]: https://github.com/dcotecnologia/kubescope/compare/v1.9.0...v1.9.1
 [1.9.0]: https://github.com/dcotecnologia/kubescope/compare/v1.8.0...v1.9.0
 [1.8.0]: https://github.com/dcotecnologia/kubescope/compare/v1.7.0...v1.8.0
 [1.7.0]: https://github.com/dcotecnologia/kubescope/compare/v1.6.0...v1.7.0

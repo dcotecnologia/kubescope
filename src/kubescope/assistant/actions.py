@@ -163,13 +163,14 @@ ACTIONS = (
     Action(
         "get_logs",
         "fetch",
-        "read a log of a window of time, always asked for, and get it back as the "
-        "next message; the window starts with since_minutes (how long ago) or "
+        "read a log and get it back as the next message; a log short enough for "
+        "one answer is read whole, with no window; for a longer one, ask for a "
+        "window of time: it starts with since_minutes (how long ago) or "
         "since (a date and time with its time zone, such as "
         "2026-10-08T13:49:00-03:00) and ends now, or with until_minutes or until "
-        "likewise; with search only the lines with any of its terms, separated by "
-        "|, come back; an answer that is too long stops and says where, to ask "
-        "again from there",
+        "likewise, and an end needs a start; with search only the lines with any of "
+        "its terms, separated by |, come back; an answer that is too long stops and "
+        "says where, to ask again from there",
         (
             Param("namespace", str, "the namespace of the Pod"),
             Param("pod", str, "the name of the Pod"),
@@ -283,8 +284,11 @@ def parse_time(text: str) -> datetime | None:
 
 def _window_problem(args: dict[str, Any]) -> str:
     """Why the window of a log is not one, or nothing when it is."""
-    if ("since_minutes" in args) == ("since" in args):
-        return "ask for the start of the window with since_minutes or since, one"
+    if "since_minutes" in args and "since" in args:
+        return "start the window with since_minutes or since, not both"
+    ends = any(name in args for name in ("until_minutes", "until"))
+    if ends and not any(name in args for name in ("since_minutes", "since")):
+        return "a window that ends needs a start, since_minutes or since"
     if "until_minutes" in args and "until" in args:
         return "end the window with until_minutes or until, not both"
     moments = {

@@ -227,15 +227,22 @@ def _log_window(context: str, args: dict[str, Any], container: str) -> str:
     answer."""
     now = datetime.now(UTC)
     since = parse_time(args.get("since", ""))
+    seconds = args.get("since_minutes", 0) * 60
+    whole = not (since or seconds)  # no window: the log, if it fits an answer
     log = cluster.get_pod_logs(
         context,
         args["namespace"],
         args["pod"],
         container,
         since_time=_second(since) if since else None,
-        since_seconds=args.get("since_minutes", 0) * 60,
-        limit_bytes=cluster.LOG_WINDOW_BYTES,
+        since_seconds=seconds,
+        limit_bytes=RESULT_LIMIT + 1 if whole else cluster.LOG_WINDOW_BYTES,
     )
+    if whole and len(log.encode()) > RESULT_LIMIT:
+        return (
+            "The log is too long for one answer. Ask again for a window: since_minutes "
+            "or since, with until_minutes, until or search to cut it down."
+        )
     lines = log.splitlines()
     end = parse_time(args.get("until", ""))
     if end is None and (minutes := args.get("until_minutes", 0)):

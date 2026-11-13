@@ -7,9 +7,16 @@ from kubescope.cluster import ClusterError
 
 
 def _request(action: str, **args) -> actions.Request:
-    if action == "get_logs" and "since" not in args:
-        args.setdefault("since_minutes", 10)  # a window is always asked for
     return actions.Request(actions.BY_NAME[action], args)
+
+
+def _whole() -> dict:
+    """What the cluster is asked for a log with no window."""
+    return {
+        "since_time": None,
+        "since_seconds": 0,
+        "limit_bytes": executor.RESULT_LIMIT + 1,
+    }
 
 
 def _window(seconds: int, since_time: str | None = None) -> dict:
@@ -61,7 +68,9 @@ def test_the_logs_are_read_from_the_container_that_was_named(cluster_reads) -> N
     calls, _answers = cluster_reads
 
     named = executor.fetch(
-        _request("get_logs", namespace="ns", pod="web", container="side"),
+        _request(
+            "get_logs", namespace="ns", pod="web", container="side", since_minutes=10
+        ),
         "ctx",
     )
 
@@ -94,7 +103,7 @@ def test_an_init_container_is_never_chosen_for_the_person(cluster_reads) -> None
     message = executor.fetch(_request("get_logs", namespace="ns", pod="api-1"), "ctx")
 
     assert "line 2" in message  # the main container, with no question
-    assert calls[-1] == ("logs", "ctx", "ns", "api-1", "api", _window(600))
+    assert calls[-1] == ("logs", "ctx", "ns", "api-1", "api", _whole())
     assert all(call[4] != "migrate" for call in calls if call[0] == "logs")
 
 
@@ -125,7 +134,7 @@ def test_a_pod_with_one_container_is_read_without_asking(cluster_reads) -> None:
     message = executor.fetch(_request("get_logs", namespace="ns", pod="web"), "ctx")
 
     assert "line 2" in message
-    assert calls[-1] == ("logs", "ctx", "ns", "web", "solo", _window(600))
+    assert calls[-1] == ("logs", "ctx", "ns", "web", "solo", _whole())
 
     answers["details"] = {"spec": {"initContainers": [{"name": "only-init"}]}}
     executor.fetch(_request("get_logs", namespace="ns", pod="web"), "ctx")
@@ -156,7 +165,10 @@ def test_a_long_log_stops_where_it_says_and_a_long_document_keeps_its_start(
     answers["details"] = {"a": "x" * 200}
 
     log = executor.fetch(
-        _request("get_logs", namespace="ns", pod="web", container="app"), "ctx"
+        _request(
+            "get_logs", namespace="ns", pod="web", container="app", since_minutes=10
+        ),
+        "ctx",
     )
     document = executor.fetch(
         _request("get_details", kind="Pod", namespace="ns", name="web"), "ctx"
@@ -175,7 +187,10 @@ def test_a_long_log_with_no_time_on_its_last_line_asks_for_a_shorter_window(
     answers["logs"] = "0123456789ABCDEFGHIJ"
 
     log = executor.fetch(
-        _request("get_logs", namespace="ns", pod="web", container="app"), "ctx"
+        _request(
+            "get_logs", namespace="ns", pod="web", container="app", since_minutes=10
+        ),
+        "ctx",
     )
 
     assert "ask again for a shorter one" in log
@@ -551,7 +566,8 @@ def test_a_log_that_is_too_long_says_the_time_to_start_from(
     answers["logs"] = "\n".join(f"2026-10-08T00:0{i}:00Z line {i}" for i in range(9))
 
     message = executor.fetch(
-        _request("get_logs", namespace="ns", pod="w", container="c"), "ctx"
+        _request("get_logs", namespace="ns", pod="w", container="c", since_minutes=10),
+        "ctx",
     )
 
     assert 'ask again with since "2026-10-08T00:0' in message
@@ -560,10 +576,10 @@ def test_a_log_that_is_too_long_says_the_time_to_start_from(
 @pytest.mark.parametrize(
     ("args", "why"),
     [
-        ({}, "since_minutes or since"),
+        ({"until_minutes": 5}, "needs a start"),
         (
             {"since_minutes": 5, "since": "2026-10-08T00:00:00Z"},
-            "since_minutes or since",
+            "start the window with since_minutes or since, not both",
         ),
         (
             {"since_minutes": 5, "until_minutes": 1, "until": "2026-10-08T00:00:00Z"},
@@ -585,3 +601,29 @@ def test_a_window_that_is_not_one_is_dropped_and_says_why(args, why) -> None:
     [found] = actions.parse(text)
 
     assert isinstance(found, actions.Invalid) and why in found.reason
+
+
+def test_a_short_log_is_read_whole_with_no_window(cluster_reads) -> None:
+    calls, answers = cluster_reads
+    answers["logs"] = "a ok\nb STATE QUERY"
+
+    whole = executor.fetch(
+        _request("get_logs", namespace="ns", pod="w", container="c"), "ctx"
+    )
+
+    assert "a ok\nb STATE QUERY" in whole
+    assert calls[0] == ("logs", "ctx", "ns", "w", "c", _whole())
+
+
+def test_a_log_too_long_for_an_answer_asks_for_a_window(
+    cluster_reads, monkeypatch
+) -> None:
+    _calls, answers = cluster_reads
+    monkeypatch.setattr(executor, "RESULT_LIMIT", 10)
+    answers["logs"] = "0123456789ABCDEFGHIJ"
+
+    message = executor.fetch(
+        _request("get_logs", namespace="ns", pod="w", container="c"), "ctx"
+    )
+
+    assert "too long for one answer" in message and "since_minutes" in message

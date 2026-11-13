@@ -3710,7 +3710,14 @@ def test_get_pod_logs_reads_the_whole_window_up_to_a_limit_of_bytes(
 
     monkeypatch.setattr(cluster, "_request", fake_request)
 
-    cluster.get_pod_logs("dev", "ops", "api", "app", tail_lines=9000, since_seconds=600)
+    cluster.get_pod_logs(
+        "dev",
+        "ops",
+        "api",
+        "app",
+        since_seconds=600,
+        limit_bytes=cluster.LOG_WINDOW_BYTES,
+    )
 
     assert requests == [
         [
@@ -3742,4 +3749,22 @@ def test_get_pod_logs_reads_from_a_time_up_to_a_limit_of_bytes(monkeypatch) -> N
             ("limitBytes", "9"),
             ("timestamps", "true"),
         ]
+    ]
+
+
+def test_get_pod_logs_reads_the_log_from_its_start_up_to_a_limit_of_bytes(
+    monkeypatch,
+) -> None:
+    requests = []
+
+    def fake_request(path, context, query=None, accept="application/json"):
+        requests.append(query)
+        return b""
+
+    monkeypatch.setattr(cluster, "_request", fake_request)
+
+    cluster.get_pod_logs("dev", "ops", "api", "app", limit_bytes=7)
+
+    assert requests == [
+        [("container", "app"), ("limitBytes", "7"), ("timestamps", "true")]
     ]

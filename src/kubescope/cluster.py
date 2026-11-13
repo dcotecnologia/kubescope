@@ -2425,19 +2425,18 @@ def get_pod_logs(
     """The last lines of a container's log; with `since_time` (the timestamp of
     a line already seen) only the lines from then on, which the cluster answers
     with a few lines instead of the whole tail; with `since_seconds` the whole
-    log from that long ago on, up to LOG_WINDOW_BYTES."""
+    log from that long ago on; `limit_bytes` caps what is read, and with no
+    time it is the log from its start."""
     path = f"{_resource_path('pods', namespace, pod_name)}/log"
     query = [("container", container)]
     if since_time:
         query.append(("sinceTime", since_time))
-        if limit_bytes:
-            query.append(("limitBytes", str(limit_bytes)))
-    else:
-        if since_seconds:
-            query.append(("sinceSeconds", str(since_seconds)))
-            query.append(("limitBytes", str(LOG_WINDOW_BYTES)))
-        else:
-            query.append(("tailLines", str(min(max(tail_lines, 1), 500))))
+    elif since_seconds:
+        query.append(("sinceSeconds", str(since_seconds)))
+    elif not limit_bytes:
+        query.append(("tailLines", str(min(max(tail_lines, 1), 500))))
+    if limit_bytes:
+        query.append(("limitBytes", str(limit_bytes)))
     query.append(("timestamps", "true"))
     return _request(path, context, query, accept="application/json, */*").decode(
         errors="replace"
