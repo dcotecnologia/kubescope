@@ -2409,6 +2409,9 @@ def get_pods(
     return namespaces, pods
 
 
+LOG_WINDOW_BYTES = 50_000_000  # the most that is read of the window of a log
+
+
 def get_pod_logs(
     context: str,
     namespace: str,
@@ -2416,16 +2419,25 @@ def get_pod_logs(
     container: str,
     tail_lines: int = 500,
     since_time: str | None = None,
+    since_seconds: int = 0,
+    limit_bytes: int = 0,
 ) -> str:
     """The last lines of a container's log; with `since_time` (the timestamp of
     a line already seen) only the lines from then on, which the cluster answers
-    with a few lines instead of the whole tail."""
+    with a few lines instead of the whole tail; with `since_seconds` the whole
+    log from that long ago on, up to LOG_WINDOW_BYTES."""
     path = f"{_resource_path('pods', namespace, pod_name)}/log"
     query = [("container", container)]
     if since_time:
         query.append(("sinceTime", since_time))
+        if limit_bytes:
+            query.append(("limitBytes", str(limit_bytes)))
     else:
-        query.append(("tailLines", str(min(max(tail_lines, 1), 500))))
+        if since_seconds:
+            query.append(("sinceSeconds", str(since_seconds)))
+            query.append(("limitBytes", str(LOG_WINDOW_BYTES)))
+        else:
+            query.append(("tailLines", str(min(max(tail_lines, 1), 500))))
     query.append(("timestamps", "true"))
     return _request(path, context, query, accept="application/json, */*").decode(
         errors="replace"

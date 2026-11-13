@@ -3697,3 +3697,49 @@ def test_the_region_of_a_context_is_known_or_empty_and_the_list_of_regions_has_i
     assert cluster.context_region("prod") == ""
     assert "us-east-1" in cluster.AWS_REGIONS and "sa-east-1" in cluster.AWS_REGIONS
     assert len(set(cluster.AWS_REGIONS)) == len(cluster.AWS_REGIONS)
+
+
+def test_get_pod_logs_reads_the_whole_window_up_to_a_limit_of_bytes(
+    monkeypatch,
+) -> None:
+    requests = []
+
+    def fake_request(path, context, query=None, accept="application/json"):
+        requests.append(query)
+        return b""
+
+    monkeypatch.setattr(cluster, "_request", fake_request)
+
+    cluster.get_pod_logs("dev", "ops", "api", "app", tail_lines=9000, since_seconds=600)
+
+    assert requests == [
+        [
+            ("container", "app"),
+            ("sinceSeconds", "600"),
+            ("limitBytes", str(cluster.LOG_WINDOW_BYTES)),
+            ("timestamps", "true"),
+        ]
+    ]
+
+
+def test_get_pod_logs_reads_from_a_time_up_to_a_limit_of_bytes(monkeypatch) -> None:
+    requests = []
+
+    def fake_request(path, context, query=None, accept="application/json"):
+        requests.append(query)
+        return b""
+
+    monkeypatch.setattr(cluster, "_request", fake_request)
+
+    cluster.get_pod_logs(
+        "dev", "ops", "api", "app", since_time="2026-10-08T13:49:00Z", limit_bytes=9
+    )
+
+    assert requests == [
+        [
+            ("container", "app"),
+            ("sinceTime", "2026-10-08T13:49:00Z"),
+            ("limitBytes", "9"),
+            ("timestamps", "true"),
+        ]
+    ]

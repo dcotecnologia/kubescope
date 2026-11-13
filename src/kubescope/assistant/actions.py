@@ -13,6 +13,7 @@ write mode, a `fetch` sends what it reads to the assistant. No Qt.
 import json
 import re
 from dataclasses import dataclass, field
+from datetime import UTC, datetime
 from typing import Any, Literal
 
 from kubescope.models import EKS_VIEWS, RESOURCE_VIEWS, WORKLOAD_VIEWS
@@ -162,7 +163,13 @@ ACTIONS = (
     Action(
         "get_logs",
         "fetch",
-        "read the last lines of a log and get them back as the next message",
+        "read a log of a window of time, always asked for, and get it back as the "
+        "next message; the window starts with since_minutes (how long ago) or "
+        "since (a date and time with its time zone, such as "
+        "2026-10-08T13:49:00-03:00) and ends now, or with until_minutes or until "
+        "likewise; with search only the lines with any of its terms, separated by "
+        "|, come back; an answer that is too long stops and says where, to ask "
+        "again from there",
         (
             Param("namespace", str, "the namespace of the Pod"),
             Param("pod", str, "the name of the Pod"),
@@ -173,7 +180,25 @@ ACTIONS = (
                 required=False,
                 empty=True,
             ),
-            Param("lines", int, "how many lines", required=False, low=1, high=2000),
+            Param(
+                "since_minutes",
+                int,
+                "how long ago the window starts",
+                required=False,
+                low=1,
+                high=10080,
+            ),
+            Param("since", str, "when the window starts", required=False),
+            Param(
+                "until_minutes",
+                int,
+                "how long ago the window ends",
+                required=False,
+                low=0,
+                high=10079,
+            ),
+            Param("until", str, "when the window ends", required=False),
+            Param("search", str, "the terms to look for", required=False, empty=True),
         ),
     ),
     Action(
@@ -246,6 +271,34 @@ def _check(param: Param, value: Any) -> str:
     return ""
 
 
+def parse_time(text: str) -> datetime | None:
+    """The moment a date and time with its time zone is, in UTC; nothing when
+    it is not one, or has no time zone."""
+    try:
+        moment = datetime.fromisoformat(text.strip())
+    except ValueError:
+        return None
+    return moment.astimezone(UTC) if moment.tzinfo else None
+
+
+def _window_problem(args: dict[str, Any]) -> str:
+    """Why the window of a log is not one, or nothing when it is."""
+    if ("since_minutes" in args) == ("since" in args):
+        return "ask for the start of the window with since_minutes or since, one"
+    if "until_minutes" in args and "until" in args:
+        return "end the window with until_minutes or until, not both"
+    moments = {
+        name: parse_time(args[name]) for name in ("since", "until") if name in args
+    }
+    for name, moment in moments.items():
+        if moment is None:
+            return f"{name} must be a date and time with its time zone"
+    since, until = moments.get("since"), moments.get("until")
+    if since and until and until <= since:
+        return "until must be after since"
+    return ""
+
+
 def _parse_block(text: str) -> Request | Invalid:
     try:
         document = json.loads(text)
@@ -267,6 +320,8 @@ def _parse_block(text: str) -> Request | Invalid:
             continue
         if problem := _check(param, args[param.name]):
             return Invalid(f"{action.name}: {problem}")
+    if action.name == "get_logs" and (problem := _window_problem(args)):
+        return Invalid(f"{action.name}: {problem}")
     return Request(action, args)
 
 
@@ -292,7 +347,8 @@ def instructions(write_mode: bool = True) -> str:
         "words what it does and why before you ask. You cannot see the result of "
         "a navigate or write action, and the client asks the person before it "
         "changes anything, so never say it is done. A fetch action answers in the "
-        "next message. Use only these actions and their fields:",
+        "next message; ask for one fetch at a time unless they do not depend on each "
+        "other. Use only these actions and their fields:",
     ]
     for action in ACTIONS:
         if action.kind == "write" and not write_mode:
@@ -300,6 +356,7 @@ def instructions(write_mode: bool = True) -> str:
         fields = ", ".join(
             f"{param.name}{'' if param.required else '?'}: {param.type.__name__}"
             + (f" ({'|'.join(param.choices)})" if param.choices else "")
+            + (f" ({param.low}-{param.high})" if param.type is int else "")
             for param in action.params
         )
         lines.append(f"- {action.name} [{action.kind}] {{{fields}}}: {action.summary}")

@@ -200,6 +200,19 @@ def test_a_block_that_does_not_fit_the_catalog_is_noted(replies) -> None:
     assert "Ignored an action: there is no action rm_rf" in tab.markdown()
 
 
+def test_two_reads_asked_together_both_go_back_in_one_message(replies) -> None:
+    queue, prompts = replies
+    first = '{"action": "get_details", "kind": "Pod", "namespace": "ns", "name": "a"}'
+    second = '{"action": "get_details", "kind": "Pod", "namespace": "ns", "name": "b"}'
+    queue.extend([[_block(first), _block(second)], ["Both read."]])
+    tab = _tab(fetch=lambda request, context: f"DATA {request.args['name']}")
+
+    _say(tab, "check both")
+
+    assert "DATA a" in prompts[1] and "DATA b" in prompts[1]
+    assert "name=a" in tab.markdown() and "name=b" in tab.markdown()
+
+
 def test_a_read_goes_back_to_the_assistant_as_the_next_message(replies) -> None:
     queue, prompts = replies
     details = '{"action": "get_details", "kind": "Pod", "namespace": "ns", "name": "p"}'
@@ -224,7 +237,9 @@ def test_a_read_goes_back_to_the_assistant_as_the_next_message(replies) -> None:
 
 def test_the_assistant_cannot_keep_reading_forever(replies) -> None:
     queue, prompts = replies
-    again = _block('{"action": "get_logs", "namespace": "ns", "pod": "p"}')
+    again = _block(
+        '{"action": "get_logs", "namespace": "ns", "pod": "p", "since_minutes": 5}'
+    )
     queue.extend([[again]] * (assistant_tab.MAX_FOLLOW_UPS + 1))
     tab = _tab(fetch=lambda request, context: "log")
 

@@ -888,26 +888,30 @@ class AssistantTab(QWidget):
             else:
                 reads.append(found)
         if reads:
-            self._read(reads[0])
+            self._read(reads)
 
-    def _read(self, request: Request) -> None:
+    def _read(self, requests: list[Request]) -> None:
         if self._follow_ups >= MAX_FOLLOW_UPS:
             self._add_entry(
                 "app", self.tr("Stopped reading: too many reads for one question.")
             )
             return
         self._follow_ups += 1
-        self._reader = reader = ReadWorker(lambda: self._fetch(request, self.context))
-        reader.done.connect(lambda message: self._on_read(request, message))
+        self._reader = reader = ReadWorker(
+            lambda: "\n\n".join(self._fetch(item, self.context) for item in requests)
+        )
+        reader.done.connect(lambda message: self._on_read(requests, message))
         reader.finished.connect(lambda: setattr(self, "_reader", None))
         reader.start()
 
-    def _on_read(self, request: Request, message: str) -> None:
+    def _on_read(self, requests: list[Request], message: str) -> None:
         self._reader = None
         self._ask(
             message,
             "app",
-            self.tr("(read) {what}").format(what=actions.describe(request)),
+            self.tr("(read) {what}").format(
+                what="; ".join(actions.describe(item) for item in requests)
+            ),
         )
 
     def _add_card(self, request: Request) -> None:

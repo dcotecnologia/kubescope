@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+### Fixed
+
+- Gabi reads a log of a window of time that it always asks for, from how many minutes ago (`since_minutes`, and `until_minutes` to end it earlier) or from a date and time with its time zone (`since` and `until`), the whole window and not only the last lines, with `search` to keep the lines with some terms; an answer that is too long stops and says where, to ask again from there, and it is told the range of every number of an action (it asked for 5000 lines when the limit was 500). When it asks for two reads at once both are made, instead of only the first by @danilogco
+
 ## [1.9.0] - 2026-11-12
 
 ### Added

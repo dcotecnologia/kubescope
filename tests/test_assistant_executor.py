@@ -1,3 +1,5 @@
+import json
+
 import pytest
 
 from kubescope.assistant import actions, executor
@@ -5,7 +7,18 @@ from kubescope.cluster import ClusterError
 
 
 def _request(action: str, **args) -> actions.Request:
+    if action == "get_logs" and "since" not in args:
+        args.setdefault("since_minutes", 10)  # a window is always asked for
     return actions.Request(actions.BY_NAME[action], args)
+
+
+def _window(seconds: int, since_time: str | None = None) -> dict:
+    """What the cluster is asked for the window of a log."""
+    return {
+        "since_time": since_time,
+        "since_seconds": seconds,
+        "limit_bytes": executor.cluster.LOG_WINDOW_BYTES,
+    }
 
 
 @pytest.fixture
@@ -48,12 +61,12 @@ def test_the_logs_are_read_from_the_container_that_was_named(cluster_reads) -> N
     calls, _answers = cluster_reads
 
     named = executor.fetch(
-        _request("get_logs", namespace="ns", pod="web", container="side", lines=50),
+        _request("get_logs", namespace="ns", pod="web", container="side"),
         "ctx",
     )
 
     assert "line 1\nline 2" in named
-    assert calls == [("logs", "ctx", "ns", "web", "side", {"tail_lines": 50})]
+    assert calls == [("logs", "ctx", "ns", "web", "side", _window(600))]
 
 
 def test_with_several_containers_and_none_named_nothing_is_read_and_it_is_asked(
@@ -81,7 +94,7 @@ def test_an_init_container_is_never_chosen_for_the_person(cluster_reads) -> None
     message = executor.fetch(_request("get_logs", namespace="ns", pod="api-1"), "ctx")
 
     assert "line 2" in message  # the main container, with no question
-    assert calls[-1] == ("logs", "ctx", "ns", "api-1", "api", {"tail_lines": 200})
+    assert calls[-1] == ("logs", "ctx", "ns", "api-1", "api", _window(600))
     assert all(call[4] != "migrate" for call in calls if call[0] == "logs")
 
 
@@ -112,7 +125,7 @@ def test_a_pod_with_one_container_is_read_without_asking(cluster_reads) -> None:
     message = executor.fetch(_request("get_logs", namespace="ns", pod="web"), "ctx")
 
     assert "line 2" in message
-    assert calls[-1] == ("logs", "ctx", "ns", "web", "solo", {"tail_lines": 200})
+    assert calls[-1] == ("logs", "ctx", "ns", "web", "solo", _window(600))
 
     answers["details"] = {"spec": {"initContainers": [{"name": "only-init"}]}}
     executor.fetch(_request("get_logs", namespace="ns", pod="web"), "ctx")
@@ -132,13 +145,15 @@ def test_tokens_and_keys_are_redacted_before_they_go(cluster_reads) -> None:
     assert "[redacted" in message
 
 
-def test_a_long_answer_is_cut_keeping_the_end_of_a_log_and_the_start_of_a_document(
+def test_a_long_log_stops_where_it_says_and_a_long_document_keeps_its_start(
     cluster_reads, monkeypatch
 ) -> None:
     _calls, answers = cluster_reads
-    monkeypatch.setattr(executor, "RESULT_LIMIT", 10)
-    answers["logs"] = "0123456789ABCDEFGHIJ"
-    answers["details"] = {"a": "x" * 100}
+    monkeypatch.setattr(executor, "RESULT_LIMIT", 120)
+    answers["logs"] = "\n".join(
+        f"2026-10-08T00:0{i}:00.123456789Z line {i}" for i in range(9)
+    )
+    answers["details"] = {"a": "x" * 200}
 
     log = executor.fetch(
         _request("get_logs", namespace="ns", pod="web", container="app"), "ctx"
@@ -147,8 +162,23 @@ def test_a_long_answer_is_cut_keeping_the_end_of_a_log_and_the_start_of_a_docume
         _request("get_details", kind="Pod", namespace="ns", name="web"), "ctx"
     )
 
-    assert "[earlier lines left out]\nABCDEFGHIJ" in log and "0123456789" not in log
+    assert "line 0" in log and "line 8" not in log
+    assert "the answer stops at 2026-10-08T00:0" in log and 'since "' in log
     assert "[the rest left out]" in document
+
+
+def test_a_long_log_with_no_time_on_its_last_line_asks_for_a_shorter_window(
+    cluster_reads, monkeypatch
+) -> None:
+    _calls, answers = cluster_reads
+    monkeypatch.setattr(executor, "RESULT_LIMIT", 10)
+    answers["logs"] = "0123456789ABCDEFGHIJ"
+
+    log = executor.fetch(
+        _request("get_logs", namespace="ns", pod="web", container="app"), "ctx"
+    )
+
+    assert "ask again for a shorter one" in log
 
 
 def test_a_failure_is_the_answer_so_the_assistant_can_tell_the_person(
@@ -419,3 +449,139 @@ def test_the_rows_of_the_lists_carry_the_live_usage_when_there_is_any(
     assert (
         "restarts 4 age 1d cpu 500m memory 512 MiB containers api, worker" in workloads
     )
+
+
+def test_a_log_is_looked_through_for_the_terms_in_the_window_asked(
+    cluster_reads,
+) -> None:
+    calls, answers = cluster_reads
+    answers["logs"] = "a ok\nb STATE QUERY\nc ok\nd Sintegra"
+
+    message = executor.fetch(
+        _request(
+            "get_logs",
+            namespace="ns",
+            pod="web",
+            container="app",
+            since_minutes=30,
+            search="state query|sintegra",
+        ),
+        "ctx",
+    )
+
+    assert "b STATE QUERY\nd Sintegra" in message and "a ok" not in message
+    assert calls == [("logs", "ctx", "ns", "web", "app", _window(1800))]
+
+
+def test_a_log_with_no_line_for_the_terms_says_so(cluster_reads) -> None:
+    _calls, answers = cluster_reads
+    answers["logs"] = "a\nb"
+
+    message = executor.fetch(
+        _request("get_logs", namespace="ns", pod="w", container="c", search="zzz"),
+        "ctx",
+    )
+
+    assert "No line of the log in that window." in message
+
+
+def test_a_window_ends_when_it_is_asked_to(cluster_reads) -> None:
+    from datetime import UTC, datetime, timedelta
+
+    _calls, answers = cluster_reads
+    now = datetime.now(UTC)
+    old = (now - timedelta(minutes=30)).strftime("%Y-%m-%dT%H:%M:%S.000000000Z")
+    new = now.strftime("%Y-%m-%dT%H:%M:%S.000000000Z")
+    answers["logs"] = f"{old} early\n{new} late"
+
+    message = executor.fetch(
+        _request(
+            "get_logs",
+            namespace="ns",
+            pod="w",
+            container="c",
+            since_minutes=60,
+            until_minutes=10,
+        ),
+        "ctx",
+    )
+
+    assert "early" in message and "late" not in message
+
+
+def test_the_assistant_is_told_the_range_of_every_number() -> None:
+    told = actions.instructions()
+
+    assert "since_minutes?: int (1-10080)" in told and "until_minutes?: int" in told
+
+
+def test_a_window_can_start_and_end_at_a_date_and_time_with_its_zone(
+    cluster_reads,
+) -> None:
+    calls, answers = cluster_reads
+    answers["logs"] = (
+        "2026-10-08T13:48:59.5Z before\n"
+        "2026-10-08T13:50:00.1Z inside\n"
+        "2026-10-08T13:53:30.0Z after"
+    )
+
+    message = executor.fetch(
+        _request(
+            "get_logs",
+            namespace="ns",
+            pod="w",
+            container="c",
+            since="2026-10-08T10:49:00-03:00",
+            until="2026-10-08T13:52:00Z",
+        ),
+        "ctx",
+    )
+
+    assert calls == [
+        ("logs", "ctx", "ns", "w", "c", _window(0, "2026-10-08T13:49:00Z"))
+    ]
+    assert "inside" in message and "after" not in message
+
+
+def test_a_log_that_is_too_long_says_the_time_to_start_from(
+    cluster_reads, monkeypatch
+) -> None:
+    _calls, answers = cluster_reads
+    monkeypatch.setattr(executor, "RESULT_LIMIT", 100)
+    answers["logs"] = "\n".join(f"2026-10-08T00:0{i}:00Z line {i}" for i in range(9))
+
+    message = executor.fetch(
+        _request("get_logs", namespace="ns", pod="w", container="c"), "ctx"
+    )
+
+    assert 'ask again with since "2026-10-08T00:0' in message
+
+
+@pytest.mark.parametrize(
+    ("args", "why"),
+    [
+        ({}, "since_minutes or since"),
+        (
+            {"since_minutes": 5, "since": "2026-10-08T00:00:00Z"},
+            "since_minutes or since",
+        ),
+        (
+            {"since_minutes": 5, "until_minutes": 1, "until": "2026-10-08T00:00:00Z"},
+            "not both",
+        ),
+        ({"since": "yesterday"}, "since must be a date and time with its time zone"),
+        ({"since": "2026-10-08T00:00:00"}, "with its time zone"),
+        ({"since_minutes": 5, "until": "later"}, "until must be a date and time"),
+        (
+            {"since": "2026-10-08T02:00:00Z", "until": "2026-10-08T01:00:00Z"},
+            "until must be after since",
+        ),
+    ],
+)
+def test_a_window_that_is_not_one_is_dropped_and_says_why(args, why) -> None:
+    block = {"action": "get_logs", "namespace": "ns", "pod": "p", **args}
+    text = "```" + actions.FENCE + "\n" + json.dumps(block) + "\n```"
+
+    [found] = actions.parse(text)
+
+    assert isinstance(found, actions.Invalid) and why in found.reason
