@@ -1,4 +1,5 @@
 import json
+import re
 import shlex
 import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -515,7 +516,8 @@ def test_the_ssm_forward_command_is_quoted_for_each_shell_on_windows(
     )
     assert versions["PowerShell"].startswith("aws ssm start-session --target i-0abc")
     assert versions["cmd"].startswith("aws ssm start-session --target i-0abc")
-    assert "db.example.com" in versions["PowerShell"] and "15432" in versions["cmd"]
+    assert re.search(r"\bdb\.example\.com\b", versions["PowerShell"])
+    assert re.search(r"\b15432\b", versions["cmd"])
 
 
 def test_the_shell_is_run_with_the_kubeconfig_files_the_app_reads(monkeypatch) -> None:
