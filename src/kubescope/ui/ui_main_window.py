@@ -208,7 +208,7 @@ class Ui_MainWindow(object):
 "}\n"
 "QPushButton[nav=\"true\"]:hover { background: #f6f6fa; }\n"
 "QFrame#workloadsSubmenu, QFrame#networkSubmenu, QFrame#configSubmenu,\n"
-"QFrame#rdsSubmenu {\n"
+"QFrame#rdsSubmenu, QFrame#pluginsSubmenu {\n"
 "    border: 0; border-left: 1px solid #d9dce4; margin-left: 19px;\n"
 "}\n"
 "QPushButton[nav=\"true\"]:checked {\n"
@@ -218,8 +218,8 @@ class Ui_MainWindow(object):
 "QFrame[card=\"true\"] {\n"
 "    background: #ffffff; border: 1px solid #dfe2e9; border-radius: 8px;\n"
 "}\n"
-"QFrame[card=\"true\"] QLabel { background: transparent; border: "
-                        "0; }\n"
+"QFrame[card=\"true\"] QLabel { background"
+                        ": transparent; border: 0; }\n"
 "QLabel[variant=\"cardTitle\"] { color: #535d69; font-size: 9px; font-weight: 700; }\n"
 "QLabel[variant=\"cardValue\"] { color: #17191e; font-size: 20px; font-weight: 700; }\n"
 "QLabel[variant=\"cardCaption\"] { color: #4f5966; font-size: 10px; }\n"
@@ -238,9 +238,9 @@ class Ui_MainWindow(object):
 "    background: transparent; color: #4f5966; padding: 9px 14px;\n"
 "    border: 0; border-bottom: 2px solid transparent; font-size: 11px;\n"
 "    font-weight: 600; max-width: 260px;\n"
-"}\n"
-"QTabBar::tab:hov"
-                        "er { color: #3220a0; }\n"
+""
+                        "}\n"
+"QTabBar::tab:hover { color: #3220a0; }\n"
 "QTabBar::tab:selected { color: #3220a0; border-bottom: 2px solid #3220a0; }\n"
 "QTabBar::close-button {\n"
 "    image: url(CLOSE_ICON); subcontrol-position: right; margin-left: 6px;\n"
@@ -258,9 +258,9 @@ class Ui_MainWindow(object):
 "    background: #fce9ea; border-bottom: 1px solid #a33d45;\n"
 "}\n"
 "QFrame#rdsBanner { border: 1px solid #a33d45; border-radius: 6px; }\n"
-"QFrame#permissionBanner QLabel, QFrame#rdsBanner QLabel {\n"
-"   "
-                        " color: #a33d45; font-size: 11px; background: transparent;\n"
+"QFrame#permissionBanner QLabel, QFrame#rdsB"
+                        "anner QLabel {\n"
+"    color: #a33d45; font-size: 11px; background: transparent;\n"
 "}\n"
 "QFrame#permissionBanner QPushButton, QFrame#rdsBanner QPushButton {\n"
 "    color: #a33d45; font-size: 11px; padding: 0 0 0 12px;\n"
@@ -752,17 +752,6 @@ class Ui_MainWindow(object):
         self.configSubmenuLayout.setSpacing(0)
         self.configSubmenuLayout.setObjectName(u"configSubmenuLayout")
         self.configSubmenuLayout.setContentsMargins(4, 0, 0, 0)
-        self.navAddons = QPushButton(self.configSubmenu)
-        self.navAddons.setObjectName(u"navAddons")
-        self.navAddons.setMinimumSize(QSize(0, 20))
-        self.navAddons.setIconSize(QSize(16, 16))
-        self.navAddons.setCheckable(True)
-        self.navAddons.setChecked(False)
-        self.navAddons.setAutoExclusive(True)
-        self.navAddons.setProperty(u"nav", u"true")
-
-        self.configSubmenuLayout.addWidget(self.navAddons)
-
         self.navConfigMaps = QPushButton(self.configSubmenu)
         self.navConfigMaps.setObjectName(u"navConfigMaps")
         self.navConfigMaps.setMinimumSize(QSize(0, 20))
@@ -886,6 +875,46 @@ class Ui_MainWindow(object):
 
 
         self.sidebarNavLayout.addWidget(self.configSubmenu)
+
+        self.navPlugins = QPushButton(self.sidebarNav)
+        self.navPlugins.setObjectName(u"navPlugins")
+        self.navPlugins.setMinimumSize(QSize(0, 24))
+        self.navPlugins.setIconSize(QSize(16, 16))
+        self.navPlugins.setCheckable(False)
+        self.navPlugins.setChecked(False)
+        self.navPlugins.setProperty(u"nav", u"true")
+
+        self.sidebarNavLayout.addWidget(self.navPlugins)
+
+        self.pluginsSubmenu = QFrame(self.sidebarNav)
+        self.pluginsSubmenu.setObjectName(u"pluginsSubmenu")
+        self.pluginsSubmenu.setMaximumSize(QSize(16777215, 0))
+        self.pluginsSubmenuLayout = QVBoxLayout(self.pluginsSubmenu)
+        self.pluginsSubmenuLayout.setSpacing(0)
+        self.pluginsSubmenuLayout.setObjectName(u"pluginsSubmenuLayout")
+        self.pluginsSubmenuLayout.setContentsMargins(4, 0, 0, 0)
+        self.navPluginsCatalog = QPushButton(self.pluginsSubmenu)
+        self.navPluginsCatalog.setObjectName(u"navPluginsCatalog")
+        self.navPluginsCatalog.setMinimumSize(QSize(0, 20))
+        self.navPluginsCatalog.setIconSize(QSize(16, 16))
+        self.navPluginsCatalog.setCheckable(True)
+        self.navPluginsCatalog.setChecked(False)
+        self.navPluginsCatalog.setProperty(u"nav", u"true")
+
+        self.pluginsSubmenuLayout.addWidget(self.navPluginsCatalog)
+
+        self.navPluginsInstalled = QPushButton(self.pluginsSubmenu)
+        self.navPluginsInstalled.setObjectName(u"navPluginsInstalled")
+        self.navPluginsInstalled.setMinimumSize(QSize(0, 20))
+        self.navPluginsInstalled.setIconSize(QSize(16, 16))
+        self.navPluginsInstalled.setCheckable(True)
+        self.navPluginsInstalled.setChecked(False)
+        self.navPluginsInstalled.setProperty(u"nav", u"true")
+
+        self.pluginsSubmenuLayout.addWidget(self.navPluginsInstalled)
+
+
+        self.sidebarNavLayout.addWidget(self.pluginsSubmenu)
 
         self.navAwsSection = QLabel(self.sidebarNav)
         self.navAwsSection.setObjectName(u"navAwsSection")
@@ -1339,6 +1368,9 @@ class Ui_MainWindow(object):
         self.forwardsHost = QWidget()
         self.forwardsHost.setObjectName(u"forwardsHost")
         self.pages.addWidget(self.forwardsHost)
+        self.pluginsHost = QWidget()
+        self.pluginsHost.setObjectName(u"pluginsHost")
+        self.pages.addWidget(self.pluginsHost)
 
         self.pageLayout.addWidget(self.pages)
 
@@ -1480,7 +1512,6 @@ class Ui_MainWindow(object):
         self.navNetworkPolicies.setText(QCoreApplication.translate("MainWindow", u"Network Policies", None))
         self.navServices.setText(QCoreApplication.translate("MainWindow", u"Services", None))
         self.navConfig.setText(QCoreApplication.translate("MainWindow", u"Config", None))
-        self.navAddons.setText(QCoreApplication.translate("MainWindow", u"Add-ons", None))
         self.navConfigMaps.setText(QCoreApplication.translate("MainWindow", u"Config Maps", None))
         self.navHorizontalPodAutoscalers.setText(QCoreApplication.translate("MainWindow", u"Horizontal Pod Autoscalers", None))
         self.navLeases.setText(QCoreApplication.translate("MainWindow", u"Leases", None))
@@ -1492,6 +1523,9 @@ class Ui_MainWindow(object):
         self.navRuntimeClasses.setText(QCoreApplication.translate("MainWindow", u"Runtime Classes", None))
         self.navSecrets.setText(QCoreApplication.translate("MainWindow", u"Secrets", None))
         self.navValidatingWebhooks.setText(QCoreApplication.translate("MainWindow", u"Validating Webhook Configurations", None))
+        self.navPlugins.setText(QCoreApplication.translate("MainWindow", u"Plugins", None))
+        self.navPluginsCatalog.setText(QCoreApplication.translate("MainWindow", u"Catalog", None))
+        self.navPluginsInstalled.setText(QCoreApplication.translate("MainWindow", u"Installed", None))
         self.navAwsSection.setText(QCoreApplication.translate("MainWindow", u"AWS", None))
         self.navRds.setText(QCoreApplication.translate("MainWindow", u"RDS", None))
         self.navRdsInstances.setText(QCoreApplication.translate("MainWindow", u"Instances", None))

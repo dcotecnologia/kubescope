@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>PluginsPage</class>
+ <widget class="QWidget" name="PluginsPage">
+  <layout class="QVBoxLayout" name="pluginsLayout" stretch="0,0,1">
+   <property name="spacing">
+    <number>14</number>
+   </property>
+   <property name="leftMargin">
+    <number>32</number>
+   </property>
+   <property name="topMargin">
+    <number>24</number>
+   </property>
+   <property name="rightMargin">
+    <number>32</number>
+   </property>
+   <property name="bottomMargin">
+    <number>22</number>
+   </property>
+   <item>
+    <layout class="QHBoxLayout" name="pluginsHeaderRow">
+     <property name="spacing">
+      <number>12</number>
+     </property>
+     <item>
+      <widget class="QLineEdit" name="searchInput">
+       <property name="placeholderText">
+        <string>Search the charts of Artifact Hub...</string>
+       </property>
+       <property name="clearButtonEnabled">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="searchButton">
+       <property name="text">
+        <string>Search</string>
+       </property>
+       <property name="variant" stdset="0">
+        <string notr="true">primary</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <widget class="QLabel" name="statusLabel">
+     <property name="text">
+      <string/>
+     </property>
+     <property name="wordWrap">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QScrollArea" name="cardsScroll">
+     <property name="frameShape">
+      <enum>QFrame::Shape::NoFrame</enum>
+     </property>
+     <property name="widgetResizable">
+      <bool>true</bool>
+     </property>
+     <widget class="QWidget" name="cardsContent">
+      <layout class="QGridLayout" name="cardsGrid">
+       <property name="spacing">
+        <number>14</number>
+       </property>
+       <property name="leftMargin">
+        <number>0</number>
+       </property>
+       <property name="topMargin">
+        <number>0</number>
+       </property>
+       <property name="rightMargin">
+        <number>0</number>
+       </property>
+       <property name="bottomMargin">
+        <number>0</number>
+       </property>
+      </layout>
+     </widget>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

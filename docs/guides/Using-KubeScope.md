@@ -137,7 +137,7 @@ Click **Config** to slide out the configuration of the cluster. It opens next to
 - **Mutating** and **Validating Webhook Configurations:** how many webhooks each
   declares.
 
-- **Add-ons:** the Helm releases of the cluster (status and revision, one row per
+- **Plugins → Installed:** the Helm releases of the cluster (status and revision, one row per
   release) and, on Amazon EKS, the EKS add-ons (status and version). The Source
   column tells them apart. Helm releases are read from the labels of the Secrets
   where Helm 3 stores them, so no `helm` program is needed; the contents of those

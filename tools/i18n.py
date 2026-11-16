@@ -26,6 +26,8 @@ SOURCES = [
             "views/assistant_panel.py",
             "views/assistant_tab.py",
             "views/log_tab.py",
+            "dialogs/plugin_update_dialog.py",
+            "views/plugins_catalog.py",
             "views/detail_tab.py",
             "utils/errors.py",
             "dialogs/account_dialog.py",

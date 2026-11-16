@@ -1610,6 +1610,14 @@ def get_resource_details(
         return _helm_release_details(context, namespace, name)
     if kind in _EKS_KINDS:
         return _describe_eks(kind, _eks_target(context), name, _context_env(context))
+    if kind in ("AksExtension", "GkeAddon"):
+        from kubescope import cloud_addons
+
+        return (
+            cloud_addons.aks_extension_details(context, name)
+            if kind == "AksExtension"
+            else cloud_addons.gke_addon_details(context, name)
+        )
     resource = {
         **_RESOURCES,
         **_LISTED_RESOURCES,
@@ -2268,6 +2276,22 @@ def _eks_addons(context: str, now: datetime) -> list[ClusterResource]:
     ]
 
 
+def _aks_extensions(context: str, now: datetime) -> list[ClusterResource]:
+    from kubescope import cloud_addons
+
+    if not cloud_addons.is_aks_context(context):
+        return []
+    return cloud_addons.aks_extensions(context, now)
+
+
+def _gke_addons(context: str) -> list[ClusterResource]:
+    from kubescope import cloud_addons
+
+    if not cloud_addons.GKE_CONTEXT.fullmatch(context):
+        return []
+    return cloud_addons.gke_addons(context)
+
+
 def _attempt(call: Any) -> tuple[list[ClusterResource], ClusterError | None]:
     try:
         return call(), None
@@ -2284,16 +2308,48 @@ def _get_addons(
     when nothing else is listed.
     """
     now = datetime.now(UTC)
-    namespaces, (eks, eks_error), (helm, helm_error) = _together(
+    (
+        namespaces,
+        (eks, eks_error),
+        (helm, helm_error),
+        (aks, aks_error),
+        (gke, gke_error),
+    ) = _together(
         partial(_get_namespaces, context),
         partial(_attempt, partial(_eks_addons, context, now)),
         partial(_attempt, partial(_helm_releases, context, namespace, now)),
+        partial(_attempt, partial(_aks_extensions, context, now)),
+        partial(_attempt, partial(_gke_addons, context)),
     )
-    resources = [*eks, *helm]
-    if not resources and (error := helm_error or eks_error):
+    resources = [*eks, *helm, *aks, *gke]
+    if not resources and (error := helm_error or eks_error or aks_error or gke_error):
         raise error
     resources.sort(key=lambda row: (row.name.casefold(), row.namespace))
-    return namespaces, resources
+    return namespaces, _with_latest(context, resources)
+
+
+def _with_latest(
+    context: str, resources: list[ClusterResource]
+) -> list[ClusterResource]:
+    """Each row with the latest version of what it lists, after its version."""
+    from kubescope import plugin_latest
+
+    try:
+        latest = plugin_latest.latest_versions(context, resources)
+    except Exception:  # a version that cannot be found never costs the list
+        logger.exception("Could not read the latest versions")
+        latest = {}
+    return [
+        replace(
+            row,
+            values=(
+                *row.values[:2],
+                latest.get((row.kind, row.name), _NO_VALUE),
+                *row.values[2:],
+            ),
+        )
+        for row in resources
+    ]
 
 
 def _get_eks(context: str, kind: str) -> tuple[list[str], list[ClusterResource]]:

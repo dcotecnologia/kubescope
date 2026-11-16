@@ -104,6 +104,7 @@ from kubescope.assistant.screen import (
     describe as describe_screen,
 )
 from kubescope.assistant.session import ChatSession
+from kubescope.cloud_addons import AKS_KIND, GKE_KIND, aks_cluster
 from kubescope.cluster import (
     AWS_REGIONS,
     ClusterError,
@@ -146,6 +147,7 @@ from kubescope.cluster import (
 from kubescope.dialogs.account_dialog import AccountDialog
 from kubescope.dialogs.changelog_dialog import ChangelogDialog
 from kubescope.dialogs.global_search import GlobalSearch, SearchEntry
+from kubescope.dialogs.plugin_update_dialog import PluginUpdateDialog
 from kubescope.dialogs.theme_editor import ThemeEditor
 from kubescope.dialogs.update_dialog import UpdateDialog
 from kubescope.forwards import Forward
@@ -178,6 +180,8 @@ from kubescope.models import (
     resource_sort_key,
     workload_sort_key,
 )
+from kubescope.plugin_latest import helm_match, installed_chart, update_available
+from kubescope.plugin_updates import eks_addon_versions, run_update
 from kubescope.settings import (
     Settings,
     config_directory,
@@ -201,6 +205,7 @@ from kubescope.theme import (
 from kubescope.ui.ui_forwards_page import Ui_ForwardsPage
 from kubescope.ui.ui_main_window import Ui_MainWindow
 from kubescope.ui.ui_overview_page import Ui_OverviewPage
+from kubescope.ui.ui_plugins_page import Ui_PluginsPage
 from kubescope.ui.ui_pods_dialog import Ui_PodsDialog
 from kubescope.ui.ui_rds_page import Ui_RdsPage
 from kubescope.ui.ui_settings_page import Ui_SettingsPage
@@ -241,6 +246,7 @@ from kubescope.views.error_banner import ErrorBanner
 from kubescope.views.forward_runner import ForwardRunner
 from kubescope.views.log_tab import LOG_REFRESH_MS, LogTab
 from kubescope.views.nav_chevron import NavChevron
+from kubescope.views.plugins_catalog import PluginsCatalog
 from kubescope.views.search_bar import compile_query, switch_button
 from kubescope.views.sidebar_resizer import SidebarResizer
 from kubescope.views.widgets import TabScrollArea
@@ -273,6 +279,7 @@ WRITE_VIEWS = {
     "statefulsets": ("forward", "delete"),
     "services": ("forward", "delete"),
     "events": ("edit", "delete"),
+    "addons": ("update", "delete"),
 }
 WRITE_VIEWS.update(
     {
@@ -618,6 +625,12 @@ def _nav_icon(shape: str, colors: tuple[str, str] | None = None) -> QIcon:
                     ]
                 )
             )
+        elif shape == "update":  # an arrow rising from a base
+            painter.drawLine(QPointF(9, 14), QPointF(9, 4))
+            painter.drawPolyline(
+                QPolygonF([QPointF(5.5, 7.5), QPointF(9, 4), QPointF(12.5, 7.5)])
+            )
+            painter.drawLine(QPointF(4, 15), QPointF(14, 15))
         elif shape == "forward":  # an arrow into a wall
             painter.drawLine(QPointF(3, 9), QPointF(12, 9))
             painter.drawPolyline(
@@ -914,7 +927,16 @@ class WorkloadWindow(QMainWindow):
         # (context, namespace) -> when it was read, what the cluster allows there
         self._permissions: dict[tuple[str, str], tuple[float, frozenset[str]]] = {}
         self._permissions_loading: set[tuple[str, str]] = set()
-        for shape in ("shell", "evict", "scale", "reload", "forward", "edit", "delete"):
+        for shape in (
+            "shell",
+            "evict",
+            "scale",
+            "reload",
+            "forward",
+            "edit",
+            "update",
+            "delete",
+        ):
             button = QPushButton()
             button.setProperty("variant", "secondary")
             button.setEnabled(False)
@@ -994,6 +1016,12 @@ class WorkloadWindow(QMainWindow):
         self.nav_rds = ui.navRds
         self.rds_submenu = ui.rdsSubmenu
         self.nav_rds_instances = ui.navRdsInstances
+        self.nav_plugins = ui.navPlugins
+        self.plugins_submenu = ui.pluginsSubmenu
+        self.nav_plugins_catalog = ui.navPluginsCatalog
+        self.plugins_ui = Ui_PluginsPage()
+        self.plugins_ui.setupUi(ui.pluginsHost)
+        self.plugins_catalog = PluginsCatalog(self.plugins_ui, ui.pluginsHost)
         # the two overview pages pin like a list does, by the page they show
         self._nav_pages = {
             "cluster-overview": (self.nav_overview, 0),
@@ -1027,7 +1055,7 @@ class WorkloadWindow(QMainWindow):
             "mutatingwebhooks": ui.navMutatingWebhooks,
             "validatingwebhooks": ui.navValidatingWebhooks,
             "nodegroups": ui.navNodeGroups,
-            "addons": ui.navAddons,
+            "addons": ui.navPluginsInstalled,
         }
 
         self.overview_ui = Ui_OverviewPage()
@@ -1183,6 +1211,7 @@ class WorkloadWindow(QMainWindow):
             self.nav_config,
             self.nav_rds,
             self.nav_rds_instances,
+            self.nav_plugins_catalog,
             self.nav_forwards,
             self.nav_workloads_overview,
             *self._nav_views.values(),
@@ -1193,6 +1222,7 @@ class WorkloadWindow(QMainWindow):
         self.nav_network.setCheckable(False)
         self.nav_config.setCheckable(False)
         self.nav_rds.setCheckable(False)
+        self.nav_plugins.setCheckable(False)
         ui.navNodeGroups.setVisible(False)  # only EKS contexts have Node Groups
         for button in (
             self.refresh_button,
@@ -1206,6 +1236,7 @@ class WorkloadWindow(QMainWindow):
             self.submenu,
             self.network_submenu,
             self.config_submenu,
+            self.plugins_submenu,
             self.rds_submenu,
         ):
             animation = QPropertyAnimation(submenu, b"maximumHeight")
@@ -1217,6 +1248,7 @@ class WorkloadWindow(QMainWindow):
             self.submenu: "workloads",
             self.network_submenu: "network",
             self.config_submenu: "config",
+            self.plugins_submenu: "plugins",
             self.rds_submenu: "rds",
         }
         closed = self.settings.menu_collapsed
@@ -1224,6 +1256,7 @@ class WorkloadWindow(QMainWindow):
             self.submenu: self.nav_workloads,
             self.network_submenu: self.nav_network,
             self.config_submenu: self.nav_config,
+            self.plugins_submenu: self.nav_plugins,
             self.rds_submenu: self.nav_rds,
         }
         self._chevrons = {
@@ -1387,6 +1420,10 @@ class WorkloadWindow(QMainWindow):
         self.nav_config.clicked.connect(
             lambda: self._toggle_submenu(self.config_submenu)
         )
+        self.nav_plugins.clicked.connect(
+            lambda: self._toggle_submenu(self.plugins_submenu)
+        )
+        self.nav_plugins_catalog.clicked.connect(lambda: self._show_page(7))
         self.nav_rds.clicked.connect(lambda: self._toggle_submenu(self.rds_submenu))
         self.nav_rds_instances.clicked.connect(lambda: self._show_page(5))
         self.rds_refresh_button.clicked.connect(self._load_rds)
@@ -2034,10 +2071,14 @@ class WorkloadWindow(QMainWindow):
         self.nav_workloads_overview.setChecked(index == 4)
         self.nav_rds_instances.setChecked(index == 5)
         self.nav_forwards.setChecked(index == 6)
+        self.nav_plugins_catalog.setChecked(index == 7)
         if index == 4:
             self._reveal_in_menu(self.nav_workloads_overview)
         if index == 5:
             self._reveal_in_menu(self.nav_rds_instances)
+        if index == 7:
+            self._reveal_in_menu(self.nav_plugins_catalog)
+            self.plugins_catalog.ensure()
         self._apply_page_titles()
         self._render_pinned()
         self._remember_screen()
@@ -2069,6 +2110,11 @@ class WorkloadWindow(QMainWindow):
         elif self.pages.currentIndex() == 2:
             self.ui.pageTitle.setText(self.tr("Settings"))
             self.ui.pageSubtitle.setText(self.tr("Preferences and context names"))
+        elif self.pages.currentIndex() == 7:
+            self.ui.pageTitle.setText(self.tr("Catalog"))
+            self.ui.pageSubtitle.setText(
+                self.tr("Helm charts of Artifact Hub to install in a cluster")
+            )
         elif self.pages.currentIndex() == 6:
             self.ui.pageTitle.setText(self.tr("Port forwards"))
             self.ui.pageSubtitle.setText(self.tr("The forwards started from KubeScope"))
@@ -2385,6 +2431,7 @@ class WorkloadWindow(QMainWindow):
         self.nav_network.setIcon(_nav_icon("network"))
         self.nav_config.setIcon(_nav_icon("config"))
         self.nav_rds.setIcon(_nav_icon("database"))
+        self.nav_plugins.setIcon(_nav_icon("workloads"))
         self.nav_forwards.setIcon(_nav_icon("forward"))
         self.save_button.setIcon(_nav_icon("save"))
         icon_only(
@@ -2599,6 +2646,7 @@ class WorkloadWindow(QMainWindow):
             "addons": [
                 translate("MainWindow", "STATUS"),
                 translate("MainWindow", "VERSION"),
+                translate("MainWindow", "LATEST"),
                 translate("MainWindow", "SOURCE"),
             ],
         }[self._view]
@@ -2682,6 +2730,7 @@ class WorkloadWindow(QMainWindow):
             "evict": self.tr("Evict"),
             "delete": self.tr("Delete"),
             "edit": self.tr("Edit"),
+            "update": self.tr("Update"),
             "scale": self.tr("Scale"),
             "reload": self.tr("Restart"),
             "forward": self.tr("Forward"),
@@ -3346,7 +3395,7 @@ class WorkloadWindow(QMainWindow):
     def _list_namespace(self, view: str) -> str | None:
         """The namespace a list is asked for.
 
-        Add-ons span the cluster: the Helm releases of every namespace sit
+        Plugins span the cluster: the Helm releases of every namespace sit
         next to the cluster's EKS add-ons, so the default namespace must not
         hide them.
         """
@@ -3655,6 +3704,15 @@ class WorkloadWindow(QMainWindow):
                 item.setForeground(QColor(themed("#242a33")))
                 if column == len(values) - 1:
                     stamp_age(item, value)
+                if (
+                    self._view == "addons"
+                    and column == 5
+                    and update_available(resource.kind, values[4], value)
+                ):  # a newer version is out: its icon, and the tip says which
+                    item.setIcon(_nav_icon("update", _pair(themed("#3220a0"))))
+                    item.setToolTip(
+                        self.tr("Update available: {latest}").format(latest=value)
+                    )
                 # a badge: the type of an event, the status of an AWS or Helm one
                 if (
                     self._view == "events" or self._view in EKS_VIEWS | {"addons"}
@@ -4036,6 +4094,8 @@ class WorkloadWindow(QMainWindow):
             button.setVisible(
                 shape in self._shown_shapes and (allowed is None or shape in allowed)
             )
+        if isinstance(row, ClusterResource) and row.kind == GKE_KIND:
+            self.write_buttons["update"].setEnabled(False)  # nothing to update to
 
     def _allowed_shapes(self, namespace: str) -> frozenset[str] | None:
         """The write actions the cluster lets the person do in a namespace, or
@@ -4060,7 +4120,8 @@ class WorkloadWindow(QMainWindow):
                 on_error=lambda _message: self._permissions_loading.discard(key),
                 quiet=True,
             )
-        return cached[1] if cached else None
+        # an update is guarded by aws and helm, not by an access review
+        return cached[1] | {"update"} if cached else None
 
     def _permissions_read(self, key: tuple[str, str], allowed: frozenset[str]) -> None:
         self._permissions_loading.discard(key)
@@ -4489,6 +4550,14 @@ class WorkloadWindow(QMainWindow):
                     partial(self._forward, "StatefulSet", row),
                 )
             ]
+        if (
+            self._view == "addons"
+            and isinstance(row, ClusterResource)
+            and row.kind != GKE_KIND  # a GKE add-on is on or off: no version
+        ):
+            entries.append(
+                ("update", self.tr("Update"), partial(self._update_plugin, row))
+            )
         if self._view == "events" and isinstance(row, ClusterResource):
             entries.append(("edit", self.tr("Edit"), partial(self._edit_resource, row)))
         if isinstance(row, Workload | ClusterResource):
@@ -4621,6 +4690,61 @@ class WorkloadWindow(QMainWindow):
                 row.namespace,
                 row.name,
             )
+
+    def _update_plugin(self, row: ClusterResource) -> None:
+        """Update an EKS add-on or a Helm release: ask for what each one takes,
+        show the command and run it.
+
+        An EKS add-on first reads the versions EKS offers for it.
+        """
+        if row.kind == "Addon":
+            self._run_action(
+                eks_addon_versions,
+                partial(self._plugin_update_dialog, row),
+                self._context(),
+                row.name,
+                on_error=partial(self._versions_failed, row),
+            )
+        elif row.kind == AKS_KIND:  # the cluster and its resource group
+            self._run_action(
+                aks_cluster,
+                lambda target: self._plugin_update_dialog(row, [], "", target),
+                self._context(),
+                on_error=partial(self._versions_failed, row),
+            )
+        else:  # Helm: where the chart most likely comes from and its versions
+            self._run_action(
+                helm_match,
+                lambda found: self._plugin_update_dialog(row, found[1], found[0]),
+                row.name,
+                installed_chart(row.values[1]),
+                on_error=partial(self._versions_failed, row),
+            )
+
+    def _versions_failed(self, row: ClusterResource, message: str) -> None:
+        """The versions could not be read: say so, and let the person type
+        one."""
+        self._show_error_banner(message)
+        self._plugin_update_dialog(row, [])
+
+    def _plugin_update_dialog(
+        self,
+        row: ClusterResource,
+        versions: list[str],
+        repository: str = "",
+        target: tuple[str, str] = ("", ""),
+    ) -> None:
+        dialog = PluginUpdateDialog(
+            self, self._context(), row, versions, repository, target
+        )
+        if dialog.exec() != QDialog.DialogCode.Accepted or not dialog.arguments:
+            return
+        self._run_write(
+            run_update,
+            self.tr("Updated {name}").format(name=row.name),
+            self._context(),
+            dialog.arguments,
+        )
 
     def _edit_resource(self, row: ClusterResource) -> None:
         """Read the object, let the person change its JSON, and replace it."""
@@ -7305,6 +7429,7 @@ class WorkloadWindow(QMainWindow):
         self.workloads_ui.retranslateUi(self.ui.workloadsOverviewHost)
         self.rds_ui.retranslateUi(self.ui.rdsHost)
         self.forwards_ui.retranslateUi(self.ui.forwardsHost)
+        self.plugins_ui.retranslateUi(self.ui.pluginsHost)
         self._render_forwards()
         if self._workloads_overview is not None:
             self._render_workloads_overview(self._workloads_overview)

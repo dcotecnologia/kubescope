@@ -2466,6 +2466,15 @@ def test_get_resources_lists_events_youngest_first(monkeypatch) -> None:
     assert [resource.name for resource in resources] == ["new", "old"]
 
 
+@pytest.fixture(autouse=True)
+def no_latest_versions(monkeypatch):
+    """The lists do not ask AWS or Artifact Hub for the latest versions
+    here."""
+    from kubescope import plugin_latest
+
+    monkeypatch.setattr(plugin_latest, "latest_versions", lambda *_a: {})
+
+
 def test_get_resources_lists_the_add_ons_of_eks_and_the_helm_releases(
     monkeypatch,
 ) -> None:
@@ -2506,9 +2515,9 @@ def test_get_resources_lists_the_add_ons_of_eks_and_the_helm_releases(
         ("Addon", "vpc-cni", ""),
         ("HelmRelease", "web", "ops"),
     ]
-    assert addons[0].values == ("failed", "—", "Helm")
-    assert addons[1].values == ("ACTIVE", "v1.18.1-eksbuild.3", "EKS")
-    assert addons[2].values == ("deployed", "—", "Helm")  # the latest revision
+    assert addons[0].values == ("failed", "—", "—", "Helm")
+    assert addons[1].values == ("ACTIVE", "v1.18.1-eksbuild.3", "—", "EKS")
+    assert addons[2].values == ("deployed", "—", "—", "Helm")  # the latest revision
     secrets = next(call for call in calls if call[0].endswith("/secrets"))
     assert secrets[1] == [("labelSelector", "owner=helm")]
     assert "PartialObjectMetadataList" in secrets[2]  # never the data of a Secret
@@ -2578,7 +2587,7 @@ def test_outside_eks_the_add_ons_are_the_helm_releases(monkeypatch) -> None:
     _, addons = cluster.get_resources("ctx", "ops", "Addon")
 
     assert [(a.kind, a.values) for a in addons] == [
-        ("HelmRelease", ("deployed", "—", "Helm"))
+        ("HelmRelease", ("deployed", "—", "—", "Helm"))
     ]
 
 
@@ -3768,3 +3777,21 @@ def test_get_pod_logs_reads_the_log_from_its_start_up_to_a_limit_of_bytes(
     assert requests == [
         [("container", "app"), ("limitBytes", "7"), ("timestamps", "true")]
     ]
+
+
+def test_a_failure_reading_the_latest_versions_never_costs_the_list(
+    monkeypatch,
+) -> None:
+    from kubescope import plugin_latest
+
+    def broken(*_a):
+        raise RuntimeError("boom")
+
+    monkeypatch.setattr(plugin_latest, "latest_versions", broken)
+    row = cluster.ClusterResource("", "Addon", "vpc-cni", ("ACTIVE", "v1", "EKS"), "1d")
+    assert cluster._with_latest("ctx", [row])[0].values == (
+        "ACTIVE",
+        "v1",
+        "—",
+        "EKS",
+    )
