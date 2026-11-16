@@ -1805,7 +1805,7 @@ def test_each_config_list_opens_with_its_own_columns(monkeypatch) -> None:
             1,
         ),
         "nodegroups": ("Node Groups", "NodeGroup", 5),
-        "addons": ("Add-ons", "Addon", 3),
+        "addons": ("Add-ons", "Addon", 4),
     }
     assert set(expected) == set(CONFIG_VIEWS)
     for view, (title, kind, extra) in expected.items():
@@ -1936,7 +1936,7 @@ def test_the_node_groups_entry_follows_the_context(monkeypatch) -> None:
     window._open_list_view("nodegroups")
     window._context_changed()  # until the new context answers, nothing from AWS
     assert window.ui.navNodeGroups.isHidden()
-    assert not window.ui.navAddons.isHidden()  # Helm releases need no AWS
+    assert not window.ui.navPluginsInstalled.isHidden()  # Helm releases need no AWS
     assert (
         window.overview_ui.clusterInfoCard.isHidden() and window._view == "deployments"
     )
@@ -1957,8 +1957,10 @@ def test_the_config_menu_opens_and_lists_every_entry(monkeypatch) -> None:
     assert not window.nav_config.isCheckable()
 
     assert window.config_submenu.maximumHeight() > 0  # open from the start
-    for view in set(CONFIG_VIEWS) - {"nodegroups"}:
+    for view in set(CONFIG_VIEWS) - {"nodegroups", "addons"}:
         assert window._nav_views[view].parent() is window.config_submenu
+    # the Helm releases and EKS add-ons are the Installed plugins, not a Config entry
+    assert window._nav_views["addons"].parent() is window.plugins_submenu
     assert window._nav_views["nodegroups"].parent() is not window.config_submenu
     window.close()
 
@@ -4067,4 +4069,33 @@ def test_quiet_reads_show_what_the_server_added_and_removed(monkeypatch) -> None
 
     window._answered("prod", None, "configmaps", ["ops"], [], True)
     assert names() == []  # the last one removed
+    window.close()
+
+
+def test_an_addon_with_a_newer_version_shows_an_icon_in_the_latest_column(
+    monkeypatch,
+) -> None:
+    window = _resource_window(monkeypatch)
+    window._open_list_view("addons")
+    window._show_resources(
+        [],
+        [
+            ClusterResource(
+                "", "Addon", "vpc-cni", ("ACTIVE", "v1", "v2", "EKS"), "1d"
+            ),
+            ClusterResource(
+                "", "Addon", "kube-proxy", ("ACTIVE", "v3", "v3", "EKS"), "1d"
+            ),
+        ],
+    )
+    names = [cell(window.table, r, 2).text() for r in range(2)]
+    icons = {}
+    for row, name in enumerate(names):
+        item = window.table.item(row, 5)
+        assert item is not None
+        icons[name] = not item.icon().isNull()
+        if name == "vpc-cni":
+            assert item.toolTip().endswith("v2")
+    assert icons == {"vpc-cni": True, "kube-proxy": False}
+    assert window.table.columnCount() == 8
     window.close()

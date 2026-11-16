@@ -106,8 +106,8 @@ _The cluster overview, shown with sample data. Regenerate it with
   **Limit Ranges**, **Horizontal Pod Autoscalers**, **Pod Disruption Budgets**,
   **Priority Classes**, **Runtime Classes**, **Leases** and the **Mutating** and
   **Validating Webhook Configurations**. **Details** of a Secret shows its keys,
-  never its values. **Add-ons** lists the Helm releases of the cluster and, on Amazon
-  EKS, its EKS add-ons.
+  never its values. **Plugins → Installed** lists the Helm releases of the cluster and, on Amazon
+  EKS, its EKS add-ons; **Plugins → Catalog** browses the Helm charts of Artifact Hub.
 - **Cluster info (EKS only):** the Overview shows status, Kubernetes and platform
   versions, creation time, API server endpoint and the cluster and IAM role ARNs,
   and a **Networking** card with the VPC, subnets, security groups, endpoint access

@@ -4,14 +4,22 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+### Added
+
+- **Plugins** menu with **Catalog** and **Installed**. The Catalog lists the Helm charts of Artifact Hub as cards (search, **Learn More**, **Install**); **Install** shows the `helm` commands to copy and run, KubeScope installs nothing by @danilogco
+- **Plugins → Installed** has an **Update** button in the write mode: an EKS add-on is moved to a version EKS offers, with the rule for the fields changed by hand, and a Helm release is upgraded with a chart, repository, version and values file; the exact `aws eks update-addon` or `helm upgrade` command is shown and runs only when you press **Update** by @danilogco
+- **Plugins → Installed** has a **Latest** column: for an EKS add-on the newest version EKS offers for the cluster's Kubernetes version, for a Helm release the version of the chart of the same name at Artifact Hub (the official or verified publisher first, so it is the best match, not a certainty). A row with a newer version shows an icon, and **Update** offers that version first by @danilogco
+- **Plugins → Installed** also lists the managed extensions of an AKS cluster (version and **Update**, with `az k8s-extension`, the cluster found by the address of its API server) and the add-ons of a GKE cluster (on or off, from `gcloud container clusters describe`, the cluster named by its context); a GKE add-on has no version, so no **Update** by @danilogco
+
+### Changed
+
+- **Add-ons** left the Config menu: the Helm releases and EKS add-ons it listed are now **Plugins → Installed** by @danilogco
+
 ## [1.9.1] - 2026-11-13
 
 ### Fixed
 
 - Gabi reads a log of a window of time that it always asks for, from how many minutes ago (`since_minutes`, and `until_minutes` to end it earlier) or from a date and time with its time zone (`since` and `until`), the whole window and not only the last lines, with `search` to keep the lines with some terms; an answer that is too long stops and says where, to ask again from there, and it is told the range of every number of an action (it asked for 5000 lines when the limit was 500). When it asks for two reads at once both are made, instead of only the first by @danilogco
-
-### Changed
-
 - Gabi reads a log that is short enough for one answer whole, with no window to ask for; the window (`since_minutes` or `since`) is asked only for a longer one by @danilogco
 
 ## [1.9.0] - 2026-11-12
@@ -101,13 +109,10 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [1.3.2] - 2026-11-01
 
-### Changed
-
-- The footer shows the version as `v1.3.2` instead of `Version 1.3.2` by @danilogco
-
 ### Fixed
 
 - **Quit** in the menu of the tray icon now ends the app when its window is hidden in the tray, which on Windows left it running with the icon still there by @danilogco
+- The footer shows the version as `v1.3.2` instead of `Version 1.3.2` by @danilogco
 
 ## [1.3.1] - 2026-10-30
 
@@ -564,7 +569,7 @@ The first release.
 [1.4.0]: https://github.com/dcotecnologia/kubescope/compare/v1.3.2...v1.4.0
 [1.3.2]: https://github.com/dcotecnologia/kubescope/compare/v1.3.1...v1.3.2
 [1.3.1]: https://github.com/dcotecnologia/kubescope/compare/v1.3.0...v1.3.1
-[1.3.0]: https://github.com/dcotecnologia/kubescope/compare/v1.2.0...v1.3.0
+[1.3.0]: https://github.com/dcotecnologia/kubescope/compare/v1.3.0-rc3...v1.3.0
 [1.3.0-rc3]: https://github.com/dcotecnologia/kubescope/compare/v1.3.0-rc2...v1.3.0-rc3
 [1.3.0-rc2]: https://github.com/dcotecnologia/kubescope/compare/v1.3.0-rc1...v1.3.0-rc2
 [1.3.0-rc1]: https://github.com/dcotecnologia/kubescope/compare/v1.2.0...v1.3.0-rc1
