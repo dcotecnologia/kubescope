@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+## [1.10.0] - 2026-11-16
+
 ### Added
 
 - **Plugins** menu with **Catalog** and **Installed**. The Catalog lists the Helm charts of Artifact Hub as cards (search, **Learn More**, **Install**); **Install** shows the `helm` commands to copy and run, KubeScope installs nothing by @danilogco
@@ -559,7 +561,8 @@ The first release.
 
 - Pod logs and resource details are still never written to disk by the app on its own. **Save** is the only exception, and it writes only to the file the user chooses. SECURITY.md says so by @danilogco
 
-[Unreleased]: https://github.com/dcotecnologia/kubescope/compare/v1.9.1...HEAD
+[Unreleased]: https://github.com/dcotecnologia/kubescope/compare/v1.10.0...HEAD
+[1.10.0]: https://github.com/dcotecnologia/kubescope/compare/v1.9.1...v1.10.0
 [1.9.1]: https://github.com/dcotecnologia/kubescope/compare/v1.9.0...v1.9.1
 [1.9.0]: https://github.com/dcotecnologia/kubescope/compare/v1.8.0...v1.9.0
 [1.8.0]: https://github.com/dcotecnologia/kubescope/compare/v1.7.0...v1.8.0
