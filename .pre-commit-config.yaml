@@ -19,7 +19,7 @@ repos:
       - id: trailing-whitespace
         exclude: '\.svg$|\.log$|\.txt$'
       - id: check-added-large-files
-        exclude: '^src/kubescope/assets/fonts/'  # the bundled fonts are ~500 KB each
+        exclude: "^src/kubescope/assets/fonts/" # the bundled fonts are ~500 KB each
       - id: fix-byte-order-marker
       - id: check-docstring-first
       - id: pretty-format-json
@@ -36,7 +36,7 @@ repos:
       - id: mixed-line-ending
       - id: name-tests-test
         args: [--pytest-test-first]
-        exclude: ^tests/qt\.py$  # shared helpers, not a test module
+        exclude: ^tests/qt\.py$ # shared helpers, not a test module
       - id: sort-simple-yaml
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
@@ -83,6 +83,12 @@ repos:
     hooks:
       - id: markdownlint
         args: ["--config", ".markdownlint.json", "--fix"]
+
+  - repo: https://github.com/dcotecnologia/keepmeachangelog-lint
+    rev: v0.1.0
+    hooks:
+      - id: keepmeachangelog-lint
+        args: [--fix, --validation-depth, "10", --version-from, pyproject.toml]
 
   - repo: local
     hooks:

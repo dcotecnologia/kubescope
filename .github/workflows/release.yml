@@ -219,13 +219,24 @@ jobs:
           path: packages
           merge-multiple: true
 
-      # the release says what the changelog says about this version
-      - name: Write the release notes from the changelog
-        run: python3 tools/release_notes.py "${GITHUB_REF_NAME}" > release-notes.md
+      # the version of the release is the one of the tag, written as the changelog does
+      - name: Get the version of the release
+        id: release_vars
+        run: echo "project_version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      # the release says what the changelog says about this version, and the
+      # action validates the changelog first (the last ten versions)
+      - name: Recupera o histórico da versão para a criação da release
+        id: changelog_reader
+        uses: dcotecnologia/keepmeachangelog-action@v1
+        with:
+          validation_depth: 10
+          version: ${{ steps.release_vars.outputs.project_version }}
+          path: ./CHANGELOG.md
 
       - uses: softprops/action-gh-release@v3
         with:
           files: packages/*
-          body_path: release-notes.md
+          body_path: ${{ steps.changelog_reader.outputs.changes_file }}
           # v1.3.0-rc1 is a pre-release: GitHub does not make it the latest release
           prerelease: ${{ contains(github.ref_name, '-') }}

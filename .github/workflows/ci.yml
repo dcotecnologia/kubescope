@@ -49,6 +49,15 @@ jobs:
           uv run python tools/sync_changelog.py --check \
             || (echo "Run 'make changelog' and commit the copy" && exit 1)
 
+      # reads and validates the changelog (the last ten versions) as the release does
+      - name: Recupera o histórico da versão para a criação da release
+        id: changelog_reader
+        uses: dcotecnologia/keepmeachangelog-action@v1
+        with:
+          validation_depth: 10
+          version: Unreleased
+          path: ./CHANGELOG.md
+
       - name: Language files list the texts of the code
         run: |
           uv run python tools/i18n.py
