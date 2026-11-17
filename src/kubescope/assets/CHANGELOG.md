@@ -4,10 +4,12 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+## [1.11.0] - 2026-11-17
+
 ### Added
 
 - **macOS Light** and **macOS Dark** themes: the system colors of macOS (system blue accent, the grays of the window and the controls, the system green, orange and red for the states), with a translucent window, page and top bar by @danilogco
-- Themes can have an `opacity` object that makes the backgrounds of a role translucent by @danilogco
+- Themes can have an `opacity` object that makes the color of a role translucent, with a slider and a number box for each role in the theme editor by @danilogco
 
 ## [1.10.0] - 2026-11-16
 
@@ -566,7 +568,8 @@ The first release.
 
 - Pod logs and resource details are still never written to disk by the app on its own. **Save** is the only exception, and it writes only to the file the user chooses. SECURITY.md says so by @danilogco
 
-[Unreleased]: https://github.com/dcotecnologia/kubescope/compare/v1.10.0...HEAD
+[Unreleased]: https://github.com/dcotecnologia/kubescope/compare/v1.11.0...HEAD
+[1.11.0]: https://github.com/dcotecnologia/kubescope/compare/v1.10.0...v1.11.0
 [1.10.0]: https://github.com/dcotecnologia/kubescope/compare/v1.9.1...v1.10.0
 [1.9.1]: https://github.com/dcotecnologia/kubescope/compare/v1.9.0...v1.9.1
 [1.9.0]: https://github.com/dcotecnologia/kubescope/compare/v1.8.0...v1.9.0
