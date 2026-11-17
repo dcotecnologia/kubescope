@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+### Added
+
+- **macOS Light** and **macOS Dark** themes: the system colors of macOS (system blue accent, the grays of the window and the controls, the system green, orange and red for the states), with a translucent window, page and top bar by @danilogco
+- Themes can have an `opacity` object that makes the backgrounds of a role translucent by @danilogco
+
 ## [1.10.0] - 2026-11-16
 
 ### Added
