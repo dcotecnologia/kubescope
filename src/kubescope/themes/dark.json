@@ -1,6 +1,12 @@
 {
     "base": "dark",
     "name": "Dark",
+    "opacity": {
+        "page": 0.9,
+        "topbar": 0.9,
+        "topbar_brand": 0.9,
+        "topbar_field": 0.9
+    },
     "palette": {
         "#06234a": "#07090c",
         "#0d315d": "#13171d",

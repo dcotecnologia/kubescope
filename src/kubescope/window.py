@@ -197,10 +197,12 @@ from kubescope.theme import (
     can_delete_theme,
     delete_custom_theme,
     save_custom_theme,
+    theme_opacity,
     theme_tokens,
     themed,
     themed_stylesheet,
     themes_directory,
+    translucent,
 )
 from kubescope.ui.ui_forwards_page import Ui_ForwardsPage
 from kubescope.ui.ui_main_window import Ui_MainWindow
@@ -2412,6 +2414,12 @@ class WorkloadWindow(QMainWindow):
     def _apply_style(self) -> None:
         """Style the window for the active theme; the icons Qt style sheets
         cannot draw are rendered in the theme's colors."""
+        glass = translucent()
+        if glass != self.testAttribute(Qt.WidgetAttribute.WA_TranslucentBackground):
+            visible = self.isVisible()
+            self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, glass)
+            if visible:
+                self.show()  # the attribute needs the window to be created again
         self.setStyleSheet(
             themed_stylesheet(self._style_template)
             .replace("SORT_UP", _sort_icon_path(up=True))
@@ -7171,11 +7179,18 @@ class WorkloadWindow(QMainWindow):
             base=theme.base,
             tokens=theme_tokens(theme),
             new=new,
+            opacity=theme_opacity(theme),
         )
         if editor.exec() != QDialog.DialogCode.Accepted:
             return None
         name, base, tokens = editor.values()
-        return save_custom_theme(name, base, tokens, None if new else theme.id)
+        return save_custom_theme(
+            name,
+            base,
+            tokens,
+            None if new else theme.id,
+            opacity=editor.opacity_values(),
+        )
 
     def _new_theme(self) -> None:
         """Start a new theme from the selected one."""

@@ -1,6 +1,6 @@
 """The dialog where people create and edit their own themes."""
 
-from PySide6.QtCore import QCoreApplication
+from PySide6.QtCore import QCoreApplication, Qt
 from PySide6.QtGui import QColor
 from PySide6.QtWidgets import (
     QColorDialog,
@@ -12,11 +12,20 @@ from PySide6.QtWidgets import (
     QLineEdit,
     QPushButton,
     QScrollArea,
+    QSlider,
+    QSpinBox,
     QVBoxLayout,
     QWidget,
 )
 
-from kubescope.theme import BUILTIN, DARK, LIGHT, theme_tokens, themed
+from kubescope.theme import (
+    BUILTIN,
+    DARK,
+    LIGHT,
+    OPACITY_ROLES,
+    theme_tokens,
+    themed,
+)
 from kubescope.views.chat_icons import close_icon, icon_only, save_icon
 
 
@@ -95,6 +104,7 @@ class ThemeEditor(QDialog):
         base: str,
         tokens: dict[str, str],
         new: bool,
+        opacity: dict[str, float] | None = None,
     ) -> None:
         super().__init__(parent)
         self.setWindowTitle(
@@ -102,10 +112,14 @@ class ThemeEditor(QDialog):
             if new
             else self.tr("Edit theme: {name}").format(name=name)
         )
-        self.resize(480, 620)
+        self.resize(640, 760)
         self._tokens = dict(tokens)
         self._initial = dict(tokens)  # what Reset goes back to
         self._swatches: dict[str, QPushButton] = {}
+        self._opacity = {role: 1.0 for role in OPACITY_ROLES} | (opacity or {})
+        self._initial_opacity = dict(self._opacity)
+        self._sliders: dict[str, QSlider] = {}
+        self._spins: dict[str, QSpinBox] = {}
 
         self.name_edit = QLineEdit(name)
         self.name_edit.setPlaceholderText(self.tr("Theme name"))
@@ -132,7 +146,30 @@ class ThemeEditor(QDialog):
                 lambda _checked=False, token=token: self._pick(token)
             )
             self._swatches[token] = swatch
-            form.addRow(QLabel(label), swatch)
+            row = QHBoxLayout()
+            row.addWidget(swatch, 1)
+            if token in OPACITY_ROLES:  # the text color on accents has no opacity
+                slider = QSlider(Qt.Orientation.Horizontal)
+                slider.setRange(0, 100)
+                slider.setValue(round(self._opacity[token] * 100))
+                slider.setToolTip(self.tr("Opacity"))
+                slider.setMinimumWidth(120)
+                spin = QSpinBox()  # type the value, or drag the slider
+                spin.setRange(0, 100)
+                spin.setSuffix("%")
+                spin.setValue(slider.value())
+                spin.setToolTip(self.tr("Opacity"))
+                spin.setMinimumWidth(70)
+                slider.valueChanged.connect(spin.setValue)
+                spin.valueChanged.connect(slider.setValue)
+                slider.valueChanged.connect(
+                    lambda value, token=token: self._set_opacity(token, value)
+                )
+                self._sliders[token] = slider
+                self._spins[token] = spin
+                row.addWidget(slider)
+                row.addWidget(spin)
+            form.addRow(QLabel(label), row)
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setWidget(colors)
@@ -170,15 +207,25 @@ class ThemeEditor(QDialog):
         self._refresh_swatches()
         self._validate()
 
+    def _set_opacity(self, role: str, value: int) -> None:
+        self._opacity[role] = value / 100
+        self.reset_button.setEnabled(self._changed())
+
+    def _changed(self) -> bool:
+        return self._tokens != self._initial or self._opacity != self._initial_opacity
+
     def _validate(self) -> None:
         self.save_button.setEnabled(bool(self.name_edit.text().strip()))
 
     def _reset(self) -> None:
         self._tokens = dict(self._initial)
+        self._opacity = dict(self._initial_opacity)
+        for role, slider in self._sliders.items():
+            slider.setValue(round(self._opacity[role] * 100))
         self._refresh_swatches()
 
     def _refresh_swatches(self) -> None:
-        self.reset_button.setEnabled(self._tokens != self._initial)
+        self.reset_button.setEnabled(self._changed())
         for token, swatch in self._swatches.items():
             color = QColor(self._tokens[token])
             swatch.setText(self._tokens[token].lower())
@@ -207,3 +254,7 @@ class ThemeEditor(QDialog):
             self.base_combo.currentData(),
             dict(self._tokens),
         )
+
+    def opacity_values(self) -> dict[str, float]:
+        """The opacity of each role that can be translucent, 1 when solid."""
+        return dict(self._opacity)

@@ -1526,14 +1526,17 @@ def test_the_theme_is_chosen_in_settings_and_applied_at_once(monkeypatch) -> Non
     assert [form.themeCombo.itemData(i) for i in range(2)] == ["light", "dark"]
     assert form.themeCombo.currentData() == "light"
     light_style = window.styleSheet()
-    assert "#dfe2e8" in light_style and "#11141a" not in light_style
+    assert "223, 226, 232" in light_style and "rgba(17, 20, 26" not in light_style
     light_icon = window_module._chevron_icon_path()
 
     form.themeCombo.setCurrentIndex(form.themeCombo.findData("dark"))
     window._save_preferences()
 
     assert window.settings.theme == "dark"
-    assert "#11141a" in window.styleSheet() and "#dfe2e8" not in window.styleSheet()
+    assert (
+        "rgba(17, 20, 26" in window.styleSheet()
+        and "#dfe2e8" not in window.styleSheet()
+    )
     phase = window.table.item(0, 4)
     assert phase is not None
     badge = phase.data(BADGE_ROLE)  # the phase, as a badge
@@ -1548,6 +1551,25 @@ def test_the_theme_is_chosen_in_settings_and_applied_at_once(monkeypatch) -> Non
     window.close()
 
 
+def test_a_translucent_theme_lets_the_desktop_show_through_the_window(
+    monkeypatch,
+) -> None:
+    from kubescope.theme import apply_theme
+
+    window = _ready_window(monkeypatch)
+    window.show()
+    glass = Qt.WidgetAttribute.WA_TranslucentBackground
+
+    apply_theme(get_application(), "dark")
+    window._apply_style()
+    assert window.testAttribute(glass)
+
+    monkeypatch.setattr(window_module, "translucent", lambda: False)  # a solid theme
+    window._apply_style()
+    assert not window.testAttribute(glass)
+    window.close()
+
+
 def test_the_window_starts_in_the_saved_theme(monkeypatch, tmp_path) -> None:
     from kubescope.settings import Settings
     from kubescope.theme import apply_theme
@@ -1558,7 +1580,7 @@ def test_the_window_starts_in_the_saved_theme(monkeypatch, tmp_path) -> None:
 
     window = _ready_window(monkeypatch)
 
-    assert "#11141a" in window.styleSheet()
+    assert "rgba(17, 20, 26" in window.styleSheet()
     window.close()
     apply_theme(get_application(), "light")
 
@@ -1604,7 +1626,7 @@ def test_a_new_theme_is_made_in_the_editor_and_then_chosen(monkeypatch) -> None:
 
     page.saveButton.click()
     assert window.settings.theme == "ocean"
-    assert "#001122" in window.styleSheet()
+    assert "0, 17, 34" in window.styleSheet()
     window.close()
 
 
@@ -1628,12 +1650,15 @@ def test_editing_the_theme_in_use_restyles_the_window_at_once(monkeypatch) -> No
     _accept_editor(monkeypatch, name="Ocean", page="#001122")
     window.settings_ui.newThemeButton.click()
     window.settings_ui.saveButton.click()
-    assert "#001122" in window.styleSheet()
+    assert "rgba(0, 17, 34" in window.styleSheet()
 
     _accept_editor(monkeypatch, page="#334455")
     window._edit_theme()
 
-    assert "#334455" in window.styleSheet() and "#001122" not in window.styleSheet()
+    assert (
+        "rgba(51, 68, 85" in window.styleSheet()
+        and "rgba(0, 17, 34" not in window.styleSheet()
+    )
     assert window.settings_ui.themeCombo.currentData() == "ocean"
 
     # editing one that is not in use leaves the look alone
@@ -1659,7 +1684,7 @@ def test_a_theme_that_was_deleted_falls_back_to_the_default(monkeypatch) -> None
 
     assert window.settings_ui.themeCombo.currentData() == "dark"
     window._apply_theme()
-    assert "#11141a" in window.styleSheet()
+    assert "rgba(17, 20, 26" in window.styleSheet()
     window.close()
 
 
@@ -3393,14 +3418,14 @@ def test_deleting_the_theme_in_use_goes_back_to_the_default(monkeypatch) -> None
     _accept_editor(monkeypatch, name="Ocean", page="#001122")
     page.newThemeButton.click()
     page.saveButton.click()
-    assert window.settings.theme == "ocean" and "#001122" in window.styleSheet()
+    assert window.settings.theme == "ocean" and "rgba(0, 17, 34" in window.styleSheet()
     monkeypatch.setattr(window, "_confirm", lambda *_a: True)
 
     window._delete_theme()
 
     assert window.settings.theme == "dark"
     assert page.themeCombo.currentData() == "dark"
-    assert "#001122" not in window.styleSheet()
+    assert "rgba(0, 17, 34" not in window.styleSheet()
     window.close()
 
 

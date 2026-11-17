@@ -23,3 +23,15 @@ changes; everything else comes from the base. See "Themes" in the main README fo
 format and `ROLES` in `src/kubescope/theme.py` for the color names.
 
 Keep text readable: aim for a contrast of at least 4.5:1 between `text` and `page`.
+
+## Transparency
+
+A theme can add an `opacity` object that gives any color role an opacity from `0`
+(clear) to `1` (solid), for example `"opacity": {"page": 0.8, "topbar": 0.75}`. The
+theme editor has a slider for each role. That role's color is drawn translucent, and
+the window lets the desktop show through. It needs a desktop compositor; the blur
+behind the window, as macOS does it, is not available.
+
+Be careful with `surface` and `surface_alt`: lists, trees and scroll areas draw them,
+and a translucent background there can be painted over its own old pixels, which
+shows as ghost text.

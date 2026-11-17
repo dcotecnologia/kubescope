@@ -92,12 +92,31 @@ class Theme:
     colors: dict[str, str] = field(default_factory=dict)  # light color -> color
     on_accent: str = WHITE
     builtin: bool = False
+    opacity: dict[str, float] = field(default_factory=dict)  # light color -> 0..1
 
 
 # The themes that come with the app are JSON files in this folder: Light and
 # Dark, which are built in, and the others, which are copied to the themes folder
 # the first time they are seen (see install_bundled_themes()).
 BUNDLED_DIRECTORY = Path(__file__).resolve().parent / "themes"
+
+
+def _parse_opacity(opacities: object) -> dict[str, float]:
+    """The opacity of each light color from a theme's `opacity` object."""
+    if not isinstance(opacities, dict):
+        raise ValueError("opacity must be an object")
+    opacity: dict[str, float] = {}
+    for role, value in opacities.items():
+        if (
+            role not in ROLES
+            or isinstance(value, bool)
+            or not isinstance(value, (int, float))
+            or not 0 <= value <= 1
+        ):
+            raise ValueError(f"bad opacity for {role!r}")
+        for light_color in ROLES[role]:
+            opacity[light_color] = float(value)
+    return opacity
 
 
 def _load_builtin(theme_id: str) -> Theme:
@@ -115,6 +134,7 @@ def _load_builtin(theme_id: str) -> Theme:
         theme_id,
         dict(document.get("palette", {})),
         builtin=True,
+        opacity=_parse_opacity(document.get("opacity", {})),
     )
 
 
@@ -141,7 +161,10 @@ def parse_theme(theme_id: str, document: object) -> Theme:
     """Build a custom theme from its JSON document; raise ValueError if it is
     not one.
 
-    Roles it does not list keep their base color.
+    Roles it does not list keep their base color. An optional `opacity`
+    object gives a role an opacity from 0 (clear) to 1 (solid); the
+    style sheet draws that role's color translucent, and the window lets
+    the desktop show through.
     """
     if not isinstance(document, dict) or not isinstance(document.get("name"), str):
         raise ValueError("a theme needs a name")
@@ -151,6 +174,7 @@ def parse_theme(theme_id: str, document: object) -> Theme:
     chosen = document.get("colors", {})
     if not isinstance(chosen, dict):
         raise ValueError("colors must be an object")
+    opacity = _parse_opacity(document.get("opacity", {}))
     colors = dict(BUILTIN[base].colors)
     on_accent = WHITE
     for token, value in chosen.items():
@@ -162,7 +186,12 @@ def parse_theme(theme_id: str, document: object) -> Theme:
         for light_color in ROLES[token]:
             colors[light_color] = value.lower()
     return Theme(
-        theme_id, document["name"].strip() or theme_id, base, colors, on_accent
+        theme_id,
+        document["name"].strip() or theme_id,
+        base,
+        colors,
+        on_accent,
+        opacity=opacity,
     )
 
 
@@ -250,16 +279,30 @@ def theme_tokens(theme: Theme) -> dict[str, str]:
     return tokens
 
 
+# Every color role can be translucent; the editor offers a slider for each.
+OPACITY_ROLES = tuple(ROLES)
+
+
+def theme_opacity(theme: Theme) -> dict[str, float]:
+    """The opacity of each role that can be translucent, 1 when solid."""
+    return {role: theme.opacity.get(ROLES[role][0], 1.0) for role in OPACITY_ROLES}
+
+
 def slugify(name: str) -> str:
     return re.sub(r"[^a-z0-9]+", "-", name.casefold()).strip("-") or "theme"
 
 
 def save_custom_theme(
-    name: str, base: str, tokens: dict[str, str], theme_id: str | None = None
+    name: str,
+    base: str,
+    tokens: dict[str, str],
+    theme_id: str | None = None,
+    opacity: dict[str, float] | None = None,
 ) -> Theme:
     """Write a theme file (a new one, or `theme_id` replaced) and return it.
 
-    Only the roles that differ from the base are stored.
+    Only the roles that differ from the base are stored. `opacity` gives
+    the opacity of each role (solid ones are not stored).
     """
     base_tokens = theme_tokens(BUILTIN[base])
     changed = {t: c.lower() for t, c in tokens.items() if c.lower() != base_tokens[t]}
@@ -270,7 +313,15 @@ def save_custom_theme(
         while theme_id in taken:
             number += 1
             theme_id = f"{stem}-{number}"
-    document = {"name": name.strip(), "base": base, "colors": changed}
+    document: dict[str, object] = {
+        "name": name.strip(),
+        "base": base,
+        "colors": changed,
+    }
+    if opacity is not None:
+        translucent_roles = {r: round(v, 2) for r, v in opacity.items() if v < 1}
+        if translucent_roles:
+            document["opacity"] = translucent_roles
     themes_directory().mkdir(parents=True, exist_ok=True)
     path = themes_directory() / f"{theme_id}.json"
     text = json.dumps(document, indent=4, sort_keys=True)  # as the repository keeps it
@@ -301,6 +352,12 @@ def themed(color: str, *, text: bool = False) -> str:
     return _active.colors.get(key, color)
 
 
+def translucent() -> bool:
+    """Whether the active theme draws something translucent, so the window must
+    let the desktop show through."""
+    return any(value < 1 for value in _active.opacity.values())
+
+
 _HEX = re.compile(r"#[0-9a-fA-F]{6}\b")
 _DECLARATION = re.compile(r"([a-z-]+)(\s*:\s*)([^;{}]*)")
 _TEXT_PROPERTIES = frozenset({"color", "selection-color"})
@@ -312,7 +369,18 @@ def themed_stylesheet(stylesheet: str) -> str:
     def declaration(match: re.Match[str]) -> str:
         prop, separator, value = match.groups()
         text = prop in _TEXT_PROPERTIES
-        recolored = _HEX.sub(lambda hit: themed(hit.group(0), text=text), value)
+
+        def recolor(hit: re.Match[str]) -> str:
+            color = themed(hit.group(0), text=text)
+            key = hit.group(0).lower()
+            # white drawn as text is the on-accent color, which has no opacity
+            alpha = 1.0 if text and key == WHITE else _active.opacity.get(key, 1.0)
+            if alpha < 1:
+                red, green, blue = (int(color[i : i + 2], 16) for i in (1, 3, 5))
+                return f"rgba({red}, {green}, {blue}, {round(alpha * 255)})"
+            return color
+
+        recolored = _HEX.sub(recolor, value)
         return f"{prop}{separator}{recolored}"
 
     return _DECLARATION.sub(declaration, stylesheet)

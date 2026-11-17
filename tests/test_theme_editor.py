@@ -134,3 +134,34 @@ def test_the_inputs_and_buttons_use_the_projects_styles() -> None:
     assert editor.reset_button.property("variant") == "secondary"
     assert editor.save_button.property("variant") == "primary"
     assert editor.save_button.isDefault()
+
+
+def test_the_editor_has_a_slider_for_each_role_that_can_be_translucent() -> None:
+    editor = ThemeEditor(
+        None,
+        name="Glass",
+        base="dark",
+        tokens=theme_tokens(DARK_THEME),
+        new=False,
+        opacity={"page": 0.4},
+    )
+
+    assert set(editor._sliders) == set(theme.OPACITY_ROLES)
+    assert editor._sliders["page"].value() == 40
+    assert editor._spins["page"].value() == 40
+    assert editor.opacity_values()["topbar"] == 1.0
+    assert not editor.reset_button.isEnabled()
+
+    editor._sliders["topbar"].setValue(50)
+
+    assert editor.opacity_values()["topbar"] == 0.5
+    assert editor._spins["topbar"].value() == 50
+
+    editor._spins["topbar"].setValue(25)  # typed instead of dragged
+
+    assert editor.opacity_values()["topbar"] == 0.25
+    assert editor._sliders["topbar"].value() == 25
+    assert editor.reset_button.isEnabled()
+    editor.reset_button.click()
+    assert editor.opacity_values()["topbar"] == 1.0
+    assert editor._sliders["topbar"].value() == 100

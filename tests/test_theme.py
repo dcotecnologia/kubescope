@@ -86,7 +86,9 @@ def test_white_is_a_surface_in_dark_but_stays_white_as_text() -> None:
     )
     assert "color: #ffffff;" in recolored and "selection-color: #ffffff" in recolored
     assert f"background: {SURFACE}" in recolored
-    assert "#13171d" in recolored and "#2b3036" in recolored  # navy becomes black
+    assert (
+        "rgba(19, 23, 29, " in recolored and "#2b3036" in recolored
+    )  # navy becomes black
     assert "border: 1px solid #2d333d" in recolored
     assert "color: #7f8a99" in recolored
 
@@ -511,3 +513,63 @@ def test_without_a_bundled_folder_every_custom_theme_can_go(
     monkeypatch.setattr(theme, "BUNDLED_DIRECTORY", tmp_path / "missing")
 
     assert theme.bundled_theme_ids() == set()
+
+
+def test_a_translucent_role_is_drawn_so_wherever_the_style_sheet_uses_it() -> None:
+    custom = theme.parse_theme(
+        "glass",
+        {"name": "Glass", "colors": {"page": "#102030"}, "opacity": {"page": 0.5}},
+    )
+    try:
+        theme._active = custom
+        sheet = theme.themed_stylesheet(
+            "A { background: #f7f7fa; color: #f7f7fa; border: 1px solid #f7f7fa; }"
+        )
+        assert theme.translucent()
+    finally:
+        theme._active = theme.DARK_THEME
+
+    assert "background: rgba(16, 32, 48, 128)" in sheet
+    assert "color: rgba(16, 32, 48, 128)" in sheet
+    assert "border: 1px solid rgba(16, 32, 48, 128)" in sheet
+    theme._active = theme.parse_theme("plain", {"name": "Plain"})
+    assert not theme.translucent()
+    theme._active = theme.DARK_THEME
+
+
+@pytest.mark.parametrize(
+    "opacity", [[], {"nope": 0.5}, {"page": 1.5}, {"page": -0.1}, {"page": "x"}]
+)
+def test_malformed_opacity_is_rejected(opacity) -> None:
+    with pytest.raises(ValueError):
+        theme.parse_theme("x", {"name": "X", "opacity": opacity})
+
+
+def test_saving_a_theme_stores_the_opacity_that_is_not_solid(themes_dir) -> None:
+    tokens = theme.theme_tokens(theme.DARK_THEME)
+    saved = theme.save_custom_theme(
+        "Glass", "dark", tokens, opacity={"page": 0.456, "topbar": 1.0}
+    )
+
+    stored = json.loads((themes_dir / "glass.json").read_text(encoding="utf-8"))
+    assert stored["opacity"] == {"page": 0.46}
+    assert theme.theme_opacity(saved)["page"] == 0.46
+    assert theme.theme_opacity(saved)["topbar"] == 1.0
+
+    solid = theme.save_custom_theme(
+        "Glass", "dark", tokens, "glass", opacity={"page": 1.0}
+    )
+    assert "opacity" not in json.loads((themes_dir / "glass.json").read_text())
+    assert not solid.opacity
+
+
+def test_white_text_ignores_the_opacity_of_the_surface_role() -> None:
+    custom = theme.parse_theme("glass", {"name": "Glass", "opacity": {"surface": 0.5}})
+    try:
+        theme._active = custom
+        sheet = theme.themed_stylesheet("A { background: #ffffff; color: #ffffff; }")
+    finally:
+        theme._active = theme.DARK_THEME
+
+    assert "background: rgba(236, 238, 242, 128)" in sheet  # Light softens white
+    assert "color: #ffffff" in sheet
