@@ -102,10 +102,7 @@ repos:
       # fail them is not accepted here either
       - id: generated-ui
         name: regenerate the ui_*.py files from the .ui files
-        entry: >-
-          sh -c 'for file in src/kubescope/ui/*.ui; do
-          uv run --frozen pyside6-uic "$file" -o "${file%/*}/ui_$(basename "$file" .ui).py";
-          done'
+        entry: uv run --frozen python tools/generate_ui.py
         language: system
         files: ^src/kubescope/ui/.*\.ui$
         pass_filenames: false
