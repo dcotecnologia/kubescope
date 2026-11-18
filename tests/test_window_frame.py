@@ -1,5 +1,8 @@
+import ctypes
 import os
 import sys
+from ctypes import wintypes
+from unittest.mock import MagicMock
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
@@ -208,3 +211,62 @@ def test_a_window_that_fills_the_screen_has_no_strip_to_resize_from() -> None:
     assert frame.eventFilter(window, move) is False
     assert window.cursor().shape() == Qt.CursorShape.ArrowCursor
     assert QPoint(0, 0) == QPoint()
+
+
+def _on_windows(monkeypatch) -> None:
+    monkeypatch.setattr(sys, "platform", "win32")
+
+
+def test_windows_is_given_a_sizing_frame_for_the_window_without_a_title_bar(
+    monkeypatch,
+) -> None:
+    window, frame, _bar, _buttons = _frame()
+    windll = MagicMock()
+    windll.user32.GetWindowLongPtrW.return_value = 0
+    monkeypatch.setattr(ctypes, "windll", windll, raising=False)
+    _on_windows(monkeypatch)
+
+    frame._allow_system_resize()
+
+    windll.user32.SetWindowLongPtrW.assert_called_once()
+    windll.user32.SetWindowPos.assert_called_once()
+    windll.dwmapi.DwmExtendFrameIntoClientArea.assert_called_once()
+    windll.dwmapi.DwmSetWindowAttribute.assert_called_once()
+    assert window.windowFlags() is not None
+
+
+def _message(kind: int, w_param: int = 0, l_param: int = 0):
+    msg = wintypes.MSG()
+    msg.message, msg.wParam, msg.lParam = kind, w_param, l_param
+    return msg
+
+
+def test_windows_resizes_the_window_from_its_own_edge(monkeypatch) -> None:
+    window, frame, _bar, _buttons = _frame()
+    frame.set_custom(True)
+    _on_windows(monkeypatch)
+    event = b"windows_generic_MSG"
+
+    def hit(msg) -> int | None:
+        return frame.native_hit(event, ctypes.addressof(msg))
+
+    assert frame.native_hit(b"xcb_generic_event_t", 0) is None
+    assert hit(_message(window_frame._WM_NCCALCSIZE, 1)) == 0
+    assert hit(_message(0x0001)) is None
+    point = window.mapToGlobal(QPoint(1, 100))
+    l_param = ((point.y() & 0xFFFF) << 16) | (point.x() & 0xFFFF)
+    assert hit(_message(window_frame._WM_NCHITTEST, 0, l_param)) == 10
+
+
+def test_the_window_hands_native_events_to_its_frame(monkeypatch) -> None:
+    from kubescope import window as window_module
+
+    monkeypatch.setattr(window_module, "list_contexts", lambda: ([], None))
+    window = window_module.WorkloadWindow()
+
+    monkeypatch.setattr(window._frame, "native_hit", lambda *_args: 12)
+    assert window.nativeEvent(b"windows_generic_MSG", 0) == (True, 12)
+
+    monkeypatch.setattr(window._frame, "native_hit", lambda *_args: None)
+    monkeypatch.setattr(QMainWindow, "nativeEvent", lambda *_args: (False, 0))
+    assert window.nativeEvent(b"other", 0) == (False, 0)

@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+## [1.12.0] - 2026-11-18
+
+### Added
+
+- On Windows the frameless window resizes from its own edge, with the system's shadow, border and rounded corners, instead of a strip drawn by KubeScope by @danilogco
+
+### Fixed
+
+- The generated-ui hook no longer needs `sh`, which Windows does not have: a Python script regenerates the ui files on every platform by @danilogco
+- Line endings are normalized to LF with a `.gitattributes` file, so tools on Windows no longer show whole files as changed by @danilogco
+
 ## [1.11.0] - 2026-11-17
 
 ### Added
@@ -568,7 +579,8 @@ The first release.
 
 - Pod logs and resource details are still never written to disk by the app on its own. **Save** is the only exception, and it writes only to the file the user chooses. SECURITY.md says so by @danilogco
 
-[Unreleased]: https://github.com/dcotecnologia/kubescope/compare/v1.11.0...HEAD
+[Unreleased]: https://github.com/dcotecnologia/kubescope/compare/v1.12.0...HEAD
+[1.12.0]: https://github.com/dcotecnologia/kubescope/compare/v1.11.0...v1.12.0
 [1.11.0]: https://github.com/dcotecnologia/kubescope/compare/v1.10.0...v1.11.0
 [1.10.0]: https://github.com/dcotecnologia/kubescope/compare/v1.9.1...v1.10.0
 [1.9.1]: https://github.com/dcotecnologia/kubescope/compare/v1.9.0...v1.9.1
