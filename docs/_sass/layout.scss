@@ -260,4 +260,8 @@ footer {
 
 	h2 { color: $feature-title-color; margin-bottom: 14px; }
 	code { font-size: 1.5rem; word-break: break-all; }
+
+	figure { margin: 28px 0 0; }
+	figure img { display: block; max-width: 100%; border-radius: 8px; }
+	figcaption { margin-top: 8px; font-size: 1.5rem; opacity: 0.8; }
 }

@@ -10,6 +10,10 @@ All notable changes to this project will be documented in this file. The format 
 
 - On Windows the frameless window resizes from its own edge, with the system's shadow, border and rounded corners, instead of a strip drawn by KubeScope by @danilogco
 
+### Changed
+
+- The README and the site show the Deployments list, the resource details and the Pod logs besides the overview by @danilogco
+
 ### Fixed
 
 - The generated-ui hook no longer needs `sh`, which Windows does not have: a Python script regenerates the ui files on every platform by @danilogco

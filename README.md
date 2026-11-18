@@ -75,6 +75,19 @@ on the wiki. To connect to your clusters, see
 _The cluster overview, shown with sample data. Regenerate it with
 `make screenshot`._
 
+![KubeScope Deployments list](docs/screenshots/store/deployments-dark.png)
+
+_The Deployments list, with the Pods, Details and Logs buttons._
+
+![KubeScope resource details](docs/screenshots/store/details-dark.png)
+
+_The JSON of a resource, colored._
+
+![KubeScope Pod logs](docs/screenshots/store/logs-dark.png)
+
+_Pod logs with colored levels. These screens are drawn from fake data by
+`make store-screenshots`, which also renders the other themes._
+
 ## Features
 
 - **Overview:** nodes ready, Pod counts, CPU and memory requests against capacity,
