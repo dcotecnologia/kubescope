@@ -1,4 +1,5 @@
 import os
+import sys
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
@@ -47,7 +48,9 @@ def test_the_controls_show_only_while_the_window_draws_its_own_title_bar() -> No
     frame.set_custom(True)
 
     assert frame.custom and all(b.isVisibleTo(window) for b in buttons)
-    assert window.contentsMargins().left() == RESIZE_MARGIN
+    assert window.contentsMargins().left() == (
+        0 if sys.platform == "win32" else RESIZE_MARGIN
+    )
     assert window.windowFlags() & Qt.WindowType.FramelessWindowHint
     frame.set_custom(False)
     assert not buttons[2].isVisibleTo(window)

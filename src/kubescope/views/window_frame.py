@@ -1,6 +1,9 @@
+import ctypes
+import sys
+from ctypes import wintypes
 from typing import cast
 
-from PySide6.QtCore import QEvent, QObject, QPointF, QSize, Qt
+from PySide6.QtCore import QEvent, QObject, QPoint, QPointF, QSize, Qt
 from PySide6.QtGui import QIcon, QMouseEvent, QPainter, QPen, QPixmap
 from PySide6.QtWidgets import QMainWindow, QPushButton, QWidget
 
@@ -23,6 +26,25 @@ _CURSORS = {
     Qt.Edge.RightEdge | Qt.Edge.BottomEdge: Qt.CursorShape.SizeFDiagCursor,
     Qt.Edge.RightEdge | Qt.Edge.TopEdge: Qt.CursorShape.SizeBDiagCursor,
     Qt.Edge.LeftEdge | Qt.Edge.BottomEdge: Qt.CursorShape.SizeBDiagCursor,
+}
+
+
+_WM_NCHITTEST = 0x0084
+_WM_NCCALCSIZE = 0x0083
+_GWL_STYLE = -16
+_STYLE_BITS = 0x00040000 | 0x00020000 | 0x00010000  # thick frame, minimize, maximize
+_CORNER_PREFERENCE = 33
+_ROUND = 2
+_SWP_REFRESH = 0x0001 | 0x0002 | 0x0004 | 0x0010 | 0x0020  # no size/move/z/activate
+_HIT = {  # what Windows is told a point on the resize strip is
+    Qt.Edge.LeftEdge: 10,
+    Qt.Edge.RightEdge: 11,
+    Qt.Edge.TopEdge: 12,
+    Qt.Edge.LeftEdge | Qt.Edge.TopEdge: 13,
+    Qt.Edge.RightEdge | Qt.Edge.TopEdge: 14,
+    Qt.Edge.BottomEdge: 15,
+    Qt.Edge.LeftEdge | Qt.Edge.BottomEdge: 16,
+    Qt.Edge.RightEdge | Qt.Edge.BottomEdge: 17,
 }
 
 
@@ -105,6 +127,8 @@ class WindowFrame(QObject):
         window.setWindowFlag(Qt.WindowType.FramelessWindowHint, custom)
         if visible:
             window.show()  # changing a window's flags hides it
+        if custom:
+            self._allow_system_resize()
         self._controls.setVisible(custom)
         margins = self._margins  # the controls go to the edge of the bar
         self._layout.setContentsMargins(
@@ -115,12 +139,36 @@ class WindowFrame(QObject):
         )
         self.refresh()
 
+    def _allow_system_resize(self) -> None:
+        """Windows only resizes a window that has a sizing frame, and a window
+        without a title bar has none: give it one, and draw nothing of it."""
+        if sys.platform != "win32":
+            return
+        user32 = ctypes.windll.user32
+        hwnd = wintypes.HWND(int(self._window.winId()))
+        get, set_ = user32.GetWindowLongPtrW, user32.SetWindowLongPtrW
+        get.restype, get.argtypes = ctypes.c_ssize_t, [wintypes.HWND, ctypes.c_int]
+        set_.restype = ctypes.c_ssize_t
+        set_.argtypes = [wintypes.HWND, ctypes.c_int, ctypes.c_ssize_t]
+        set_(hwnd, _GWL_STYLE, get(hwnd, _GWL_STYLE) | _STYLE_BITS)
+        user32.SetWindowPos(hwnd, None, 0, 0, 0, 0, _SWP_REFRESH)
+        # What the system draws on its own windows: a shadow, a thin border and
+        # (on Windows 11) rounded corners. Older versions ignore what they lack.
+        dwm = ctypes.windll.dwmapi
+        dwm.DwmExtendFrameIntoClientArea(hwnd, ctypes.byref(wintypes.RECT(0, 0, 1, 0)))
+        corners = ctypes.c_int(_ROUND)
+        dwm.DwmSetWindowAttribute(
+            hwnd, _CORNER_PREFERENCE, ctypes.byref(corners), ctypes.sizeof(corners)
+        )
+
     def refresh(self) -> None:
         """Follow the window's state: the right icon, and no resize strip while
         it fills the screen."""
         window = self._window
         filled = window.isMaximized() or window.isFullScreen()
-        margin = RESIZE_MARGIN if self.custom and not filled else 0
+        # Windows resizes from the window's own edge, so it needs no strip
+        strip = self.custom and not filled and sys.platform != "win32"
+        margin = RESIZE_MARGIN if strip else 0
         window.setContentsMargins(margin, margin, margin, margin)
         self._maximize.setIcon(control_icon("restore" if filled else "maximize"))
 
@@ -144,6 +192,28 @@ class WindowFrame(QObject):
         elif position.y() >= window.height() - RESIZE_MARGIN:
             edges |= Qt.Edge.BottomEdge
         return edges
+
+    def native_hit(self, event_type: object, message: object) -> int | None:
+        """On Windows, the part of the window a pointer is on, when it is on the
+        resize strip: the system then resizes the window itself. None otherwise."""
+        if (
+            sys.platform != "win32"
+            or not self.custom
+            or bytes(cast(bytes, event_type)) != b"windows_generic_MSG"
+            or self._window.isMaximized()
+            or self._window.isFullScreen()
+        ):
+            return None
+        msg = wintypes.MSG.from_address(int(cast(int, message)))
+        if msg.message == _WM_NCCALCSIZE and msg.wParam:
+            return 0  # the whole window is client area: no frame is drawn
+        if msg.message != _WM_NCHITTEST:
+            return None
+        x = ctypes.c_short(msg.lParam & 0xFFFF).value
+        y = ctypes.c_short((msg.lParam >> 16) & 0xFFFF).value
+        ratio = self._window.devicePixelRatio()
+        point = self._window.mapFromGlobal(QPoint(round(x / ratio), round(y / ratio)))
+        return _HIT.get(self.edges_at(QPointF(point)))
 
     def eventFilter(self, watched: QObject, event: QEvent) -> bool:
         if not self.custom:

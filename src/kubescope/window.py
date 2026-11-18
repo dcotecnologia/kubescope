@@ -821,6 +821,12 @@ class ActionWorker(QThread):
 
 
 class WorkloadWindow(QMainWindow):
+    def nativeEvent(self, eventType, message):  # noqa: N802
+        hit = self._frame.native_hit(eventType, message)
+        if hit is not None:
+            return True, hit
+        return super().nativeEvent(eventType, message)
+
     def __init__(self, settings: Settings | None = None) -> None:
         super().__init__()
         self.settings = settings or Settings()
