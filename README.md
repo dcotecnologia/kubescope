@@ -73,7 +73,7 @@ on the wiki. To connect to your clusters, see
 ![KubeScope cluster overview](docs/screenshots/overview.png)
 
 _The cluster overview, shown with sample data. Regenerate it with
-`make screenshot`._
+`make screenshot`, which also renders the ones below._
 
 ![KubeScope Deployments list](docs/screenshots/store/deployments-dark.png)
 

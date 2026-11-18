@@ -37,9 +37,10 @@ UI_PY := $(UI_FILES:$(UI_DIR)/%.ui=$(UI_DIR)/ui_%.py)
 $(UI_DIR)/ui_%.py: $(UI_DIR)/%.ui
 	$(UV) run pyside6-uic $< -o $@
 
-screenshot: $(UI_PY) ## Regenerate docs/screenshots/overview.png from the fake data
+screenshot: $(UI_PY) ## Regenerate every screenshot in docs/screenshots/ from the fake data
 	mkdir -p docs/screenshots
 	QT_QPA_PLATFORM=offscreen $(UV) run python tools/preview.py docs/screenshots/overview.png overview
+	$(MAKE) store-screenshots
 
 store-screenshots: $(UI_PY) ## Render docs/screenshots/store/ (every theme) for the app stores
 	QT_QPA_PLATFORM=offscreen $(UV) run python tools/store_screenshots.py
