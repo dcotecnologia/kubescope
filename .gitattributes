@@ -1,0 +1,13 @@
+# Keep the repository in LF so no tool or editor on Windows shows a whole
+# file as changed when only its line endings differ
+* text=auto eol=lf
+
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+*.png binary
+*.jpg binary
+*.ico binary
+*.icns binary
+*.qm binary
