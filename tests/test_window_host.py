@@ -230,9 +230,9 @@ def test_quitting_tells_the_extensions_and_unloads_them(window, tmp_path) -> Non
 
 
 def test_the_extension_of_the_app_is_not_run_by_the_loader_yet(window) -> None:
-    assert "dco.gabi" not in window.extension_loader.loaded
+    assert "kubescope.gabi" not in window.extension_loader.loaded
     assert [one.manifest.id for one in window.extension_store.installed()] == [
-        "dco.gabi"
+        "kubescope.gabi"
     ]
 
 

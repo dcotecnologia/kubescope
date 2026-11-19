@@ -9,7 +9,7 @@ from kubescope.extensions.manifest import (
 )
 
 GOOD = b"""
-id = "dco.gabi"
+id = "kubescope.gabi"
 name = "Gabi"
 version = "1.2.3"
 api = "0"
@@ -27,7 +27,7 @@ def replaced(old: str, new: str) -> bytes:
 def test_a_good_manifest_is_read() -> None:
     manifest = parse_manifest(GOOD)
 
-    assert manifest.id == "dco.gabi"
+    assert manifest.id == "kubescope.gabi"
     assert manifest.name == "Gabi"
     assert manifest.version == "1.2.3"
     assert manifest.entry == "gabi.main:activate"
@@ -51,10 +51,10 @@ def test_description_author_and_permissions_are_optional() -> None:
         (b"\xff\xfe", "not a valid TOML"),
         (b"id = ", "not a valid TOML"),
         (b"x" * (MAX_MANIFEST_BYTES + 1), "too big"),
-        (replaced('id = "dco.gabi"', "id = 3"), "id must be a text"),
-        (replaced('id = "dco.gabi"', 'id = ""'), "id must be a text"),
-        (replaced('"dco.gabi"', '"Gabi"'), "id must look like"),
-        (replaced('"dco.gabi"', '"a/b.c"'), "id must look like"),
+        (replaced('id = "kubescope.gabi"', "id = 3"), "id must be a text"),
+        (replaced('id = "kubescope.gabi"', 'id = ""'), "id must be a text"),
+        (replaced('"kubescope.gabi"', '"Gabi"'), "id must look like"),
+        (replaced('"kubescope.gabi"', '"a/b.c"'), "id must look like"),
         (replaced('"1.2.3"', '"1.2"'), "version must look like"),
         (replaced('api = "0"', 'api = "9"'), "needs the API 9"),
         (replaced('"gabi.main:activate"', '"gabi.main"'), "entry must look like"),
@@ -74,7 +74,7 @@ def test_a_manifest_that_does_not_fit_is_refused(content: bytes, message: str) -
 def test_the_manifest_is_read_from_the_folder(tmp_path) -> None:
     (tmp_path / MANIFEST_NAME).write_bytes(GOOD)
 
-    assert read_manifest(tmp_path).id == "dco.gabi"
+    assert read_manifest(tmp_path).id == "kubescope.gabi"
 
 
 def test_a_folder_without_a_manifest_is_refused(tmp_path) -> None:
