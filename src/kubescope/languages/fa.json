@@ -123,6 +123,7 @@
         "ExtensionsPanel": {
             "Bundled": "همراه برنامه",
             "Choose the kubescope-extension.toml of the extension": "فایل kubescope-extension.toml افزونه را انتخاب کنید",
+            "Could not load: {error}": "بارگذاری نشد: {error}",
             "Development": "توسعه",
             "Extension manifest (kubescope-extension.toml)": "مانیفست افزونه (kubescope-extension.toml)",
             "Extensions": "افزونه‌ها",

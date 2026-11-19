@@ -71,6 +71,8 @@ class ExtensionsPanel(QObject):
         window: QWidget,
         run_action: Callable[..., None],
         show_message: Callable[[QMessageBox.Icon, str, str], None],
+        changed: Callable[[], None] = lambda: None,
+        load_errors: Callable[[], dict[str, str]] = dict,
     ) -> None:
         super().__init__(window)
         self.form = form
@@ -78,6 +80,8 @@ class ExtensionsPanel(QObject):
         self.window = window
         self.run_action = run_action
         self.show_message = show_message
+        self.changed = changed  # what was installed or removed is to be loaded
+        self.load_errors = load_errors  # why an extension did not load
         self.rows: list[Row] = []
         self._columns = 1
         form.extensionsInstallFolderButton.clicked.connect(self.install_from_folder)
@@ -154,6 +158,13 @@ class ExtensionsPanel(QObject):
         description.setWordWrap(True)
         description.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
         layout.addWidget(description, 1)
+        error = self.load_errors().get(manifest.id)
+        if error:
+            problem = QLabel(self.tr("Could not load: {error}").format(error=error))
+            problem.setObjectName("extensionCardError")
+            problem.setWordWrap(True)
+            problem.setStyleSheet("color: #c0392b;")
+            layout.addWidget(problem)
         if not row.bundled:
             source = QLabel(row.source)
             source.setWordWrap(True)
@@ -257,6 +268,7 @@ class ExtensionsPanel(QObject):
             logger.warning("Could not install an extension: %s", error)
             self._warn(str(error))
         self.refresh()
+        self.changed()
 
     # uninstall and reinstall
 
@@ -283,6 +295,7 @@ class ExtensionsPanel(QObject):
         except StoreError as error:
             self._warn(str(error))
         self.refresh()
+        self.changed()
 
     def reinstall(self, row: Row) -> None:
         if not row.installed:  # a bundled one the person uninstalled
@@ -291,6 +304,7 @@ class ExtensionsPanel(QObject):
             except StoreError as error:
                 self._warn(str(error))
             self.refresh()
+            self.changed()
             return
         if row.source.startswith(FOLDER_SOURCE):
             folder = Path(row.source.removeprefix(FOLDER_SOURCE))

@@ -97,6 +97,11 @@ class ExtensionLoader:
         self._forget(_roots(result.installed.folder))
         logger.info("Unloaded the extension %s", extension)
 
+    def unload_all(self) -> None:
+        """Unload every extension, the last one loaded first."""
+        for extension in reversed(list(self.loaded)):
+            self.unload(extension)
+
     @staticmethod
     def _inside(module: object, roots: list[Path]) -> bool:
         """Whether the module was imported from the folders of the extension (a

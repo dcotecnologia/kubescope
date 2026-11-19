@@ -123,6 +123,7 @@
         "ExtensionsPanel": {
             "Bundled": "内置",
             "Choose the kubescope-extension.toml of the extension": "选择扩展的 kubescope-extension.toml",
+            "Could not load: {error}": "无法加载:{error}",
             "Development": "开发",
             "Extension manifest (kubescope-extension.toml)": "扩展清单 (kubescope-extension.toml)",
             "Extensions": "扩展",

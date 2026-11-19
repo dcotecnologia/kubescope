@@ -123,6 +123,7 @@
         "ExtensionsPanel": {
             "Bundled": "Dahili",
             "Choose the kubescope-extension.toml of the extension": "Uzantının kubescope-extension.toml dosyasını seçin",
+            "Could not load: {error}": "Yüklenemedi: {error}",
             "Development": "Geliştirme",
             "Extension manifest (kubescope-extension.toml)": "Uzantı bildirimi (kubescope-extension.toml)",
             "Extensions": "Uzantılar",

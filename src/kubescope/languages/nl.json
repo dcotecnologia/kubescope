@@ -123,6 +123,7 @@
         "ExtensionsPanel": {
             "Bundled": "Meegeleverd",
             "Choose the kubescope-extension.toml of the extension": "Kies de kubescope-extension.toml van de extensie",
+            "Could not load: {error}": "Kon niet worden geladen: {error}",
             "Development": "Ontwikkeling",
             "Extension manifest (kubescope-extension.toml)": "Manifest van de extensie (kubescope-extension.toml)",
             "Extensions": "Extensies",

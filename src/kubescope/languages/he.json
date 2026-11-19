@@ -123,6 +123,7 @@
         "ExtensionsPanel": {
             "Bundled": "מובנה",
             "Choose the kubescope-extension.toml of the extension": "בחר את kubescope-extension.toml של התוסף",
+            "Could not load: {error}": "לא ניתן לטעון: {error}",
             "Development": "פיתוח",
             "Extension manifest (kubescope-extension.toml)": "מניפסט התוסף (kubescope-extension.toml)",
             "Extensions": "תוספים",
