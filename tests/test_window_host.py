@@ -28,6 +28,9 @@ def activate(ctx):
         "language_changed", lambda language: CALLS.append(("language", language))
     )
     ctx.events.on("shutdown", lambda: CALLS.append("shutdown"))
+    ctx.events.on(
+        "write_mode_changed", lambda write_mode: CALLS.append(("write", write_mode))
+    )
     ctx.on_unload(lambda: CALLS.append("unload"))
     ctx.register_command(ctx.id + ".ping", lambda: "pong")
     ctx.settings.set("seen", True)
@@ -528,3 +531,20 @@ def test_the_extension_is_told_the_language_by_name_and_has_its_folder(
     assert ctx.app.resolved_language == resolve_language(window.settings.language)
     assert ctx.data_directory.name == extension
     assert ctx.data_directory.parent.name == "extension-data"
+
+
+def test_the_extension_hears_when_the_write_mode_changes(window, tmp_path) -> None:
+    folder, package, _ = make_extension(tmp_path)
+    install_linked(window, folder)
+    window._show_page(2)
+
+    window.settings_ui.writeModeCheck.setChecked(True)
+    window._save_preferences()
+    window._save_preferences()  # the same again is not a change
+    window.settings_ui.writeModeCheck.setChecked(False)
+    window._save_preferences()
+
+    assert [c for c in calls(package) if c[0:1] == ("write",)] == [
+        ("write", True),
+        ("write", False),
+    ]
