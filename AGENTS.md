@@ -242,7 +242,8 @@ Follow [SECURITY.md](SECURITY.md); its guarantees are part of the product.
   `make notices`). A test fails while it is out of date. Keep GPL-only Qt modules out of the bundle.
 - Do not add telemetry or network calls of the app's own, beyond the update
   check in `utils/updates.py` (GitHub's public API, sends only the version, can be turned
-  off in Settings) and the update the person confirms in `utils/selfupdate.py` (only
+  off in Settings), the zip of an extension from GitHub that the person asks for in
+  `extensions/github.py`, and the update the person confirms in `utils/selfupdate.py` (only
   from this project's GitHub releases, over HTTPS, and only with a verified sha256). Cluster traffic goes through the `kubernetes` client only;
   never write to the kubeconfig.
 - Keep `settings.json` free of secrets, and validate it on load.
