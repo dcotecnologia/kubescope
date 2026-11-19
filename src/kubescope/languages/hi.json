@@ -105,6 +105,8 @@
             "Uninstall": "अनइंस्टॉल करें",
             "Uninstall {name}? Its files are deleted.": "{name} अनइंस्टॉल करें? इसकी फ़ाइलें मिटा दी जाएँगी।",
             "Uninstalled": "अनइंस्टॉल किया गया",
+            "installed {date}": "इंस्टॉल किया गया {date}",
+            "updated {date}": "अपडेट किया गया {date}",
             "{name} comes with KubeScope. Uninstall it? You can reinstall it here.": "{name} KubeScope के साथ आता है। अनइंस्टॉल करें? आप इसे यहीं से दोबारा इंस्टॉल कर सकते हैं।"
         },
         "ForwardsPage": {

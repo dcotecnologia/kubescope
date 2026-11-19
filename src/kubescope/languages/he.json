@@ -105,6 +105,8 @@
             "Uninstall": "הסרה",
             "Uninstall {name}? Its files are deleted.": "להסיר את {name}? הקבצים שלו יימחקו.",
             "Uninstalled": "הוסר",
+            "installed {date}": "הותקן {date}",
+            "updated {date}": "עודכן {date}",
             "{name} comes with KubeScope. Uninstall it? You can reinstall it here.": "{name} מגיע עם KubeScope. להסיר? אפשר להתקין אותו מחדש כאן."
         },
         "ForwardsPage": {

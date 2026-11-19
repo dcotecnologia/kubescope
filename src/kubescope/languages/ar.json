@@ -105,6 +105,8 @@
             "Uninstall": "إلغاء التثبيت",
             "Uninstall {name}? Its files are deleted.": "إلغاء تثبيت {name}؟ ستُحذف ملفاتها.",
             "Uninstalled": "تم إلغاء التثبيت",
+            "installed {date}": "تم التثبيت {date}",
+            "updated {date}": "آخر تحديث {date}",
             "{name} comes with KubeScope. Uninstall it? You can reinstall it here.": "{name} تأتي مع KubeScope. هل تريد إلغاء تثبيتها؟ يمكنك إعادة تثبيتها من هنا."
         },
         "ForwardsPage": {

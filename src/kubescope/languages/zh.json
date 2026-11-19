@@ -105,6 +105,8 @@
             "Uninstall": "卸载",
             "Uninstall {name}? Its files are deleted.": "卸载 {name}?其文件将被删除。",
             "Uninstalled": "已卸载",
+            "installed {date}": "安装于 {date}",
+            "updated {date}": "更新于 {date}",
             "{name} comes with KubeScope. Uninstall it? You can reinstall it here.": "{name} 随 KubeScope 一起提供。要卸载吗?你可以在这里重新安装。"
         },
         "ForwardsPage": {

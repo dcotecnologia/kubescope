@@ -105,6 +105,8 @@
             "Uninstall": "Kaldır",
             "Uninstall {name}? Its files are deleted.": "{name} kaldırılsın mı? Dosyaları silinir.",
             "Uninstalled": "Kaldırıldı",
+            "installed {date}": "yüklendi {date}",
+            "updated {date}": "güncellendi {date}",
             "{name} comes with KubeScope. Uninstall it? You can reinstall it here.": "{name}, KubeScope ile birlikte gelir. Kaldırılsın mı? Buradan yeniden yükleyebilirsiniz."
         },
         "ForwardsPage": {

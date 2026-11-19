@@ -366,3 +366,56 @@ def test_the_same_version_has_the_same_hash_from_a_repository_and_from_a_folder(
     assert from_github.sha256 == from_folder.sha256
     (source / "README.md").write_bytes(b"changed")
     assert store.prepare_folder(source).sha256 != from_github.sha256
+
+
+def test_the_day_of_the_installation_and_of_the_last_update_are_kept(
+    tmp_path, monkeypatch
+) -> None:
+    from kubescope.extensions import store as store_module
+
+    moments = iter(["2026-01-05T10:00:00+00:00", "2026-03-20T08:30:00+00:00"])
+    monkeypatch.setattr(store_module, "_now", lambda: next(moments))
+    store = store_in(tmp_path)
+
+    first = install(store, tool_zip("1.0.0"))
+    second = install(store, tool_zip("1.1.0", extra=b"# new\n"))
+
+    assert (first.installed_at, first.updated_at) == (
+        "2026-01-05T10:00:00+00:00",
+        "2026-01-05T10:00:00+00:00",
+    )
+    assert second.installed_at == "2026-01-05T10:00:00+00:00"  # first time, kept
+    assert second.updated_at == "2026-03-20T08:30:00+00:00"
+    [read] = store_in(tmp_path).installed()  # and they are on the disk
+    assert (read.installed_at, read.updated_at) == (
+        second.installed_at,
+        second.updated_at,
+    )
+
+
+def test_an_extension_installed_before_the_dates_were_kept_has_those_of_its_folder(
+    tmp_path,
+) -> None:
+    store = store_in(tmp_path)
+    install(store, tool_zip())
+    registry = tmp_path / "ext" / "registry.json"
+    document = json.loads(registry.read_text())
+    for entry in document["installed"].values():
+        entry.pop("installed_at")
+        entry.pop("updated_at")
+    registry.write_text(json.dumps(document))
+
+    [read] = store_in(tmp_path).installed()
+
+    assert read.installed_at.startswith("20") and read.updated_at == read.installed_at
+
+
+def test_a_folder_run_in_place_keeps_its_dates_too(tmp_path) -> None:
+    store = store_in(tmp_path)
+    folder = tmp_path / "author"
+    folder.mkdir()
+    (folder / MANIFEST_NAME).write_bytes(manifest())
+
+    linked = store.install(store.prepare_link(folder))
+
+    assert linked.installed_at and linked.updated_at

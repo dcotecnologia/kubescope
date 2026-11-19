@@ -105,6 +105,8 @@
             "Uninstall": "アンインストール",
             "Uninstall {name}? Its files are deleted.": "{name} をアンインストールしますか? ファイルは削除されます。",
             "Uninstalled": "アンインストール済み",
+            "installed {date}": "インストール {date}",
+            "updated {date}": "更新 {date}",
             "{name} comes with KubeScope. Uninstall it? You can reinstall it here.": "{name} は KubeScope に同梱されています。アンインストールしますか? ここから再インストールできます。"
         },
         "ForwardsPage": {

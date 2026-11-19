@@ -5,7 +5,7 @@ UV ?= uv
 .PHONY: help setup run changelog dev debug preview language screenshot store-screenshots designer ui i18n appimage deb snap docker-build docker-flatpak flatpak flatpak-lint flathub-submission windows windows-remote lint format test qt-libs build clean
 
 help: ## List the available commands
-	@awk 'BEGIN { FS = ":.*##" } /^[a-zA-Z_-]+:.*##/ { printf "  %-12s %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
+	@awk 'BEGIN { FS = ":.*##" } /^[a-zA-Z0-9_-]+:.*##/ { printf "  %-12s %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
 
 setup: ## Sync the project dependencies and install the pre-commit hook
 	$(UV) sync --extra dev --extra build

@@ -105,6 +105,8 @@
             "Uninstall": "ถอนการติดตั้ง",
             "Uninstall {name}? Its files are deleted.": "ถอนการติดตั้ง {name} หรือไม่? ไฟล์ของมันจะถูกลบ",
             "Uninstalled": "ถอนการติดตั้งแล้ว",
+            "installed {date}": "ติดตั้ง {date}",
+            "updated {date}": "อัปเดต {date}",
             "{name} comes with KubeScope. Uninstall it? You can reinstall it here.": "{name} มาพร้อมกับ KubeScope ถอนการติดตั้งหรือไม่? คุณติดตั้งใหม่ได้ที่นี่"
         },
         "ForwardsPage": {
