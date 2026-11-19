@@ -8,6 +8,8 @@ All notable changes to this project will be documented in this file. The format 
 
 ### Added
 
+- The global search is the extension [`kubescope-search`](https://github.com/dcotecnologia/kubescope-search), recommended by the app and installed the first time it runs (`/` and `Ctrl+K` as before, and the keys you chose are kept); it can be uninstalled in **Settings → Extensions**, and an extension can now search the resources of the cluster and read the lists of the side menu by @danilogco
+- The global search leaves the app and is the extension `kubescope-search`, installed by default like Gabi: `/` and `Ctrl+K` still open it, the keys you chose are kept, and an extension can now search the resources of the cluster (`search_resources`) and read the lists of the side menu (the command `views`) by @danilogco
 - **Settings → Extensions** shows the author and latest available version of recommended extensions that are not installed by @danilogco
 - When extensions have a newer version, a window like the one of the app's own updates lists them, from which version to which, and **Update** goes through them one at a time, each shown with its permissions and hash before it replaces the one installed; it shows once for each new version, and the **Update...** button of **Settings → Extensions** opens it again by @danilogco
 - The README, CONTRIBUTING and AGENTS point to the SDK and to the extensions (Gabi and AWS), each a project of its own with a pipeline of tests and releases, and the README has a section on extensions by @danilogco
