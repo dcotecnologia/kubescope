@@ -52,6 +52,7 @@ DEFAULTS: dict[str, Any] = {
     "sign_in_commands": {},
     "shortcuts": {},
     "integration_accounts": [],
+    "extensions": {},
 }
 
 
@@ -89,6 +90,9 @@ def _clean_accounts(stored: object) -> list[dict[str, Any]]:
             }
         )
     return accounts
+
+
+_EXTENSION_ID = re.compile(r"[a-z0-9][a-z0-9_.-]{0,99}")
 
 
 def is_namespace_name(value: str) -> bool:
@@ -183,6 +187,16 @@ class Settings:
         self._data["integration_accounts"] = _clean_accounts(
             self._data["integration_accounts"]
         )
+        stored_extensions = self._data["extensions"]
+        self._data["extensions"] = {
+            name: data
+            for name, data in (
+                stored_extensions.items() if isinstance(stored_extensions, dict) else []
+            )
+            if isinstance(name, str)
+            and _EXTENSION_ID.fullmatch(name)
+            and isinstance(data, dict)
+        }
         namespace = self._data["default_namespace"]
         if not (isinstance(namespace, str) and is_namespace_name(namespace)):
             self._data["default_namespace"] = ""  # empty means all namespaces
@@ -278,6 +292,16 @@ class Settings:
     @shortcuts.setter
     def shortcuts(self, value: dict[str, str]) -> None:
         self._data["shortcuts"] = shortcuts.clean(value)
+
+    def extension_data(self, extension: str) -> dict[str, Any]:
+        """The preferences of one extension: a dictionary that is saved with
+        the rest of the settings, and that no other extension sees.
+
+        What the extension puts in it must be something JSON can hold.
+        """
+        if not _EXTENSION_ID.fullmatch(extension):
+            raise ValueError(f"{extension!r} is not the id of an extension")
+        return self._data["extensions"].setdefault(extension, {})
 
     @property
     def integration_accounts(self) -> list[dict[str, Any]]:
