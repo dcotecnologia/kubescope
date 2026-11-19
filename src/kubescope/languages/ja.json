@@ -109,6 +109,16 @@
         "ExtensionPages": {
             "This page could not be built.": "このページを作成できませんでした。"
         },
+        "ExtensionUpdatesDialog": {
+            "EXTENSION": "拡張機能",
+            "Each one is downloaded and shown to you, with its permissions, before it replaces the one you have.": "それぞれをダウンロードし、権限とともに表示してから、現在のものを置き換えます。",
+            "INSTALLED": "インストール済み",
+            "Later": "後で",
+            "NEW": "新しい",
+            "Update": "更新",
+            "Update extensions": "拡張機能を更新",
+            "{count} extensions have a newer version": "{count} 件の拡張機能に新しいバージョンがあります"
+        },
         "ExtensionsPanel": {
             "AUTHOR": "作成者",
             "Bundled": "同梱",
@@ -139,6 +149,7 @@
             "Uninstalled": "アンインストール済み",
             "Update available": "アップデートあり",
             "Update to {version}": "{version} に更新",
+            "Update...": "更新...",
             "VERSION": "バージョン",
             "{count} extensions": "{count} 件の拡張機能",
             "{count} updates available": "{count} 件のアップデートがあります",

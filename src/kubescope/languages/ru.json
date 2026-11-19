@@ -109,6 +109,16 @@
         "ExtensionPages": {
             "This page could not be built.": "Не удалось создать эту страницу."
         },
+        "ExtensionUpdatesDialog": {
+            "EXTENSION": "РАСШИРЕНИЕ",
+            "Each one is downloaded and shown to you, with its permissions, before it replaces the one you have.": "Каждое скачивается и показывается вам с его разрешениями, прежде чем заменит текущее.",
+            "INSTALLED": "УСТАНОВЛЕНА",
+            "Later": "Позже",
+            "NEW": "НОВАЯ",
+            "Update": "Обновить",
+            "Update extensions": "Обновить расширения",
+            "{count} extensions have a newer version": "У расширений ({count}) есть новая версия"
+        },
         "ExtensionsPanel": {
             "AUTHOR": "АВТОР",
             "Bundled": "Встроенное",
@@ -139,6 +149,7 @@
             "Uninstalled": "Удалён",
             "Update available": "Доступно обновление",
             "Update to {version}": "Обновить до {version}",
+            "Update...": "Обновить...",
             "VERSION": "ВЕРСИЯ",
             "{count} extensions": "Расширений: {count}",
             "{count} updates available": "Доступно обновлений: {count}",

@@ -109,6 +109,16 @@
         "ExtensionPages": {
             "This page could not be built.": "無法建立此頁面。"
         },
+        "ExtensionUpdatesDialog": {
+            "EXTENSION": "擴充功能",
+            "Each one is downloaded and shown to you, with its permissions, before it replaces the one you have.": "每個擴充功能都會先下載並連同其權限一併顯示給你，之後才會取代你現有的版本。",
+            "INSTALLED": "已安裝",
+            "Later": "稍後",
+            "NEW": "新版本",
+            "Update": "更新",
+            "Update extensions": "更新擴充功能",
+            "{count} extensions have a newer version": "{count} 個擴充功能有新版本"
+        },
         "ExtensionsPanel": {
             "AUTHOR": "作者",
             "Bundled": "內建",
@@ -139,6 +149,7 @@
             "Uninstalled": "已解除安裝",
             "Update available": "有可用更新",
             "Update to {version}": "更新到 {version}",
+            "Update...": "更新...",
             "VERSION": "版本",
             "{count} extensions": "{count} 個擴充功能",
             "{count} updates available": "有 {count} 個可用更新",

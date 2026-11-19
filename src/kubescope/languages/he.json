@@ -109,6 +109,16 @@
         "ExtensionPages": {
             "This page could not be built.": "לא ניתן היה ליצור את הדף הזה."
         },
+        "ExtensionUpdatesDialog": {
+            "EXTENSION": "תוסף",
+            "Each one is downloaded and shown to you, with its permissions, before it replaces the one you have.": "כל אחד מהם יורד ומוצג לך עם ההרשאות שלו לפני שהוא מחליף את הקיים.",
+            "INSTALLED": "מותקן",
+            "Later": "מאוחר יותר",
+            "NEW": "חדש",
+            "Update": "עדכון",
+            "Update extensions": "עדכון תוספים",
+            "{count} extensions have a newer version": "ל-{count} תוספים יש גרסה חדשה"
+        },
         "ExtensionsPanel": {
             "AUTHOR": "מחבר",
             "Bundled": "מובנה",
@@ -139,6 +149,7 @@
             "Uninstalled": "הוסר",
             "Update available": "עדכון זמין",
             "Update to {version}": "עדכון ל-{version}",
+            "Update...": "עדכון...",
             "VERSION": "גרסה",
             "{count} extensions": "{count} תוספים",
             "{count} updates available": "{count} עדכונים זמינים",

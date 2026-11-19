@@ -109,6 +109,16 @@
         "ExtensionPages": {
             "This page could not be built.": "ไม่สามารถสร้างหน้านี้ได้"
         },
+        "ExtensionUpdatesDialog": {
+            "EXTENSION": "ส่วนขยาย",
+            "Each one is downloaded and shown to you, with its permissions, before it replaces the one you have.": "แต่ละรายการจะถูกดาวน์โหลดและแสดงให้คุณดูพร้อมสิทธิ์ ก่อนที่จะแทนที่ของเดิม",
+            "INSTALLED": "ติดตั้งแล้ว",
+            "Later": "ภายหลัง",
+            "NEW": "ใหม่",
+            "Update": "อัปเดต",
+            "Update extensions": "อัปเดตส่วนขยาย",
+            "{count} extensions have a newer version": "ส่วนขยาย {count} รายการมีเวอร์ชันใหม่"
+        },
         "ExtensionsPanel": {
             "AUTHOR": "ผู้เขียน",
             "Bundled": "มาพร้อมแอป",
@@ -139,6 +149,7 @@
             "Uninstalled": "ถอนการติดตั้งแล้ว",
             "Update available": "มีการอัปเดต",
             "Update to {version}": "อัปเดตเป็น {version}",
+            "Update...": "อัปเดต...",
             "VERSION": "เวอร์ชัน",
             "{count} extensions": "ส่วนขยาย {count} รายการ",
             "{count} updates available": "มีการอัปเดต {count} รายการ",

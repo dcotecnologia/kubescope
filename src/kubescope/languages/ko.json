@@ -109,6 +109,16 @@
         "ExtensionPages": {
             "This page could not be built.": "이 페이지를 만들 수 없습니다."
         },
+        "ExtensionUpdatesDialog": {
+            "EXTENSION": "확장 프로그램",
+            "Each one is downloaded and shown to you, with its permissions, before it replaces the one you have.": "각각 다운로드하여 권한과 함께 보여 드린 뒤에 현재 것을 교체합니다.",
+            "INSTALLED": "설치됨",
+            "Later": "나중에",
+            "NEW": "새 버전",
+            "Update": "업데이트",
+            "Update extensions": "확장 프로그램 업데이트",
+            "{count} extensions have a newer version": "확장 프로그램 {count}개에 새 버전이 있습니다"
+        },
         "ExtensionsPanel": {
             "AUTHOR": "작성자",
             "Bundled": "기본 포함",
@@ -139,6 +149,7 @@
             "Uninstalled": "제거됨",
             "Update available": "업데이트 가능",
             "Update to {version}": "{version}(으)로 업데이트",
+            "Update...": "업데이트...",
             "VERSION": "버전",
             "{count} extensions": "확장 프로그램 {count}개",
             "{count} updates available": "업데이트 {count}개 사용 가능",

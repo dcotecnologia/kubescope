@@ -686,6 +686,22 @@ def test_what_comes_with_the_app_or_is_only_recommended_has_no_dates(
     assert not [t for t in setup.card("Gabi").texts if "installed " in t]
 
 
+def updates_window(monkeypatch, accept: bool) -> list[list[str]]:
+    """Answer the window of the updates, and remember what it listed."""
+    from kubescope.dialogs.extension_updates_dialog import ExtensionUpdatesDialog
+
+    shown: list[list[str]] = []
+
+    def run(dialog) -> QDialog.DialogCode:
+        shown.append(
+            [f"{one.name} {one.current} {one.version}" for one in dialog.updates]
+        )
+        return QDialog.DialogCode.Accepted if accept else QDialog.DialogCode.Rejected
+
+    monkeypatch.setattr(ExtensionUpdatesDialog, "exec", run)
+    return shown
+
+
 def update_for(tmp_path, version="1.1.0"):
     from kubescope.extensions.updates import Update
 
@@ -774,10 +790,11 @@ def test_other_repositories_are_asked_once_a_day_and_the_time_is_kept(
         "list_tags",
         lambda repo: asked.append(repo) or ["v1.2.0", "v1.1.0"],
     )
+    updates_window(monkeypatch, accept=False)
 
     setup.panel.check_updates(settings)
 
-    assert asked == [Repo("dco", "tool")] and saved == [1]
+    assert asked == [Repo("dco", "tool")] and saved  # the time, and what was seen
     assert setup.card("Tool").badge == "Update available"
     assert settings.extension_updates_checked_at > 0
     setup.panel.check_updates(settings)  # within a day: not again
@@ -977,3 +994,99 @@ def test_details_say_that_a_newer_version_is_there_and_why_it_did_not_load(
     setup.card("Tool").details.click()  # type: ignore[union-attr]
 
     assert "Newer version" in shown[0][1] and "v1.1.0" in shown[0][1]
+
+
+def test_the_window_of_the_updates_is_shown_once_for_each_new_version(
+    setup, tmp_path, monkeypatch
+) -> None:
+    from kubescope.settings import Settings
+
+    installed_tool(setup, tmp_path)
+    settings = Settings()
+    setup.panel.run_action = lambda function, done, *a, **k: done(function(*a))
+    monkeypatch.setattr(extensions_panel, "list_tags", lambda repo: ["v1.1.0"])
+    shown = updates_window(monkeypatch, accept=False)
+
+    setup.panel.check_updates(settings, force=False)
+
+    assert shown == [["Tool 1.0.0 1.1.0"]]
+    assert settings.extension_updates_seen == ["dco.tool@v1.1.0"]
+    setup.panel.check_updates(settings, force=True)  # asked: shown again
+    assert len(shown) == 2
+    settings.record_extension_updates_check(0)
+    setup.panel._queue.clear()
+    setup.panel.updates = []
+    setup.panel.check_updates(settings)  # the same version: not told again
+    assert len(shown) == 2
+    monkeypatch.setattr(extensions_panel, "list_tags", lambda repo: ["v1.2.0"])
+    setup.panel.check_updates(settings, force=True)
+    assert len(shown) == 3 and shown[-1] == ["Tool 1.0.0 1.2.0"]
+
+
+def test_the_button_opens_the_window_and_later_changes_nothing(
+    setup, tmp_path, monkeypatch
+) -> None:
+    installed_tool(setup, tmp_path)
+    setup.panel.updates = [update_for(tmp_path)]
+    setup.panel._after_check()
+    shown = updates_window(monkeypatch, accept=False)
+
+    setup.panel.updates_button.click()
+
+    assert shown == [["Tool 1.0.0 1.1.0"]]
+    assert setup.downloads == [] and setup.panel.updates_button.isHidden() is False
+    setup.panel.updates = []
+    setup.panel.show_updates()  # nothing to offer: no window
+    assert len(shown) == 1
+
+
+def test_update_goes_through_the_extensions_one_at_a_time_and_shows_each(
+    setup, tmp_path, monkeypatch
+) -> None:
+    from kubescope.extensions.updates import Update
+
+    installed_tool(setup, tmp_path)
+    setup.panel.updates = [
+        update_for(tmp_path),
+        Update("dco.gone", "Gone", "1.0.0", "v2.0.0", Repo("dco", "gone", "v2.0.0")),
+    ]
+    updates_window(monkeypatch, accept=True)
+    monkeypatch.setattr(
+        extensions_panel, "download", lambda repo: tool_zip(version="1.1.0")
+    )
+    setup.decide(True)  # the install dialog of each
+
+    setup.panel.show_updates()
+
+    assert setup.downloads == [Repo("dco", "tool", "v1.1.0")]  # the other is gone
+    assert setup.card("Tool").badge == "Installed" and setup.changes >= 1
+    assert setup.panel._queue == []
+
+
+def test_a_refused_or_failed_update_does_not_stop_the_next_one(
+    setup, tmp_path, monkeypatch
+) -> None:
+    from kubescope.extensions.github import GithubError
+    from kubescope.extensions.updates import Update
+
+    installed_tool(setup, tmp_path)
+    second = Update(
+        "kubescope.gabi", "Gabi", "1.0.0", "v1.1.0", Repo("dco", "gabi", "v1.1.0")
+    )
+    setup.panel.updates = [second, update_for(tmp_path)]
+    updates_window(monkeypatch, accept=True)
+
+    def download(repo):
+        if repo.name == "gabi":
+            raise GithubError("rate limit")
+        return tool_zip(version="1.1.0")
+
+    monkeypatch.setattr(extensions_panel, "download", download)
+    setup.decide(False)  # the person says no to the dialog of the install
+
+    setup.panel.show_updates()
+
+    assert [repo.name for repo in setup.downloads] == ["gabi", "tool"]
+    assert "rate limit" in setup.messages[0]
+    assert setup.card("Tool").texts[1] == "v1.0.0"  # declined: nothing replaced
+    assert setup.panel._queue == []

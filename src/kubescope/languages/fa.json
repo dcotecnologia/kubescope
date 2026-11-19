@@ -109,6 +109,16 @@
         "ExtensionPages": {
             "This page could not be built.": "ساخت این صفحه ممکن نبود."
         },
+        "ExtensionUpdatesDialog": {
+            "EXTENSION": "افزونه",
+            "Each one is downloaded and shown to you, with its permissions, before it replaces the one you have.": "هر کدام دانلود و با مجوزهایش به شما نشان داده می‌شود، پیش از آنکه جایگزین نسخه فعلی شود.",
+            "INSTALLED": "نصب‌شده",
+            "Later": "بعداً",
+            "NEW": "جدید",
+            "Update": "به‌روزرسانی",
+            "Update extensions": "به‌روزرسانی افزونه‌ها",
+            "{count} extensions have a newer version": "{count} افزونه نسخه جدیدتری دارند"
+        },
         "ExtensionsPanel": {
             "AUTHOR": "نویسنده",
             "Bundled": "همراه برنامه",
@@ -139,6 +149,7 @@
             "Uninstalled": "حذف نصب شد",
             "Update available": "به‌روزرسانی در دسترس است",
             "Update to {version}": "به‌روزرسانی به {version}",
+            "Update...": "به‌روزرسانی...",
             "VERSION": "نسخه",
             "{count} extensions": "{count} افزونه",
             "{count} updates available": "{count} به‌روزرسانی در دسترس است",

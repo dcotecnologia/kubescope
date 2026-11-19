@@ -109,6 +109,16 @@
         "ExtensionPages": {
             "This page could not be built.": "Nie udało się utworzyć tej strony."
         },
+        "ExtensionUpdatesDialog": {
+            "EXTENSION": "ROZSZERZENIE",
+            "Each one is downloaded and shown to you, with its permissions, before it replaces the one you have.": "Każde jest pobierane i pokazywane razem z uprawnieniami, zanim zastąpi to, które masz.",
+            "INSTALLED": "ZAINSTALOWANA",
+            "Later": "Później",
+            "NEW": "NOWA",
+            "Update": "Aktualizuj",
+            "Update extensions": "Zaktualizuj rozszerzenia",
+            "{count} extensions have a newer version": "{count} rozszerzeń ma nowszą wersję"
+        },
         "ExtensionsPanel": {
             "AUTHOR": "AUTOR",
             "Bundled": "Wbudowane",
@@ -139,6 +149,7 @@
             "Uninstalled": "Odinstalowano",
             "Update available": "Dostępna aktualizacja",
             "Update to {version}": "Zaktualizuj do {version}",
+            "Update...": "Zaktualizuj...",
             "VERSION": "WERSJA",
             "{count} extensions": "Rozszerzenia: {count}",
             "{count} updates available": "Dostępne aktualizacje: {count}",
