@@ -269,7 +269,11 @@ class ExtensionsPanel(QObject):
         """
         have = {one.manifest.id for one in self.store.installed()}
         for one in self.defaults():
-            if one.id in have or one.id in settings.extensions_offered:
+            if (
+                not one.automatic
+                or one.id in have
+                or one.id in settings.extensions_offered
+            ):
                 continue
             settings.offered(one.id)
             settings.save()

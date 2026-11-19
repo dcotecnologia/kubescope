@@ -36,7 +36,7 @@ def test_only_what_is_pinned_is_offered(monkeypatch) -> None:
 
 
 def test_gabi_is_offered_by_a_tag_and_only_once_it_is_pinned() -> None:
-    [gabi] = REAL
+    gabi, _ = REAL
 
     assert (gabi.id, gabi.repo.owner, gabi.repo.name) == (
         "kubescope.gabi",
@@ -59,3 +59,11 @@ def test_another_extension_is_refused() -> None:
 def test_files_that_are_not_the_checked_ones_are_refused() -> None:
     with pytest.raises(StoreError, match="not the ones that were checked"):
         verify(candidate(sha256="b" * 64), wanted())
+
+
+def test_aws_is_recommended_and_not_installed_by_itself() -> None:
+    _, aws = REAL
+
+    assert (aws.id, aws.repo.name) == ("kubescope.aws", "kubescope-aws")
+    assert aws.pinned and not aws.automatic
+    assert REAL[0].automatic  # Gabi comes with the app

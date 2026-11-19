@@ -645,3 +645,20 @@ def test_what_the_app_recommends_is_offered_once(setup, tmp_path, monkeypatch) -
     setup.panel.store.uninstall("dco.tool")
     setup.panel.offer_defaults(settings)  # said yes once; it does not ask again
     assert setup.downloads == [Repo("dco", "tool", "v1.0.0")]
+
+
+def test_what_is_only_recommended_is_a_card_and_is_not_installed_by_itself(
+    setup, tmp_path, monkeypatch
+) -> None:
+    from dataclasses import replace
+
+    from kubescope.settings import Settings
+
+    settings = Settings()
+    with_defaults(setup, replace(offered(tmp_path), automatic=False))
+    monkeypatch.setattr(extensions_panel, "download", lambda repo: tool_zip())
+
+    setup.panel.offer_defaults(settings)
+
+    assert setup.downloads == [] and settings.extensions_offered == []
+    assert setup.card("Tool").badge == "Recommended"
