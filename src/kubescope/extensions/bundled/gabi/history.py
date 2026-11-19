@@ -11,7 +11,7 @@ import json
 import logging
 from pathlib import Path
 
-from kubescope.utils.diagnostics import redact
+from kubescope.sdk.redact import redact
 
 logger = logging.getLogger(__name__)
 

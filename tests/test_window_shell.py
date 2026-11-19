@@ -1,10 +1,10 @@
 import pytest
+from kubescope.sdk.models import PodInfo
 from PySide6.QtGui import QAction
 from PySide6.QtWidgets import QComboBox, QDialog, QMenu, QPushButton
 
 from kubescope import window as window_module
 from kubescope.cluster import ClusterError
-from kubescope.models import PodInfo
 from tests.test_window_flows import POD, _ready_window, _wait_until
 
 

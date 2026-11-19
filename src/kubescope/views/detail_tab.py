@@ -3,6 +3,13 @@ import json
 from typing import Any
 
 import yaml
+from kubescope.sdk.models import (
+    DetailRow,
+    detail_sections,
+    format_cpu,
+    format_memory,
+    safe_file_name,
+)
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QColor, QKeySequence, QShortcut
 from PySide6.QtWidgets import (
@@ -19,13 +26,6 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from kubescope.models import (
-    DetailRow,
-    detail_sections,
-    format_cpu,
-    format_memory,
-    safe_file_name,
-)
 from kubescope.theme import themed, themed_stylesheet
 from kubescope.utils.fonts import code_font
 from kubescope.utils.json_view import style_json_view

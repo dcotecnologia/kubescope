@@ -226,7 +226,7 @@ def test_an_action_that_does_not_read_for_the_assistant_is_refused() -> None:
 def lists(monkeypatch):
     """What the cluster lists; the arguments of each call are kept in
     `calls`."""
-    from kubescope.models import ClusterResource, PodInfo, Workload
+    from kubescope.sdk.models import ClusterResource, PodInfo, Workload
 
     calls: list[tuple] = []
     pod = PodInfo(
@@ -326,7 +326,7 @@ def test_a_long_list_is_cut_at_the_row_limit(lists, monkeypatch) -> None:
 
 
 def executor_pod():
-    from kubescope.models import PodInfo
+    from kubescope.sdk.models import PodInfo
 
     return PodInfo("ns", "p", "Running", 1, 1, "1m", ("app",))
 
@@ -429,7 +429,7 @@ def test_a_container_without_a_sample_shows_only_what_it_declares(usage) -> None
 def test_the_rows_of_the_lists_carry_the_live_usage_when_there_is_any(
     lists, monkeypatch
 ) -> None:
-    from kubescope.models import PodInfo
+    from kubescope.sdk.models import PodInfo
 
     monkeypatch.setattr(
         executor.cluster,

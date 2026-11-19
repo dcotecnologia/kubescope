@@ -12,7 +12,6 @@ import logging
 import logging.handlers
 import os
 import platform
-import re
 import subprocess
 import sys
 import time
@@ -20,11 +19,12 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import IO, cast
 
+from kubescope.sdk.redact import redact
 from PySide6.QtCore import QEvent, QObject, Qt
 from PySide6.QtGui import QGuiApplication, QKeyEvent
 from PySide6.QtWidgets import QApplication
 
-import kubescope
+from kubescope import about
 from kubescope.settings import log_directory
 
 LOG_FILE = "kubescope.log"
@@ -33,23 +33,6 @@ MAX_BYTES = 1_000_000
 BACKUPS = 3
 MAX_AGE_DAYS = 30
 _FORMAT = "%(asctime)s %(levelname)-7s %(threadName)s %(name)s: %(message)s"
-
-_SECRETS = (
-    (re.compile(r"(?i)(bearer\s+)[A-Za-z0-9._~+/=-]{8,}"), r"\1[redacted]"),
-    (
-        re.compile(
-            r"(?i)((?:token|secret|password|passwd|authorization|access[_-]?key"
-            r"|session[_-]?token|x-amz-[a-z-]*)[\"']?\s*[:=]\s*[\"']?)[^\s\"',;&]+"
-        ),
-        r"\1[redacted]",
-    ),
-    (re.compile(r"\b(?:AKIA|ASIA)[0-9A-Z]{16}\b"), "[redacted-key-id]"),
-    (re.compile(r"\bk8s-aws-v1\.[A-Za-z0-9_-]+"), "[redacted]"),
-    (
-        re.compile(r"\beyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]*"),
-        "[redacted]",
-    ),
-)
 
 # Native libraries whose version and origin explain a crash that Python cannot
 # show: the desktop ones a bundle may carry its own copy of, and Qt itself.
@@ -75,13 +58,6 @@ _logger = logging.getLogger("kubescope")
 _file_handler: logging.Handler | None = None
 _console_handler: logging.Handler | None = None
 _crash_stream: IO[str] | None = None
-
-
-def redact(text: str) -> str:
-    """Hide tokens, keys and passwords that may appear in a line of text."""
-    for pattern, replacement in _SECRETS:
-        text = pattern.sub(replacement, text)
-    return text
 
 
 class _RedactingFormatter(logging.Formatter):
@@ -179,7 +155,7 @@ def describe_environment() -> list[str]:
     from PySide6.QtCore import qVersion
 
     return [
-        f"KubeScope {kubescope.__version__} (commit {commit()})",
+        f"KubeScope {about.__version__} (commit {commit()})",
         f"Python {platform.python_version()} on {platform.platform()}",
         f"PySide6 {pyside_version}, Qt {qVersion()}",
         f"Frozen bundle: {bool(getattr(sys, 'frozen', False))}",

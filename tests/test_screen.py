@@ -118,7 +118,7 @@ def test_the_assistant_is_told_to_say_plainly_that_it_is_read_only() -> None:
 
 
 def _overview():
-    from kubescope.models import ClusterOverview, NodeInfo
+    from kubescope.sdk.models import ClusterOverview, NodeInfo
 
     node = NodeInfo(
         "node-1",
@@ -161,8 +161,9 @@ def test_the_overview_of_the_cluster_gives_its_numbers_and_its_nodes() -> None:
 
 
 def test_the_overview_of_the_workloads_gives_each_kind_and_the_events() -> None:
+    from kubescope.sdk.models import EventInfo, KindSummary, WorkloadsOverview
+
     from kubescope import screen
-    from kubescope.models import EventInfo, KindSummary, WorkloadsOverview
     from kubescope.screen import describe_workloads_overview
 
     events = tuple(

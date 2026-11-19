@@ -3,6 +3,7 @@
 from collections.abc import Callable
 from datetime import datetime
 
+from kubescope.sdk.timezone import zone_now
 from PySide6.QtCore import QEvent, QObject, QPointF, QRect, QRectF, QSize, Qt, QTimer
 from PySide6.QtGui import (
     QColor,
@@ -18,7 +19,6 @@ from PySide6.QtWidgets import QPlainTextEdit, QScrollArea, QSizePolicy, QWidget
 
 from kubescope.theme import themed
 from kubescope.utils.json_view import current_palette
-from kubescope.utils.timezone import zone_now
 
 TRACK = "#e8eaee"
 OK = "#3d9a6d"

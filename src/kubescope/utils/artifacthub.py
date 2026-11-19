@@ -17,8 +17,9 @@ from dataclasses import dataclass
 from typing import Any
 from urllib.parse import quote, urlencode
 
-from kubescope import __version__
-from kubescope.utils.errors import first_line
+from kubescope.sdk.errors import first_line
+
+from kubescope.about import __version__
 
 logger = logging.getLogger(__name__)
 

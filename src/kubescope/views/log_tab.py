@@ -1,14 +1,14 @@
 import re
 
+from kubescope.sdk.models import PodInfo, safe_file_name
+from kubescope.sdk.timezone import zone_now
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QKeySequence, QShortcut
 from PySide6.QtWidgets import QPlainTextEdit, QWidget
 
-from kubescope.models import PodInfo, safe_file_name
 from kubescope.ui.ui_log_tab import Ui_LogTab
 from kubescope.utils.fonts import code_font
 from kubescope.utils.log_view import style_log_view
-from kubescope.utils.timezone import zone_now
 from kubescope.views.search_bar import SearchBar
 
 LOG_REFRESH_MS = 3000

@@ -23,8 +23,9 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 from urllib.parse import quote
 
-from kubescope import integrations
-from kubescope.models import (
+from kubescope.sdk.errors import first_line
+from kubescope.sdk.flatpak import HOST, host_has, in_flatpak, on_host
+from kubescope.sdk.models import (
     BAD_STATUSES,
     OK_STATUSES,
     WARNING_STATUSES,
@@ -46,10 +47,11 @@ from kubescope.models import (
     parse_cpu,
     parse_memory,
 )
-from kubescope.utils.errors import first_line, is_auth_error
-from kubescope.utils.flatpak import HOST, host_has, in_flatpak, on_host
-from kubescope.utils.programs import find_program
-from kubescope.utils.timezone import to_zone
+from kubescope.sdk.programs import find_program
+from kubescope.sdk.timezone import to_zone
+
+from kubescope import integrations
+from kubescope.utils.errors import is_auth_error
 
 if TYPE_CHECKING:
     from kubernetes import client

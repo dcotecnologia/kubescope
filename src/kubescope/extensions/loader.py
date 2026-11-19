@@ -13,9 +13,10 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
+from kubescope.sdk.errors import first_line
+
 from kubescope.extensions.context import ExtensionContext, Host
 from kubescope.extensions.store import Installed
-from kubescope.utils.errors import first_line
 
 logger = logging.getLogger(__name__)
 

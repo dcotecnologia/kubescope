@@ -1,10 +1,10 @@
 from dataclasses import replace
 
 import pytest
+from kubescope.sdk.models import ClusterResource
 
 from kubescope import cluster, plugin_latest
 from kubescope.cluster import ClusterError
-from kubescope.models import ClusterResource
 from kubescope.utils import artifacthub
 from kubescope.utils.artifacthub import Chart, Results
 

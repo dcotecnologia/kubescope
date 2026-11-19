@@ -6,7 +6,8 @@ import time
 
 import pytest
 
-from kubescope import __version__, app, cli
+from kubescope import app, cli
+from kubescope.about import __version__
 from kubescope.settings import log_directory
 from kubescope.utils.diagnostics import CRASH_FILE, LOG_FILE, MAX_AGE_DAYS
 from kubescope.utils.selfupdate import Install, UpdateError

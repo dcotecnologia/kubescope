@@ -26,11 +26,11 @@ from pathlib import Path
 from typing import Any
 
 import yaml
+from kubescope.sdk.errors import first_line
+from kubescope.sdk.programs import find_program
+from kubescope.sdk.redact import redact
 
 from kubescope.settings import config_directory
-from kubescope.utils.diagnostics import redact
-from kubescope.utils.errors import first_line
-from kubescope.utils.programs import find_program
 
 TIMEOUT = 120.0
 ACCOUNT_VARIABLE = "KUBESCOPE_ACCOUNT"  # names the account in a kubeconfig user

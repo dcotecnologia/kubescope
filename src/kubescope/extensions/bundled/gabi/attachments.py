@@ -11,7 +11,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal
 
-from kubescope.utils.diagnostics import redact
+from kubescope.sdk.redact import redact
 
 MAX_IMAGE_BYTES = 5 * 2**20  # what the services take for one image
 MAX_TEXT_BYTES = 200 * 2**10

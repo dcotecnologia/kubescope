@@ -69,7 +69,7 @@ The release workflow publishes the section of the tag as the release notes.
 | Change | Place |
 | ------ | ----- |
 | Cluster queries and parsing of the API responses | `src/kubescope/cluster.py` |
-| Data shapes, formatters, sort and highlight rules | `src/kubescope/models.py` |
+| Data shapes, formatters, sort and highlight rules | `kubescope.sdk.models`, in the `kubescope-sdk` project |
 | Widgets, pages and interactions | `src/kubescope/window.py` and the `.ui` files |
 | Preferences | `src/kubescope/settings.py` |
 | Friendly error messages | `src/kubescope/utils/errors.py` |

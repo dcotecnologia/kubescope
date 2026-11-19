@@ -92,7 +92,7 @@ def test_the_program_runs_with_the_options_of_its_assistant() -> None:
 
 
 def test_in_a_flatpak_the_host_runs_the_program(monkeypatch) -> None:
-    monkeypatch.setattr("kubescope.utils.flatpak.in_flatpak", lambda: True)
+    monkeypatch.setattr("kubescope.sdk.flatpak.in_flatpak", lambda: True)
 
     assert runner.command(FAKE)[:3] == ["flatpak-spawn", "--host", "fake-ai"]
 

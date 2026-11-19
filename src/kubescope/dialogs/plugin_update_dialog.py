@@ -1,5 +1,6 @@
 from collections.abc import Callable
 
+from kubescope.sdk.models import ClusterResource
 from PySide6.QtWidgets import (
     QCheckBox,
     QComboBox,
@@ -16,7 +17,6 @@ from PySide6.QtWidgets import (
 
 from kubescope import cloud_addons, plugin_updates
 from kubescope.cluster import ClusterError
-from kubescope.models import ClusterResource
 
 
 class PluginUpdateDialog(QDialog):

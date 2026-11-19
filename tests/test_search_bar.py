@@ -200,7 +200,8 @@ def test_escape_clears_the_search_and_gives_the_text_the_focus() -> None:
 
 
 def test_the_log_tab_searches_its_text_and_keeps_up_with_new_lines() -> None:
-    from kubescope.models import PodInfo
+    from kubescope.sdk.models import PodInfo
+
     from kubescope.views.log_tab import LogTab
 
     tab = _made_here(
@@ -234,7 +235,8 @@ def test_the_details_search_opens_the_raw_json() -> None:
 
 
 def test_the_list_filter_has_the_same_switches(monkeypatch) -> None:
-    from kubescope.models import ClusterResource
+    from kubescope.sdk.models import ClusterResource
+
     from tests.test_window_flows import _ready_window
 
     window = _ready_window(monkeypatch)

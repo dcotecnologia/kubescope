@@ -521,3 +521,12 @@ def test_the_cloud_accounts_are_saved_without_what_cannot_be_read(tmp_path) -> N
     damaged: Any = "damaged"
     settings.integration_accounts = damaged
     assert settings.integration_accounts == []
+
+
+def test_settings_default_and_validation(tmp_path):
+    settings = Settings(tmp_path / "s.json")
+    assert settings.timezone == "auto"
+    settings.timezone = "Europe/Lisbon"
+    assert settings.timezone == "Europe/Lisbon"
+    settings.timezone = "bogus"
+    assert settings.timezone == "auto"

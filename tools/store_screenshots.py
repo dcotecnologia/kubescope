@@ -11,10 +11,10 @@ import time
 from pathlib import Path
 
 import preview  # the fake cluster data, and a throwaway settings folder
+from kubescope.sdk.models import PodInfo
 from PySide6.QtWidgets import QApplication
 
 from kubescope import window
-from kubescope.models import PodInfo
 from kubescope.theme import apply_theme, install_bundled_themes
 from kubescope.utils.fonts import apply_fonts
 

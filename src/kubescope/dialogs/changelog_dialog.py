@@ -9,7 +9,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from kubescope import PROJECT_URL, __version__
+from kubescope.about import PROJECT_URL, __version__
 from kubescope.theme import themed
 from kubescope.utils.changelog import (
     Version,

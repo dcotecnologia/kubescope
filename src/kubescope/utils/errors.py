@@ -4,6 +4,7 @@ on."""
 import re
 from dataclasses import dataclass
 
+from kubescope.sdk.errors import first_line
 from PySide6.QtCore import QCoreApplication
 
 
@@ -53,11 +54,6 @@ def forbidden_action(message: str) -> str | None:
     it."""
     found = re.search(r'cannot (\w+) resource "([^"]+)"', message)
     return f"{found.group(1)} {found.group(2)}" if found else None
-
-
-def first_line(text: str) -> str:
-    """The first non-empty line, for one-line summaries and logs."""
-    return next((line.strip() for line in text.splitlines() if line.strip()), "")
 
 
 def describe_error(message: str) -> ErrorInfo:

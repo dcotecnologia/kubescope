@@ -7,8 +7,9 @@ import sys
 from pathlib import Path
 from typing import Any
 
+from kubescope.sdk.timezone import is_timezone
+
 from kubescope.utils import shortcuts
-from kubescope.utils.timezone import is_timezone
 
 CONFIG_DIR_ENV = "KUBESCOPE_CONFIG_DIR"
 # A language is a JSON file named by its code (see kubescope.i18n); "auto" follows

@@ -8,6 +8,18 @@ import pytest
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
+from kubescope.sdk.models import (
+    CONFIG_VIEWS,
+    ClusterInfo,
+    ClusterOverview,
+    ClusterResource,
+    EventInfo,
+    KindSummary,
+    NodeInfo,
+    PodInfo,
+    Workload,
+    WorkloadsOverview,
+)
 from PySide6.QtCore import (
     QEvent,
     QMimeData,
@@ -48,18 +60,6 @@ from kubescope import cluster as cluster_module
 from kubescope import theme
 from kubescope import window as window_module
 from kubescope.cluster import ClusterError, LoginAction
-from kubescope.models import (
-    CONFIG_VIEWS,
-    ClusterInfo,
-    ClusterOverview,
-    ClusterResource,
-    EventInfo,
-    KindSummary,
-    NodeInfo,
-    PodInfo,
-    Workload,
-    WorkloadsOverview,
-)
 from kubescope.settings import Settings
 from kubescope.theme import themed
 from kubescope.utils import json_view, shortcuts
@@ -1705,7 +1705,7 @@ def test_the_themes_folder_opens_in_the_file_manager(monkeypatch) -> None:
 
 
 def test_the_footer_shows_the_version_and_links_to_the_project(monkeypatch) -> None:
-    import kubescope
+    from kubescope import about
 
     window = _ready_window(monkeypatch)
     opened = []
@@ -1715,20 +1715,20 @@ def test_the_footer_shows_the_version_and_links_to_the_project(monkeypatch) -> N
         staticmethod(lambda url: opened.append(url.toString())),
     )
 
-    assert window.ui.footerVersion.text() == f"v{kubescope.__version__}"
-    assert kubescope.PROJECT_URL in window.ui.githubLink.toolTip()
+    assert window.ui.footerVersion.text() == f"v{about.__version__}"
+    assert about.PROJECT_URL in window.ui.githubLink.toolTip()
 
     window.ui.githubLink.click()
-    assert opened == [kubescope.PROJECT_URL]
+    assert opened == [about.PROJECT_URL]
 
     window.ui.companyLink.click()
     assert opened[-1] == "https://dcotecnologia.com"
 
     window.ui.licenseLink.click()  # the real license, on GitHub
-    assert opened[-1] == f"{kubescope.PROJECT_URL}/blob/main/LICENSE"
+    assert opened[-1] == f"{about.PROJECT_URL}/blob/main/LICENSE"
 
     window._retranslate()  # a language change rewrites the .ui texts
-    assert window.ui.footerVersion.text() == f"v{kubescope.__version__}"
+    assert window.ui.footerVersion.text() == f"v{about.__version__}"
     window.close()
 
 

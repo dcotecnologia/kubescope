@@ -26,7 +26,7 @@ two documents disagree, stop and ask instead of picking one.
 Keep the layers separate and the dependency direction one-way
 (`window` -> `cluster` -> `models`):
 
-- `src/kubescope/models.py`
+- `kubescope.sdk.models` (in the SDK project, `kubescope-sdk/src/kubescope/sdk/models.py`)
   - Plain dataclasses (`Workload`, `PodInfo`, `NodeInfo`, ...), formatters, and sort
     or highlight rules. Pure functions, no Qt and no cluster access.
 - `src/kubescope/cluster.py`
@@ -52,10 +52,15 @@ Keep the layers separate and the dependency direction one-way
     `dialogs/update_dialog.py` is the dialog and the worker thread that run it.
 - `src/kubescope/writes.py`
   - The actions that change a cluster (delete or evict a Pod, scale or restart a Deployment, and the shell and port-forward commands). No Qt; only reachable through the write mode.
-- The SDK (`kubescope_sdk`, the project `kubescope-sdk` next to this one)
+- The SDK (`kubescope.sdk`, the project `kubescope-sdk` next to this one)
   - The contract an extension is written against (protocols, permissions, events,
-    contributions). It has no dependencies and imports neither the app nor Qt.
-    The app depends on it, like every extension.
+    contributions) and the code that both the app and the extensions use (the models
+    of the cluster, how a program is found and run, time zones, hiding secrets). It has
+    no dependencies and imports neither the app nor Qt. The app depends on it, like
+    every extension.
+  - `kubescope` is a namespace shared by the app and the SDK, so **never add a
+    `src/kubescope/__init__.py`**: the version and the addresses of the project are in
+    `src/kubescope/about.py`.
 - `src/kubescope/extensions/`
   - The app's side of the extensions: the registries the window reads and the context
     each extension gets. `extensions/bundled/` holds the extensions that ship with the
@@ -70,13 +75,14 @@ Keep the layers separate and the dependency direction one-way
 - `tools/`
   - Build and packaging scripts (deb, AppImage, Flatpak, Windows/Wine). `packaging/` holds the static packaging files.
 - `tests/`
-  - Mirrors `src/kubescope/`: `test_cluster.py`, `test_models.py`,
-    `test_settings.py`, `test_window.py`, `test_app.py`, `test_theme.py`.
+  - Mirrors `src/kubescope/`: `test_cluster.py`, `test_settings.py`,
+    `test_window.py`, `test_app.py`, `test_theme.py`. What lives in the SDK is
+    tested there.
 
 Golden rule:
 
 - New cluster query or API response parsing -> `cluster.py`
-- New data shape, formatter, sort key, or display rule -> `models.py`
+- New data shape, formatter, sort key, or display rule -> `kubescope.sdk.models`, in the SDK
 - New widget, page, menu, or interaction -> `window.py` and the matching `.ui`
 - New preference -> `settings.py` (with a safe default and validation on load)
 

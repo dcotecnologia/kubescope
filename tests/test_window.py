@@ -2,13 +2,13 @@ import os
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
+from kubescope.sdk.models import ClusterOverview, NodeInfo, PodInfo, Workload
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QAction
 from PySide6.QtWidgets import QApplication, QTableWidgetItem, QWidget
 
 from kubescope import theme
 from kubescope import window as window_module
-from kubescope.models import ClusterOverview, NodeInfo, PodInfo, Workload
 from kubescope.utils import log_view
 from kubescope.views.container_states import LINK_ROLE
 from kubescope.views.detail_tab import DetailTab

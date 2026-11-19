@@ -6,7 +6,7 @@ from urllib.parse import parse_qs, urlparse
 
 import pytest
 
-from kubescope import PROJECT_URL, __version__
+from kubescope.about import PROJECT_URL, __version__
 from kubescope.settings import log_directory
 from kubescope.utils import crashreport
 

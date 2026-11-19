@@ -16,8 +16,9 @@ from dataclasses import dataclass, replace
 from typing import Any, cast
 from urllib.parse import quote
 
-from kubescope import PROJECT_URL, __version__
-from kubescope.utils.errors import first_line
+from kubescope.sdk.errors import first_line
+
+from kubescope.about import PROJECT_URL, __version__
 
 logger = logging.getLogger(__name__)
 
