@@ -177,11 +177,16 @@ class ExtensionContext:
         self._commands.append(name)
 
     def add_shortcut(
-        self, action: str, label: str, default: str, handler: Callable[[], None]
+        self,
+        action: str,
+        label: str,
+        default: str,
+        handler: Callable[[], None],
+        application: bool = False,
     ) -> None:
         self._require("ui.window")
         self._host.contributions.shortcuts.append(
-            ShortcutContribution(self.id, action, label, default, handler)
+            ShortcutContribution(self.id, action, label, default, handler, application)
         )
 
     def add_dock(
