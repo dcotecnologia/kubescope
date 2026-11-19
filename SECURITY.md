@@ -220,19 +220,18 @@ configure` so you type the keys there. Apart from the integrations below, the ap
   whose content differs asks again. What is copied is limited (size, number of
   files), refuses links and names that leave its folder, and leaves out `.git`, a
   virtual environment and caches. The repository is downloaded only when you ask,
-  over HTTPS from `api.github.com` (which sends the zip from
-  `codeload.github.com`), sending a `User-Agent` with the app version and nothing
+  over HTTPS from `codeload.github.com`, sending a `User-Agent` with the app version and nothing
   else. Uninstalling an extension deletes its folder. Writes by an extension still need
   the write mode. The extensions the app recommends (shown with a star, and only
   Gabi installed by itself) are the **latest release** of a repository of the
   `dcotecnologia` organization, the same one that publishes KubeScope: the highest final
-  tag (`v1.2.3`, never a pre-release) that GitHub lists, found by asking `api.github.com`
-  for the tags. What is downloaded must be the extension it is meant to be, and an entry
+  tag (`v1.2.3`, never a pre-release) that GitHub lists, found in the feed of its tags on `github.com` (the website, never the API, whose
+  limit of anonymous requests a first run could use up). What is downloaded must be the extension it is meant to be, and an entry
   of the app may pin a tag and the sha256 of its files, in which case any other files are
   refused and deleted. Whoever can publish a release in that organization can therefore
   change what runs, as for the app itself. The first time the app runs it downloads and
   installs Gabi once, with no dialog; uninstalled, she does not come back by itself. Looking
-  for newer versions of an extension installed from GitHub asks `api.github.com` for the
+  for newer versions of an extension installed from GitHub asks `github.com` for the
   tags of its repository (a `User-Agent` with the app version and nothing else), at most
   once a day and only while **Check for updates** is on in the Settings; the **Check for
   updates** button of the extensions asks at once. The same check looks up the latest tag of an

@@ -1252,3 +1252,43 @@ def test_the_menu_of_the_table_is_shown_where_the_person_clicked(setup) -> None:
     setup.panel._show_menu(menu, QPoint(0, 0))
 
     assert not menu.isVisible()
+
+
+def test_what_cannot_be_downloaded_by_default_is_quiet_and_tried_again_next_start(
+    setup, monkeypatch
+) -> None:
+    from kubescope.extensions.github import GithubError
+    from kubescope.settings import Settings
+
+    settings = Settings()
+    with_defaults(setup, latest_of_tool())
+    monkeypatch.setattr(
+        extensions_panel,
+        "list_tags",
+        lambda repo: (_ for _ in ()).throw(GithubError("GitHub answered 403")),
+    )
+
+    setup.panel.offer_defaults(settings)
+
+    assert setup.messages == []  # nothing is said
+    assert settings.extensions_offered == []  # and it is tried again at the next start
+    monkeypatch.setattr(extensions_panel, "list_tags", lambda repo: ["v1.0.0"])
+    monkeypatch.setattr(extensions_panel, "download", lambda repo: tool_zip())
+    setup.panel.offer_defaults(settings)
+    assert settings.extensions_offered == ["dco.tool"]
+
+
+def test_a_default_that_cannot_be_installed_is_not_marked_as_offered(
+    setup, tmp_path, monkeypatch
+) -> None:
+    from kubescope.settings import Settings
+
+    settings = Settings()
+    with_defaults(setup, offered(tmp_path))
+    monkeypatch.setattr(
+        extensions_panel, "download", lambda repo: tool_zip("dco.other")
+    )  # not the extension it should be
+
+    setup.panel.offer_defaults(settings)
+
+    assert setup.messages == [] and settings.extensions_offered == []

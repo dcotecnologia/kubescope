@@ -51,11 +51,11 @@ def test_what_is_not_a_repository_is_refused(text) -> None:
 
 def test_the_label_and_the_url_follow_the_ref() -> None:
     assert Repo("dco", "gabi").label == "dco/gabi"
-    assert Repo("dco", "gabi").zip_url == (
-        "https://api.github.com/repos/dco/gabi/zipball"
+    assert (
+        Repo("dco", "gabi").zip_url == "https://codeload.github.com/dco/gabi/zip/HEAD"
     )
     assert Repo("dco", "gabi", "feature/x").label == "dco/gabi@feature/x"
-    assert Repo("dco", "gabi", "feature/x").zip_url.endswith("/zipball/feature/x")
+    assert Repo("dco", "gabi", "feature/x").zip_url.endswith("/zip/feature/x")
 
 
 class Response:
@@ -93,7 +93,7 @@ def test_the_zip_is_downloaded_with_only_a_user_agent(monkeypatch) -> None:
 
     assert download(Repo("dco", "gabi")) == b"zip"
     request, timeout = sent[0]
-    assert request.full_url == "https://api.github.com/repos/dco/gabi/zipball"
+    assert request.full_url == "https://codeload.github.com/dco/gabi/zip/HEAD"
     assert request.get_header("User-agent").startswith("KubeScope/")
     assert set(request.headers) == {"User-agent", "Accept"}
     assert timeout == github.TIMEOUT
@@ -142,32 +142,35 @@ def test_a_source_that_is_not_a_repository_is_none_or_refused() -> None:
         repo_of("github ../x")
 
 
-def test_the_tags_are_listed_with_only_a_user_agent(monkeypatch) -> None:
-    body = b'[{"name": "v1.1.0"}, {"name": "v1.0.0"}, {"x": 1}, {"name": 5}]'
-    sent = fake(
-        monkeypatch, Response(body, "https://api.github.com/repos/dco/gabi/tags")
-    )
+FEED = (
+    b'<?xml version="1.0"?><feed xmlns="http://www.w3.org/2005/Atom">'
+    b"<entry><title>v1.1.0</title></entry><entry><title>v1.0.0</title></entry>"
+    b"<entry><link/></entry><entry><title>" + b"x" * 101 + b"</title></entry></feed>"
+)
+
+
+def test_the_tags_are_listed_from_the_website_with_only_a_user_agent(
+    monkeypatch,
+) -> None:
+    sent = fake(monkeypatch, Response(FEED, "https://github.com/dco/gabi/tags.atom"))
 
     assert github.list_tags(Repo("dco", "gabi")) == ["v1.1.0", "v1.0.0"]
     request, timeout = sent[0]
-    assert request.full_url == "https://api.github.com/repos/dco/gabi/tags?per_page=100"
-    assert (
-        set(request.headers) == {"User-agent", "Accept"} and timeout == github.TIMEOUT
-    )
+    assert request.full_url == "https://github.com/dco/gabi/tags.atom"  # not the API
+    assert set(request.headers) == {"User-agent"} and timeout == github.TIMEOUT
 
 
 @pytest.mark.parametrize(
     ("outcome", "message"),
     [
-        (Response(b"[]", "https://evil.example/tags"), "somewhere else"),
+        (Response(FEED, "https://evil.example/tags"), "somewhere else"),
         (
-            Response(b"x" * (github.MAX_TAGS_BYTES + 1), "https://api.github.com/x"),
+            Response(b"x" * (github.MAX_TAGS_BYTES + 1), "https://github.com/x"),
             "too much",
         ),
-        (Response(b"not json", "https://api.github.com/x"), "unexpected"),
-        (Response(b'{"a": 1}', "https://api.github.com/x"), "unexpected"),
+        (Response(b"not xml", "https://github.com/x"), "unexpected"),
         (urllib.error.URLError("no route"), "could not be reached"),
-        (urllib.error.HTTPError("u", 403, "rate", {}, None), "answered 403"),  # type: ignore[arg-type]
+        (urllib.error.HTTPError("u", 404, "no", {}, None), "answered 404"),  # type: ignore[arg-type]
     ],
 )
 def test_tags_that_cannot_be_read_say_why(monkeypatch, outcome, message) -> None:
