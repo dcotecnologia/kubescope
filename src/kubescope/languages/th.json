@@ -149,6 +149,7 @@
             "add a section to the Settings": "เพิ่มส่วนลงในการตั้งค่า",
             "change your clusters, in the write mode": "เปลี่ยนแปลงคลัสเตอร์ของคุณ ในโหมดเขียน",
             "none": "ไม่มี",
+            "read your AWS account (RDS, EC2, EKS, Systems Manager)": "อ่านบัญชี AWS ของคุณ (RDS, EC2, EKS, Systems Manager)",
             "read your clusters": "อ่านคลัสเตอร์ของคุณ",
             "run programs of this computer": "รันโปรแกรมของคอมพิวเตอร์เครื่องนี้",
             "use the window: show messages, run tasks and add shortcuts": "ใช้หน้าต่าง: แสดงข้อความ เรียกใช้งาน และเพิ่มปุ่มลัด"

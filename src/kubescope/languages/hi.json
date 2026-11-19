@@ -149,6 +149,7 @@
             "add a section to the Settings": "सेटिंग्स में अनुभाग जोड़ना",
             "change your clusters, in the write mode": "आपके क्लस्टर बदलना, राइट मोड में",
             "none": "कोई नहीं",
+            "read your AWS account (RDS, EC2, EKS, Systems Manager)": "आपका AWS खाता पढ़ना (RDS, EC2, EKS, Systems Manager)",
             "read your clusters": "आपके क्लस्टर पढ़ना",
             "run programs of this computer": "इस कंप्यूटर के प्रोग्राम चलाना",
             "use the window: show messages, run tasks and add shortcuts": "विंडो का उपयोग: संदेश दिखाना, कार्य चलाना और शॉर्टकट जोड़ना"

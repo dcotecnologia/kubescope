@@ -14,10 +14,12 @@ from typing import Any
 
 from kubescope.sdk.paths import config_directory
 
+from kubescope.extensions.aws_access import AwsBridge
 from kubescope.extensions.cluster_access import WritesBridge
 from kubescope.extensions.registries import CommandRegistry, Contributions, EventBus
 from kubescope.sdk import (
     PERMISSIONS,
+    AwsAccess,
     Cli,
     CliCommand,
     ClusterAccess,
@@ -165,6 +167,11 @@ class ExtensionContext:
     def cluster(self) -> ClusterAccess:
         self._require("cluster.read")
         return self._host.cluster
+
+    @property
+    def aws(self) -> AwsAccess:
+        self._require("aws.read")
+        return AwsBridge()
 
     @property
     def writes(self) -> Writes:

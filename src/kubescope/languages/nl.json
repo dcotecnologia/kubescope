@@ -149,6 +149,7 @@
             "add a section to the Settings": "een sectie aan de Instellingen toevoegen",
             "change your clusters, in the write mode": "je clusters wijzigen, in de schrijfmodus",
             "none": "geen",
+            "read your AWS account (RDS, EC2, EKS, Systems Manager)": "je AWS-account lezen (RDS, EC2, EKS, Systems Manager)",
             "read your clusters": "je clusters lezen",
             "run programs of this computer": "programma's van deze computer uitvoeren",
             "use the window: show messages, run tasks and add shortcuts": "het venster gebruiken: berichten tonen, taken uitvoeren en sneltoetsen toevoegen"

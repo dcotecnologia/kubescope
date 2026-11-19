@@ -149,6 +149,7 @@
             "add a section to the Settings": "افزودن یک بخش به تنظیمات",
             "change your clusters, in the write mode": "تغییر خوشه‌های شما، در حالت نوشتن",
             "none": "هیچ",
+            "read your AWS account (RDS, EC2, EKS, Systems Manager)": "خواندن حساب AWS شما (RDS، EC2، EKS، Systems Manager)",
             "read your clusters": "خواندن خوشه‌های شما",
             "run programs of this computer": "اجرای برنامه‌های این رایانه",
             "use the window: show messages, run tasks and add shortcuts": "استفاده از پنجره: نمایش پیام، اجرای کارها و افزودن میان‌بر"

@@ -149,6 +149,7 @@
             "add a section to the Settings": "設定にセクションを追加する",
             "change your clusters, in the write mode": "クラスターを変更する (書き込みモード時)",
             "none": "なし",
+            "read your AWS account (RDS, EC2, EKS, Systems Manager)": "AWS アカウントを読み取る (RDS、EC2、EKS、Systems Manager)",
             "read your clusters": "クラスターを読み取る",
             "run programs of this computer": "このコンピューターのプログラムを実行する",
             "use the window: show messages, run tasks and add shortcuts": "ウィンドウを使う (メッセージの表示、タスクの実行、ショートカットの追加)"

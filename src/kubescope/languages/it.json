@@ -149,6 +149,7 @@
             "add a section to the Settings": "aggiungere una sezione alle Impostazioni",
             "change your clusters, in the write mode": "modificare i tuoi cluster, in modalità scrittura",
             "none": "nessuno",
+            "read your AWS account (RDS, EC2, EKS, Systems Manager)": "leggere il tuo account AWS (RDS, EC2, EKS, Systems Manager)",
             "read your clusters": "leggere i tuoi cluster",
             "run programs of this computer": "eseguire programmi di questo computer",
             "use the window: show messages, run tasks and add shortcuts": "usare la finestra: mostrare messaggi, eseguire attività e aggiungere scorciatoie"

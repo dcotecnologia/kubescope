@@ -149,6 +149,7 @@
             "add a section to the Settings": "向设置添加分区",
             "change your clusters, in the write mode": "修改你的集群(在写入模式下)",
             "none": "无",
+            "read your AWS account (RDS, EC2, EKS, Systems Manager)": "读取你的 AWS 账户（RDS、EC2、EKS、Systems Manager）",
             "read your clusters": "读取你的集群",
             "run programs of this computer": "运行这台电脑上的程序",
             "use the window: show messages, run tasks and add shortcuts": "使用窗口:显示消息、运行任务并添加快捷键"
