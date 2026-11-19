@@ -19,12 +19,13 @@ from datetime import UTC, datetime
 from functools import partial
 from typing import Any
 
+from kubescope.sdk.models import MAX_REPLICAS
+
 from kubescope import cluster
 from kubescope.cluster import ClusterError
 
 logger = logging.getLogger(__name__)
 
-MAX_REPLICAS = 10000
 RESTARTED_AT = "kubectl.kubernetes.io/restartedAt"
 _MERGE_PATCH = "application/merge-patch+json"
 _STRATEGIC_PATCH = "application/strategic-merge-patch+json"

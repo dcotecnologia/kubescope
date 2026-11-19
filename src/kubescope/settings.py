@@ -1,17 +1,15 @@
 """User preferences stored as JSON in the platform's config directory."""
 
 import json
-import os
 import re
-import sys
 from pathlib import Path
 from typing import Any
 
+from kubescope.sdk.paths import config_directory
 from kubescope.sdk.timezone import is_timezone
 
 from kubescope.utils import shortcuts
 
-CONFIG_DIR_ENV = "KUBESCOPE_CONFIG_DIR"
 # A language is a JSON file named by its code (see kubescope.i18n); "auto" follows
 # the system. The choice is checked when it is applied, so a file can add one.
 _LANGUAGE_CODE = re.compile(r"[a-z]{2,3}(_[A-Za-z0-9]+)?")
@@ -97,19 +95,6 @@ _EXTENSION_ID = re.compile(r"[a-z0-9][a-z0-9_.-]{0,99}")
 
 def is_namespace_name(value: str) -> bool:
     return len(value) <= 63 and _NAMESPACE_NAME.fullmatch(value) is not None
-
-
-def config_directory() -> Path:
-    override = os.environ.get(CONFIG_DIR_ENV)
-    if override:
-        return Path(override)
-    if sys.platform == "win32":
-        base = Path(os.environ.get("APPDATA") or Path.home() / "AppData" / "Roaming")
-    elif sys.platform == "darwin":
-        base = Path.home() / "Library" / "Application Support"
-    else:
-        base = Path(os.environ.get("XDG_CONFIG_HOME") or Path.home() / ".config")
-    return base / "kubescope"
 
 
 def log_directory() -> Path:
