@@ -1105,3 +1105,65 @@ def test_the_buttons_that_install_or_look_for_updates_look_alike(setup) -> None:
     }
 
     assert variants == {"secondary"}
+
+
+def latest_of_tool():
+    from kubescope.extensions.defaults import DefaultExtension
+
+    return DefaultExtension("dco.tool", "Tool", "Does things", Repo("dco", "tool"))
+
+
+def test_what_is_recommended_without_a_tag_is_the_latest_release(
+    setup, monkeypatch
+) -> None:
+    with_defaults(setup, latest_of_tool())
+    setup.decide(True)
+    downloaded = []
+    monkeypatch.setattr(
+        extensions_panel, "list_tags", lambda repo: ["v1.1.0", "main", "v1.2.0"]
+    )
+    monkeypatch.setattr(
+        extensions_panel,
+        "download",
+        lambda repo: downloaded.append(repo) or tool_zip(version="1.2.0"),
+    )
+
+    setup.card("Tool").buttons["Install"].click()
+
+    assert downloaded == [Repo("dco", "tool", "v1.2.0")]  # the highest final tag
+    assert setup.card("Tool").badge == "Installed"
+    assert setup.store.source_of("dco.tool") == "github dco/tool@v1.2.0"
+
+
+def test_a_recommended_repository_without_a_release_says_so(setup, monkeypatch) -> None:
+    with_defaults(setup, latest_of_tool())
+    setup.decide(True)
+    monkeypatch.setattr(extensions_panel, "list_tags", lambda repo: ["main"])
+    monkeypatch.setattr(
+        extensions_panel, "download", lambda repo: pytest.fail("downloaded")
+    )
+
+    setup.card("Tool").buttons["Install"].click()
+
+    assert "dco/tool has no release yet" in setup.messages[0]
+    assert setup.card("Tool").badge == "Recommended"
+
+
+def test_a_repository_the_person_types_is_taken_as_typed_not_as_its_latest_tag(
+    setup, monkeypatch
+) -> None:
+    setup.decide(True)
+    setup.type_repository("dco/tool")
+    downloaded = []
+    monkeypatch.setattr(
+        extensions_panel, "list_tags", lambda repo: pytest.fail("looked for tags")
+    )
+    monkeypatch.setattr(
+        extensions_panel,
+        "download",
+        lambda repo: downloaded.append(repo) or tool_zip(),
+    )
+
+    setup.panel.install_from_github()
+
+    assert downloaded == [Repo("dco", "tool")]

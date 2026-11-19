@@ -29,6 +29,12 @@ def version_key(text: str) -> tuple[int, int, int] | None:
     return (int(found[1]), int(found[2]), int(found[3])) if found else None
 
 
+def latest_tag(names: Sequence[str]) -> str | None:
+    """The highest final tag of a list of tags, None when there is none."""
+    finals = [name for name in names if version_key(name) is not None]
+    return max(finals, key=lambda name: version_key(name) or (0, 0, 0), default=None)
+
+
 @dataclass(frozen=True)
 class Update:
     extension: str
@@ -73,8 +79,8 @@ def find(
             ),
             None,
         )
-        if pinned is not None:
-            wanted_key = version_key(pinned.repo.ref) if pinned.pinned else None
+        if pinned is not None and pinned.pinned:
+            wanted_key = version_key(pinned.repo.ref)
             if wanted_key is not None and wanted_key > current:
                 found.append(
                     Update(
@@ -86,7 +92,7 @@ def find(
                         pinned,
                     )
                 )
-            continue  # what is recommended never goes past what was checked
+            continue  # what is pinned never goes past what was checked
         if tags is None:
             continue
         try:
@@ -94,11 +100,7 @@ def find(
         except GithubError as error:
             logger.info("Could not look for updates of %s: %s", one.manifest.id, error)
             continue
-        newest = max(
-            (name for name in names if version_key(name) is not None),
-            key=lambda name: version_key(name) or (0, 0, 0),
-            default=None,
-        )
+        newest = latest_tag(names)
         if newest is not None and (version_key(newest) or (0, 0, 0)) > current:
             found.append(
                 Update(
@@ -107,6 +109,7 @@ def find(
                     one.manifest.version,
                     newest,
                     Repo(repo.owner, repo.name, newest),
+                    pinned,  # a recommended one is still checked to be itself
                 )
             )
     return found

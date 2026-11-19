@@ -57,7 +57,7 @@ class ExtensionDetailsDialog(QDialog):
         layout.addLayout(form)
         rows = [
             (self.tr("Id"), details.id),
-            (self.tr("Version"), f"v{details.version}"),
+            (self.tr("Version"), f"v{details.version}" if details.version else ""),
             (self.tr("Status"), details.status),
             (self.tr("Author"), details.author),
             (self.tr("Source"), details.source),

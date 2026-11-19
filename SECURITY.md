@@ -223,19 +223,21 @@ configure` so you type the keys there. Apart from the integrations below, the ap
   over HTTPS from `api.github.com` (which sends the zip from
   `codeload.github.com`), sending a `User-Agent` with the app version and nothing
   else. Uninstalling an extension deletes its folder. Writes by an extension still need
-  the write mode. The extensions the app recommends (shown as cards, never installed
-  by themselves) have a version tag and the sha256 of their content pinned in the
-  app; the files downloaded, also on reinstall, are refused and deleted if they
-  differ or are another extension, and one without a pin is not offered. The first
-  time the app runs it downloads and installs each of them once, from GitHub, with no
-  dialog, because the files are the pinned ones; uninstalled, one does not come back
-  by itself. Looking for newer versions of an extension installed from GitHub asks
-  `api.github.com` for the tags of its repository (a `User-Agent` with the app version
-  and nothing else), at most once a day and only while **Check for updates** is on in
-  the Settings; the **Check for updates** button of the extensions asks at once. An
-  extension the app recommends is updated only to the version the app pins, with no
-  request. A newer version is never installed by itself: it is downloaded when you
-  press **Update** and shown in the same dialog as any install.
+  the write mode. The extensions the app recommends (shown with a star, and only
+  Gabi installed by itself) are the **latest release** of a repository of the
+  `dcotecnologia` organization, the same one that publishes KubeScope: the highest final
+  tag (`v1.2.3`, never a pre-release) that GitHub lists, found by asking `api.github.com`
+  for the tags. What is downloaded must be the extension it is meant to be, and an entry
+  of the app may pin a tag and the sha256 of its files, in which case any other files are
+  refused and deleted. Whoever can publish a release in that organization can therefore
+  change what runs, as for the app itself. The first time the app runs it downloads and
+  installs Gabi once, with no dialog; uninstalled, she does not come back by itself. Looking
+  for newer versions of an extension installed from GitHub asks `api.github.com` for the
+  tags of its repository (a `User-Agent` with the app version and nothing else), at most
+  once a day and only while **Check for updates** is on in the Settings; the **Check for
+  updates** button of the extensions asks at once. A newer version is never installed by
+  itself apart from that first install: it is downloaded when you press **Update** and shown
+  in the same dialog as any install.
 - **An extension with `aws.read` can read your AWS account, not change it.** It
   runs the AWS CLI with the profile or keys of the cluster context, only for
   `rds`, `ec2`, `eks` and `ssm describe-instance-information`, and only for verbs
