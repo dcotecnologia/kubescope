@@ -50,8 +50,8 @@ DEFAULTS = (
             "and logs, and a port forward to a database through Systems Manager "
             "in the write mode."
         ),
-        repo=Repo("dcotecnologia", "kubescope-aws", "v1.0.0"),
-        sha256="ca4ee4ccda1d83d20f4fa25f380cdc1ab7eabc3694df3f008650a11ea1c0bc83",
+        repo=Repo("dcotecnologia", "kubescope-aws", "v1.0.1"),
+        sha256="9762bac6076e467b5868ca4966726b7a2b3613ce28a1d65181788e41d3688e0a",
         automatic=False,
     ),
 )
