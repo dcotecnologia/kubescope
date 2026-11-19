@@ -186,7 +186,7 @@ def test_cluster_read_paths_are_what_the_host_lends() -> None:
     context = make_context("cluster.read")
 
     assert context.cluster is CLUSTER
-    assert context.cluster.KINDS == ClusterBridge.KINDS
+    assert context.cluster.LOG_WINDOW_BYTES == ClusterBridge.LOG_WINDOW_BYTES
 
 
 def test_writes_need_the_write_mode(monkeypatch) -> None:

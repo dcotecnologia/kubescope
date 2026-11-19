@@ -17,7 +17,6 @@ from kubescope.sdk import WriteModeOff
 
 class ClusterBridge:
     LOG_WINDOW_BYTES: int = cluster.LOG_WINDOW_BYTES
-    KINDS: tuple[str, ...] = writes.RESOURCE_KINDS
 
     def get_workloads(
         self,
