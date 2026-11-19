@@ -75,3 +75,11 @@ def test_another_extension_is_refused() -> None:
 def test_files_that_are_not_the_checked_ones_are_refused() -> None:
     with pytest.raises(StoreError, match="not the ones that were checked"):
         verify(candidate(sha256="b" * 64), wanted())
+
+
+def test_the_names_shown_before_the_download_are_the_ones_of_the_manifests() -> None:
+    assert [one.name for one in REAL] == [
+        "Gabi - AI Assistant",
+        "AWS Resources",
+        "Global Search",
+    ]
