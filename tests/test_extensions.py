@@ -214,7 +214,6 @@ def test_context_reads_the_app() -> None:
     assert context.current_context == "dev"
     assert context.snapshot() == "the overview"
     assert context.invoke("select_context", name="prod") == "PROD"
-    assert context.events is host.events
 
 
 def test_settings_are_kept_apart_per_extension_and_saved() -> None:
@@ -236,3 +235,18 @@ def test_settings_refuse_what_the_file_cannot_hold() -> None:
 
     with pytest.raises(TypeError):
         context.settings.set("bad", object())
+
+
+def test_an_extension_hears_the_events_until_it_is_closed() -> None:
+    host, _, _ = make_host()
+    context = ExtensionContext("dco.test", frozenset({"ui.dock"}), host)
+    heard: list[str] = []
+    context.events.on(CONTEXT_CHANGED, lambda context: heard.append(context))
+    context.add_dock("chat", object)
+
+    host.events.emit(CONTEXT_CHANGED, context="a")
+    context.close()
+    host.events.emit(CONTEXT_CHANGED, context="b")
+
+    assert heard == ["a"]
+    assert host.contributions.docks == []

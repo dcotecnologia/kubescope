@@ -62,6 +62,25 @@ class ExtensionWrites:
         return function(*arguments)
 
 
+class ScopedEvents:
+    """The events as one extension sees them: what it subscribes to is
+    remembered, so that unloading it stops every handler."""
+
+    def __init__(self, bus: EventBus) -> None:
+        self._bus = bus
+        self._offs: list[Callable[[], None]] = []
+
+    def on(self, event: str, handler: Callable[..., None]) -> Callable[[], None]:
+        off = self._bus.on(event, handler)
+        self._offs.append(off)
+        return off
+
+    def close(self) -> None:
+        for off in self._offs:
+            off()
+        self._offs.clear()
+
+
 class ExtensionContext:
     def __init__(self, extension: str, permissions: frozenset[str], host: Host) -> None:
         unknown = permissions - set(PERMISSIONS)
@@ -70,10 +89,16 @@ class ExtensionContext:
         self.id = extension
         self.permissions = permissions
         self._host = host
-        self.events = host.events
+        self.events = ScopedEvents(host.events)
         self.settings = ExtensionSettings(
             host.settings_data(extension), host.save_settings
         )
+
+    def close(self) -> None:
+        """The extension is unloaded: stop its handlers and drop what it
+        added."""
+        self.events.close()
+        self._host.contributions.remove_extension(self.id)
 
     def _require(self, permission: str) -> None:
         if permission not in self.permissions:
