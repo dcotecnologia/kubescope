@@ -1,5 +1,6 @@
 import time
 
+from kubescope.sdk.models import age_seconds, format_age
 from PySide6.QtCore import QModelIndex, QPersistentModelIndex, QRectF, QSize, Qt
 from PySide6.QtGui import QColor, QFont, QHelpEvent, QPainter
 from PySide6.QtWidgets import (
@@ -12,7 +13,6 @@ from PySide6.QtWidgets import (
     QToolTip,
 )
 
-from kubescope.models import age_seconds, format_age
 from kubescope.theme import themed
 
 STATES_ROLE = Qt.ItemDataRole.UserRole + 1

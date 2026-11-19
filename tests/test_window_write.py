@@ -1,3 +1,4 @@
+from kubescope.sdk.models import ClusterResource, PodInfo, Workload
 from PySide6.QtCore import QPoint
 from PySide6.QtGui import QAction
 from PySide6.QtWidgets import (
@@ -15,7 +16,6 @@ from PySide6.QtWidgets import (
 
 from kubescope import window as window_module
 from kubescope import writes
-from kubescope.models import ClusterResource, PodInfo, Workload
 from kubescope.writes import MAX_REPLICAS
 from tests.test_window_flows import POD, _ready_window
 

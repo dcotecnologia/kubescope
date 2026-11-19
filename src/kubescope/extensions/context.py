@@ -1,7 +1,7 @@
 """The context each extension is handed, behind the permissions it asked for.
 
 `Host` is what the window lends: the registries and a few functions that
-read the app. `ExtensionContext` implements `kubescope_sdk.Context` over
+read the app. `ExtensionContext` implements `kubescope.sdk.Context` over
 it. No Qt.
 """
 
@@ -11,7 +11,8 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any
 
-from kubescope_sdk import (
+from kubescope.extensions.registries import CommandRegistry, Contributions, EventBus
+from kubescope.sdk import (
     PERMISSIONS,
     CliCommand,
     ClusterAccess,
@@ -24,8 +25,6 @@ from kubescope_sdk import (
     Ui,
     WriteModeOff,
 )
-
-from kubescope.extensions.registries import CommandRegistry, Contributions, EventBus
 
 logger = logging.getLogger(__name__)
 

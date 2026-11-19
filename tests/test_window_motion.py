@@ -5,9 +5,7 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 import time
 
 import pytest
-from PySide6.QtWidgets import QApplication
-
-from kubescope.models import (
+from kubescope.sdk.models import (
     ClusterOverview,
     ClusterResource,
     EventInfo,
@@ -15,6 +13,8 @@ from kubescope.models import (
     NodeInfo,
     WorkloadsOverview,
 )
+from PySide6.QtWidgets import QApplication
+
 from kubescope.views import motion
 from tests.test_window_flows import _ready_window
 
@@ -92,7 +92,7 @@ def test_a_list_that_rises_is_drawn_by_the_effect_until_it_arrives(monkeypatch) 
 
 
 def test_the_other_lists_rise_too(monkeypatch) -> None:
-    from kubescope.models import PodInfo, Workload
+    from kubescope.sdk.models import PodInfo, Workload
 
     window = _ready_window(monkeypatch)
     window.show()

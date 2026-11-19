@@ -13,10 +13,7 @@ import re
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
-from kubescope import cluster
-from kubescope.cluster import ClusterError
-from kubescope.extensions.bundled.gabi.actions import Request, parse_time
-from kubescope.models import (
+from kubescope.sdk.models import (
     RESOURCE_VIEWS,
     WORKLOAD_VIEWS,
     ClusterResource,
@@ -25,7 +22,11 @@ from kubescope.models import (
     format_cpu,
     format_memory,
 )
-from kubescope.utils.diagnostics import redact
+from kubescope.sdk.redact import redact
+
+from kubescope import cluster
+from kubescope.cluster import ClusterError
+from kubescope.extensions.bundled.gabi.actions import Request, parse_time
 
 RESULT_LIMIT = 20_000  # characters of one answer that go to the assistant
 ROW_LIMIT = 300  # rows of a list that go to the assistant

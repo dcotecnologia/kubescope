@@ -3,6 +3,7 @@ from collections.abc import Callable, Sequence
 from math import ceil
 from pathlib import Path
 
+from kubescope.sdk.timezone import zone_now
 from PySide6.QtCore import (
     QBuffer,
     QByteArray,
@@ -55,7 +56,6 @@ from kubescope.extensions.bundled.gabi.runner import (
 )
 from kubescope.extensions.bundled.gabi.session import ChatSession, Message
 from kubescope.theme import themed
-from kubescope.utils.timezone import zone_now
 from kubescope.views.chat_icons import attach_icon, send_icon, stop_icon
 
 SHUTDOWN_WAIT_MS = 3000

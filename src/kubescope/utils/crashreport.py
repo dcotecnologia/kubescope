@@ -18,9 +18,11 @@ from datetime import UTC, datetime
 from types import TracebackType
 from urllib.parse import urlencode
 
-from kubescope import PROJECT_URL, __version__
+from kubescope.sdk.redact import redact
+
+from kubescope.about import PROJECT_URL, __version__
 from kubescope.settings import log_directory
-from kubescope.utils.diagnostics import describe_environment, redact
+from kubescope.utils.diagnostics import describe_environment
 
 REPORT_FILE = "crash-report.txt"
 RECENT_RECORDS = 200

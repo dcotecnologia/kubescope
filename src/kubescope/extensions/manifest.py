@@ -10,7 +10,7 @@ import tomllib
 from dataclasses import dataclass
 from pathlib import Path
 
-from kubescope_sdk import API_VERSION, PERMISSIONS
+from kubescope.sdk import API_VERSION, PERMISSIONS
 
 MANIFEST_NAME = "kubescope-extension.toml"
 MAX_MANIFEST_BYTES = 16 * 1024

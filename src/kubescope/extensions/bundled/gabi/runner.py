@@ -18,10 +18,11 @@ from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
 
+from kubescope.sdk.errors import first_line
+from kubescope.sdk.flatpak import host_has, in_flatpak, on_host
+from kubescope.sdk.programs import find_program
+
 from kubescope.extensions.bundled.gabi.attachments import Attachment
-from kubescope.utils.errors import first_line
-from kubescope.utils.flatpak import host_has, in_flatpak, on_host
-from kubescope.utils.programs import find_program
 
 # no console window flashing up from the program, on Windows
 _NO_WINDOW = getattr(subprocess, "CREATE_NO_WINDOW", 0)

@@ -1,11 +1,11 @@
 import pytest
+from kubescope.sdk.models import SearchHit
+from kubescope.sdk.timezone import set_timezone
 from PySide6.QtGui import QKeySequence
 from PySide6.QtWidgets import QKeySequenceEdit
 
 from kubescope import window as window_module
-from kubescope.models import SearchHit
 from kubescope.utils import shortcuts
-from kubescope.utils.timezone import set_timezone
 from tests.test_window_flows import _ready_window
 
 

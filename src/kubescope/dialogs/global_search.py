@@ -1,6 +1,7 @@
 from collections.abc import Callable
 from dataclasses import dataclass
 
+from kubescope.sdk.models import SearchHit, match_rank
 from PySide6.QtCore import QCoreApplication, QEvent, QObject, Qt
 from PySide6.QtGui import QKeyEvent
 from PySide6.QtWidgets import (
@@ -14,7 +15,6 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from kubescope.models import SearchHit, match_rank
 from kubescope.theme import themed_stylesheet
 
 MAX_RESULTS = 50

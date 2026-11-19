@@ -16,7 +16,8 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Any, Literal
 
-from kubescope.models import EKS_VIEWS, RESOURCE_VIEWS, WORKLOAD_VIEWS
+from kubescope.sdk.models import EKS_VIEWS, RESOURCE_VIEWS, WORKLOAD_VIEWS
+
 from kubescope.writes import _RESOURCE_OF_KIND, MAX_REPLICAS
 
 FENCE = "kubescope-action"

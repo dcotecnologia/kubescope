@@ -1,11 +1,11 @@
 import logging
 from functools import partial
 
+from kubescope.sdk.flatpak import on_host
 from PySide6.QtCore import QObject, QProcess, QProcessEnvironment, QTimer, Signal
 
 from kubescope import forwards
 from kubescope.forwards import FAILED, RUNNING, STARTING, STOPPED, Forward, status_of
-from kubescope.utils.flatpak import on_host
 
 logger = logging.getLogger(__name__)
 

@@ -1,10 +1,10 @@
 import pytest
+from kubescope.sdk.models import SearchHit, match_rank
 from PySide6.QtCore import QCoreApplication, QEvent, Qt
 from PySide6.QtGui import QKeyEvent
 from PySide6.QtWidgets import QWidget
 
 from kubescope.dialogs.global_search import GlobalSearch, SearchEntry
-from kubescope.models import SearchHit, match_rank
 from tests.qt import get_application
 
 application = get_application()

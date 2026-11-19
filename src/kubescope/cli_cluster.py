@@ -13,8 +13,8 @@ import yaml
 
 from kubescope import cluster, integrations, writes
 from kubescope.cluster import ClusterError
+from kubescope.sdk import ansi
 from kubescope.settings import Settings
-from kubescope.utils import ansi
 from kubescope.utils.errors import is_auth_error
 
 CLUSTER_COMMANDS = (

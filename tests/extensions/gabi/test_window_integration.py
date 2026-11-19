@@ -455,7 +455,7 @@ def test_closing_the_window_stops_the_chat_and_a_language_change_retitles_it(
 def test_the_assistant_sees_the_list_the_selection_and_the_open_tab(
     monkeypatch,
 ) -> None:
-    from kubescope.models import ClusterResource
+    from kubescope.sdk.models import ClusterResource
 
     window, _messages = _open(monkeypatch)
     window.show()
@@ -488,7 +488,8 @@ def test_the_assistant_sees_the_list_the_selection_and_the_open_tab(
 
 
 def test_the_assistant_sees_the_log_that_is_open(monkeypatch) -> None:
-    from kubescope.models import PodInfo
+    from kubescope.sdk.models import PodInfo
+
     from kubescope.views.log_tab import LogTab
 
     window, _messages = _open(monkeypatch)
@@ -521,7 +522,7 @@ def test_the_chat_answers_in_the_language_of_the_app_and_follows_a_change(
 
 
 def test_the_assistant_sees_the_numbers_of_the_overviews(monkeypatch) -> None:
-    from kubescope.models import (
+    from kubescope.sdk.models import (
         ClusterOverview,
         EventInfo,
         KindSummary,
@@ -548,7 +549,7 @@ def test_the_assistant_sees_the_numbers_of_the_overviews(monkeypatch) -> None:
 def test_the_assistant_moves_to_a_page_an_open_tab_and_the_logs_of_a_pod(
     monkeypatch,
 ) -> None:
-    from kubescope.models import PodInfo
+    from kubescope.sdk.models import PodInfo
 
     window, _messages = _open(monkeypatch)
     window.gabi.open()
@@ -608,7 +609,7 @@ def test_the_assistant_moves_to_a_page_an_open_tab_and_the_logs_of_a_pod(
 
 
 def test_the_logs_are_the_main_container_and_never_a_migration(monkeypatch) -> None:
-    from kubescope.models import PodInfo
+    from kubescope.sdk.models import PodInfo
 
     window, _messages = _open(monkeypatch)
     window.gabi.open()
@@ -644,7 +645,7 @@ def test_the_logs_are_the_main_container_and_never_a_migration(monkeypatch) -> N
 def test_with_several_main_containers_and_none_said_the_person_is_asked(
     monkeypatch,
 ) -> None:
-    from kubescope.models import PodInfo
+    from kubescope.sdk.models import PodInfo
 
     window, _messages = _open(monkeypatch)
     window.gabi.open()

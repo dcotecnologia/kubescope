@@ -5,12 +5,12 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 import subprocess
 
 import pytest
+from kubescope.sdk.models import ClusterResource
 from PySide6.QtCore import QCoreApplication, QEvent
 
 from kubescope import cluster, plugin_updates
 from kubescope.cluster import ClusterError
 from kubescope.dialogs.plugin_update_dialog import PluginUpdateDialog
-from kubescope.models import ClusterResource
 from tests.qt import get_application
 
 application = get_application()

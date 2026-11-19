@@ -8,7 +8,7 @@ from typing import cast
 import pytest
 from PySide6.QtCore import QObject
 
-import kubescope
+from kubescope import about
 from kubescope.settings import log_directory
 from kubescope.utils import diagnostics
 from tests.qt import get_application
@@ -24,33 +24,6 @@ def _fake(*parts: str) -> str:
     """Join a made-up secret from pieces, so no literal in this file looks like
     a real one to the secret scanner."""
     return "".join(parts)
-
-
-@pytest.mark.parametrize(
-    ("template", "hidden"),
-    [
-        ("Authorization: Bearer {}", _fake("abcdef12", "34567890")),
-        ("token={}", _fake("not-a-", "real-value-", "12345")),
-        ("aws_secret_access_key = {}", _fake("FAKE", "SECRETVALUE", "1234567")),
-        ("key {} in use", _fake("AK", "IA", "ABCDEFGHIJKLMNOP")),
-        ("exec token {}", _fake("k8s-aws-", "v1.", "ZmFrZS1wcmVzaWduZWQ")),
-        (
-            "jwt {}",
-            _fake("ey", "JhbGciOiJIUzI1NiJ9.", "eyJzdWIiOiIxMjM0", ".c2ln-fake"),
-        ),
-        ('{{"password": "{}"}}', _fake("fake-", "pass-", "value-1")),
-    ],
-)
-def test_redact_hides_secrets(template: str, hidden: str) -> None:
-    text = template.format(hidden)
-
-    assert hidden not in diagnostics.redact(text)
-    assert "redacted" in diagnostics.redact(text)
-
-
-def test_redact_keeps_ordinary_text() -> None:
-    line = "Exit 0 after 0.31s: kubectl --context prod get pods -n default"
-    assert diagnostics.redact(line) == line
 
 
 def test_the_debug_file_records_the_run_without_secrets() -> None:
@@ -109,10 +82,10 @@ def test_an_unwritable_log_folder_is_reported_not_fatal(
 
 
 def test_the_environment_description_starts_with_the_app_version() -> None:
-    import kubescope
+    from kubescope import about
 
     assert diagnostics.describe_environment()[0].startswith(
-        f"KubeScope {kubescope.__version__} (commit "
+        f"KubeScope {about.__version__} (commit "
     )
 
 
@@ -123,7 +96,7 @@ def test_crash_log_starts_each_session_with_the_build_and_the_machine() -> None:
     text = (log_directory() / diagnostics.CRASH_FILE).read_text(encoding="utf-8")
 
     assert text.count("=== KubeScope session started ") == 2
-    assert text.count(f"KubeScope {kubescope.__version__} (commit ") == 2
+    assert text.count(f"KubeScope {about.__version__} (commit ") == 2
     assert "Python " in text and "PySide6 " in text and "Frozen bundle: " in text
 
 

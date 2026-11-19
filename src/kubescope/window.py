@@ -13,6 +13,31 @@ from functools import partial
 from pathlib import Path
 from typing import Any, cast
 
+from kubescope.sdk.errors import first_line
+from kubescope.sdk.models import (
+    EKS_VIEWS,
+    RESOURCE_VIEWS,
+    WORKLOAD_VIEWS,
+    ClusterInfo,
+    ClusterOverview,
+    ClusterResource,
+    PodInfo,
+    RdsInstance,
+    RdsLogFile,
+    SsmTarget,
+    Workload,
+    WorkloadsOverview,
+    event_link,
+    format_bytes,
+    format_cores,
+    format_cpu,
+    format_memory,
+    pod_highlight,
+    pod_sort_key,
+    resource_sort_key,
+    workload_sort_key,
+)
+from kubescope.sdk.timezone import set_timezone, timezone_choices, to_zone
 from PySide6.QtCore import (
     QByteArray,
     QCoreApplication,
@@ -78,14 +103,13 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from kubescope import (
+from kubescope import forwards, integrations
+from kubescope.about import (
     COMPANY_URL,
     LICENSE_URL,
     PROJECT_URL,
     SPONSOR_URL,
     __version__,
-    forwards,
-    integrations,
 )
 from kubescope.cloud_addons import AKS_KIND, GKE_KIND, aks_cluster
 from kubescope.cluster import (
@@ -147,29 +171,6 @@ from kubescope.i18n import (
     language_choices,
     resolve_language,
 )
-from kubescope.models import (
-    EKS_VIEWS,
-    RESOURCE_VIEWS,
-    WORKLOAD_VIEWS,
-    ClusterInfo,
-    ClusterOverview,
-    ClusterResource,
-    PodInfo,
-    RdsInstance,
-    RdsLogFile,
-    SsmTarget,
-    Workload,
-    WorkloadsOverview,
-    event_link,
-    format_bytes,
-    format_cores,
-    format_cpu,
-    format_memory,
-    pod_highlight,
-    pod_sort_key,
-    resource_sort_key,
-    workload_sort_key,
-)
 from kubescope.plugin_latest import helm_match, installed_chart, update_available
 from kubescope.plugin_updates import eks_addon_versions, run_update
 from kubescope.screen import (
@@ -215,7 +216,6 @@ from kubescope.utils import shortcuts
 from kubescope.utils.diagnostics import configure_logging, log_file
 from kubescope.utils.errors import (
     describe_error,
-    first_line,
     forbidden_action,
     is_auth_error,
     is_forbidden,
@@ -223,7 +223,6 @@ from kubescope.utils.errors import (
 from kubescope.utils.fonts import code_font
 from kubescope.utils.json_view import restyle
 from kubescope.utils.selfupdate import detect_install, restart
-from kubescope.utils.timezone import set_timezone, timezone_choices, to_zone
 from kubescope.utils.updates import Release, UpdateCheck, check_for_update
 from kubescope.views import motion
 from kubescope.views.chat_icons import check_icon, close_icon, icon_only, save_icon

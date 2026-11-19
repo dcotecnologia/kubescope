@@ -2,10 +2,10 @@ import json
 from datetime import UTC, datetime
 
 import pytest
+from kubescope.sdk.models import ClusterResource
 
 from kubescope import cloud_addons, cluster, plugin_latest
 from kubescope.cluster import ClusterError
-from kubescope.models import ClusterResource
 
 NOW = datetime(2026, 1, 11, tzinfo=UTC)
 AKS_LIST = [

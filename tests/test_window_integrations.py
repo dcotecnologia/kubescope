@@ -1,6 +1,8 @@
 from unittest.mock import MagicMock
 
 import pytest
+from kubescope.sdk.models import RdsInstance, RdsLogFile, SsmTarget
+from kubescope.sdk.timezone import set_timezone
 from PySide6.QtCore import QEvent, QPoint
 from PySide6.QtGui import QAction
 from PySide6.QtWidgets import (
@@ -20,8 +22,6 @@ from kubescope import integrations
 from kubescope import window as window_module
 from kubescope.cluster import ClusterError
 from kubescope.integrations import Found
-from kubescope.models import RdsInstance, RdsLogFile, SsmTarget
-from kubescope.utils.timezone import set_timezone
 from tests.test_window_flows import _ready_window, _wait_until
 
 KEYS = {"access_key_id": "AKIA", "secret_access_key": "secret", "regions": "us-east-1"}

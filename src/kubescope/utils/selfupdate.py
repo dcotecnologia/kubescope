@@ -25,8 +25,9 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 
-from kubescope import PROJECT_URL
-from kubescope.utils.errors import first_line
+from kubescope.sdk.errors import first_line
+
+from kubescope.about import PROJECT_URL
 from kubescope.utils.updates import Asset, Release
 
 logger = logging.getLogger(__name__)

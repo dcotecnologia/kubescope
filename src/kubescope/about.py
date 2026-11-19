@@ -1,4 +1,8 @@
-"""Desktop IDE for Kubernetes."""
+"""About KubeScope: its version and its addresses.
+
+There is no `__init__.py` in `kubescope`: it is a namespace that the app
+shares with the SDK (`kubescope.sdk`), which is a project of its own.
+"""
 
 from importlib import metadata
 

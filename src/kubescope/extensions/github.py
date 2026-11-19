@@ -12,9 +12,10 @@ import urllib.request
 from dataclasses import dataclass
 from urllib.parse import quote, urlparse
 
-from kubescope import __version__
+from kubescope.sdk.errors import first_line
+
+from kubescope.about import __version__
 from kubescope.extensions.archive import MAX_ARCHIVE
-from kubescope.utils.errors import first_line
 
 TIMEOUT = 30  # seconds
 _HOSTS = ("api.github.com", "codeload.github.com")

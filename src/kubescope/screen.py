@@ -7,13 +7,13 @@ through the same redaction of tokens and keys as every read. No Qt.
 
 from dataclasses import dataclass, field
 
-from kubescope.models import (
+from kubescope.sdk.models import (
     ClusterOverview,
     WorkloadsOverview,
     format_cpu,
     format_memory,
 )
-from kubescope.utils.diagnostics import redact
+from kubescope.sdk.redact import redact
 
 ROW_LIMIT = 60  # rows of the list that are described
 VIEWER_LIMIT = 6000  # characters of the open Details or Logs

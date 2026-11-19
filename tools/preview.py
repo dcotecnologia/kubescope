@@ -13,11 +13,7 @@ import tempfile
 import time
 from pathlib import Path
 
-from PySide6.QtCore import QFileSystemWatcher
-from PySide6.QtWidgets import QApplication
-
-from kubescope import window
-from kubescope.models import (
+from kubescope.sdk.models import (
     ClusterInfo,
     ClusterOverview,
     ClusterResource,
@@ -25,6 +21,10 @@ from kubescope.models import (
     PodInfo,
     Workload,
 )
+from PySide6.QtCore import QFileSystemWatcher
+from PySide6.QtWidgets import QApplication
+
+from kubescope import window
 from kubescope.theme import apply_theme
 from kubescope.utils.fonts import apply_fonts
 

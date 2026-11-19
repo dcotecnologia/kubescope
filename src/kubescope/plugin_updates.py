@@ -15,10 +15,11 @@ import shlex
 import subprocess
 from typing import Any
 
+from kubescope.sdk.flatpak import in_flatpak
+from kubescope.sdk.programs import find_program
+
 from kubescope import cluster
 from kubescope.cluster import ClusterError
-from kubescope.utils.flatpak import in_flatpak
-from kubescope.utils.programs import find_program
 from kubescope.writes import _with_kubeconfig
 
 logger = logging.getLogger(__name__)

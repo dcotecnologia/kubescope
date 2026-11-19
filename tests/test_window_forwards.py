@@ -1,4 +1,5 @@
 import pytest
+from kubescope.sdk.models import RdsInstance
 from PySide6.QtWidgets import (
     QApplication,
     QComboBox,
@@ -12,7 +13,6 @@ from PySide6.QtWidgets import (
 from kubescope import forwards
 from kubescope import window as window_module
 from kubescope.forwards import FAILED, RUNNING, STOPPED, Forward
-from kubescope.models import RdsInstance
 from tests.test_window_flows import _ready_window
 from tests.test_window_write import SERVICE, SERVICE_DOCUMENT
 

@@ -4,12 +4,12 @@ import sys
 import threading
 from pathlib import Path
 
+from kubescope.sdk.timezone import set_timezone
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QIcon, QPixmap
 from PySide6.QtWidgets import QApplication
 
-import kubescope
-from kubescope import cli
+from kubescope import about, cli
 from kubescope.dialogs.crash_dialog import show_pending_crash_report
 from kubescope.i18n import apply_language
 from kubescope.settings import Settings
@@ -25,14 +25,13 @@ from kubescope.utils.diagnostics import (
 )
 from kubescope.utils.fonts import apply_fonts
 from kubescope.utils.single_instance import SingleInstance
-from kubescope.utils.timezone import set_timezone
 from kubescope.utils.wheel_guard import install_wheel_guard
 from kubescope.views.motion import DialogSlide
 from kubescope.window import WorkloadWindow
 
 # __file__ of the entry script points at the bundle root once frozen, so anchor
 # on the package instead
-ICON_PATH = Path(kubescope.__file__).resolve().parent / "assets" / "icon.png"
+ICON_PATH = Path(about.__file__).resolve().parent / "assets" / "icon.png"
 ICON_SIZES = (16, 24, 32, 48, 64, 128, 256, 512)
 
 

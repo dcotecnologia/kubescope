@@ -4,10 +4,10 @@ import sys
 from types import SimpleNamespace
 
 import pytest
+from kubescope.sdk.models import ClusterResource, NodeInfo, PodInfo, Workload
 
 from kubescope import cli, cli_cluster, cluster, writes
 from kubescope.cluster import ClusterError, LoginAction
-from kubescope.models import ClusterResource, NodeInfo, PodInfo, Workload
 
 
 class FakeSettings:

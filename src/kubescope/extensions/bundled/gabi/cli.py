@@ -29,8 +29,8 @@ from kubescope.extensions.bundled.gabi.runner import (
     AssistantError,
 )
 from kubescope.extensions.bundled.gabi.session import ChatSession, Message
+from kubescope.sdk import ansi
 from kubescope.settings import Settings, config_directory
-from kubescope.utils import ansi
 
 MAX_FOLLOW_UPS = 5  # reads the assistant may ask for after one question
 EXIT_WORDS = ("/exit", "/quit", "exit", "quit")

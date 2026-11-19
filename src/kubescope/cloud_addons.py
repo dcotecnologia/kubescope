@@ -17,9 +17,10 @@ from datetime import UTC, datetime
 from typing import Any
 from urllib.parse import urlparse
 
+from kubescope.sdk.models import ClusterResource
+
 from kubescope import cluster
 from kubescope.cluster import ClusterError
-from kubescope.models import ClusterResource
 
 logger = logging.getLogger(__name__)
 

@@ -3,12 +3,12 @@ import sys
 from pathlib import Path
 
 import pytest
-from kubescope_sdk import CONTEXT_CHANGED
 
 from kubescope.extensions.context import Host
 from kubescope.extensions.loader import ExtensionLoader
 from kubescope.extensions.manifest import Manifest
 from kubescope.extensions.store import Installed
+from kubescope.sdk import CONTEXT_CHANGED
 
 counter = iter(range(1, 1000))
 
