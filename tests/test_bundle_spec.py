@@ -27,17 +27,3 @@ def test_the_bundle_is_never_packed_with_upx() -> None:
     spec = (ROOT / "KubeScope.spec").read_text(encoding="utf-8")
 
     assert "upx=True" not in spec
-
-
-def test_the_manifests_of_the_bundled_extensions_are_packed() -> None:
-    spec = (ROOT / "KubeScope.spec").read_text(encoding="utf-8")
-    project = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
-    manifests = list(
-        (ROOT / "src" / "kubescope" / "extensions" / "bundled").glob(
-            "*/kubescope-extension.toml"
-        )
-    )
-
-    assert manifests  # Gabi is the first one
-    assert "extensions/bundled/*/kubescope-extension.toml" in project
-    assert '"*/kubescope-extension.toml"' in spec

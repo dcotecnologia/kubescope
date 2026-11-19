@@ -240,22 +240,6 @@ def test_write_mode_is_off_by_default_and_only_true_turns_it_on(tmp_path) -> Non
         assert Settings(path).write_mode is False
 
 
-def test_the_assistant_is_chosen_by_name_and_needs_a_consent(tmp_path) -> None:
-    path = tmp_path / "settings.json"
-    settings = Settings(path)
-    assert settings.assistant == "" and settings.assistant_consent is False
-
-    settings.assistant = "claude"
-    settings.assistant_consent = True
-    settings.save()
-    reloaded = Settings(path)
-    assert reloaded.assistant == "claude" and reloaded.assistant_consent is True
-
-    path.write_text('{"assistant": 3, "assistant_consent": "yes"}', encoding="utf-8")
-    damaged = Settings(path)
-    assert damaged.assistant == "" and damaged.assistant_consent is False
-
-
 def test_wrapping_the_logs_is_off_by_default_and_persists(tmp_path) -> None:
     path = tmp_path / "settings.json"
     settings = Settings(path)
@@ -280,19 +264,6 @@ def test_the_system_title_bar_is_off_by_default_and_persists(tmp_path) -> None:
 
     path.write_text('{"system_title_bar": "yes"}', encoding="utf-8")
     assert Settings(path).system_title_bar is False  # only a real true turns it on
-
-
-def test_the_assistant_shows_unless_the_person_turned_it_off(tmp_path) -> None:
-    path = tmp_path / "settings.json"
-    settings = Settings(path)
-    assert settings.assistant_enabled is True
-
-    settings.assistant_enabled = False
-    settings.save()
-    assert Settings(path).assistant_enabled is False
-
-    path.write_text('{"assistant_enabled": "no"}', encoding="utf-8")
-    assert Settings(path).assistant_enabled is True  # only a real false counts
 
 
 def test_the_windows_animate_unless_the_person_turned_it_off(tmp_path) -> None:
@@ -330,60 +301,6 @@ def test_a_recent_up_to_date_is_remembered_for_the_version_that_found_it(
     assert not Settings(path).update_check_is_fresh("1.2.0", 0.5, 3600)
 
 
-def test_the_state_of_the_chat_panel_keeps_only_what_can_be_read(tmp_path) -> None:
-    path = tmp_path / "settings.json"
-    settings = Settings(path)
-    assert settings.assistant_panel == {}
-
-    settings.assistant_panel = {
-        "width": 520,
-        "height": 640,
-        "floating": True,
-        "geometry": "AAEC",
-    }
-    settings.save()
-    assert Settings(path).assistant_panel == {
-        "width": 520,
-        "height": 640,
-        "floating": True,
-        "geometry": "AAEC",
-    }
-
-    path.write_text(
-        '{"assistant_panel": {"width": 5, "height": true, "floating": "yes", '
-        '"geometry": 7}}',
-        encoding="utf-8",
-    )
-    assert Settings(path).assistant_panel == {}  # none of it is usable
-    path.write_text('{"assistant_panel": [1]}', encoding="utf-8")
-    assert Settings(path).assistant_panel == {}
-    path.write_text(
-        '{"assistant_panel": {"width": 90000, "geometry": "' + "A" * 5000 + '"}}',
-        encoding="utf-8",
-    )
-    assert Settings(path).assistant_panel == {}
-
-
-def test_the_paths_of_the_assistant_programs_keep_only_names_and_paths(
-    tmp_path,
-) -> None:
-    path = tmp_path / "settings.json"
-    settings = Settings(path)
-    assert settings.assistant_programs == {}
-
-    settings.assistant_programs = {"claude": "/opt/claude/bin/claude"}
-    settings.save()
-    assert Settings(path).assistant_programs == {"claude": "/opt/claude/bin/claude"}
-
-    path.write_text(
-        '{"assistant_programs": {"codex": " /x/codex ", "": "/y", "a": "", "b": 3}}',
-        encoding="utf-8",
-    )
-    assert Settings(path).assistant_programs == {"codex": "/x/codex"}
-    path.write_text('{"assistant_programs": ["claude"]}', encoding="utf-8")
-    assert Settings(path).assistant_programs == {}
-
-
 def test_the_width_the_person_gave_the_side_menu_is_kept_when_it_makes_sense(
     tmp_path,
 ) -> None:
@@ -415,30 +332,6 @@ def test_the_sections_of_the_menu_the_person_closed_are_kept(tmp_path) -> None:
     assert Settings(path).menu_collapsed == ["network"]
     path.write_text('{"menu_collapsed": "config"}', encoding="utf-8")
     assert Settings(path).menu_collapsed == []
-
-
-def test_the_model_and_effort_of_each_assistant_keep_only_names_and_texts(
-    tmp_path,
-) -> None:
-    path = tmp_path / "settings.json"
-    settings = Settings(path)
-    assert settings.assistant_models == {} and settings.assistant_efforts == {}
-
-    settings.assistant_models = {"claude": "opus"}
-    settings.assistant_efforts = {"codex": "high"}
-    settings.save()
-    saved = Settings(path)
-    assert saved.assistant_models == {"claude": "opus"}
-    assert saved.assistant_efforts == {"codex": "high"}
-
-    path.write_text(
-        '{"assistant_models": {"codex": " gpt ", "": "x", "a": "", "b": 3}, '
-        '"assistant_efforts": ["low"]}',
-        encoding="utf-8",
-    )
-    damaged = Settings(path)
-    assert damaged.assistant_models == {"codex": "gpt"}
-    assert damaged.assistant_efforts == {}
 
 
 def test_a_context_without_an_alias_shows_the_end_of_its_name(tmp_path) -> None:
@@ -540,3 +433,114 @@ def test_damaged_preferences_of_extensions_are_dropped_on_load(tmp_path) -> None
     assert settings.extension_data("dco.text") == {}
     path.write_text('{"extensions": [1]}', encoding="utf-8")
     assert Settings(path).extension_data("dco.ok") == {}
+
+
+def write(path, document: dict) -> None:
+    path.write_text(json.dumps(document), encoding="utf-8")
+
+
+def test_what_the_app_kept_for_the_assistant_moves_to_her_extension(tmp_path) -> None:
+    path = tmp_path / "settings.json"
+    write(
+        path,
+        {
+            "assistant_enabled": False,
+            "assistant_panel": {"width": 400},
+            "assistant_programs": {"claude": "/x/claude"},
+            "assistant_models": {"claude": "opus"},
+            "assistant_efforts": {"codex": "high"},
+            "assistant": "claude",
+            "assistant_consent": True,
+            "language": "pt_BR",
+        },
+    )
+
+    settings = Settings(path)
+
+    assert settings.extension_data("kubescope.gabi") == {
+        "enabled": False,
+        "panel": {"width": 400},
+        "programs": {"claude": "/x/claude"},
+        "models": {"claude": "opus"},
+        "efforts": {"codex": "high"},
+        "assistant": "claude",
+        "consent": True,
+    }
+    settings.save()
+    saved = json.loads(path.read_text(encoding="utf-8"))
+    assert not [key for key in saved if key.startswith("assistant")]
+    assert saved["language"] == "pt_BR"
+    assert saved["extensions"]["kubescope.gabi"]["consent"] is True
+
+
+def test_what_she_already_has_is_not_replaced_by_the_old_keys(tmp_path) -> None:
+    path = tmp_path / "settings.json"
+    write(
+        path,
+        {
+            "assistant_consent": False,
+            "assistant": "old",
+            "extensions": {"kubescope.gabi": {"consent": True}, "dco.other": {"a": 1}},
+        },
+    )
+
+    settings = Settings(path)
+
+    assert settings.extension_data("kubescope.gabi") == {
+        "consent": True,
+        "assistant": "old",
+    }
+    assert settings.extension_data("dco.other") == {"a": 1}
+
+
+def test_the_key_of_the_shortcut_of_the_assistant_moves_to_her_action(tmp_path) -> None:
+    path = tmp_path / "settings.json"
+    write(path, {"shortcuts": {"assistant": "Ctrl+H", "refresh": "F2"}})
+
+    settings = Settings(path)
+
+    assert settings.shortcuts["kubescope.gabi.ask"] == "Ctrl+H"
+    assert (
+        "assistant" not in settings.shortcuts and settings.shortcuts["refresh"] == "F2"
+    )
+
+
+def test_a_shortcut_she_already_has_wins_over_the_old_one(tmp_path) -> None:
+    path = tmp_path / "settings.json"
+    write(
+        path,
+        {"shortcuts": {"assistant": "Ctrl+H", "kubescope.gabi.ask": "Ctrl+J"}},
+    )
+
+    assert Settings(path).shortcuts["kubescope.gabi.ask"] == "Ctrl+J"
+
+
+def test_without_old_keys_nothing_is_made_for_her(tmp_path) -> None:
+    path = tmp_path / "settings.json"
+    write(path, {"language": "de"})
+    settings = Settings(path)
+    settings.save()
+
+    assert "extensions" not in json.loads(path.read_text(encoding="utf-8")) or (
+        "kubescope.gabi"
+        not in json.loads(path.read_text(encoding="utf-8"))["extensions"]
+    )
+    assert "assistant" not in settings.shortcuts
+
+
+@pytest.mark.parametrize(
+    "document",
+    [
+        {"assistant_consent": True, "extensions": [1]},
+        {"assistant_consent": True, "extensions": {"kubescope.gabi": "x"}},
+        {"shortcuts": ["assistant"]},
+    ],
+)
+def test_a_damaged_file_still_gets_what_can_be_moved(tmp_path, document) -> None:
+    path = tmp_path / "settings.json"
+    write(path, document)
+
+    settings = Settings(path)
+
+    expected = {"consent": True} if "assistant_consent" in document else {}
+    assert settings.extension_data("kubescope.gabi") == expected

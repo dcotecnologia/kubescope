@@ -151,7 +151,9 @@ configure` so you type the keys there. Apart from the integrations below, the ap
   installs anything. Turn the startup check off in Settings.
 - **The assistant sends what you ask to a program of your computer.** Gabi, the
   assistant of DCO Tecnologia, is an AI that runs on a coding assistant installed
-  on your computer; she tells you so if asked. The chat in the corner does nothing until you open it and agree, once, that what you type
+  on your computer; she tells you so if asked. She is an extension (see below),
+  from the project `dcotecnologia/kubescope-gabi`, and the chat is there only
+  while she is installed. The chat in the corner does nothing until you open it and agree, once, that what you type
   and attach, and what the assistant reads from the cluster to answer, are sent
   to the program (Claude Code or Codex, installed and signed in on your
   computer, which you choose in Settings) and from it to its service. KubeScope
@@ -205,9 +207,9 @@ configure` so you type the keys there. Apart from the integrations below, the ap
   `pkexec`, so the system asks for your password and the app never sees it; the
   Windows installer runs silently for your user. A Flatpak or a source checkout
   never updates itself.
-- **An extension is code that runs in the app.** The app ships one extension, Gabi,
-  and **Settings → Extensions** can install others from a folder on your computer
-  or from a GitHub repository. An extension is Python that runs with your
+- **An extension is code that runs in the app.** **Settings → Extensions** installs
+  extensions, like Gabi, from a folder on your computer or from a GitHub
+  repository. An extension is Python that runs with your
   permissions, so install only the ones you trust: the permissions its manifest
   lists (the cluster it reads or changes, programs it runs, the parts of the
   window it adds) tell you what it does, and the app holds it to them, but they
@@ -220,9 +222,8 @@ configure` so you type the keys there. Apart from the integrations below, the ap
   virtual environment and caches. The repository is downloaded only when you ask,
   over HTTPS from `api.github.com` (which sends the zip from
   `codeload.github.com`), sending a `User-Agent` with the app version and nothing
-  else. Uninstalling an extension deletes its folder; the app's own extension is
-  only set aside, and you can reinstall it. Writes by an extension still need the
-  write mode.
+  else. Uninstalling an extension deletes its folder. Writes by an extension still need
+  the write mode.
 - **Development mode runs a folder in place.** With **Development mode** ticked, a
   folder is not copied: the extension runs from where it is, and is reloaded when
   its files change, so whoever can edit that folder can change what runs. There is

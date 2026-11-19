@@ -9,8 +9,6 @@ from pathlib import Path
 
 from kubescope import cli_cluster
 from kubescope.about import __version__
-from kubescope.extensions import bundled as bundled_extensions
-from kubescope.extensions.bundled.gabi import cli as cli_chat
 from kubescope.extensions.store import ExtensionStore
 from kubescope.extensions.terminal import owner_of, run_command
 from kubescope.settings import Settings, config_directory, log_directory
@@ -24,8 +22,6 @@ COMMANDS = (
     "check-update",
     "update",
     "help",
-    "chat",
-    "assistant",
     *cli_cluster.CLUSTER_COMMANDS,
 )
 FLAGS = ("--version", "-V", "--help", "-h")
@@ -153,16 +149,13 @@ def _parser() -> argparse.ArgumentParser:
         "--version", metavar="X.Y.Z", help="the version to install (default: latest)"
     )
     cli_cluster.add_commands(commands)
-    cli_chat.add_command(commands)
     help_command = commands.add_parser("help", help="show the help of a command")
     help_command.add_argument("topic", nargs="?", metavar="command")
     return parser
 
 
 def _extension_store() -> ExtensionStore:
-    return ExtensionStore(
-        config_directory() / "extensions", Path(bundled_extensions.__file__).parent
-    )
+    return ExtensionStore(config_directory() / "extensions")
 
 
 def _extension_command(arguments: Sequence[str]) -> int | None:
@@ -195,8 +188,6 @@ def run(arguments: Sequence[str]) -> int | None:
         return _cleanup(namespace.all, namespace.dry_run)
     if namespace.command == "update":
         return _update(namespace.version)
-    if namespace.command in ("chat", "assistant"):
-        return cli_chat.run(namespace)
     if namespace.command in cli_cluster.CLUSTER_COMMANDS:
         return cli_cluster.run(namespace)
     return _check_update()

@@ -1,8 +1,0 @@
-id = "kubescope.gabi"
-name = "Gabi - AI Assistant"
-version = "1.0.0"
-api = "0"
-entry = "gabi:activate"
-description = "The assistant of DCO Tecnologia: asks about the cluster from a coding assistant installed on this computer."
-author = "DCO Tecnologia"
-permissions = ["cluster.read", "cluster.write", "subprocess", "ui.dock", "ui.tab", "ui.settings", "cli"]

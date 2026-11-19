@@ -84,13 +84,6 @@ analysis = Analysis(
             (str(path), "kubescope/themes")
             for path in (root / "src" / "kubescope" / "themes").glob("*.json")
         ),
-        # the manifests of the extensions that ship with the app
-        *(
-            (str(path), f"kubescope/extensions/bundled/{path.parent.name}")
-            for path in (root / "src" / "kubescope" / "extensions" / "bundled").glob(
-                "*/kubescope-extension.toml"
-            )
-        ),
         *(
             (str(path), "kubescope/languages")
             for path in (root / "src" / "kubescope" / "languages").glob("*.json")

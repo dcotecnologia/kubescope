@@ -76,11 +76,11 @@ def test_the_shortcuts_are_edited_saved_and_applied(window, monkeypatch) -> None
 
 def test_two_actions_cannot_share_a_key(window, monkeypatch) -> None:
     window._load_settings_form()
-    _edit(window, "pods").setKeySequence(QKeySequence("Ctrl+G"))
+    _edit(window, "pods").setKeySequence(QKeySequence("Ctrl+R"))
 
     window._save_preferences()
 
-    assert "Ctrl+G" in window.settings_ui.noticeLabel.text()
+    assert "Ctrl+R" in window.settings_ui.noticeLabel.text()
     assert window.settings.shortcuts == shortcuts.DEFAULTS  # nothing was saved
 
 

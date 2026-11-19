@@ -12,7 +12,7 @@ def test_defaults_do_not_share_a_key():
 
 
 def test_empty_turns_an_action_off():
-    assert clean({"assistant": " "})["assistant"] == ""
+    assert clean({"refresh": " "})["refresh"] == ""
 
 
 def test_duplicate_ignores_empty_keys():

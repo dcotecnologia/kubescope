@@ -49,14 +49,6 @@ class Ui_SettingsPage(object):
 
         self.settingsSections.addWidget(self.kubeSectionButton)
 
-        self.assistantSectionButton = QPushButton(SettingsPage)
-        self.assistantSectionButton.setObjectName(u"assistantSectionButton")
-        self.assistantSectionButton.setCheckable(True)
-        self.assistantSectionButton.setChecked(False)
-        self.assistantSectionButton.setProperty(u"variant", u"secondary")
-
-        self.settingsSections.addWidget(self.assistantSectionButton)
-
         self.shortcutsSectionButton = QPushButton(SettingsPage)
         self.shortcutsSectionButton.setObjectName(u"shortcutsSectionButton")
         self.shortcutsSectionButton.setCheckable(True)
@@ -294,77 +286,6 @@ class Ui_SettingsPage(object):
 
 
         self.settingsContentLayout.addWidget(self.accessCard)
-
-        self.assistantCard = QFrame(self.settingsContent)
-        self.assistantCard.setObjectName(u"assistantCard")
-        self.assistantCard.setProperty(u"card", u"true")
-        self.assistantCardLayout = QVBoxLayout(self.assistantCard)
-        self.assistantCardLayout.setSpacing(14)
-        self.assistantCardLayout.setObjectName(u"assistantCardLayout")
-        self.assistantCardLayout.setContentsMargins(16, 14, 16, 14)
-        self.assistantHeading = QLabel(self.assistantCard)
-        self.assistantHeading.setObjectName(u"assistantHeading")
-        self.assistantHeading.setProperty(u"variant", u"cardTitle")
-
-        self.assistantCardLayout.addWidget(self.assistantHeading)
-
-        self.assistantCheck = QCheckBox(self.assistantCard)
-        self.assistantCheck.setObjectName(u"assistantCheck")
-
-        self.assistantCardLayout.addWidget(self.assistantCheck)
-
-        self.assistantCombo = QComboBox(self.assistantCard)
-        self.assistantCombo.setObjectName(u"assistantCombo")
-        self.assistantCombo.setProperty(u"variant", u"filter")
-
-        self.assistantCardLayout.addWidget(self.assistantCombo)
-
-        self.assistantModelsLabel = QLabel(self.assistantCard)
-        self.assistantModelsLabel.setObjectName(u"assistantModelsLabel")
-        self.assistantModelsLabel.setProperty(u"variant", u"muted")
-
-        self.assistantCardLayout.addWidget(self.assistantModelsLabel)
-
-        self.assistantModelsHost = QWidget(self.assistantCard)
-        self.assistantModelsHost.setObjectName(u"assistantModelsHost")
-        self.assistantModelsLayout = QVBoxLayout(self.assistantModelsHost)
-        self.assistantModelsLayout.setSpacing(6)
-        self.assistantModelsLayout.setObjectName(u"assistantModelsLayout")
-        self.assistantModelsLayout.setContentsMargins(0, 0, 0, 0)
-
-        self.assistantCardLayout.addWidget(self.assistantModelsHost)
-
-        self.assistantPathsLabel = QLabel(self.assistantCard)
-        self.assistantPathsLabel.setObjectName(u"assistantPathsLabel")
-        self.assistantPathsLabel.setProperty(u"variant", u"muted")
-
-        self.assistantCardLayout.addWidget(self.assistantPathsLabel)
-
-        self.assistantPathsHost = QWidget(self.assistantCard)
-        self.assistantPathsHost.setObjectName(u"assistantPathsHost")
-        self.assistantPathsLayout = QVBoxLayout(self.assistantPathsHost)
-        self.assistantPathsLayout.setSpacing(6)
-        self.assistantPathsLayout.setObjectName(u"assistantPathsLayout")
-        self.assistantPathsLayout.setContentsMargins(0, 0, 0, 0)
-
-        self.assistantCardLayout.addWidget(self.assistantPathsHost)
-
-        self.assistantHint = QLabel(self.assistantCard)
-        self.assistantHint.setObjectName(u"assistantHint")
-        self.assistantHint.setWordWrap(True)
-        self.assistantHint.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
-        self.assistantHint.setProperty(u"variant", u"muted")
-
-        self.assistantCardLayout.addWidget(self.assistantHint)
-
-        self.assistantClearButton = QPushButton(self.assistantCard)
-        self.assistantClearButton.setObjectName(u"assistantClearButton")
-        self.assistantClearButton.setProperty(u"variant", u"secondary")
-
-        self.assistantCardLayout.addWidget(self.assistantClearButton)
-
-
-        self.settingsContentLayout.addWidget(self.assistantCard)
 
         self.debugCard = QFrame(self.settingsContent)
         self.debugCard.setObjectName(u"debugCard")
@@ -725,7 +646,6 @@ class Ui_SettingsPage(object):
     def retranslateUi(self, SettingsPage):
         self.generalSectionButton.setText(QCoreApplication.translate("SettingsPage", u"General", None))
         self.kubeSectionButton.setText(QCoreApplication.translate("SettingsPage", u"Kube", None))
-        self.assistantSectionButton.setText(QCoreApplication.translate("SettingsPage", u"Assistant", None))
         self.shortcutsSectionButton.setText(QCoreApplication.translate("SettingsPage", u"Shortcuts", None))
         self.integrationsSectionButton.setText(QCoreApplication.translate("SettingsPage", u"Integrations", None))
         self.extensionsSectionButton.setText(QCoreApplication.translate("SettingsPage", u"Extensions", None))
@@ -770,18 +690,6 @@ class Ui_SettingsPage(object):
 #if QT_CONFIG(tooltip)
         self.writeModeCheck.setToolTip(QCoreApplication.translate("SettingsPage", u"Shows, in the right-click menu, the actions that change a cluster: delete or evict a Pod, scale or restart a Deployment. Each one asks for confirmation. It also shows the kubectl command to open a shell in a Pod. Off keeps the app read-only.", None))
 #endif // QT_CONFIG(tooltip)
-        self.assistantHeading.setText(QCoreApplication.translate("SettingsPage", u"ASSISTANT", None))
-        self.assistantCheck.setText(QCoreApplication.translate("SettingsPage", u"Show the assistant, a chat in the corner of the window", None))
-#if QT_CONFIG(tooltip)
-        self.assistantCheck.setToolTip(QCoreApplication.translate("SettingsPage", u"Turns the chat button on or off. Nothing is sent anywhere until you open the chat and agree.", None))
-#endif // QT_CONFIG(tooltip)
-#if QT_CONFIG(tooltip)
-        self.assistantCombo.setToolTip(QCoreApplication.translate("SettingsPage", u"The program of this computer that answers. Automatic uses the first one the system has.", None))
-#endif // QT_CONFIG(tooltip)
-        self.assistantModelsLabel.setText(QCoreApplication.translate("SettingsPage", u"Model and effort of each program", None))
-        self.assistantPathsLabel.setText(QCoreApplication.translate("SettingsPage", u"Where the programs are, when the system does not find them", None))
-        self.assistantHint.setText(QCoreApplication.translate("SettingsPage", u"The assistant uses the client that is already installed on this computer, such as Claude Code or Codex, signed in the way you already are. KubeScope asks you for no credentials and stores none: the sign-in stays with that program. What you ask, attach and what it reads from the cluster go to that program and to its service. The conversations are kept on this computer, without the documents and logs that were read.", None))
-        self.assistantClearButton.setText(QCoreApplication.translate("SettingsPage", u"Clear the chat history", None))
         self.debugHeading.setText(QCoreApplication.translate("SettingsPage", u"DEBUGGING", None))
         self.debugCheck.setText(QCoreApplication.translate("SettingsPage", u"Debug mode: write a log file I can share", None))
         self.openLogsButton.setText(QCoreApplication.translate("SettingsPage", u"Open the log folder", None))
