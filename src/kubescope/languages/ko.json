@@ -85,6 +85,9 @@
             "Your kubeconfig runs “{tool}” to sign in, but it is not installed or not on the PATH. Install it and refresh.": "kubeconfig가 로그인에 “{tool}”을(를) 실행하지만 설치되어 있지 않거나 PATH에 없습니다. 설치한 뒤 새로 고치세요.",
             "Your user is not allowed to read this resource.": "사용자에게 이 리소스를 읽을 권한이 없습니다."
         },
+        "ExtensionPages": {
+            "This page could not be built.": "이 페이지를 만들 수 없습니다."
+        },
         "ExtensionsPanel": {
             "Bundled": "기본 포함",
             "Choose the kubescope-extension.toml of the extension": "확장 프로그램의 kubescope-extension.toml 선택",
@@ -141,6 +144,7 @@
             "Version": "버전",
             "add a command to kubescope": "kubescope에 명령 추가",
             "add a kind of tab": "탭 종류 추가",
+            "add a page to the side menu": "사이드 메뉴에 페이지 추가",
             "add a panel to the window": "창에 패널 추가",
             "add a section to the Settings": "설정에 섹션 추가",
             "change your clusters, in the write mode": "클러스터 변경 (쓰기 모드에서)",

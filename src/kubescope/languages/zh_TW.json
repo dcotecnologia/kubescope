@@ -85,6 +85,9 @@
             "Your kubeconfig runs “{tool}” to sign in, but it is not installed or not on the PATH. Install it and refresh.": "您的 kubeconfig 會執行「{tool}」來登入，但它尚未安裝或不在 PATH 中。請安裝後重新整理。",
             "Your user is not allowed to read this resource.": "您的使用者無權讀取此資源。"
         },
+        "ExtensionPages": {
+            "This page could not be built.": "無法建立此頁面。"
+        },
         "ExtensionsPanel": {
             "Bundled": "內建",
             "Choose the kubescope-extension.toml of the extension": "選擇擴充功能的 kubescope-extension.toml",
@@ -141,6 +144,7 @@
             "Version": "版本",
             "add a command to kubescope": "為 kubescope 新增指令",
             "add a kind of tab": "新增分頁類型",
+            "add a page to the side menu": "在側邊選單新增頁面",
             "add a panel to the window": "為視窗新增面板",
             "add a section to the Settings": "為設定新增區段",
             "change your clusters, in the write mode": "修改你的叢集(在寫入模式下)",

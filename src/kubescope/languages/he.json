@@ -85,6 +85,9 @@
             "Your kubeconfig runs “{tool}” to sign in, but it is not installed or not on the PATH. Install it and refresh.": "ה-kubeconfig שלכם מריץ את \"{tool}\" כדי להתחבר, אך הוא אינו מותקן או שאינו ב-PATH. התקינו אותו ורעננו.",
             "Your user is not allowed to read this resource.": "למשתמש שלכם אין הרשאה לקרוא משאב זה."
         },
+        "ExtensionPages": {
+            "This page could not be built.": "לא ניתן היה ליצור את הדף הזה."
+        },
         "ExtensionsPanel": {
             "Bundled": "מובנה",
             "Choose the kubescope-extension.toml of the extension": "בחר את kubescope-extension.toml של התוסף",
@@ -141,6 +144,7 @@
             "Version": "גרסה",
             "add a command to kubescope": "להוסיף פקודה ל-kubescope",
             "add a kind of tab": "להוסיף סוג כרטיסייה",
+            "add a page to the side menu": "הוספת דף לתפריט הצד",
             "add a panel to the window": "להוסיף חלונית לחלון",
             "add a section to the Settings": "להוסיף מדור להגדרות",
             "change your clusters, in the write mode": "לשנות את האשכולות שלך, במצב כתיבה",

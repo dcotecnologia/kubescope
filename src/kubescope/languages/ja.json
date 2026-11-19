@@ -85,6 +85,9 @@
             "Your kubeconfig runs “{tool}” to sign in, but it is not installed or not on the PATH. Install it and refresh.": "kubeconfig はサインインに「{tool}」を実行しますが、インストールされていないか PATH にありません。インストールしてから更新してください。",
             "Your user is not allowed to read this resource.": "このユーザーにはこのリソースを読み取る権限がありません。"
         },
+        "ExtensionPages": {
+            "This page could not be built.": "このページを作成できませんでした。"
+        },
         "ExtensionsPanel": {
             "Bundled": "同梱",
             "Choose the kubescope-extension.toml of the extension": "拡張機能の kubescope-extension.toml を選択",
@@ -141,6 +144,7 @@
             "Version": "バージョン",
             "add a command to kubescope": "kubescope にコマンドを追加する",
             "add a kind of tab": "タブの種類を追加する",
+            "add a page to the side menu": "サイドメニューにページを追加する",
             "add a panel to the window": "ウィンドウにパネルを追加する",
             "add a section to the Settings": "設定にセクションを追加する",
             "change your clusters, in the write mode": "クラスターを変更する (書き込みモード時)",

@@ -85,6 +85,9 @@
             "Your kubeconfig runs “{tool}” to sign in, but it is not installed or not on the PATH. Install it and refresh.": "Il tuo kubeconfig esegue «{tool}» per accedere, ma non è installato o non è nel PATH. Installalo e aggiorna.",
             "Your user is not allowed to read this resource.": "Il tuo utente non è autorizzato a leggere questa risorsa."
         },
+        "ExtensionPages": {
+            "This page could not be built.": "Impossibile creare questa pagina."
+        },
         "ExtensionsPanel": {
             "Bundled": "Inclusa",
             "Choose the kubescope-extension.toml of the extension": "Scegli il kubescope-extension.toml dell'estensione",
@@ -141,6 +144,7 @@
             "Version": "Versione",
             "add a command to kubescope": "aggiungere un comando a kubescope",
             "add a kind of tab": "aggiungere un tipo di scheda",
+            "add a page to the side menu": "aggiungere una pagina al menu laterale",
             "add a panel to the window": "aggiungere un pannello alla finestra",
             "add a section to the Settings": "aggiungere una sezione alle Impostazioni",
             "change your clusters, in the write mode": "modificare i tuoi cluster, in modalità scrittura",

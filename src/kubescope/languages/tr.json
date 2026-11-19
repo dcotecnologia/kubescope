@@ -85,6 +85,9 @@
             "Your kubeconfig runs “{tool}” to sign in, but it is not installed or not on the PATH. Install it and refresh.": "kubeconfig dosyanız oturum açmak için “{tool}” çalıştırıyor, ancak yüklü değil veya PATH içinde değil. Yükleyin ve yenileyin.",
             "Your user is not allowed to read this resource.": "Kullanıcınızın bu kaynağı okuma izni yok."
         },
+        "ExtensionPages": {
+            "This page could not be built.": "Bu sayfa oluşturulamadı."
+        },
         "ExtensionsPanel": {
             "Bundled": "Dahili",
             "Choose the kubescope-extension.toml of the extension": "Uzantının kubescope-extension.toml dosyasını seçin",
@@ -141,6 +144,7 @@
             "Version": "Sürüm",
             "add a command to kubescope": "kubescope'a bir komut eklemek",
             "add a kind of tab": "bir sekme türü eklemek",
+            "add a page to the side menu": "yan menüye bir sayfa eklemek",
             "add a panel to the window": "pencereye bir panel eklemek",
             "add a section to the Settings": "Ayarlar'a bir bölüm eklemek",
             "change your clusters, in the write mode": "kümelerinizi değiştirmek, yazma kipinde",

@@ -85,6 +85,9 @@
             "Your kubeconfig runs “{tool}” to sign in, but it is not installed or not on the PATH. Install it and refresh.": "kubeconfig của bạn chạy “{tool}” để đăng nhập, nhưng công cụ này chưa được cài đặt hoặc không có trong PATH. Hãy cài đặt rồi làm mới.",
             "Your user is not allowed to read this resource.": "Người dùng của bạn không được phép đọc tài nguyên này."
         },
+        "ExtensionPages": {
+            "This page could not be built.": "Không thể tạo trang này."
+        },
         "ExtensionsPanel": {
             "Bundled": "Tích hợp sẵn",
             "Choose the kubescope-extension.toml of the extension": "Chọn kubescope-extension.toml của tiện ích mở rộng",
@@ -141,6 +144,7 @@
             "Version": "Phiên bản",
             "add a command to kubescope": "thêm một lệnh vào kubescope",
             "add a kind of tab": "thêm một loại tab",
+            "add a page to the side menu": "thêm một trang vào menu bên",
             "add a panel to the window": "thêm một bảng vào cửa sổ",
             "add a section to the Settings": "thêm một mục vào Cài đặt",
             "change your clusters, in the write mode": "thay đổi cụm của bạn, ở chế độ ghi",
