@@ -128,6 +128,9 @@ class ExtensionsPanel(QObject):
         while (item := grid.takeAt(0)) is not None:
             if widget := item.widget():
                 widget.deleteLater()
+        for column in range(grid.columnCount()):
+            grid.setColumnStretch(column, 0)  # the ones of the last drawing
+            grid.setColumnMinimumWidth(column, 0)
         columns = self._columns = self._fit_columns()
         if not self.rows:
             grid.addWidget(QLabel(self.tr("No extension is installed")), 0, 0)

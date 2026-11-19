@@ -97,4 +97,4 @@ def test_a_forward_of_an_extension_goes_to_the_forwards_page(monkeypatch) -> Non
     assert window._begin_forward("RDS x", "ssm", ["aws"], {}, 15432, "db:5432")
 
     assert started == [("RDS x", "ssm", ["aws"], {}, 15432, "db:5432")]
-    assert window.pages.currentIndex() == 6
+    assert window.pages.currentIndex() == 5

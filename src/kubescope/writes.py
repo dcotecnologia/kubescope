@@ -401,52 +401,6 @@ def container_ports(
     return list(ports.items())
 
 
-def ssm_forward_arguments(
-    instance: str,
-    host: str,
-    remote: int,
-    local: int,
-    region: str,
-    profile: str = "",
-) -> list[str]:
-    """The AWS CLI command that forwards a local port to a database (`host`,
-    `remote`) through an EC2 instance with AWS Systems Manager."""
-    parameters = json.dumps(
-        {"host": [host], "portNumber": [str(remote)], "localPortNumber": [str(local)]},
-        separators=(",", ":"),
-    )
-    return [
-        "aws",
-        "ssm",
-        "start-session",
-        "--target",
-        instance or "<EC2-INSTANCE-ID>",
-        "--document-name",
-        "AWS-StartPortForwardingSessionToRemoteHost",
-        "--parameters",
-        parameters,
-        "--region",
-        region,
-        *(["--profile", profile] if profile else []),
-    ]
-
-
-def ssm_forward_commands(
-    instance: str,
-    host: str,
-    remote: int,
-    local: int,
-    region: str,
-    profile: str = "",
-) -> list[tuple[str, str]]:
-    """The complete AWS CLI commands that forward a local port to a database
-    through an EC2 instance with AWS Systems Manager, for the person to run in
-    their own terminal, as (shell, command) pairs."""
-    return _plain_lines(
-        ssm_forward_arguments(instance, host, remote, local, region, profile)
-    )
-
-
 def _forward_arguments(
     context: str, namespace: str, service: str, remote: int, local: int, kind: str
 ) -> list[str]:
