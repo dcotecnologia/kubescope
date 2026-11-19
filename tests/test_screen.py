@@ -1,5 +1,5 @@
 from kubescope.extensions.bundled.gabi import actions, knowledge, runner
-from kubescope.extensions.bundled.gabi.screen import (
+from kubescope.screen import (
     ROW_LIMIT,
     VIEWER_LIMIT,
     Screen,
@@ -147,7 +147,7 @@ def _overview():
 
 
 def test_the_overview_of_the_cluster_gives_its_numbers_and_its_nodes() -> None:
-    from kubescope.extensions.bundled.gabi.screen import describe_cluster_overview
+    from kubescope.screen import describe_cluster_overview
 
     text = "\n".join(describe_cluster_overview(_overview()))
 
@@ -161,9 +161,9 @@ def test_the_overview_of_the_cluster_gives_its_numbers_and_its_nodes() -> None:
 
 
 def test_the_overview_of_the_workloads_gives_each_kind_and_the_events() -> None:
-    from kubescope.extensions.bundled.gabi import screen
-    from kubescope.extensions.bundled.gabi.screen import describe_workloads_overview
+    from kubescope import screen
     from kubescope.models import EventInfo, KindSummary, WorkloadsOverview
+    from kubescope.screen import describe_workloads_overview
 
     events = tuple(
         EventInfo("Warning", "kubelet", "ns", f"Pod: p{n}", "BackOff", 3, "1h", "2m")

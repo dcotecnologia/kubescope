@@ -145,14 +145,6 @@ from kubescope.extensions.bundled.gabi.runner import NAME, Assistant
 from kubescope.extensions.bundled.gabi.runner import (
     is_available as is_available_assistant,
 )
-from kubescope.extensions.bundled.gabi.screen import (
-    Screen,
-    describe_cluster_overview,
-    describe_workloads_overview,
-)
-from kubescope.extensions.bundled.gabi.screen import (
-    describe as describe_screen,
-)
 from kubescope.extensions.bundled.gabi.session import ChatSession
 from kubescope.extensions.bundled.gabi.tab import AssistantTab
 from kubescope.extensions.registries import CommandRegistry
@@ -189,6 +181,14 @@ from kubescope.models import (
 )
 from kubescope.plugin_latest import helm_match, installed_chart, update_available
 from kubescope.plugin_updates import eks_addon_versions, run_update
+from kubescope.screen import (
+    Screen,
+    describe_cluster_overview,
+    describe_workloads_overview,
+)
+from kubescope.screen import (
+    describe as describe_screen,
+)
 from kubescope.settings import (
     Settings,
     config_directory,
