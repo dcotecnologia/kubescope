@@ -1,4 +1,6 @@
-from PySide6.QtCore import Qt
+from collections.abc import Iterable
+
+from PySide6.QtCore import QCoreApplication, Qt
 from PySide6.QtWidgets import (
     QDialog,
     QFormLayout,
@@ -10,6 +12,57 @@ from PySide6.QtWidgets import (
 )
 
 from kubescope.extensions.store import Candidate
+
+
+def permission_lines(permissions: Iterable[str]) -> str:
+    """What each permission lets an extension do, one line each; the texts are
+    those of the install dialog."""
+
+    def tr(text: str) -> str:
+        return QCoreApplication.translate("InstallExtensionDialog", text)
+
+    meaning = {
+        "cluster.read": QCoreApplication.translate(
+            "InstallExtensionDialog", "read your clusters"
+        ),
+        "cluster.write": QCoreApplication.translate(
+            "InstallExtensionDialog", "change your clusters, in the write mode"
+        ),
+        "aws.read": QCoreApplication.translate(
+            "InstallExtensionDialog",
+            "read your AWS account (RDS, EC2, EKS, Systems Manager)",
+        ),
+        "forward": QCoreApplication.translate(
+            "InstallExtensionDialog",
+            "start a port forward to a database, in the write mode",
+        ),
+        "subprocess": QCoreApplication.translate(
+            "InstallExtensionDialog", "run programs of this computer"
+        ),
+        "ui.dock": QCoreApplication.translate(
+            "InstallExtensionDialog", "add a panel to the window"
+        ),
+        "ui.tab": QCoreApplication.translate(
+            "InstallExtensionDialog", "add a kind of tab"
+        ),
+        "ui.page": QCoreApplication.translate(
+            "InstallExtensionDialog", "add a page to the side menu"
+        ),
+        "ui.settings": QCoreApplication.translate(
+            "InstallExtensionDialog", "add a section to the Settings"
+        ),
+        "ui.window": QCoreApplication.translate(
+            "InstallExtensionDialog",
+            "use the window: show messages, run tasks and add shortcuts",
+        ),
+        "cli": QCoreApplication.translate(
+            "InstallExtensionDialog", "add a command to kubescope"
+        ),
+    }
+    names = sorted(permissions)
+    if not names:
+        return tr("none")
+    return "\n".join(f"• {meaning.get(name, name)} ({name})" for name in names)
 
 
 class InstallExtensionDialog(QDialog):
@@ -93,24 +146,4 @@ class InstallExtensionDialog(QDialog):
         return label
 
     def _permissions(self, candidate: Candidate) -> str:
-        meaning = {
-            "cluster.read": self.tr("read your clusters"),
-            "cluster.write": self.tr("change your clusters, in the write mode"),
-            "aws.read": self.tr(
-                "read your AWS account (RDS, EC2, EKS, Systems Manager)"
-            ),
-            "forward": self.tr("start a port forward to a database, in the write mode"),
-            "subprocess": self.tr("run programs of this computer"),
-            "ui.dock": self.tr("add a panel to the window"),
-            "ui.tab": self.tr("add a kind of tab"),
-            "ui.page": self.tr("add a page to the side menu"),
-            "ui.settings": self.tr("add a section to the Settings"),
-            "ui.window": self.tr(
-                "use the window: show messages, run tasks and add shortcuts"
-            ),
-            "cli": self.tr("add a command to kubescope"),
-        }
-        names = sorted(candidate.manifest.permissions)
-        if not names:
-            return self.tr("none")
-        return "\n".join(f"• {meaning[name]} ({name})" for name in names)
+        return permission_lines(candidate.manifest.permissions)
