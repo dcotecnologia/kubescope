@@ -956,7 +956,7 @@ def preview_tool():
     from pathlib import Path
 
     kept = dict(vars(window_module))
-    path = Path(__file__).resolve().parent.parent / "tools" / "preview.py"
+    path = Path(__file__).resolve().parents[3] / "tools" / "preview.py"
     spec = importlib.util.spec_from_file_location("kubescope_preview", path)
     assert spec is not None and spec.loader is not None
     module = importlib.util.module_from_spec(spec)

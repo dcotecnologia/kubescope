@@ -8,34 +8,12 @@ import pytest
 def isolated_config(tmp_path, monkeypatch):
     """Never read or write the real user settings during tests."""
     monkeypatch.setenv("KUBESCOPE_CONFIG_DIR", str(tmp_path / "config"))
-    # nor the configuration of the programs the assistant runs, which says the
-    # model and the effort they use
+    # nor the configuration of the programs an extension runs, which may say
+    # which model and effort they use
     home = tmp_path / "isolated-home"  # not made: it is only a place with nothing in it
     monkeypatch.setenv("HOME", str(home))
     monkeypatch.setenv("USERPROFILE", str(home))
     monkeypatch.setenv("CLAUDE_CONFIG_DIR", str(home / ".claude"))
-
-
-@pytest.fixture(autouse=True)
-def no_chosen_assistant_programs():
-    """The program, the model and the effort chosen for an assistant are kept
-    in the runner; a test starts without."""
-    from kubescope.extensions.bundled.gabi import runner
-
-    saved = [
-        dict(d)
-        for d in (runner.CUSTOM_PROGRAMS, runner.CUSTOM_MODELS, runner.CUSTOM_EFFORTS)
-    ]
-    for chosen in (runner.CUSTOM_PROGRAMS, runner.CUSTOM_MODELS, runner.CUSTOM_EFFORTS):
-        chosen.clear()
-    yield
-    for chosen, before in zip(
-        (runner.CUSTOM_PROGRAMS, runner.CUSTOM_MODELS, runner.CUSTOM_EFFORTS),
-        saved,
-        strict=True,
-    ):
-        chosen.clear()
-        chosen.update(before)
 
 
 # What the offscreen platform says about things a desktop has: it reports a system
@@ -161,16 +139,13 @@ def finish_workers_with_the_test(monkeypatch):
 
 @pytest.fixture(autouse=True)
 def still_windows(monkeypatch):
-    """Windows, lists and the panel of the assistant show at once; the tests of
-    the motion turn it on.
+    """Windows and lists show at once; the tests of the motion turn it on.
 
     A window sets `motion.ENABLED` from its settings, which are on by
     default, so the animations are held off by their duration, which
     nothing sets.
     """
-    from kubescope.extensions.bundled.gabi import panel
     from kubescope.views import motion
 
     monkeypatch.setattr(motion, "ENABLED", False)
     monkeypatch.setattr(motion, "DURATION_MS", 0)
-    monkeypatch.setattr(panel, "ANIMATION_MS", 0)
