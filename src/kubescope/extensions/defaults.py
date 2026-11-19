@@ -45,7 +45,7 @@ DEFAULTS = (
     ),
     DefaultExtension(
         id="kubescope.aws",
-        name="AWS",
+        name="AWS Resources",
         description=(
             "Look at your AWS account from KubeScope: the RDS databases of the "
             "account of the selected cluster, in any region, with their details "
@@ -58,7 +58,7 @@ DEFAULTS = (
     ),
     DefaultExtension(
         id="kubescope.search",
-        name="Global search",
+        name="Global Search",
         description=(
             "Press / or Ctrl+K to find a screen, a list or a resource of any "
             "namespace by its name, and open it."
