@@ -165,7 +165,7 @@ from kubescope.extensions.bundled.gabi.runner import (
     is_available as is_available_assistant,
 )
 from kubescope.extensions.cluster_access import ClusterBridge
-from kubescope.extensions.context import Host
+from kubescope.extensions.context import Host, data_directory
 from kubescope.extensions.loader import ExtensionLoader
 from kubescope.extensions.registries import CommandRegistry
 from kubescope.extensions.store import ExtensionStore, Installed
@@ -1456,9 +1456,7 @@ class WorkloadWindow(QMainWindow):
             language=lambda: self.settings.language,
             resolved_language=lambda: resolve_language(self.settings.language),
             language_name=lambda: language_name(self.settings.language),
-            data_directory=lambda extension: (
-                config_directory() / "extension-data" / extension
-            ),
+            data_directory=data_directory,
             ui=WindowUi(
                 self,
                 central,

@@ -19,6 +19,8 @@ _ID = re.compile(r"[a-z0-9][a-z0-9_-]*(\.[a-z0-9][a-z0-9_-]*)+")
 _VERSION = re.compile(r"\d{1,6}\.\d{1,6}\.\d{1,6}")
 _ENTRY = re.compile(r"([A-Za-z_]\w*)(\.[A-Za-z_]\w*)*:[A-Za-z_]\w*")
 _MAX_TEXT = 300
+_COMMAND = re.compile(r"[a-z][a-z0-9-]{0,29}")
+_MAX_COMMANDS = 8
 
 
 class ManifestError(Exception):
@@ -34,6 +36,9 @@ class Manifest:
     permissions: frozenset[str]
     description: str = ""
     author: str = ""
+    # the commands it adds to `kubescope`, so that the app knows them without
+    # running the extension
+    commands: tuple[str, ...] = ()
 
 
 def _text(document: dict[str, object], key: str, required: bool = True) -> str:
@@ -75,6 +80,18 @@ def parse_manifest(content: bytes) -> Manifest:
     unknown = sorted(set(permissions) - set(PERMISSIONS))
     if unknown:
         raise ManifestError(f"unknown permissions: {', '.join(unknown)}")
+    commands = document.get("commands", [])
+    if (
+        not isinstance(commands, list)
+        or not all(isinstance(one, str) and _COMMAND.fullmatch(one) for one in commands)
+        or len(commands) > _MAX_COMMANDS
+        or len(set(commands)) != len(commands)
+    ):
+        raise ManifestError(
+            "commands must be a list of at most 8 different names, like chat"
+        )
+    if commands and "cli" not in permissions:
+        raise ManifestError("commands need the permission cli")
     return Manifest(
         id=extension,
         name=_text(document, "name"),
@@ -83,6 +100,7 @@ def parse_manifest(content: bytes) -> Manifest:
         permissions=frozenset(permissions),
         description=_text(document, "description", required=False),
         author=_text(document, "author", required=False),
+        commands=tuple(commands),
     )
 
 

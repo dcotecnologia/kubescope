@@ -87,3 +87,44 @@ def test_a_folder_with_a_huge_manifest_is_refused(tmp_path) -> None:
 
     with pytest.raises(ManifestError, match="too big"):
         read_manifest(tmp_path)
+
+
+def test_the_commands_an_extension_adds_are_in_the_manifest() -> None:
+    manifest = parse_manifest(
+        GOOD.replace(
+            b'permissions = ["cluster.read", "ui.dock"]', b'permissions = ["cli"]'
+        )
+        + b'commands = ["chat", "ask-me"]\n'
+    )
+
+    assert manifest.commands == ("chat", "ask-me")
+    assert parse_manifest(GOOD).commands == ()
+
+
+@pytest.mark.parametrize(
+    "commands",
+    [
+        '"chat"',
+        "[1]",
+        '["Chat"]',
+        '["chat", "chat"]',
+        '["with space"]',
+        '["1st"]',
+        "[" + ", ".join(f'"c{i}"' for i in range(9)) + "]",
+    ],
+)
+def test_commands_that_do_not_fit_are_refused(commands) -> None:
+    content = (
+        GOOD.replace(
+            b'permissions = ["cluster.read", "ui.dock"]', b'permissions = ["cli"]'
+        )
+        + f"commands = {commands}\n".encode()
+    )
+
+    with pytest.raises(ManifestError, match="commands must be"):
+        parse_manifest(content)
+
+
+def test_commands_need_the_permission_to_add_them() -> None:
+    with pytest.raises(ManifestError, match="need the permission cli"):
+        parse_manifest(GOOD + b'commands = ["chat"]\n')
