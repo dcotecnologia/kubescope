@@ -45,6 +45,7 @@ DEFAULTS: dict[str, Any] = {
     "integration_accounts": [],
     "extensions": {},
     "extensions_offered": [],
+    "extension_updates_checked_at": 0.0,
 }
 
 
@@ -324,6 +325,17 @@ class Settings:
             if isinstance(value, list)
             else []
         )
+
+    @property
+    def extension_updates_checked_at(self) -> float:
+        """When the extensions were last looked at for a newer version, in
+        seconds since the epoch; 0 when never."""
+        value = self._data["extension_updates_checked_at"]
+        valid = isinstance(value, int | float) and not isinstance(value, bool)
+        return float(value) if valid and value > 0 else 0.0
+
+    def record_extension_updates_check(self, now: float) -> None:
+        self._data["extension_updates_checked_at"] = float(now)
 
     def offered(self, extension: str) -> None:
         """Remember that `extension` was offered."""

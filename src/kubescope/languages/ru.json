@@ -90,9 +90,11 @@
         },
         "ExtensionsPanel": {
             "Bundled": "Встроенное",
+            "Check for updates": "Проверить обновления",
             "Choose the kubescope-extension.toml of the extension": "Выберите kubescope-extension.toml расширения",
             "Could not load: {error}": "Не удалось загрузить: {error}",
             "Development": "Разработка",
+            "Everything is up to date": "Всё актуально",
             "Extension manifest (kubescope-extension.toml)": "Манифест расширения (kubescope-extension.toml)",
             "Extensions": "Расширения",
             "Install": "Установить",
@@ -105,8 +107,11 @@
             "Uninstall": "Удалить",
             "Uninstall {name}? Its files are deleted.": "Удалить {name}? Его файлы будут стёрты.",
             "Uninstalled": "Удалён",
+            "Update available": "Доступно обновление",
+            "Update to {version}": "Обновить до {version}",
             "installed {date}": "установлено {date}",
             "updated {date}": "обновлено {date}",
+            "{count} updates available": "Доступно обновлений: {count}",
             "{name} comes with KubeScope. Uninstall it? You can reinstall it here.": "{name} входит в состав KubeScope. Удалить? Вы можете снова установить его здесь."
         },
         "ForwardsPage": {

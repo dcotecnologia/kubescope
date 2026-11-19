@@ -577,3 +577,15 @@ def test_only_ids_are_kept_in_the_list_of_offers(tmp_path) -> None:
     )
 
     assert Settings(path).extensions_offered == ["kubescope.gabi"]
+
+
+def test_the_time_the_extensions_were_last_looked_at_is_kept_and_read_safely() -> None:
+    settings = Settings()
+
+    assert settings.extension_updates_checked_at == 0.0
+    settings.record_extension_updates_check(1_700_000_000)
+    assert settings.extension_updates_checked_at == 1_700_000_000.0
+    settings._data["extension_updates_checked_at"] = "yesterday"
+    assert settings.extension_updates_checked_at == 0.0
+    settings._data["extension_updates_checked_at"] = -5
+    assert settings.extension_updates_checked_at == 0.0

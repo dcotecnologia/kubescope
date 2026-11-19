@@ -90,9 +90,11 @@
         },
         "ExtensionsPanel": {
             "Bundled": "Tích hợp sẵn",
+            "Check for updates": "Kiểm tra bản cập nhật",
             "Choose the kubescope-extension.toml of the extension": "Chọn kubescope-extension.toml của tiện ích mở rộng",
             "Could not load: {error}": "Không thể tải: {error}",
             "Development": "Phát triển",
+            "Everything is up to date": "Mọi thứ đã được cập nhật",
             "Extension manifest (kubescope-extension.toml)": "Tệp kê khai của tiện ích mở rộng (kubescope-extension.toml)",
             "Extensions": "Tiện ích mở rộng",
             "Install": "Cài đặt",
@@ -105,8 +107,11 @@
             "Uninstall": "Gỡ cài đặt",
             "Uninstall {name}? Its files are deleted.": "Gỡ cài đặt {name}? Các tệp của nó sẽ bị xóa.",
             "Uninstalled": "Đã gỡ cài đặt",
+            "Update available": "Có bản cập nhật",
+            "Update to {version}": "Cập nhật lên {version}",
             "installed {date}": "đã cài đặt {date}",
             "updated {date}": "đã cập nhật {date}",
+            "{count} updates available": "Có {count} bản cập nhật",
             "{name} comes with KubeScope. Uninstall it? You can reinstall it here.": "{name} đi kèm với KubeScope. Gỡ cài đặt? Bạn có thể cài lại tại đây."
         },
         "ForwardsPage": {

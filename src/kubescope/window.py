@@ -814,6 +814,7 @@ class ActionWorker(QThread):
         self.completed.emit(result)
 
 
+EXTENSION_UPDATE_DELAY_MS = 8000  # after the start, to look for newer extensions
 EXTENSION_WATCH_MS = 1000  # how often the folders of extensions in development are read
 EXTENSION_SECTION_FIRST = 100  # the id of the first section that an extension adds
 
@@ -1187,7 +1188,13 @@ class WorkloadWindow(QMainWindow):
             self._show_message,
             changed=lambda: self._sync_extensions(),
             load_errors=lambda: self._extension_errors(),
+            save_settings=lambda: self._save_settings(),
         )
+        QTimer.singleShot(
+            EXTENSION_UPDATE_DELAY_MS,
+            self,
+            lambda: self.extensions_panel.check_updates(self.settings),
+        )  # a while after the start, so that it does not slow it down
         self.settings_ui.shortcutsResetButton.clicked.connect(
             lambda: self._fill_shortcuts(self._shortcut_defaults())
         )
@@ -6052,6 +6059,7 @@ class WorkloadWindow(QMainWindow):
             entry.button.setChecked(section == entry.id)
         if section == 5:
             self.extensions_panel.refresh()  # it may have changed on disk
+            self.extensions_panel.check_updates(self.settings)
         form.settingsScroll.verticalScrollBar().setValue(0)
 
     def _register_commands(self) -> None:

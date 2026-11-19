@@ -229,7 +229,13 @@ configure` so you type the keys there. Apart from the integrations below, the ap
   differ or are another extension, and one without a pin is not offered. The first
   time the app runs it downloads and installs each of them once, from GitHub, with no
   dialog, because the files are the pinned ones; uninstalled, one does not come back
-  by itself.
+  by itself. Looking for newer versions of an extension installed from GitHub asks
+  `api.github.com` for the tags of its repository (a `User-Agent` with the app version
+  and nothing else), at most once a day and only while **Check for updates** is on in
+  the Settings; the **Check for updates** button of the extensions asks at once. An
+  extension the app recommends is updated only to the version the app pins, with no
+  request. A newer version is never installed by itself: it is downloaded when you
+  press **Update** and shown in the same dialog as any install.
 - **An extension with `aws.read` can read your AWS account, not change it.** It
   runs the AWS CLI with the profile or keys of the cluster context, only for
   `rds`, `ec2`, `eks` and `ssm describe-instance-information`, and only for verbs

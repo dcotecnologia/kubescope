@@ -90,9 +90,11 @@
         },
         "ExtensionsPanel": {
             "Bundled": "มาพร้อมแอป",
+            "Check for updates": "ตรวจหาการอัปเดต",
             "Choose the kubescope-extension.toml of the extension": "เลือก kubescope-extension.toml ของส่วนขยาย",
             "Could not load: {error}": "โหลดไม่ได้: {error}",
             "Development": "กำลังพัฒนา",
+            "Everything is up to date": "ทุกอย่างเป็นปัจจุบัน",
             "Extension manifest (kubescope-extension.toml)": "แมนิเฟสต์ของส่วนขยาย (kubescope-extension.toml)",
             "Extensions": "ส่วนขยาย",
             "Install": "ติดตั้ง",
@@ -105,8 +107,11 @@
             "Uninstall": "ถอนการติดตั้ง",
             "Uninstall {name}? Its files are deleted.": "ถอนการติดตั้ง {name} หรือไม่? ไฟล์ของมันจะถูกลบ",
             "Uninstalled": "ถอนการติดตั้งแล้ว",
+            "Update available": "มีการอัปเดต",
+            "Update to {version}": "อัปเดตเป็น {version}",
             "installed {date}": "ติดตั้ง {date}",
             "updated {date}": "อัปเดต {date}",
+            "{count} updates available": "มีการอัปเดต {count} รายการ",
             "{name} comes with KubeScope. Uninstall it? You can reinstall it here.": "{name} มาพร้อมกับ KubeScope ถอนการติดตั้งหรือไม่? คุณติดตั้งใหม่ได้ที่นี่"
         },
         "ForwardsPage": {

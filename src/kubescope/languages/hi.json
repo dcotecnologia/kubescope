@@ -90,9 +90,11 @@
         },
         "ExtensionsPanel": {
             "Bundled": "पहले से शामिल",
+            "Check for updates": "अपडेट जाँचें",
             "Choose the kubescope-extension.toml of the extension": "एक्सटेंशन की kubescope-extension.toml चुनें",
             "Could not load: {error}": "लोड नहीं हो सका: {error}",
             "Development": "विकास",
+            "Everything is up to date": "सब कुछ अप टू डेट है",
             "Extension manifest (kubescope-extension.toml)": "एक्सटेंशन का मैनिफ़ेस्ट (kubescope-extension.toml)",
             "Extensions": "एक्सटेंशन",
             "Install": "इंस्टॉल करें",
@@ -105,8 +107,11 @@
             "Uninstall": "अनइंस्टॉल करें",
             "Uninstall {name}? Its files are deleted.": "{name} अनइंस्टॉल करें? इसकी फ़ाइलें मिटा दी जाएँगी।",
             "Uninstalled": "अनइंस्टॉल किया गया",
+            "Update available": "अपडेट उपलब्ध है",
+            "Update to {version}": "{version} पर अपडेट करें",
             "installed {date}": "इंस्टॉल किया गया {date}",
             "updated {date}": "अपडेट किया गया {date}",
+            "{count} updates available": "{count} अपडेट उपलब्ध हैं",
             "{name} comes with KubeScope. Uninstall it? You can reinstall it here.": "{name} KubeScope के साथ आता है। अनइंस्टॉल करें? आप इसे यहीं से दोबारा इंस्टॉल कर सकते हैं।"
         },
         "ForwardsPage": {

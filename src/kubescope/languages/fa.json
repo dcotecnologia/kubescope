@@ -90,9 +90,11 @@
         },
         "ExtensionsPanel": {
             "Bundled": "همراه برنامه",
+            "Check for updates": "بررسی به‌روزرسانی‌ها",
             "Choose the kubescope-extension.toml of the extension": "فایل kubescope-extension.toml افزونه را انتخاب کنید",
             "Could not load: {error}": "بارگذاری نشد: {error}",
             "Development": "توسعه",
+            "Everything is up to date": "همه‌چیز به‌روز است",
             "Extension manifest (kubescope-extension.toml)": "مانیفست افزونه (kubescope-extension.toml)",
             "Extensions": "افزونه‌ها",
             "Install": "نصب",
@@ -105,8 +107,11 @@
             "Uninstall": "حذف نصب",
             "Uninstall {name}? Its files are deleted.": "{name} حذف شود؟ فایل‌های آن پاک می‌شوند.",
             "Uninstalled": "حذف نصب شد",
+            "Update available": "به‌روزرسانی در دسترس است",
+            "Update to {version}": "به‌روزرسانی به {version}",
             "installed {date}": "نصب‌شده {date}",
             "updated {date}": "به‌روزرسانی {date}",
+            "{count} updates available": "{count} به‌روزرسانی در دسترس است",
             "{name} comes with KubeScope. Uninstall it? You can reinstall it here.": "{name} همراه KubeScope عرضه می‌شود. حذف شود؟ می‌توانید آن را از همین‌جا دوباره نصب کنید."
         },
         "ForwardsPage": {

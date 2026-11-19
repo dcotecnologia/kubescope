@@ -90,9 +90,11 @@
         },
         "ExtensionsPanel": {
             "Bundled": "기본 포함",
+            "Check for updates": "업데이트 확인",
             "Choose the kubescope-extension.toml of the extension": "확장 프로그램의 kubescope-extension.toml 선택",
             "Could not load: {error}": "불러올 수 없습니다: {error}",
             "Development": "개발",
+            "Everything is up to date": "모두 최신 상태입니다",
             "Extension manifest (kubescope-extension.toml)": "확장 프로그램 매니페스트 (kubescope-extension.toml)",
             "Extensions": "확장 프로그램",
             "Install": "설치",
@@ -105,8 +107,11 @@
             "Uninstall": "제거",
             "Uninstall {name}? Its files are deleted.": "{name}을(를) 제거할까요? 파일이 삭제됩니다.",
             "Uninstalled": "제거됨",
+            "Update available": "업데이트 가능",
+            "Update to {version}": "{version}(으)로 업데이트",
             "installed {date}": "설치 {date}",
             "updated {date}": "업데이트 {date}",
+            "{count} updates available": "업데이트 {count}개 사용 가능",
             "{name} comes with KubeScope. Uninstall it? You can reinstall it here.": "{name}은(는) KubeScope에 포함되어 있습니다. 제거할까요? 여기에서 다시 설치할 수 있습니다."
         },
         "ForwardsPage": {

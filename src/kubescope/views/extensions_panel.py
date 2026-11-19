@@ -10,6 +10,7 @@ downloaded off the UI thread.
 """
 
 import logging
+import time
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass, replace
 from datetime import datetime
@@ -37,17 +38,20 @@ from kubescope.extensions.github import (
     GithubError,
     Repo,
     download,
+    list_tags,
     parse_repo,
     repo_of,
 )
 from kubescope.extensions.manifest import Manifest
 from kubescope.extensions.store import Candidate, ExtensionStore, StoreError
+from kubescope.extensions.updates import Update, find, version_key
 from kubescope.settings import Settings
 from kubescope.ui.ui_settings_page import Ui_SettingsPage
 
 logger = logging.getLogger(__name__)
 
 FOLDER_SOURCE = "folder "  # how the store remembers an extension from a folder
+UPDATE_CHECK_SECONDS = 24 * 3600  # how often GitHub is asked for newer tags
 CARD_WIDTH = 260  # pixels a card needs at least; two fit in a narrow window
 GAP = 14
 
@@ -60,6 +64,7 @@ class Row:
     default: DefaultExtension | None = None  # one the app offers, not installed
     installed_at: str = ""  # UTC, as the store keeps it
     updated_at: str = ""
+    update: Update | None = None  # a newer version that can be installed
 
     @property
     def bundled(self) -> bool:
@@ -81,6 +86,7 @@ class ExtensionsPanel(QObject):
         changed: Callable[[], None] = lambda: None,
         load_errors: Callable[[], dict[str, str]] = dict,
         defaults: Callable[[], Sequence[DefaultExtension]] = offered,
+        save_settings: Callable[[], None] = lambda: None,
     ) -> None:
         super().__init__(window)
         self.form = form
@@ -91,6 +97,24 @@ class ExtensionsPanel(QObject):
         self.changed = changed  # what was installed or removed is to be loaded
         self.load_errors = load_errors  # why an extension did not load
         self.defaults = defaults  # what the app offers to install
+        self.save_settings = save_settings
+        self.updates: list[Update] = []  # newer versions of what is installed
+        self._checking = False
+        self.updates_label = QLabel()
+        self.updates_label.setObjectName("extensionUpdatesLabel")
+        self.updates_label.setProperty("variant", "muted")
+        self.updates_label.hide()
+        self.check_button = QPushButton(self.tr("Check for updates"))
+        self.check_button.setProperty("variant", "secondary")
+        form.extensionsButtonsRow.insertWidget(
+            form.extensionsButtonsRow.indexOf(form.extensionsInstallRepoButton) + 1,
+            self.check_button,
+        )
+        form.extensionsCardLayout.insertWidget(
+            form.extensionsCardLayout.indexOf(form.extensionsCardsHost),
+            self.updates_label,
+        )
+        self.check_button.clicked.connect(lambda: self.check_updates(force=True))
         self.rows: list[Row] = []
         self._columns = 1
         form.extensionsInstallFolderButton.clicked.connect(self.install_from_folder)
@@ -125,6 +149,7 @@ class ExtensionsPanel(QObject):
         ] + [
             Row(manifest, "bundled", False) for manifest in self.store.removed_bundled()
         ]
+        self.rows = [replace(row, update=self._update_of(row)) for row in self.rows]
         have = {row.manifest.id for row in self.rows}
         for one in self.defaults():
             if one.id not in have:  # offered, and not here
@@ -134,6 +159,83 @@ class ExtensionsPanel(QObject):
                 manifest = replace(manifest, description=one.description)
                 self.rows.append(Row(manifest, f"github {one.repo.label}", False, one))
         self.render()
+
+    def _update_of(self, row: Row) -> Update | None:
+        """The newer version of an installed extension, if one was found and it
+        is still newer than what is installed."""
+        current = version_key(row.manifest.version)
+        for update in self.updates:
+            latest = version_key(update.latest)
+            if (
+                row.installed
+                and update.extension == row.manifest.id
+                and current is not None
+                and latest is not None
+                and latest > current
+            ):
+                return update
+        return None
+
+    # looking for newer versions
+
+    def check_updates(
+        self, settings: Settings | None = None, force: bool = False
+    ) -> None:
+        """Look for newer versions of what is installed.
+
+        What the app pins needs no network and is always looked at; the
+        tags of other repositories are asked of GitHub only when the
+        Settings allow it, and at most once a day unless the person
+        asks.
+        """
+        installed = self.store.installed()
+        defaults = list(self.defaults())
+        self.updates = find(installed, defaults, None)
+        self._after_check()
+        if self._checking:
+            return
+        allowed = settings is None or settings.check_updates
+        fresh = (
+            settings is not None
+            and not force
+            and 0
+            <= time.time() - settings.extension_updates_checked_at
+            < UPDATE_CHECK_SECONDS
+        )
+        if not allowed and not force or fresh:
+            return
+        self._checking = True
+        self.check_button.setEnabled(False)
+
+        def done(found: list[Update]) -> None:
+            self._checking = False
+            self.check_button.setEnabled(True)
+            self.updates = found
+            if settings is not None:
+                settings.record_extension_updates_check(time.time())
+                self.save_settings()
+            self._after_check(told=force)
+
+        def failed(_message: str) -> None:
+            self._checking = False
+            self.check_button.setEnabled(True)
+
+        self.run_action(
+            partial(find, installed, defaults, list_tags),
+            done,
+            on_error=failed,
+            quiet=True,
+        )
+
+    def _after_check(self, told: bool = False) -> None:
+        count = len(self.updates)
+        self.updates_label.setVisible(count > 0 or told)
+        self.updates_label.setText(
+            self.tr("{count} updates available").format(count=count)
+            if count
+            else self.tr("Everything is up to date")
+        )
+        self.refresh()
 
     def render(self) -> None:
         grid = self.form.extensionsCardsGrid
@@ -156,6 +258,8 @@ class ExtensionsPanel(QObject):
     def _badge(self, row: Row) -> str:
         if row.default is not None:
             return self.tr("Recommended")
+        if row.update is not None:
+            return self.tr("Update available")
         if not row.installed:
             return self.tr("Uninstalled")
         if row.dev:
@@ -213,6 +317,18 @@ class ExtensionsPanel(QObject):
             install.setProperty("variant", "primary")
             install.clicked.connect(partial(self.install_default, row.default))
             buttons.addWidget(install)
+        elif row.update is not None:
+            update = QPushButton(
+                self.tr("Update to {version}").format(version=row.update.version)
+            )
+            update.setProperty("variant", "primary")
+            update.clicked.connect(partial(self.update, row.update))
+            buttons.addWidget(update)
+            if self._can_reinstall(row):
+                reinstall = QPushButton(self.tr("Reinstall"))
+                reinstall.setProperty("variant", "secondary")
+                reinstall.clicked.connect(partial(self.reinstall, row))
+                buttons.addWidget(reinstall)
         elif not row.installed or self._can_reinstall(row):
             reinstall = QPushButton(self.tr("Reinstall"))
             reinstall.setProperty(
@@ -314,6 +430,11 @@ class ExtensionsPanel(QObject):
             settings.offered(one.id)
             settings.save()
             self._download(one.repo, one, review=False)
+
+    def update(self, update: Update) -> None:
+        """Download the newer version; the same dialog as any install shows
+        what is new before it replaces the one that is installed."""
+        self._download(update.repo, update.pin)
 
     def install_default(self, wanted: DefaultExtension) -> None:
         """Download the version of an extension that the app offers, which is
