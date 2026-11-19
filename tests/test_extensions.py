@@ -416,3 +416,18 @@ def test_the_app_names_the_language_it_shows_and_the_ones_it_has() -> None:
         ExtensionContext("dco.t", frozenset(), make_host()[0]).app.language_name
         == "English"
     )
+
+
+def test_a_page_added_by_an_extension_keeps_what_the_refresh_button_does() -> None:
+    host, _, _ = make_host()
+    context = ExtensionContext("dco.a", frozenset({"ui.page"}), host)
+    called: list[int] = []
+
+    context.add_page(
+        "AWS", "RDS", "Instances", object, refresh=lambda: called.append(1)
+    )
+
+    [page] = host.contributions.pages
+    assert page.refresh is not None
+    page.refresh()
+    assert called == [1]

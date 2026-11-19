@@ -253,7 +253,9 @@ class ExtensionContext:
     ) -> None:
         self._require("ui.page")
         self._host.contributions.pages.append(
-            PageContribution(self.id, section, group, title, factory, subtitle, visible)
+            PageContribution(
+                self.id, section, group, title, factory, subtitle, visible, refresh
+            )
         )
 
     def add_tab_kind(self, key: str, factory: Callable[..., Any]) -> None:
