@@ -1361,3 +1361,13 @@ def test_settings_show_a_language_of_an_older_version_as_its_current_code(
         window._load_settings_form()
         assert form.languageCombo.currentData() == current
     window.close()
+
+
+def test_the_window_offers_a_command_for_every_navigation_the_assistant_asks(
+    monkeypatch,
+) -> None:
+    window, _messages = _open(monkeypatch)
+
+    asked = {one.name for one in actions.ACTIONS if one.kind == "navigate"}
+
+    assert asked <= set(window.commands.names())
