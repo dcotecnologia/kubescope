@@ -99,6 +99,11 @@ class Context(Protocol):
         """Do in the window what the person could do by hand."""
         ...
 
+    def on_unload(self, callback: Callable[[], None]) -> None:
+        """Call `callback` when the extension is unloaded or reloaded, to close
+        what it created (a panel, a thread)."""
+        ...
+
     def add_dock(
         self, key: str, factory: Callable[..., Any], shortcut: str = ""
     ) -> None:

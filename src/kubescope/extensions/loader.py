@@ -80,6 +80,12 @@ class ExtensionLoader:
         self.loaded[extension] = result
         return result
 
+    def reload(self, one: Installed) -> Loaded:
+        """Unload an extension and load it again from its folder, as the author
+        sees it now (the manifest is read again by the caller)."""
+        self.unload(one.manifest.id)
+        return self.load(one)
+
     def unload(self, extension: str) -> None:
         """Stop an extension and forget its code; it can be loaded again."""
         result = self.loaded.pop(extension, None)

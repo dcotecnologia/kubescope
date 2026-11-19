@@ -6,6 +6,7 @@ it. No Qt.
 """
 
 import json
+import logging
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any
@@ -21,6 +22,8 @@ from kubescope.sdk import (
     TabKind,
     WriteModeOff,
 )
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -90,13 +93,24 @@ class ExtensionContext:
         self.permissions = permissions
         self._host = host
         self.events = ScopedEvents(host.events)
+        self._cleanups: list[Callable[[], None]] = []
         self.settings = ExtensionSettings(
             host.settings_data(extension), host.save_settings
         )
 
+    def on_unload(self, callback: Callable[[], None]) -> None:
+        """Call `callback` when the extension is unloaded (the app quits, it is
+        uninstalled, or it is reloaded), to close what it created."""
+        self._cleanups.append(callback)
+
     def close(self) -> None:
-        """The extension is unloaded: stop its handlers and drop what it
-        added."""
+        """The extension is unloaded: run its cleanups, stop its handlers and
+        drop what it added."""
+        while self._cleanups:
+            try:
+                self._cleanups.pop()()
+            except Exception:
+                logger.exception("A cleanup of the extension %s failed", self.id)
         self.events.close()
         self._host.contributions.remove_extension(self.id)
 

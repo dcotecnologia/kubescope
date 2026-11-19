@@ -34,6 +34,7 @@ logger = logging.getLogger(__name__)
 REGISTRY = "registry.json"
 _ID = re.compile(r"[a-z0-9][a-z0-9_.-]{0,99}")
 _SOURCE_MAX = 500
+MAX_DEPTH = 3  # folders down, where the manifest is looked for
 
 
 class StoreError(Exception):
@@ -50,6 +51,7 @@ class Candidate:
     folder: Path  # where it is staged
     replaces: Manifest | None = None  # the version installed now, if any
     content_changed: bool = False  # it replaces one whose sha256 differs
+    dev: bool = False  # linked, not copied: `folder` is the author's own
 
 
 @dataclass(frozen=True)
@@ -59,6 +61,7 @@ class Installed:
     source: str  # "bundled" for the ones that ship with the app
     sha256: str
     bundled: bool
+    dev: bool = False  # run from the author's folder, which is watched
 
 
 class ExtensionStore:
@@ -90,10 +93,13 @@ class ExtensionStore:
                     and isinstance(entry.get("source"), str)
                     and isinstance(entry.get("sha256"), str)
                 ):
-                    self._installed[key] = {
+                    kept = {
                         "source": entry["source"][:_SOURCE_MAX],
                         "sha256": entry["sha256"][:64],
                     }
+                    if isinstance(entry.get("path"), str):
+                        kept["path"] = entry["path"][:_SOURCE_MAX]
+                    self._installed[key] = kept
         removed = document.get("removed")
         if isinstance(removed, list):
             self._removed = {
@@ -136,14 +142,21 @@ class ExtensionStore:
         person did not uninstall and did not replace."""
         found: list[Installed] = []
         for extension, entry in sorted(self._installed.items()):
-            folder = self._folder(extension)
+            folder = Path(entry["path"]) if "path" in entry else self._folder(extension)
             try:
                 manifest = read_manifest(folder)
             except ManifestError:
                 logger.debug("The extension %s is damaged and is skipped", extension)
                 continue
             found.append(
-                Installed(manifest, folder, entry["source"], entry["sha256"], False)
+                Installed(
+                    manifest,
+                    folder,
+                    entry["source"],
+                    entry["sha256"],
+                    False,
+                    dev="path" in entry,
+                )
             )
         taken = {one.manifest.id for one in found}
         found += [
@@ -171,18 +184,14 @@ class ExtensionStore:
 
     # install
 
-    def prepare(self, data: bytes, source: str) -> Candidate:
-        """Unpack `data`, a zip, and say what it is; nothing is installed."""
+    def _new_staging(self) -> Path:
         staging = self.directory / "staging" / uuid.uuid4().hex
         staging.mkdir(parents=True)
-        try:
-            archive.extract(data, staging)
-            root = self._root(staging)
-            manifest = read_manifest(root)
-        except (archive.ArchiveError, ManifestError, StoreError) as error:
-            shutil.rmtree(staging, ignore_errors=True)
-            raise StoreError(str(error)) from error
-        digest = hashlib.sha256(data).hexdigest()
+        return staging
+
+    def _describe(self, staging: Path, digest: str, source: str) -> Candidate:
+        root = self._root(staging)
+        manifest = read_manifest(root)
         current = next(
             (one for one in self.installed() if one.manifest.id == manifest.id), None
         )
@@ -197,19 +206,72 @@ class ExtensionStore:
             ),
         )
 
+    def prepare(self, data: bytes, source: str) -> Candidate:
+        """Unpack `data`, a zip, and say what it is; nothing is installed."""
+        staging = self._new_staging()
+        try:
+            archive.extract(data, staging)
+            return self._describe(staging, hashlib.sha256(data).hexdigest(), source)
+        except (archive.ArchiveError, ManifestError, StoreError) as error:
+            shutil.rmtree(staging, ignore_errors=True)
+            raise StoreError(str(error)) from error
+
+    def prepare_folder(self, source: Path) -> Candidate:
+        """Copy the folder `source` and say what it is; nothing is installed.
+
+        The manifest is looked for in it, so any folder of the
+        repository will do.
+        """
+        staging = self._new_staging()
+        try:
+            archive.copy_tree(source, staging)
+            return self._describe(
+                staging, archive.tree_digest(staging), f"folder {source}"
+            )
+        except (archive.ArchiveError, ManifestError, StoreError) as error:
+            shutil.rmtree(staging, ignore_errors=True)
+            raise StoreError(str(error)) from error
+
+    def prepare_link(self, source: Path) -> Candidate:
+        """Say what the folder `source` is, to run it from where it is: nothing
+        is copied, so the author edits it and the app follows."""
+        try:
+            root = self._root(source.resolve())
+            manifest = read_manifest(root)
+        except (ManifestError, StoreError, OSError) as error:
+            raise StoreError(str(error)) from error
+        current = next(
+            (one for one in self.installed() if one.manifest.id == manifest.id), None
+        )
+        return Candidate(
+            manifest=manifest,
+            source=f"dev {root}"[:_SOURCE_MAX],
+            sha256="",
+            folder=root,
+            replaces=current.manifest if current else None,
+            dev=True,
+        )
+
     @staticmethod
     def _root(staging: Path) -> Path:
-        """The folder with the manifest: the archive's root, or the one folder
-        in it (what GitHub's zip of a repository has)."""
-        if (staging / MANIFEST_NAME).is_file():
-            return staging
-        folders = [
-            one
-            for one in staging.iterdir()
-            if one.is_dir() and one.name != "__MACOSX" and not one.is_symlink()
-        ]
-        if len(folders) == 1 and (folders[0] / MANIFEST_NAME).is_file():
-            return folders[0]
+        """The folder with the manifest, looked for from the top: the
+        shallowest one (a repository has its code in a folder, or in a folder
+        of its own)."""
+        level = [staging]
+        for _ in range(MAX_DEPTH + 1):
+            found = [folder for folder in level if (folder / MANIFEST_NAME).is_file()]
+            if len(found) == 1:
+                return found[0]
+            if found:
+                raise StoreError(f"There is more than one {MANIFEST_NAME} in it")
+            level = [
+                child
+                for folder in level
+                for child in sorted(folder.iterdir())
+                if child.is_dir()
+                and not child.is_symlink()
+                and child.name not in archive.IGNORED
+            ]
         raise StoreError(f"There is no {MANIFEST_NAME} in it")
 
     def _staging_of(self, candidate: Candidate) -> Path:
@@ -226,10 +288,12 @@ class ExtensionStore:
 
     def install(self, candidate: Candidate) -> Installed:
         """Put a prepared extension in place, replacing the one with its id."""
-        staged = self._staging_of(candidate)
         extension = candidate.manifest.id
         if not _ID.fullmatch(extension):
             raise StoreError("That is not a valid id")
+        if candidate.dev:
+            return self._link(candidate)
+        staged = self._staging_of(candidate)
         target = self._folder(extension)
         target.parent.mkdir(parents=True, exist_ok=True)
         previous = target.with_name(f"{extension}.old")
@@ -251,8 +315,27 @@ class ExtensionStore:
             candidate.manifest, target, candidate.source, candidate.sha256, False
         )
 
+    def _link(self, candidate: Candidate) -> Installed:
+        """Record that an extension runs from the folder of its author."""
+        extension = candidate.manifest.id
+        if "path" not in self._installed.get(extension, {}):
+            shutil.rmtree(self._folder(extension), ignore_errors=True)  # a copy
+        self._installed[extension] = {
+            "source": candidate.source,
+            "sha256": "",
+            "path": str(candidate.folder),
+        }
+        self._save()
+        logger.info("Linked the extension %s to %s", extension, candidate.folder)
+        return Installed(
+            candidate.manifest, candidate.folder, candidate.source, "", False, dev=True
+        )
+
     def discard(self, candidate: Candidate) -> None:
-        """Throw away a prepared extension the person declined."""
+        """Throw away a prepared extension the person declined (the folder of
+        one that is linked is the author's, and stays)."""
+        if candidate.dev:
+            return
         shutil.rmtree(self._staging_of(candidate), ignore_errors=True)
 
     # uninstall and reinstall
@@ -260,7 +343,8 @@ class ExtensionStore:
     def uninstall(self, extension: str) -> None:
         """Remove an installed extension; a bundled one is only set aside."""
         if extension in self._installed:
-            shutil.rmtree(self._folder(extension), ignore_errors=True)
+            if "path" not in self._installed[extension]:  # not the author's own
+                shutil.rmtree(self._folder(extension), ignore_errors=True)
             del self._installed[extension]
         elif any(one.manifest.id == extension for one in self._bundled()):
             self._removed.add(extension)

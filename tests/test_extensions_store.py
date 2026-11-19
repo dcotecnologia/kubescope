@@ -90,16 +90,46 @@ def test_the_folder_a_repository_zip_has_on_top_is_looked_into(tmp_path) -> None
     [
         {"tool.py": b""},
         {"a/tool.py": b"", "b/tool.py": b""},
-        {f"a/b/{MANIFEST_NAME}": manifest()},
+        {f"a/b/c/d/{MANIFEST_NAME}": manifest()},  # deeper than it is looked for
+        {f".git/{MANIFEST_NAME}": manifest()},  # in what a repository carries
     ],
 )
-def test_an_archive_without_a_manifest_in_its_root_is_refused(tmp_path, files) -> None:
+def test_an_archive_without_a_manifest_in_reach_is_refused(tmp_path, files) -> None:
     store = store_in(tmp_path)
 
     with pytest.raises(StoreError, match=f"There is no {MANIFEST_NAME}"):
         store.prepare(make_zip(files), "file x.zip")
 
     assert list((tmp_path / "ext" / "staging").iterdir()) == []
+
+
+def test_the_manifest_is_looked_for_down_the_folders(tmp_path) -> None:
+    store = store_in(tmp_path)
+    data = make_zip({f"repo-abc/extensions/tool/{MANIFEST_NAME}": manifest()})
+
+    assert store.prepare(data, "github dco/tool").folder.name == "tool"
+
+
+def test_the_shallowest_manifest_wins_and_two_at_one_depth_are_refused(
+    tmp_path,
+) -> None:
+    store = store_in(tmp_path)
+    shallow = make_zip(
+        {
+            f"{MANIFEST_NAME}": manifest("dco.top"),
+            f"examples/one/{MANIFEST_NAME}": manifest("dco.example"),
+        }
+    )
+    twins = make_zip(
+        {
+            f"a/{MANIFEST_NAME}": manifest("dco.a"),
+            f"b/{MANIFEST_NAME}": manifest("dco.b"),
+        }
+    )
+
+    assert store.prepare(shallow, "file x.zip").manifest.id == "dco.top"
+    with pytest.raises(StoreError, match="more than one"):
+        store.prepare(twins, "file x.zip")
 
 
 def test_a_bad_archive_or_manifest_is_refused_and_cleaned_up(tmp_path) -> None:
@@ -316,3 +346,157 @@ def test_the_gabi_that_ships_with_the_app_is_a_bundled_extension() -> None:
     [gabi] = store.installed()
     assert gabi.manifest.id == "dco.gabi" and gabi.bundled
     assert {"ui.dock", "cli"} <= gabi.manifest.permissions
+
+
+def make_folder(root: Path, version: str = "1.0.0", extra: str = "") -> Path:
+    """An extension as its author has it: code in src, and what a repository
+    carries."""
+    (root / "src" / "tool").mkdir(parents=True)
+    (root / MANIFEST_NAME).write_bytes(manifest(version=version))
+    (root / "src" / "tool" / "__init__.py").write_text(
+        "def activate(ctx): pass\n" + extra
+    )
+    (root / ".git").mkdir()
+    (root / ".git" / "HEAD").write_text("ref")
+    (root / "src" / "tool" / "__pycache__").mkdir()
+    (root / "src" / "tool" / "__pycache__" / "x.pyc").write_bytes(b"x")
+    return root
+
+
+def test_a_folder_is_copied_without_what_a_repository_carries(tmp_path) -> None:
+    store = store_in(tmp_path)
+    source = make_folder(tmp_path / "tool")
+
+    candidate = store.prepare_folder(source)
+
+    assert candidate.manifest.id == "dco.tool"
+    assert candidate.source == f"folder {source}"
+    assert (candidate.folder / "src" / "tool" / "__init__.py").is_file()
+    assert not (candidate.folder / ".git").exists()
+    assert not (candidate.folder / "src" / "tool" / "__pycache__").exists()
+    assert store.installed() == []  # nothing is installed yet
+    assert source.joinpath(".git", "HEAD").is_file()  # and the author's folder stays
+
+
+def test_a_folder_is_installed_and_its_content_hash_tells_a_change(tmp_path) -> None:
+    store = store_in(tmp_path)
+    source = make_folder(tmp_path / "tool")
+    first = store.install(store.prepare_folder(source))
+    unchanged = store.prepare_folder(source)
+    (source / "src" / "tool" / "__init__.py").write_text("def activate(ctx): 1\n")
+    changed = store.prepare_folder(source)
+
+    assert first.source == f"folder {source}"
+    assert not unchanged.content_changed
+    assert changed.content_changed and changed.replaces is not None
+
+
+def test_the_manifest_is_found_in_a_subfolder_of_the_folder(tmp_path) -> None:
+    store = store_in(tmp_path)
+    repository = tmp_path / "repo"
+    make_folder(repository / "extensions" / "tool")
+
+    assert store.prepare_folder(repository).manifest.id == "dco.tool"
+
+
+def test_a_folder_that_is_not_one_or_has_no_manifest_is_refused(tmp_path) -> None:
+    store = store_in(tmp_path)
+    (tmp_path / "empty").mkdir()
+
+    with pytest.raises(StoreError, match="It is not a folder"):
+        store.prepare_folder(tmp_path / "missing")
+    with pytest.raises(StoreError, match=f"There is no {MANIFEST_NAME}"):
+        store.prepare_folder(tmp_path / "empty")
+    assert list((tmp_path / "ext" / "staging").iterdir()) == []
+
+
+def test_a_folder_with_a_link_is_refused(tmp_path) -> None:
+    store = store_in(tmp_path)
+    source = make_folder(tmp_path / "tool")
+    (source / "src" / "link.py").symlink_to(source / "src" / "tool" / "__init__.py")
+
+    with pytest.raises(StoreError, match="It has a link"):
+        store.prepare_folder(source)
+
+
+def test_a_folder_can_be_linked_and_runs_from_where_it_is(tmp_path) -> None:
+    store = store_in(tmp_path)
+    source = make_folder(tmp_path / "tool")
+
+    candidate = store.prepare_link(source)
+    installed = store.install(candidate)
+
+    assert candidate.dev and candidate.sha256 == ""
+    assert candidate.source == f"dev {source.resolve()}"
+    assert installed.dev and installed.folder == source.resolve()
+    assert [one.dev for one in store.installed()] == [True]
+    assert not (tmp_path / "ext" / "installed").exists()  # nothing was copied
+    # the registry remembers it, and the manifest is read from the folder again
+    (source / MANIFEST_NAME).write_bytes(manifest(version="2.0.0"))
+    assert [one.manifest.version for one in store_in(tmp_path).installed()] == ["2.0.0"]
+
+
+def test_discarding_a_link_never_touches_the_folder_of_the_author(tmp_path) -> None:
+    store = store_in(tmp_path)
+    source = make_folder(tmp_path / "tool")
+
+    store.discard(store.prepare_link(source))
+
+    assert (source / MANIFEST_NAME).is_file()
+
+
+def test_uninstalling_a_link_keeps_the_folder_of_the_author(tmp_path) -> None:
+    store = store_in(tmp_path)
+    source = make_folder(tmp_path / "tool")
+    store.install(store.prepare_link(source))
+
+    store.uninstall("dco.tool")
+
+    assert store.installed() == []
+    assert (source / MANIFEST_NAME).is_file() and (source / "src").is_dir()
+
+
+def test_linking_replaces_a_copy_and_a_copy_replaces_a_link(tmp_path) -> None:
+    store = store_in(tmp_path)
+    source = make_folder(tmp_path / "tool")
+    copied = install(store, tool_zip())
+    store.install(store.prepare_link(source))
+
+    assert not copied.folder.exists()  # the copy is gone
+    assert [one.dev for one in store.installed()] == [True]
+
+    store.install(store.prepare_folder(source))  # now a copy again
+
+    [one] = store.installed()
+    assert not one.dev and one.folder != source.resolve()
+    assert source.is_dir()  # still the author's
+
+
+def test_a_folder_that_cannot_be_linked_is_refused(tmp_path) -> None:
+    store = store_in(tmp_path)
+    (tmp_path / "empty").mkdir()
+
+    with pytest.raises(StoreError, match=f"There is no {MANIFEST_NAME}"):
+        store.prepare_link(tmp_path / "empty")
+    with pytest.raises(StoreError):
+        store.prepare_link(tmp_path / "missing")
+
+
+def test_the_path_of_a_link_is_kept_and_trimmed_in_the_registry(tmp_path) -> None:
+    directory = tmp_path / "ext"
+    directory.mkdir()
+    (directory / REGISTRY).write_text(
+        json.dumps(
+            {
+                "installed": {
+                    "dco.a": {"source": "dev x", "sha256": "", "path": "p" * 900},
+                    "dco.b": {"source": "dev y", "sha256": "", "path": 5},
+                }
+            }
+        )
+    )
+
+    store = ExtensionStore(directory)
+
+    assert len(store._installed["dco.a"]["path"]) == 500
+    assert "path" not in store._installed["dco.b"]

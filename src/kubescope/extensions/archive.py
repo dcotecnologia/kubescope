@@ -6,7 +6,10 @@ a link, a repeated name, or more data than the limits allow is refused
 before it is written.
 """
 
+import hashlib
 import io
+import os
+import shutil
 import stat
 import zipfile
 from pathlib import Path
@@ -15,6 +18,22 @@ MAX_ARCHIVE = 20 * 1024 * 1024  # bytes of the zip
 MAX_FILES = 2000
 MAX_UNPACKED = 50 * 1024 * 1024  # bytes once unpacked
 _CHUNK = 64 * 1024
+# what a repository carries that an extension does not need
+IGNORED = frozenset(
+    {
+        ".git",
+        ".venv",
+        "venv",
+        "__pycache__",
+        "node_modules",
+        "dist",
+        "build",
+        ".pytest_cache",
+        ".ruff_cache",
+        ".mypy_cache",
+        "__MACOSX",
+    }
+)
 
 
 class ArchiveError(Exception):
@@ -69,3 +88,45 @@ def extract(data: bytes, destination: Path) -> None:
                     if written > MAX_UNPACKED:  # the sizes it declares can lie
                         raise ArchiveError("It is too big once unpacked")
                     out.write(chunk)
+
+
+def copy_tree(source: Path, destination: Path) -> None:
+    """Copy the folder `source` into the existing folder `destination`, under the
+    same limits as an archive: no links, and not more files or bytes than an
+    extension may have. What a repository carries besides the code (`.git`, a
+    virtual environment, caches) is left out."""
+    root = source.resolve()
+    if not root.is_dir():
+        raise ArchiveError("It is not a folder")
+    count = written = 0
+    for folder, names, files in os.walk(root, followlinks=False):
+        names[:] = sorted(name for name in names if name not in IGNORED)
+        here = Path(folder)
+        for name in names:
+            if (here / name).is_symlink():
+                raise ArchiveError(f"It has a link: {name!r}")
+        target = destination / here.relative_to(root)
+        target.mkdir(parents=True, exist_ok=True)
+        for name in sorted(files):
+            path = here / name
+            if path.is_symlink():
+                raise ArchiveError(f"It has a link: {name!r}")
+            count += 1
+            written += path.stat().st_size
+            if count > MAX_FILES:
+                raise ArchiveError("It has too many files")
+            if written > MAX_UNPACKED:
+                raise ArchiveError("It is too big")
+            shutil.copyfile(path, target / name)
+
+
+def tree_digest(root: Path) -> str:
+    """The sha256 of the files under `root`: their paths and their content."""
+    digest = hashlib.sha256()
+    for path in sorted(root.rglob("*")):
+        if path.is_file():
+            digest.update(path.relative_to(root).as_posix().encode())
+            digest.update(b"\0")
+            digest.update(path.read_bytes())
+            digest.update(b"\0")
+    return digest.hexdigest()
