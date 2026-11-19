@@ -46,7 +46,7 @@ from kubescope.ui.ui_settings_page import Ui_SettingsPage
 logger = logging.getLogger(__name__)
 
 FOLDER_SOURCE = "folder "  # how the store remembers an extension from a folder
-CARD_WIDTH = 300  # pixels a card needs at least
+CARD_WIDTH = 260  # pixels a card needs at least; two fit in a narrow window
 GAP = 14
 
 
@@ -96,7 +96,8 @@ class ExtensionsPanel(QObject):
 
     def eventFilter(self, watched: QObject, event: QEvent) -> bool:
         """More cards side by side when the page gives room for them."""
-        if event.type() == QEvent.Type.Resize and self._fit_columns() != self._columns:
+        shown = event.type() in (QEvent.Type.Resize, QEvent.Type.Show)
+        if shown and self._fit_columns() != self._columns:
             self.render()
         return False
 
