@@ -154,6 +154,7 @@ from kubescope.extensions.bundled.gabi.screen import (
 )
 from kubescope.extensions.bundled.gabi.session import ChatSession
 from kubescope.extensions.bundled.gabi.tab import AssistantTab
+from kubescope.extensions.registries import CommandRegistry
 from kubescope.forwards import Forward
 from kubescope.i18n import (
     apply_language,
@@ -1374,6 +1375,8 @@ class WorkloadWindow(QMainWindow):
         self._assistant_history = History(config_directory() / "assistant_history.json")
         self._assistant_tab: AssistantTab | None = None
         self._assistant_switching = False  # the assistant itself changes the context
+        self.commands = CommandRegistry()
+        self._register_commands()
         central = self.centralWidget()
         assert central is not None
         self.assistant_dock = AssistantDock(central)
@@ -6528,64 +6531,97 @@ class WorkloadWindow(QMainWindow):
         self._show_page(2)
         self._show_settings_section(1)
 
-    def _assistant_choose(
-        self, tab: AssistantTab, combo: QComboBox, value: str, what: str
+    def _register_commands(self) -> None:
+        """Offer what a person does by hand under a name, for the extensions.
+
+        Each command takes `report`, the function that tells the person
+        why it could not do what was asked.
+        """
+        commands = {
+            "open_view": self._command_open_view,
+            "set_namespace": self._command_set_namespace,
+            "search": self._command_search,
+            "switch_context": self._command_switch_context,
+            "open_page": self._command_open_page,
+            "switch_tab": self._command_switch_tab,
+            "show_logs": self._command_show_logs,
+            "refresh": self._command_refresh,
+            "show_details": self._command_show_details,
+        }
+        for name, command in commands.items():
+            self.commands.register(name, command)
+
+    def _choose(
+        self, combo: QComboBox, value: str, what: str, report: Callable[[str], None]
     ) -> bool:
         """Pick an entry of a combo by its data, and say so when it is not
         there."""
         index = combo.findData(value)
         if index < 0:
-            tab.note(
+            report(
                 self.tr("There is no {what} {value}.").format(what=what, value=value)
             )
             return False
         combo.setCurrentIndex(index)
         return True
 
+    def _command_open_view(self, view: str, report: Callable[[str], None]) -> None:
+        if view in EKS_VIEWS and not self.ui.navNodeGroups.isVisible():
+            report(self.tr("{view} is only in EKS contexts.").format(view=view))
+            return
+        self._open_list_view(view)
+
+    def _command_set_namespace(
+        self, namespace: str, report: Callable[[str], None]
+    ) -> None:
+        self._choose(self.namespace_combo, namespace, "namespace", report)
+
+    def _command_search(
+        self,
+        text: str,
+        report: Callable[[str], None],
+        regex: bool = False,
+        case: bool = False,
+    ) -> None:
+        self.search_regex_button.setChecked(regex)
+        self.search_case_button.setChecked(case)
+        self.search_input.setText(text)
+
+    def _command_switch_context(
+        self, context: str, report: Callable[[str], None]
+    ) -> bool:
+        """True when the window is on the context now."""
+        return self._choose(self.context_combo, context, "context", report)
+
+    def _command_open_page(self, page: str, report: Callable[[str], None]) -> None:
+        {
+            "overview": self.nav_overview,
+            "workloads_overview": self.nav_workloads_overview,
+            "settings": self.ui.settingsButton,
+        }[page].click()  # as the person would
+
+    def _command_refresh(self, report: Callable[[str], None]) -> None:
+        self._press_refresh()
+
+    def _command_show_details(
+        self, kind: str, namespace: str, name: str, report: Callable[[str], None]
+    ) -> None:
+        self._open_resource(kind, namespace, name)
+
     def _assistant_navigate(
         self, tab: AssistantTab, request: assistant_actions.Request
     ) -> None:
         """Do in the window what the assistant asked, as the person would."""
-        args = request.args
         name = request.action.name
-        if name == "open_view":
-            if args["view"] in EKS_VIEWS and not self.ui.navNodeGroups.isVisible():
-                tab.note(
-                    self.tr("{view} is only in EKS contexts.").format(view=args["view"])
-                )
-                return
-            self._open_list_view(args["view"])
-        elif name == "set_namespace":
-            self._assistant_choose(
-                tab, self.namespace_combo, args["namespace"], "namespace"
-            )
-        elif name == "search":
-            self.search_regex_button.setChecked(args.get("regex", False))
-            self.search_case_button.setChecked(args.get("case", False))
-            self.search_input.setText(args["text"])
-        elif name == "switch_context":
-            self._assistant_switching = True
-            try:
-                if self._assistant_choose(
-                    tab, self.context_combo, args["context"], "context"
-                ):
-                    tab.context = self._context()  # the chat follows
-            finally:
-                self._assistant_switching = False
-        elif name == "open_page":
-            {
-                "overview": self.nav_overview,
-                "workloads_overview": self.nav_workloads_overview,
-                "settings": self.ui.settingsButton,
-            }[args["page"]].click()  # as the person would
-        elif name == "switch_tab":
-            self._assistant_switch_tab(tab, args["title"])
-        elif name == "show_logs":
-            self._assistant_show_logs(tab, args)
-        elif name == "refresh":
-            self._press_refresh()
-        else:
-            self._open_resource(args["kind"], args["namespace"], args["name"])
+        if name != "switch_context":
+            self.commands.invoke(name, report=tab.note, **request.args)
+            return
+        self._assistant_switching = True
+        try:
+            if self.commands.invoke(name, report=tab.note, **request.args):
+                tab.context = self._context()  # the chat follows
+        finally:
+            self._assistant_switching = False
 
     def _open_tabs(self) -> list[tuple[int, str]]:
         """The Details and Logs tabs of this context, with their index."""
@@ -6596,7 +6632,7 @@ class WorkloadWindow(QMainWindow):
             == self._context()
         ]
 
-    def _assistant_switch_tab(self, tab: AssistantTab, title: str) -> None:
+    def _command_switch_tab(self, title: str, report: Callable[[str], None]) -> None:
         """Show the open tab whose title has the words, or say there is
         none."""
         wanted = title.strip().lower()
@@ -6604,60 +6640,59 @@ class WorkloadWindow(QMainWindow):
             (i for i, text in self._open_tabs() if wanted in text.lower()), None
         )
         if found is None:
-            tab.note(self.tr("There is no open tab {title}.").format(title=title))
+            report(self.tr("There is no open tab {title}.").format(title=title))
             return
         self.viewer_tabs.setCurrentIndex(found)
         self._show_page(3)
 
-    def _assistant_show_logs(self, tab: AssistantTab, args: dict[str, Any]) -> None:
+    def _command_show_logs(
+        self,
+        namespace: str,
+        pod: str,
+        report: Callable[[str], None],
+        container: str = "",
+    ) -> None:
         """Open the logs of a Pod, looking the Pod up as the lists do."""
         context = self._context()
-        namespace, name = args["namespace"], args["pod"]
 
         def found(result: tuple[list[str], list[PodInfo]]) -> None:
-            pod = next((p for p in result[1] if p.name == name), None)
-            if pod is None:
-                tab.note(self.tr("There is no Pod {name}.").format(name=name))
+            info = next((p for p in result[1] if p.name == pod), None)
+            if info is None:
+                report(self.tr("There is no Pod {name}.").format(name=pod))
                 return
-            choices = [*pod.containers, *pod.init_containers]
-            container = args.get("container") or ""
-            if not container and len(pod.containers) == 1:
-                container = pod.containers[0]  # the main one, never an init one
-            elif not container and not pod.containers and len(choices) == 1:
-                container = choices[0]  # only a setup container: nothing to choose
-            elif not container:
+            choices = [*info.containers, *info.init_containers]
+            chosen = container
+            if not chosen and len(info.containers) == 1:
+                chosen = info.containers[0]  # the main one, never an init one
+            elif not chosen and not info.containers and len(choices) == 1:
+                chosen = choices[0]  # only a setup container: nothing to choose
+            elif not chosen:
                 # never the first of the list: the init containers (a migration, a
                 # setup) come first in it, and they are rarely what is wanted
-                tab.note(
+                report(
                     self.tr(
                         "The Pod {name} has more than one container ({names}), and "
                         "none was said. Tell Gabi which one you want."
-                    ).format(name=name, names=", ".join(choices))
+                    ).format(name=pod, names=", ".join(choices))
                 )
                 return
-            if container not in choices:
-                tab.note(
+            if chosen not in choices:
+                report(
                     self.tr("The Pod {name} has no container {container}.").format(
-                        name=name, container=container
+                        name=pod, container=chosen
                     )
                 )
                 return
             self._run_action(
                 get_pod_logs,
-                lambda text: self._show_logs_dialog(pod, container, text),
+                lambda text: self._show_logs_dialog(info, chosen, text),
                 context,
-                pod.namespace,
-                pod.name,
-                container,
+                info.namespace,
+                info.name,
+                chosen,
             )
 
-        self._run_action(
-            get_pods,
-            found,
-            context,
-            namespace,
-            on_error=lambda message: tab.note(message),
-        )
+        self._run_action(get_pods, found, context, namespace, on_error=report)
 
     def _assistant_write(
         self, tab: AssistantTab, request: assistant_actions.Request
