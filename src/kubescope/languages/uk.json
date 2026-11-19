@@ -123,6 +123,7 @@
         "ExtensionsPanel": {
             "Bundled": "Вбудоване",
             "Choose the kubescope-extension.toml of the extension": "Виберіть kubescope-extension.toml розширення",
+            "Could not load: {error}": "Не вдалося завантажити: {error}",
             "Development": "Розробка",
             "Extension manifest (kubescope-extension.toml)": "Маніфест розширення (kubescope-extension.toml)",
             "Extensions": "Розширення",

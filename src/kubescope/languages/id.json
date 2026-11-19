@@ -123,6 +123,7 @@
         "ExtensionsPanel": {
             "Bundled": "Bawaan",
             "Choose the kubescope-extension.toml of the extension": "Pilih kubescope-extension.toml dari ekstensi",
+            "Could not load: {error}": "Tidak dapat dimuat: {error}",
             "Development": "Pengembangan",
             "Extension manifest (kubescope-extension.toml)": "Manifes ekstensi (kubescope-extension.toml)",
             "Extensions": "Ekstensi",

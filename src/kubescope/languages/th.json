@@ -123,6 +123,7 @@
         "ExtensionsPanel": {
             "Bundled": "มาพร้อมแอป",
             "Choose the kubescope-extension.toml of the extension": "เลือก kubescope-extension.toml ของส่วนขยาย",
+            "Could not load: {error}": "โหลดไม่ได้: {error}",
             "Development": "กำลังพัฒนา",
             "Extension manifest (kubescope-extension.toml)": "แมนิเฟสต์ของส่วนขยาย (kubescope-extension.toml)",
             "Extensions": "ส่วนขยาย",

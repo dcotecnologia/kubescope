@@ -123,6 +123,7 @@
         "ExtensionsPanel": {
             "Bundled": "기본 포함",
             "Choose the kubescope-extension.toml of the extension": "확장 프로그램의 kubescope-extension.toml 선택",
+            "Could not load: {error}": "불러올 수 없습니다: {error}",
             "Development": "개발",
             "Extension manifest (kubescope-extension.toml)": "확장 프로그램 매니페스트 (kubescope-extension.toml)",
             "Extensions": "확장 프로그램",

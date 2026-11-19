@@ -123,6 +123,7 @@
         "ExtensionsPanel": {
             "Bundled": "مضمّنة",
             "Choose the kubescope-extension.toml of the extension": "اختر ملف kubescope-extension.toml الخاص بالإضافة",
+            "Could not load: {error}": "تعذّر التحميل: {error}",
             "Development": "التطوير",
             "Extension manifest (kubescope-extension.toml)": "بيان الإضافة (kubescope-extension.toml)",
             "Extensions": "الإضافات",

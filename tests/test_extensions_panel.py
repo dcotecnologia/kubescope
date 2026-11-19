@@ -76,15 +76,22 @@ class Setup:
         self.form.setupUi(self.window)
         self.messages: list[str] = []
         self.downloads: list[Repo] = []
+        self.changes = 0
+        self.errors: dict[str, str] = {}
         self.panel = ExtensionsPanel(
             self.form,
             self.store,
             self.window,
             self.run_action,
             lambda _icon, _title, text: self.messages.append(text),
+            changed=self.changed,
+            load_errors=lambda: self.errors,
         )
         self.monkeypatch = monkeypatch
         self.dialogs: list[InstallExtensionDialog] = []
+
+    def changed(self) -> None:
+        self.changes += 1
 
     def run_action(self, operation, on_success, *arguments, on_error=None, **_):
         self.downloads.append(arguments[0])
@@ -460,3 +467,41 @@ def test_more_cards_sit_side_by_side_when_the_page_has_room(setup, tmp_path) -> 
 
     assert narrow == [(0, 0), (1, 0)] and wide == [(0, 0), (0, 1)]
     assert setup.panel.eventFilter(host, QEvent(QEvent.Type.Show)) is False
+
+
+def test_the_window_is_told_when_something_was_installed_or_removed(
+    setup, tmp_path
+) -> None:
+    setup.decide(True)
+    setup.pick_manifest(make_folder(tmp_path / "tool"))
+    setup.confirm(True)
+
+    setup.panel.install_from_folder()
+    assert setup.changes == 1
+    setup.card("Tool").buttons["Uninstall"].click()
+    assert setup.changes == 2
+    setup.card("Gabi").buttons["Uninstall"].click()
+    setup.card("Gabi").buttons["Reinstall"].click()
+    assert setup.changes == 4
+
+
+def test_declining_or_failing_to_install_tells_the_window_nothing(
+    setup, tmp_path
+) -> None:
+    setup.decide(False)
+    setup.pick_manifest(make_folder(tmp_path / "tool"))
+
+    setup.panel.install_from_folder()
+
+    assert setup.changes == 0
+
+
+def test_a_card_says_why_an_extension_did_not_load(setup) -> None:
+    setup.errors = {"dco.gabi": "boom"}
+
+    setup.panel.refresh()
+
+    assert "Could not load: boom" in setup.card("Gabi").texts
+    setup.errors = {}
+    setup.panel.refresh()
+    assert not any(t.startswith("Could not load") for t in setup.card("Gabi").texts)

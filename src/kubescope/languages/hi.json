@@ -123,6 +123,7 @@
         "ExtensionsPanel": {
             "Bundled": "पहले से शामिल",
             "Choose the kubescope-extension.toml of the extension": "एक्सटेंशन की kubescope-extension.toml चुनें",
+            "Could not load: {error}": "लोड नहीं हो सका: {error}",
             "Development": "विकास",
             "Extension manifest (kubescope-extension.toml)": "एक्सटेंशन का मैनिफ़ेस्ट (kubescope-extension.toml)",
             "Extensions": "एक्सटेंशन",

@@ -123,6 +123,7 @@
         "ExtensionsPanel": {
             "Bundled": "Tích hợp sẵn",
             "Choose the kubescope-extension.toml of the extension": "Chọn kubescope-extension.toml của tiện ích mở rộng",
+            "Could not load: {error}": "Không thể tải: {error}",
             "Development": "Phát triển",
             "Extension manifest (kubescope-extension.toml)": "Tệp kê khai của tiện ích mở rộng (kubescope-extension.toml)",
             "Extensions": "Tiện ích mở rộng",

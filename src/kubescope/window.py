@@ -103,6 +103,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from kubescope import cluster as cluster_module
 from kubescope import forwards, integrations
 from kubescope.about import (
     COMPANY_URL,
@@ -163,8 +164,11 @@ from kubescope.extensions.bundled.gabi.controller import GabiController, GabiPor
 from kubescope.extensions.bundled.gabi.runner import (
     is_available as is_available_assistant,
 )
+from kubescope.extensions.context import Host
+from kubescope.extensions.loader import ExtensionLoader
 from kubescope.extensions.registries import CommandRegistry
-from kubescope.extensions.store import ExtensionStore
+from kubescope.extensions.store import ExtensionStore, Installed
+from kubescope.extensions.window_ui import WindowUi
 from kubescope.forwards import Forward
 from kubescope.i18n import (
     apply_language,
@@ -180,6 +184,13 @@ from kubescope.screen import (
 )
 from kubescope.screen import (
     describe as describe_screen,
+)
+from kubescope.sdk import (
+    CONTEXT_CHANGED,
+    LANGUAGE_CHANGED,
+    SHUTDOWN,
+    THEME_CHANGED,
+    ClusterAccess,
 )
 from kubescope.settings import (
     Settings,
@@ -1182,15 +1193,19 @@ class WorkloadWindow(QMainWindow):
         self._settings_sections.addButton(self.settings_ui.shortcutsSectionButton, 3)
         self._settings_sections.addButton(self.settings_ui.integrationsSectionButton, 4)
         self._settings_sections.addButton(self.settings_ui.extensionsSectionButton, 5)
+        self.extension_store = ExtensionStore(
+            config_directory() / "extensions",
+            Path(bundled_extensions.__file__).parent,
+        )
+        self._extension_loader: ExtensionLoader | None = None  # made below
         self.extensions_panel = ExtensionsPanel(
             self.settings_ui,
-            ExtensionStore(
-                config_directory() / "extensions",
-                Path(bundled_extensions.__file__).parent,
-            ),
+            self.extension_store,
             self,
             self._run_action,
             self._show_message,
+            changed=lambda: self._sync_extensions(),
+            load_errors=lambda: self._extension_errors(),
         )
         self.settings_ui.shortcutsResetButton.clicked.connect(
             lambda: self._fill_shortcuts(shortcuts.DEFAULTS)
@@ -1379,6 +1394,7 @@ class WorkloadWindow(QMainWindow):
         if self.settings.sidebar_width:
             self.sidebar_resizer.set_width(self.settings.sidebar_width)
         self.sidebar_resizer.width_changed.connect(self._keep_sidebar_width)
+        self._corner_owners: dict[str, int] = {}  # pixels each one keeps clear
         self._corner_margins = {
             layout: layout.contentsMargins()
             for layout in (ui.footerRow, ui.appFooterLayout)
@@ -1402,9 +1418,32 @@ class WorkloadWindow(QMainWindow):
                 run_action=lambda *args, **kwargs: self._run_action(*args, **kwargs),
                 style_box=lambda box: self._style_box_buttons(box),
                 show_settings=lambda: self._show_assistant_settings(),
-                reserve_corner=lambda pixels: self._reserve_corner(pixels),
+                reserve_corner=lambda pixels: self._reserve_corner_for(
+                    "kubescope.gabi", pixels
+                ),
             )
         )
+        self.extension_host = Host(
+            cluster=cast(ClusterAccess, cluster_module),
+            snapshot=lambda: self._screen_snapshot(),
+            current_context=lambda: self._context() or None,
+            write_mode=lambda: self.settings.write_mode,
+            settings_data=self.settings.extension_data,
+            save_settings=lambda: self._save_settings(),
+            language=lambda: self.settings.language,
+            ui=WindowUi(
+                self,
+                central,
+                lambda icon, title, text: self._show_message(icon, title, text),
+                lambda *args, **kwargs: self._run_action(*args, **kwargs),
+                lambda box: self._style_box_buttons(box),
+                lambda section: self._show_extension_settings(section),
+                lambda owner, pixels: self._reserve_corner_for(owner, pixels),
+            ),
+            commands=self.commands,
+        )
+        self._extension_loader = ExtensionLoader(self.extension_host)
+        QTimer.singleShot(0, self, self._sync_extensions)  # once the window is built
         ui.settingsButton.setIcon(_gear_icon())
         ui.settingsButton.clicked.connect(lambda: self._show_page(2))
         # "/" is left to the text fields: typing in one does not open the search
@@ -2497,6 +2536,7 @@ class WorkloadWindow(QMainWindow):
                 restyle(tab.editor, tab.highlighter)
                 tab.restyle()
         self.gabi.restyle()
+        self.extension_host.events.emit(THEME_CHANGED)
         self._render_rows()
         if self._overview is not None:
             self._render_overview(self._overview)
@@ -2817,6 +2857,9 @@ class WorkloadWindow(QMainWindow):
     def _context_changed(self, *_args: object) -> None:
         logger.info("Context changed to %s", self._context())
         self.gabi.context_changed()
+        self.extension_host.events.emit(
+            CONTEXT_CHANGED, context=self._context() or None
+        )
         self._rds = None  # the instances are those of the context
         self._sync_aws_menu()  # an EKS context brings the AWS part of the menu
         if self.pages.currentIndex() == 5:
@@ -5332,6 +5375,73 @@ class WorkloadWindow(QMainWindow):
             )
         )
 
+    @property
+    def extension_loader(self) -> ExtensionLoader:
+        """The loader of the extensions; it exists once the window is built."""
+        assert self._extension_loader is not None
+        return self._extension_loader
+
+    def _reserve_corner_for(self, owner: str, pixels: int) -> None:
+        """Keep `pixels` of the corner clear for `owner`; the corner is as wide
+        as what everyone asked for together."""
+        if pixels:
+            self._corner_owners[owner] = pixels
+        else:
+            self._corner_owners.pop(owner, None)
+        self._reserve_corner(sum(self._corner_owners.values()))
+
+    @staticmethod
+    def _extension_signature(one: Installed) -> tuple[object, ...]:
+        """What tells that an installed extension is not the one that runs."""
+        manifest = one.manifest
+        return (
+            one.folder,
+            one.source,
+            one.sha256,
+            manifest.version,
+            manifest.entry,
+            manifest.permissions,
+        )
+
+    def _extension_errors(self) -> dict[str, str]:
+        """Why each extension that did not load did not."""
+        loader = self._extension_loader
+        return (
+            {name: one.error for name, one in loader.loaded.items() if one.error}
+            if loader is not None
+            else {}
+        )
+
+    def _sync_extensions(self) -> None:
+        """Run the installed extensions, and stop the ones that are not, or
+        that are not the version that runs (the app's own, Gabi, is not run
+        here yet)."""
+        loader = self._extension_loader
+        if loader is None:
+            return
+        wanted = {
+            one.manifest.id: one
+            for one in self.extension_store.installed()
+            if not one.bundled
+        }
+        for extension, loaded in list(loader.loaded.items()):
+            now = wanted.get(extension)
+            if now is None or self._extension_signature(
+                now
+            ) != self._extension_signature(loaded.installed):
+                loader.unload(extension)
+        for extension, one in wanted.items():
+            if extension not in loader.loaded:
+                loader.load(one)
+        self.extensions_panel.refresh()
+
+    def _show_extension_settings(self, section: str) -> None:
+        """Go to the Settings; the sections of the extensions come with
+        them."""
+        self.raise_()
+        self.activateWindow()
+        self._show_page(2)
+
     def _reserve_corner(self, pixels: int) -> None:
         """Keep what is at the right of the footer and of the note under the
         lists clear of what sits in that corner."""
@@ -7032,6 +7142,9 @@ class WorkloadWindow(QMainWindow):
         if self.settings.language != previous_language:
             apply_language(self.settings.language)
             self.gabi.refresh_system()  # the chat answers in the new one
+            self.extension_host.events.emit(
+                LANGUAGE_CHANGED, language=self.settings.language
+            )
         if self.settings.theme != previous_theme:
             logger.info("Theme changed to %s", self.settings.theme)
             self._apply_theme()
@@ -7347,6 +7460,9 @@ class WorkloadWindow(QMainWindow):
         self._remember_geometry()
         if self._tray is None or self._quitting:
             self.gabi.shutdown()
+            self.extension_host.events.emit(SHUTDOWN)
+            if self._extension_loader is not None:
+                self._extension_loader.unload_all()
         if self._tray is not None and not self._quitting:
             logger.info("Closing to the system tray")
             self.hide()
