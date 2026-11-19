@@ -36,10 +36,10 @@ def test_opening_the_catalog_searches_once_and_draws_a_card_per_chart(
         return Results([CHART], 1)
 
     monkeypatch.setattr(plugins_catalog, "search_charts", search)
-    window._show_page(7)
+    window._show_page(6)
     catalog = window.plugins_catalog
     _wait_until(lambda: catalog.charts is not None)
-    window._show_page(7)
+    window._show_page(6)
 
     assert asked == [""]
     assert window.ui.navPluginsCatalog.isChecked()

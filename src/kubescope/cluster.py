@@ -36,10 +36,7 @@ from kubescope.sdk.models import (
     KindSummary,
     NodeInfo,
     PodInfo,
-    RdsInstance,
-    RdsLogFile,
     SearchHit,
-    SsmTarget,
     Workload,
     WorkloadsOverview,
     age_seconds,
@@ -944,106 +941,6 @@ def _aws_json(
     return document if isinstance(document, dict) else {}
 
 
-def get_rds_instances(context: str, region: str = "") -> list[RdsInstance]:
-    """The RDS instances of the AWS account of an EKS context in a region (the
-    one of the context unless another is given), from `aws rds describe-db-
-    instances`; only that account is asked, with the profile or the keys the
-    context signs in with."""
-    scope_region, profile, account = _aws_scope(context)
-    region = region or scope_region
-    document = _aws_json(context, ["rds", "describe-db-instances"], region)
-    instances = []
-    for item in document.get("DBInstances") or []:
-        if not isinstance(item, dict):
-            continue
-        endpoint = item.get("Endpoint")
-        port = endpoint.get("Port") if isinstance(endpoint, dict) else None
-        storage = item.get("AllocatedStorage")
-        group = item.get("DBSubnetGroup")
-        instances.append(
-            RdsInstance(
-                account,
-                region,
-                str(item.get("DBInstanceIdentifier", "")),
-                str(item.get("Engine", "")),
-                str(item.get("EngineVersion", "")),
-                str(item.get("DBInstanceClass", "")),
-                str(item.get("DBInstanceStatus", "")),
-                storage if isinstance(storage, int) else 0,
-                item.get("MultiAZ") is True,
-                str(endpoint.get("Address") or "")
-                if isinstance(endpoint, dict)
-                else "",
-                port if isinstance(port, int) else 0,
-                profile,
-                str(group.get("VpcId") or "") if isinstance(group, dict) else "",
-            )
-        )
-    return sorted(instances, key=lambda row: row.identifier)
-
-
-def get_rds_details(context: str, identifier: str, region: str = "") -> dict[str, Any]:
-    """Everything `aws rds describe-db-instances` says about one instance."""
-    document = _aws_json(
-        context,
-        ["rds", "describe-db-instances", "--db-instance-identifier", identifier],
-        region,
-    )
-    items = [
-        item for item in document.get("DBInstances") or [] if isinstance(item, dict)
-    ]
-    if not items:
-        raise ClusterError(f"RDS instance {identifier} was not found")
-    return items[0]
-
-
-def get_rds_log_files(
-    context: str, identifier: str, region: str = ""
-) -> list[RdsLogFile]:
-    """The log files of an RDS instance, the one written last first."""
-    document = _aws_json(
-        context,
-        ["rds", "describe-db-log-files", "--db-instance-identifier", identifier],
-        region,
-    )
-    files = []
-    for item in document.get("DescribeDBLogFiles") or []:
-        if not (isinstance(item, dict) and item.get("LogFileName")):
-            continue
-        size, written = item.get("Size"), item.get("LastWritten")
-        files.append(
-            RdsLogFile(
-                str(item["LogFileName"]),
-                size if isinstance(size, int) else 0,
-                written if isinstance(written, int) else 0,
-            )
-        )
-    return sorted(files, key=lambda row: (-row.written, row.name))
-
-
-RDS_LOG_LINES = 1000  # what is read of the end of a log file
-
-
-def get_rds_log(context: str, identifier: str, name: str, region: str = "") -> str:
-    """The last lines of a log file of an RDS instance."""
-    document = _aws_json(
-        context,
-        [
-            "rds",
-            "download-db-log-file-portion",
-            "--db-instance-identifier",
-            identifier,
-            "--log-file-name",
-            name,
-            "--number-of-lines",
-            str(RDS_LOG_LINES),
-            "--no-paginate",
-        ],
-        region,
-    )
-    return str(document.get("LogFileData") or "")
-
-
 _PROVIDER_ID = re.compile(r"aws:///([a-z0-9-]+)/(i-[0-9a-f]+)")
 
 
@@ -1065,45 +962,6 @@ def get_node_instance(context: str, node: str) -> tuple[str, str, str]:
         region or found.group(1)[:-1],
         profile,
     )  # zone, less its letter
-
-
-def get_ssm_targets(context: str, vpc: str, region: str = "") -> list[SsmTarget]:
-    """The EC2 instances of the account that Systems Manager can reach, the
-    ones in the `vpc` of a database first: the ones a port can be forwarded
-    through."""
-    information = _aws_json(context, ["ssm", "describe-instance-information"], region)
-    online = [
-        str(item["InstanceId"])
-        for item in information.get("InstanceInformationList") or []
-        if isinstance(item, dict)
-        and item.get("PingStatus") == "Online"
-        and str(item.get("InstanceId", "")).startswith("i-")  # not a hybrid server
-    ]
-    if not online:
-        return []
-    reservations = _aws_json(
-        context, ["ec2", "describe-instances", "--instance-ids", *online], region
-    ).get("Reservations")
-    targets = []
-    for reservation in reservations or []:
-        for item in (reservation or {}).get("Instances") or []:
-            tags = {
-                tag.get("Key"): tag.get("Value")
-                for tag in item.get("Tags") or []
-                if isinstance(tag, dict)
-            }
-            where = str(item.get("VpcId") or "")
-            targets.append(
-                SsmTarget(
-                    str(item.get("InstanceId", "")),
-                    str(tags.get("Name") or ""),
-                    where,
-                    bool(vpc) and where == vpc,
-                )
-            )
-    return sorted(
-        targets, key=lambda row: (not row.same_vpc, row.name, row.instance_id)
-    )
 
 
 def _eks_json(

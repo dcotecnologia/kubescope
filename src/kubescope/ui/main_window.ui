@@ -58,7 +58,7 @@ QComboBox#contextCombo {
 }
 QWidget#sidebar { background: #ffffff; border-right: 1px solid #e1e3e9; }
 QScrollArea#sidebarScroll, QWidget#sidebarNav { background: transparent; border: 0; }
-QLabel#navSection, QLabel#navAwsSection, QLabel#filterLabel {
+QLabel#navSection, QLabel#filterLabel {
     color: #535d69; font-size: 9px; font-weight: 700;
 }
 QFrame#sidebarRule { color: #e6e7ed; }
@@ -193,7 +193,7 @@ QPushButton[nav="true"] {
 }
 QPushButton[nav="true"]:hover { background: #f6f6fa; }
 QFrame#workloadsSubmenu, QFrame#networkSubmenu, QFrame#configSubmenu,
-QFrame#rdsSubmenu, QFrame#pluginsSubmenu {
+QFrame#pluginsSubmenu {
     border: 0; border-left: 1px solid #d9dce4; margin-left: 19px;
 }
 QPushButton[nav="true"]:checked {
@@ -1960,96 +1960,6 @@ QPushButton#updateButton:hover { background: #f6f6fa; }
               </widget>
              </item>
 
-<item>
-              <widget class="QLabel" name="navAwsSection">
-               <property name="text">
-                <string>AWS</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QPushButton" name="navRds">
-               <property name="text">
-                <string>RDS</string>
-               </property>
-               <property name="minimumSize">
-                <size>
-                 <width>0</width>
-                 <height>24</height>
-                </size>
-               </property>
-               <property name="iconSize">
-                <size>
-                 <width>16</width>
-                 <height>16</height>
-                </size>
-               </property>
-               <property name="checkable">
-                <bool>false</bool>
-               </property>
-               <property name="checked">
-                <bool>false</bool>
-               </property>
-               <property name="nav" stdset="0">
-                <string notr="true">true</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QFrame" name="rdsSubmenu">
-               <property name="maximumSize">
-                <size>
-                 <width>16777215</width>
-                 <height>0</height>
-                </size>
-               </property>
-               <layout class="QVBoxLayout" name="rdsSubmenuLayout">
-                <property name="spacing">
-                 <number>0</number>
-                </property>
-                <property name="leftMargin">
-                 <number>4</number>
-                </property>
-                <property name="topMargin">
-                 <number>0</number>
-                </property>
-                <property name="rightMargin">
-                 <number>0</number>
-                </property>
-                <property name="bottomMargin">
-                 <number>0</number>
-                </property>
-                  <item>
-                   <widget class="QPushButton" name="navRdsInstances">
-                    <property name="text">
-                     <string>Instances</string>
-                    </property>
-                    <property name="minimumSize">
-                     <size>
-                      <width>0</width>
-                      <height>20</height>
-                     </size>
-                    </property>
-                    <property name="iconSize">
-                     <size>
-                      <width>16</width>
-                      <height>16</height>
-                     </size>
-                    </property>
-                    <property name="checkable">
-                     <bool>true</bool>
-                    </property>
-                    <property name="checked">
-                     <bool>false</bool>
-                    </property>
-                    <property name="nav" stdset="0">
-                     <string notr="true">true</string>
-                    </property>
-                   </widget>
-                  </item>
-               </layout>
-              </widget>
-             </item>
              <item>
               <spacer name="sidebarNavSpacer">
                <property name="orientation">
@@ -2170,19 +2080,6 @@ Resources in read-only mode</string>
             </item>
             <item>
              <widget class="QPushButton" name="workloadsRefreshButton">
-              <property name="toolTip">
-               <string>Refresh</string>
-              </property>
-              <property name="iconOnly" stdset="0">
-               <string notr="true">true</string>
-              </property>
-              <property name="variant" stdset="0">
-               <string notr="true">primary</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QPushButton" name="rdsRefreshButton">
               <property name="toolTip">
                <string>Refresh</string>
               </property>
@@ -3052,7 +2949,6 @@ Resources in read-only mode</string>
            <widget class="QWidget" name="settingsHost" />
            <widget class="QWidget" name="viewerHost" />
            <widget class="QWidget" name="workloadsOverviewHost" />
-           <widget class="QWidget" name="rdsHost" />
            <widget class="QWidget" name="forwardsHost" />
            <widget class="QWidget" name="pluginsHost" />
           </widget>

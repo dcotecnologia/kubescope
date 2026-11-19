@@ -662,3 +662,18 @@ def test_what_is_only_recommended_is_a_card_and_is_not_installed_by_itself(
 
     assert setup.downloads == [] and settings.extensions_offered == []
     assert setup.card("Tool").badge == "Recommended"
+
+
+def test_the_cards_fill_the_width_after_the_page_gets_narrower(setup, tmp_path) -> None:
+    with_defaults(setup, offered(tmp_path))
+    grid = setup.panel.form.extensionsCardsGrid
+    host = setup.panel.form.extensionsCardsHost
+    setup.panel.window.show()
+    widths = {}
+    for page in (1100, 700):
+        setup.panel.window.resize(page, 600)
+        application.processEvents()
+        application.processEvents()
+        widths[page] = [grid.itemAt(i).widget().width() for i in range(grid.count())]
+
+    assert min(widths[700]) >= host.width() - 2 * 14  # one column, the whole width

@@ -1,11 +1,6 @@
 import pytest
-from kubescope.sdk.models import RdsInstance
 from PySide6.QtWidgets import (
-    QApplication,
-    QComboBox,
     QDialog,
-    QLineEdit,
-    QPlainTextEdit,
     QPushButton,
     QSpinBox,
 )
@@ -79,7 +74,7 @@ def test_a_kubectl_forward_is_run_from_its_dialog_and_listed(
     assert command[:3] == ["kubectl", "--context", "prod"]
     assert command[-2:] == ["service/api", "9090:80"] and env == {}
     assert seen["result"] == QDialog.DialogCode.Accepted
-    assert window.pages.currentIndex() == 6
+    assert window.pages.currentIndex() == 5
 
 
 def test_a_forward_to_a_port_in_use_is_not_started(window, monkeypatch) -> None:
@@ -94,76 +89,7 @@ def test_a_forward_to_a_port_in_use_is_not_started(window, monkeypatch) -> None:
 
     assert "already in use" in messages[0]
     assert window.forward_runner.start.calls == []
-    assert window.pages.currentIndex() != 6
-
-
-def _instance() -> RdsInstance:
-    return RdsInstance(
-        "1", "us-east-1", "orders", "postgres", "15", "db.t3", "available", 20,
-        False, "orders.example.com", 5432, "work", "vpc-1",
-    )  # fmt: skip
-
-
-def test_an_ssm_forward_needs_an_instance_and_runs_with_the_keys_of_the_account(
-    window, monkeypatch
-) -> None:
-    monkeypatch.setattr(
-        window_module, "get_ssm_targets", lambda context, vpc, region="": []
-    )
-    monkeypatch.setattr(
-        window_module, "context_environment", lambda context: {"AWS_PROFILE": "work"}
-    )
-    messages = []
-    monkeypatch.setattr(
-        window, "_show_message", lambda icon, title, text: messages.append(text)
-    )
-
-    def click(dialog) -> None:
-        buttons = _buttons(dialog)
-        buttons["Run in KubeScope"].click()  # no instance yet
-        target = dialog.findChild(QComboBox)
-        target.setEditText("i-0abc")
-        buttons["Run in KubeScope"].click()
-        assert dialog.findChildren(QLineEdit)
-
-    _run(monkeypatch, click)
-
-    window._forward_rds(_instance())
-
-    assert "Type the ID of the EC2 instance" in messages[0]
-    title, kind, command, env, local, target = window.forward_runner.start.calls[0]
-    assert (title, kind, local) == ("RDS orders", "ssm", 15432)
-    assert target == "orders.example.com:5432" and env == {"AWS_PROFILE": "work"}
-    assert command[:4] == ["aws", "ssm", "start-session", "--target"]
-    assert "i-0abc" in command and "--profile" in command
-
-
-def test_each_shell_of_windows_has_its_own_copy_under_its_command(
-    window, monkeypatch
-) -> None:
-    monkeypatch.setattr(
-        window_module, "get_ssm_targets", lambda context, vpc, region="": []
-    )
-    monkeypatch.setattr(
-        window_module,
-        "ssm_forward_commands",
-        lambda *a: [("PowerShell", "aws ps"), ("cmd", "aws cmd")],
-    )
-    seen = {}
-
-    def inspect(dialog) -> None:
-        copies = [b for b in dialog.findChildren(QPushButton) if b.text() == "Copy"]
-        boxes = dialog.findChildren(QPlainTextEdit)
-        seen["copies"], seen["boxes"] = len(copies), [b.toPlainText() for b in boxes]
-        copies[1].click()
-        seen["clipboard"] = QApplication.clipboard().text()
-
-    _run(monkeypatch, inspect)
-
-    window._forward_rds(_instance())
-
-    assert seen["copies"] == 2 and seen["boxes"] == ["aws ps", "aws cmd"]
-    assert seen["clipboard"] == "aws cmd"
+    assert window.pages.currentIndex() != 5
 
 
 def _list(window, *items: Forward) -> None:
@@ -208,7 +134,7 @@ def test_the_forwards_page_lists_their_status_and_stops_them(
     ui.clearButton.click()  # only the finished ones go
     assert [item.number for item in runner.items] == [1]
     window.nav_forwards.click()
-    assert window.pages.currentIndex() == 6 and window.nav_forwards.isChecked()
+    assert window.pages.currentIndex() == 5 and window.nav_forwards.isChecked()
     assert window.ui.pageTitle.text() == "Port forwards"
     window._retranslate()
 

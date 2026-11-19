@@ -5,16 +5,27 @@ from kubescope import cluster, forwards
 from kubescope.extensions.context import ExtensionContext
 from kubescope.extensions.forward_access import ForwardsBridge, check_ssm
 from kubescope.sdk import PermissionDenied, WriteModeOff
-from kubescope.writes import ssm_forward_arguments
 from tests.test_extensions import make_host
 
 INSTANCE = "i-0123456789abcdef0"
 
 
 def command(instance=INSTANCE, profile="work"):
-    return ssm_forward_arguments(
-        instance, "db.example.com", 5432, 15432, "us-east-1", profile
-    )
+    """The command the AWS extension builds."""
+    return [
+        "aws",
+        "ssm",
+        "start-session",
+        "--target",
+        instance,
+        "--document-name",
+        "AWS-StartPortForwardingSessionToRemoteHost",
+        "--parameters",
+        '{"host":["db.example.com"],"portNumber":["5432"],"localPortNumber":["15432"]}',
+        "--region",
+        "us-east-1",
+        *(["--profile", profile] if profile else []),
+    ]
 
 
 def test_the_command_the_app_builds_is_accepted() -> None:

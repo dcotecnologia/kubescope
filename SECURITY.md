@@ -60,7 +60,7 @@ restart` does). Each of these asks for confirmation first (Cancel is the
   reads the Services of the namespace) and a local port you pick. The app does
   not run the shell command. The forward it can run for you, when you press
   **Run in KubeScope** in the dialog of a **Forward** (a Service, a Pod, a
-  StatefulSet or, with the **AWS** block, an RDS instance through AWS Systems
+  StatefulSet or, with the **AWS** extension, an RDS instance through AWS Systems
   Manager), is the same `kubectl port-forward` or `aws ssm start-session`
   command shown there, started as a program of your computer (`kubectl` or the
   AWS CLI with its Session Manager plugin has to be installed), with the
@@ -129,9 +129,9 @@ configure` so you type the keys there. Apart from the integrations below, the ap
   commands of the clusters that name it. The **AWS** block of the side menu, shown
   while an AWS account is plugged in or an SSO profile of the AWS CLI is signed in
   (the app reads only the address, the expiry and whether it can be renewed of
-  the cached SSO sign-ins in `~/.aws/sso/cache`, never the value of a token), lists its RDS instances with `aws rds
-  describe-db-instances` for each region of the account, with the keys of that
-  account; it only reads. **Remove** in the menu of an account
+  the cached SSO sign-ins in `~/.aws/sso/cache`, never the value of a token), reads it with the AWS CLI and the keys of that
+  account, and only reads: the **AWS** extension lists its RDS instances with `aws rds
+  describe-db-instances` (see the extensions below). **Remove** in the menu of an account
   deletes its folder, which also holds what `az` and `gcloud` keep of their own
   sign-in for it. One limit to know: `az login --service-principal` takes the
   client secret as an argument, which another process of your computer can see
