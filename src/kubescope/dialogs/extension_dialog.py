@@ -40,7 +40,17 @@ class InstallExtensionDialog(QDialog):
         form.addRow(
             self.tr("Permissions"), self._selectable(self._permissions(candidate))
         )
-        form.addRow(self.tr("SHA-256"), self._selectable(candidate.sha256))
+        if candidate.dev:
+            development = QLabel(
+                self.tr(
+                    "Development mode: it runs from this folder, without a copy, "
+                    "and reloads when its files change."
+                )
+            )
+            development.setWordWrap(True)
+            layout.addWidget(development)
+        else:
+            form.addRow(self.tr("SHA-256"), self._selectable(candidate.sha256))
         if candidate.replaces is not None:
             version = candidate.replaces.version
             notes = [

@@ -16,10 +16,11 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
 from PySide6.QtWidgets import (QAbstractItemView, QApplication, QCheckBox, QComboBox,
-    QFormLayout, QFrame, QHBoxLayout, QHeaderView,
-    QLabel, QLineEdit, QListWidget, QListWidgetItem,
-    QPushButton, QScrollArea, QSizePolicy, QSpacerItem,
-    QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget)
+    QFormLayout, QFrame, QGridLayout, QHBoxLayout,
+    QHeaderView, QLabel, QLineEdit, QListWidget,
+    QListWidgetItem, QPushButton, QScrollArea, QSizePolicy,
+    QSpacerItem, QTableWidget, QTableWidgetItem, QVBoxLayout,
+    QWidget)
 
 class Ui_SettingsPage(object):
     def setupUi(self, SettingsPage):
@@ -560,35 +561,13 @@ class Ui_SettingsPage(object):
 
         self.extensionsCardLayout.addWidget(self.extensionsHint)
 
-        self.extensionsTable = QTableWidget(self.extensionsCard)
-        if (self.extensionsTable.columnCount() < 4):
-            self.extensionsTable.setColumnCount(4)
-        __qtablewidgetitem2 = QTableWidgetItem()
-        self.extensionsTable.setHorizontalHeaderItem(0, __qtablewidgetitem2)
-        __qtablewidgetitem3 = QTableWidgetItem()
-        self.extensionsTable.setHorizontalHeaderItem(1, __qtablewidgetitem3)
-        __qtablewidgetitem4 = QTableWidgetItem()
-        self.extensionsTable.setHorizontalHeaderItem(2, __qtablewidgetitem4)
-        __qtablewidgetitem5 = QTableWidgetItem()
-        self.extensionsTable.setHorizontalHeaderItem(3, __qtablewidgetitem5)
-        self.extensionsTable.setObjectName(u"extensionsTable")
-        self.extensionsTable.setMinimumSize(QSize(0, 220))
-        self.extensionsTable.setEditTriggers(QAbstractItemView.NoEditTriggers)
-        self.extensionsTable.setSelectionBehavior(QAbstractItemView.SelectRows)
-        self.extensionsTable.setSelectionMode(QAbstractItemView.SingleSelection)
-        self.extensionsTable.setProperty(u"variant", u"data")
-        self.extensionsTable.horizontalHeader().setStretchLastSection(True)
-        self.extensionsTable.verticalHeader().setVisible(False)
-
-        self.extensionsCardLayout.addWidget(self.extensionsTable)
-
         self.extensionsButtonsRow = QHBoxLayout()
         self.extensionsButtonsRow.setObjectName(u"extensionsButtonsRow")
-        self.extensionsInstallFileButton = QPushButton(self.extensionsCard)
-        self.extensionsInstallFileButton.setObjectName(u"extensionsInstallFileButton")
-        self.extensionsInstallFileButton.setProperty(u"variant", u"primary")
+        self.extensionsInstallFolderButton = QPushButton(self.extensionsCard)
+        self.extensionsInstallFolderButton.setObjectName(u"extensionsInstallFolderButton")
+        self.extensionsInstallFolderButton.setProperty(u"variant", u"primary")
 
-        self.extensionsButtonsRow.addWidget(self.extensionsInstallFileButton)
+        self.extensionsButtonsRow.addWidget(self.extensionsInstallFolderButton)
 
         self.extensionsInstallRepoButton = QPushButton(self.extensionsCard)
         self.extensionsInstallRepoButton.setObjectName(u"extensionsInstallRepoButton")
@@ -596,17 +575,10 @@ class Ui_SettingsPage(object):
 
         self.extensionsButtonsRow.addWidget(self.extensionsInstallRepoButton)
 
-        self.extensionsReinstallButton = QPushButton(self.extensionsCard)
-        self.extensionsReinstallButton.setObjectName(u"extensionsReinstallButton")
-        self.extensionsReinstallButton.setProperty(u"variant", u"secondary")
+        self.extensionsDevCheck = QCheckBox(self.extensionsCard)
+        self.extensionsDevCheck.setObjectName(u"extensionsDevCheck")
 
-        self.extensionsButtonsRow.addWidget(self.extensionsReinstallButton)
-
-        self.extensionsUninstallButton = QPushButton(self.extensionsCard)
-        self.extensionsUninstallButton.setObjectName(u"extensionsUninstallButton")
-        self.extensionsUninstallButton.setProperty(u"variant", u"secondary")
-
-        self.extensionsButtonsRow.addWidget(self.extensionsUninstallButton)
+        self.extensionsButtonsRow.addWidget(self.extensionsDevCheck)
 
         self.extensionsButtonsSpacer = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
 
@@ -614,6 +586,15 @@ class Ui_SettingsPage(object):
 
 
         self.extensionsCardLayout.addLayout(self.extensionsButtonsRow)
+
+        self.extensionsCardsHost = QWidget(self.extensionsCard)
+        self.extensionsCardsHost.setObjectName(u"extensionsCardsHost")
+        self.extensionsCardsGrid = QGridLayout(self.extensionsCardsHost)
+        self.extensionsCardsGrid.setSpacing(14)
+        self.extensionsCardsGrid.setObjectName(u"extensionsCardsGrid")
+        self.extensionsCardsGrid.setContentsMargins(0, 4, 0, 0)
+
+        self.extensionsCardLayout.addWidget(self.extensionsCardsHost)
 
 
         self.settingsContentLayout.addWidget(self.extensionsCard)
@@ -641,10 +622,10 @@ class Ui_SettingsPage(object):
         self.shortcutsTable = QTableWidget(self.shortcutsCard)
         if (self.shortcutsTable.columnCount() < 2):
             self.shortcutsTable.setColumnCount(2)
-        __qtablewidgetitem6 = QTableWidgetItem()
-        self.shortcutsTable.setHorizontalHeaderItem(0, __qtablewidgetitem6)
-        __qtablewidgetitem7 = QTableWidgetItem()
-        self.shortcutsTable.setHorizontalHeaderItem(1, __qtablewidgetitem7)
+        __qtablewidgetitem2 = QTableWidgetItem()
+        self.shortcutsTable.setHorizontalHeaderItem(0, __qtablewidgetitem2)
+        __qtablewidgetitem3 = QTableWidgetItem()
+        self.shortcutsTable.setHorizontalHeaderItem(1, __qtablewidgetitem3)
         self.shortcutsTable.setObjectName(u"shortcutsTable")
         self.shortcutsTable.setMinimumSize(QSize(0, 300))
         self.shortcutsTable.setSelectionMode(QAbstractItemView.NoSelection)
@@ -695,24 +676,24 @@ class Ui_SettingsPage(object):
         self.contextsTable = QTableWidget(self.contextsCard)
         if (self.contextsTable.columnCount() < 2):
             self.contextsTable.setColumnCount(2)
-        __qtablewidgetitem8 = QTableWidgetItem()
-        self.contextsTable.setHorizontalHeaderItem(0, __qtablewidgetitem8)
-        __qtablewidgetitem9 = QTableWidgetItem()
-        self.contextsTable.setHorizontalHeaderItem(1, __qtablewidgetitem9)
+        __qtablewidgetitem4 = QTableWidgetItem()
+        self.contextsTable.setHorizontalHeaderItem(0, __qtablewidgetitem4)
+        __qtablewidgetitem5 = QTableWidgetItem()
+        self.contextsTable.setHorizontalHeaderItem(1, __qtablewidgetitem5)
         if (self.contextsTable.rowCount() < 2):
             self.contextsTable.setRowCount(2)
-        __qtablewidgetitem10 = QTableWidgetItem()
-        __qtablewidgetitem10.setText(u"prod-eks")
-        self.contextsTable.setItem(0, 0, __qtablewidgetitem10)
-        __qtablewidgetitem11 = QTableWidgetItem()
-        __qtablewidgetitem11.setText(u"Production")
-        self.contextsTable.setItem(0, 1, __qtablewidgetitem11)
-        __qtablewidgetitem12 = QTableWidgetItem()
-        __qtablewidgetitem12.setText(u"staging-eks")
-        self.contextsTable.setItem(1, 0, __qtablewidgetitem12)
-        __qtablewidgetitem13 = QTableWidgetItem()
-        __qtablewidgetitem13.setText(u"Staging")
-        self.contextsTable.setItem(1, 1, __qtablewidgetitem13)
+        __qtablewidgetitem6 = QTableWidgetItem()
+        __qtablewidgetitem6.setText(u"prod-eks")
+        self.contextsTable.setItem(0, 0, __qtablewidgetitem6)
+        __qtablewidgetitem7 = QTableWidgetItem()
+        __qtablewidgetitem7.setText(u"Production")
+        self.contextsTable.setItem(0, 1, __qtablewidgetitem7)
+        __qtablewidgetitem8 = QTableWidgetItem()
+        __qtablewidgetitem8.setText(u"staging-eks")
+        self.contextsTable.setItem(1, 0, __qtablewidgetitem8)
+        __qtablewidgetitem9 = QTableWidgetItem()
+        __qtablewidgetitem9.setText(u"Staging")
+        self.contextsTable.setItem(1, 1, __qtablewidgetitem9)
         self.contextsTable.setObjectName(u"contextsTable")
         self.contextsTable.setMinimumSize(QSize(0, 260))
         self.contextsTable.setSelectionMode(QAbstractItemView.SingleSelection)
@@ -821,32 +802,26 @@ class Ui_SettingsPage(object):
         self.loginAddButton.setText(QCoreApplication.translate("SettingsPage", u"Add row", None))
         self.loginRemoveButton.setText(QCoreApplication.translate("SettingsPage", u"Remove", None))
         self.extensionsHeading.setText(QCoreApplication.translate("SettingsPage", u"EXTENSIONS", None))
-        self.extensionsHint.setText(QCoreApplication.translate("SettingsPage", u"An extension adds a feature to KubeScope, like Gabi. It is code that runs with your permissions, so install only the ones you trust. Changes apply the next time KubeScope starts.", None))
-        ___qtablewidgetitem2 = self.extensionsTable.horizontalHeaderItem(0)
-        ___qtablewidgetitem2.setText(QCoreApplication.translate("SettingsPage", u"EXTENSION", None))
-        ___qtablewidgetitem3 = self.extensionsTable.horizontalHeaderItem(1)
-        ___qtablewidgetitem3.setText(QCoreApplication.translate("SettingsPage", u"VERSION", None))
-        ___qtablewidgetitem4 = self.extensionsTable.horizontalHeaderItem(2)
-        ___qtablewidgetitem4.setText(QCoreApplication.translate("SettingsPage", u"SOURCE", None))
-        ___qtablewidgetitem5 = self.extensionsTable.horizontalHeaderItem(3)
-        ___qtablewidgetitem5.setText(QCoreApplication.translate("SettingsPage", u"STATUS", None))
-        self.extensionsInstallFileButton.setText(QCoreApplication.translate("SettingsPage", u"Install from a zip...", None))
+        self.extensionsHint.setText(QCoreApplication.translate("SettingsPage", u"An extension adds a feature to KubeScope, like Gabi. It is code that runs with your permissions, so install only the ones you trust. KubeScope looks for the kubescope-extension.toml in the folder or the repository you give it. Changes apply the next time KubeScope starts.", None))
+        self.extensionsInstallFolderButton.setText(QCoreApplication.translate("SettingsPage", u"Install from a folder...", None))
         self.extensionsInstallRepoButton.setText(QCoreApplication.translate("SettingsPage", u"Install from GitHub...", None))
-        self.extensionsReinstallButton.setText(QCoreApplication.translate("SettingsPage", u"Reinstall", None))
-        self.extensionsUninstallButton.setText(QCoreApplication.translate("SettingsPage", u"Uninstall", None))
+        self.extensionsDevCheck.setText(QCoreApplication.translate("SettingsPage", u"Development mode", None))
+#if QT_CONFIG(tooltip)
+        self.extensionsDevCheck.setToolTip(QCoreApplication.translate("SettingsPage", u"Run the extension from its own folder, without a copy, and reload it when its files change. Only for a folder.", None))
+#endif // QT_CONFIG(tooltip)
         self.shortcutsHeading.setText(QCoreApplication.translate("SettingsPage", u"KEYBOARD SHORTCUTS", None))
         self.shortcutsHint.setText(QCoreApplication.translate("SettingsPage", u"Click a shortcut and press the keys you want (two keys one after the other, like G then P, work too); Backspace clears it, and a shortcut left empty is off. Press Save to apply.", None))
-        ___qtablewidgetitem6 = self.shortcutsTable.horizontalHeaderItem(0)
-        ___qtablewidgetitem6.setText(QCoreApplication.translate("SettingsPage", u"ACTION", None))
-        ___qtablewidgetitem7 = self.shortcutsTable.horizontalHeaderItem(1)
-        ___qtablewidgetitem7.setText(QCoreApplication.translate("SettingsPage", u"SHORTCUT", None))
+        ___qtablewidgetitem2 = self.shortcutsTable.horizontalHeaderItem(0)
+        ___qtablewidgetitem2.setText(QCoreApplication.translate("SettingsPage", u"ACTION", None))
+        ___qtablewidgetitem3 = self.shortcutsTable.horizontalHeaderItem(1)
+        ___qtablewidgetitem3.setText(QCoreApplication.translate("SettingsPage", u"SHORTCUT", None))
         self.shortcutsResetButton.setText(QCoreApplication.translate("SettingsPage", u"Restore defaults", None))
         self.contextsHeading.setText(QCoreApplication.translate("SettingsPage", u"CONTEXT NAMES", None))
         self.contextsHint.setText(QCoreApplication.translate("SettingsPage", u"Give your contexts friendlier names. Leave a name empty to keep the original one.", None))
-        ___qtablewidgetitem8 = self.contextsTable.horizontalHeaderItem(0)
-        ___qtablewidgetitem8.setText(QCoreApplication.translate("SettingsPage", u"CONTEXT", None))
-        ___qtablewidgetitem9 = self.contextsTable.horizontalHeaderItem(1)
-        ___qtablewidgetitem9.setText(QCoreApplication.translate("SettingsPage", u"DISPLAY NAME", None))
+        ___qtablewidgetitem4 = self.contextsTable.horizontalHeaderItem(0)
+        ___qtablewidgetitem4.setText(QCoreApplication.translate("SettingsPage", u"CONTEXT", None))
+        ___qtablewidgetitem5 = self.contextsTable.horizontalHeaderItem(1)
+        ___qtablewidgetitem5.setText(QCoreApplication.translate("SettingsPage", u"DISPLAY NAME", None))
 
         __sortingEnabled = self.contextsTable.isSortingEnabled()
         self.contextsTable.setSortingEnabled(False)

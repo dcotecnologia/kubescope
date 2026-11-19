@@ -1,4 +1,6 @@
-from tests.qt import cell
+from PySide6.QtWidgets import QLabel
+
+from tests.qt import present
 from tests.test_window_flows import _ready_window
 
 
@@ -17,15 +19,13 @@ def test_the_settings_have_a_section_for_the_extensions(monkeypatch) -> None:
     assert not form.generalCard.isVisibleTo(content)
 
 
-def test_the_bundled_gabi_is_listed_in_the_section(monkeypatch) -> None:
+def test_the_bundled_gabi_is_a_card_in_the_section(monkeypatch) -> None:
     window = _ready_window(monkeypatch)
 
     window.settings_ui.extensionsSectionButton.click()
 
-    table = window.settings_ui.extensionsTable
-    assert [cell(table, 0, column).text() for column in range(4)] == [
-        "Gabi",
-        "1.0.0",
-        "Bundled",
-        "Installed",
-    ]
+    grid = window.settings_ui.extensionsCardsGrid
+    [card] = [present(grid.itemAt(i)).widget() for i in range(grid.count())]
+    title = present(card).findChild(QLabel, "extensionCardTitle")
+    badge = present(card).findChild(QLabel, "extensionCardBadge")
+    assert present(title).text() == "Gabi" and present(badge).text() == "Bundled"

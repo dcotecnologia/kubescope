@@ -206,20 +206,29 @@ configure` so you type the keys there. Apart from the integrations below, the ap
   Windows installer runs silently for your user. A Flatpak or a source checkout
   never updates itself.
 - **An extension is code that runs in the app.** The app ships one extension, Gabi,
-  and **Settings → Extensions** can install others from a zip file or from a GitHub
-  repository. An extension is Python that runs with your permissions, so install
-  only the ones you trust: the permissions its manifest lists (the cluster it reads
-  or changes, programs it runs, the parts of the window it adds) tell you what it
-  does, and the app holds it to them, but they are not a sandbox. Nothing of an
-  extension runs before you confirm a dialog that shows where it came from, its
-  version, the permissions it asks for and the sha256 of its archive; an update whose
-  content differs asks again. The archive is unpacked with strict limits (size, number
-  of files) and refuses names that leave its folder, links and repeated names. The
-  repository is downloaded only when you ask, over HTTPS from `api.github.com`
-  (which sends the zip from `codeload.github.com`), sending a `User-Agent` with the
-  app version and nothing else. Uninstalling an extension deletes its folder; the
-  app's own extension is only set aside, and you can reinstall it. Writes by an
-  extension still need the write mode.
+  and **Settings → Extensions** can install others from a folder on your computer
+  or from a GitHub repository. An extension is Python that runs with your
+  permissions, so install only the ones you trust: the permissions its manifest
+  lists (the cluster it reads or changes, programs it runs, the parts of the
+  window it adds) tell you what it does, and the app holds it to them, but they
+  are not a sandbox. The app looks for the `kubescope-extension.toml` in what you
+  give it (down at most three folders, and refuses two at the same level). Nothing
+  of an extension runs before you confirm a dialog that shows where it came from,
+  its version, the permissions it asks for and the sha256 of its content; an update
+  whose content differs asks again. What is copied is limited (size, number of
+  files), refuses links and names that leave its folder, and leaves out `.git`, a
+  virtual environment and caches. The repository is downloaded only when you ask,
+  over HTTPS from `api.github.com` (which sends the zip from
+  `codeload.github.com`), sending a `User-Agent` with the app version and nothing
+  else. Uninstalling an extension deletes its folder; the app's own extension is
+  only set aside, and you can reinstall it. Writes by an extension still need the
+  write mode.
+- **Development mode runs a folder in place.** With **Development mode** ticked, a
+  folder is not copied: the extension runs from where it is, and is reloaded when
+  its files change, so whoever can edit that folder can change what runs. There is
+  no sha256 to compare, and the dialog says so. It is meant for the author of an
+  extension, on their own computer. Uninstalling it, or declining the dialog, never
+  deletes that folder.
 - **Local settings hold no secrets.** `settings.json` keeps the language, the
   last context, the page and list you were on, context display names, hidden table columns, the pinned lists, the size
   and position of the window, and the size and place of the assistant panel. It lives in your

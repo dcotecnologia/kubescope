@@ -1063,7 +1063,7 @@
           <item>
            <widget class="QLabel" name="extensionsHint">
             <property name="text">
-             <string>An extension adds a feature to KubeScope, like Gabi. It is code that runs with your permissions, so install only the ones you trust. Changes apply the next time KubeScope starts.</string>
+             <string>An extension adds a feature to KubeScope, like Gabi. It is code that runs with your permissions, so install only the ones you trust. KubeScope looks for the kubescope-extension.toml in the folder or the repository you give it. Changes apply the next time KubeScope starts.</string>
             </property>
             <property name="wordWrap">
              <bool>true</bool>
@@ -1074,59 +1074,11 @@
            </widget>
           </item>
           <item>
-           <widget class="QTableWidget" name="extensionsTable">
-            <property name="minimumSize">
-             <size>
-              <width>0</width>
-              <height>220</height>
-             </size>
-            </property>
-            <property name="editTriggers">
-             <set>QAbstractItemView::NoEditTriggers</set>
-            </property>
-            <property name="selectionBehavior">
-             <enum>QAbstractItemView::SelectRows</enum>
-            </property>
-            <property name="selectionMode">
-             <enum>QAbstractItemView::SingleSelection</enum>
-            </property>
-            <attribute name="verticalHeaderVisible">
-             <bool>false</bool>
-            </attribute>
-            <attribute name="horizontalHeaderStretchLastSection">
-             <bool>true</bool>
-            </attribute>
-            <column>
-             <property name="text">
-              <string>EXTENSION</string>
-             </property>
-            </column>
-            <column>
-             <property name="text">
-              <string>VERSION</string>
-             </property>
-            </column>
-            <column>
-             <property name="text">
-              <string>SOURCE</string>
-             </property>
-            </column>
-            <column>
-             <property name="text">
-              <string>STATUS</string>
-             </property>
-            </column>
-            <property name="variant" stdset="0">
-             <string notr="true">data</string>
-            </property>
-           </widget>
-          </item>
-          <item>
            <layout class="QHBoxLayout" name="extensionsButtonsRow">
             <item>
-             <widget class="QPushButton" name="extensionsInstallFileButton">
+             <widget class="QPushButton" name="extensionsInstallFolderButton">
               <property name="text">
-               <string>Install from a zip...</string>
+               <string>Install from a folder...</string>
               </property>
               <property name="variant" stdset="0">
                <string notr="true">primary</string>
@@ -1144,22 +1096,12 @@
              </widget>
             </item>
             <item>
-             <widget class="QPushButton" name="extensionsReinstallButton">
+             <widget class="QCheckBox" name="extensionsDevCheck">
               <property name="text">
-               <string>Reinstall</string>
+               <string>Development mode</string>
               </property>
-              <property name="variant" stdset="0">
-               <string notr="true">secondary</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QPushButton" name="extensionsUninstallButton">
-              <property name="text">
-               <string>Uninstall</string>
-              </property>
-              <property name="variant" stdset="0">
-               <string notr="true">secondary</string>
+              <property name="toolTip">
+               <string>Run the extension from its own folder, without a copy, and reload it when its files change. Only for a folder.</string>
               </property>
              </widget>
             </item>
@@ -1177,6 +1119,27 @@
              </spacer>
             </item>
            </layout>
+          </item>
+          <item>
+           <widget class="QWidget" name="extensionsCardsHost">
+            <layout class="QGridLayout" name="extensionsCardsGrid">
+             <property name="leftMargin">
+              <number>0</number>
+             </property>
+             <property name="topMargin">
+              <number>4</number>
+             </property>
+             <property name="rightMargin">
+              <number>0</number>
+             </property>
+             <property name="bottomMargin">
+              <number>0</number>
+             </property>
+             <property name="spacing">
+              <number>14</number>
+             </property>
+            </layout>
+           </widget>
           </item>
          </layout>
         </widget>

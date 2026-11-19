@@ -20,6 +20,7 @@ def candidate(
     author="",
     replaces: Manifest | None = None,
     changed: bool = False,
+    dev: bool = False,
 ) -> Candidate:
     return Candidate(
         manifest=Manifest(
@@ -36,6 +37,7 @@ def candidate(
         folder=Path("staged"),
         replaces=replaces,
         content_changed=changed,
+        dev=dev,
     )
 
 
@@ -91,3 +93,12 @@ def test_cancel_is_the_default_and_install_accepts() -> None:
     assert buttons["Cancel"].isDefault() and not buttons["Install"].isDefault()
     buttons["Install"].click()
     assert dialog.result() == dialog.DialogCode.Accepted
+
+
+def test_development_mode_says_it_runs_from_the_folder_and_has_no_hash() -> None:
+    dialog = InstallExtensionDialog(PARENT, candidate(dev=True))
+
+    text = texts(dialog)
+    assert "Development mode: it runs from this folder" in text
+    assert "SHA-256" not in text
+    assert "SHA-256" in texts(InstallExtensionDialog(PARENT, candidate()))
