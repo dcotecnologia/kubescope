@@ -3,6 +3,8 @@ import sys
 from pathlib import Path
 from typing import Any, cast
 
+import pytest
+
 from kubescope.settings import (
     Settings,
     config_directory,
@@ -530,3 +532,49 @@ def test_settings_default_and_validation(tmp_path):
     assert settings.timezone == "Europe/Lisbon"
     settings.timezone = "bogus"
     assert settings.timezone == "auto"
+
+
+def test_each_extension_has_preferences_of_its_own_that_are_saved(tmp_path) -> None:
+    path = tmp_path / "settings.json"
+    settings = Settings(path)
+    assert settings.extension_data("dco.a") == {}
+
+    settings.extension_data("dco.a")["model"] = "opus"
+    settings.extension_data("dco.b")["panel"] = {"width": 400}
+    settings.save()
+    reloaded = Settings(path)
+
+    assert reloaded.extension_data("dco.a") == {"model": "opus"}
+    assert reloaded.extension_data("dco.b") == {"panel": {"width": 400}}
+    assert reloaded.extension_data("dco.c") == {}  # no other extension's
+
+
+def test_the_data_of_an_extension_is_the_live_dictionary(tmp_path) -> None:
+    settings = Settings(tmp_path / "settings.json")
+
+    assert settings.extension_data("dco.a") is settings.extension_data("dco.a")
+
+
+def test_what_is_not_the_id_of_an_extension_is_refused(tmp_path) -> None:
+    settings = Settings(tmp_path / "settings.json")
+
+    for bad in ("", "Dco.A", "a/b", "x" * 101):
+        with pytest.raises(ValueError, match="not the id of an extension"):
+            settings.extension_data(bad)
+
+
+def test_damaged_preferences_of_extensions_are_dropped_on_load(tmp_path) -> None:
+    path = tmp_path / "settings.json"
+    path.write_text(
+        '{"extensions": {"dco.ok": {"a": 1}, "Bad Id": {"a": 1}, "dco.list": [1], '
+        '"dco.text": "x"}}',
+        encoding="utf-8",
+    )
+
+    settings = Settings(path)
+
+    assert settings.extension_data("dco.ok") == {"a": 1}
+    assert settings.extension_data("dco.list") == {}
+    assert settings.extension_data("dco.text") == {}
+    path.write_text('{"extensions": [1]}', encoding="utf-8")
+    assert Settings(path).extension_data("dco.ok") == {}
