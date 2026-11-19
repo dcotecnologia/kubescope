@@ -7,7 +7,6 @@ from pathlib import Path
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 import pytest
-from PySide6.QtCore import QEvent
 from PySide6.QtWidgets import (
     QApplication,
     QDialog,
@@ -450,25 +449,6 @@ def test_without_extensions_the_page_says_so(tmp_path, monkeypatch) -> None:
     ] == ["No extension is installed"]
 
 
-def test_more_cards_sit_side_by_side_when_the_page_has_room(setup, tmp_path) -> None:
-    setup.decide(True)
-    setup.pick_manifest(make_folder(tmp_path / "tool"))
-    setup.panel.install_from_folder()
-    host = setup.form.extensionsCardsHost
-    grid = setup.form.extensionsCardsGrid
-
-    host.resize(200, 300)
-    setup.panel.eventFilter(host, QEvent(QEvent.Type.Resize))
-    narrow = [grid.getItemPosition(i)[:2] for i in range(grid.count())]
-    host.resize(900, 300)
-    assert setup.panel.eventFilter(host, QEvent(QEvent.Type.Resize)) is False
-    wide = [grid.getItemPosition(i)[:2] for i in range(grid.count())]
-    setup.panel.eventFilter(host, QEvent(QEvent.Type.Resize))  # the same width again
-
-    assert narrow == [(0, 0), (1, 0)] and wide == [(0, 0), (0, 1)]
-    assert setup.panel.eventFilter(host, QEvent(QEvent.Type.Show)) is False
-
-
 def test_the_window_is_told_when_something_was_installed_or_removed(
     setup, tmp_path
 ) -> None:
@@ -664,22 +644,6 @@ def test_what_is_only_recommended_is_a_card_and_is_not_installed_by_itself(
     assert setup.card("Tool").badge == "Recommended"
 
 
-def test_the_cards_fill_the_width_after_the_page_gets_narrower(setup, tmp_path) -> None:
-    with_defaults(setup, offered(tmp_path))
-    grid = setup.panel.form.extensionsCardsGrid
-    host = setup.panel.form.extensionsCardsHost
-    setup.panel.window.show()
-    widths = {}
-    for page in (1100, 700):
-        setup.panel.window.resize(page, 600)
-        application.processEvents()
-        application.processEvents()
-        widths[page] = [grid.itemAt(i).widget().width() for i in range(grid.count())]
-
-    row = widths[700][:2] if host.width() >= 2 * 260 + 14 else widths[700][:1]
-    assert sum(row) + 14 * (len(row) - 1) >= host.width() - 4  # the whole width
-
-
 def test_a_card_says_in_lowercase_when_it_was_installed_and_last_updated(
     setup, tmp_path, monkeypatch
 ) -> None:
@@ -842,3 +806,32 @@ def test_the_button_checks_even_when_it_was_checked_today(
     assert setup.panel.updates_label.text() == "Everything is up to date"
     assert setup.panel.check_button.isEnabled()
     assert Settings().extension_updates_checked_at == 0.0  # no settings were given
+
+
+def test_the_extensions_are_a_list_that_fills_the_width_at_any_size(
+    setup, tmp_path
+) -> None:
+    with_defaults(setup, offered(tmp_path))
+    grid = setup.panel.form.extensionsCardsGrid
+    host = setup.panel.form.extensionsCardsHost
+    setup.panel.window.show()
+
+    for page in (1100, 700, 400):
+        setup.panel.window.resize(page, 600)
+        application.processEvents()
+        application.processEvents()
+        places = [grid.getItemPosition(i)[:2] for i in range(grid.count())]
+        widths = [grid.itemAt(i).widget().width() for i in range(grid.count())]
+
+        assert places == [(0, 0), (1, 0)]  # one column, in order
+        assert min(widths) >= host.width() - 4  # each row the whole width
+    assert host.minimumSizeHint().width() < 400  # it never makes the page wider
+
+
+def test_the_buttons_do_not_make_the_page_wider_than_a_narrow_window(setup) -> None:
+    form = setup.panel.form
+
+    assert form.extensionsCard.minimumSizeHint().width() < 500
+    row = form.extensionsButtonsRow
+    layout = form.extensionsCardLayout
+    assert layout.indexOf(form.extensionsDevCheck) == layout.indexOf(row) + 1
