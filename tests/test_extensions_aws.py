@@ -1,11 +1,11 @@
 import pytest
+from kubescope.sdk import PermissionDenied
 from kubescope.sdk.errors import ClusterError
 
 from kubescope import cluster
 from kubescope.extensions import aws_access
 from kubescope.extensions.aws_access import AwsBridge, check
 from kubescope.extensions.context import ExtensionContext
-from kubescope.sdk import PermissionDenied
 from tests.test_extensions import make_host
 
 

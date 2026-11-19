@@ -14,6 +14,14 @@ from functools import partial
 from pathlib import Path
 from typing import Any, cast
 
+from kubescope.sdk import (
+    CONTEXT_CHANGED,
+    LANGUAGE_CHANGED,
+    SHUTDOWN,
+    THEME_CHANGED,
+    WRITE_MODE_CHANGED,
+    SettingsPanel,
+)
 from kubescope.sdk.errors import first_line
 from kubescope.sdk.models import (
     EKS_VIEWS,
@@ -170,14 +178,6 @@ from kubescope.screen import (
 )
 from kubescope.screen import (
     describe as describe_screen,
-)
-from kubescope.sdk import (
-    CONTEXT_CHANGED,
-    LANGUAGE_CHANGED,
-    SHUTDOWN,
-    THEME_CHANGED,
-    WRITE_MODE_CHANGED,
-    SettingsPanel,
 )
 from kubescope.settings import (
     Settings,

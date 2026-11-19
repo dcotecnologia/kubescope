@@ -9,10 +9,10 @@ to a cluster is this list. No Qt.
 from collections.abc import Callable
 from typing import Any
 
+from kubescope.sdk import WriteModeOff
 from kubescope.sdk.models import ClusterResource, PodInfo, SearchHit, Workload
 
 from kubescope import cluster, writes
-from kubescope.sdk import WriteModeOff
 
 
 class ClusterBridge:

@@ -2,6 +2,7 @@ import os
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
+from kubescope.sdk import PageContribution
 from PySide6.QtWidgets import (
     QApplication,
     QLabel,
@@ -13,7 +14,6 @@ from PySide6.QtWidgets import (
 )
 
 from kubescope.extensions.registries import Contributions
-from kubescope.sdk import PageContribution
 from kubescope.views.extension_pages import ExtensionPages
 
 application = QApplication.instance() or QApplication([])

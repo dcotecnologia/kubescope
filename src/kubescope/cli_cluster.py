@@ -10,10 +10,10 @@ from collections.abc import Callable, Sequence
 from typing import Any
 
 import yaml
+from kubescope.sdk import ansi
 
 from kubescope import cluster, integrations, writes
 from kubescope.cluster import ClusterError
-from kubescope.sdk import ansi
 from kubescope.settings import Settings
 from kubescope.utils.errors import is_auth_error
 
