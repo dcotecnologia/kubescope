@@ -9,10 +9,10 @@ here, so that it cannot run another program. No Qt.
 import re
 from collections.abc import Callable
 
+from kubescope.sdk import WriteModeOff
 from kubescope.sdk.errors import ClusterError
 
 from kubescope import cluster, forwards
-from kubescope.sdk import WriteModeOff
 
 DOCUMENT = "AWS-StartPortForwardingSessionToRemoteHost"
 _INSTANCE = re.compile(r"(i|mi)-[0-9a-f]{8,17}")

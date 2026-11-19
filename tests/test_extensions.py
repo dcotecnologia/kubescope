@@ -7,10 +7,6 @@ import pytest
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
-from kubescope.extensions.cluster_access import ClusterBridge
-from kubescope.extensions.context import ExtensionContext, Host
-from kubescope.extensions.registries import CommandRegistry, EventBus
-from kubescope.extensions.window_ui import WindowUi
 from kubescope.sdk import (
     CONTEXT_CHANGED,
     CommandError,
@@ -18,6 +14,11 @@ from kubescope.sdk import (
     PermissionDenied,
     WriteModeOff,
 )
+
+from kubescope.extensions.cluster_access import ClusterBridge
+from kubescope.extensions.context import ExtensionContext, Host
+from kubescope.extensions.registries import CommandRegistry, EventBus
+from kubescope.extensions.window_ui import WindowUi
 
 CLUSTER = ClusterBridge()
 

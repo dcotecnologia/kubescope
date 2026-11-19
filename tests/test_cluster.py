@@ -13,10 +13,10 @@ from types import SimpleNamespace
 from typing import cast
 
 import pytest
+from kubescope.sdk import flatpak, programs
 from kubescope.sdk.models import PodInfo, Workload
 
 from kubescope import cluster
-from kubescope.sdk import flatpak, programs
 
 
 def test_parse_deployment_workload() -> None:

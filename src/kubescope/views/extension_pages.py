@@ -9,6 +9,7 @@ import logging
 from collections.abc import Callable, Sequence
 from functools import partial
 
+from kubescope.sdk import PageContribution
 from PySide6.QtCore import QObject
 from PySide6.QtWidgets import (
     QFrame,
@@ -18,8 +19,6 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-
-from kubescope.sdk import PageContribution
 
 logger = logging.getLogger(__name__)
 

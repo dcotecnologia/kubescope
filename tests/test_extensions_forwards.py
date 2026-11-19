@@ -1,10 +1,10 @@
 import pytest
+from kubescope.sdk import PermissionDenied, WriteModeOff
 from kubescope.sdk.errors import ClusterError
 
 from kubescope import cluster, forwards
 from kubescope.extensions.context import ExtensionContext
 from kubescope.extensions.forward_access import ForwardsBridge, check_ssm
-from kubescope.sdk import PermissionDenied, WriteModeOff
 from tests.test_extensions import make_host
 
 INSTANCE = "i-0123456789abcdef0"

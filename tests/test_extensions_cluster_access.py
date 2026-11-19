@@ -1,10 +1,10 @@
 import pytest
+from kubescope.sdk import ClusterAccess, WriteModeOff, Writes
 from kubescope.sdk.models import RESOURCE_KINDS
 
 from kubescope import cluster, writes
 from kubescope.extensions import cluster_access
 from kubescope.extensions.cluster_access import ClusterBridge, WritesBridge
-from kubescope.sdk import ClusterAccess, WriteModeOff, Writes
 
 
 def names(protocol: type) -> set[str]:

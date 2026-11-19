@@ -8,10 +8,10 @@ server. No Qt.
 import re
 from typing import Any
 
+from kubescope.sdk import AwsScope
 from kubescope.sdk.errors import ClusterError
 
 from kubescope import cluster, integrations
-from kubescope.sdk import AwsScope
 
 # service -> the verbs it may run, by prefix (ending in "-") or whole
 ALLOWED: dict[str, tuple[str, ...]] = {

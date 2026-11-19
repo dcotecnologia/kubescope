@@ -12,12 +12,6 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from kubescope.sdk.paths import config_directory
-
-from kubescope.extensions.aws_access import AwsBridge
-from kubescope.extensions.cluster_access import WritesBridge
-from kubescope.extensions.forward_access import ForwardsBridge
-from kubescope.extensions.registries import CommandRegistry, Contributions, EventBus
 from kubescope.sdk import (
     PERMISSIONS,
     AwsAccess,
@@ -35,6 +29,12 @@ from kubescope.sdk import (
     Ui,
     Writes,
 )
+from kubescope.sdk.paths import config_directory
+
+from kubescope.extensions.aws_access import AwsBridge
+from kubescope.extensions.cluster_access import WritesBridge
+from kubescope.extensions.forward_access import ForwardsBridge
+from kubescope.extensions.registries import CommandRegistry, Contributions, EventBus
 
 logger = logging.getLogger(__name__)
 

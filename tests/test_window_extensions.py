@@ -32,9 +32,8 @@ def test_without_extensions_the_section_says_so(monkeypatch) -> None:
 def test_a_page_of_an_extension_is_in_the_menu_and_opens_with_its_title(
     monkeypatch,
 ) -> None:
-    from PySide6.QtWidgets import QPushButton
-
     from kubescope.sdk import PageContribution
+    from PySide6.QtWidgets import QPushButton
 
     window = _ready_window(monkeypatch)
     refreshed: list[int] = []
