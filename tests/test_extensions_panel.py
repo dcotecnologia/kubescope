@@ -626,3 +626,21 @@ def test_reinstalling_what_the_app_offers_checks_the_pin_again(
 
     assert "not the ones that were checked" in setup.messages[-1]
     assert setup.dialogs == []
+
+
+def test_what_the_app_recommends_is_offered_once(setup, tmp_path, monkeypatch) -> None:
+    from kubescope.settings import Settings
+
+    settings = Settings()
+    with_defaults(setup, offered(tmp_path))
+    setup.decide(True)
+    monkeypatch.setattr(extensions_panel, "download", lambda repo: tool_zip())
+
+    setup.panel.offer_defaults(settings)
+
+    assert setup.card("Tool").badge == "Installed"
+    assert settings.extensions_offered == ["dco.tool"]
+    setup.dialogs.clear()
+    setup.panel.store.uninstall("dco.tool")
+    setup.panel.offer_defaults(settings)  # said yes once; it does not ask again
+    assert setup.dialogs == [] and setup.downloads == [Repo("dco", "tool", "v1.0.0")]

@@ -34,8 +34,8 @@ DEFAULTS = (
             "The assistant of DCO Tecnologia: ask about your cluster from a coding "
             "assistant installed on this computer."
         ),
-        repo=Repo("dcotecnologia", "kubescope-gabi", "v1.0.0"),
-        sha256="",  # filled when the tag is published
+        repo=Repo("dcotecnologia", "kubescope-ai-gabi", "v1.0.0"),
+        sha256="48008c8ce9ac8c1279208e699892faf9d70e8833bdccf55d595d11df30b62e6d",
     ),
 )
 

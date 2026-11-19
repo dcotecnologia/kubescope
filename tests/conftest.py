@@ -149,3 +149,10 @@ def still_windows(monkeypatch):
 
     monkeypatch.setattr(motion, "ENABLED", False)
     monkeypatch.setattr(motion, "DURATION_MS", 0)
+
+
+@pytest.fixture(autouse=True)
+def no_recommended_extensions(monkeypatch):
+    """The window offers the recommended extensions by downloading them; a test
+    offers its own, and never reaches GitHub."""
+    monkeypatch.setattr("kubescope.extensions.defaults.DEFAULTS", ())

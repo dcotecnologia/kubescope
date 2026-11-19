@@ -5428,6 +5428,7 @@ class WorkloadWindow(QMainWindow):
         self._watch_extensions()
         self._apply_extension_contributions()
         self.extensions_panel.refresh()
+        self.extensions_panel.offer_defaults(self.settings)
 
     def _watch_extensions(self) -> None:
         """Watch the folder of each extension that runs from where its author
