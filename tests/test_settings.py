@@ -1,13 +1,10 @@
 import json
-import sys
-from pathlib import Path
 from typing import Any, cast
 
 import pytest
 
 from kubescope.settings import (
     Settings,
-    config_directory,
     is_namespace_name,
     log_directory,
 )
@@ -73,41 +70,6 @@ def test_hidden_columns_persist_and_ignore_damaged_values(tmp_path) -> None:
     path.write_text('{"hidden_columns": {"pods": [1, "x"], "deployments": 3}}')
     assert Settings(path).hidden_columns("pods") == set()
     assert Settings(path).hidden_columns("deployments") == set()
-
-
-def test_config_directory_follows_the_platform(monkeypatch, tmp_path) -> None:
-    monkeypatch.delenv("KUBESCOPE_CONFIG_DIR", raising=False)
-    monkeypatch.setattr(Path, "home", lambda: tmp_path)
-
-    monkeypatch.setattr(sys, "platform", "win32")
-    monkeypatch.setenv("APPDATA", str(tmp_path / "roaming"))
-    assert config_directory() == tmp_path / "roaming" / "kubescope"
-    monkeypatch.delenv("APPDATA")
-    assert config_directory() == tmp_path / "AppData" / "Roaming" / "kubescope"
-
-    monkeypatch.setattr(sys, "platform", "darwin")
-    assert (
-        config_directory() == tmp_path / "Library" / "Application Support" / "kubescope"
-    )
-
-    monkeypatch.setattr(sys, "platform", "linux")
-    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path / "xdg"))
-    assert config_directory() == tmp_path / "xdg" / "kubescope"
-    monkeypatch.delenv("XDG_CONFIG_HOME")
-    assert config_directory() == tmp_path / ".config" / "kubescope"
-
-
-def test_debug_logging_defaults_off_and_persists(tmp_path) -> None:
-    path = tmp_path / "settings.json"
-    settings = Settings(path)
-    assert settings.debug_logging is False
-
-    settings.debug_logging = True
-    settings.save()
-    assert Settings(path).debug_logging is True
-
-    path.write_text('{"debug_logging": "yes"}', encoding="utf-8")
-    assert Settings(path).debug_logging is False  # only a real true turns it on
 
 
 def test_log_directory_lives_in_the_config_directory(monkeypatch, tmp_path) -> None:

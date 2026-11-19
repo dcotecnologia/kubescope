@@ -23,7 +23,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 from urllib.parse import quote
 
-from kubescope.sdk.errors import first_line
+from kubescope.sdk.errors import ClusterError, first_line
 from kubescope.sdk.flatpak import HOST, host_has, in_flatpak, on_host
 from kubescope.sdk.models import (
     BAD_STATUSES,
@@ -77,10 +77,6 @@ def __getattr__(name: str) -> Any:
         raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
     module = importlib.import_module(_LAZY[name])
     return module if name in {"client", "config"} else getattr(module, name)
-
-
-class ClusterError(RuntimeError):
-    """Raised when a request to the cluster or an AWS CLI command fails."""
 
 
 class SignInFailed(ClusterError):
