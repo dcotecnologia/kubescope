@@ -13,6 +13,7 @@ from kubescope.sdk import (
     CliCommand,
     CommandError,
     DockContribution,
+    PageContribution,
     SettingsSection,
     ShortcutContribution,
     TabKind,
@@ -89,6 +90,7 @@ class Contributions:
 
     docks: list[DockContribution] = field(default_factory=list)
     tab_kinds: list[TabKind] = field(default_factory=list)
+    pages: list[PageContribution] = field(default_factory=list)
     settings_sections: list[SettingsSection] = field(default_factory=list)
     cli_commands: list[CliCommand] = field(default_factory=list)
     shortcuts: list[ShortcutContribution] = field(default_factory=list)
@@ -97,6 +99,7 @@ class Contributions:
         """Drop everything `extension` added."""
         self.docks = [one for one in self.docks if one.extension != extension]
         self.tab_kinds = [one for one in self.tab_kinds if one.extension != extension]
+        self.pages = [one for one in self.pages if one.extension != extension]
         self.settings_sections = [
             one for one in self.settings_sections if one.extension != extension
         ]

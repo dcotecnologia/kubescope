@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file. The format 
 
 ### Added
 
+- An extension can add a page to the side menu, in a section and a group of its own (with the permission `ui.page`), shown only while the extension says it should, which is what lets features like the AWS RDS instances leave the app and become extensions by @danilogco
 - Extensions the app recommends, such as Gabi, show in **Settings → Extensions** as a Recommended card with an Install button; they come from GitHub and are installed only if the files downloaded are the ones whose sha256 the app pinned (also when reinstalled), and one that is not pinned yet is not offered; the first time the app runs it installs them once, without a dialog since they are the pinned files, so that Gabi is there by default and can be uninstalled by @danilogco
 - The SDK that extensions are written against, a project of its own (`kubescope-sdk`) that the app depends on: events, named commands, the contributions of an extension to the window, the settings of each extension, and the cluster read paths and writes behind the permissions its manifest asks for by @danilogco
 - The code behind installing extensions from a folder or a GitHub repository by their `kubescope-extension.toml`, uninstalling and reinstalling them, running one from its own folder in development mode and reloading it when its files change, with what is copied under strict limits and the manifest checked before anything of it runs by @danilogco

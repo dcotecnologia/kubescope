@@ -249,6 +249,7 @@ from kubescope.views.container_states import (
 from kubescope.views.detail_tab import USAGE_REFRESH_MS, DetailTab
 from kubescope.views.dialog_frame import frames
 from kubescope.views.error_banner import ErrorBanner
+from kubescope.views.extension_pages import ExtensionPages
 from kubescope.views.extensions_panel import ExtensionsPanel
 from kubescope.views.forward_runner import ForwardRunner
 from kubescope.views.log_tab import LOG_REFRESH_MS, LogTab
@@ -1209,6 +1210,12 @@ class WorkloadWindow(QMainWindow):
         self.extension_store = ExtensionStore(config_directory() / "extensions")
         self._extension_loader: ExtensionLoader | None = None  # made below
         self._extension_sections: list[_ExtensionSection] = []
+        self.extension_pages = ExtensionPages(
+            ui.sidebarNavLayout,
+            self.pages,
+            self._show_page,
+            lambda: self._show_page(0),
+        )
         self._extension_shortcuts: dict[str, QShortcut] = {}
         self._extension_watchers: dict[str, FolderWatcher] = {}
         self.extensions_panel = ExtensionsPanel(
@@ -2133,6 +2140,10 @@ class WorkloadWindow(QMainWindow):
             self._reveal_in_menu(self.nav_plugins_catalog)
             self.plugins_catalog.ensure()
         self._apply_page_titles()
+        from_extension = self.extension_pages.shown(index)
+        if from_extension is not None:
+            self.ui.pageTitle.setText(from_extension[0])
+            self.ui.pageSubtitle.setText(from_extension[1])
         self._render_pinned()
         self._remember_screen()
         for page, button in (
@@ -5491,6 +5502,7 @@ class WorkloadWindow(QMainWindow):
         their sections of the Settings."""
         self._apply_extension_shortcuts()
         self._apply_extension_sections()
+        self.extension_pages.apply(self.extension_host.contributions.pages)
         self._fill_shortcuts(self._shortcut_values())
 
     def _apply_extension_shortcuts(self) -> None:
@@ -5925,6 +5937,7 @@ class WorkloadWindow(QMainWindow):
         """The AWS part of the side menu shows while AWS is in use, and leaves
         with the last sign of it."""
         has_aws = self._uses_aws()
+        self.extension_pages.sync()
         for widget in (self.ui.navAwsSection, self.nav_rds, self.rds_submenu):
             widget.setVisible(has_aws)
         if self._aws_account_ids() != self._aws_accounts:

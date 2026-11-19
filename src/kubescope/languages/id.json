@@ -85,6 +85,9 @@
             "Your kubeconfig runs “{tool}” to sign in, but it is not installed or not on the PATH. Install it and refresh.": "kubeconfig Anda menjalankan “{tool}” untuk masuk, tetapi belum terpasang atau tidak ada di PATH. Pasang lalu segarkan.",
             "Your user is not allowed to read this resource.": "Pengguna Anda tidak diizinkan membaca sumber daya ini."
         },
+        "ExtensionPages": {
+            "This page could not be built.": "Halaman ini tidak dapat dibuat."
+        },
         "ExtensionsPanel": {
             "Bundled": "Bawaan",
             "Choose the kubescope-extension.toml of the extension": "Pilih kubescope-extension.toml dari ekstensi",
@@ -141,6 +144,7 @@
             "Version": "Versi",
             "add a command to kubescope": "menambahkan perintah ke kubescope",
             "add a kind of tab": "menambahkan jenis tab",
+            "add a page to the side menu": "menambahkan halaman ke menu samping",
             "add a panel to the window": "menambahkan panel ke jendela",
             "add a section to the Settings": "menambahkan bagian ke Pengaturan",
             "change your clusters, in the write mode": "mengubah klaster Anda, dalam mode tulis",

@@ -85,6 +85,9 @@
             "Your kubeconfig runs “{tool}” to sign in, but it is not installed or not on the PATH. Install it and refresh.": "kubeconfig ของคุณเรียกใช้ “{tool}” เพื่อลงชื่อเข้าใช้ แต่ยังไม่ได้ติดตั้งหรือไม่อยู่ใน PATH ติดตั้งแล้วรีเฟรช",
             "Your user is not allowed to read this resource.": "ผู้ใช้ของคุณไม่ได้รับอนุญาตให้อ่านทรัพยากรนี้"
         },
+        "ExtensionPages": {
+            "This page could not be built.": "ไม่สามารถสร้างหน้านี้ได้"
+        },
         "ExtensionsPanel": {
             "Bundled": "มาพร้อมแอป",
             "Choose the kubescope-extension.toml of the extension": "เลือก kubescope-extension.toml ของส่วนขยาย",
@@ -141,6 +144,7 @@
             "Version": "เวอร์ชัน",
             "add a command to kubescope": "เพิ่มคำสั่งให้ kubescope",
             "add a kind of tab": "เพิ่มชนิดของแท็บ",
+            "add a page to the side menu": "เพิ่มหน้าในเมนูด้านข้าง",
             "add a panel to the window": "เพิ่มแผงลงในหน้าต่าง",
             "add a section to the Settings": "เพิ่มส่วนลงในการตั้งค่า",
             "change your clusters, in the write mode": "เปลี่ยนแปลงคลัสเตอร์ของคุณ ในโหมดเขียน",

@@ -85,6 +85,9 @@
             "Your kubeconfig runs “{tool}” to sign in, but it is not installed or not on the PATH. Install it and refresh.": "kubeconfig شما برای ورود «{tool}» را اجرا می‌کند، اما نصب نشده یا در PATH نیست. آن را نصب کنید و تازه‌سازی کنید.",
             "Your user is not allowed to read this resource.": "کاربر شما اجازه خواندن این منبع را ندارد."
         },
+        "ExtensionPages": {
+            "This page could not be built.": "ساخت این صفحه ممکن نبود."
+        },
         "ExtensionsPanel": {
             "Bundled": "همراه برنامه",
             "Choose the kubescope-extension.toml of the extension": "فایل kubescope-extension.toml افزونه را انتخاب کنید",
@@ -141,6 +144,7 @@
             "Version": "نسخه",
             "add a command to kubescope": "افزودن یک فرمان به kubescope",
             "add a kind of tab": "افزودن یک نوع زبانه",
+            "add a page to the side menu": "افزودن یک صفحه به منوی کناری",
             "add a panel to the window": "افزودن یک پنل به پنجره",
             "add a section to the Settings": "افزودن یک بخش به تنظیمات",
             "change your clusters, in the write mode": "تغییر خوشه‌های شما، در حالت نوشتن",

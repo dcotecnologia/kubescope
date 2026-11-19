@@ -99,6 +99,7 @@ class InstallExtensionDialog(QDialog):
             "subprocess": self.tr("run programs of this computer"),
             "ui.dock": self.tr("add a panel to the window"),
             "ui.tab": self.tr("add a kind of tab"),
+            "ui.page": self.tr("add a page to the side menu"),
             "ui.settings": self.tr("add a section to the Settings"),
             "ui.window": self.tr(
                 "use the window: show messages, run tasks and add shortcuts"

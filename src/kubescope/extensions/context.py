@@ -23,6 +23,7 @@ from kubescope.sdk import (
     ClusterAccess,
     CommandError,
     DockContribution,
+    PageContribution,
     PermissionDenied,
     SettingsSection,
     ShortcutContribution,
@@ -221,6 +222,20 @@ class ExtensionContext:
         self._require("ui.dock")
         self._host.contributions.docks.append(
             DockContribution(self.id, key, factory, shortcut)
+        )
+
+    def add_page(
+        self,
+        section: str,
+        group: str,
+        title: str,
+        factory: Callable[..., Any],
+        subtitle: str = "",
+        visible: Callable[[], bool] | None = None,
+    ) -> None:
+        self._require("ui.page")
+        self._host.contributions.pages.append(
+            PageContribution(self.id, section, group, title, factory, subtitle, visible)
         )
 
     def add_tab_kind(self, key: str, factory: Callable[..., Any]) -> None:
