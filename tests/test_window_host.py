@@ -529,6 +529,7 @@ def test_the_extension_is_told_the_language_by_name_and_has_its_folder(
 
     assert ctx.app.language_name == language_name(window.settings.language)
     assert ctx.app.resolved_language == resolve_language(window.settings.language)
+    assert ctx.app.language_names[0] == "English" and len(ctx.app.language_names) > 5
     assert ctx.data_directory.name == extension
     assert ctx.data_directory.parent.name == "extension-data"
 

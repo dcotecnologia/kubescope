@@ -394,13 +394,15 @@ def test_an_extension_has_a_folder_of_its_own() -> None:
     )
 
 
-def test_the_app_names_the_language_it_shows() -> None:
+def test_the_app_names_the_language_it_shows_and_the_ones_it_has() -> None:
     host, _, _ = make_host()
     host.resolved_language = lambda: "pt_BR"
     host.language_name = lambda: "Portuguese"
+    host.language_names = lambda: ("English", "Portuguese")
     app = ExtensionContext("dco.test", frozenset(), host).app
 
     assert (app.resolved_language, app.language_name) == ("pt_BR", "Portuguese")
+    assert app.language_names == ("English", "Portuguese")
     assert (
         ExtensionContext("dco.t", frozenset(), make_host()[0]).app.language_name
         == "English"
