@@ -193,6 +193,7 @@ from kubescope.sdk import (
     LANGUAGE_CHANGED,
     SHUTDOWN,
     THEME_CHANGED,
+    WRITE_MODE_CHANGED,
     SettingsPanel,
 )
 from kubescope.settings import (
@@ -1441,7 +1442,7 @@ class WorkloadWindow(QMainWindow):
                 style_box=lambda box: self._style_box_buttons(box),
                 show_settings=lambda: self._show_assistant_settings(),
                 reserve_corner=lambda pixels: self._reserve_corner_for(
-                    "kubescope.gabi", pixels
+                    "builtin.gabi", pixels
                 ),
             )
         )
@@ -7322,6 +7323,9 @@ class WorkloadWindow(QMainWindow):
             self._show_access_note()
             self._apply_view_buttons()
             self.gabi.refresh_system()  # nothing to change without it
+            self.extension_host.events.emit(
+                WRITE_MODE_CHANGED, write_mode=self.settings.write_mode
+            )
         was_debugging = self.settings.debug_logging
         self.settings.debug_logging = form.debugCheck.isChecked()
         self._save_settings()
