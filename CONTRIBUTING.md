@@ -20,6 +20,16 @@ Run the app against a cluster with `make run`, or without any cluster using fake
 data with `make preview`. `make dev` runs the app and restarts it every time you
 save a source, `.ui` or language file.
 
+## Extensions
+
+A feature that is not for everyone is an extension, not part of the app. Write it against the
+[SDK](https://github.com/dcotecnologia/kubescope-sdk) (see its
+[guides](https://github.com/dcotecnologia/kubescope-sdk/tree/main/docs)); the existing ones are
+[Gabi](https://github.com/dcotecnologia/kubescope-ai-gabi) and
+[AWS](https://github.com/dcotecnologia/kubescope-aws), each with its own repository and
+contributing guide. A change to what the app lends to extensions goes in the SDK first, then in
+`src/kubescope/extensions/`.
+
 ## Workflow
 
 1. Pull the latest `main` and create a branch. Do not commit to `main` directly.

@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file. The format 
 
 ### Added
 
+- The README, CONTRIBUTING and AGENTS point to the SDK and to the extensions (Gabi and AWS), each a project of its own with a pipeline of tests and releases, and the README has a section on extensions by @danilogco
 - **Settings → Extensions** shows the extensions in a table like the other lists (name, version, status, author, when installed and updated, source and description), with a star on the ones KubeScope recommends, and what can be done with one (Details, Install, Update, Reinstall, Uninstall) is in its right-click menu; a double click opens **Details**, a dialog with a dialog with its id, source, folder, sha256, permissions, commands and any load error by @danilogco
 - The app looks for newer versions of the extensions that were installed from GitHub and suggests them: a card says **Update available** with a button to update, a line above the cards counts them, and **Check for updates** looks again. What the app recommends is updated to the version it pins; the other repositories are asked for their tags at most once a day, only while the check for updates is on in the Settings, and a new version is downloaded and reviewed like any install by @danilogco
 - The card of an extension in **Settings → Extensions** says, in lowercase, when it was installed and when it was last updated; the app keeps both days and the first one never changes on a reinstall by @danilogco
