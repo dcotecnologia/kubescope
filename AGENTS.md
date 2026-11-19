@@ -52,6 +52,13 @@ Keep the layers separate and the dependency direction one-way
     `dialogs/update_dialog.py` is the dialog and the worker thread that run it.
 - `src/kubescope/writes.py`
   - The actions that change a cluster (delete or evict a Pod, scale or restart a Deployment, and the shell and port-forward commands). No Qt; only reachable through the write mode.
+- `src/kubescope/sdk/`
+  - The contract an extension is written against (protocols, permissions, events,
+    contributions). It imports nothing of the app, which `tests/test_sdk.py` enforces.
+- `src/kubescope/extensions/`
+  - The app's side of the extensions: the registries the window reads and the context
+    each extension gets. `extensions/bundled/` holds the extensions that ship with the
+    app, such as Gabi (`bundled/gabi/`), which the person can uninstall.
 - `src/kubescope/settings.py`
   - User preferences stored as JSON; tolerant of missing or damaged files.
 - `src/kubescope/i18n.py` and `src/kubescope/languages/`

@@ -4,8 +4,8 @@ import subprocess
 
 import pytest
 
-from kubescope.assistant import runner
-from kubescope.assistant.runner import Assistant, AssistantError
+from kubescope.extensions.bundled.gabi import runner
+from kubescope.extensions.bundled.gabi.runner import Assistant, AssistantError
 
 
 def _parse(line: str) -> tuple[str, str]:
@@ -183,7 +183,7 @@ def test_closing_the_answer_early_stops_the_program(start) -> None:
 
 
 def test_images_go_to_a_program_that_takes_them_as_a_message(start) -> None:
-    from kubescope.assistant.attachments import Attachment
+    from kubescope.extensions.bundled.gabi.attachments import Attachment
 
     seen: list = []
 
@@ -212,7 +212,7 @@ def test_images_go_to_a_program_that_takes_them_as_a_message(start) -> None:
 
 
 def test_images_are_refused_by_a_program_that_does_not_take_them(start) -> None:
-    from kubescope.assistant.attachments import Attachment
+    from kubescope.extensions.bundled.gabi.attachments import Attachment
 
     start(FakeProcess())
     image = Attachment("a.png", "image", b"x", "image/png")
@@ -228,7 +228,7 @@ def test_a_program_that_reads_images_from_files_gets_them_and_the_instructions(
     import os
     from pathlib import Path
 
-    from kubescope.assistant.attachments import Attachment
+    from kubescope.extensions.bundled.gabi.attachments import Attachment
 
     paths: list[str] = []
     contents: list[bytes] = []
@@ -262,7 +262,7 @@ def test_a_program_that_reads_images_from_files_gets_them_and_the_instructions(
 def test_the_files_of_the_images_go_even_when_the_answer_is_cut_short(start) -> None:
     import os
 
-    from kubescope.assistant.attachments import Attachment
+    from kubescope.extensions.bundled.gabi.attachments import Attachment
 
     paths: list[str] = []
     reader = Assistant(
@@ -322,7 +322,7 @@ def test_in_a_flatpak_the_host_says_whether_a_path_can_be_run(monkeypatch) -> No
 
 
 def test_the_model_and_effort_the_person_chose_reach_the_program(monkeypatch) -> None:
-    from kubescope.assistant import claude, codex
+    from kubescope.extensions.bundled.gabi import claude, codex
 
     monkeypatch.setattr(runner, "find_program", lambda program: None)
     monkeypatch.setattr(runner, "CUSTOM_MODELS", {"claude": "opus", "codex": "gpt-x"})
@@ -341,7 +341,7 @@ def test_the_model_and_effort_the_person_chose_reach_the_program(monkeypatch) ->
 
 
 def test_an_effort_is_left_out_for_a_program_that_cannot_set_it(monkeypatch) -> None:
-    from kubescope.assistant.runner import Assistant
+    from kubescope.extensions.bundled.gabi.runner import Assistant
 
     plain = Assistant(
         "plain", "Plain", "plain-ai", lambda m, s: ["x"], lambda line: ("", "")

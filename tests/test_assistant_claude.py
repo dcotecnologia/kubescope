@@ -1,7 +1,7 @@
 import json
 
-from kubescope import assistant
-from kubescope.assistant import claude, runner
+from kubescope.extensions.bundled import gabi as assistant
+from kubescope.extensions.bundled.gabi import claude, runner
 
 
 def _delta(text: str) -> str:
@@ -54,7 +54,7 @@ def test_the_installed_assistants_are_the_known_ones_the_system_has(
 def test_claude_takes_images_as_one_message_with_the_question() -> None:
     import base64
 
-    from kubescope.assistant.attachments import Attachment
+    from kubescope.extensions.bundled.gabi.attachments import Attachment
 
     image = Attachment("shot.png", "image", b"\x89PNGdata", "image/png")
 

@@ -1,8 +1,8 @@
 """The coding assistants of the system the person can ask about the cluster."""
 
-from kubescope.assistant.claude import CLAUDE
-from kubescope.assistant.codex import CODEX
-from kubescope.assistant.runner import Assistant, is_available
+from kubescope.extensions.bundled.gabi.claude import CLAUDE
+from kubescope.extensions.bundled.gabi.codex import CODEX
+from kubescope.extensions.bundled.gabi.runner import Assistant, is_available
 
 ASSISTANTS = {assistant.key: assistant for assistant in (CLAUDE, CODEX)}
 

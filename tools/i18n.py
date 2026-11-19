@@ -23,8 +23,8 @@ SOURCES = [
         SOURCE / name
         for name in (
             "window.py",
-            "views/assistant_panel.py",
-            "views/assistant_tab.py",
+            "extensions/bundled/gabi/panel.py",
+            "extensions/bundled/gabi/tab.py",
             "views/log_tab.py",
             "dialogs/plugin_update_dialog.py",
             "views/plugins_catalog.py",

@@ -20,7 +20,7 @@ def isolated_config(tmp_path, monkeypatch):
 def no_chosen_assistant_programs():
     """The program, the model and the effort chosen for an assistant are kept
     in the runner; a test starts without."""
-    from kubescope.assistant import runner
+    from kubescope.extensions.bundled.gabi import runner
 
     saved = [
         dict(d)
@@ -168,8 +168,9 @@ def still_windows(monkeypatch):
     default, so the animations are held off by their duration, which
     nothing sets.
     """
-    from kubescope.views import assistant_panel, motion
+    from kubescope.extensions.bundled.gabi import panel
+    from kubescope.views import motion
 
     monkeypatch.setattr(motion, "ENABLED", False)
     monkeypatch.setattr(motion, "DURATION_MS", 0)
-    monkeypatch.setattr(assistant_panel, "ANIMATION_MS", 0)
+    monkeypatch.setattr(panel, "ANIMATION_MS", 0)

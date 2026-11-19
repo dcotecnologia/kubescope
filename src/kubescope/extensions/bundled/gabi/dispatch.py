@@ -9,7 +9,7 @@ from collections.abc import Callable
 from typing import Any
 
 from kubescope import writes
-from kubescope.assistant.actions import Request
+from kubescope.extensions.bundled.gabi.actions import Request
 
 
 def write_call(

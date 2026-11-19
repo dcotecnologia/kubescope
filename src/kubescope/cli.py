@@ -7,7 +7,8 @@ import sys
 from collections.abc import Sequence
 from pathlib import Path
 
-from kubescope import __version__, cli_chat, cli_cluster
+from kubescope import __version__, cli_cluster
+from kubescope.extensions.bundled.gabi import cli as cli_chat
 from kubescope.settings import Settings, config_directory, log_directory
 from kubescope.utils.diagnostics import MAX_AGE_DAYS, commit, log_files
 from kubescope.utils.selfupdate import UpdateError, detect_install, restart, run_update

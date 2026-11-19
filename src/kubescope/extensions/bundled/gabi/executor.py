@@ -14,8 +14,8 @@ from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from kubescope import cluster
-from kubescope.assistant.actions import Request, parse_time
 from kubescope.cluster import ClusterError
+from kubescope.extensions.bundled.gabi.actions import Request, parse_time
 from kubescope.models import (
     RESOURCE_VIEWS,
     WORKLOAD_VIEWS,
