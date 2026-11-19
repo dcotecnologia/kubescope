@@ -17,7 +17,7 @@ from kubescope.extensions.cluster_access import ClusterBridge
 from kubescope.extensions.context import Host, data_directory
 from kubescope.extensions.loader import ExtensionLoader
 from kubescope.extensions.store import ExtensionStore, Installed
-from kubescope.i18n import language_name, resolve_language
+from kubescope.i18n import english_names, language_name, resolve_language
 from kubescope.settings import Settings
 
 
@@ -74,6 +74,7 @@ def run_command(
         language=lambda: settings.language,
         resolved_language=lambda: resolve_language(settings.language),
         language_name=lambda: language_name(settings.language),
+        language_names=lambda: tuple(english_names()),
         data_directory=data_directory,
         cli=TerminalBridge(),
     )

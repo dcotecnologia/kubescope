@@ -26,6 +26,7 @@ CTX = []
 def run(arguments):
     ctx = CTX[0]
     RESULT.append(("run", arguments, ctx.ui, ctx.cli is not None, ctx.app.write_mode))
+    RESULT.append(("names", ctx.app.language_names[:1]))
     ctx.settings.set("seen", ctx.cli.choose_context("given"))
     return 7 if "--fail" in arguments else 0
 
@@ -95,7 +96,8 @@ def test_an_extension_runs_its_command_and_its_exit_code_is_the_one_of_the_termi
     assert cli.run(["hello"]) == 0
 
     assert log[0] == ("run", ["a", "--fail"], None, True, False)
-    assert log[1] == "unloaded"  # it is not kept after the command
+    assert log[1] == ("names", ("English",))  # what the app says of its languages
+    assert log[2] == "unloaded"  # it is not kept after the command
 
 
 def test_the_cluster_is_set_up_as_the_person_configured_it_before_the_command(

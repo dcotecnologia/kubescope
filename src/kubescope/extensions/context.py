@@ -52,6 +52,7 @@ class Host:
     language: Callable[[], str] = lambda: "auto"
     resolved_language: Callable[[], str] = lambda: "en"
     language_name: Callable[[], str] = lambda: "English"
+    language_names: Callable[[], tuple[str, ...]] = lambda: ("English",)
     data_directory: Callable[[str], Path] = lambda extension: Path(extension)
     ui: Ui | None = None  # None while the app runs without a window
     cli: Cli | None = None  # set while a command of the terminal runs
@@ -81,6 +82,10 @@ class AppInfo:
     @property
     def language_name(self) -> str:
         return self._host.language_name()
+
+    @property
+    def language_names(self) -> tuple[str, ...]:
+        return self._host.language_names()
 
 
 class ExtensionSettings:

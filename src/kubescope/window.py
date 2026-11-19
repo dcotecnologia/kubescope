@@ -174,6 +174,7 @@ from kubescope.extensions.window_ui import WindowUi
 from kubescope.forwards import Forward
 from kubescope.i18n import (
     apply_language,
+    english_names,
     language_choices,
     language_name,
     resolve_language,
@@ -1456,6 +1457,7 @@ class WorkloadWindow(QMainWindow):
             language=lambda: self.settings.language,
             resolved_language=lambda: resolve_language(self.settings.language),
             language_name=lambda: language_name(self.settings.language),
+            language_names=lambda: tuple(english_names()),
             data_directory=data_directory,
             ui=WindowUi(
                 self,
