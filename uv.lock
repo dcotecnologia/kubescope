@@ -384,7 +384,7 @@ development = [{ name = "pre-commit", specifier = ">=4.7.0" }]
 [[package]]
 name = "kubescope-sdk"
 version = "0.1.0"
-source = { git = "https://github.com/dcotecnologia/kubescope-sdk?branch=main#1db06fb28ece69e6c2f01974f149369a2229588d" }
+source = { git = "https://github.com/dcotecnologia/kubescope-sdk?branch=main#9058cc442f2137f4401230410eef788034c15c82" }
 
 [[package]]
 name = "macholib"

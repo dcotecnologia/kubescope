@@ -1,4 +1,5 @@
 import pytest
+from kubescope.sdk.models import RESOURCE_KINDS
 
 from kubescope import cluster, writes
 from kubescope.extensions import cluster_access
@@ -21,13 +22,14 @@ def test_the_bridges_offer_everything_the_sdk_describes_and_nothing_more() -> No
     assert names(Writes) == {n for n in dir(WritesBridge) if not n.startswith("_")}
 
 
-def test_the_kinds_and_the_window_of_a_log_are_the_ones_of_the_app() -> None:
-    assert ClusterBridge.KINDS == writes.RESOURCE_KINDS
-    assert (
-        tuple(sorted(ClusterBridge.KINDS)) == ClusterBridge.KINDS
-        and ClusterBridge.KINDS
-    )
+def test_the_window_of_a_log_is_the_one_of_the_app() -> None:
     assert ClusterBridge.LOG_WINDOW_BYTES == cluster.LOG_WINDOW_BYTES
+
+
+def test_the_kinds_of_the_sdk_are_the_ones_the_app_reads_and_changes() -> None:
+    """The SDK lists them so that an extension has them when it is imported;
+    this is what tells that the app and the list went apart."""
+    assert tuple(sorted(writes._RESOURCE_OF_KIND)) == RESOURCE_KINDS
 
 
 @pytest.mark.parametrize(
