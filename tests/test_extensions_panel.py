@@ -633,14 +633,15 @@ def test_what_the_app_recommends_is_offered_once(setup, tmp_path, monkeypatch) -
 
     settings = Settings()
     with_defaults(setup, offered(tmp_path))
-    setup.decide(True)
     monkeypatch.setattr(extensions_panel, "download", lambda repo: tool_zip())
 
     setup.panel.offer_defaults(settings)
+
+    assert setup.dialogs == []  # no dialog: it is what the app pinned
 
     assert setup.card("Tool").badge == "Installed"
     assert settings.extensions_offered == ["dco.tool"]
     setup.dialogs.clear()
     setup.panel.store.uninstall("dco.tool")
     setup.panel.offer_defaults(settings)  # said yes once; it does not ask again
-    assert setup.dialogs == [] and setup.downloads == [Repo("dco", "tool", "v1.0.0")]
+    assert setup.downloads == [Repo("dco", "tool", "v1.0.0")]

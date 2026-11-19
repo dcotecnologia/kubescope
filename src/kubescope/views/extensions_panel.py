@@ -273,17 +273,21 @@ class ExtensionsPanel(QObject):
                 continue
             settings.offered(one.id)
             settings.save()
-            self.install_default(one)
+            self._download(one.repo, one, review=False)
 
     def install_default(self, wanted: DefaultExtension) -> None:
         """Download the version of an extension that the app offers, which is
         installed only if its files are the ones that were pinned."""
         self._download(wanted.repo, wanted)
 
-    def _download(self, repo: Repo, pin: DefaultExtension | None = None) -> None:
+    def _download(
+        self, repo: Repo, pin: DefaultExtension | None = None, review: bool = True
+    ) -> None:
         self.run_action(
             download,
-            lambda data: self._prepared(self.store.prepare, data, repo.source, pin=pin),
+            lambda data: self._prepared(
+                self.store.prepare, data, repo.source, pin=pin, review=review
+            ),
             repo,
             on_error=self._warn,
         )
@@ -293,6 +297,7 @@ class ExtensionsPanel(QObject):
         prepare: Callable[..., Candidate],
         *arguments: object,
         pin: DefaultExtension | None = None,
+        review: bool = True,
     ) -> None:
         try:
             candidate = prepare(*arguments)
@@ -305,7 +310,10 @@ class ExtensionsPanel(QObject):
         except StoreError as error:
             self._warn(str(error))
             return
-        self._review(candidate)
+        if review:
+            self._review(candidate)
+        else:  # only a pinned one gets here
+            self._install(candidate)
 
     def _review(self, candidate: Candidate) -> None:
         """Show what the extension is and install it if the person agrees."""
@@ -313,6 +321,9 @@ class ExtensionsPanel(QObject):
         if dialog.exec() != QDialog.DialogCode.Accepted:
             self.store.discard(candidate)
             return
+        self._install(candidate)
+
+    def _install(self, candidate: Candidate) -> None:
         try:
             self.store.install(candidate)
         except (StoreError, OSError) as error:
