@@ -1117,6 +1117,21 @@ class WorkloadWindow(QMainWindow):
         self.nodes_table.customContextMenuRequested.connect(self._show_node_menu)
         self._aws_accounts: tuple[str, ...] = ()  # the ones the Integrations show
         self.workloads_refresh_button = ui.workloadsRefreshButton
+        self.extension_refresh_button = QPushButton()  # of the page of an extension
+        self.extension_refresh_button.setToolTip(self.tr("Refresh"))
+        self.extension_refresh_button.setProperty("iconOnly", "true")
+        self.extension_refresh_button.setProperty("variant", "primary")
+        header_row = ui.refreshButton.parentWidget()
+        header = header_row.layout() if header_row is not None else None
+        assert header is not None
+        header.addWidget(self.extension_refresh_button)
+        self.extension_refresh_button.hide()
+        self._extension_refresh: Callable[[], None] | None = None
+        self.extension_refresh_button.clicked.connect(
+            lambda: self._call_extension(
+                "", lambda: self._extension_refresh and self._extension_refresh()
+            )
+        )
         self.workloads_table = self.workloads_ui.eventsTable
         self.workloads_table.setItemDelegateForColumn(
             0, BadgeDelegate(self.workloads_table)
@@ -2080,6 +2095,8 @@ class WorkloadWindow(QMainWindow):
         if from_extension is not None:
             self.ui.pageTitle.setText(from_extension[0])
             self.ui.pageSubtitle.setText(from_extension[1])
+        self._extension_refresh = from_extension[2] if from_extension else None
+        self.extension_refresh_button.setVisible(self._extension_refresh is not None)
         self._render_pinned()
         self._remember_screen()
         for page, button in (
@@ -2442,6 +2459,7 @@ class WorkloadWindow(QMainWindow):
             self.workloads_refresh_button,
             self.overview_refresh_button,
             self.refresh_button,
+            self.extension_refresh_button,
         ):
             button.setIcon(_nav_icon("reload", light))
         accent = _pair(themed("#3220a0"))

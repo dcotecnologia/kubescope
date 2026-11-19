@@ -147,16 +147,17 @@ class ExtensionPages(QObject):
     def owns(self, index: int) -> bool:
         return any(self.stack.indexOf(entry.host) == index for entry in self._entries)
 
-    def shown(self, index: int) -> tuple[str, str] | None:
+    def shown(self, index: int) -> tuple[str, str, Callable[[], None] | None] | None:
         """Check the entry of the page opened and build it the first time; the
-        title and the subtitle, if it is one of these pages."""
-        found: tuple[str, str] | None = None
+        title, the subtitle and what its refresh button does, if it is one of
+        these pages."""
+        found: tuple[str, str, Callable[[], None] | None] | None = None
         for entry in self._entries:
             mine = self.stack.indexOf(entry.host) == index
             entry.button.setChecked(mine)
             if not mine:
                 continue
-            found = (entry.page.title, entry.page.subtitle)
+            found = (entry.page.title, entry.page.subtitle, entry.page.refresh)
             if not entry.built:
                 entry.built = True
                 self._build(entry)

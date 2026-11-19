@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file. The format 
 
 ### Added
 
+- A page of an extension can ask for the refresh button of the header of the window, the same as the other pages have, so its own page does not draw one by @danilogco
 - The AWS RDS instances page leaves the app and is the extension `kubescope-aws` (**Settings → Extensions → AWS**, recommended and not installed by itself), with the same list, details, logs and Systems Manager forward by @danilogco
 - An extension brings its own translations: the JSON files of its `languages` folder are added to the languages of the app while it runs, in contexts of their own that can never replace one of the app by @danilogco
 - An extension can show details in a tab, open a text as a log with a refresh button, ask the person to pick an item, and, with the permission `forward` and only in the write mode, start the port forward to a database through AWS Systems Manager, which the app checks is that command and nothing else by @danilogco

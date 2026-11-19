@@ -249,6 +249,7 @@ class ExtensionContext:
         factory: Callable[..., Any],
         subtitle: str = "",
         visible: Callable[[], bool] | None = None,
+        refresh: Callable[[], None] | None = None,
     ) -> None:
         self._require("ui.page")
         self._host.contributions.pages.append(
