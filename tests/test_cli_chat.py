@@ -4,13 +4,14 @@ from typing import cast
 
 import pytest
 
-from kubescope import cli, cli_chat, cluster, writes
-from kubescope.assistant import runner
-from kubescope.assistant.actions import FENCE
-from kubescope.assistant.history import History
-from kubescope.assistant.runner import Assistant, AssistantError
-from kubescope.assistant.session import ChatSession
+from kubescope import cli, cluster, writes
 from kubescope.cluster import ClusterError
+from kubescope.extensions.bundled.gabi import cli as cli_chat
+from kubescope.extensions.bundled.gabi import runner
+from kubescope.extensions.bundled.gabi.actions import FENCE
+from kubescope.extensions.bundled.gabi.history import History
+from kubescope.extensions.bundled.gabi.runner import Assistant, AssistantError
+from kubescope.extensions.bundled.gabi.session import ChatSession
 from kubescope.settings import Settings
 
 

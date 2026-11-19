@@ -14,16 +14,21 @@ import sys
 from collections.abc import Callable
 
 from kubescope import cluster, integrations
-from kubescope.assistant import ASSISTANTS, actions, executor, runner
-from kubescope.assistant import installed as installed_assistants
-from kubescope.assistant.actions import Invalid, Request
-from kubescope.assistant.dispatch import write_call
-from kubescope.assistant.history import Entry, History
-from kubescope.assistant.knowledge import system_prompt
-from kubescope.assistant.runner import COMPANY, NAME, Assistant, AssistantError
-from kubescope.assistant.session import ChatSession, Message
 from kubescope.cli_cluster import _confirm, _context
 from kubescope.cluster import ClusterError
+from kubescope.extensions.bundled.gabi import ASSISTANTS, actions, executor, runner
+from kubescope.extensions.bundled.gabi import installed as installed_assistants
+from kubescope.extensions.bundled.gabi.actions import Invalid, Request
+from kubescope.extensions.bundled.gabi.dispatch import write_call
+from kubescope.extensions.bundled.gabi.history import Entry, History
+from kubescope.extensions.bundled.gabi.knowledge import system_prompt
+from kubescope.extensions.bundled.gabi.runner import (
+    COMPANY,
+    NAME,
+    Assistant,
+    AssistantError,
+)
+from kubescope.extensions.bundled.gabi.session import ChatSession, Message
 from kubescope.settings import Settings, config_directory
 from kubescope.utils import ansi
 

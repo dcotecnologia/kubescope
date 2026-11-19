@@ -7,7 +7,7 @@ from collections.abc import Sequence
 from pathlib import Path
 from typing import Any
 
-from kubescope.assistant.runner import Assistant
+from kubescope.extensions.bundled.gabi.runner import Assistant
 
 # Everything of Codex that can act, off: it is asked to answer, not to work. With
 # the sandbox only read-only it could still read any file of the computer.

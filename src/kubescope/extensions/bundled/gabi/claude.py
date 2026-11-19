@@ -6,8 +6,8 @@ from collections.abc import Sequence
 from pathlib import Path
 from typing import Any
 
-from kubescope.assistant.attachments import Attachment
-from kubescope.assistant.runner import Assistant
+from kubescope.extensions.bundled.gabi.attachments import Attachment
+from kubescope.extensions.bundled.gabi.runner import Assistant
 
 
 def options(model: str | None, system: str) -> list[str]:

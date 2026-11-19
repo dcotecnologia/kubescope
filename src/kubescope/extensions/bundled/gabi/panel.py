@@ -25,7 +25,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from kubescope.assistant.runner import NAME
+from kubescope.extensions.bundled.gabi.runner import NAME
 from kubescope.theme import themed
 from kubescope.views.chat_icons import (
     close_icon,

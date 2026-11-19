@@ -1,7 +1,7 @@
 import json
 
-from kubescope import assistant
-from kubescope.assistant import codex, runner
+from kubescope.extensions.bundled import gabi as assistant
+from kubescope.extensions.bundled.gabi import codex, runner
 
 
 def test_codex_runs_with_nothing_it_could_act_on_the_machine_with(monkeypatch) -> None:

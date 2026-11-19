@@ -43,12 +43,17 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from kubescope.assistant import actions, attachments, executor
-from kubescope.assistant.actions import Invalid, Request
-from kubescope.assistant.attachments import Attachment, AttachmentError
-from kubescope.assistant.history import Entry
-from kubescope.assistant.runner import COMPANY, NAME, Assistant, AssistantError
-from kubescope.assistant.session import ChatSession, Message
+from kubescope.extensions.bundled.gabi import actions, attachments, executor
+from kubescope.extensions.bundled.gabi.actions import Invalid, Request
+from kubescope.extensions.bundled.gabi.attachments import Attachment, AttachmentError
+from kubescope.extensions.bundled.gabi.history import Entry
+from kubescope.extensions.bundled.gabi.runner import (
+    COMPANY,
+    NAME,
+    Assistant,
+    AssistantError,
+)
+from kubescope.extensions.bundled.gabi.session import ChatSession, Message
 from kubescope.theme import themed
 from kubescope.utils.timezone import zone_now
 from kubescope.views.chat_icons import attach_icon, send_icon, stop_icon

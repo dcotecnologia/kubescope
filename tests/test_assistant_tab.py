@@ -7,11 +7,11 @@ import time
 import pytest
 from PySide6.QtWidgets import QApplication
 
-from kubescope.assistant import session as chat
-from kubescope.assistant.runner import Assistant, AssistantError
-from kubescope.assistant.session import ChatSession
-from kubescope.views import assistant_tab
-from kubescope.views.assistant_tab import AnswerWorker, AssistantTab, ReadWorker
+from kubescope.extensions.bundled.gabi import session as chat
+from kubescope.extensions.bundled.gabi import tab as assistant_tab
+from kubescope.extensions.bundled.gabi.runner import Assistant, AssistantError
+from kubescope.extensions.bundled.gabi.session import ChatSession
+from kubescope.extensions.bundled.gabi.tab import AnswerWorker, AssistantTab, ReadWorker
 
 application = QApplication.instance() or QApplication([])
 FAKE = Assistant("fake", "Fake", "fake-ai", lambda m, s: [], lambda line: ("", ""))
@@ -799,7 +799,7 @@ def test_a_short_message_is_as_wide_as_its_text_and_not_squeezed(replies) -> Non
 
 
 def test_the_text_of_a_message_keeps_its_format_and_is_selectable() -> None:
-    from kubescope.views.assistant_tab import MessageText
+    from kubescope.extensions.bundled.gabi.tab import MessageText
 
     markdown, plain = MessageText(markdown=True), MessageText(markdown=False)
     markdown.setText("**bold** and `code`")
@@ -820,7 +820,7 @@ def test_the_wheel_over_a_message_scrolls_the_conversation_not_the_message() -> 
     from PySide6.QtCore import QPoint, QPointF
     from PySide6.QtGui import QWheelEvent
 
-    from kubescope.views.assistant_tab import MessageText
+    from kubescope.extensions.bundled.gabi.tab import MessageText
 
     text = MessageText(markdown=False)
     event = QWheelEvent(

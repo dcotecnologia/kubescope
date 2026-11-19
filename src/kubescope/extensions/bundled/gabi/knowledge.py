@@ -7,8 +7,8 @@ ask for. No Qt.
 from datetime import date
 
 from kubescope import i18n
-from kubescope.assistant import actions
-from kubescope.assistant.runner import BORN, HOMETOWN, NAME, SYSTEM_PROMPT
+from kubescope.extensions.bundled.gabi import actions
+from kubescope.extensions.bundled.gabi.runner import BORN, HOMETOWN, NAME, SYSTEM_PROMPT
 
 APP = (
     "About the client, KubeScope: a desktop app to read a Kubernetes cluster. The "

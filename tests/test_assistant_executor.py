@@ -2,8 +2,8 @@ import json
 
 import pytest
 
-from kubescope.assistant import actions, executor
 from kubescope.cluster import ClusterError
+from kubescope.extensions.bundled.gabi import actions, executor
 
 
 def _request(action: str, **args) -> actions.Request:

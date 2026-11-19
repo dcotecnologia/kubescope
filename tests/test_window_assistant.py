@@ -6,10 +6,10 @@ import pytest
 from PySide6.QtWidgets import QMessageBox
 
 from kubescope import window as window_module
-from kubescope.assistant import actions
-from kubescope.assistant.runner import Assistant
+from kubescope.extensions.bundled.gabi import actions
+from kubescope.extensions.bundled.gabi.runner import Assistant
+from kubescope.extensions.bundled.gabi.tab import AssistantTab
 from kubescope.i18n import apply_language
-from kubescope.views.assistant_tab import AssistantTab
 from tests.test_window_flows import _ready_window
 
 ONE = Assistant("one", "One", "one-ai", lambda m, s: [], lambda line: ("", ""))
@@ -160,7 +160,7 @@ def test_the_guide_links_to_how_each_program_is_installed(monkeypatch) -> None:
 
 
 def test_the_guide_of_claude_is_in_portuguese_for_a_portuguese_app(monkeypatch) -> None:
-    from kubescope.assistant import claude, codex
+    from kubescope.extensions.bundled.gabi import claude, codex
 
     window, _messages = _open(monkeypatch, found=())
     opened: list[str] = []
@@ -184,7 +184,7 @@ def test_the_guide_of_claude_is_in_portuguese_for_a_portuguese_app(monkeypatch) 
 def test_the_guide_says_when_a_path_that_was_set_is_no_longer_a_program(
     monkeypatch, tmp_path
 ) -> None:
-    from kubescope.assistant import runner
+    from kubescope.extensions.bundled.gabi import runner
 
     monkeypatch.setattr(runner, "CUSTOM_PROGRAMS", {})
     window, _messages = _open(monkeypatch, found=())
@@ -229,7 +229,7 @@ def test_the_chat_asks_once_before_anything_can_leave_the_computer(monkeypatch) 
 
 
 def test_images_are_offered_only_to_a_program_that_takes_them(monkeypatch) -> None:
-    from kubescope.assistant.claude import CLAUDE
+    from kubescope.extensions.bundled.gabi.claude import CLAUDE
 
     window, _messages = _open(monkeypatch, found=(ONE,))
     window._open_assistant()
@@ -750,7 +750,7 @@ def test_the_settings_say_the_assistant_uses_the_client_of_the_computer(
 def test_the_settings_take_the_path_of_a_program_the_system_does_not_find(
     monkeypatch, tmp_path
 ) -> None:
-    from kubescope.assistant import runner
+    from kubescope.extensions.bundled.gabi import runner
 
     monkeypatch.setattr(runner, "CUSTOM_PROGRAMS", {})
     program = tmp_path / "claude"
@@ -801,7 +801,7 @@ def test_browsing_for_a_program_fills_its_path(monkeypatch, tmp_path) -> None:
 
 
 def test_the_paths_kept_are_used_from_the_start(monkeypatch, tmp_path) -> None:
-    from kubescope.assistant import runner
+    from kubescope.extensions.bundled.gabi import runner
     from kubescope.settings import Settings
 
     monkeypatch.setattr(runner, "CUSTOM_PROGRAMS", {})
@@ -840,7 +840,7 @@ def test_the_assistant_is_told_the_mode_and_follows_it_when_it_changes(
 def test_the_corner_of_the_footer_is_left_to_the_button_of_the_assistant(
     monkeypatch,
 ) -> None:
-    from kubescope.views.assistant_panel import BUBBLE, MARGIN
+    from kubescope.extensions.bundled.gabi.panel import BUBBLE, MARGIN
 
     window, _messages = _open(monkeypatch)
     footer = window.ui.footerRow
@@ -1040,7 +1040,7 @@ def test_the_settings_split_into_general_and_assistant(monkeypatch) -> None:
 
 
 def test_the_model_and_effort_are_chosen_for_each_program(monkeypatch) -> None:
-    from kubescope.assistant import runner
+    from kubescope.extensions.bundled.gabi import runner
 
     monkeypatch.setattr(runner, "CUSTOM_MODELS", {})
     monkeypatch.setattr(runner, "CUSTOM_EFFORTS", {})
@@ -1077,7 +1077,7 @@ def test_the_model_and_effort_are_chosen_for_each_program(monkeypatch) -> None:
 
 
 def test_the_header_of_the_chat_says_what_answers(monkeypatch) -> None:
-    from kubescope.assistant import runner
+    from kubescope.extensions.bundled.gabi import runner
 
     monkeypatch.setattr(runner, "CUSTOM_MODELS", {})
     monkeypatch.setattr(runner, "CUSTOM_EFFORTS", {})
@@ -1110,7 +1110,7 @@ def test_the_header_of_the_chat_says_what_answers(monkeypatch) -> None:
 
 
 def test_what_the_program_is_set_to_use_is_told_to_it_and_shown(monkeypatch) -> None:
-    from kubescope.assistant import runner
+    from kubescope.extensions.bundled.gabi import runner
 
     monkeypatch.setattr(runner, "CUSTOM_MODELS", {})
     monkeypatch.setattr(runner, "CUSTOM_EFFORTS", {})
@@ -1168,7 +1168,7 @@ def test_the_save_button_shows_a_tick_for_a_moment_and_goes_back(monkeypatch) ->
 
 
 def test_debug_tells_what_answers_and_all_of_its_configuration(monkeypatch) -> None:
-    from kubescope.assistant import runner
+    from kubescope.extensions.bundled.gabi import runner
 
     monkeypatch.setattr(runner, "CUSTOM_MODELS", {})
     monkeypatch.setattr(runner, "CUSTOM_EFFORTS", {})
@@ -1303,7 +1303,7 @@ def test_ctrl_g_opens_the_chat_with_the_cursor_in_it(monkeypatch) -> None:
 
 
 def test_a_program_this_computer_does_not_have_is_not_offered(monkeypatch) -> None:
-    from kubescope.assistant import runner
+    from kubescope.extensions.bundled.gabi import runner
 
     monkeypatch.setattr(runner, "CUSTOM_MODELS", {})
     monkeypatch.setattr(runner, "CUSTOM_EFFORTS", {})

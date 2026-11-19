@@ -87,23 +87,6 @@ from kubescope import (
     forwards,
     integrations,
 )
-from kubescope.assistant import ASSISTANTS, runner
-from kubescope.assistant import actions as assistant_actions
-from kubescope.assistant import installed as installed_assistants
-from kubescope.assistant.dispatch import write_call
-from kubescope.assistant.history import History
-from kubescope.assistant.knowledge import system_prompt
-from kubescope.assistant.runner import NAME, Assistant
-from kubescope.assistant.runner import is_available as is_available_assistant
-from kubescope.assistant.screen import (
-    Screen,
-    describe_cluster_overview,
-    describe_workloads_overview,
-)
-from kubescope.assistant.screen import (
-    describe as describe_screen,
-)
-from kubescope.assistant.session import ChatSession
 from kubescope.cloud_addons import AKS_KIND, GKE_KIND, aks_cluster
 from kubescope.cluster import (
     AWS_REGIONS,
@@ -150,6 +133,27 @@ from kubescope.dialogs.global_search import GlobalSearch, SearchEntry
 from kubescope.dialogs.plugin_update_dialog import PluginUpdateDialog
 from kubescope.dialogs.theme_editor import ThemeEditor
 from kubescope.dialogs.update_dialog import UpdateDialog
+from kubescope.extensions.bundled.gabi import ASSISTANTS, runner
+from kubescope.extensions.bundled.gabi import actions as assistant_actions
+from kubescope.extensions.bundled.gabi import installed as installed_assistants
+from kubescope.extensions.bundled.gabi.dispatch import write_call
+from kubescope.extensions.bundled.gabi.history import History
+from kubescope.extensions.bundled.gabi.knowledge import system_prompt
+from kubescope.extensions.bundled.gabi.panel import BUBBLE, MARGIN, AssistantDock
+from kubescope.extensions.bundled.gabi.runner import NAME, Assistant
+from kubescope.extensions.bundled.gabi.runner import (
+    is_available as is_available_assistant,
+)
+from kubescope.extensions.bundled.gabi.screen import (
+    Screen,
+    describe_cluster_overview,
+    describe_workloads_overview,
+)
+from kubescope.extensions.bundled.gabi.screen import (
+    describe as describe_screen,
+)
+from kubescope.extensions.bundled.gabi.session import ChatSession
+from kubescope.extensions.bundled.gabi.tab import AssistantTab
 from kubescope.forwards import Forward
 from kubescope.i18n import (
     apply_language,
@@ -228,8 +232,6 @@ from kubescope.utils.selfupdate import detect_install, restart
 from kubescope.utils.timezone import set_timezone, timezone_choices, to_zone
 from kubescope.utils.updates import Release, UpdateCheck, check_for_update
 from kubescope.views import motion
-from kubescope.views.assistant_panel import BUBBLE, MARGIN, AssistantDock
-from kubescope.views.assistant_tab import AssistantTab
 from kubescope.views.chat_icons import check_icon, close_icon, icon_only, save_icon
 from kubescope.views.container_states import (
     BADGE_ROLE,

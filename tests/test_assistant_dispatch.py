@@ -1,7 +1,7 @@
 import pytest
 
 from kubescope import writes
-from kubescope.assistant import actions, dispatch
+from kubescope.extensions.bundled.gabi import actions, dispatch
 
 
 def _request(action: str, **args) -> actions.Request:

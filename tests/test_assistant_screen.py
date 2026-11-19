@@ -1,5 +1,10 @@
-from kubescope.assistant import actions, knowledge, runner
-from kubescope.assistant.screen import ROW_LIMIT, VIEWER_LIMIT, Screen, describe
+from kubescope.extensions.bundled.gabi import actions, knowledge, runner
+from kubescope.extensions.bundled.gabi.screen import (
+    ROW_LIMIT,
+    VIEWER_LIMIT,
+    Screen,
+    describe,
+)
 
 
 def _list(**overrides) -> Screen:
@@ -142,7 +147,7 @@ def _overview():
 
 
 def test_the_overview_of_the_cluster_gives_its_numbers_and_its_nodes() -> None:
-    from kubescope.assistant.screen import describe_cluster_overview
+    from kubescope.extensions.bundled.gabi.screen import describe_cluster_overview
 
     text = "\n".join(describe_cluster_overview(_overview()))
 
@@ -156,8 +161,8 @@ def test_the_overview_of_the_cluster_gives_its_numbers_and_its_nodes() -> None:
 
 
 def test_the_overview_of_the_workloads_gives_each_kind_and_the_events() -> None:
-    from kubescope.assistant import screen
-    from kubescope.assistant.screen import describe_workloads_overview
+    from kubescope.extensions.bundled.gabi import screen
+    from kubescope.extensions.bundled.gabi.screen import describe_workloads_overview
     from kubescope.models import EventInfo, KindSummary, WorkloadsOverview
 
     events = tuple(
