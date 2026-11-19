@@ -63,7 +63,7 @@ Keep the layers separate and the dependency direction one-way
     `src/kubescope/about.py`.
 - `src/kubescope/extensions/`
   - The app's side of the extensions: the registries the window reads and the context
-    each extension gets: the store (`store.py`), the loader, the pinned recommendations
+    each extension gets: the store (`store.py`), the loader, the recommendations (the latest release of a repository, or a pinned tag and hash)
     (`defaults.py`), the search for newer versions (`updates.py`) and what the app lends
     (`cluster_access.py`, `aws_access.py`, `forward_access.py`). The app ships no extension.
     The contract is the project [`kubescope-sdk`](https://github.com/dcotecnologia/kubescope-sdk) (namespace

@@ -29,22 +29,36 @@ def test_an_extension_is_pinned_when_it_has_a_tag_and_a_sha256() -> None:
     assert not wanted(ref="").pinned
 
 
-def test_only_what_is_pinned_is_offered(monkeypatch) -> None:
+def test_what_the_app_recommends_is_offered(monkeypatch) -> None:
     monkeypatch.setattr(defaults, "DEFAULTS", (wanted(), wanted(sha256="")))
 
-    assert offered() == (wanted(),)
+    assert offered() == (wanted(), wanted(sha256=""))
 
 
-def test_gabi_is_offered_by_a_tag_and_only_once_it_is_pinned() -> None:
-    gabi, _ = REAL
+def test_the_recommended_extensions_are_the_latest_release_of_their_repositories() -> (
+    None
+):
+    gabi, aws = REAL
 
     assert (gabi.id, gabi.repo.owner, gabi.repo.name) == (
         "kubescope.gabi",
         "dcotecnologia",
         "kubescope-ai-gabi",
     )
-    assert gabi.repo.ref  # a tag, never the default branch
-    assert gabi.pinned  # published, so it is offered; never without a hash
+    assert (aws.id, aws.repo.owner, aws.repo.name) == (
+        "kubescope.aws",
+        "dcotecnologia",
+        "kubescope-aws",
+    )
+    for one in REAL:
+        assert one.repo.ref == "" and one.sha256 == "" and not one.pinned  # the latest
+    assert gabi.automatic and not aws.automatic  # Gabi comes with the app
+
+
+def test_without_a_hash_any_files_of_that_extension_are_accepted() -> None:
+    verify(candidate(sha256="b" * 64), wanted(sha256="", ref=""))
+    with pytest.raises(StoreError, match="That is not Gabi"):
+        verify(candidate(extension="dco.other"), wanted(sha256=""))
 
 
 def test_what_was_pinned_is_accepted() -> None:
@@ -59,11 +73,3 @@ def test_another_extension_is_refused() -> None:
 def test_files_that_are_not_the_checked_ones_are_refused() -> None:
     with pytest.raises(StoreError, match="not the ones that were checked"):
         verify(candidate(sha256="b" * 64), wanted())
-
-
-def test_aws_is_recommended_and_not_installed_by_itself() -> None:
-    _, aws = REAL
-
-    assert (aws.id, aws.repo.name) == ("kubescope.aws", "kubescope-aws")
-    assert aws.pinned and not aws.automatic
-    assert REAL[0].automatic  # Gabi comes with the app

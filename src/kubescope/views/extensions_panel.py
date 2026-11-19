@@ -52,7 +52,7 @@ from kubescope.extensions.github import (
 )
 from kubescope.extensions.manifest import Manifest
 from kubescope.extensions.store import Candidate, ExtensionStore, StoreError
-from kubescope.extensions.updates import Update, find, version_key
+from kubescope.extensions.updates import Update, find, latest_tag, version_key
 from kubescope.settings import Settings
 from kubescope.theme import themed
 from kubescope.ui.ui_settings_page import Ui_SettingsPage
@@ -194,7 +194,7 @@ class ExtensionsPanel(QObject):
         for one in self.defaults():
             if one.id not in have:  # offered, and not here
                 manifest = Manifest(
-                    one.id, one.name, one.repo.ref.lstrip("v"), "", frozenset()
+                    one.id, one.name, one.repo.ref.removeprefix("v"), "", frozenset()
                 )
                 manifest = replace(manifest, description=one.description)
                 self.rows.append(
@@ -392,7 +392,7 @@ class ExtensionsPanel(QObject):
             status = self._badge(row)
             cells = {
                 "name": f"{STAR} {manifest.name}" if row.recommended else manifest.name,
-                "version": f"v{manifest.version}",
+                "version": f"v{manifest.version}" if manifest.version else "",
                 "status": status,
                 "author": manifest.author,
                 "installed": self._day(row.installed_at),
@@ -642,13 +642,29 @@ class ExtensionsPanel(QObject):
         self, repo: Repo, pin: DefaultExtension | None = None, review: bool = True
     ) -> None:
         self.run_action(
-            download,
-            lambda data: self._prepared(
-                self.store.prepare, data, repo.source, pin=pin, review=review
+            self._fetch,
+            lambda found: self._prepared(
+                self.store.prepare, found[1], found[0].source, pin=pin, review=review
             ),
             repo,
+            pin is not None,
             on_error=self._download_failed,
         )
+
+    @staticmethod
+    def _fetch(repo: Repo, latest: bool = False) -> tuple[Repo, bytes]:
+        """The files of a repository and the repository they are of.
+
+        What the app recommends, with no tag, is its latest release (its
+        highest final tag); a repository the person typed is taken as it
+        was typed.
+        """
+        if latest and not repo.ref:
+            tag = latest_tag(list_tags(repo))
+            if tag is None:
+                raise GithubError(f"{repo.label} has no release yet")
+            repo = Repo(repo.owner, repo.name, tag)
+        return repo, download(repo)
 
     def _download_failed(self, text: str) -> None:
         self._warn(text)

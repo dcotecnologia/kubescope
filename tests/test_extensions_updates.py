@@ -92,12 +92,29 @@ def test_what_the_app_recommends_is_updated_to_what_it_pinned_without_the_networ
     assert find([installed("1.0.2")], [pin], tags) == []
 
 
-def test_what_is_recommended_but_not_pinned_yet_is_not_updated() -> None:
-    unpinned = DefaultExtension(
-        "dco.tool", "Tool", "d", Repo("dco", "tool", "v2.0.0"), ""
-    )
+def test_what_is_recommended_without_a_pin_is_updated_to_the_latest_release() -> None:
+    latest = DefaultExtension("dco.tool", "Tool", "d", Repo("dco", "tool"))
+    tags = tags_of("v1.0.0", "v2.0.0", "v2.1.0-rc1")
 
-    assert find([installed()], [unpinned], tags_of("v2.0.0")) == []
+    [update] = find([installed()], [latest], tags)
+
+    assert update.latest == "v2.0.0" and update.pin is latest  # still checked to be it
+    assert tags.asked == [Repo("dco", "tool")]
+    assert find([installed("2.0.0")], [latest], tags_of("v2.0.0")) == []
+
+
+def test_what_is_recommended_without_a_pin_needs_the_network_to_be_updated() -> None:
+    latest = DefaultExtension("dco.tool", "Tool", "d", Repo("dco", "tool"))
+
+    assert find([installed()], [latest], None) == []
+
+
+def test_the_latest_tag_is_the_highest_final_one() -> None:
+    from kubescope.extensions.updates import latest_tag
+
+    assert latest_tag(["v1.9.0", "v1.10.0", "main", "v2.0.0-rc1"]) == "v1.10.0"
+    assert latest_tag(["main", "nightly"]) is None
+    assert latest_tag([]) is None
 
 
 def test_a_recommended_id_from_another_repository_is_not_taken_for_it() -> None:
