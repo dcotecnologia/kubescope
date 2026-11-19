@@ -1090,3 +1090,18 @@ def test_a_refused_or_failed_update_does_not_stop_the_next_one(
     assert "rate limit" in setup.messages[0]
     assert setup.card("Tool").texts[1] == "v1.0.0"  # declined: nothing replaced
     assert setup.panel._queue == []
+
+
+def test_the_buttons_that_install_or_look_for_updates_look_alike(setup) -> None:
+    form = setup.panel.form
+
+    variants = {
+        button.property("variant")
+        for button in (
+            form.extensionsInstallFolderButton,
+            form.extensionsInstallRepoButton,
+            setup.panel.check_button,
+        )
+    }
+
+    assert variants == {"secondary"}
