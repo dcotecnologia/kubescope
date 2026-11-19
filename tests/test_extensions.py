@@ -1,8 +1,10 @@
 import logging
+from pathlib import Path
 from typing import Any
 
 import pytest
 
+from kubescope.extensions.cluster_access import ClusterBridge
 from kubescope.extensions.context import ExtensionContext, Host
 from kubescope.extensions.registries import CommandRegistry, EventBus
 from kubescope.sdk import (
@@ -13,13 +15,7 @@ from kubescope.sdk import (
     WriteModeOff,
 )
 
-
-class FakeCluster:
-    def __getattr__(self, name: str):
-        return lambda *arguments: (name, arguments)
-
-
-CLUSTER = FakeCluster()
+CLUSTER = ClusterBridge()
 
 
 def make_host(write_mode: bool = False) -> tuple[Host, dict[str, dict[str, Any]], list]:
@@ -190,20 +186,32 @@ def test_cluster_read_paths_are_what_the_host_lends() -> None:
     context = make_context("cluster.read")
 
     assert context.cluster is CLUSTER
-    assert context.cluster.list_pods("dev") == ("list_pods", ("dev",))
+    assert context.cluster.KINDS == ClusterBridge.KINDS
 
 
-def test_writes_need_the_write_mode() -> None:
+def test_writes_need_the_write_mode(monkeypatch) -> None:
+    called: list = []
+    monkeypatch.setattr(
+        "kubescope.writes.scale_deployment", lambda *a: called.append(a)
+    )
     context = make_context("cluster.write", write_mode=False)
 
     with pytest.raises(WriteModeOff):
-        context.writes.run(lambda: None)
+        context.writes.scale_deployment("dev", "ns", "web", 3)
+
+    assert called == []
 
 
-def test_writes_run_when_the_write_mode_is_on() -> None:
+def test_writes_run_when_the_write_mode_is_on(monkeypatch) -> None:
+    called: list = []
+    monkeypatch.setattr(
+        "kubescope.writes.scale_deployment", lambda *a: called.append(a)
+    )
     context = make_context("cluster.write", write_mode=True)
 
-    assert context.writes.run(lambda a, b: a + b, 1, 2) == 3
+    context.writes.scale_deployment("dev", "ns", "web", 3)
+
+    assert called == [("dev", "ns", "web", 3)]
 
 
 def test_context_reads_the_app() -> None:
@@ -267,6 +275,9 @@ class FakeUi:
 
     def style_box(self, box) -> None:
         self.calls.append(("style", box))
+
+    def themed(self, color, text=False) -> str:
+        return color
 
     def show_settings(self, section="") -> None:
         self.calls.append(("settings", section))
@@ -347,3 +358,50 @@ def test_a_shortcut_is_a_contribution_that_goes_with_the_extension() -> None:
         ExtensionContext("dco.test", frozenset(), host).add_shortcut(
             "a", "A", "", handler
         )
+
+
+class FakeCli:
+    def choose_context(self, name) -> str:
+        return name or "picked"
+
+    def confirm(self, question) -> bool:
+        return True
+
+
+def test_the_terminal_is_lent_only_to_what_asked_for_it_and_only_while_it_runs() -> (
+    None
+):
+    host, _, _ = make_host()
+    asked = ExtensionContext("dco.test", frozenset({"cli"}), host)
+
+    with pytest.raises(PermissionDenied, match="did not ask for cli"):
+        _ = ExtensionContext("dco.test", frozenset(), host).cli
+    assert asked.cli is None  # in the window
+    host.cli = FakeCli()
+    assert asked.cli is host.cli
+    assert asked.cli is not None and asked.cli.choose_context(None) == "picked"
+
+
+def test_an_extension_has_a_folder_of_its_own() -> None:
+    host, _, _ = make_host()
+    host.data_directory = lambda extension: Path("/data") / extension
+
+    assert ExtensionContext("dco.a", frozenset(), host).data_directory == Path(
+        "/data/dco.a"
+    )
+    assert ExtensionContext("dco.b", frozenset(), host).data_directory == Path(
+        "/data/dco.b"
+    )
+
+
+def test_the_app_names_the_language_it_shows() -> None:
+    host, _, _ = make_host()
+    host.resolved_language = lambda: "pt_BR"
+    host.language_name = lambda: "Portuguese"
+    app = ExtensionContext("dco.test", frozenset(), host).app
+
+    assert (app.resolved_language, app.language_name) == ("pt_BR", "Portuguese")
+    assert (
+        ExtensionContext("dco.t", frozenset(), make_host()[0]).app.language_name
+        == "English"
+    )

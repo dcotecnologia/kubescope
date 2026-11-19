@@ -9,11 +9,14 @@ import json
 import logging
 from collections.abc import Callable
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any
 
+from kubescope.extensions.cluster_access import WritesBridge
 from kubescope.extensions.registries import CommandRegistry, Contributions, EventBus
 from kubescope.sdk import (
     PERMISSIONS,
+    Cli,
     CliCommand,
     ClusterAccess,
     CommandError,
@@ -23,7 +26,7 @@ from kubescope.sdk import (
     ShortcutContribution,
     TabKind,
     Ui,
-    WriteModeOff,
+    Writes,
 )
 
 logger = logging.getLogger(__name__)
@@ -40,7 +43,11 @@ class Host:
     settings_data: Callable[[str], dict[str, Any]]  # the store of one extension
     save_settings: Callable[[], None]
     language: Callable[[], str] = lambda: "auto"
+    resolved_language: Callable[[], str] = lambda: "en"
+    language_name: Callable[[], str] = lambda: "English"
+    data_directory: Callable[[str], Path] = lambda extension: Path(extension)
     ui: Ui | None = None  # None while the app runs without a window
+    cli: Cli | None = None  # set while a command of the terminal runs
     events: EventBus = field(default_factory=EventBus)
     commands: CommandRegistry = field(default_factory=CommandRegistry)
     contributions: Contributions = field(default_factory=Contributions)
@@ -60,6 +67,14 @@ class AppInfo:
     def language(self) -> str:
         return self._host.language()
 
+    @property
+    def resolved_language(self) -> str:
+        return self._host.resolved_language()
+
+    @property
+    def language_name(self) -> str:
+        return self._host.language_name()
+
 
 class ExtensionSettings:
     def __init__(self, data: dict[str, Any], save: Callable[[], None]) -> None:
@@ -73,16 +88,6 @@ class ExtensionSettings:
         json.dumps(value)  # only what the settings file can hold
         self._data[key] = value
         self._save()
-
-
-class ExtensionWrites:
-    def __init__(self, host: Host) -> None:
-        self._host = host
-
-    def run(self, function: Callable[..., Any], *arguments: Any) -> Any:
-        if not self._host.write_mode():
-            raise WriteModeOff("turn on the write mode to change the cluster")
-        return function(*arguments)
 
 
 class ScopedEvents:
@@ -149,9 +154,9 @@ class ExtensionContext:
         return self._host.cluster
 
     @property
-    def writes(self) -> ExtensionWrites:
+    def writes(self) -> Writes:
         self._require("cluster.write")
-        return ExtensionWrites(self._host)
+        return WritesBridge(self._host.write_mode)
 
     @property
     def current_context(self) -> str | None:
@@ -162,6 +167,15 @@ class ExtensionContext:
 
     def invoke(self, command: str, /, **arguments: Any) -> Any:
         return self._host.commands.invoke(command, **arguments)
+
+    @property
+    def cli(self) -> Cli | None:
+        self._require("cli")
+        return self._host.cli
+
+    @property
+    def data_directory(self) -> Path:
+        return self._host.data_directory(self.id)
 
     @property
     def ui(self) -> Ui | None:

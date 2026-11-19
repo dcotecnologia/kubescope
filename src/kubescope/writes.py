@@ -101,6 +101,7 @@ _RESOURCE_OF_KIND = {
     for resource, kind in cluster._KINDS.items()
     if resource not in ("nodes", "namespaces")
 }
+RESOURCE_KINDS = tuple(sorted(_RESOURCE_OF_KIND))  # the kinds that can be changed
 
 # What each button of the write mode needs the cluster to allow, as the
 # (verb, API group, resource, subresource) of an access review. Forwarding to a

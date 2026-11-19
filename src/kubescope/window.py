@@ -104,7 +104,6 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from kubescope import cluster as cluster_module
 from kubescope import forwards, integrations
 from kubescope.about import (
     COMPANY_URL,
@@ -165,6 +164,7 @@ from kubescope.extensions.bundled.gabi.controller import GabiController, GabiPor
 from kubescope.extensions.bundled.gabi.runner import (
     is_available as is_available_assistant,
 )
+from kubescope.extensions.cluster_access import ClusterBridge
 from kubescope.extensions.context import Host
 from kubescope.extensions.loader import ExtensionLoader
 from kubescope.extensions.registries import CommandRegistry
@@ -175,6 +175,7 @@ from kubescope.forwards import Forward
 from kubescope.i18n import (
     apply_language,
     language_choices,
+    language_name,
     resolve_language,
 )
 from kubescope.plugin_latest import helm_match, installed_chart, update_available
@@ -192,7 +193,6 @@ from kubescope.sdk import (
     LANGUAGE_CHANGED,
     SHUTDOWN,
     THEME_CHANGED,
-    ClusterAccess,
     SettingsPanel,
 )
 from kubescope.settings import (
@@ -1446,13 +1446,18 @@ class WorkloadWindow(QMainWindow):
             )
         )
         self.extension_host = Host(
-            cluster=cast(ClusterAccess, cluster_module),
+            cluster=ClusterBridge(),
             snapshot=lambda: self._screen_snapshot(),
             current_context=lambda: self._context() or None,
             write_mode=lambda: self.settings.write_mode,
             settings_data=self.settings.extension_data,
             save_settings=lambda: self._save_settings(),
             language=lambda: self.settings.language,
+            resolved_language=lambda: resolve_language(self.settings.language),
+            language_name=lambda: language_name(self.settings.language),
+            data_directory=lambda extension: (
+                config_directory() / "extension-data" / extension
+            ),
             ui=WindowUi(
                 self,
                 central,
@@ -1461,6 +1466,7 @@ class WorkloadWindow(QMainWindow):
                 lambda box: self._style_box_buttons(box),
                 lambda section: self._show_extension_settings(section),
                 lambda owner, pixels: self._reserve_corner_for(owner, pixels),
+                lambda color, text: themed(color, text=text),
             ),
             commands=self.commands,
         )

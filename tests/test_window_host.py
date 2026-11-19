@@ -7,7 +7,7 @@ from PySide6.QtGui import QKeySequence
 from PySide6.QtWidgets import QKeySequenceEdit, QLabel, QMessageBox, QPushButton
 
 from kubescope.extensions.manifest import MANIFEST_NAME
-from kubescope.i18n import apply_language
+from kubescope.i18n import apply_language, language_name, resolve_language
 from kubescope.window import EXTENSION_SECTION_FIRST, EXTENSION_WATCH_MS
 from tests.qt import present
 from tests.test_window_flows import _ready_window
@@ -502,3 +502,29 @@ def test_the_watcher_goes_when_the_extension_does(window, tmp_path) -> None:
     window._sync_extensions()
 
     assert window._extension_watchers == {}
+
+
+def test_the_extension_asks_the_window_for_the_colors_of_the_theme(
+    window, tmp_path
+) -> None:
+    from kubescope import theme
+
+    folder, package, _ = make_extension(tmp_path)
+    install_linked(window, folder)
+    ui = sys.modules[package].CTX[0].ui
+
+    assert ui.themed("#ffffff", False) == theme.themed("#ffffff")
+    assert ui.themed("#ffffff", True) == theme.themed("#ffffff", text=True)
+
+
+def test_the_extension_is_told_the_language_by_name_and_has_its_folder(
+    window, tmp_path
+) -> None:
+    folder, package, extension = make_extension(tmp_path, permissions='"ui.window"')
+    install_linked(window, folder)
+    ctx = sys.modules[package].CTX[0]
+
+    assert ctx.app.language_name == language_name(window.settings.language)
+    assert ctx.app.resolved_language == resolve_language(window.settings.language)
+    assert ctx.data_directory.name == extension
+    assert ctx.data_directory.parent.name == "extension-data"
