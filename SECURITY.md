@@ -223,7 +223,10 @@ configure` so you type the keys there. Apart from the integrations below, the ap
   over HTTPS from `api.github.com` (which sends the zip from
   `codeload.github.com`), sending a `User-Agent` with the app version and nothing
   else. Uninstalling an extension deletes its folder. Writes by an extension still need
-  the write mode.
+  the write mode. The extensions the app recommends (shown as cards, never installed
+  by themselves) have a version tag and the sha256 of their content pinned in the
+  app; the files downloaded, also on reinstall, are refused and deleted if they
+  differ or are another extension, and one without a pin is not offered.
 - **Development mode runs a folder in place.** With **Development mode** ticked, a
   folder is not copied: the extension runs from where it is, and is reloaded when
   its files change, so whoever can edit that folder can change what runs. There is

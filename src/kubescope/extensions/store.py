@@ -11,7 +11,6 @@ A bundled extension is part of the app, so uninstalling it only records
 that the person does not want it, and reinstalling takes that back.
 """
 
-import hashlib
 import json
 import logging
 import re
@@ -47,7 +46,7 @@ class Candidate:
 
     manifest: Manifest
     source: str  # "file name.zip" or "github owner/repo@ref"
-    sha256: str  # of the archive
+    sha256: str  # of the files, from the folder of the manifest
     folder: Path  # where it is staged
     replaces: Manifest | None = None  # the version installed now, if any
     content_changed: bool = False  # it replaces one whose sha256 differs
@@ -189,9 +188,14 @@ class ExtensionStore:
         staging.mkdir(parents=True)
         return staging
 
-    def _describe(self, staging: Path, digest: str, source: str) -> Candidate:
+    def _describe(self, staging: Path, source: str) -> Candidate:
+        """What is in `staging`, with the sha256 of the files from the folder
+        of the manifest, wherever that folder is and whatever it is called, so
+        that the same version has the same hash from a folder and from a
+        repository."""
         root = self._root(staging)
         manifest = read_manifest(root)
+        digest = archive.tree_digest(root)
         current = next(
             (one for one in self.installed() if one.manifest.id == manifest.id), None
         )
@@ -211,7 +215,7 @@ class ExtensionStore:
         staging = self._new_staging()
         try:
             archive.extract(data, staging)
-            return self._describe(staging, hashlib.sha256(data).hexdigest(), source)
+            return self._describe(staging, source)
         except (archive.ArchiveError, ManifestError, StoreError) as error:
             shutil.rmtree(staging, ignore_errors=True)
             raise StoreError(str(error)) from error
@@ -225,9 +229,7 @@ class ExtensionStore:
         staging = self._new_staging()
         try:
             archive.copy_tree(source, staging)
-            return self._describe(
-                staging, archive.tree_digest(staging), f"folder {source}"
-            )
+            return self._describe(staging, f"folder {source}")
         except (archive.ArchiveError, ManifestError, StoreError) as error:
             shutil.rmtree(staging, ignore_errors=True)
             raise StoreError(str(error)) from error

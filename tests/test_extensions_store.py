@@ -1,4 +1,3 @@
-import hashlib
 import io
 import json
 import zipfile
@@ -6,6 +5,7 @@ from pathlib import Path
 
 import pytest
 
+from kubescope.extensions.archive import tree_digest
 from kubescope.extensions.manifest import MANIFEST_NAME
 from kubescope.extensions.store import (
     REGISTRY,
@@ -64,7 +64,7 @@ def test_an_archive_is_prepared_and_nothing_is_installed(tmp_path) -> None:
 
     assert candidate.manifest.id == "dco.tool"
     assert candidate.source == "file tool.zip"
-    assert candidate.sha256 == hashlib.sha256(data).hexdigest()
+    assert candidate.sha256 == tree_digest(candidate.folder)  # of the files
     assert candidate.replaces is None and not candidate.content_changed
     assert (candidate.folder / "tool.py").is_file()
     assert store.installed() == []
@@ -340,3 +340,29 @@ def test_the_registry_is_trimmed_to_what_it_may_hold(tmp_path) -> None:
     assert len(store.source_of("dco.a")) == 500
     assert len(store._installed["dco.a"]["sha256"]) == 64
     assert store._removed == {"dco.b"}
+
+
+def test_the_same_version_has_the_same_hash_from_a_repository_and_from_a_folder(
+    tmp_path,
+) -> None:
+    store = store_in(tmp_path)
+    files = {
+        MANIFEST_NAME: manifest(),
+        "pkg/__init__.py": b"x = 1\n",
+        "README.md": b"hi",
+    }
+    from_github = store.prepare(
+        make_zip({f"dco-tool-abc1234/{name}": data for name, data in files.items()}),
+        "github dco/tool@v1",
+    )
+    source = tmp_path / "checkout"
+    (source / "pkg").mkdir(parents=True)
+    for name, data in files.items():
+        (source / name).write_bytes(data)
+    (source / ".git").mkdir()
+    (source / ".git" / "HEAD").write_text("ref")  # what a checkout carries
+    from_folder = store.prepare_folder(source)
+
+    assert from_github.sha256 == from_folder.sha256
+    (source / "README.md").write_bytes(b"changed")
+    assert store.prepare_folder(source).sha256 != from_github.sha256

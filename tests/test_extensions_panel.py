@@ -505,3 +505,124 @@ def test_a_card_says_why_an_extension_did_not_load(setup) -> None:
     setup.errors = {}
     setup.panel.refresh()
     assert not any(t.startswith("Could not load") for t in setup.card("Gabi").texts)
+
+
+def offered(tmp_path, sha256: str | None = None):
+    """A default extension whose pin is what `tool_zip()` has when it is
+    prepared."""
+    from kubescope.extensions.defaults import DefaultExtension
+
+    if sha256 is None:
+        probe = ExtensionStore(tmp_path / "probe")
+        sha256 = probe.prepare(tool_zip(), "github dco/tool@v1.0.0").sha256
+    return DefaultExtension(
+        "dco.tool", "Tool", "Does things", Repo("dco", "tool", "v1.0.0"), sha256
+    )
+
+
+def with_defaults(setup, *wanted):
+    setup.panel.defaults = lambda: wanted
+    setup.panel.refresh()
+
+
+def test_what_the_app_offers_is_a_recommended_card_with_a_button_to_install(
+    setup, tmp_path
+) -> None:
+    with_defaults(setup, offered(tmp_path))
+
+    card = setup.card("Tool")
+
+    assert card.badge == "Recommended"
+    assert set(card.buttons) == {"Install"}
+    assert "github dco/tool@v1.0.0" in card.texts and "v1.0.0" in card.texts
+    assert "Does things" in card.texts
+
+
+def test_the_pinned_version_is_downloaded_reviewed_and_installed(
+    setup, tmp_path, monkeypatch
+) -> None:
+    with_defaults(setup, offered(tmp_path))
+    setup.decide(True)
+    monkeypatch.setattr(extensions_panel, "download", lambda repo: tool_zip())
+
+    setup.card("Tool").buttons["Install"].click()
+
+    assert setup.downloads == [Repo("dco", "tool", "v1.0.0")]
+    assert setup.card("Tool").badge == "Installed"  # no longer only recommended
+    assert setup.changes == 1
+
+
+def test_files_that_are_not_the_pinned_ones_are_refused_and_not_staged(
+    setup, tmp_path, monkeypatch
+) -> None:
+    with_defaults(setup, offered(tmp_path, sha256="f" * 64))
+    setup.decide(True)
+    monkeypatch.setattr(extensions_panel, "download", lambda repo: tool_zip())
+
+    setup.card("Tool").buttons["Install"].click()
+
+    assert "not the ones that were checked" in setup.messages[0]
+    assert setup.dialogs == []  # the person is not even asked
+    assert [card.title for card in setup.cards()] == ["Gabi", "Tool"]
+    assert list((tmp_path / "ext" / "staging").iterdir()) == []
+
+
+def test_another_extension_in_that_place_is_refused(
+    setup, tmp_path, monkeypatch
+) -> None:
+    with_defaults(setup, offered(tmp_path))
+    setup.decide(True)
+    monkeypatch.setattr(
+        extensions_panel, "download", lambda repo: tool_zip("dco.other")
+    )
+
+    setup.card("Tool").buttons["Install"].click()
+
+    assert "That is not Gabi" not in setup.messages[0]
+    assert "That is not Tool: it is dco.other" in setup.messages[0]
+
+
+def test_what_is_installed_is_not_recommended_again(setup, tmp_path) -> None:
+    setup.decide(True)
+    setup.pick_manifest(make_folder(tmp_path / "tool"))
+    setup.panel.install_from_folder()
+
+    with_defaults(setup, offered(tmp_path))
+
+    assert [card.badge for card in setup.cards() if card.title == "Tool"] == [
+        "Installed"
+    ]
+
+
+def test_uninstalling_what_the_app_offers_brings_it_back_as_recommended(
+    setup, tmp_path, monkeypatch
+) -> None:
+    with_defaults(setup, offered(tmp_path))
+    setup.decide(True)
+    monkeypatch.setattr(extensions_panel, "download", lambda repo: tool_zip())
+    setup.card("Tool").buttons["Install"].click()
+    setup.confirm(True)
+
+    setup.card("Tool").buttons["Uninstall"].click()
+
+    assert setup.card("Tool").badge == "Recommended"
+
+
+def test_reinstalling_what_the_app_offers_checks_the_pin_again(
+    setup, tmp_path, monkeypatch
+) -> None:
+    wanted = offered(tmp_path)
+    with_defaults(setup, wanted)
+    setup.decide(True)
+    monkeypatch.setattr(extensions_panel, "download", lambda repo: tool_zip())
+    setup.card("Tool").buttons["Install"].click()
+    # the tag now gives other files: the extension of the same id, changed
+    monkeypatch.setattr(
+        extensions_panel, "download", lambda repo: tool_zip(version="9.9.9")
+    )
+    setup.dialogs.clear()
+
+    setup.card("Tool").buttons["Reinstall"].click()
+
+    assert "not the ones that were checked" in setup.messages[-1]
+    assert setup.dialogs == []

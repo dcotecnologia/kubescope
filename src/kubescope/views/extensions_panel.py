@@ -10,8 +10,8 @@ downloaded off the UI thread.
 """
 
 import logging
-from collections.abc import Callable
-from dataclasses import dataclass
+from collections.abc import Callable, Sequence
+from dataclasses import dataclass, replace
 from functools import partial
 from pathlib import Path
 
@@ -30,6 +30,7 @@ from PySide6.QtWidgets import (
 )
 
 from kubescope.dialogs.extension_dialog import InstallExtensionDialog
+from kubescope.extensions.defaults import DefaultExtension, offered, verify
 from kubescope.extensions.github import (
     GithubError,
     Repo,
@@ -53,6 +54,7 @@ class Row:
     manifest: Manifest
     source: str  # "bundled", "folder /x", "github o/r", "dev /x"
     installed: bool
+    default: DefaultExtension | None = None  # one the app offers, not installed
 
     @property
     def bundled(self) -> bool:
@@ -73,6 +75,7 @@ class ExtensionsPanel(QObject):
         show_message: Callable[[QMessageBox.Icon, str, str], None],
         changed: Callable[[], None] = lambda: None,
         load_errors: Callable[[], dict[str, str]] = dict,
+        defaults: Callable[[], Sequence[DefaultExtension]] = offered,
     ) -> None:
         super().__init__(window)
         self.form = form
@@ -82,6 +85,7 @@ class ExtensionsPanel(QObject):
         self.show_message = show_message
         self.changed = changed  # what was installed or removed is to be loaded
         self.load_errors = load_errors  # why an extension did not load
+        self.defaults = defaults  # what the app offers to install
         self.rows: list[Row] = []
         self._columns = 1
         form.extensionsInstallFolderButton.clicked.connect(self.install_from_folder)
@@ -108,6 +112,14 @@ class ExtensionsPanel(QObject):
         ] + [
             Row(manifest, "bundled", False) for manifest in self.store.removed_bundled()
         ]
+        have = {row.manifest.id for row in self.rows}
+        for one in self.defaults():
+            if one.id not in have:  # offered, and not here
+                manifest = Manifest(
+                    one.id, one.name, one.repo.ref.lstrip("v"), "", frozenset()
+                )
+                manifest = replace(manifest, description=one.description)
+                self.rows.append(Row(manifest, f"github {one.repo.label}", False, one))
         self.render()
 
     def render(self) -> None:
@@ -126,6 +138,8 @@ class ExtensionsPanel(QObject):
         grid.setRowStretch((len(self.rows) + columns - 1) // columns, 1)
 
     def _badge(self, row: Row) -> str:
+        if row.default is not None:
+            return self.tr("Recommended")
         if not row.installed:
             return self.tr("Uninstalled")
         if row.dev:
@@ -172,14 +186,19 @@ class ExtensionsPanel(QObject):
             source.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
             layout.addWidget(source)
         buttons = QHBoxLayout()
-        if not row.installed or self._can_reinstall(row):
+        if row.default is not None:
+            install = QPushButton(self.tr("Install"))
+            install.setProperty("variant", "primary")
+            install.clicked.connect(partial(self.install_default, row.default))
+            buttons.addWidget(install)
+        elif not row.installed or self._can_reinstall(row):
             reinstall = QPushButton(self.tr("Reinstall"))
             reinstall.setProperty(
                 "variant", "primary" if not row.installed else "secondary"
             )
             reinstall.clicked.connect(partial(self.reinstall, row))
             buttons.addWidget(reinstall)
-        if row.installed:
+        if row.installed and row.default is None:
             uninstall = QPushButton(self.tr("Uninstall"))
             uninstall.setProperty("variant", "secondary")
             uninstall.clicked.connect(partial(self.uninstall, row))
@@ -240,17 +259,33 @@ class ExtensionsPanel(QObject):
             return
         self._download(repo)
 
-    def _download(self, repo: Repo) -> None:
+    def install_default(self, wanted: DefaultExtension) -> None:
+        """Download the version of an extension that the app offers, which is
+        installed only if its files are the ones that were pinned."""
+        self._download(wanted.repo, wanted)
+
+    def _download(self, repo: Repo, pin: DefaultExtension | None = None) -> None:
         self.run_action(
             download,
-            lambda data: self._prepared(self.store.prepare, data, repo.source),
+            lambda data: self._prepared(self.store.prepare, data, repo.source, pin=pin),
             repo,
             on_error=self._warn,
         )
 
-    def _prepared(self, prepare: Callable[..., Candidate], *arguments: object) -> None:
+    def _prepared(
+        self,
+        prepare: Callable[..., Candidate],
+        *arguments: object,
+        pin: DefaultExtension | None = None,
+    ) -> None:
         try:
             candidate = prepare(*arguments)
+            if pin is not None:
+                try:
+                    verify(candidate, pin)
+                except StoreError:
+                    self.store.discard(candidate)
+                    raise
         except StoreError as error:
             self._warn(str(error))
             return
@@ -319,4 +354,12 @@ class ExtensionsPanel(QObject):
             self._warn(str(error))
             return
         if repo is not None:
-            self._download(repo)
+            pin = next(  # one the app offers is checked against what was pinned
+                (
+                    one
+                    for one in self.defaults()
+                    if one.id == row.manifest.id and one.repo == repo
+                ),
+                None,
+            )
+            self._download(repo, pin)

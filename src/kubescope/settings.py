@@ -44,6 +44,7 @@ DEFAULTS: dict[str, Any] = {
     "shortcuts": {},
     "integration_accounts": [],
     "extensions": {},
+    "extensions_offered": [],
 }
 
 
@@ -305,6 +306,29 @@ class Settings:
     @shortcuts.setter
     def shortcuts(self, value: dict[str, str]) -> None:
         self._data["shortcuts"] = shortcuts.clean(value)
+
+    @property
+    def extensions_offered(self) -> list[str]:
+        """The extensions the app already offered to install, so that it asks
+        once and does not ask again after the person said no (or uninstalled
+        one)."""
+        value = self._data["extensions_offered"]
+        return (
+            list(
+                dict.fromkeys(
+                    one
+                    for one in value
+                    if isinstance(one, str) and _EXTENSION_ID.fullmatch(one)
+                )
+            )
+            if isinstance(value, list)
+            else []
+        )
+
+    def offered(self, extension: str) -> None:
+        """Remember that `extension` was offered."""
+        if extension not in self.extensions_offered:
+            self._data["extensions_offered"] = [*self.extensions_offered, extension]
 
     def extension_data(self, extension: str) -> dict[str, Any]:
         """The preferences of one extension: a dictionary that is saved with

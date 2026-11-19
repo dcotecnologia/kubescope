@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file. The format 
 
 ### Added
 
+- Extensions the app recommends, such as Gabi, show in **Settings → Extensions** as a Recommended card with an Install button; they come from GitHub and are installed only if the files downloaded are the ones whose sha256 the app pinned (also when reinstalled), and one that is not pinned yet is not offered by @danilogco
 - The SDK that extensions are written against, a project of its own (`kubescope-sdk`) that the app depends on: events, named commands, the contributions of an extension to the window, the settings of each extension, and the cluster read paths and writes behind the permissions its manifest asks for by @danilogco
 - The code behind installing extensions from a folder or a GitHub repository by their `kubescope-extension.toml`, uninstalling and reinstalling them, running one from its own folder in development mode and reloading it when its files change, with what is copied under strict limits and the manifest checked before anything of it runs by @danilogco
 - **Settings → Extensions** shows a card for each extension and installs one from a folder (pick its `kubescope-extension.toml`) or a GitHub repository after a dialog shows where it comes from, its permissions and its sha256, with a development mode that runs the folder in place, and uninstalls and reinstalls them; Gabi, which ships with the app, can be uninstalled and reinstalled there by @danilogco
