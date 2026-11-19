@@ -20,6 +20,7 @@ class DefaultExtension:
     description: str
     repo: Repo  # with the tag of the version
     sha256: str  # of the files of that tag; see `tools/pin_default_extension.py`
+    automatic: bool = True  # installed on the first run; else only a card
 
     @property
     def pinned(self) -> bool:
@@ -39,6 +40,19 @@ DEFAULTS = (
         ),
         repo=Repo("dcotecnologia", "kubescope-ai-gabi", "v1.0.1"),
         sha256="08910eda1092a1aa950b8ab49e3ddf8c7455680986e2a336c364b6b023b03ea5",
+    ),
+    DefaultExtension(
+        id="kubescope.aws",
+        name="AWS",
+        description=(
+            "Look at your AWS account from KubeScope: the RDS databases of the "
+            "account of the selected cluster, in any region, with their details "
+            "and logs, and a port forward to a database through Systems Manager "
+            "in the write mode."
+        ),
+        repo=Repo("dcotecnologia", "kubescope-aws", "v1.0.0"),
+        sha256="ca4ee4ccda1d83d20f4fa25f380cdc1ab7eabc3694df3f008650a11ea1c0bc83",
+        automatic=False,
     ),
 )
 
