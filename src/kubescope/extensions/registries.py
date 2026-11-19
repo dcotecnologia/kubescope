@@ -8,7 +8,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any
 
-from kubescope.sdk import (
+from kubescope_sdk import (
     EVENTS,
     CliCommand,
     CommandError,

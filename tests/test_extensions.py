@@ -2,16 +2,16 @@ import logging
 from typing import Any
 
 import pytest
-
-from kubescope.extensions.context import ExtensionContext, Host
-from kubescope.extensions.registries import CommandRegistry, EventBus
-from kubescope.sdk import (
+from kubescope_sdk import (
     CONTEXT_CHANGED,
     CommandError,
     DockContribution,
     PermissionDenied,
     WriteModeOff,
 )
+
+from kubescope.extensions.context import ExtensionContext, Host
+from kubescope.extensions.registries import CommandRegistry, EventBus
 
 
 class FakeCluster:
