@@ -90,6 +90,9 @@ _Pod logs with colored levels. These screens are drawn from fake data by
 
 ## Features
 
+- **Extensions:** [Gabi](https://github.com/dcotecnologia/kubescope-ai-gabi), [AWS](https://github.com/dcotecnologia/kubescope-aws) and your own,
+  written against the [SDK](https://github.com/dcotecnologia/kubescope-sdk), installed from a folder or
+  GitHub in **Settings → Extensions**. See [Extensions](#extensions).
 - **Overview:** nodes ready, Pod counts, CPU and memory requests against capacity,
   and the number of namespaces, Deployments, StatefulSets and DaemonSets.
 - **Workloads overview:** the first entry of the **Workloads** menu counts Pods,
@@ -181,9 +184,37 @@ _Pod logs with colored levels. These screens are drawn from fake data by
   selectable in Settings, where each language is listed by its own name and its English
   name, in alphabetical order.
 
+## Extensions
+
+KubeScope stays small: a feature that is not for everyone is an **extension** that you install and
+uninstall in **Settings → Extensions**, from a folder (pick its `kubescope-extension.toml`) or from a
+GitHub repository. An extension is a Python project written against the
+[KubeScope SDK](https://github.com/dcotecnologia/kubescope-sdk) and nothing else of the app.
+
+| Extension | What it does | Installed |
+| --------- | ------------ | --------- |
+| [Gabi](https://github.com/dcotecnologia/kubescope-ai-gabi) | The AI assistant: ask about your cluster in the corner of the window or with `kubescope chat` | Comes with KubeScope, and can be uninstalled |
+| [AWS](https://github.com/dcotecnologia/kubescope-aws) | The RDS databases of the account of the selected cluster, with details, logs and a port forward | Recommended (★), you install it |
+
+The table of **Settings → Extensions** lists what is installed and what KubeScope recommends, with the
+version, the author, when it was installed and last updated, and where it came from; double-click a row
+for its details and right-click it to install, update, reinstall or uninstall. KubeScope looks for newer
+versions and suggests them, and never updates one by itself. Before anything of an extension runs, a
+dialog shows where it comes from, its permissions and the sha256 of its content.
+
+To write one, read the guides of the SDK:
+[getting started](https://github.com/dcotecnologia/kubescope-sdk/blob/main/docs/getting-started.md),
+[the manifest](https://github.com/dcotecnologia/kubescope-sdk/blob/main/docs/manifest.md),
+[the context](https://github.com/dcotecnologia/kubescope-sdk/blob/main/docs/api.md),
+[contributions](https://github.com/dcotecnologia/kubescope-sdk/blob/main/docs/contributions.md) and
+[permissions and security](https://github.com/dcotecnologia/kubescope-sdk/blob/main/docs/permissions.md).
+An extension is code that runs with your permissions: install only the ones you trust (see
+[SECURITY.md](SECURITY.md)).
+
 ## Gabi, the assistant
 
-Gabi is an AI assistant for KubeScope, made by DCO Tecnologia. She knows Kubernetes
+Gabi is an AI assistant for KubeScope, made by DCO Tecnologia. She is
+[an extension of her own project](https://github.com/dcotecnologia/kubescope-ai-gabi) that comes installed. She knows Kubernetes
 and KubeScope, and she only talks about them: she politely declines anything else.
 She answers in the language of the app, in any of its 21 languages, unless you write
 to her in another one.
@@ -206,7 +237,7 @@ both without a saved session. Gabi cannot read a file of your computer or run a 
 2. Open the round button in the corner of the window and, the first time, agree that
    what you ask and what she reads from the cluster go to that program and to its
    service. Nothing is sent before that.
-3. In **Settings**, the **Assistant** card turns the button on or off, picks the program
+3. In **Settings → Gabi**, the section turns the button on or off, picks the program
    (**Automatic** uses the first one it finds) and, if the system does not find a
    program on its path, takes the path of it, which you can type or browse for.
 
@@ -479,6 +510,10 @@ them when renaming or moving widgets.
 Read [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) and [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request, and
 [COMMITING.md](COMMITING.md) for the commit message format. [AGENTS.md](AGENTS.md)
 holds the architecture and standards that people and AI assistants follow.
+To write an extension, start with the [SDK](https://github.com/dcotecnologia/kubescope-sdk); each of
+[the SDK](https://github.com/dcotecnologia/kubescope-sdk/blob/main/CONTRIBUTING.md),
+[Gabi](https://github.com/dcotecnologia/kubescope-ai-gabi/blob/main/CONTRIBUTING.md) and
+[AWS](https://github.com/dcotecnologia/kubescope-aws/blob/main/CONTRIBUTING.md) has its own contributing guide.
 Report vulnerabilities privately as described in [SECURITY.md](SECURITY.md).
 
 ## Author

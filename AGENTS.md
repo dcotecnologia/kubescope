@@ -63,8 +63,14 @@ Keep the layers separate and the dependency direction one-way
     `src/kubescope/about.py`.
 - `src/kubescope/extensions/`
   - The app's side of the extensions: the registries the window reads and the context
-    each extension gets. The app ships no extension: Gabi, the assistant, is the project
-    `kubescope-gabi`, installed from Settings → Extensions.
+    each extension gets: the store (`store.py`), the loader, the pinned recommendations
+    (`defaults.py`), the search for newer versions (`updates.py`) and what the app lends
+    (`cluster_access.py`, `aws_access.py`, `forward_access.py`). The app ships no extension.
+    The contract is the project [`kubescope-sdk`](https://github.com/dcotecnologia/kubescope-sdk) (namespace
+    `kubescope.sdk`); Gabi ([`kubescope-ai-gabi`](https://github.com/dcotecnologia/kubescope-ai-gabi)) and
+    AWS ([`kubescope-aws`](https://github.com/dcotecnologia/kubescope-aws)) are extensions of their own
+    projects, installed from Settings → Extensions. A feature that is not for everyone belongs in one;
+    the app may import `kubescope.sdk`, and an extension imports nothing of the app.
 - `src/kubescope/settings.py`
   - User preferences stored as JSON; tolerant of missing or damaged files.
 - `src/kubescope/i18n.py` and `src/kubescope/languages/`
