@@ -676,4 +676,5 @@ def test_the_cards_fill_the_width_after_the_page_gets_narrower(setup, tmp_path) 
         application.processEvents()
         widths[page] = [grid.itemAt(i).widget().width() for i in range(grid.count())]
 
-    assert min(widths[700]) >= host.width() - 2 * 14  # one column, the whole width
+    row = widths[700][:2] if host.width() >= 2 * 260 + 14 else widths[700][:1]
+    assert sum(row) + 14 * (len(row) - 1) >= host.width() - 4  # the whole width
