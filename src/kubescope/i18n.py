@@ -24,6 +24,7 @@ ENGLISH = "en_US"  # the language of the source texts
 
 _installed: list[QTranslator] = []
 _languages: dict[str, Language] | None = None
+_extension_folders: dict[str, Path] = {}  # extension id -> its `languages` folder
 
 
 @dataclass(frozen=True)
@@ -94,14 +95,44 @@ def _read_languages(directory: Path, into: dict[str, Language]) -> None:
             logger.warning("Skipping language %s: %s", path.name, error)
 
 
+def set_extension_languages(extension: str, folder: Path | None) -> bool:
+    """Take the translations of an extension (the JSON files of its `languages`
+    folder, with contexts of its own) into the languages of the app, or take
+    them back with `None`; True when that changed something."""
+    if folder is None or not folder.is_dir():
+        changed = _extension_folders.pop(extension, None) is not None
+    else:
+        changed = _extension_folders.get(extension) != folder
+        _extension_folders[extension] = folder
+    if changed:
+        reload_languages()
+    return changed
+
+
+def _add_extensions(into: dict[str, Language]) -> None:
+    """The texts of the extensions, in the languages the app has; a context of
+    the app is never replaced by one of an extension."""
+    for folder in _extension_folders.values():
+        found: dict[str, Language] = {}
+        _read_languages(folder, found)
+        for code, extra in found.items():
+            if code not in into:
+                continue
+            own = into[code]
+            merged = {**extra.strings, **own.strings}
+            into[code] = Language(own.name, own.right_to_left, merged)
+
+
 def languages() -> dict[str, Language]:
     """The languages besides English: the ones that ship with the app, and the
-    files of the languages folder on top of them, which win by code."""
+    files of the languages folder on top of them, which win by code, with the
+    texts of the extensions that are loaded."""
     global _languages
     if _languages is None:
         found: dict[str, Language] = {}
         _read_languages(BUNDLED_DIRECTORY, found)
         _read_languages(languages_directory(), found)
+        _add_extensions(found)
         _languages = found
     return _languages
 

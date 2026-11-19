@@ -139,3 +139,39 @@ def test_the_languages_of_the_app_have_an_english_name_each() -> None:
         "Hindi",
     ):
         assert name in names
+
+
+def test_an_extension_brings_its_own_texts_to_the_languages_of_the_app(
+    tmp_path,
+) -> None:
+    get_application()
+    folder = tmp_path / "languages"
+    _write(folder / "pt_BR.json", _language("x", AwsPage={"Instances": "Instâncias"}))
+    _write(folder / "zz.json", _language("Unknown", AwsPage={"Instances": "Z"}))
+
+    assert i18n.set_extension_languages("dco.aws", folder)
+    assert not i18n.set_extension_languages("dco.aws", folder)  # nothing new
+    try:
+        languages = i18n.languages()
+        assert languages["pt_BR"].strings["AwsPage"] == {"Instances": "Instâncias"}
+        assert languages["pt_BR"].name != "x"  # the app's language, with more texts
+        assert "zz" not in languages  # an extension adds no language
+        assert "Settings" in languages["pt_BR"].strings or languages["pt_BR"].strings
+        i18n.apply_language("pt_BR")
+        assert QCoreApplication.translate("AwsPage", "Instances") == "Instâncias"
+    finally:
+        i18n.apply_language("en")
+        assert i18n.set_extension_languages("dco.aws", None)
+    assert "AwsPage" not in i18n.languages()["pt_BR"].strings
+
+
+def test_a_context_of_the_app_is_not_replaced_by_one_of_an_extension(tmp_path) -> None:
+    folder = tmp_path / "languages"
+    own = next(iter(i18n.languages()["pt_BR"].strings))
+    _write(folder / "pt_BR.json", _language("x", **{own: {"Hijack": "Sequestro"}}))
+    before = dict(i18n.languages()["pt_BR"].strings[own])
+    try:
+        i18n.set_extension_languages("dco.evil", folder)
+        assert i18n.languages()["pt_BR"].strings[own] == before
+    finally:
+        i18n.set_extension_languages("dco.evil", None)

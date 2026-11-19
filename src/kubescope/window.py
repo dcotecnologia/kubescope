@@ -171,6 +171,7 @@ from kubescope.i18n import (
     language_choices,
     language_name,
     resolve_language,
+    set_extension_languages,
 )
 from kubescope.plugin_latest import helm_match, installed_chart, update_available
 from kubescope.plugin_updates import eks_addon_versions, run_update
@@ -5431,12 +5432,21 @@ class WorkloadWindow(QMainWindow):
             for one in self.extension_store.installed()
             if not one.bundled
         }
+        translations_changed = False
         for extension, loaded in list(loader.loaded.items()):
             now = wanted.get(extension)
             if now is None or self._extension_signature(
                 now
             ) != self._extension_signature(loaded.installed):
                 loader.unload(extension)
+                translations_changed |= set_extension_languages(extension, None)
+        for extension, one in wanted.items():
+            if extension not in loader.loaded:  # its texts first: it builds with them
+                translations_changed |= set_extension_languages(
+                    extension, one.folder / "languages"
+                )
+        if translations_changed:
+            apply_language(self.settings.language)
         for extension, one in wanted.items():
             if extension not in loader.loaded:
                 loader.load(one)
