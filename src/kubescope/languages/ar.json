@@ -409,7 +409,7 @@
             "Add file...": "إضافة ملف...",
             "Add row": "إضافة صف",
             "All namespaces": "كل namespaces",
-            "An extension adds a feature to KubeScope, like Gabi. It is code that runs with your permissions, so install only the ones you trust. KubeScope looks for the kubescope-extension.toml in the folder or the repository you give it. Changes apply the next time KubeScope starts.": "الإضافة تضيف ميزة إلى KubeScope، مثل Gabi. هي شيفرة تعمل بأذوناتك، لذا ثبّت فقط ما تثق به. يبحث KubeScope عن kubescope-extension.toml في المجلد أو المستودع الذي تحدده. تسري التغييرات عند التشغيل التالي لـ KubeScope.",
+            "An extension adds a feature to KubeScope. It is code that runs with your permissions, so install only the ones you trust. KubeScope looks for the kubescope-extension.toml in the folder or the repository you give it. Changes apply the next time KubeScope starts.": "",
             "Animate windows and lists as they open": "تحريك النوافذ والقوائم عند فتحها",
             "Asks the public GitHub API for the latest release and sends nothing but the app version. The icon in the footer checks on demand.": "يستعلم عن آخر إصدار من واجهة GitHub API العامة ولا يرسل سوى إصدار التطبيق. أيقونة التذييل تتحقق عند الطلب.",
             "CLUSTER ACCESS": "الوصول إلى الكتلة",

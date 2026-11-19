@@ -19,8 +19,14 @@ layout: default
  </figure>
 </div>
 <div class="more">
- <h2>Meet Gabi</h2>
- <p>The round button in the corner opens a chat with Gabi, the assistant of DCO Tecnologia. She sees the list and the logs you have open, reads the cluster to find what is wrong, and moves you to the right screen. She runs on the Claude Code or Codex that is already on your computer, so KubeScope asks for no credentials and stores none, and in the read-only mode she cannot change anything. <a href="{{ '/assistant/' | relative_url }}" target="_self">See how she works.</a></p>
+ <h2>Meet Gabi, your Kubernetes assistant</h2>
+ <p>Ask Gabi why a Pod is restarting, what changed in a Deployment, or where to find the evidence. From the round button in the corner, she can inspect the resource, logs and events you need; explain what she found; and take you to the right list, detail or log.</p>
+ <ul>
+  <li>Paste a screenshot, manifest or long log to add context to the conversation.</li>
+  <li>Get an answer in the language of KubeScope, with the checks and evidence behind it.</li>
+  <li>Stay safe by default: she cannot change a cluster in read-only mode. With write mode on, every proposed change still waits for your review and <strong>Run</strong>.</li>
+ </ul>
+ <p>Gabi uses Claude Code or Codex already signed in on your computer; KubeScope asks for no credentials and stores none. <a href="{{ '/assistant/' | relative_url }}" target="_self">Explore Gabi's capabilities and safeguards.</a></p>
 </div>
 <div class="more">
  <h2>Install it in one command</h2>

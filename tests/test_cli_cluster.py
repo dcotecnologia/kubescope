@@ -277,3 +277,11 @@ def test_delete_cluster_wide_kind_has_no_namespace_in_question(monkeypatch, caps
     _tty(monkeypatch, "n")
     assert cli.run(["delete", "node", "n1", "--context", "a", "-n", "ns"]) == 1
     assert "in ns" not in capsys.readouterr().err
+
+
+def test_the_terminal_asks_a_question_and_trims_the_answer(monkeypatch) -> None:
+    from kubescope import cli_cluster
+
+    monkeypatch.setattr("builtins.input", lambda prompt: f"  {prompt}yes \n")
+
+    assert cli_cluster._ask("Sure? ") == "Sure? yes"

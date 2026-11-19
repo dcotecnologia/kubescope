@@ -6,7 +6,7 @@ from kubescope.extensions.defaults import DefaultExtension
 from kubescope.extensions.github import GithubError, Repo
 from kubescope.extensions.manifest import Manifest
 from kubescope.extensions.store import Installed
-from kubescope.extensions.updates import find, version_key
+from kubescope.extensions.updates import find, recommended_versions, version_key
 
 
 def installed(
@@ -115,6 +115,36 @@ def test_the_latest_tag_is_the_highest_final_one() -> None:
     assert latest_tag(["v1.9.0", "v1.10.0", "main", "v2.0.0-rc1"]) == "v1.10.0"
     assert latest_tag(["main", "nightly"]) is None
     assert latest_tag([]) is None
+
+
+def test_the_latest_version_of_an_uninstalled_recommendation_is_shown() -> None:
+    latest = DefaultExtension("dco.tool", "Tool", "d", Repo("dco", "tool"))
+    tags = tags_of("v1.9.0", "v1.10.0", "v2.0.0-rc1", "main")
+
+    assert recommended_versions([latest], set(), tags) == {"dco.tool": "1.10.0"}
+    assert tags.asked == [Repo("dco", "tool")]
+
+
+def test_recommended_versions_skip_installed_pinned_and_unavailable_releases() -> None:
+    latest = DefaultExtension("dco.latest", "Latest", "d", Repo("dco", "latest"))
+    pinned = DefaultExtension(
+        "dco.pinned", "Pinned", "d", Repo("dco", "pinned", "v1.0.0")
+    )
+    tags = tags_of("main")
+
+    assert recommended_versions([latest, pinned], {"dco.latest"}, tags) == {}
+    assert recommended_versions([latest], set(), None) == {}
+    assert recommended_versions([latest], set(), tags) == {}
+    assert tags.asked == [Repo("dco", "latest")]
+
+
+def test_a_recommended_repository_that_cannot_be_reached_is_skipped() -> None:
+    latest = DefaultExtension("dco.tool", "Tool", "d", Repo("dco", "tool"))
+
+    def tags(_repo: Repo) -> list[str]:
+        raise GithubError("rate limit")
+
+    assert recommended_versions([latest], set(), tags) == {}
 
 
 def test_a_recommended_id_from_another_repository_is_not_taken_for_it() -> None:

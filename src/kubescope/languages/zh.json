@@ -409,7 +409,7 @@
             "Add file...": "添加文件...",
             "Add row": "添加行",
             "All namespaces": "所有 namespaces",
-            "An extension adds a feature to KubeScope, like Gabi. It is code that runs with your permissions, so install only the ones you trust. KubeScope looks for the kubescope-extension.toml in the folder or the repository you give it. Changes apply the next time KubeScope starts.": "扩展可以像 Gabi 一样为 KubeScope 添加功能。它是以你的权限运行的代码,所以只安装你信任的扩展。KubeScope 会在你指定的文件夹或仓库中查找 kubescope-extension.toml。更改将在下次启动 KubeScope 时生效。",
+            "An extension adds a feature to KubeScope. It is code that runs with your permissions, so install only the ones you trust. KubeScope looks for the kubescope-extension.toml in the folder or the repository you give it. Changes apply the next time KubeScope starts.": "",
             "Animate windows and lists as they open": "打开窗口和列表时显示动画",
             "Asks the public GitHub API for the latest release and sends nothing but the app version. The icon in the footer checks on demand.": "向 GitHub 公共 API 查询最新版本，只发送应用版本号。页脚的图标可按需检查。",
             "CLUSTER ACCESS": "集群访问",

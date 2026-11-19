@@ -419,3 +419,21 @@ def test_a_folder_run_in_place_keeps_its_dates_too(tmp_path) -> None:
     linked = store.install(store.prepare_link(folder))
 
     assert linked.installed_at and linked.updated_at
+
+
+def test_a_folder_that_cannot_be_read_has_no_date(tmp_path) -> None:
+    from kubescope.extensions.store import _modified
+
+    assert _modified(tmp_path / "gone") == ""
+    assert _modified(tmp_path).startswith("20")
+
+
+def test_what_has_an_id_that_is_not_one_is_not_installed(tmp_path) -> None:
+    from dataclasses import replace
+
+    store = store_in(tmp_path)
+    candidate = store.prepare(tool_zip(), "github dco/tool@v1")
+    bad = replace(candidate, manifest=replace(candidate.manifest, id="../x"))
+
+    with pytest.raises(StoreError, match="not a valid id"):
+        store.install(bad)

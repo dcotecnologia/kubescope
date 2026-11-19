@@ -235,9 +235,11 @@ configure` so you type the keys there. Apart from the integrations below, the ap
   for newer versions of an extension installed from GitHub asks `api.github.com` for the
   tags of its repository (a `User-Agent` with the app version and nothing else), at most
   once a day and only while **Check for updates** is on in the Settings; the **Check for
-  updates** button of the extensions asks at once. A newer version is never installed by
-  itself apart from that first install: it is downloaded when you press **Update** and shown
-  in the same dialog as any install.
+  updates** button of the extensions asks at once. The same check looks up the latest tag of an
+  uninstalled recommendation so Settings can show its available version, once per app session
+  for each recommendation while automatic checks are on. A newer version is never installed by
+  first install: it is downloaded when you press **Update** and shown in the same dialog as any
+  install.
 - **An extension with `aws.read` can read your AWS account, not change it.** It
   runs the AWS CLI with the profile or keys of the cluster context, only for
   `rds`, `ec2`, `eks` and `ssm describe-instance-information`, and only for verbs

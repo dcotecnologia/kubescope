@@ -409,7 +409,7 @@
             "Add file...": "Adicionar arquivo...",
             "Add row": "Adicionar linha",
             "All namespaces": "Todos os namespaces",
-            "An extension adds a feature to KubeScope, like Gabi. It is code that runs with your permissions, so install only the ones you trust. KubeScope looks for the kubescope-extension.toml in the folder or the repository you give it. Changes apply the next time KubeScope starts.": "Uma extensão adiciona um recurso ao KubeScope, como a Gabi. É código que roda com as suas permissões, então instale só as que você confia. O KubeScope procura o kubescope-extension.toml na pasta ou no repositório que você indicar. As mudanças valem na próxima vez que o KubeScope iniciar.",
+            "An extension adds a feature to KubeScope. It is code that runs with your permissions, so install only the ones you trust. KubeScope looks for the kubescope-extension.toml in the folder or the repository you give it. Changes apply the next time KubeScope starts.": "",
             "Animate windows and lists as they open": "Animar janelas e listas ao abrir",
             "Asks the public GitHub API for the latest release and sends nothing but the app version. The icon in the footer checks on demand.": "Consulta a API pública do GitHub pela última versão e envia apenas a versão do app. O ícone do rodapé verifica sob demanda.",
             "CLUSTER ACCESS": "ACESSO AO CLUSTER",

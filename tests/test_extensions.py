@@ -1,12 +1,16 @@
 import logging
+import os
 from pathlib import Path
 from typing import Any
 
 import pytest
 
+os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+
 from kubescope.extensions.cluster_access import ClusterBridge
 from kubescope.extensions.context import ExtensionContext, Host
 from kubescope.extensions.registries import CommandRegistry, EventBus
+from kubescope.extensions.window_ui import WindowUi
 from kubescope.sdk import (
     CONTEXT_CHANGED,
     CommandError,
@@ -35,6 +39,41 @@ def make_host(write_mode: bool = False) -> tuple[Host, dict[str, dict[str, Any]]
 def make_context(*permissions: str, write_mode: bool = False) -> ExtensionContext:
     host, _, _ = make_host(write_mode)
     return ExtensionContext("dco.test", frozenset(permissions), host)
+
+
+def test_window_ui_delegates_every_extension_callback() -> None:
+    from PySide6.QtWidgets import QApplication, QWidget
+
+    calls: list[tuple] = []
+    application = QApplication.instance() or QApplication([])
+    ui = WindowUi(
+        QWidget(),
+        QWidget(),
+        lambda *args: calls.append(args),
+        lambda *_: None,
+        lambda box: calls.append(("style", box)),
+        lambda section: calls.append(("settings", section)),
+        lambda owner, pixels: calls.append(("corner", owner, pixels)),
+        lambda color, text: f"{color}:{text}",
+        lambda *args: calls.append(("pick", *args)) or ("chosen", True),
+        lambda *args: calls.append(("json", *args)),
+        lambda *args: calls.append(("log", *args)),
+    )
+
+    ui.show_message("warning", "Title", "Text")
+    ui.style_box("box")
+    ui.show_settings("extensions")
+    ui.reserve_corner("tool", 24)
+    assert ui.themed("#fff", True) == "#fff:True"
+    assert ui.pick_item("Pick", "One", ["a"]) == ("chosen", True)
+    ui.show_json("Document", {"name": "api"})
+    ui.open_log("Log", "api", lambda: "text")
+
+    assert calls[0][1:] == ("Title", "Text")
+    assert ("style", "box") in calls
+    assert ("settings", "extensions") in calls
+    assert ("corner", "tool", 24) in calls
+    application.processEvents()
 
 
 def test_event_reaches_every_handler_in_order() -> None:

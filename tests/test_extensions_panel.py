@@ -1,5 +1,6 @@
 import io
 import os
+import time
 import zipfile
 from dataclasses import dataclass
 from pathlib import Path
@@ -780,6 +781,7 @@ def test_other_repositories_are_asked_once_a_day_and_the_time_is_kept(
     from kubescope.settings import Settings
 
     installed_tool(setup, tmp_path)
+    setup.panel.defaults = lambda: []
     settings = Settings()
     saved = []
     setup.panel.save_settings = lambda: saved.append(1)
@@ -801,6 +803,66 @@ def test_other_repositories_are_asked_once_a_day_and_the_time_is_kept(
     assert len(asked) == 1
     setup.panel.check_updates(settings, force=True)  # unless the person asks
     assert len(asked) == 2
+
+
+def test_an_uninstalled_recommendation_shows_its_version_even_after_a_recent_check(
+    setup, monkeypatch
+) -> None:
+    from kubescope.extensions.defaults import DefaultExtension
+    from kubescope.settings import Settings
+
+    setup.panel.defaults = lambda: [
+        DefaultExtension(
+            "kubescope.aws",
+            "AWS",
+            "Does things",
+            Repo("dcotecnologia", "kubescope-aws"),
+            author="DCO Tecnologia",
+        )
+    ]
+    settings = Settings()
+    settings.record_extension_updates_check(time.time())
+    setup.panel.run_action = lambda operation, done, *args, **kwargs: done(
+        operation(*args)
+    )
+    asked = []
+
+    def tags(repo: Repo) -> list[str]:
+        asked.append(repo)
+        return ["v1.0.0", "v1.1.0-rc1"]
+
+    monkeypatch.setattr(extensions_panel, "list_tags", tags)
+
+    setup.panel.check_updates(settings)
+
+    assert setup.card("AWS").texts[1] == "v1.0.0"
+    assert setup.card("AWS").texts[3] == "DCO Tecnologia"
+    assert asked == [Repo("dcotecnologia", "kubescope-aws")]
+
+
+def test_a_failed_recommendation_check_reenables_the_button(setup) -> None:
+    from kubescope.extensions.defaults import DefaultExtension
+    from kubescope.settings import Settings
+
+    setup.panel.defaults = lambda: [
+        DefaultExtension(
+            "kubescope.aws",
+            "AWS",
+            "Does things",
+            Repo("dcotecnologia", "kubescope-aws"),
+        )
+    ]
+
+    def fail(_operation, _done, *args, on_error=None, **kwargs) -> None:
+        assert on_error is not None
+        on_error("offline")
+
+    setup.panel.run_action = fail
+
+    setup.panel.check_updates(Settings())
+
+    assert setup.panel.check_button.isEnabled()
+    assert setup.panel._recommended_versions_checked == {"kubescope.aws"}
 
 
 def test_with_the_updates_check_off_github_is_not_asked(
@@ -1167,3 +1229,26 @@ def test_a_repository_the_person_types_is_taken_as_typed_not_as_its_latest_tag(
     setup.panel.install_from_github()
 
     assert downloaded == [Repo("dco", "tool")]
+
+
+def test_a_check_that_is_running_is_not_started_again(setup) -> None:
+    setup.panel._checking = True
+    calls = []
+    setup.panel.run_action = lambda *a, **k: calls.append(1)
+
+    setup.panel.check_updates(force=True)
+
+    assert calls == []
+
+
+def test_the_menu_of_the_table_is_shown_where_the_person_clicked(setup) -> None:
+    from PySide6.QtCore import QPoint, QTimer
+    from PySide6.QtWidgets import QMenu
+
+    menu = QMenu()
+    menu.addAction("Details")
+    QTimer.singleShot(0, menu.close)  # nobody answers it: close it at once
+
+    setup.panel._show_menu(menu, QPoint(0, 0))
+
+    assert not menu.isVisible()

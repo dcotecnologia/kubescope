@@ -52,7 +52,13 @@ from kubescope.extensions.github import (
 )
 from kubescope.extensions.manifest import Manifest
 from kubescope.extensions.store import Candidate, ExtensionStore, StoreError
-from kubescope.extensions.updates import Update, find, latest_tag, version_key
+from kubescope.extensions.updates import (
+    Update,
+    find,
+    latest_tag,
+    recommended_versions,
+    version_key,
+)
 from kubescope.settings import Settings
 from kubescope.theme import themed
 from kubescope.ui.ui_settings_page import Ui_SettingsPage
@@ -130,6 +136,8 @@ class ExtensionsPanel(QObject):
         self.defaults = defaults  # what the app offers to install
         self.save_settings = save_settings
         self.updates: list[Update] = []  # newer versions of what is installed
+        self.recommended_versions: dict[str, str] = {}
+        self._recommended_versions_checked: set[str] = set()
         self._checking = False
         self.updates_row = QWidget()
         updates_layout = QHBoxLayout(self.updates_row)
@@ -194,7 +202,13 @@ class ExtensionsPanel(QObject):
         for one in self.defaults():
             if one.id not in have:  # offered, and not here
                 manifest = Manifest(
-                    one.id, one.name, one.repo.ref.removeprefix("v"), "", frozenset()
+                    one.id,
+                    one.name,
+                    one.repo.ref.removeprefix("v")
+                    or self.recommended_versions.get(one.id, ""),
+                    "",
+                    frozenset(),
+                    author=one.author,
                 )
                 manifest = replace(manifest, description=one.description)
                 self.rows.append(
@@ -243,6 +257,14 @@ class ExtensionsPanel(QObject):
         self._after_check(settings, announce=not force)
         if self._checking:
             return
+        present = {one.manifest.id for one in installed}
+        present.update(one.id for one in self.store.removed_bundled())
+        recommended_to_check = {
+            one.id for one in defaults if one.id not in present and not one.repo.ref
+        }
+        needs_recommended_versions = recommended_to_check - (
+            self._recommended_versions_checked
+        )
         allowed = settings is None or settings.check_updates
         fresh = (
             settings is not None
@@ -251,15 +273,22 @@ class ExtensionsPanel(QObject):
             <= time.time() - settings.extension_updates_checked_at
             < UPDATE_CHECK_SECONDS
         )
-        if not allowed and not force or fresh:
+        if (not allowed and not force) or (fresh and not needs_recommended_versions):
             return
         self._checking = True
         self.check_button.setEnabled(False)
 
-        def done(found: list[Update]) -> None:
+        def lookup() -> tuple[list[Update], dict[str, str]]:
+            return (
+                find(installed, defaults, list_tags),
+                recommended_versions(defaults, present, list_tags),
+            )
+
+        def done(result: tuple[list[Update], dict[str, str]]) -> None:
             self._checking = False
             self.check_button.setEnabled(True)
-            self.updates = found
+            self.updates, self.recommended_versions = result
+            self._recommended_versions_checked.update(recommended_to_check)
             if settings is not None:
                 settings.record_extension_updates_check(time.time())
                 self.save_settings()
@@ -268,9 +297,10 @@ class ExtensionsPanel(QObject):
         def failed(_message: str) -> None:
             self._checking = False
             self.check_button.setEnabled(True)
+            self._recommended_versions_checked.update(recommended_to_check)
 
         self.run_action(
-            partial(find, installed, defaults, list_tags),
+            lookup,
             done,
             on_error=failed,
             quiet=True,
@@ -338,9 +368,11 @@ class ExtensionsPanel(QObject):
         self.actions = QWidget()
         self.actions_row = QHBoxLayout(self.actions)
         self.actions_row.setContentsMargins(0, 0, 0, 0)
-        self.actions_row.setSpacing(8)
+        self.actions_row.setSpacing(8)  # the count, which is all this line has
         self.count_label = QLabel()
         self.count_label.setProperty("variant", "muted")
+        self.actions_row.addWidget(self.count_label)
+        self.actions_row.addStretch(1)
         self.table = QTableWidget(0, len(COLUMNS))
         self.table.setObjectName("extensionsTable")
         self.table.setHorizontalHeaderLabels(
@@ -371,7 +403,6 @@ class ExtensionsPanel(QObject):
             self.table.setColumnWidth(COLUMNS[column], width)
         self.table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.table.customContextMenuRequested.connect(self._menu)
-        self.table.itemSelectionChanged.connect(self._sync_actions)
         self.table.cellDoubleClicked.connect(self._double_clicked)
         self.empty_label = QLabel(self.tr("No extension is installed"))
         grid.addWidget(self.actions, 0, 0)
@@ -422,7 +453,6 @@ class ExtensionsPanel(QObject):
         self.count_label.setText(
             self.tr("{count} extensions").format(count=len(self.rows))
         )
-        self._sync_actions()
 
     def _selected_id(self) -> str:
         row = self._selected_row()
@@ -444,17 +474,6 @@ class ExtensionsPanel(QObject):
         if status == self.tr("Recommended"):
             return themed("#3220a0"), themed("#f3f1f9")
         return themed("#505963"), themed("#eff1f3")
-
-    def _sync_actions(self) -> None:
-        """The line above the table only counts; what can be done with an
-        extension is in its right-click menu, and Details is a double click."""
-        while (item := self.actions_row.takeAt(0)) is not None:
-            widget = item.widget()
-            if widget is not None and widget is not self.count_label:
-                widget.hide()
-                widget.deleteLater()
-        self.actions_row.addWidget(self.count_label)
-        self.actions_row.addStretch(1)
 
     def _actions(self, row: Row) -> list[tuple[str, str, Callable[[], None]]]:
         """What can be done with an extension, as (label, variant, what to

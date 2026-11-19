@@ -19,6 +19,12 @@ evict a Pod, scale or restart a Deployment (each asks for confirmation), and the
 complete `kubectl exec` command to open a shell in a Pod and the `kubectl
 port-forward` command of a Service, a Pod or a StatefulSet, to run in your own terminal.
 
+Meet **Gabi**, the Kubernetes assistant built into KubeScope. Ask her why a Pod is
+restarting, let her investigate the resource, logs and events, or have her take you
+straight to the relevant screen. She uses Claude Code or Codex already signed in on
+your computer, works in the app's language, and stays read-only unless you explicitly
+turn on write mode and confirm a proposed action. [See what Gabi can do](#gabi-the-assistant).
+
 ## Install
 
 The easiest way, and the one we recommend, is the install script. It finds the
@@ -136,10 +142,11 @@ _Pod logs with colored levels. These screens are drawn from fake data by
 - **Details and logs:** JSON or YAML details of a Pod or workload, and live Pod logs,
   each in its own closable tab, colored like Monokai. **Save...** writes the open
   tab to a file you choose.
-- **Assistant:** the round button in the corner opens a chat with **Gabi**, the
-  assistant of DCO Tecnologia and an expert in Kubernetes and KubeScope. She sees
-  what you see, looks into problems, takes you to the right screen, and never
-  changes a cluster without your confirmation. See [Gabi, the assistant](#gabi-the-assistant).
+- **Gabi, the Kubernetes assistant:** ask about a workload in the round chat button,
+  paste a screenshot, manifest or log, and she uses the cluster context to investigate
+  it. She can explain evidence, open the right resource, list, log or overview, and
+  prepare a write action only when write mode is on and you press **Run**. See
+  [Gabi, the assistant](#gabi-the-assistant).
 - **Update check:** when it starts, KubeScope asks GitHub for the latest release and shows **Update available** next to an icon in the footer. The icon spins
   while it looks, and clicking it checks again. It sends only the app version;
   **Settings** turns the startup check off. A stable installation is offered only
@@ -197,10 +204,10 @@ GitHub repository. An extension is a Python project written against the
 | [AWS](https://github.com/dcotecnologia/kubescope-aws) | The RDS databases of the account of the selected cluster, with details, logs and a port forward | Recommended (★), you install it |
 
 The table of **Settings → Extensions** lists what is installed and what KubeScope recommends, with the
-version, the author, when it was installed and last updated, and where it came from; double-click a row
-for its details and right-click it to install, update, reinstall or uninstall. KubeScope looks for newer
-versions and suggests them, and never updates one by itself. Before anything of an extension runs, a
-dialog shows where it comes from, its permissions and the sha256 of its content.
+installed or latest available version, the author, when it was installed and last updated, and where it
+came from; double-click a row for its details and right-click it to install, update, reinstall or uninstall.
+KubeScope looks for newer versions and suggests them, and never updates one by itself. Before anything of
+an extension runs, a dialog shows where it comes from, its permissions and the sha256 of its content.
 
 To write one, read the guides of the SDK:
 [getting started](https://github.com/dcotecnologia/kubescope-sdk/blob/main/docs/getting-started.md),
@@ -217,7 +224,9 @@ Gabi is an AI assistant for KubeScope, made by DCO Tecnologia. She is
 [an extension of her own project](https://github.com/dcotecnologia/kubescope-ai-gabi) that comes installed. She knows Kubernetes
 and KubeScope, and she only talks about them: she politely declines anything else.
 She answers in the language of the app, in any of its 21 languages, unless you write
-to her in another one.
+to her in another one. Open the round button and ask a practical question such as
+“why is this Pod restarting?”, “show me the errors from the last hour” or “where is
+this Deployment configured?”
 
 ### How it works
 
@@ -260,6 +269,9 @@ to the card where the path is told, and a link to these instructions.
   evict or delete a Pod, delete or replace a resource. A change is never done by her. It
   appears as a card with the exact action and **Run** or **Cancel**, and runs through the
   same code and limits as the buttons of the write mode.
+- **Work from the evidence you provide.** Attach a screenshot, manifest or text file,
+  or paste an image into the chat; she combines it with the context you allow her to
+  read and keeps the answer focused on the cluster.
 
 In the default **read-only mode** she cannot edit, update or delete anything, she is not
 even told that those actions exist, and she says so plainly when you ask. She may still

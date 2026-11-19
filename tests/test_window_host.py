@@ -547,3 +547,31 @@ def test_the_extension_hears_when_the_write_mode_changes(window, tmp_path) -> No
         ("write", True),
         ("write", False),
     ]
+
+
+def test_the_texts_of_an_extension_join_the_language_before_it_runs(
+    window, tmp_path, monkeypatch
+) -> None:
+    from kubescope import i18n
+    from kubescope import window as window_module
+
+    folder, _package, extension = make_extension(tmp_path)
+    languages = folder / "languages"
+    languages.mkdir()
+    (languages / "pt_BR.json").write_text(
+        '{"name": "Português", "rtl": false, "strings": {"Mine": {"Hi": "Oi"}}}'
+    )
+    applied = []
+    monkeypatch.setattr(
+        window_module, "apply_language", lambda choice: applied.append(choice)
+    )
+
+    try:
+        install_linked(window, folder)
+
+        assert applied == [window.settings.language]  # once, before it was loaded
+        assert i18n.languages()["pt_BR"].strings["Mine"] == {"Hi": "Oi"}
+    finally:
+        window.extension_store.uninstall(extension)
+        window._sync_extensions()
+        i18n.set_extension_languages(extension, None)
