@@ -4,6 +4,7 @@ from pathlib import Path
 
 import pytest
 
+from kubescope.extensions.cluster_access import ClusterBridge
 from kubescope.extensions.context import Host
 from kubescope.extensions.loader import ExtensionLoader
 from kubescope.extensions.manifest import Manifest
@@ -13,14 +14,9 @@ from kubescope.sdk import CONTEXT_CHANGED
 counter = iter(range(1, 1000))
 
 
-class FakeCluster:
-    def __getattr__(self, name: str):
-        return lambda *arguments: (name, arguments)
-
-
 def make_host() -> Host:
     return Host(
-        cluster=FakeCluster(),
+        cluster=ClusterBridge(),
         snapshot=lambda: "screen",
         current_context=lambda: "dev",
         write_mode=lambda: False,

@@ -28,6 +28,7 @@ class WindowUi:
         style_box: Callable[[QMessageBox], None],
         show_settings: Callable[[str], None],
         reserve_corner: Callable[[str, int], None],
+        themed: Callable[[str, bool], str],
     ) -> None:
         self.window = window
         self.central = central
@@ -36,6 +37,7 @@ class WindowUi:
         self._style_box = style_box
         self._show_settings = show_settings
         self._reserve_corner = reserve_corner
+        self._themed = themed
 
     def show_message(self, icon: str, title: str, text: str) -> None:
         self._message(_ICONS.get(icon, QMessageBox.Icon.Information), title, text)
@@ -45,6 +47,9 @@ class WindowUi:
 
     def show_settings(self, section: str = "") -> None:
         self._show_settings(section)
+
+    def themed(self, color: str, text: bool = False) -> str:
+        return self._themed(color, text)
 
     def reserve_corner(self, owner: str, pixels: int) -> None:
         self._reserve_corner(owner, pixels)
