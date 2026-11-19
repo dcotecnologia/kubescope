@@ -166,11 +166,6 @@
             "TARGET": "יעד",
             "TYPE": "סוג"
         },
-        "GlobalSearch": {
-            "Loading resources...": "טוען משאבים...",
-            "Search": "חיפוש",
-            "Search screens, actions and resources...": "חפשו מסכים, פעולות ומשאבים..."
-        },
         "InstallDialog": {
             "Close": "סגירה",
             "Copy": "העתקה",
@@ -577,7 +572,6 @@
             "Cluster ARN": "Cluster ARN",
             "Cluster IAM role ARN": "ARN של תפקיד ה-IAM של האשכול",
             "Cluster IP address family": "משפחת כתובות ה-IP של האשכול",
-            "Cluster overview": "סקירת האשכול",
             "Cluster resources and capacity": "משאבי האשכול והקיבולת שלו",
             "Cluster security group": "קבוצת האבטחה של האשכול",
             "Complete": "הושלם",
@@ -641,8 +635,6 @@
             "Forwards ({count})": "פורוורדים ({count})",
             "GOOGLE GKE": "GOOGLE GKE",
             "GitHub limited the checks; try again at {time}": "GitHub הגביל את הבדיקות; נסו שוב ב-{time}",
-            "Global search": "חיפוש כללי",
-            "Global search (second shortcut)": "חיפוש כללי (קיצור שני)",
             "Go to Deployments": "מעבר ל-Deployments",
             "Go to Pods": "מעבר ל-Pods",
             "Go to Services": "מעבר ל-Services",
@@ -774,7 +766,6 @@
             "Scaled to zero": "הוקטן לאפס",
             "Scaled {name} to {count} replicas": "{name} הוגדל/הוקטן ל-{count} עותקים",
             "Scheduled": "מתוזמן",
-            "Screen": "מסך",
             "Secrets": "Secrets",
             "Secrets of the cluster": "Secrets של האשכול",
             "Select the Pod:": "בחרו את ה-Pod:",

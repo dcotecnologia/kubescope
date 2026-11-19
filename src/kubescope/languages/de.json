@@ -166,11 +166,6 @@
             "TARGET": "ZIEL",
             "TYPE": "TYP"
         },
-        "GlobalSearch": {
-            "Loading resources...": "Ressourcen werden geladen...",
-            "Search": "Suchen",
-            "Search screens, actions and resources...": "Bildschirme, Aktionen und Ressourcen suchen..."
-        },
         "InstallDialog": {
             "Close": "Schließen",
             "Copy": "Kopieren",
@@ -577,7 +572,6 @@
             "Cluster ARN": "Cluster ARN",
             "Cluster IAM role ARN": "ARN der IAM-Rolle des Clusters",
             "Cluster IP address family": "IP-Adressfamilie des Clusters",
-            "Cluster overview": "Cluster-Übersicht",
             "Cluster resources and capacity": "Ressourcen und Kapazität des Clusters",
             "Cluster security group": "Sicherheitsgruppe des Clusters",
             "Complete": "Abgeschlossen",
@@ -641,8 +635,6 @@
             "Forwards ({count})": "Forwards ({count})",
             "GOOGLE GKE": "GOOGLE GKE",
             "GitHub limited the checks; try again at {time}": "GitHub hat die Prüfungen begrenzt; versuchen Sie es um {time} erneut",
-            "Global search": "Globale Suche",
-            "Global search (second shortcut)": "Globale Suche (zweites Kürzel)",
             "Go to Deployments": "Zu Deployments gehen",
             "Go to Pods": "Zu Pods gehen",
             "Go to Services": "Zu Services gehen",
@@ -774,7 +766,6 @@
             "Scaled to zero": "Auf null skaliert",
             "Scaled {name} to {count} replicas": "{name} auf {count} Replikate skaliert",
             "Scheduled": "Geplant",
-            "Screen": "Bildschirm",
             "Secrets": "Secrets",
             "Secrets of the cluster": "Secrets des Clusters",
             "Select the Pod:": "Pod auswählen:",

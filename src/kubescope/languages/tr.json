@@ -166,11 +166,6 @@
             "TARGET": "HEDEF",
             "TYPE": "TÜR"
         },
-        "GlobalSearch": {
-            "Loading resources...": "Kaynaklar yükleniyor...",
-            "Search": "Ara",
-            "Search screens, actions and resources...": "Ekranları, eylemleri ve kaynakları ara..."
-        },
         "InstallDialog": {
             "Close": "Kapat",
             "Copy": "Kopyala",
@@ -577,7 +572,6 @@
             "Cluster ARN": "Cluster ARN",
             "Cluster IAM role ARN": "Küme IAM rolü ARN'si",
             "Cluster IP address family": "Küme IP adresi ailesi",
-            "Cluster overview": "Küme genel bakışı",
             "Cluster resources and capacity": "Küme kaynakları ve kapasitesi",
             "Cluster security group": "Küme güvenlik grubu",
             "Complete": "Tamamlandı",
@@ -641,8 +635,6 @@
             "Forwards ({count})": "Forward'lar ({count})",
             "GOOGLE GKE": "GOOGLE GKE",
             "GitHub limited the checks; try again at {time}": "GitHub denetimleri sınırladı; {time} sonrasında tekrar deneyin",
-            "Global search": "Genel arama",
-            "Global search (second shortcut)": "Genel arama (ikinci kısayol)",
             "Go to Deployments": "Deployments'a git",
             "Go to Pods": "Pods'a git",
             "Go to Services": "Services'a git",
@@ -774,7 +766,6 @@
             "Scaled to zero": "Sıfıra ölçeklendi",
             "Scaled {name} to {count} replicas": "{name}, {count} kopyaya ölçeklendi",
             "Scheduled": "Zamanlandı",
-            "Screen": "Ekran",
             "Secrets": "Secrets",
             "Secrets of the cluster": "Kümenin Secrets",
             "Select the Pod:": "Pod'u seçin:",

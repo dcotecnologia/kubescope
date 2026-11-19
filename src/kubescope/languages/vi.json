@@ -166,11 +166,6 @@
             "TARGET": "ĐÍCH",
             "TYPE": "LOẠI"
         },
-        "GlobalSearch": {
-            "Loading resources...": "Đang tải tài nguyên...",
-            "Search": "Tìm kiếm",
-            "Search screens, actions and resources...": "Tìm màn hình, thao tác và tài nguyên..."
-        },
         "InstallDialog": {
             "Close": "Đóng",
             "Copy": "Sao chép",
@@ -577,7 +572,6 @@
             "Cluster ARN": "Cluster ARN",
             "Cluster IAM role ARN": "ARN vai trò IAM của cụm",
             "Cluster IP address family": "Họ địa chỉ IP của cụm",
-            "Cluster overview": "Tổng quan cụm",
             "Cluster resources and capacity": "Tài nguyên và dung lượng của cụm",
             "Cluster security group": "Nhóm bảo mật của cụm",
             "Complete": "Hoàn tất",
@@ -641,8 +635,6 @@
             "Forwards ({count})": "Forward ({count})",
             "GOOGLE GKE": "GOOGLE GKE",
             "GitHub limited the checks; try again at {time}": "GitHub đã giới hạn số lần kiểm tra; hãy thử lại lúc {time}",
-            "Global search": "Tìm kiếm toàn cục",
-            "Global search (second shortcut)": "Tìm kiếm toàn cục (phím tắt thứ hai)",
             "Go to Deployments": "Đến Deployments",
             "Go to Pods": "Đến Pods",
             "Go to Services": "Đến Services",
@@ -774,7 +766,6 @@
             "Scaled to zero": "Đã thu về không",
             "Scaled {name} to {count} replicas": "Đã đổi {name} thành {count} bản sao",
             "Scheduled": "Đã lên lịch",
-            "Screen": "Màn hình",
             "Secrets": "Secrets",
             "Secrets of the cluster": "Secrets của cụm",
             "Select the Pod:": "Chọn Pod:",

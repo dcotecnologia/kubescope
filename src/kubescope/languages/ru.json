@@ -166,11 +166,6 @@
             "TARGET": "ЦЕЛЬ",
             "TYPE": "ТИП"
         },
-        "GlobalSearch": {
-            "Loading resources...": "Загрузка ресурсов...",
-            "Search": "Поиск",
-            "Search screens, actions and resources...": "Поиск экранов, действий и ресурсов..."
-        },
         "InstallDialog": {
             "Close": "Закрыть",
             "Copy": "Копировать",
@@ -577,7 +572,6 @@
             "Cluster ARN": "ARN кластера",
             "Cluster IAM role ARN": "ARN IAM-роли кластера",
             "Cluster IP address family": "Семейство IP-адресов кластера",
-            "Cluster overview": "Обзор кластера",
             "Cluster resources and capacity": "Ресурсы и ёмкость кластера",
             "Cluster security group": "Security group кластера",
             "Complete": "Завершено",
@@ -641,8 +635,6 @@
             "Forwards ({count})": "Форварды ({count})",
             "GOOGLE GKE": "GOOGLE GKE",
             "GitHub limited the checks; try again at {time}": "GitHub ограничил число проверок; повторите попытку в {time}",
-            "Global search": "Глобальный поиск",
-            "Global search (second shortcut)": "Глобальный поиск (второе сочетание)",
             "Go to Deployments": "Перейти к Deployments",
             "Go to Pods": "Перейти к Pods",
             "Go to Services": "Перейти к Services",
@@ -774,7 +766,6 @@
             "Scaled to zero": "Масштабировано до нуля",
             "Scaled {name} to {count} replicas": "{name} масштабирован до {count} реплик",
             "Scheduled": "Запланировано",
-            "Screen": "Экран",
             "Secrets": "Secrets",
             "Secrets of the cluster": "Secrets кластера",
             "Select the Pod:": "Выберите Pod:",

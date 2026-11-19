@@ -166,11 +166,6 @@
             "TARGET": "مقصد",
             "TYPE": "نوع"
         },
-        "GlobalSearch": {
-            "Loading resources...": "در حال بارگذاری منابع...",
-            "Search": "جستجو",
-            "Search screens, actions and resources...": "جستجوی صفحه‌ها، کنش‌ها و منابع..."
-        },
         "InstallDialog": {
             "Close": "بستن",
             "Copy": "کپی",
@@ -577,7 +572,6 @@
             "Cluster ARN": "Cluster ARN",
             "Cluster IAM role ARN": "ARN نقش IAM خوشه",
             "Cluster IP address family": "خانواده نشانی IP خوشه",
-            "Cluster overview": "نمای کلی خوشه",
             "Cluster resources and capacity": "منابع و ظرفیت خوشه",
             "Cluster security group": "گروه امنیتی خوشه",
             "Complete": "کامل شد",
@@ -641,8 +635,6 @@
             "Forwards ({count})": "فوروارد‌ها ({count})",
             "GOOGLE GKE": "GOOGLE GKE",
             "GitHub limited the checks; try again at {time}": "GitHub بررسی‌ها را محدود کرد؛ در {time} دوباره تلاش کنید",
-            "Global search": "جستجوی سراسری",
-            "Global search (second shortcut)": "جستجوی سراسری (میان‌بر دوم)",
             "Go to Deployments": "رفتن به Deployments",
             "Go to Pods": "رفتن به Pods",
             "Go to Services": "رفتن به Services",
@@ -774,7 +766,6 @@
             "Scaled to zero": "به صفر مقیاس داده شد",
             "Scaled {name} to {count} replicas": "{name} به {count} نسخه مقیاس داده شد",
             "Scheduled": "زمان‌بندی‌شده",
-            "Screen": "صفحه",
             "Secrets": "Secrets",
             "Secrets of the cluster": "Secrets خوشه",
             "Select the Pod:": "Pod را انتخاب کنید:",

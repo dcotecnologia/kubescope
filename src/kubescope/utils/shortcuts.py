@@ -11,8 +11,6 @@ import re
 DEFAULTS: dict[str, str] = {
     "refresh": "Ctrl+R",
     "refresh_alt": "F5",
-    "search": "/",
-    "search_alt": "Ctrl+K",
     "overview": "G, O",
     "pods": "G, P",
     "deployments": "G, D",

@@ -56,6 +56,16 @@ DEFAULTS = (
         automatic=False,
         author="DCO Tecnologia",
     ),
+    DefaultExtension(
+        id="kubescope.search",
+        name="Global search",
+        description=(
+            "Press / or Ctrl+K to find a screen, a list or a resource of any "
+            "namespace by its name, and open it."
+        ),
+        repo=Repo("dcotecnologia", "kubescope-search"),
+        author="DCO Tecnologia",
+    ),
 )
 
 

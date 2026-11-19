@@ -38,7 +38,7 @@ def test_what_the_app_recommends_is_offered(monkeypatch) -> None:
 def test_the_recommended_extensions_are_the_latest_release_of_their_repositories() -> (
     None
 ):
-    gabi, aws = REAL
+    gabi, aws, search = REAL
 
     assert (gabi.id, gabi.repo.owner, gabi.repo.name) == (
         "kubescope.gabi",
@@ -50,6 +50,8 @@ def test_the_recommended_extensions_are_the_latest_release_of_their_repositories
         "dcotecnologia",
         "kubescope-aws",
     )
+    assert (search.id, search.repo.name) == ("kubescope.search", "kubescope-search")
+    assert search.automatic  # it comes with the app, like Gabi
     for one in REAL:
         assert one.repo.ref == "" and one.sha256 == "" and not one.pinned  # the latest
     assert gabi.automatic and not aws.automatic  # Gabi comes with the app

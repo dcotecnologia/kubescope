@@ -166,11 +166,6 @@
             "TARGET": "DOEL",
             "TYPE": "TYPE"
         },
-        "GlobalSearch": {
-            "Loading resources...": "Resources laden...",
-            "Search": "Zoeken",
-            "Search screens, actions and resources...": "Zoek schermen, acties en resources..."
-        },
         "InstallDialog": {
             "Close": "Sluiten",
             "Copy": "Kopiëren",
@@ -577,7 +572,6 @@
             "Cluster ARN": "Cluster ARN",
             "Cluster IAM role ARN": "ARN van de IAM-rol van het cluster",
             "Cluster IP address family": "IP-adresfamilie van het cluster",
-            "Cluster overview": "Clusteroverzicht",
             "Cluster resources and capacity": "Resources en capaciteit van het cluster",
             "Cluster security group": "Beveiligingsgroep van het cluster",
             "Complete": "Voltooid",
@@ -641,8 +635,6 @@
             "Forwards ({count})": "Forwards ({count})",
             "GOOGLE GKE": "GOOGLE GKE",
             "GitHub limited the checks; try again at {time}": "GitHub heeft de controles beperkt; probeer het opnieuw om {time}",
-            "Global search": "Globaal zoeken",
-            "Global search (second shortcut)": "Globaal zoeken (tweede sneltoets)",
             "Go to Deployments": "Ga naar Deployments",
             "Go to Pods": "Ga naar Pods",
             "Go to Services": "Ga naar Services",
@@ -774,7 +766,6 @@
             "Scaled to zero": "Geschaald naar nul",
             "Scaled {name} to {count} replicas": "{name} geschaald naar {count} replica's",
             "Scheduled": "Gepland",
-            "Screen": "Scherm",
             "Secrets": "Secrets",
             "Secrets of the cluster": "Secrets van het cluster",
             "Select the Pod:": "Selecteer de Pod:",

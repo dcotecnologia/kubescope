@@ -9,7 +9,7 @@ to a cluster is this list. No Qt.
 from collections.abc import Callable
 from typing import Any
 
-from kubescope.sdk.models import ClusterResource, PodInfo, Workload
+from kubescope.sdk.models import ClusterResource, PodInfo, SearchHit, Workload
 
 from kubescope import cluster, writes
 from kubescope.sdk import WriteModeOff
@@ -74,6 +74,9 @@ class ClusterBridge:
         self, context: str, kind: str, namespace: str, name: str
     ) -> dict[str, Any]:
         return cluster.get_resource_details(context, kind, namespace, name)
+
+    def search_resources(self, context: str) -> list[SearchHit]:
+        return cluster.search_resources(context)
 
     def describe_kube(self) -> str:
         return cluster.describe_kube()

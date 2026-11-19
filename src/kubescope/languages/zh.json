@@ -166,11 +166,6 @@
             "TARGET": "目标",
             "TYPE": "类型"
         },
-        "GlobalSearch": {
-            "Loading resources...": "正在加载资源...",
-            "Search": "搜索",
-            "Search screens, actions and resources...": "搜索界面、操作和资源..."
-        },
         "InstallDialog": {
             "Close": "关闭",
             "Copy": "复制",
@@ -577,7 +572,6 @@
             "Cluster ARN": "集群 ARN",
             "Cluster IAM role ARN": "集群 IAM 角色 ARN",
             "Cluster IP address family": "集群 IP 地址族",
-            "Cluster overview": "集群概览",
             "Cluster resources and capacity": "集群资源与容量",
             "Cluster security group": "集群安全组",
             "Complete": "已完成",
@@ -641,8 +635,6 @@
             "Forwards ({count})": "端口转发（{count}）",
             "GOOGLE GKE": "GOOGLE GKE",
             "GitHub limited the checks; try again at {time}": "GitHub 限制了检查次数；请在 {time} 重试",
-            "Global search": "全局搜索",
-            "Global search (second shortcut)": "全局搜索（第二快捷键）",
             "Go to Deployments": "前往 Deployments",
             "Go to Pods": "前往 Pods",
             "Go to Services": "前往 Services",
@@ -774,7 +766,6 @@
             "Scaled to zero": "已缩容至零",
             "Scaled {name} to {count} replicas": "已将 {name} 扩缩容到 {count} 个副本",
             "Scheduled": "已计划",
-            "Screen": "界面",
             "Secrets": "Secrets",
             "Secrets of the cluster": "集群的 Secrets",
             "Select the Pod:": "选择 Pod：",

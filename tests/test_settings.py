@@ -602,3 +602,35 @@ def test_the_updates_the_person_was_told_about_are_remembered_without_repeats() 
     assert settings.extension_updates_seen == ["ok"]
     settings._data["extension_updates_seen"] = "nope"
     assert settings.extension_updates_seen == []
+
+
+def test_the_keys_of_the_global_search_move_to_the_extension_that_has_it(
+    tmp_path,
+) -> None:
+    import json
+
+    path = tmp_path / "s.json"
+    path.write_text(
+        json.dumps(
+            {"shortcuts": {"search": "Ctrl+P", "search_alt": "F3", "pods": "G, X"}}
+        )
+    )
+
+    kept = Settings(path).shortcuts
+
+    assert kept["kubescope.search.open"] == "Ctrl+P"
+    assert kept["kubescope.search.open_alt"] == "F3"
+    assert "search" not in kept and kept["pods"] == "G, X"
+
+
+def test_what_the_extension_of_the_search_already_has_is_not_replaced(tmp_path) -> None:
+    import json
+
+    path = tmp_path / "s.json"
+    path.write_text(
+        json.dumps(
+            {"shortcuts": {"search": "Ctrl+P", "kubescope.search.open": "Ctrl+Space"}}
+        )
+    )
+
+    assert Settings(path).shortcuts["kubescope.search.open"] == "Ctrl+Space"

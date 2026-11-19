@@ -23,8 +23,8 @@ def test_duplicate_ignores_empty_keys():
 def test_settings_keep_shortcuts(tmp_path):
     settings = Settings(tmp_path / "s.json")
     assert settings.shortcuts == DEFAULTS
-    settings.shortcuts = {"search": "Ctrl+P"}
-    assert settings.shortcuts["search"] == "Ctrl+P"
+    settings.shortcuts = {"overview": "Ctrl+P"}
+    assert settings.shortcuts["overview"] == "Ctrl+P"
     assert settings.shortcuts["refresh"] == DEFAULTS["refresh"]
 
 

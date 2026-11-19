@@ -166,11 +166,6 @@
             "TARGET": "대상",
             "TYPE": "유형"
         },
-        "GlobalSearch": {
-            "Loading resources...": "리소스 불러오는 중...",
-            "Search": "검색",
-            "Search screens, actions and resources...": "화면, 동작, 리소스 검색..."
-        },
         "InstallDialog": {
             "Close": "닫기",
             "Copy": "복사",
@@ -577,7 +572,6 @@
             "Cluster ARN": "클러스터 ARN",
             "Cluster IAM role ARN": "클러스터 IAM 역할 ARN",
             "Cluster IP address family": "클러스터 IP 주소 체계",
-            "Cluster overview": "클러스터 개요",
             "Cluster resources and capacity": "클러스터 리소스와 용량",
             "Cluster security group": "클러스터 보안 그룹",
             "Complete": "완료",
@@ -641,8 +635,6 @@
             "Forwards ({count})": "포워드 ({count})",
             "GOOGLE GKE": "GOOGLE GKE",
             "GitHub limited the checks; try again at {time}": "GitHub에서 확인을 제한했습니다. {time}에 다시 시도하세요",
-            "Global search": "전역 검색",
-            "Global search (second shortcut)": "전역 검색(두 번째 단축키)",
             "Go to Deployments": "Deployments로 이동",
             "Go to Pods": "Pods로 이동",
             "Go to Services": "Services로 이동",
@@ -774,7 +766,6 @@
             "Scaled to zero": "0으로 축소됨",
             "Scaled {name} to {count} replicas": "{name}을(를) 레플리카 {count}개로 스케일했습니다",
             "Scheduled": "예약됨",
-            "Screen": "화면",
             "Secrets": "Secrets",
             "Secrets of the cluster": "클러스터의 Secrets",
             "Select the Pod:": "Pod 선택:",

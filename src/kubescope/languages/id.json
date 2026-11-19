@@ -166,11 +166,6 @@
             "TARGET": "TUJUAN",
             "TYPE": "TIPE"
         },
-        "GlobalSearch": {
-            "Loading resources...": "Memuat sumber daya...",
-            "Search": "Cari",
-            "Search screens, actions and resources...": "Cari layar, tindakan, dan sumber daya..."
-        },
         "InstallDialog": {
             "Close": "Tutup",
             "Copy": "Salin",
@@ -577,7 +572,6 @@
             "Cluster ARN": "Cluster ARN",
             "Cluster IAM role ARN": "ARN peran IAM klaster",
             "Cluster IP address family": "Keluarga alamat IP klaster",
-            "Cluster overview": "Ringkasan klaster",
             "Cluster resources and capacity": "Sumber daya dan kapasitas klaster",
             "Cluster security group": "Grup keamanan klaster",
             "Complete": "Selesai",
@@ -641,8 +635,6 @@
             "Forwards ({count})": "Forward ({count})",
             "GOOGLE GKE": "GOOGLE GKE",
             "GitHub limited the checks; try again at {time}": "GitHub membatasi pemeriksaan; coba lagi pada {time}",
-            "Global search": "Pencarian global",
-            "Global search (second shortcut)": "Pencarian global (pintasan kedua)",
             "Go to Deployments": "Buka Deployments",
             "Go to Pods": "Buka Pods",
             "Go to Services": "Buka Services",
@@ -774,7 +766,6 @@
             "Scaled to zero": "Diskalakan ke nol",
             "Scaled {name} to {count} replicas": "{name} diskalakan ke {count} replika",
             "Scheduled": "Terjadwal",
-            "Screen": "Layar",
             "Secrets": "Secrets",
             "Secrets of the cluster": "Secrets di klaster",
             "Select the Pod:": "Pilih Pod:",
