@@ -409,7 +409,7 @@
             "Add file...": "Добавить файл...",
             "Add row": "Добавить строку",
             "All namespaces": "Все namespaces",
-            "An extension adds a feature to KubeScope. It is code that runs with your permissions, so install only the ones you trust. KubeScope looks for the kubescope-extension.toml in the folder or the repository you give it. Changes apply the next time KubeScope starts.": "",
+            "An extension adds a feature to KubeScope. It is code that runs with your permissions, so install only the ones you trust. KubeScope looks for the kubescope-extension.toml in the folder or the repository you give it. Changes apply the next time KubeScope starts.": "Расширение добавляет в KubeScope новую возможность. Это код, который работает с вашими правами, поэтому устанавливайте только то, чему доверяете. KubeScope ищет kubescope-extension.toml в указанной папке или репозитории. Изменения вступают в силу при следующем запуске KubeScope.",
             "Animate windows and lists as they open": "Анимировать окна и списки при открытии",
             "Asks the public GitHub API for the latest release and sends nothing but the app version. The icon in the footer checks on demand.": "Запрашивает у публичного API GitHub последний релиз и отправляет только версию приложения. Значок в нижней панели проверяет по запросу.",
             "CLUSTER ACCESS": "ДОСТУП К КЛАСТЕРУ",

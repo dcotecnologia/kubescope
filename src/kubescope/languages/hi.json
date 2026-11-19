@@ -409,7 +409,7 @@
             "Add file...": "फ़ाइल जोड़ें...",
             "Add row": "पंक्ति जोड़ें",
             "All namespaces": "सभी namespaces",
-            "An extension adds a feature to KubeScope. It is code that runs with your permissions, so install only the ones you trust. KubeScope looks for the kubescope-extension.toml in the folder or the repository you give it. Changes apply the next time KubeScope starts.": "",
+            "An extension adds a feature to KubeScope. It is code that runs with your permissions, so install only the ones you trust. KubeScope looks for the kubescope-extension.toml in the folder or the repository you give it. Changes apply the next time KubeScope starts.": "एक्सटेंशन KubeScope में एक सुविधा जोड़ता है। यह आपकी अनुमतियों के साथ चलने वाला कोड है, इसलिए केवल उन्हीं को इंस्टॉल करें जिन पर आपको भरोसा हो। KubeScope आपके दिए फ़ोल्डर या रिपॉज़िटरी में kubescope-extension.toml खोजता है। बदलाव KubeScope के अगली बार शुरू होने पर लागू होते हैं।",
             "Animate windows and lists as they open": "खुलते समय विंडो और सूचियों को एनिमेट करें",
             "Asks the public GitHub API for the latest release and sends nothing but the app version. The icon in the footer checks on demand.": "सार्वजनिक GitHub API से नवीनतम रिलीज़ पूछता है और ऐप के संस्करण के अलावा कुछ नहीं भेजता। फ़ुटर का आइकन माँगने पर जाँच करता है।",
             "CLUSTER ACCESS": "क्लस्टर एक्सेस",

@@ -409,7 +409,7 @@
             "Add file...": "Dosya ekle...",
             "Add row": "Satır ekle",
             "All namespaces": "Tüm ad alanları",
-            "An extension adds a feature to KubeScope. It is code that runs with your permissions, so install only the ones you trust. KubeScope looks for the kubescope-extension.toml in the folder or the repository you give it. Changes apply the next time KubeScope starts.": "",
+            "An extension adds a feature to KubeScope. It is code that runs with your permissions, so install only the ones you trust. KubeScope looks for the kubescope-extension.toml in the folder or the repository you give it. Changes apply the next time KubeScope starts.": "Bir uzantı KubeScope'a bir özellik ekler. İzinlerinizle çalışan koddur, bu yüzden yalnızca güvendiklerinizi yükleyin. KubeScope, verdiğiniz klasörde veya depoda kubescope-extension.toml dosyasını arar. Değişiklikler KubeScope'un bir sonraki başlatılışında geçerli olur.",
             "Animate windows and lists as they open": "Pencereleri ve listeleri açılırken canlandır",
             "Asks the public GitHub API for the latest release and sends nothing but the app version. The icon in the footer checks on demand.": "Genel GitHub API'sinden en son sürümü ister ve uygulama sürümünden başka bir şey göndermez. Alt bilgideki simge isteğe bağlı denetler.",
             "CLUSTER ACCESS": "KÜME ERİŞİMİ",

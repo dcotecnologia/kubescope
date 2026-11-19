@@ -409,7 +409,7 @@
             "Add file...": "เพิ่มไฟล์...",
             "Add row": "เพิ่มแถว",
             "All namespaces": "เนมสเปซทั้งหมด",
-            "An extension adds a feature to KubeScope. It is code that runs with your permissions, so install only the ones you trust. KubeScope looks for the kubescope-extension.toml in the folder or the repository you give it. Changes apply the next time KubeScope starts.": "",
+            "An extension adds a feature to KubeScope. It is code that runs with your permissions, so install only the ones you trust. KubeScope looks for the kubescope-extension.toml in the folder or the repository you give it. Changes apply the next time KubeScope starts.": "ส่วนขยายเพิ่มคุณสมบัติให้ KubeScope เป็นโค้ดที่ทำงานด้วยสิทธิ์ของคุณ ดังนั้นควรติดตั้งเฉพาะที่คุณไว้ใจ KubeScope จะมองหา kubescope-extension.toml ในโฟลเดอร์หรือที่เก็บที่คุณระบุ การเปลี่ยนแปลงจะมีผลเมื่อเปิด KubeScope ครั้งถัดไป",
             "Animate windows and lists as they open": "แสดงภาพเคลื่อนไหวของหน้าต่างและรายการเมื่อเปิด",
             "Asks the public GitHub API for the latest release and sends nothing but the app version. The icon in the footer checks on demand.": "ถาม GitHub API สาธารณะเกี่ยวกับรุ่นล่าสุด และไม่ส่งสิ่งใดนอกจากเวอร์ชันแอป ไอคอนที่ส่วนท้ายจะตรวจสอบเมื่อสั่ง",
             "CLUSTER ACCESS": "การเข้าถึงคลัสเตอร์",
