@@ -83,7 +83,7 @@ def test_the_page_is_built_when_it_is_first_opened_and_told_each_time() -> None:
     index = stack.count() - 1
 
     assert built == []
-    assert pages.shown(index) == ("Instances", "Subtitle")
+    assert pages.shown(index) == ("Instances", "Subtitle", None)
     pages.shown(index)
 
     assert built == ["x"]  # built once

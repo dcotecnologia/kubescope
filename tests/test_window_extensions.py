@@ -42,6 +42,7 @@ def test_a_page_of_an_extension_is_in_the_menu_and_opens_with_its_title(
     from kubescope.sdk import PageContribution
 
     window = _ready_window(monkeypatch)
+    refreshed: list[int] = []
     window.extension_host.contributions.pages.append(
         PageContribution(
             "dco.a",
@@ -50,6 +51,8 @@ def test_a_page_of_an_extension_is_in_the_menu_and_opens_with_its_title(
             "Instances",
             lambda: QLabel("the page"),
             "Of the account",
+            None,
+            lambda: refreshed.append(1),
         )
     )
 
@@ -64,10 +67,14 @@ def test_a_page_of_an_extension_is_in_the_menu_and_opens_with_its_title(
     assert window.ui.pageTitle.text() == "Instances"
     assert window.ui.pageSubtitle.text() == "Of the account"
     assert entry.isChecked() and not window.nav_overview.isChecked()
+    assert window.extension_refresh_button.isVisibleTo(window)
+    window.extension_refresh_button.click()
+    assert refreshed == [1]
 
     window.nav_overview.click()
 
     assert not entry.isChecked()
+    assert not window.extension_refresh_button.isVisibleTo(window)
 
 
 def test_an_extension_shows_details_and_a_log_in_tabs(monkeypatch) -> None:
