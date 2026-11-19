@@ -88,6 +88,11 @@ def _clean_accounts(stored: object) -> list[dict[str, Any]]:
 
 GABI = "kubescope.gabi"  # the extension that has the settings of the assistant
 GABI_SHORTCUT = "kubescope.gabi.ask"
+# the keys of the global search, which became the extension kubescope.search
+_SEARCH_SHORTCUTS = {
+    "search": "kubescope.search.open",
+    "search_alt": "kubescope.search.open_alt",
+}
 # the keys of the assistant, as the app kept them, and what she calls them now
 _GABI_KEYS = {
     "assistant_enabled": "enabled",
@@ -133,6 +138,7 @@ class Settings:
         except OSError, ValueError:
             pass
         self._adopt_assistant_keys(stored)
+        self._adopt_search_keys(stored)
         self._data = {**DEFAULTS, **{k: stored[k] for k in DEFAULTS if k in stored}}
         self._data["context_aliases"] = {
             str(context): str(alias).strip()
@@ -219,6 +225,21 @@ class Settings:
             stored["shortcuts"] = kept
         if mine:
             stored["extensions"] = {**extensions, GABI: mine}
+
+    @staticmethod
+    def _adopt_search_keys(stored: dict[str, Any]) -> None:
+        """The keys the person chose for the global search, before it became an
+        extension, move under the actions of the extension; what it already has
+        there is not replaced."""
+        pressed = stored.get("shortcuts")
+        if not isinstance(pressed, dict):
+            return
+        kept = {**pressed}
+        for old, new in _SEARCH_SHORTCUTS.items():
+            if old in kept:
+                asked = kept.pop(old)
+                kept.setdefault(new, asked)
+        stored["shortcuts"] = kept
 
     def save(self) -> None:
         self.path.parent.mkdir(parents=True, exist_ok=True)

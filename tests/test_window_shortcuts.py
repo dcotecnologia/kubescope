@@ -1,5 +1,4 @@
 import pytest
-from kubescope.sdk.models import SearchHit
 from kubescope.sdk.timezone import set_timezone
 from PySide6.QtGui import QKeySequence
 from PySide6.QtWidgets import QKeySequenceEdit
@@ -62,16 +61,16 @@ def test_the_filter_and_the_cluster_switch_take_the_focus(window, monkeypatch) -
 
 def test_the_shortcuts_are_edited_saved_and_applied(window, monkeypatch) -> None:
     window._load_settings_form()
-    assert _edit(window, "search").keySequence().toString() == "/"
+    assert _edit(window, "overview").keySequence().toString() == "G, O"
 
-    _edit(window, "search").setKeySequence(QKeySequence("Ctrl+P"))
+    _edit(window, "overview").setKeySequence(QKeySequence("Ctrl+P"))
     window._save_preferences()
 
-    assert window.settings.shortcuts["search"] == "Ctrl+P"
-    assert window._shortcuts["search"].key().toString() == "Ctrl+P"
+    assert window.settings.shortcuts["overview"] == "Ctrl+P"
+    assert window._shortcuts["overview"].key().toString() == "Ctrl+P"
 
     window.settings_ui.shortcutsResetButton.click()  # back to the defaults
-    assert _edit(window, "search").keySequence().toString() == "/"
+    assert _edit(window, "overview").keySequence().toString() == "G, O"
 
 
 def test_two_actions_cannot_share_a_key(window, monkeypatch) -> None:
@@ -105,57 +104,6 @@ def test_a_zone_that_is_typed_wrong_goes_back_to_the_chosen_one(
     window._save_preferences()
     assert window.settings.timezone == "auto"
     set_timezone("auto")
-
-
-def test_the_search_lists_the_screens_and_opens_the_resource_found(
-    window, monkeypatch
-) -> None:
-    opened = []
-    monkeypatch.setattr(window, "_open_resource", lambda *args: opened.append(args))
-    monkeypatch.setattr(
-        window_module,
-        "search_resources",
-        lambda _context: [SearchHit("Pod", "ns", "api")],
-    )
-    window._nav_views["pods"].setText("")  # an entry with no label is left out
-
-    window._open_global_search()
-    dialog = window._global_search
-    assert dialog is not None
-    labels = [dialog.results.item(row).text() for row in range(dialog.results.count())]
-    assert any(label.startswith("Settings") for label in labels)
-    assert not any(label.startswith("Pods") for label in labels)
-
-    window._open_global_search()  # a second time reuses the dialog
-    assert window._global_search is dialog
-    from tests.test_window_flows import _wait_until
-
-    _wait_until(lambda: dialog.note.text() == "")
-    dialog.input.setText("api")
-    dialog.results.setCurrentRow(0)
-    dialog._choose(dialog.results.item(0))
-    assert opened == [("Pod", "ns", "api")]
-
-    for row, view in ((0, 0), (1, 4), (2, 2)):  # the screens that are not lists
-        dialog.input.clear()
-        dialog.results.item(row).data(window_module.Qt.ItemDataRole.UserRole).run()
-        assert window.pages.currentIndex() == view
-
-
-def test_the_search_without_a_cluster_says_nothing_and_does_not_ask(
-    window, monkeypatch
-) -> None:
-    window.context_combo.clear()
-    asked = []
-    monkeypatch.setattr(window, "_run_action", lambda *args, **kw: asked.append(args))
-
-    window._open_global_search()
-    assert asked == []
-
-    window._close_when_worker_stops = True
-    window._global_search = None
-    window._open_global_search()  # closing: it does not open
-    assert window._global_search is None
 
 
 def test_a_screen_reached_by_a_shortcut_opens_its_section_of_the_menu(

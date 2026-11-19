@@ -166,11 +166,6 @@
             "TARGET": "लक्ष्य",
             "TYPE": "प्रकार"
         },
-        "GlobalSearch": {
-            "Loading resources...": "संसाधन लोड हो रहे हैं...",
-            "Search": "खोजें",
-            "Search screens, actions and resources...": "स्क्रीन, क्रियाएँ और संसाधन खोजें..."
-        },
         "InstallDialog": {
             "Close": "बंद करें",
             "Copy": "कॉपी करें",
@@ -577,7 +572,6 @@
             "Cluster ARN": "क्लस्टर ARN",
             "Cluster IAM role ARN": "क्लस्टर IAM रोल ARN",
             "Cluster IP address family": "क्लस्टर IP पता परिवार",
-            "Cluster overview": "क्लस्टर अवलोकन",
             "Cluster resources and capacity": "क्लस्टर संसाधन और क्षमता",
             "Cluster security group": "क्लस्टर security group",
             "Complete": "पूर्ण",
@@ -641,8 +635,6 @@
             "Forwards ({count})": "फ़ॉरवर्ड ({count})",
             "GOOGLE GKE": "GOOGLE GKE",
             "GitHub limited the checks; try again at {time}": "GitHub ने जाँचें सीमित कर दीं; {time} पर फिर कोशिश करें",
-            "Global search": "वैश्विक खोज",
-            "Global search (second shortcut)": "वैश्विक खोज (दूसरा शॉर्टकट)",
             "Go to Deployments": "Deployments पर जाएँ",
             "Go to Pods": "Pods पर जाएँ",
             "Go to Services": "Services पर जाएँ",
@@ -774,7 +766,6 @@
             "Scaled to zero": "शून्य पर स्केल किया गया",
             "Scaled {name} to {count} replicas": "{name} को {count} रेप्लिका पर स्केल किया गया",
             "Scheduled": "शेड्यूल किया गया",
-            "Screen": "स्क्रीन",
             "Secrets": "Secrets",
             "Secrets of the cluster": "क्लस्टर के Secrets",
             "Select the Pod:": "Pod चुनें:",

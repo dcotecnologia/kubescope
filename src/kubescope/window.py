@@ -136,14 +136,12 @@ from kubescope.cluster import (
     parse_command,
     retry_sign_in,
     run_login,
-    search_resources,
 )
 from kubescope.cluster import (
     configure as configure_cluster,
 )
 from kubescope.dialogs.account_dialog import AccountDialog
 from kubescope.dialogs.changelog_dialog import ChangelogDialog
-from kubescope.dialogs.global_search import GlobalSearch, SearchEntry
 from kubescope.dialogs.plugin_update_dialog import PluginUpdateDialog
 from kubescope.dialogs.theme_editor import ThemeEditor
 from kubescope.dialogs.update_dialog import UpdateDialog
@@ -1413,8 +1411,6 @@ class WorkloadWindow(QMainWindow):
         actions = {
             "refresh": self._press_refresh,
             "refresh_alt": self._press_refresh,
-            "search": self._open_global_search,
-            "search_alt": self._open_global_search,
             "overview": lambda: self._show_page(0),
             "pods": lambda: self._open_list_view("pods"),
             "deployments": lambda: self._open_list_view("deployments"),
@@ -1425,7 +1421,6 @@ class WorkloadWindow(QMainWindow):
             "help": self._show_shortcuts,
         }
         self._shortcuts: dict[str, QShortcut] = {}
-        self._global_search: GlobalSearch | None = None
         for action, run in actions.items():
             shortcut = QShortcut(self)
             shortcut.activated.connect(run)
@@ -4222,62 +4217,6 @@ class WorkloadWindow(QMainWindow):
             return
         self._open_resource(*link)
 
-    def _search_entries(self) -> list[SearchEntry]:
-        """The screens and actions the global search goes to."""
-        entries = [
-            SearchEntry(
-                self.tr("Cluster overview"),
-                self.tr("Screen"),
-                lambda: self._show_page(0),
-            ),
-            SearchEntry(
-                self.tr("Workloads overview"),
-                self.tr("Screen"),
-                lambda: self._show_page(4),
-            ),
-            SearchEntry(
-                self.tr("Settings"), self.tr("Screen"), lambda: self._show_page(2)
-            ),
-        ]
-        for view, button in self._nav_views.items():
-            label = button.text().strip()
-            if label:
-                entries.append(
-                    SearchEntry(
-                        label,
-                        self.tr("Screen"),
-                        lambda view=view: self._open_list_view(view),
-                    )
-                )
-        return entries
-
-    def _open_global_search(self) -> None:
-        """/ or Ctrl+K: find a screen, an action or a resource of any
-        namespace."""
-        if self._close_when_worker_stops:
-            return
-        if self._global_search is None:
-            self._global_search = GlobalSearch(self)
-        dialog = self._global_search
-        dialog.open_with(self._search_entries())
-        context = self._context()
-        if not context:
-            dialog.resources_failed("")
-            return
-
-        def found(hits: list) -> None:
-            dialog.set_resources(
-                hits, lambda hit: self._open_resource(hit.kind, hit.namespace, hit.name)
-            )
-
-        self._run_action(
-            search_resources,
-            found,
-            context,
-            on_error=dialog.resources_failed,
-            quiet=True,
-        )
-
     def _open_resource(self, kind: str, namespace: str, name: str) -> None:
         self._run_action(
             get_resource_details,
@@ -5585,8 +5524,6 @@ class WorkloadWindow(QMainWindow):
         return {
             "refresh": self.tr("Refresh"),
             "refresh_alt": self.tr("Refresh (second shortcut)"),
-            "search": self.tr("Global search"),
-            "search_alt": self.tr("Global search (second shortcut)"),
             "overview": self.tr("Go to the cluster overview"),
             "pods": self.tr("Go to Pods"),
             "deployments": self.tr("Go to Deployments"),
@@ -6072,6 +6009,7 @@ class WorkloadWindow(QMainWindow):
             "show_logs": self._command_show_logs,
             "refresh": self._command_refresh,
             "show_details": self._command_show_details,
+            "views": self._command_views,
         }
         for name, command in commands.items():
             self.commands.register(name, command)
@@ -6127,6 +6065,15 @@ class WorkloadWindow(QMainWindow):
 
     def _command_refresh(self, report: Callable[[str], None]) -> None:
         self._press_refresh()
+
+    def _command_views(self, report: Callable[[str], None]) -> list[tuple[str, str]]:
+        """The lists of the side menu, as (view, name), for an extension that
+        offers to go to one."""
+        return [
+            (view, button.text().strip())
+            for view, button in self._nav_views.items()
+            if button.text().strip()
+        ]
 
     def _command_show_details(
         self, kind: str, namespace: str, name: str, report: Callable[[str], None]

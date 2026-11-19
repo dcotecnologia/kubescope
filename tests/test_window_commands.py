@@ -239,3 +239,11 @@ def test_a_text_log_that_fails_or_whose_tab_closed_is_handled(
     tab.closed = True
     tab.ui.refreshButton.click()  # closed: the answer is dropped
     assert tab.busy is False
+
+
+def test_the_lists_of_the_menu_are_told_to_an_extension(window, run) -> None:
+    views = run("views")
+
+    assert ("pods", "Pods") in views
+    assert all(label.strip() for _view, label in views)  # a hidden entry has none
+    assert len({view for view, _label in views}) == len(views)

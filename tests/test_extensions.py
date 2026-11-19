@@ -470,3 +470,17 @@ def test_a_page_added_by_an_extension_keeps_what_the_refresh_button_does() -> No
     assert page.refresh is not None
     page.refresh()
     assert called == [1]
+
+
+def test_an_extension_searches_the_resources_through_the_cluster_bridge(
+    monkeypatch,
+) -> None:
+    from kubescope.sdk.models import SearchHit
+
+    from kubescope import cluster
+    from kubescope.extensions.cluster_access import ClusterBridge
+
+    hits = [SearchHit("Pod", "ns", "api")]
+    monkeypatch.setattr(cluster, "search_resources", lambda context: hits)
+
+    assert ClusterBridge().search_resources("prod") == hits

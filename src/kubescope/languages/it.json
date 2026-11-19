@@ -166,11 +166,6 @@
             "TARGET": "DESTINAZIONE",
             "TYPE": "TIPO"
         },
-        "GlobalSearch": {
-            "Loading resources...": "Caricamento delle risorse...",
-            "Search": "Cerca",
-            "Search screens, actions and resources...": "Cerca schermate, azioni e risorse..."
-        },
         "InstallDialog": {
             "Close": "Chiudi",
             "Copy": "Copia",
@@ -577,7 +572,6 @@
             "Cluster ARN": "ARN del cluster",
             "Cluster IAM role ARN": "ARN del ruolo IAM del cluster",
             "Cluster IP address family": "Famiglia di indirizzi IP del cluster",
-            "Cluster overview": "Panoramica del cluster",
             "Cluster resources and capacity": "Risorse e capacità del cluster",
             "Cluster security group": "Security group del cluster",
             "Complete": "Completato",
@@ -641,8 +635,6 @@
             "Forwards ({count})": "Forward ({count})",
             "GOOGLE GKE": "GOOGLE GKE",
             "GitHub limited the checks; try again at {time}": "GitHub ha limitato i controlli; riprova alle {time}",
-            "Global search": "Ricerca globale",
-            "Global search (second shortcut)": "Ricerca globale (seconda scorciatoia)",
             "Go to Deployments": "Vai ai Deployments",
             "Go to Pods": "Vai ai Pod",
             "Go to Services": "Vai ai Services",
@@ -774,7 +766,6 @@
             "Scaled to zero": "Ridotto a zero",
             "Scaled {name} to {count} replicas": "{name} scalato a {count} repliche",
             "Scheduled": "Pianificato",
-            "Screen": "Schermata",
             "Secrets": "Secrets",
             "Secrets of the cluster": "Secrets del cluster",
             "Select the Pod:": "Seleziona il Pod:",

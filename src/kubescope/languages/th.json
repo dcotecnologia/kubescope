@@ -166,11 +166,6 @@
             "TARGET": "ปลายทาง",
             "TYPE": "ประเภท"
         },
-        "GlobalSearch": {
-            "Loading resources...": "กำลังโหลดทรัพยากร...",
-            "Search": "ค้นหา",
-            "Search screens, actions and resources...": "ค้นหาหน้าจอ การกระทำ และทรัพยากร..."
-        },
         "InstallDialog": {
             "Close": "ปิด",
             "Copy": "คัดลอก",
@@ -577,7 +572,6 @@
             "Cluster ARN": "Cluster ARN",
             "Cluster IAM role ARN": "ARN ของบทบาท IAM ของคลัสเตอร์",
             "Cluster IP address family": "กลุ่มที่อยู่ IP ของคลัสเตอร์",
-            "Cluster overview": "ภาพรวมคลัสเตอร์",
             "Cluster resources and capacity": "ทรัพยากรและความจุของคลัสเตอร์",
             "Cluster security group": "กลุ่มความปลอดภัยของคลัสเตอร์",
             "Complete": "เสร็จสมบูรณ์",
@@ -641,8 +635,6 @@
             "Forwards ({count})": "Forwards ({count})",
             "GOOGLE GKE": "GOOGLE GKE",
             "GitHub limited the checks; try again at {time}": "GitHub จำกัดการตรวจสอบ โปรดลองอีกครั้งเมื่อ {time}",
-            "Global search": "ค้นหาทั่วทั้งระบบ",
-            "Global search (second shortcut)": "ค้นหาทั่วทั้งระบบ (ปุ่มลัดที่สอง)",
             "Go to Deployments": "ไปที่ Deployments",
             "Go to Pods": "ไปที่ Pods",
             "Go to Services": "ไปที่ Services",
@@ -774,7 +766,6 @@
             "Scaled to zero": "ย่อเหลือศูนย์",
             "Scaled {name} to {count} replicas": "ปรับ {name} เป็น {count} สำเนาแล้ว",
             "Scheduled": "ตั้งเวลาไว้",
-            "Screen": "หน้าจอ",
             "Secrets": "Secrets",
             "Secrets of the cluster": "Secrets ของคลัสเตอร์",
             "Select the Pod:": "เลือก Pod:",

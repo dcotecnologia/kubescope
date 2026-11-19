@@ -166,11 +166,6 @@
             "TARGET": "الهدف",
             "TYPE": "النوع"
         },
-        "GlobalSearch": {
-            "Loading resources...": "جارٍ تحميل الموارد...",
-            "Search": "بحث",
-            "Search screens, actions and resources...": "ابحث عن الشاشات والإجراءات والموارد..."
-        },
         "InstallDialog": {
             "Close": "إغلاق",
             "Copy": "نسخ",
@@ -577,7 +572,6 @@
             "Cluster ARN": "ARN العنقود",
             "Cluster IAM role ARN": "ARN دور IAM للعنقود",
             "Cluster IP address family": "عائلة عناوين IP للعنقود",
-            "Cluster overview": "نظرة عامة على العنقود",
             "Cluster resources and capacity": "موارد العنقود وسعته",
             "Cluster security group": "مجموعة أمان العنقود",
             "Complete": "مكتمل",
@@ -641,8 +635,6 @@
             "Forwards ({count})": "إعادة التوجيه ({count})",
             "GOOGLE GKE": "GOOGLE GKE",
             "GitHub limited the checks; try again at {time}": "قيّدت GitHub عمليات التحقق؛ حاول مرة أخرى في {time}",
-            "Global search": "البحث الشامل",
-            "Global search (second shortcut)": "البحث الشامل (الاختصار الثاني)",
             "Go to Deployments": "الانتقال إلى Deployments",
             "Go to Pods": "الانتقال إلى Pods",
             "Go to Services": "الانتقال إلى Services",
@@ -774,7 +766,6 @@
             "Scaled to zero": "مخفّض إلى صفر",
             "Scaled {name} to {count} replicas": "تم تغيير حجم {name} إلى {count} نسخ",
             "Scheduled": "مجدول",
-            "Screen": "الشاشة",
             "Secrets": "Secrets",
             "Secrets of the cluster": "Secrets العنقود",
             "Select the Pod:": "اختر Pod:",
