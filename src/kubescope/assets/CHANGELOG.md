@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+### Added
+
+- The SDK that extensions are written against (`kubescope.sdk`): events, named commands, the contributions of an extension to the window, the settings of each extension, and the cluster read paths and writes behind the permissions its manifest asks for by @danilogco
+
 ## [1.12.0] - 2026-11-18
 
 ### Added
