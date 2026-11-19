@@ -486,7 +486,7 @@ class Ui_SettingsPage(object):
         self.extensionsButtonsRow.setObjectName(u"extensionsButtonsRow")
         self.extensionsInstallFolderButton = QPushButton(self.extensionsCard)
         self.extensionsInstallFolderButton.setObjectName(u"extensionsInstallFolderButton")
-        self.extensionsInstallFolderButton.setProperty(u"variant", u"primary")
+        self.extensionsInstallFolderButton.setProperty(u"variant", u"secondary")
 
         self.extensionsButtonsRow.addWidget(self.extensionsInstallFolderButton)
 

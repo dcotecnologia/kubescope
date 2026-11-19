@@ -923,7 +923,7 @@
                <string>Install from a folder...</string>
               </property>
               <property name="variant" stdset="0">
-               <string notr="true">primary</string>
+               <string notr="true">secondary</string>
               </property>
              </widget>
             </item>
