@@ -13,6 +13,10 @@ root = Path(SPECPATH)
 shutil.copyfile(
     root / "CHANGELOG.md", root / "src" / "kubescope" / "assets" / "CHANGELOG.md"
 )
+# The extensions installed by default ship with the app, so that a first run needs no
+# network; a build without one just has no copy and the app downloads them.
+extensions = root / "src" / "kubescope" / "assets" / "extensions"
+subprocess.run([sys.executable, str(root / "tools" / "bundle_extensions.py")], check=False)
 # The commit goes into the bundle, so a crash log can say which build it is from.
 commit_file = root / "src" / "kubescope" / "_commit.txt"
 try:
@@ -76,6 +80,7 @@ analysis = Analysis(
         # next to the app's files, where a person who got the bundle finds them
         (str(root / "LICENSE"), "."),
         (str(root / "src" / "kubescope" / "assets" / "THIRD_PARTY_NOTICES.txt"), "."),
+        *((str(path), "kubescope/assets/extensions") for path in extensions.glob("*")),
         *(
             (str(path), "kubescope/assets/fonts")
             for path in (root / "src" / "kubescope" / "assets" / "fonts").iterdir()

@@ -51,6 +51,7 @@ from kubescope.extensions.github import (
     repo_of,
 )
 from kubescope.extensions.manifest import Manifest
+from kubescope.extensions.offline import Snapshot, snapshot
 from kubescope.extensions.store import Candidate, ExtensionStore, StoreError
 from kubescope.extensions.updates import (
     Update,
@@ -124,6 +125,7 @@ class ExtensionsPanel(QObject):
         load_errors: Callable[[], dict[str, str]] = dict,
         defaults: Callable[[], Sequence[DefaultExtension]] = offered,
         save_settings: Callable[[], None] = lambda: None,
+        snapshots: Callable[[str], Snapshot | None] = snapshot,
     ) -> None:
         super().__init__(window)
         self.form = form
@@ -135,6 +137,7 @@ class ExtensionsPanel(QObject):
         self.load_errors = load_errors  # why an extension did not load
         self.defaults = defaults  # what the app offers to install
         self.save_settings = save_settings
+        self.snapshots = snapshots  # the copies that ship with the app
         self.updates: list[Update] = []  # newer versions of what is installed
         self.recommended_versions: dict[str, str] = {}
         self._recommended_versions_checked: set[str] = set()
@@ -631,7 +634,9 @@ class ExtensionsPanel(QObject):
     def offer_defaults(self, settings: Settings) -> None:
         """The first time, install what the app recommends, without a dialog.
 
-        It is quiet: when GitHub cannot be reached nothing is said and it is
+        It is taken from the copy that ships with the app when there is one, so
+        a first run needs no network; otherwise it is downloaded, and it is
+        quiet: when GitHub cannot be reached nothing is said and it is
         tried again at the next start. Once an extension is installed it is
         not offered again, so what the person uninstalls does not come back;
         it can be installed from the table.
@@ -644,12 +649,19 @@ class ExtensionsPanel(QObject):
                 or one.id in settings.extensions_offered
             ):
                 continue
-            self._download(
-                one.repo,
-                one,
-                review=False,
-                installed=partial(self._offered, settings, one.id),
-            )
+            installed = partial(self._offered, settings, one.id)
+            copy = self.snapshots(one.id)
+            if copy is not None:  # it ships with the app: no network
+                self._prepared(
+                    self.store.prepare,
+                    copy.data,
+                    copy.repo.source,
+                    pin=one,
+                    review=False,
+                    installed=installed,
+                )
+                continue
+            self._download(one.repo, one, review=False, installed=installed)
 
     def _offered(self, settings: Settings, extension: str) -> None:
         settings.offered(extension)
