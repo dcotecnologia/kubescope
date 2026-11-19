@@ -409,7 +409,7 @@
             "Add file...": "Thêm tệp...",
             "Add row": "Thêm dòng",
             "All namespaces": "Tất cả namespace",
-            "An extension adds a feature to KubeScope. It is code that runs with your permissions, so install only the ones you trust. KubeScope looks for the kubescope-extension.toml in the folder or the repository you give it. Changes apply the next time KubeScope starts.": "",
+            "An extension adds a feature to KubeScope. It is code that runs with your permissions, so install only the ones you trust. KubeScope looks for the kubescope-extension.toml in the folder or the repository you give it. Changes apply the next time KubeScope starts.": "Một tiện ích mở rộng thêm tính năng cho KubeScope. Đó là mã chạy với quyền của bạn, nên chỉ cài những gì bạn tin tưởng. KubeScope tìm kubescope-extension.toml trong thư mục hoặc kho lưu trữ bạn đưa ra. Các thay đổi áp dụng vào lần khởi động KubeScope tiếp theo.",
             "Animate windows and lists as they open": "Hiệu ứng khi mở cửa sổ và danh sách",
             "Asks the public GitHub API for the latest release and sends nothing but the app version. The icon in the footer checks on demand.": "Hỏi API GitHub công khai về bản phát hành mới nhất và không gửi gì ngoài phiên bản ứng dụng. Biểu tượng ở chân trang kiểm tra theo yêu cầu.",
             "CLUSTER ACCESS": "TRUY CẬP CỤM",

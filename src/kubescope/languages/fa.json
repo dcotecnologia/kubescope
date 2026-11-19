@@ -409,7 +409,7 @@
             "Add file...": "افزودن پرونده...",
             "Add row": "افزودن ردیف",
             "All namespaces": "همه فضاهای نام",
-            "An extension adds a feature to KubeScope. It is code that runs with your permissions, so install only the ones you trust. KubeScope looks for the kubescope-extension.toml in the folder or the repository you give it. Changes apply the next time KubeScope starts.": "",
+            "An extension adds a feature to KubeScope. It is code that runs with your permissions, so install only the ones you trust. KubeScope looks for the kubescope-extension.toml in the folder or the repository you give it. Changes apply the next time KubeScope starts.": "یک افزونه قابلیتی به KubeScope اضافه می‌کند. این کد با مجوزهای شما اجرا می‌شود، پس فقط افزونه‌هایی را نصب کنید که به آن‌ها اعتماد دارید. KubeScope فایل kubescope-extension.toml را در پوشه یا مخزنی که می‌دهید جست‌وجو می‌کند. تغییرات در اجرای بعدی KubeScope اعمال می‌شوند.",
             "Animate windows and lists as they open": "پویانمایی پنجره‌ها و فهرست‌ها هنگام باز شدن",
             "Asks the public GitHub API for the latest release and sends nothing but the app version. The icon in the footer checks on demand.": "از API عمومی GitHub آخرین انتشار را می‌پرسد و جز نسخه برنامه چیزی نمی‌فرستد. نماد پایین صفحه در صورت درخواست بررسی می‌کند.",
             "CLUSTER ACCESS": "دسترسی به خوشه",
