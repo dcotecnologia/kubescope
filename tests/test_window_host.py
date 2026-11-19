@@ -3,10 +3,12 @@ from itertools import count
 from pathlib import Path
 
 import pytest
-from PySide6.QtWidgets import QLabel, QMessageBox
+from PySide6.QtGui import QKeySequence
+from PySide6.QtWidgets import QKeySequenceEdit, QLabel, QMessageBox, QPushButton
 
 from kubescope.extensions.manifest import MANIFEST_NAME
 from kubescope.i18n import apply_language
+from kubescope.window import EXTENSION_SECTION_FIRST, EXTENSION_WATCH_MS
 from tests.qt import present
 from tests.test_window_flows import _ready_window
 
@@ -244,3 +246,259 @@ def test_a_window_without_a_loader_yet_syncs_nothing(window) -> None:
     assert window._extension_errors() == {}
 
     window._extension_loader = loader
+
+
+CONTRIBUTOR = """
+from PySide6.QtWidgets import QLabel, QVBoxLayout, QWidget
+
+FIRED = []
+SAVES = []
+PANELS = []
+FAIL = {"build": False, "save": None, "handler": False}
+
+
+class Panel(QWidget):
+    def __init__(self):
+        super().__init__()
+        QVBoxLayout(self).addWidget(QLabel("the panel"))
+        self.loads = 0
+
+    def load(self):
+        self.loads += 1
+
+    def save(self):
+        SAVES.append("save")
+        if FAIL["save"] == "raise":
+            raise RuntimeError("cannot save")
+        return FAIL["save"] is None
+
+
+def build():
+    if FAIL["build"]:
+        raise RuntimeError("cannot build")
+    panel = Panel()
+    PANELS.append(panel)
+    return panel
+
+
+def fire():
+    FIRED.append("ask")
+    if FAIL["handler"]:
+        raise RuntimeError("handler failed")
+
+
+def activate(ctx):
+    ctx.add_shortcut(
+        ctx.id + ".ask", "Ask the test", "Ctrl+Alt+T", fire, application=True
+    )
+    ctx.add_settings_section("Host Test", build)
+"""
+
+CONTRIBUTOR_PERMISSIONS = '"ui.window", "ui.settings"'
+
+
+def contributing(tmp_path, window):
+    folder, package, extension = make_extension(
+        tmp_path, CONTRIBUTOR, CONTRIBUTOR_PERMISSIONS
+    )
+    install_linked(window, folder)
+    return folder, sys.modules[package], extension
+
+
+def shortcut_row(window, label: str) -> int | None:
+    table = window.settings_ui.shortcutsTable
+    for row in range(table.rowCount()):
+        if present(table.item(row, 0)).text() == label:
+            return row
+    return None
+
+
+def key_of(window, label: str) -> str:
+    row = shortcut_row(window, label)
+    assert row is not None
+    edit = window.settings_ui.shortcutsTable.cellWidget(row, 1)
+    assert isinstance(edit, QKeySequenceEdit)
+    return edit.keySequence().toString()
+
+
+def test_a_shortcut_of_an_extension_works_and_is_in_the_settings(
+    window, tmp_path
+) -> None:
+    _, module, extension = contributing(tmp_path, window)
+    action = f"{extension}.ask"
+
+    shortcut = window._shortcuts[action]
+    shortcut.activated.emit()
+
+    assert shortcut.key().toString() == "Ctrl+Alt+T"
+    assert shortcut.context().name == "ApplicationShortcut"
+    assert module.FIRED == ["ask"]
+    assert key_of(window, "Ask the test") == "Ctrl+Alt+T"
+
+
+def test_the_key_of_an_extension_is_changed_in_the_settings_like_the_others(
+    window, tmp_path
+) -> None:
+    _, _, extension = contributing(tmp_path, window)
+    window._show_page(2)
+    row = shortcut_row(window, "Ask the test")
+    assert row is not None
+    edit = window.settings_ui.shortcutsTable.cellWidget(row, 1)
+    assert isinstance(edit, QKeySequenceEdit)
+
+    edit.setKeySequence(QKeySequence("Ctrl+Alt+Y"))
+    window._save_preferences()
+
+    assert window.settings.shortcuts[f"{extension}.ask"] == "Ctrl+Alt+Y"
+    assert window._shortcuts[f"{extension}.ask"].key().toString() == "Ctrl+Alt+Y"
+    # and the default comes back with the button
+    window.settings_ui.shortcutsResetButton.click()
+    assert key_of(window, "Ask the test") == "Ctrl+Alt+T"
+
+
+def test_a_failing_shortcut_of_an_extension_does_not_reach_the_window(
+    window, tmp_path, caplog
+) -> None:
+    _, module, extension = contributing(tmp_path, window)
+    module.FAIL["handler"] = True
+
+    window._shortcuts[f"{extension}.ask"].activated.emit()
+
+    assert module.FIRED == ["ask"]
+    assert f"The extension {extension} failed" in caplog.text
+
+
+def test_uninstalling_takes_back_the_shortcut_and_the_section(window, tmp_path) -> None:
+    _, _, extension = contributing(tmp_path, window)
+
+    window.extension_store.uninstall(extension)
+    window._sync_extensions()
+
+    assert f"{extension}.ask" not in window._shortcuts
+    assert shortcut_row(window, "Ask the test") is None
+    assert window._extension_sections == []
+    assert "Host Test" not in [
+        b.text()
+        for b in window.settings_ui.settingsContent.parent().findChildren(QPushButton)
+    ]
+
+
+def test_a_section_of_an_extension_has_its_button_and_its_card(
+    window, tmp_path
+) -> None:
+    _, module, _ = contributing(tmp_path, window)
+    form = window.settings_ui
+    content = form.settingsContent
+    [entry] = window._extension_sections
+
+    assert entry.id == EXTENSION_SECTION_FIRST and entry.title == "Host Test"
+    assert entry.button.text() == "Host Test" and entry.button.isCheckable()
+    assert not entry.card.isVisibleTo(content)  # until its button is pressed
+    assert module.PANELS[0].loads >= 1
+
+    entry.button.click()
+
+    assert entry.card.isVisibleTo(content) and entry.button.isChecked()
+    assert not form.generalCard.isVisibleTo(content)
+    assert not form.generalSectionButton.isChecked()
+    form.generalSectionButton.click()
+    assert not entry.card.isVisibleTo(content) and not entry.button.isChecked()
+
+
+def test_the_section_is_loaded_when_the_settings_open_and_saved_with_them(
+    window, tmp_path
+) -> None:
+    _, module, _ = contributing(tmp_path, window)
+    loads = module.PANELS[0].loads
+
+    window._show_page(2)
+    window._save_preferences()
+
+    assert module.PANELS[0].loads > loads
+    assert module.SAVES == ["save"]
+
+
+@pytest.mark.parametrize("how", ["no", "raise"])
+def test_a_section_that_refuses_or_fails_keeps_the_settings_from_saving(
+    window, tmp_path, how
+) -> None:
+    _, module, _ = contributing(tmp_path, window)
+    window._show_page(2)
+    before = window.settings.remember_last_context
+    window.settings_ui.rememberCheck.setChecked(not before)
+    module.FAIL["save"] = how
+
+    window._save_preferences()
+
+    assert module.SAVES == ["save"]
+    assert window.settings.remember_last_context is before  # nothing was applied
+
+
+def test_a_section_that_cannot_be_built_is_left_out_and_the_rest_runs(
+    window, tmp_path, caplog
+) -> None:
+    folder, _, extension = make_extension(
+        tmp_path,
+        CONTRIBUTOR.replace('"build": False', '"build": True'),
+        CONTRIBUTOR_PERMISSIONS,
+    )
+
+    install_linked(window, folder)  # it loads, and its section fails to build
+
+    assert window._extension_sections == []
+    assert f"{extension}" in caplog.text and "could not build" in caplog.text
+    assert f"{extension}.ask" in window._shortcuts  # the shortcut is there anyway
+
+
+def test_an_extension_can_take_the_person_to_its_section(window, tmp_path) -> None:
+    _, _, _ = contributing(tmp_path, window)
+    [entry] = window._extension_sections
+
+    window.extension_host.ui.show_settings("host TEST")
+
+    assert window.pages.currentIndex() == 2 and entry.button.isChecked()
+
+
+def test_an_extension_run_from_its_folder_is_reloaded_when_its_files_change(
+    window, tmp_path
+) -> None:
+    folder, module, extension = contributing(tmp_path, window)
+    package_file = next(folder.glob("host_ext_*/__init__.py"))
+    assert extension in window._extension_watchers
+
+    window._reload_changed_extensions()  # nothing changed
+    assert shortcut_row(window, "Ask the test") is not None
+    package_file.write_text(
+        package_file.read_text().replace("Ask the test", "Ask the reloaded one")
+    )
+    window._reload_changed_extensions()
+
+    assert shortcut_row(window, "Ask the test") is None
+    assert shortcut_row(window, "Ask the reloaded one") is not None
+    assert [one.title for one in window._extension_sections] == ["Host Test"]
+    window._reload_changed_extensions()  # and it is told once
+    assert shortcut_row(window, "Ask the reloaded one") is not None
+
+
+def test_only_what_runs_from_its_folder_is_watched(window, tmp_path) -> None:
+    folder, _, extension = make_extension(tmp_path)
+    store = window.extension_store
+
+    store.install(store.prepare_folder(folder))  # a copy, not the author's folder
+    window._sync_extensions()
+
+    assert window._extension_watchers == {}
+    assert window._extension_timer.isActive()
+    assert window._extension_timer.interval() == EXTENSION_WATCH_MS
+    store.uninstall(extension)
+    window._sync_extensions()
+
+
+def test_the_watcher_goes_when_the_extension_does(window, tmp_path) -> None:
+    _, _, extension = contributing(tmp_path, window)
+    assert extension in window._extension_watchers
+
+    window.extension_store.uninstall(extension)
+    window._sync_extensions()
+
+    assert window._extension_watchers == {}

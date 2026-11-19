@@ -1,5 +1,5 @@
 from kubescope.settings import Settings
-from kubescope.utils.shortcuts import DEFAULTS, clean, duplicate
+from kubescope.utils.shortcuts import DEFAULTS, MAX_KEY, clean, duplicate
 
 
 def test_missing_or_damaged_fall_back_to_defaults():
@@ -26,3 +26,19 @@ def test_settings_keep_shortcuts(tmp_path):
     settings.shortcuts = {"search": "Ctrl+P"}
     assert settings.shortcuts["search"] == "Ctrl+P"
     assert settings.shortcuts["refresh"] == DEFAULTS["refresh"]
+
+
+def test_the_shortcuts_of_extensions_are_kept_as_they_were_saved():
+    kept = clean(
+        {
+            "refresh": "F2",
+            "kubescope.gabi.ask": " Ctrl+G ",
+            "Bad Id": "x",
+            "kubescope.number": 5,
+            "kubescope.long": "k" * (MAX_KEY + 1),
+        }
+    )
+
+    assert kept["refresh"] == "F2"
+    assert kept["kubescope.gabi.ask"] == "Ctrl+G"
+    assert set(kept) == set(DEFAULTS) | {"kubescope.gabi.ask"}

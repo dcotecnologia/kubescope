@@ -9,6 +9,7 @@ import tempfile
 import time
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
+from dataclasses import dataclass
 from functools import partial
 from pathlib import Path
 from typing import Any, cast
@@ -168,6 +169,7 @@ from kubescope.extensions.context import Host
 from kubescope.extensions.loader import ExtensionLoader
 from kubescope.extensions.registries import CommandRegistry
 from kubescope.extensions.store import ExtensionStore, Installed
+from kubescope.extensions.watcher import FolderWatcher
 from kubescope.extensions.window_ui import WindowUi
 from kubescope.forwards import Forward
 from kubescope.i18n import (
@@ -191,6 +193,7 @@ from kubescope.sdk import (
     SHUTDOWN,
     THEME_CHANGED,
     ClusterAccess,
+    SettingsPanel,
 )
 from kubescope.settings import (
     Settings,
@@ -827,6 +830,22 @@ class ActionWorker(QThread):
         self.completed.emit(result)
 
 
+EXTENSION_WATCH_MS = 1000  # how often the folders of extensions in development are read
+EXTENSION_SECTION_FIRST = 100  # the id of the first section that an extension adds
+
+
+@dataclass
+class _ExtensionSection:
+    """A section of the Settings that an extension added."""
+
+    extension: str
+    title: str
+    id: int
+    button: QPushButton
+    card: QFrame
+    panel: SettingsPanel
+
+
 class WorkloadWindow(QMainWindow):
     def nativeEvent(self, eventType, message):  # noqa: N802
         hit = self._frame.native_hit(eventType, message)
@@ -1198,6 +1217,9 @@ class WorkloadWindow(QMainWindow):
             Path(bundled_extensions.__file__).parent,
         )
         self._extension_loader: ExtensionLoader | None = None  # made below
+        self._extension_sections: list[_ExtensionSection] = []
+        self._extension_shortcuts: dict[str, QShortcut] = {}
+        self._extension_watchers: dict[str, FolderWatcher] = {}
         self.extensions_panel = ExtensionsPanel(
             self.settings_ui,
             self.extension_store,
@@ -1208,7 +1230,7 @@ class WorkloadWindow(QMainWindow):
             load_errors=lambda: self._extension_errors(),
         )
         self.settings_ui.shortcutsResetButton.clicked.connect(
-            lambda: self._fill_shortcuts(shortcuts.DEFAULTS)
+            lambda: self._fill_shortcuts(self._shortcut_defaults())
         )
         self._settings_sections.idClicked.connect(self._show_settings_section)
         self._show_settings_section(0)
@@ -1444,6 +1466,10 @@ class WorkloadWindow(QMainWindow):
         )
         self._extension_loader = ExtensionLoader(self.extension_host)
         QTimer.singleShot(0, self, self._sync_extensions)  # once the window is built
+        self._extension_timer = QTimer(self)  # an extension run from its folder
+        self._extension_timer.setInterval(EXTENSION_WATCH_MS)  # follows its files
+        self._extension_timer.timeout.connect(self._reload_changed_extensions)
+        self._extension_timer.start()
         ui.settingsButton.setIcon(_gear_icon())
         ui.settingsButton.clicked.connect(lambda: self._show_page(2))
         # "/" is left to the text fields: typing in one does not open the search
@@ -5433,14 +5459,160 @@ class WorkloadWindow(QMainWindow):
         for extension, one in wanted.items():
             if extension not in loader.loaded:
                 loader.load(one)
+        self._watch_extensions()
+        self._apply_extension_contributions()
         self.extensions_panel.refresh()
 
+    def _watch_extensions(self) -> None:
+        """Watch the folder of each extension that runs from where its author
+        keeps it, and only those."""
+        running = {
+            name: loaded.installed.folder
+            for name, loaded in self.extension_loader.loaded.items()
+            if loaded.installed.dev
+        }
+        for name in list(self._extension_watchers):
+            if name not in running:
+                del self._extension_watchers[name]
+        for name, folder in running.items():
+            if name not in self._extension_watchers:
+                self._extension_watchers[name] = FolderWatcher(folder)
+
+    def _reload_changed_extensions(self) -> None:
+        """Reload the extensions whose files changed since the last look."""
+        changed = [
+            name
+            for name, watcher in self._extension_watchers.items()
+            if watcher.changed()
+        ]
+        if not changed:
+            return
+        current = {one.manifest.id: one for one in self.extension_store.installed()}
+        for name in changed:
+            one = current.get(name)
+            if one is not None:
+                logger.info("Reloading the extension %s: its files changed", name)
+                self.extension_loader.reload(one)
+        self._watch_extensions()
+        self._apply_extension_contributions()
+        self.extensions_panel.refresh()
+
+    def _call_extension(self, extension: str, function: Callable[[], Any]) -> None:
+        """Call what an extension gave the window, so that its failing is its
+        own and not the window's."""
+        try:
+            function()
+        except Exception:
+            logger.exception("The extension %s failed", extension)
+
+    def _shortcut_defaults(self) -> dict[str, str]:
+        return {
+            **shortcuts.DEFAULTS,
+            **{
+                one.action: one.default
+                for one in self.extension_host.contributions.shortcuts
+            },
+        }
+
+    def _shortcut_values(self) -> dict[str, str]:
+        """The keys as they are saved; an action of an extension that was never
+        changed has its default."""
+        return {**self._shortcut_defaults(), **self.settings.shortcuts}
+
+    def _apply_extension_contributions(self) -> None:
+        """Show what the extensions that run now added: their shortcuts and
+        their sections of the Settings."""
+        self._apply_extension_shortcuts()
+        self._apply_extension_sections()
+        self._fill_shortcuts(self._shortcut_values())
+
+    def _apply_extension_shortcuts(self) -> None:
+        for action, shortcut in self._extension_shortcuts.items():
+            self._shortcuts.pop(action, None)
+            shortcut.setEnabled(False)
+            shortcut.deleteLater()
+        self._extension_shortcuts = {}
+        for one in self.extension_host.contributions.shortcuts:
+            shortcut = QShortcut(self)
+            if one.application:
+                shortcut.setContext(Qt.ShortcutContext.ApplicationShortcut)
+            shortcut.activated.connect(
+                partial(self._call_extension, one.extension, one.handler)
+            )
+            shortcut.setKey(
+                QKeySequence(self.settings.shortcuts.get(one.action, one.default))
+            )
+            self._shortcuts[one.action] = shortcut
+            self._extension_shortcuts[one.action] = shortcut
+
+    def _apply_extension_sections(self) -> None:
+        """One button and one card in the Settings for each section that the
+        extensions that run now added."""
+        form = self.settings_ui
+        for entry in self._extension_sections:
+            self._settings_sections.removeButton(entry.button)
+            entry.button.deleteLater()
+            entry.card.deleteLater()
+        self._extension_sections = []
+        row = form.settingsSections.indexOf(form.extensionsSectionButton) + 1
+        end = form.settingsContentLayout.count() - 1  # the spacer that ends the page
+        for position, one in enumerate(
+            self.extension_host.contributions.settings_sections
+        ):
+            try:
+                panel = one.factory()
+            except Exception:
+                logger.exception(
+                    "The extension %s could not build %s", one.extension, one.title
+                )
+                continue
+            number = EXTENSION_SECTION_FIRST + position
+            button = QPushButton(one.title)
+            button.setCheckable(True)
+            button.setProperty("variant", "secondary")
+            self._settings_sections.addButton(button, number)
+            form.settingsSections.insertWidget(row, button)
+            row += 1
+            card = QFrame()
+            card.setProperty("card", "true")
+            layout = QVBoxLayout(card)
+            heading = QLabel(one.title.upper())
+            heading.setProperty("variant", "cardTitle")
+            layout.addWidget(heading)
+            layout.addWidget(panel)
+            card.setVisible(False)
+            form.settingsContentLayout.insertWidget(end, card)
+            end += 1
+            self._extension_sections.append(
+                _ExtensionSection(one.extension, one.title, number, button, card, panel)
+            )
+            self._call_extension(one.extension, panel.load)
+
+    def _save_extension_sections(self) -> bool:
+        """Ask each section of an extension to keep what was typed; False as
+        soon as one says no."""
+        for entry in self._extension_sections:
+            try:
+                if not entry.panel.save():
+                    return False
+            except Exception:
+                logger.exception("The extension %s failed to save", entry.extension)
+                return False
+        return True
+
     def _show_extension_settings(self, section: str) -> None:
-        """Go to the Settings; the sections of the extensions come with
-        them."""
+        """Go to the Settings, to the section of an extension if it has one
+        with that title."""
         self.raise_()
         self.activateWindow()
         self._show_page(2)
+        wanted = section.strip().lower()
+        entry = next(
+            (one for one in self._extension_sections if one.title.lower() == wanted),
+            None,
+        )
+        if entry is not None:
+            self._show_settings_section(entry.id)
 
     def _reserve_corner(self, pixels: int) -> None:
         """Keep what is at the right of the footer and of the note under the
@@ -5478,7 +5650,9 @@ class WorkloadWindow(QMainWindow):
 
     def _apply_shortcuts(self) -> None:
         for action, key in self.settings.shortcuts.items():
-            self._shortcuts[action].setKey(QKeySequence(key))
+            shortcut = self._shortcuts.get(action)  # not an extension that is gone
+            if shortcut is not None:
+                shortcut.setKey(QKeySequence(key))
 
     def _shortcut_labels(self) -> dict[str, str]:
         return {
@@ -5495,6 +5669,10 @@ class WorkloadWindow(QMainWindow):
             "filter": self.tr("Filter the list"),
             "context": self.tr("Switch cluster"),
             "help": self.tr("Show the shortcuts"),
+            **{
+                one.action: one.label
+                for one in self.extension_host.contributions.shortcuts
+            },
         }
 
     def _fill_shortcuts(self, shortcuts: dict[str, str]) -> None:
@@ -6315,6 +6493,7 @@ class WorkloadWindow(QMainWindow):
             form.shortcutsCard: 3,
             form.integrationsCard: 4,
             form.extensionsCard: 5,
+            **{entry.card: entry.id for entry in self._extension_sections},
         }
         for card in form.settingsContent.findChildren(
             QFrame, options=Qt.FindChildOption.FindDirectChildrenOnly
@@ -6326,6 +6505,8 @@ class WorkloadWindow(QMainWindow):
         form.shortcutsSectionButton.setChecked(section == 3)
         form.integrationsSectionButton.setChecked(section == 4)
         form.extensionsSectionButton.setChecked(section == 5)
+        for entry in self._extension_sections:
+            entry.button.setChecked(section == entry.id)
         if section == 5:
             self.extensions_panel.refresh()  # it may have changed on disk
         form.settingsScroll.verticalScrollBar().setValue(0)
@@ -6666,8 +6847,10 @@ class WorkloadWindow(QMainWindow):
             chosen = resolve_language(chosen)
         form.languageCombo.setCurrentIndex(max(form.languageCombo.findData(chosen), 0))
         self._fill_timezone_combo(self.settings.timezone)
-        self._fill_shortcuts(self.settings.shortcuts)
+        self._fill_shortcuts(self._shortcut_values())
         self._render_integrations()
+        for entry in self._extension_sections:
+            self._call_extension(entry.extension, entry.panel.load)
         self._fill_theme_combo(self.settings.theme)
         self._fill_default_namespaces()
         form.rememberCheck.setChecked(self.settings.remember_last_context)
@@ -7057,6 +7240,8 @@ class WorkloadWindow(QMainWindow):
         programs = self._assistant_programs_from_form()
         if programs is None:
             return  # nor until every path of an assistant is a program
+        if not self._save_extension_sections():
+            return  # nor until every section of an extension agrees
         keys = self._shortcuts_from_form()
         if keys is None:
             return  # nor while two shortcuts share a key
