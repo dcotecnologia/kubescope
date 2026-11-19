@@ -27,6 +27,7 @@ SOURCES = [
             "views/extensions_panel.py",
             "views/extension_pages.py",
             "dialogs/extension_dialog.py",
+            "dialogs/extension_details_dialog.py",
             "dialogs/plugin_update_dialog.py",
             "views/plugins_catalog.py",
             "views/detail_tab.py",

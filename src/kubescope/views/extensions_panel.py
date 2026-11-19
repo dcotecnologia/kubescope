@@ -18,21 +18,27 @@ from functools import partial
 from pathlib import Path
 
 from kubescope.sdk.timezone import to_zone
-from PySide6.QtCore import QObject, Qt
+from PySide6.QtCore import QObject, QPoint, Qt
+from PySide6.QtGui import QColor
 from PySide6.QtWidgets import (
+    QAbstractItemView,
     QDialog,
     QFileDialog,
-    QFrame,
     QHBoxLayout,
     QInputDialog,
     QLabel,
+    QMenu,
     QMessageBox,
     QPushButton,
-    QSizePolicy,
-    QVBoxLayout,
+    QTableWidget,
+    QTableWidgetItem,
     QWidget,
 )
 
+from kubescope.dialogs.extension_details_dialog import (
+    ExtensionDetails,
+    ExtensionDetailsDialog,
+)
 from kubescope.dialogs.extension_dialog import InstallExtensionDialog
 from kubescope.extensions.defaults import DefaultExtension, offered, verify
 from kubescope.extensions.github import (
@@ -47,12 +53,34 @@ from kubescope.extensions.manifest import Manifest
 from kubescope.extensions.store import Candidate, ExtensionStore, StoreError
 from kubescope.extensions.updates import Update, find, version_key
 from kubescope.settings import Settings
+from kubescope.theme import themed
 from kubescope.ui.ui_settings_page import Ui_SettingsPage
+from kubescope.views.container_states import BADGE_ROLE, BadgeDelegate
 
 logger = logging.getLogger(__name__)
 
 FOLDER_SOURCE = "folder "  # how the store remembers an extension from a folder
+STAR = "\u2605"  # marks the extensions the app recommends
 UPDATE_CHECK_SECONDS = 24 * 3600  # how often GitHub is asked for newer tags
+COLUMNS = {
+    "name": 0,
+    "version": 1,
+    "status": 2,
+    "author": 3,
+    "installed": 4,
+    "updated": 5,
+    "source": 6,
+    "description": 7,
+}
+WIDTHS = {  # DESCRIPTION takes what is left
+    "name": 220,
+    "version": 80,
+    "status": 150,
+    "author": 130,
+    "installed": 100,
+    "updated": 100,
+    "source": 260,
+}
 
 
 @dataclass(frozen=True)
@@ -64,6 +92,9 @@ class Row:
     installed_at: str = ""  # UTC, as the store keeps it
     updated_at: str = ""
     update: Update | None = None  # a newer version that can be installed
+    sha256: str = ""
+    folder: str = ""
+    recommended: bool = False  # the app recommends it, installed or not
 
     @property
     def bundled(self) -> bool:
@@ -114,6 +145,7 @@ class ExtensionsPanel(QObject):
             self.updates_label,
         )
         self.check_button.clicked.connect(lambda: self.check_updates(force=True))
+        self._build_table()
         # Development mode goes under the buttons: all four in a row make the
         # page wider than a narrow window
         form.extensionsButtonsRow.removeWidget(form.extensionsDevCheck)
@@ -130,6 +162,7 @@ class ExtensionsPanel(QObject):
 
     def refresh(self) -> None:
         """Read the store again and draw the cards."""
+        recommended = {one.id for one in self.defaults()}
         self.rows = [
             Row(
                 one.manifest,
@@ -137,6 +170,9 @@ class ExtensionsPanel(QObject):
                 True,
                 installed_at=one.installed_at,
                 updated_at=one.updated_at,
+                sha256=one.sha256,
+                folder=str(one.folder),
+                recommended=one.manifest.id in recommended,
             )
             for one in self.store.installed()
         ] + [
@@ -150,7 +186,16 @@ class ExtensionsPanel(QObject):
                     one.id, one.name, one.repo.ref.lstrip("v"), "", frozenset()
                 )
                 manifest = replace(manifest, description=one.description)
-                self.rows.append(Row(manifest, f"github {one.repo.label}", False, one))
+                self.rows.append(
+                    Row(
+                        manifest,
+                        f"github {one.repo.label}",
+                        False,
+                        one,
+                        sha256=one.sha256,
+                        recommended=True,
+                    )
+                )
         self.render()
 
     def _update_of(self, row: Row) -> Update | None:
@@ -230,23 +275,225 @@ class ExtensionsPanel(QObject):
         )
         self.refresh()
 
-    def render(self) -> None:
-        """One row for each extension, the whole width of the page."""
+    def _build_table(self) -> None:
+        """The table of the extensions, with the buttons for the one selected
+        above it, as the other lists of the app have."""
         grid = self.form.extensionsCardsGrid
-        while (item := grid.takeAt(0)) is not None:
-            if widget := item.widget():
-                widget.hide()  # until it is deleted
-                widget.deleteLater()
-        for column in range(grid.columnCount()):
-            grid.setColumnStretch(column, 0)
-            grid.setColumnMinimumWidth(column, 0)
-        if not self.rows:
-            grid.addWidget(QLabel(self.tr("No extension is installed")), 0, 0)
-            return
-        for index, row in enumerate(self.rows):
-            grid.addWidget(self._card(row), index, 0)
+        self.actions = QWidget()
+        self.actions_row = QHBoxLayout(self.actions)
+        self.actions_row.setContentsMargins(0, 0, 0, 0)
+        self.actions_row.setSpacing(8)
+        self.count_label = QLabel()
+        self.count_label.setProperty("variant", "muted")
+        self.table = QTableWidget(0, len(COLUMNS))
+        self.table.setObjectName("extensionsTable")
+        self.table.setHorizontalHeaderLabels(
+            [
+                self.tr("NAME"),
+                self.tr("VERSION"),
+                self.tr("STATUS"),
+                self.tr("AUTHOR"),
+                self.tr("INSTALLED"),
+                self.tr("UPDATED"),
+                self.tr("SOURCE"),
+                self.tr("DESCRIPTION"),
+            ]
+        )
+        self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
+        self.table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+        self.table.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
+        self.table.setShowGrid(False)
+        self.table.setProperty("variant", "data")
+        self.table.horizontalHeader().setStretchLastSection(True)
+        self.table.verticalHeader().setVisible(False)
+        self.table.verticalHeader().setDefaultSectionSize(46)  # as the Pods table
+        self.table.setMinimumHeight(260)
+        self.table.setItemDelegateForColumn(
+            COLUMNS["status"], BadgeDelegate(self.table)
+        )
+        for column, width in WIDTHS.items():
+            self.table.setColumnWidth(COLUMNS[column], width)
+        self.table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.table.customContextMenuRequested.connect(self._menu)
+        self.table.itemSelectionChanged.connect(self._sync_actions)
+        self.table.cellDoubleClicked.connect(self._double_clicked)
+        self.empty_label = QLabel(self.tr("No extension is installed"))
+        grid.addWidget(self.actions, 0, 0)
+        grid.addWidget(self.table, 1, 0)
+        grid.addWidget(self.empty_label, 2, 0)
         grid.setColumnStretch(0, 1)
-        grid.setRowStretch(len(self.rows), 1)
+        grid.setRowStretch(1, 1)
+
+    def render(self) -> None:
+        """One row for each extension; the one that was selected stays so."""
+        selected = self._selected_id()
+        self.empty_label.setVisible(not self.rows)
+        self.table.setVisible(bool(self.rows))
+        self.table.setRowCount(len(self.rows))
+        for index, row in enumerate(self.rows):
+            manifest = row.manifest
+            error = self.load_errors().get(manifest.id)
+            status = self._badge(row)
+            cells = {
+                "name": f"{STAR} {manifest.name}" if row.recommended else manifest.name,
+                "version": f"v{manifest.version}",
+                "status": status,
+                "author": manifest.author,
+                "installed": self._day(row.installed_at),
+                "updated": self._day(row.updated_at),
+                "source": "" if row.bundled else row.source,
+                "description": (
+                    self.tr("Could not load: {error}").format(error=error)
+                    if error
+                    else manifest.description
+                ),
+            }
+            for name, text in cells.items():
+                item = QTableWidgetItem(text)
+                item.setToolTip(manifest.description or text)
+                if name == "status":
+                    item.setData(BADGE_ROLE, self._status_colors(status, bool(error)))
+                if name == "name" and row.recommended:
+                    item.setToolTip(self.tr("Recommended by KubeScope"))
+                    item.setForeground(QColor(themed("#3220a0", text=True)))
+                if name == "description" and error:
+                    item.setForeground(QColor(themed("#a33d45", text=True)))
+                self.table.setItem(index, COLUMNS[name], item)
+        if selected:
+            for index, row in enumerate(self.rows):
+                if row.manifest.id == selected:
+                    self.table.selectRow(index)
+        self.count_label.setText(
+            self.tr("{count} extensions").format(count=len(self.rows))
+        )
+        self._sync_actions()
+
+    def _selected_id(self) -> str:
+        row = self._selected_row()
+        return row.manifest.id if row is not None else ""
+
+    def _selected_row(self) -> Row | None:
+        index = self.table.currentRow()
+        selected = self.table.selectionModel().hasSelection()
+        return self.rows[index] if selected and 0 <= index < len(self.rows) else None
+
+    def _status_colors(self, status: str, failed: bool) -> tuple[str, str]:
+        """The text and fill colors of the badge of a status."""
+        if failed:
+            return themed("#a33d45"), themed("#fce9ea")
+        if status in (self.tr("Installed"), self.tr("Bundled")):
+            return themed("#176b58"), themed("#e5f4eb")
+        if status in (self.tr("Update available"), self.tr("Development")):
+            return themed("#985415"), themed("#fff2de")
+        if status == self.tr("Recommended"):
+            return themed("#3220a0"), themed("#f3f1f9")
+        return themed("#505963"), themed("#eff1f3")
+
+    def _sync_actions(self) -> None:
+        """The buttons above the table are those of the row selected."""
+        while (item := self.actions_row.takeAt(0)) is not None:
+            widget = item.widget()
+            if widget is not None and widget is not self.count_label:
+                widget.hide()
+                widget.deleteLater()
+        row = self._selected_row()
+        self.actions_row.addWidget(self.count_label)
+        self.actions_row.addStretch(1)
+        for label, variant, callback in self._actions(row) if row else []:
+            button = QPushButton(label)
+            button.setProperty("variant", variant)
+            button.clicked.connect(callback)
+            self.actions_row.addWidget(button)
+
+    def _actions(self, row: Row) -> list[tuple[str, str, Callable[[], None]]]:
+        """What can be done with an extension, as (label, variant, what to
+        call)."""
+        found: list[tuple[str, str, Callable[[], None]]] = [
+            (self.tr("Details"), "secondary", partial(self.details, row))
+        ]
+        if row.default is not None:
+            found.append(
+                (
+                    self.tr("Install"),
+                    "primary",
+                    partial(self.install_default, row.default),
+                )
+            )
+            return found
+        if row.update is not None:
+            found.append(
+                (
+                    self.tr("Update to {version}").format(version=row.update.version),
+                    "primary",
+                    partial(self.update, row.update),
+                )
+            )
+        if not row.installed or self._can_reinstall(row):
+            found.append(
+                (
+                    self.tr("Reinstall"),
+                    "primary" if not row.installed else "secondary",
+                    partial(self.reinstall, row),
+                )
+            )
+        if row.installed:
+            found.append(
+                (self.tr("Uninstall"), "secondary", partial(self.uninstall, row))
+            )
+        return found
+
+    def _double_clicked(self, index: int, _column: int) -> None:
+        if 0 <= index < len(self.rows):
+            self.details(self.rows[index])
+
+    def details(self, row: Row) -> None:
+        """Everything about one extension, in a dialog."""
+        manifest = row.manifest
+        known = row.installed or not row.default
+        ExtensionDetailsDialog(
+            self.window,
+            ExtensionDetails(
+                name=manifest.name,
+                id=manifest.id,
+                version=manifest.version,
+                status=self._badge(row),
+                description=manifest.description,
+                author=manifest.author,
+                source="" if row.bundled else row.source,
+                sha256=row.sha256,
+                folder=row.folder if row.installed else "",
+                installed_at=self._day(row.installed_at),
+                updated_at=self._day(row.updated_at),
+                permissions=tuple(sorted(manifest.permissions)),
+                commands=manifest.commands,
+                error=self.load_errors().get(manifest.id, ""),
+                recommended=row.recommended,
+                known=known,
+                newer=row.update.version if row.update else "",
+            ),
+        ).exec()
+
+    def _menu(self, position: QPoint) -> None:
+        """Right-click on an extension: what can be done with it."""
+        index = self.table.rowAt(position.y())
+        if not 0 <= index < len(self.rows):
+            return
+        self.table.selectRow(index)
+        menu = QMenu(self.table)
+        for label, _variant, callback in self._actions(self.rows[index]):
+            menu.addAction(label, callback)
+        self._show_menu(menu, self.table.viewport().mapToGlobal(position))
+
+    @staticmethod
+    def _show_menu(menu: QMenu, where: QPoint) -> None:
+        menu.exec(where)
+
+    def _day(self, moment: str) -> str:
+        """A day in the time zone of the settings, empty when there is none."""
+        try:
+            return to_zone(datetime.fromisoformat(moment)).strftime("%Y-%m-%d")
+        except ValueError:
+            return ""
 
     def _badge(self, row: Row) -> str:
         if row.default is not None:
@@ -258,111 +505,6 @@ class ExtensionsPanel(QObject):
         if row.dev:
             return self.tr("Development")
         return self.tr("Bundled") if row.bundled else self.tr("Installed")
-
-    def _card(self, row: Row) -> QFrame:
-        """A row: what the extension is on the left, and its buttons on the
-        right."""
-        manifest = row.manifest
-        card = QFrame()
-        card.setObjectName("extensionCard")
-        card.setProperty("card", "true")  # the look of the app's other cards
-        layout = QHBoxLayout(card)
-        layout.setSpacing(16)
-        about = QVBoxLayout()
-        about.setSpacing(4)
-        top = QHBoxLayout()
-        top.setSpacing(10)
-        title = QLabel(manifest.name)
-        title.setObjectName("extensionCardTitle")
-        title.setStyleSheet("font-size: 16px; font-weight: 700;")
-        top.addWidget(title)
-        badge = QLabel(self._badge(row))
-        badge.setObjectName("extensionCardBadge")
-        badge.setStyleSheet("font-weight: 700;")
-        top.addWidget(badge)
-        top.addStretch(1)
-        about.addLayout(top)
-        meta = f"v{manifest.version}" + (
-            f" · {manifest.author}" if manifest.author else ""
-        )
-        about.addWidget(self._text(meta))
-        dates = self._dates(row)
-        if dates:
-            when = self._text(dates, muted=True)
-            when.setObjectName("extensionCardDates")
-            about.addWidget(when)
-        if manifest.description:
-            about.addWidget(self._text(manifest.description))
-        error = self.load_errors().get(manifest.id)
-        if error:
-            problem = self._text(self.tr("Could not load: {error}").format(error=error))
-            problem.setObjectName("extensionCardError")
-            problem.setStyleSheet("color: #c0392b;")
-            about.addWidget(problem)
-        if not row.bundled:
-            source = self._text(row.source, muted=True)
-            source.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
-            about.addWidget(source)
-        layout.addLayout(about, 1)
-        buttons = QVBoxLayout()
-        buttons.setSpacing(6)
-        if row.default is not None:
-            install = QPushButton(self.tr("Install"))
-            install.setProperty("variant", "primary")
-            install.clicked.connect(partial(self.install_default, row.default))
-            buttons.addWidget(install)
-        elif row.update is not None:
-            update = QPushButton(
-                self.tr("Update to {version}").format(version=row.update.version)
-            )
-            update.setProperty("variant", "primary")
-            update.clicked.connect(partial(self.update, row.update))
-            buttons.addWidget(update)
-            if self._can_reinstall(row):
-                reinstall = QPushButton(self.tr("Reinstall"))
-                reinstall.setProperty("variant", "secondary")
-                reinstall.clicked.connect(partial(self.reinstall, row))
-                buttons.addWidget(reinstall)
-        elif not row.installed or self._can_reinstall(row):
-            reinstall = QPushButton(self.tr("Reinstall"))
-            reinstall.setProperty(
-                "variant", "primary" if not row.installed else "secondary"
-            )
-            reinstall.clicked.connect(partial(self.reinstall, row))
-            buttons.addWidget(reinstall)
-        if row.installed and row.default is None:
-            uninstall = QPushButton(self.tr("Uninstall"))
-            uninstall.setProperty("variant", "secondary")
-            uninstall.clicked.connect(partial(self.uninstall, row))
-            buttons.addWidget(uninstall)
-        buttons.addStretch(1)
-        layout.addLayout(buttons)
-        return card
-
-    @staticmethod
-    def _text(text: str, muted: bool = False) -> QLabel:
-        """A line that wraps and never makes the page wider than the window."""
-        label = QLabel(text)
-        label.setWordWrap(True)
-        label.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Minimum)
-        if muted:
-            label.setProperty("variant", "muted")
-        return label
-
-    def _dates(self, row: Row) -> str:
-        """When it was installed and last updated, in lowercase, in the time
-        zone of the settings; nothing for what was never installed here."""
-        parts = []
-        for text, moment in (
-            (self.tr("installed {date}"), row.installed_at),
-            (self.tr("updated {date}"), row.updated_at),
-        ):
-            try:
-                day = to_zone(datetime.fromisoformat(moment)).strftime("%Y-%m-%d")
-            except ValueError:
-                continue
-            parts.append(text.format(date=day).lower())
-        return " · ".join(parts)
 
     @staticmethod
     def _can_reinstall(row: Row) -> bool:

@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 from PySide6.QtGui import QKeySequence
-from PySide6.QtWidgets import QKeySequenceEdit, QLabel, QMessageBox, QPushButton
+from PySide6.QtWidgets import QKeySequenceEdit, QMessageBox, QPushButton
 
 from kubescope.extensions.manifest import MANIFEST_NAME
 from kubescope.i18n import apply_language, language_name, resolve_language
@@ -172,12 +172,12 @@ def test_an_extension_that_fails_shows_why_and_the_others_run(window, tmp_path) 
     assert window.extension_loader.loaded[bad].error == "boom"
     assert calls(good_package)[0] == "activate"
     window.settings_ui.extensionsSectionButton.click()
-    grid = window.settings_ui.extensionsCardsGrid
+    table = window.extensions_panel.table
     errors = [
-        label.text()
-        for i in range(grid.count())
-        for label in present(present(grid.itemAt(i)).widget()).findChildren(QLabel)
-        if label.objectName() == "extensionCardError"
+        item.text()
+        for row in range(table.rowCount())
+        if (item := table.item(row, 7)) is not None
+        and item.text().startswith("Could not load")
     ]
     assert errors == ["Could not load: boom"]
 

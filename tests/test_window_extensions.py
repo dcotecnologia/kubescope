@@ -1,8 +1,5 @@
-from typing import cast
-
 from PySide6.QtWidgets import QLabel
 
-from tests.qt import present
 from tests.test_window_flows import _ready_window
 
 
@@ -26,12 +23,10 @@ def test_without_extensions_the_section_says_so(monkeypatch) -> None:
 
     window.settings_ui.extensionsSectionButton.click()
 
-    grid = window.settings_ui.extensionsCardsGrid
-    labels = [
-        cast(QLabel, present(present(grid.itemAt(i)).widget()))
-        for i in range(grid.count())
-    ]
-    assert [label.text() for label in labels] == ["No extension is installed"]
+    panel = window.extensions_panel
+
+    assert panel.empty_label.text() == "No extension is installed"
+    assert not panel.empty_label.isHidden() and panel.table.isHidden()
 
 
 def test_a_page_of_an_extension_is_in_the_menu_and_opens_with_its_title(

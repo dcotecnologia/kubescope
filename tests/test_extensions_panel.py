@@ -59,6 +59,7 @@ class Card:
     badge: str
     texts: list[str]
     buttons: dict[str, QPushButton]
+    details: QPushButton | None = None
 
 
 class Setup:
@@ -103,25 +104,29 @@ class Setup:
         on_success(result)
 
     def cards(self) -> list[Card]:
-        grid = self.form.extensionsCardsGrid
+        table = self.panel.table
         found = []
-        for index in range(grid.count()):
-            widget = present(present(grid.itemAt(index)).widget())
-            labels = widget.findChildren(QLabel)
-            title = widget.findChild(QLabel, "extensionCardTitle")
-            badge = widget.findChild(QLabel, "extensionCardBadge")
-            found.append(
-                Card(
-                    title.text() if title else "",
-                    badge.text() if badge else "",
-                    [label.text() for label in labels],
-                    {b.text(): b for b in widget.findChildren(QPushButton)},
-                )
-            )
+        for row in range(table.rowCount()):
+            texts = [
+                present(table.item(row, column)).text()
+                for column in range(table.columnCount())
+            ]
+            found.append(Card(texts[0].removeprefix("\u2605 "), texts[2], texts, {}))
         return found
 
     def card(self, title: str) -> Card:
-        return next(card for card in self.cards() if card.title == title)
+        """The row of an extension, selected, with the buttons it then has."""
+        table = self.panel.table
+        row = next(i for i, one in enumerate(self.cards()) if one.title == title)
+        table.selectRow(row)
+        shown = self.cards()[row]
+        buttons = {
+            b.text(): b
+            for b in self.panel.actions.findChildren(QPushButton)
+            if not b.isHidden()  # not one that waits to be deleted
+        }
+        details = buttons.pop("Details", None)
+        return Card(shown.title, shown.badge, shown.texts, buttons, details)
 
     def summary(self) -> list[tuple[str, str]]:
         return [(card.title, card.badge) for card in self.cards()]
@@ -164,10 +169,10 @@ def setup(tmp_path, monkeypatch):
 
 
 def test_the_bundled_extension_is_a_card_that_can_be_uninstalled(setup) -> None:
-    [gabi] = setup.cards()
+    gabi = setup.card("Gabi")
 
     assert (gabi.title, gabi.badge) == ("Gabi", "Bundled")
-    assert "v1.0.0 · Someone" in gabi.texts and "Does things" in gabi.texts
+    assert {"v1.0.0", "Someone"} <= set(gabi.texts) and "Does things" in gabi.texts
     assert set(gabi.buttons) == {"Uninstall"}  # nothing to fetch again
 
 
@@ -405,7 +410,7 @@ def test_a_folder_extension_is_copied_again_from_its_folder_on_reinstall(
 
     setup.card("Tool").buttons["Reinstall"].click()
 
-    assert "v1.1.0 · Someone" in setup.card("Tool").texts
+    assert {"v1.1.0", "Someone"} <= set(setup.card("Tool").texts)
     assert setup.card("Tool").badge == "Installed"
 
 
@@ -422,7 +427,7 @@ def test_a_folder_that_is_gone_is_asked_for_again_on_reinstall(setup, tmp_path) 
 
     setup.card("Tool").buttons["Reinstall"].click()
 
-    assert "v2.0.0 · Someone" in setup.card("Tool").texts
+    assert {"v2.0.0", "Someone"} <= set(setup.card("Tool").texts)
 
 
 def test_a_remembered_source_that_is_not_a_repository_is_reported(setup) -> None:
@@ -444,9 +449,8 @@ def test_a_source_that_cannot_be_fetched_again_does_nothing(setup) -> None:
 def test_without_extensions_the_page_says_so(tmp_path, monkeypatch) -> None:
     empty = Setup(tmp_path, monkeypatch, with_bundled=False)
 
-    assert [
-        label.text() for label in empty.form.extensionsCardsHost.findChildren(QLabel)
-    ] == ["No extension is installed"]
+    assert empty.panel.empty_label.text() == "No extension is installed"
+    assert not empty.panel.empty_label.isHidden() and empty.panel.table.isHidden()
 
 
 def test_the_window_is_told_when_something_was_installed_or_removed(
@@ -644,7 +648,7 @@ def test_what_is_only_recommended_is_a_card_and_is_not_installed_by_itself(
     assert setup.card("Tool").badge == "Recommended"
 
 
-def test_a_card_says_in_lowercase_when_it_was_installed_and_last_updated(
+def test_a_row_says_when_it_was_installed_and_last_updated(
     setup, tmp_path, monkeypatch
 ) -> None:
     from kubescope.extensions import store as store_module
@@ -661,8 +665,7 @@ def test_a_card_says_in_lowercase_when_it_was_installed_and_last_updated(
 
     card = setup.card("Tool")
 
-    assert "installed 2026-01-05 · updated 2026-03-20" in card.texts
-    assert not any(text.startswith("Installed ") for text in card.texts)
+    assert card.texts[4:6] == ["2026-01-05", "2026-03-20"]  # INSTALLED, UPDATED
 
 
 def test_what_comes_with_the_app_or_is_only_recommended_has_no_dates(
@@ -808,23 +811,21 @@ def test_the_button_checks_even_when_it_was_checked_today(
     assert Settings().extension_updates_checked_at == 0.0  # no settings were given
 
 
-def test_the_extensions_are_a_list_that_fills_the_width_at_any_size(
+def test_the_extensions_are_a_table_that_fills_the_width_at_any_size(
     setup, tmp_path
 ) -> None:
     with_defaults(setup, offered(tmp_path))
-    grid = setup.panel.form.extensionsCardsGrid
     host = setup.panel.form.extensionsCardsHost
+    table = setup.panel.table
     setup.panel.window.show()
 
     for page in (1100, 700, 400):
         setup.panel.window.resize(page, 600)
         application.processEvents()
         application.processEvents()
-        places = [grid.getItemPosition(i)[:2] for i in range(grid.count())]
-        widths = [grid.itemAt(i).widget().width() for i in range(grid.count())]
 
-        assert places == [(0, 0), (1, 0)]  # one column, in order
-        assert min(widths) >= host.width() - 4  # each row the whole width
+        assert table.width() >= host.width() - 4  # the whole width
+        assert table.rowCount() == 2
     assert host.minimumSizeHint().width() < 400  # it never makes the page wider
 
 
@@ -835,3 +836,135 @@ def test_the_buttons_do_not_make_the_page_wider_than_a_narrow_window(setup) -> N
     row = form.extensionsButtonsRow
     layout = form.extensionsCardLayout
     assert layout.indexOf(form.extensionsDevCheck) == layout.indexOf(row) + 1
+
+
+def test_right_click_offers_what_the_buttons_offer_and_the_selection_stays(
+    setup, tmp_path, monkeypatch
+) -> None:
+    from PySide6.QtCore import QPoint
+
+    with_defaults(setup, offered(tmp_path))
+    table = setup.panel.table
+    offered_actions: list[list[str]] = []
+    monkeypatch.setattr(
+        setup.panel,
+        "_show_menu",
+        lambda menu, where: offered_actions.append([a.text() for a in menu.actions()]),
+    )
+    setup.panel.window.show()
+
+    setup.panel._menu(QPoint(5, table.rowViewportPosition(1) + 5))
+    setup.panel._menu(QPoint(5, 10_000))  # below the rows: nothing
+
+    assert offered_actions == [["Details", "Install"]]  # the recommended one is row 1
+    setup.panel.refresh()
+    assert setup.panel._selected_row() is not None
+    assert setup.panel._selected_row().manifest.id == "dco.tool"  # type: ignore[union-attr]
+    assert setup.panel.count_label.text() == "2 extensions"
+
+
+def test_what_the_app_recommends_has_a_star_whether_or_not_it_is_installed(
+    setup, tmp_path
+) -> None:
+    with_defaults(setup, offered(tmp_path))
+    table = setup.panel.table
+
+    names = [present(table.item(row, 0)).text() for row in range(table.rowCount())]
+
+    assert names == ["Gabi", "\u2605 Tool"]  # only the recommended one
+    from dataclasses import replace
+
+    setup.panel.defaults = lambda: [
+        replace(offered(tmp_path), id="kubescope.gabi", name="Gabi"),
+    ]
+    setup.panel.refresh()
+    assert present(table.item(0, 0)).text() == "\u2605 Gabi"  # installed, and still
+
+
+def opened_details(setup, monkeypatch):
+    from kubescope.dialogs import extension_details_dialog as module
+
+    shown = []
+
+    def run(dialog) -> int:
+        shown.append(
+            (
+                dialog.windowTitle(),
+                " | ".join(label.text() for label in dialog.findChildren(QLabel)),
+            )
+        )
+        return 0
+
+    monkeypatch.setattr(module.ExtensionDetailsDialog, "exec", run)
+    return shown
+
+
+def test_details_show_everything_about_an_installed_extension(
+    setup, tmp_path, monkeypatch
+) -> None:
+    shown = opened_details(setup, monkeypatch)
+    setup.decide(True)
+    setup.pick_manifest(make_folder(tmp_path / "tool"))
+    setup.panel.install_from_folder()
+
+    card = setup.card("Tool")
+    assert card.details is not None
+    card.details.click()
+
+    [(title, text)] = shown
+    assert title == "Tool"
+    for wanted in (
+        "dco.tool",
+        "v1.0.0",
+        "Someone",
+        "Does things",
+        "folder ",
+        "read your clusters",
+    ):
+        assert wanted in text
+    assert "Installed" in text and "Updated" in text and "SHA-256" in text
+
+
+def test_double_click_and_the_menu_open_the_details_too(
+    setup, tmp_path, monkeypatch
+) -> None:
+    shown = opened_details(setup, monkeypatch)
+
+    setup.panel._double_clicked(0, 0)
+    setup.panel._double_clicked(9, 0)  # nothing there
+
+    assert [title for title, _ in shown] == ["Gabi"]
+    labels = [
+        text
+        for _label, _variant, text in [
+            (a, b, c) for a, b, c in setup.panel._actions(setup.panel.rows[0])
+        ]
+    ]
+    assert labels[0] is not None
+
+
+def test_the_details_of_what_is_not_downloaded_say_the_permissions_come_later(
+    setup, tmp_path, monkeypatch
+) -> None:
+    shown = opened_details(setup, monkeypatch)
+    with_defaults(setup, offered(tmp_path))
+
+    setup.card("Tool").details.click()  # type: ignore[union-attr]
+
+    [(_, text)] = shown
+    assert "They are shown when it is downloaded." in text
+    assert "KubeScope recommends it" in text and "Recommended" in text
+
+
+def test_details_say_that_a_newer_version_is_there_and_why_it_did_not_load(
+    setup, tmp_path, monkeypatch
+) -> None:
+    shown = opened_details(setup, monkeypatch)
+    setup.load_errors = {"dco.gabi": "boom"}
+    installed_tool(setup, tmp_path)
+    setup.panel.updates = [update_for(tmp_path)]
+    setup.panel.refresh()
+
+    setup.card("Tool").details.click()  # type: ignore[union-attr]
+
+    assert "Newer version" in shown[0][1] and "v1.1.0" in shown[0][1]
