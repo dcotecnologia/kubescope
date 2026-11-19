@@ -26,6 +26,8 @@ SOURCES = [
             "extensions/bundled/gabi/panel.py",
             "extensions/bundled/gabi/tab.py",
             "views/log_tab.py",
+            "views/extensions_panel.py",
+            "dialogs/extension_dialog.py",
             "dialogs/plugin_update_dialog.py",
             "views/plugins_catalog.py",
             "views/detail_tab.py",

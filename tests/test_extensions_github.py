@@ -5,7 +5,13 @@ from email.message import Message
 import pytest
 
 from kubescope.extensions import github
-from kubescope.extensions.github import GithubError, Repo, download, parse_repo
+from kubescope.extensions.github import (
+    GithubError,
+    Repo,
+    download,
+    parse_repo,
+    repo_of,
+)
 
 
 @pytest.mark.parametrize(
@@ -121,3 +127,16 @@ def test_a_repository_too_big_is_refused(monkeypatch) -> None:
 
     with pytest.raises(GithubError, match="too big"):
         download(Repo("dco", "gabi"))
+
+
+def test_a_repository_is_remembered_by_its_source_and_found_again() -> None:
+    for repo in (Repo("dco", "gabi"), Repo("dco", "gabi", "feature/x")):
+        assert repo.source == f"github {repo.label}"
+        assert repo_of(repo.source) == repo
+
+
+def test_a_source_that_is_not_a_repository_is_none_or_refused() -> None:
+    assert repo_of("file gabi.zip") is None
+    assert repo_of("bundled") is None
+    with pytest.raises(GithubError, match="owner/name"):
+        repo_of("github ../x")

@@ -7,7 +7,8 @@ All notable changes to this project will be documented in this file. The format 
 ### Added
 
 - The SDK that extensions are written against (`kubescope.sdk`): events, named commands, the contributions of an extension to the window, the settings of each extension, and the cluster read paths and writes behind the permissions its manifest asks for by @danilogco
-- The code behind installing extensions from a zip or a GitHub repository, uninstalling and reinstalling them, with the archive unpacked under strict limits and the manifest checked before anything of it runs; the Settings page for it comes next by @danilogco
+- The code behind installing extensions from a zip or a GitHub repository, uninstalling and reinstalling them, with the archive unpacked under strict limits and the manifest checked before anything of it runs by @danilogco
+- **Settings → Extensions** lists the extensions and installs them from a zip or a GitHub repository after a dialog shows where they come from, their permissions and their sha256, and uninstalls and reinstalls them; Gabi, which ships with the app, can be uninstalled and reinstalled there by @danilogco
 
 ## [1.12.0] - 2026-11-18
 

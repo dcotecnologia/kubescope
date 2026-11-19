@@ -40,6 +40,11 @@ class Repo:
         return f"{self.owner}/{self.name}" + (f"@{self.ref}" if self.ref else "")
 
     @property
+    def source(self) -> str:
+        """How an installed extension remembers where it came from."""
+        return f"github {self.label}"
+
+    @property
     def zip_url(self) -> str:
         url = f"https://api.github.com/repos/{self.owner}/{self.name}/zipball"
         return f"{url}/{quote(self.ref, safe='/')}" if self.ref else url
@@ -52,6 +57,14 @@ def parse_repo(text: str) -> Repo:
     if found is None or ".." in text:
         raise GithubError("Give the repository as owner/name or its GitHub address")
     return Repo(found.group(1), found.group(2), found.group(3) or "")
+
+
+def repo_of(source: str) -> Repo | None:
+    """The repository a `Repo.source` names; None for any other source."""
+    if not source.startswith("github "):
+        return None
+    name, _, ref = source.removeprefix("github ").partition("@")
+    return parse_repo(f"{name}/tree/{ref}" if ref else name)
 
 
 def download(repo: Repo) -> bytes:
