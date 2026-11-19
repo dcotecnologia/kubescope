@@ -152,6 +152,7 @@
             "read your AWS account (RDS, EC2, EKS, Systems Manager)": "आपका AWS खाता पढ़ना (RDS, EC2, EKS, Systems Manager)",
             "read your clusters": "आपके क्लस्टर पढ़ना",
             "run programs of this computer": "इस कंप्यूटर के प्रोग्राम चलाना",
+            "start a port forward to a database, in the write mode": "राइट मोड में डेटाबेस तक पोर्ट फ़ॉरवर्ड शुरू करना",
             "use the window: show messages, run tasks and add shortcuts": "विंडो का उपयोग: संदेश दिखाना, कार्य चलाना और शॉर्टकट जोड़ना"
         },
         "LogTab": {

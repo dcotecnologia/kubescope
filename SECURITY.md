@@ -238,6 +238,11 @@ configure` so you type the keys there. Apart from the integrations below, the ap
   `--region`, `--endpoint-url`, `--output`, `--cli-*`, `--debug` and `file://`
   values, is refused, so it cannot ask another account, region or server. The
   permission is shown in the install dialog.
+- **An extension with `forward` can start one kind of port forward, in the write
+  mode.** It is `aws ssm start-session` to the document
+  `AWS-StartPortForwardingSessionToRemoteHost` for an EC2 instance, with the keys of
+  the cluster context, and it shows on the Forwards page. Any other command, option
+  or value is refused, so it cannot run another program.
 - **Development mode runs a folder in place.** With **Development mode** ticked, a
   folder is not copied: the extension runs from where it is, and is reloaded when
   its files change, so whoever can edit that folder can change what runs. There is

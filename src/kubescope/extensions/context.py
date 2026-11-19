@@ -16,6 +16,7 @@ from kubescope.sdk.paths import config_directory
 
 from kubescope.extensions.aws_access import AwsBridge
 from kubescope.extensions.cluster_access import WritesBridge
+from kubescope.extensions.forward_access import ForwardsBridge
 from kubescope.extensions.registries import CommandRegistry, Contributions, EventBus
 from kubescope.sdk import (
     PERMISSIONS,
@@ -25,6 +26,7 @@ from kubescope.sdk import (
     ClusterAccess,
     CommandError,
     DockContribution,
+    Forwards,
     PageContribution,
     PermissionDenied,
     SettingsSection,
@@ -57,6 +59,9 @@ class Host:
     language_name: Callable[[], str] = lambda: "English"
     language_names: Callable[[], tuple[str, ...]] = lambda: ("English",)
     data_directory: Callable[[str], Path] = lambda extension: Path(extension)
+    begin_forward: Callable[[str, str, list[str], dict[str, str], int, str], bool] = (
+        lambda *_: False
+    )
     ui: Ui | None = None  # None while the app runs without a window
     cli: Cli | None = None  # set while a command of the terminal runs
     events: EventBus = field(default_factory=EventBus)
@@ -172,6 +177,11 @@ class ExtensionContext:
     def aws(self) -> AwsAccess:
         self._require("aws.read")
         return AwsBridge()
+
+    @property
+    def forwards(self) -> Forwards:
+        self._require("forward")
+        return ForwardsBridge(self._host.write_mode, self._host.begin_forward)
 
     @property
     def writes(self) -> Writes:

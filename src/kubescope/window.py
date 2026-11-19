@@ -1439,7 +1439,11 @@ class WorkloadWindow(QMainWindow):
                 lambda section: self._show_extension_settings(section),
                 lambda owner, pixels: self._reserve_corner_for(owner, pixels),
                 lambda color, text: themed(color, text=text),
+                lambda title, label, items: self._pick_item(title, label, items),
+                lambda title, document: self._show_json_dialog(title, document),
+                lambda title, name, read: self._open_text_log(title, name, read),
             ),
+            begin_forward=lambda *args: self._begin_forward(*args),
             commands=self.commands,
         )
         self._extension_loader = ExtensionLoader(self.extension_host)
@@ -6127,16 +6131,30 @@ class WorkloadWindow(QMainWindow):
         target: str,
     ) -> None:
         """Run a forward from its dialog and show it on the Forwards page."""
+        if self._begin_forward(title, kind, command, env, local, target):
+            dialog.accept()
+
+    def _begin_forward(
+        self,
+        title: str,
+        kind: str,
+        command: list[str],
+        env: dict[str, str],
+        local: int,
+        target: str,
+    ) -> bool:
+        """Start a forward and show the Forwards page; False when the local
+        port is in use, which is said."""
         if forwards.port_in_use(local):
             self._show_message(
                 QMessageBox.Icon.Warning,
                 self.tr("Forward"),
                 self.tr("The local port {port} is already in use.").format(port=local),
             )
-            return
+            return False
         self.forward_runner.start(title, kind, command, env, local, target)
-        dialog.accept()
         self._show_page(6)
+        return True
 
     def _rds_logs(self, instance: RdsInstance) -> None:
         """The log files of an instance, to pick one to read."""
@@ -6172,6 +6190,37 @@ class WorkloadWindow(QMainWindow):
         settings."""
         moment = datetime.datetime.fromtimestamp(item.written / 1000, datetime.UTC)
         return to_zone(moment).strftime("%Y-%m-%d %H:%M")
+
+    def _open_text_log(self, title: str, name: str, read: Callable[[], str]) -> None:
+        """Show a text an extension reads in a Logs tab; the refresh button
+        reads it again, off the UI thread."""
+        stub = PodInfo("", title, "", 0, 0, "", ())  # a log has no Pod
+        tab = LogTab(self._context(), stub, name, self.settings.wrap_log_lines)
+        tab.ui.wrapCheck.toggled.connect(self._wrap_logs)
+        tab.ui.refreshButton.setIcon(_nav_icon("reload", _pair(themed("#3220a0"))))
+
+        def load(_checked: bool = False) -> None:
+            if tab.closed or tab.busy:
+                return
+            tab.busy = True
+
+            def done(text: str) -> None:
+                tab.busy = False
+                if not tab.closed:
+                    tab.set_logs(text)
+
+            def failed(message: str) -> None:
+                tab.busy = False
+                if not tab.closed:
+                    tab.set_error(message)
+
+            self._run_action(read, done, on_error=failed, quiet=True)
+
+        tab.ui.refreshButton.clicked.connect(load)
+        self._add_viewer_tab(
+            tab, self.tr("Logs: {pod} / {container}").format(pod=title, container=name)
+        )
+        load()
 
     def _open_rds_log(self, instance: RdsInstance, name: str) -> None:
         """Read the end of a log file and show it in a Logs tab; the refresh

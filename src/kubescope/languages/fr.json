@@ -152,6 +152,7 @@
             "read your AWS account (RDS, EC2, EKS, Systems Manager)": "lire votre compte AWS (RDS, EC2, EKS, Systems Manager)",
             "read your clusters": "lire vos clusters",
             "run programs of this computer": "lancer des programmes de cet ordinateur",
+            "start a port forward to a database, in the write mode": "démarrer une redirection de port vers une base de données, en mode écriture",
             "use the window: show messages, run tasks and add shortcuts": "utiliser la fenêtre : afficher des messages, lancer des tâches et ajouter des raccourcis"
         },
         "LogTab": {

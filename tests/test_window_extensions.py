@@ -68,3 +68,33 @@ def test_a_page_of_an_extension_is_in_the_menu_and_opens_with_its_title(
     window.nav_overview.click()
 
     assert not entry.isChecked()
+
+
+def test_an_extension_shows_details_and_a_log_in_tabs(monkeypatch) -> None:
+    window = _ready_window(monkeypatch)
+    ui = window.extension_host.ui
+    assert ui is not None
+    monkeypatch.setattr(
+        window, "_run_action", lambda function, done, *a, **k: done(function(*a))
+    )
+
+    ui.show_json("RDS: orders", {"a": 1})
+    ui.open_log("orders", "error.log", lambda: "line one\nline two")
+
+    titles = [window.viewer_tabs.tabText(i) for i in range(window.viewer_tabs.count())]
+    assert titles == ["RDS: orders", "Logs: orders / error.log"]
+    assert window.pages.currentIndex() == 3
+
+
+def test_a_forward_of_an_extension_goes_to_the_forwards_page(monkeypatch) -> None:
+    window = _ready_window(monkeypatch)
+    started = []
+    monkeypatch.setattr(
+        window.forward_runner, "start", lambda *args: started.append(args)
+    )
+    monkeypatch.setattr("kubescope.forwards.port_in_use", lambda port: False)
+
+    assert window._begin_forward("RDS x", "ssm", ["aws"], {}, 15432, "db:5432")
+
+    assert started == [("RDS x", "ssm", ["aws"], {}, 15432, "db:5432")]
+    assert window.pages.currentIndex() == 6

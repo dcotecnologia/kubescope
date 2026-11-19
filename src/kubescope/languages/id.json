@@ -152,6 +152,7 @@
             "read your AWS account (RDS, EC2, EKS, Systems Manager)": "membaca akun AWS Anda (RDS, EC2, EKS, Systems Manager)",
             "read your clusters": "membaca klaster Anda",
             "run programs of this computer": "menjalankan program di komputer ini",
+            "start a port forward to a database, in the write mode": "memulai penerusan port ke basis data, dalam mode tulis",
             "use the window: show messages, run tasks and add shortcuts": "menggunakan jendela: menampilkan pesan, menjalankan tugas, dan menambahkan pintasan"
         },
         "LogTab": {
