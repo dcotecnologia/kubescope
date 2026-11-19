@@ -152,6 +152,7 @@
             "read your AWS account (RDS, EC2, EKS, Systems Manager)": "讀取你的 AWS 帳戶（RDS、EC2、EKS、Systems Manager）",
             "read your clusters": "讀取你的叢集",
             "run programs of this computer": "執行這台電腦上的程式",
+            "start a port forward to a database, in the write mode": "在寫入模式下啟動資料庫的連接埠轉送",
             "use the window: show messages, run tasks and add shortcuts": "使用視窗:顯示訊息、執行工作並新增快速鍵"
         },
         "LogTab": {

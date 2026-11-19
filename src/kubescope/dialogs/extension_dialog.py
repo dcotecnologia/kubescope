@@ -99,6 +99,7 @@ class InstallExtensionDialog(QDialog):
             "aws.read": self.tr(
                 "read your AWS account (RDS, EC2, EKS, Systems Manager)"
             ),
+            "forward": self.tr("start a port forward to a database, in the write mode"),
             "subprocess": self.tr("run programs of this computer"),
             "ui.dock": self.tr("add a panel to the window"),
             "ui.tab": self.tr("add a kind of tab"),

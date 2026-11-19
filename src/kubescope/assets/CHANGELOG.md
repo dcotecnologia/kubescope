@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file. The format 
 
 ### Added
 
+- An extension can show details in a tab, open a text as a log with a refresh button, ask the person to pick an item, and, with the permission `forward` and only in the write mode, start the port forward to a database through AWS Systems Manager, which the app checks is that command and nothing else by @danilogco
 - An extension can read the AWS account of a cluster context (permission `aws.read`): only commands of `rds`, `ec2`, `eks` and `ssm` that read are run, with the profile or keys of the context, and never one that changes something, reveals a secret or moves the request to another account, region or server by @danilogco
 - An extension can add a page to the side menu, in a section and a group of its own (with the permission `ui.page`), shown only while the extension says it should, which is what lets features like the AWS RDS instances leave the app and become extensions by @danilogco
 - Extensions the app recommends, such as Gabi, show in **Settings → Extensions** as a Recommended card with an Install button; they come from GitHub and are installed only if the files downloaded are the ones whose sha256 the app pinned (also when reinstalled), and one that is not pinned yet is not offered; the first time the app runs it installs them once, without a dialog since they are the pinned files, so that Gabi is there by default and can be uninstalled by @danilogco

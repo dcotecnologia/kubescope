@@ -152,6 +152,7 @@
             "read your AWS account (RDS, EC2, EKS, Systems Manager)": "خواندن حساب AWS شما (RDS، EC2، EKS، Systems Manager)",
             "read your clusters": "خواندن خوشه‌های شما",
             "run programs of this computer": "اجرای برنامه‌های این رایانه",
+            "start a port forward to a database, in the write mode": "شروع هدایت پورت به یک پایگاه داده، در حالت نوشتن",
             "use the window: show messages, run tasks and add shortcuts": "استفاده از پنجره: نمایش پیام، اجرای کارها و افزودن میان‌بر"
         },
         "LogTab": {

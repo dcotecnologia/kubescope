@@ -285,6 +285,15 @@ class FakeUi:
     def reserve_corner(self, owner, pixels) -> None:
         self.calls.append(("corner", owner, pixels))
 
+    def pick_item(self, title, label, items):
+        return "", False
+
+    def show_json(self, title, document) -> None:
+        self.calls.append(("json", title))
+
+    def open_log(self, title, name, read) -> None:
+        self.calls.append(("log", title, name))
+
 
 def test_the_window_is_lent_only_to_an_extension_that_asked_for_it() -> None:
     host, _, _ = make_host()

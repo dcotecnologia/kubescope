@@ -152,6 +152,7 @@
             "read your AWS account (RDS, EC2, EKS, Systems Manager)": "AWS hesabınızı okumak (RDS, EC2, EKS, Systems Manager)",
             "read your clusters": "kümelerinizi okumak",
             "run programs of this computer": "bu bilgisayarın programlarını çalıştırmak",
+            "start a port forward to a database, in the write mode": "yazma kipinde bir veritabanına bağlantı noktası yönlendirmesi başlatmak",
             "use the window: show messages, run tasks and add shortcuts": "pencereyi kullanmak: ileti göstermek, görev çalıştırmak ve kısayol eklemek"
         },
         "LogTab": {
