@@ -31,11 +31,14 @@ DEFAULTS = (
         id="kubescope.gabi",
         name="Gabi - AI Assistant",
         description=(
-            "The assistant of DCO Tecnologia: ask about your cluster from a coding "
-            "assistant installed on this computer."
+            "Ask about your cluster in plain language: she reads workloads, events, "
+            "logs and live CPU and memory, explains what is wrong and how to fix it, "
+            "and takes you to the right list or tab. "
+            "Changes (scale, edit) only in write mode, each one confirmed. "
+            "Uses the coding assistant you already signed in to."
         ),
-        repo=Repo("dcotecnologia", "kubescope-ai-gabi", "v1.0.0"),
-        sha256="48008c8ce9ac8c1279208e699892faf9d70e8833bdccf55d595d11df30b62e6d",
+        repo=Repo("dcotecnologia", "kubescope-ai-gabi", "v1.0.1"),
+        sha256="08910eda1092a1aa950b8ab49e3ddf8c7455680986e2a336c364b6b023b03ea5",
     ),
 )
 
