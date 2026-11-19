@@ -90,9 +90,11 @@
         },
         "ExtensionsPanel": {
             "Bundled": "內建",
+            "Check for updates": "檢查更新",
             "Choose the kubescope-extension.toml of the extension": "選擇擴充功能的 kubescope-extension.toml",
             "Could not load: {error}": "無法載入:{error}",
             "Development": "開發",
+            "Everything is up to date": "一切都是最新的",
             "Extension manifest (kubescope-extension.toml)": "擴充功能資訊清單 (kubescope-extension.toml)",
             "Extensions": "擴充功能",
             "Install": "安裝",
@@ -105,8 +107,11 @@
             "Uninstall": "解除安裝",
             "Uninstall {name}? Its files are deleted.": "解除安裝 {name}?其檔案會被刪除。",
             "Uninstalled": "已解除安裝",
+            "Update available": "有可用更新",
+            "Update to {version}": "更新到 {version}",
             "installed {date}": "安裝於 {date}",
             "updated {date}": "更新於 {date}",
+            "{count} updates available": "有 {count} 個可用更新",
             "{name} comes with KubeScope. Uninstall it? You can reinstall it here.": "{name} 隨 KubeScope 一併提供。要解除安裝嗎?你可以在這裡重新安裝。"
         },
         "ForwardsPage": {

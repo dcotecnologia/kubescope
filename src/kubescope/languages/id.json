@@ -90,9 +90,11 @@
         },
         "ExtensionsPanel": {
             "Bundled": "Bawaan",
+            "Check for updates": "Periksa pembaruan",
             "Choose the kubescope-extension.toml of the extension": "Pilih kubescope-extension.toml dari ekstensi",
             "Could not load: {error}": "Tidak dapat dimuat: {error}",
             "Development": "Pengembangan",
+            "Everything is up to date": "Semuanya sudah terbaru",
             "Extension manifest (kubescope-extension.toml)": "Manifes ekstensi (kubescope-extension.toml)",
             "Extensions": "Ekstensi",
             "Install": "Pasang",
@@ -105,8 +107,11 @@
             "Uninstall": "Copot",
             "Uninstall {name}? Its files are deleted.": "Copot {name}? Filenya dihapus.",
             "Uninstalled": "Dicopot",
+            "Update available": "Pembaruan tersedia",
+            "Update to {version}": "Perbarui ke {version}",
             "installed {date}": "dipasang {date}",
             "updated {date}": "diperbarui {date}",
+            "{count} updates available": "{count} pembaruan tersedia",
             "{name} comes with KubeScope. Uninstall it? You can reinstall it here.": "{name} disertakan dengan KubeScope. Copot? Anda dapat memasangnya kembali di sini."
         },
         "ForwardsPage": {

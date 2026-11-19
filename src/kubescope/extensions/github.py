@@ -6,6 +6,7 @@ It reaches `api.github.com` (which sends the zip from
 with the app version.
 """
 
+import json
 import re
 import urllib.error
 import urllib.request
@@ -91,3 +92,44 @@ def download(repo: Repo) -> bytes:
     if len(data) > MAX_ARCHIVE:
         raise GithubError("The repository is too big to be an extension")
     return data
+
+
+MAX_TAGS_BYTES = 1024 * 1024
+
+
+def list_tags(repo: Repo) -> list[str]:
+    """The names of the tags of the repository, the newest first as GitHub
+    lists them (the first hundred)."""
+    request = urllib.request.Request(
+        f"https://api.github.com/repos/{repo.owner}/{repo.name}/tags?per_page=100",
+        headers={
+            "User-Agent": f"KubeScope/{__version__}",
+            "Accept": "application/vnd.github+json",
+        },
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=TIMEOUT) as response:
+            if urlparse(response.geturl()).hostname != "api.github.com":
+                raise GithubError("GitHub answered from somewhere else")
+            data = response.read(MAX_TAGS_BYTES + 1)
+    except urllib.error.HTTPError as error:
+        raise GithubError(f"GitHub answered {error.code} for {repo.label}") from error
+    except (urllib.error.URLError, OSError) as error:
+        raise GithubError(
+            f"GitHub could not be reached: {first_line(str(error))}"
+        ) from error
+    if len(data) > MAX_TAGS_BYTES:
+        raise GithubError("GitHub sent too much")
+    try:
+        document = json.loads(data)
+    except ValueError as error:
+        raise GithubError("GitHub answered with something unexpected") from error
+    if not isinstance(document, list):
+        raise GithubError("GitHub answered with something unexpected")
+    return [
+        item["name"]
+        for item in document
+        if isinstance(item, dict)
+        and isinstance(item.get("name"), str)
+        and len(item["name"]) <= 100
+    ]

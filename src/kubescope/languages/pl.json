@@ -90,9 +90,11 @@
         },
         "ExtensionsPanel": {
             "Bundled": "Wbudowane",
+            "Check for updates": "Sprawdź aktualizacje",
             "Choose the kubescope-extension.toml of the extension": "Wybierz kubescope-extension.toml rozszerzenia",
             "Could not load: {error}": "Nie można załadować: {error}",
             "Development": "Rozwój",
+            "Everything is up to date": "Wszystko jest aktualne",
             "Extension manifest (kubescope-extension.toml)": "Manifest rozszerzenia (kubescope-extension.toml)",
             "Extensions": "Rozszerzenia",
             "Install": "Zainstaluj",
@@ -105,8 +107,11 @@
             "Uninstall": "Odinstaluj",
             "Uninstall {name}? Its files are deleted.": "Odinstalować {name}? Jego pliki zostaną usunięte.",
             "Uninstalled": "Odinstalowano",
+            "Update available": "Dostępna aktualizacja",
+            "Update to {version}": "Zaktualizuj do {version}",
             "installed {date}": "zainstalowano {date}",
             "updated {date}": "zaktualizowano {date}",
+            "{count} updates available": "Dostępne aktualizacje: {count}",
             "{name} comes with KubeScope. Uninstall it? You can reinstall it here.": "{name} jest dołączone do KubeScope. Odinstalować? Możesz zainstalować je ponownie tutaj."
         },
         "ForwardsPage": {

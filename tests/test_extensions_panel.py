@@ -708,3 +708,137 @@ def test_what_comes_with_the_app_or_is_only_recommended_has_no_dates(
 
     assert not [t for t in setup.card("Tool").texts if "installed " in t]
     assert not [t for t in setup.card("Gabi").texts if "installed " in t]
+
+
+def update_for(tmp_path, version="1.1.0"):
+    from kubescope.extensions.updates import Update
+
+    return Update(
+        "dco.tool", "Tool", "1.0.0", f"v{version}", Repo("dco", "tool", f"v{version}")
+    )
+
+
+def installed_tool(setup, tmp_path, source="github dco/tool@v1.0.0") -> None:
+    setup.decide(True)
+    setup.pick_manifest(make_folder(tmp_path / "tool"))
+    setup.panel.install_from_folder()
+    setup.panel.store._installed["dco.tool"]["source"] = source
+    setup.panel.refresh()
+
+
+def test_a_newer_version_is_a_badge_and_a_button_that_downloads_it(
+    setup, tmp_path, monkeypatch
+) -> None:
+    installed_tool(setup, tmp_path)
+    setup.panel.updates = [update_for(tmp_path)]
+    setup.panel.refresh()
+
+    card = setup.card("Tool")
+
+    assert card.badge == "Update available"
+    assert {"Update to 1.1.0", "Reinstall", "Uninstall"} <= set(card.buttons)
+    monkeypatch.setattr(
+        extensions_panel, "download", lambda repo: tool_zip(version="1.1.0")
+    )
+    setup.decide(True)
+
+    card.buttons["Update to 1.1.0"].click()
+
+    assert setup.downloads[-1] == Repo("dco", "tool", "v1.1.0")
+    assert setup.card("Tool").badge == "Installed"  # no longer behind
+    assert "v1.1.0" in setup.card("Tool").texts or "v1.1.0" in " ".join(
+        setup.card("Tool").texts
+    )
+
+
+def test_an_update_that_is_not_newer_any_more_is_not_offered(setup, tmp_path) -> None:
+    installed_tool(setup, tmp_path)
+    setup.panel.updates = [update_for(tmp_path, "1.0.0")]
+    setup.panel.refresh()
+
+    assert setup.card("Tool").badge == "Installed"
+
+
+def test_the_pinned_version_is_offered_without_asking_github(
+    setup, tmp_path, monkeypatch
+) -> None:
+    from kubescope.extensions.defaults import DefaultExtension
+
+    installed_tool(setup, tmp_path)
+    pin = DefaultExtension(
+        "dco.tool", "Tool", "d", Repo("dco", "tool", "v1.0.1"), "a" * 64
+    )
+    setup.panel.defaults = lambda: [pin]
+    setup.panel.run_action = lambda function, done, *a, **k: done(function(*a))
+    asked = []
+    monkeypatch.setattr(
+        extensions_panel, "list_tags", lambda repo: asked.append(repo) or []
+    )
+
+    setup.panel.check_updates()
+
+    assert setup.card("Tool").badge == "Update available"
+    assert setup.panel.updates[0].pin is pin and asked == []
+    assert setup.panel.updates_label.text() == "1 updates available"
+
+
+def test_other_repositories_are_asked_once_a_day_and_the_time_is_kept(
+    setup, tmp_path, monkeypatch
+) -> None:
+    from kubescope.settings import Settings
+
+    installed_tool(setup, tmp_path)
+    settings = Settings()
+    saved = []
+    setup.panel.save_settings = lambda: saved.append(1)
+    setup.panel.run_action = lambda function, done, *a, **k: done(function(*a))
+    asked = []
+    monkeypatch.setattr(
+        extensions_panel,
+        "list_tags",
+        lambda repo: asked.append(repo) or ["v1.2.0", "v1.1.0"],
+    )
+
+    setup.panel.check_updates(settings)
+
+    assert asked == [Repo("dco", "tool")] and saved == [1]
+    assert setup.card("Tool").badge == "Update available"
+    assert settings.extension_updates_checked_at > 0
+    setup.panel.check_updates(settings)  # within a day: not again
+    assert len(asked) == 1
+    setup.panel.check_updates(settings, force=True)  # unless the person asks
+    assert len(asked) == 2
+
+
+def test_with_the_updates_check_off_github_is_not_asked(
+    setup, tmp_path, monkeypatch
+) -> None:
+    from kubescope.settings import Settings
+
+    installed_tool(setup, tmp_path)
+    settings = Settings()
+    settings.check_updates = False
+    setup.panel.run_action = lambda function, done, *a, **k: done(function(*a))
+    monkeypatch.setattr(
+        extensions_panel, "list_tags", lambda repo: pytest.fail("asked")
+    )
+
+    setup.panel.check_updates(settings)
+
+    assert setup.card("Tool").badge == "Installed"
+
+
+def test_the_button_checks_even_when_it_was_checked_today(
+    setup, tmp_path, monkeypatch
+) -> None:
+    from kubescope.settings import Settings
+
+    installed_tool(setup, tmp_path)
+    setup.panel.run_action = lambda function, done, *a, **k: done(function(*a))
+    monkeypatch.setattr(extensions_panel, "list_tags", lambda repo: [])
+
+    setup.panel.check_button.click()
+
+    assert setup.panel.updates_label.text() == "Everything is up to date"
+    assert setup.panel.check_button.isEnabled()
+    assert Settings().extension_updates_checked_at == 0.0  # no settings were given

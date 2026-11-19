@@ -90,9 +90,11 @@
         },
         "ExtensionsPanel": {
             "Bundled": "同梱",
+            "Check for updates": "アップデートを確認",
             "Choose the kubescope-extension.toml of the extension": "拡張機能の kubescope-extension.toml を選択",
             "Could not load: {error}": "読み込めませんでした: {error}",
             "Development": "開発",
+            "Everything is up to date": "すべて最新です",
             "Extension manifest (kubescope-extension.toml)": "拡張機能のマニフェスト (kubescope-extension.toml)",
             "Extensions": "拡張機能",
             "Install": "インストール",
@@ -105,8 +107,11 @@
             "Uninstall": "アンインストール",
             "Uninstall {name}? Its files are deleted.": "{name} をアンインストールしますか? ファイルは削除されます。",
             "Uninstalled": "アンインストール済み",
+            "Update available": "アップデートあり",
+            "Update to {version}": "{version} に更新",
             "installed {date}": "インストール {date}",
             "updated {date}": "更新 {date}",
+            "{count} updates available": "{count} 件のアップデートがあります",
             "{name} comes with KubeScope. Uninstall it? You can reinstall it here.": "{name} は KubeScope に同梱されています。アンインストールしますか? ここから再インストールできます。"
         },
         "ForwardsPage": {

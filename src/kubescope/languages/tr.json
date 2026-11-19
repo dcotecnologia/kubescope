@@ -90,9 +90,11 @@
         },
         "ExtensionsPanel": {
             "Bundled": "Dahili",
+            "Check for updates": "Güncellemeleri denetle",
             "Choose the kubescope-extension.toml of the extension": "Uzantının kubescope-extension.toml dosyasını seçin",
             "Could not load: {error}": "Yüklenemedi: {error}",
             "Development": "Geliştirme",
+            "Everything is up to date": "Her şey güncel",
             "Extension manifest (kubescope-extension.toml)": "Uzantı bildirimi (kubescope-extension.toml)",
             "Extensions": "Uzantılar",
             "Install": "Yükle",
@@ -105,8 +107,11 @@
             "Uninstall": "Kaldır",
             "Uninstall {name}? Its files are deleted.": "{name} kaldırılsın mı? Dosyaları silinir.",
             "Uninstalled": "Kaldırıldı",
+            "Update available": "Güncelleme var",
+            "Update to {version}": "{version} sürümüne güncelle",
             "installed {date}": "yüklendi {date}",
             "updated {date}": "güncellendi {date}",
+            "{count} updates available": "{count} güncelleme var",
             "{name} comes with KubeScope. Uninstall it? You can reinstall it here.": "{name}, KubeScope ile birlikte gelir. Kaldırılsın mı? Buradan yeniden yükleyebilirsiniz."
         },
         "ForwardsPage": {

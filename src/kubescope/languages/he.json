@@ -90,9 +90,11 @@
         },
         "ExtensionsPanel": {
             "Bundled": "מובנה",
+            "Check for updates": "בדיקת עדכונים",
             "Choose the kubescope-extension.toml of the extension": "בחר את kubescope-extension.toml של התוסף",
             "Could not load: {error}": "לא ניתן לטעון: {error}",
             "Development": "פיתוח",
+            "Everything is up to date": "הכול מעודכן",
             "Extension manifest (kubescope-extension.toml)": "מניפסט התוסף (kubescope-extension.toml)",
             "Extensions": "תוספים",
             "Install": "התקנה",
@@ -105,8 +107,11 @@
             "Uninstall": "הסרה",
             "Uninstall {name}? Its files are deleted.": "להסיר את {name}? הקבצים שלו יימחקו.",
             "Uninstalled": "הוסר",
+            "Update available": "עדכון זמין",
+            "Update to {version}": "עדכון ל-{version}",
             "installed {date}": "הותקן {date}",
             "updated {date}": "עודכן {date}",
+            "{count} updates available": "{count} עדכונים זמינים",
             "{name} comes with KubeScope. Uninstall it? You can reinstall it here.": "{name} מגיע עם KubeScope. להסיר? אפשר להתקין אותו מחדש כאן."
         },
         "ForwardsPage": {
