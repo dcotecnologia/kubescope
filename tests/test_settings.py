@@ -544,3 +544,36 @@ def test_a_damaged_file_still_gets_what_can_be_moved(tmp_path, document) -> None
 
     expected = {"consent": True} if "assistant_consent" in document else {}
     assert settings.extension_data("kubescope.gabi") == expected
+
+
+def test_the_app_remembers_which_extensions_it_already_offered(tmp_path) -> None:
+    path = tmp_path / "settings.json"
+    settings = Settings(path)
+    assert settings.extensions_offered == []
+
+    settings.offered("kubescope.gabi")
+    settings.offered("kubescope.gabi")  # once
+    settings.offered("dco.other")
+    settings.save()
+
+    assert Settings(path).extensions_offered == ["kubescope.gabi", "dco.other"]
+
+
+@pytest.mark.parametrize(
+    "stored", [{"extensions_offered": "gabi"}, {"extensions_offered": 3}]
+)
+def test_a_damaged_list_of_offers_is_empty(tmp_path, stored) -> None:
+    path = tmp_path / "settings.json"
+    write(path, stored)
+
+    assert Settings(path).extensions_offered == []
+
+
+def test_only_ids_are_kept_in_the_list_of_offers(tmp_path) -> None:
+    path = tmp_path / "settings.json"
+    write(
+        path,
+        {"extensions_offered": ["kubescope.gabi", 3, "Bad Id", "kubescope.gabi", None]},
+    )
+
+    assert Settings(path).extensions_offered == ["kubescope.gabi"]
