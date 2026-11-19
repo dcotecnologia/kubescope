@@ -39,7 +39,7 @@ def tool_zip(version: str = "1.0.0", top: str = "", extra: bytes = b"") -> bytes
     )
 
 
-def make_bundled(root: Path, extension: str = "dco.gabi") -> Path:
+def make_bundled(root: Path, extension: str = "kubescope.gabi") -> Path:
     folder = root / "gabi"
     folder.mkdir(parents=True)
     (folder / MANIFEST_NAME).write_bytes(manifest(extension))
@@ -236,10 +236,10 @@ def test_a_bundled_extension_runs_until_it_is_uninstalled(tmp_path) -> None:
     assert one.folder == bundled / "gabi"
     assert store.removed_bundled() == []
 
-    store.uninstall("dco.gabi")
+    store.uninstall("kubescope.gabi")
 
     assert store.installed() == []
-    assert [m.id for m in store.removed_bundled()] == ["dco.gabi"]
+    assert [m.id for m in store.removed_bundled()] == ["kubescope.gabi"]
     assert (bundled / "gabi" / MANIFEST_NAME).is_file()  # the app's files stay
     # the choice survives a restart
     assert store_in(tmp_path, bundled).installed() == []
@@ -248,14 +248,14 @@ def test_a_bundled_extension_runs_until_it_is_uninstalled(tmp_path) -> None:
 def test_a_bundled_extension_is_reinstalled_with_a_click(tmp_path) -> None:
     bundled = make_bundled(tmp_path / "bundled")
     store = store_in(tmp_path, bundled)
-    store.uninstall("dco.gabi")
+    store.uninstall("kubescope.gabi")
 
-    store.restore_bundled("dco.gabi")
+    store.restore_bundled("kubescope.gabi")
 
-    assert [one.manifest.id for one in store.installed()] == ["dco.gabi"]
+    assert [one.manifest.id for one in store.installed()] == ["kubescope.gabi"]
     assert store.removed_bundled() == []
     with pytest.raises(StoreError, match="was not uninstalled"):
-        store.restore_bundled("dco.gabi")
+        store.restore_bundled("kubescope.gabi")
 
 
 def test_an_installed_extension_takes_the_place_of_the_bundled_one(tmp_path) -> None:
@@ -263,22 +263,26 @@ def test_an_installed_extension_takes_the_place_of_the_bundled_one(tmp_path) -> 
     store = store_in(tmp_path, bundled)
 
     candidate = store.prepare(
-        make_zip({MANIFEST_NAME: manifest("dco.gabi", "2.0.0")}), "file gabi.zip"
+        make_zip({MANIFEST_NAME: manifest("kubescope.gabi", "2.0.0")}), "file gabi.zip"
     )
     store.install(candidate)
 
     [one] = store.installed()
     assert not one.bundled and one.manifest.version == "2.0.0"
-    store.uninstall("dco.gabi")  # the installed copy goes, and the bundled returns
+    store.uninstall(
+        "kubescope.gabi"
+    )  # the installed copy goes, and the bundled returns
     assert [x.bundled for x in store.installed()] == [True]
 
 
 def test_a_bundled_uninstalled_and_replaced_is_not_offered_again(tmp_path) -> None:
     bundled = make_bundled(tmp_path / "bundled")
     store = store_in(tmp_path, bundled)
-    store.uninstall("dco.gabi")
+    store.uninstall("kubescope.gabi")
     store.install(
-        store.prepare(make_zip({MANIFEST_NAME: manifest("dco.gabi")}), "file g.zip")
+        store.prepare(
+            make_zip({MANIFEST_NAME: manifest("kubescope.gabi")}), "file g.zip"
+        )
     )
 
     assert store.removed_bundled() == []
@@ -344,7 +348,7 @@ def test_the_gabi_that_ships_with_the_app_is_a_bundled_extension() -> None:
     store = ExtensionStore(Path("unused"), Path(bundled.__file__).parent)
 
     [gabi] = store.installed()
-    assert gabi.manifest.id == "dco.gabi" and gabi.bundled
+    assert gabi.manifest.id == "kubescope.gabi" and gabi.bundled
     assert {"ui.dock", "cli"} <= gabi.manifest.permissions
 
 

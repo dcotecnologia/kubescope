@@ -1,5 +1,5 @@
-id = "dco.gabi"
-name = "Gabi"
+id = "kubescope.gabi"
+name = "Gabi - AI Assistant"
 version = "1.0.0"
 api = "0"
 entry = "gabi:activate"

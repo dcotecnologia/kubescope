@@ -68,7 +68,7 @@ class Setup:
         bundled.mkdir()
         if with_bundled:
             (bundled / "gabi").mkdir()
-            (bundled / "gabi" / MANIFEST_NAME).write_bytes(manifest("dco.gabi"))
+            (bundled / "gabi" / MANIFEST_NAME).write_bytes(manifest("kubescope.gabi"))
         self.tmp_path = tmp_path
         self.store = ExtensionStore(tmp_path / "ext", bundled)
         self.window = QWidget()
@@ -181,7 +181,7 @@ def test_a_folder_is_installed_by_its_manifest_after_the_person_agrees(
 
     setup.panel.install_from_folder()
 
-    assert setup.summary() == [("Gabi", "Bundled"), ("Tool", "Installed")]
+    assert setup.summary() == [("Tool", "Installed"), ("Gabi", "Bundled")]  # by id
     assert f"folder {folder}" in setup.card("Tool").texts
     assert set(setup.card("Tool").buttons) == {"Reinstall", "Uninstall"}
     assert (
@@ -497,7 +497,7 @@ def test_declining_or_failing_to_install_tells_the_window_nothing(
 
 
 def test_a_card_says_why_an_extension_did_not_load(setup) -> None:
-    setup.errors = {"dco.gabi": "boom"}
+    setup.errors = {"kubescope.gabi": "boom"}
 
     setup.panel.refresh()
 

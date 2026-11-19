@@ -28,4 +28,7 @@ def test_the_bundled_gabi_is_a_card_in_the_section(monkeypatch) -> None:
     [card] = [present(grid.itemAt(i)).widget() for i in range(grid.count())]
     title = present(card).findChild(QLabel, "extensionCardTitle")
     badge = present(card).findChild(QLabel, "extensionCardBadge")
-    assert present(title).text() == "Gabi" and present(badge).text() == "Bundled"
+    assert (
+        present(title).text() == "Gabi - AI Assistant"
+        and present(badge).text() == "Bundled"
+    )
