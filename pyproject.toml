@@ -7,8 +7,8 @@ license = "MIT"
 authors = [{ name = "Danilo Carolino", email = "danilogcarolino@gmail.com" }]
 requires-python = ">=3.15,<3.16"
 dependencies = [
-    "kubernetes>=37.0.2",
-    "kubescope-sdk>=0.1.0",
+    "kubernetes>=37.0.3",
+    "kubescope-sdk>=1.0.0,<2.0.0",
     "pyside6>=6.12.0",
     "tzdata>=2026.6",
 ]
@@ -23,7 +23,7 @@ dev = [
     "pytest>=9.2.0",
     "pyright>=1.1.414",
     "pytest-cov>=7.1.0",
-    "ruff>=0.17.5",
+    "ruff>=0.17.6",
 ]
 build = [
     "pyinstaller>=6.22.3",
