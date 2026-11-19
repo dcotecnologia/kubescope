@@ -9,7 +9,6 @@ from kubescope.sdk.errors import ClusterError
 from kubescope.sdk.paths import config_directory
 
 from kubescope import cli, cli_cluster, cluster, integrations
-from kubescope.extensions import bundled
 from kubescope.extensions.manifest import MANIFEST_NAME
 from kubescope.extensions.store import ExtensionStore
 from kubescope.extensions.terminal import TerminalBridge, owner_of
@@ -59,9 +58,7 @@ def make_extension(
 
 
 def install(folder: Path) -> ExtensionStore:
-    store = ExtensionStore(
-        config_directory() / "extensions", Path(bundled.__file__).parent
-    )
+    store = ExtensionStore(config_directory() / "extensions")
     store.install(store.prepare_link(folder))
     return store
 
@@ -153,12 +150,19 @@ def test_a_command_of_the_app_comes_first(tmp_path, configured, capsys) -> None:
     assert package not in sys.modules  # the extension was never run
 
 
-def test_the_extension_the_app_ships_is_not_found_by_its_commands(tmp_path) -> None:
-    store = ExtensionStore(
-        config_directory() / "extensions", Path(bundled.__file__).parent
+def test_an_extension_the_app_ships_is_run_by_the_window_not_found_by_its_commands(
+    tmp_path,
+) -> None:
+    shipped = tmp_path / "shipped" / "tool"
+    shipped.mkdir(parents=True)
+    (shipped / MANIFEST_NAME).write_text(
+        'id = "dco.shipped"\nname = "S"\nversion = "1.0.0"\napi = "0"\n'
+        'entry = "s:go"\npermissions = ["cli"]\ncommands = ["chat"]\n'
     )
+    store = ExtensionStore(config_directory() / "extensions", tmp_path / "shipped")
 
-    assert owner_of(store, "chat") is None  # it is run by the window
+    assert [one.bundled for one in store.installed()] == [True]
+    assert owner_of(store, "chat") is None
 
 
 def test_an_extension_that_fails_to_load_is_told_and_the_exit_code_is_one(

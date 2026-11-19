@@ -63,8 +63,8 @@ Keep the layers separate and the dependency direction one-way
     `src/kubescope/about.py`.
 - `src/kubescope/extensions/`
   - The app's side of the extensions: the registries the window reads and the context
-    each extension gets. `extensions/bundled/` holds the extensions that ship with the
-    app, such as Gabi (`bundled/gabi/`), which the person can uninstall.
+    each extension gets. The app ships no extension: Gabi, the assistant, is the project
+    `kubescope-gabi`, installed from Settings → Extensions.
 - `src/kubescope/settings.py`
   - User preferences stored as JSON; tolerant of missing or damaged files.
 - `src/kubescope/i18n.py` and `src/kubescope/languages/`

@@ -35,13 +35,6 @@ DEFAULTS: dict[str, Any] = {
     "animations": True,
     "sidebar_width": 0,
     "menu_collapsed": [],
-    "assistant_enabled": True,
-    "assistant_panel": {},
-    "assistant_programs": {},
-    "assistant_models": {},
-    "assistant_efforts": {},
-    "assistant": "",
-    "assistant_consent": False,
     "run_in_background": True,
     "system_title_bar": False,
     "welcome_dismissed": False,
@@ -90,6 +83,18 @@ def _clean_accounts(stored: object) -> list[dict[str, Any]]:
     return accounts
 
 
+GABI = "kubescope.gabi"  # the extension that has the settings of the assistant
+GABI_SHORTCUT = "kubescope.gabi.ask"
+# the keys of the assistant, as the app kept them, and what she calls them now
+_GABI_KEYS = {
+    "assistant_enabled": "enabled",
+    "assistant_panel": "panel",
+    "assistant_programs": "programs",
+    "assistant_models": "models",
+    "assistant_efforts": "efforts",
+    "assistant": "assistant",
+    "assistant_consent": "consent",
+}
 _EXTENSION_ID = re.compile(r"[a-z0-9][a-z0-9_.-]{0,99}")
 
 
@@ -124,6 +129,7 @@ class Settings:
                 stored = document
         except OSError, ValueError:
             pass
+        self._adopt_assistant_keys(stored)
         self._data = {**DEFAULTS, **{k: stored[k] for k in DEFAULTS if k in stored}}
         self._data["context_aliases"] = {
             str(context): str(alias).strip()
@@ -188,6 +194,28 @@ class Settings:
         self.language = self._data["language"]
         self.timezone = self._data["timezone"]
         self.theme = self._data["theme"]
+
+    @staticmethod
+    def _adopt_assistant_keys(stored: dict[str, Any]) -> None:
+        """What the app kept for the assistant before Gabi became an extension
+        moves under her id, so that nobody loses the preferences, the consent
+        or the key of the shortcut; what she already has there is not
+        replaced."""
+        extensions = stored.get("extensions")
+        extensions = extensions if isinstance(extensions, dict) else {}
+        mine = extensions.get(GABI)
+        mine = dict(mine) if isinstance(mine, dict) else {}
+        for old, new in _GABI_KEYS.items():
+            if old in stored and new not in mine:
+                mine[new] = stored[old]
+        pressed = stored.get("shortcuts")
+        if isinstance(pressed, dict) and "assistant" in pressed:
+            kept = {**pressed}
+            asked = kept.pop("assistant")
+            kept.setdefault(GABI_SHORTCUT, asked)
+            stored["shortcuts"] = kept
+        if mine:
+            stored["extensions"] = {**extensions, GABI: mine}
 
     def save(self) -> None:
         self.path.parent.mkdir(parents=True, exist_ok=True)
@@ -435,114 +463,6 @@ class Settings:
     @animations.setter
     def animations(self, value: bool) -> None:
         self._data["animations"] = bool(value)
-
-    @property
-    def assistant_enabled(self) -> bool:
-        """Whether the chat button shows in the window; on unless the person
-        turned it off.
-
-        Nothing is sent before the person opens the chat and agrees.
-        """
-        return self._data["assistant_enabled"] is not False
-
-    @assistant_enabled.setter
-    def assistant_enabled(self, value: bool) -> None:
-        self._data["assistant_enabled"] = bool(value)
-
-    def _assistant_map(self, name: str) -> dict[str, str]:
-        """A text for each assistant, by its key; what is not a key and a text
-        is left out."""
-        value = self._data[name]
-        return {
-            key.strip(): text.strip()
-            for key, text in (value.items() if isinstance(value, dict) else [])
-            if isinstance(key, str)
-            and isinstance(text, str)
-            and key.strip()
-            and text.strip()
-        }
-
-    @property
-    def assistant_models(self) -> dict[str, str]:
-        """The model each assistant answers with; an assistant not in it uses
-        the default of its program."""
-        return self._assistant_map("assistant_models")
-
-    @assistant_models.setter
-    def assistant_models(self, value: dict[str, str]) -> None:
-        self._data["assistant_models"] = dict(value)
-
-    @property
-    def assistant_efforts(self) -> dict[str, str]:
-        """How much each assistant thinks before it answers; an assistant not
-        in it uses the default of its program."""
-        return self._assistant_map("assistant_efforts")
-
-    @assistant_efforts.setter
-    def assistant_efforts(self, value: dict[str, str]) -> None:
-        self._data["assistant_efforts"] = dict(value)
-
-    @property
-    def assistant_programs(self) -> dict[str, str]:
-        """The path of the program of each assistant, for the ones the system
-        does not find; what is not a name and a path is left out."""
-        value = self._data["assistant_programs"]
-        return {
-            key.strip(): path.strip()
-            for key, path in (value.items() if isinstance(value, dict) else [])
-            if isinstance(key, str)
-            and isinstance(path, str)
-            and key.strip()
-            and path.strip()
-        }
-
-    @assistant_programs.setter
-    def assistant_programs(self, value: dict[str, str]) -> None:
-        self._data["assistant_programs"] = dict(value)
-
-    @property
-    def assistant_panel(self) -> dict[str, Any]:
-        """The size of the chat panel, whether it is out of the window and
-        where; what cannot be read is left out."""
-        value = self._data["assistant_panel"]
-        stored = value if isinstance(value, dict) else {}
-        kept: dict[str, Any] = {}
-        for key in ("width", "height"):
-            number = stored.get(key)
-            if type(number) is int and 200 <= number <= 10_000:
-                kept[key] = number
-        if stored.get("floating") is True:
-            kept["floating"] = True
-        geometry = stored.get("geometry")
-        if isinstance(geometry, str) and geometry.isascii() and len(geometry) < 4096:
-            kept["geometry"] = geometry
-        return kept
-
-    @assistant_panel.setter
-    def assistant_panel(self, value: dict[str, Any]) -> None:
-        self._data["assistant_panel"] = dict(value)
-
-    @property
-    def assistant(self) -> str:
-        """The program the person chose for the assistant; empty leaves it to
-        the first one the system has."""
-        value = self._data["assistant"]
-        return value if isinstance(value, str) else ""
-
-    @assistant.setter
-    def assistant(self, value: str) -> None:
-        self._data["assistant"] = str(value)
-
-    @property
-    def assistant_consent(self) -> bool:
-        """True once the person agreed that what they ask the assistant, with
-        the cluster data it reads, leaves this computer; off unless exactly
-        true."""
-        return self._data["assistant_consent"] is True
-
-    @assistant_consent.setter
-    def assistant_consent(self, value: bool) -> None:
-        self._data["assistant_consent"] = bool(value)
 
     @property
     def welcome_dismissed(self) -> bool:

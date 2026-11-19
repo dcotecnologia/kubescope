@@ -13,7 +13,6 @@ DEFAULTS: dict[str, str] = {
     "refresh_alt": "F5",
     "search": "/",
     "search_alt": "Ctrl+K",
-    "assistant": "Ctrl+G",
     "overview": "G, O",
     "pods": "G, P",
     "deployments": "G, D",

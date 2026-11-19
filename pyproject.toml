@@ -49,7 +49,6 @@ kubescope = [
     "assets/*.md",
     "assets/fonts/*",
     "themes/*.json",
-    "extensions/bundled/*/kubescope-extension.toml",
 ]
 
 [tool.pytest.ini_options]

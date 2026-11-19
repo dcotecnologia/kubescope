@@ -234,11 +234,9 @@ def test_quitting_tells_the_extensions_and_unloads_them(window, tmp_path) -> Non
     assert extension not in window.extension_loader.loaded
 
 
-def test_the_extension_of_the_app_is_not_run_by_the_loader_yet(window) -> None:
-    assert "kubescope.gabi" not in window.extension_loader.loaded
-    assert [one.manifest.id for one in window.extension_store.installed()] == [
-        "kubescope.gabi"
-    ]
+def test_with_nothing_installed_nothing_runs(window) -> None:
+    assert window.extension_loader.loaded == {}
+    assert window.extension_store.installed() == []
 
 
 def test_a_window_without_a_loader_yet_syncs_nothing(window) -> None:

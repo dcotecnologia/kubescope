@@ -157,13 +157,6 @@ from kubescope.dialogs.global_search import GlobalSearch, SearchEntry
 from kubescope.dialogs.plugin_update_dialog import PluginUpdateDialog
 from kubescope.dialogs.theme_editor import ThemeEditor
 from kubescope.dialogs.update_dialog import UpdateDialog
-from kubescope.extensions import bundled as bundled_extensions
-from kubescope.extensions.bundled.gabi import ASSISTANTS, runner
-from kubescope.extensions.bundled.gabi import installed as installed_assistants
-from kubescope.extensions.bundled.gabi.controller import GabiController, GabiPort
-from kubescope.extensions.bundled.gabi.runner import (
-    is_available as is_available_assistant,
-)
 from kubescope.extensions.cluster_access import ClusterBridge
 from kubescope.extensions.context import Host, data_directory
 from kubescope.extensions.loader import ExtensionLoader
@@ -1209,15 +1202,11 @@ class WorkloadWindow(QMainWindow):
         self.settings_ui.saveButton.clicked.connect(self._save_preferences)
         self._settings_sections = QButtonGroup(self)
         self._settings_sections.addButton(self.settings_ui.generalSectionButton, 0)
-        self._settings_sections.addButton(self.settings_ui.assistantSectionButton, 1)
         self._settings_sections.addButton(self.settings_ui.kubeSectionButton, 2)
         self._settings_sections.addButton(self.settings_ui.shortcutsSectionButton, 3)
         self._settings_sections.addButton(self.settings_ui.integrationsSectionButton, 4)
         self._settings_sections.addButton(self.settings_ui.extensionsSectionButton, 5)
-        self.extension_store = ExtensionStore(
-            config_directory() / "extensions",
-            Path(bundled_extensions.__file__).parent,
-        )
+        self.extension_store = ExtensionStore(config_directory() / "extensions")
         self._extension_loader: ExtensionLoader | None = None  # made below
         self._extension_sections: list[_ExtensionSection] = []
         self._extension_shortcuts: dict[str, QShortcut] = {}
@@ -1237,9 +1226,6 @@ class WorkloadWindow(QMainWindow):
         self._settings_sections.idClicked.connect(self._show_settings_section)
         self._show_settings_section(0)
         self.settings_ui.openLogsButton.clicked.connect(self._open_log_folder)
-        self.settings_ui.assistantClearButton.clicked.connect(
-            lambda: self.gabi.clear_history()
-        )
         self.settings_ui.clearCacheButton.clicked.connect(self._clear_cache)
         self.settings_ui.kubeconfigAddButton.clicked.connect(self._add_kubeconfig_file)
         self.settings_ui.kubeconfigRemoveButton.clicked.connect(
@@ -1425,28 +1411,6 @@ class WorkloadWindow(QMainWindow):
         }
         central = self.centralWidget()
         assert central is not None
-        # every call is looked up when it is made, so a test (or an extension)
-        # that replaces a method of the window is heard
-        self.gabi = GabiController(
-            GabiPort(
-                settings=self.settings,
-                parent=self,
-                central=central,
-                commands=self.commands,
-                context=lambda: self._context(),
-                screen=lambda: self._screen_snapshot(),
-                save_settings=lambda: self._save_settings(),
-                show_message=lambda icon, title, text: self._show_message(
-                    icon, title, text
-                ),
-                run_action=lambda *args, **kwargs: self._run_action(*args, **kwargs),
-                style_box=lambda box: self._style_box_buttons(box),
-                show_settings=lambda: self._show_assistant_settings(),
-                reserve_corner=lambda pixels: self._reserve_corner_for(
-                    "builtin.gabi", pixels
-                ),
-            )
-        )
         self.extension_host = Host(
             cluster=ClusterBridge(),
             snapshot=lambda: self._screen_snapshot(),
@@ -1485,7 +1449,6 @@ class WorkloadWindow(QMainWindow):
             "refresh_alt": self._press_refresh,
             "search": self._open_global_search,
             "search_alt": self._open_global_search,
-            "assistant": self.gabi.shortcut,
             "overview": lambda: self._show_page(0),
             "pods": lambda: self._open_list_view("pods"),
             "deployments": lambda: self._open_list_view("deployments"),
@@ -1499,8 +1462,6 @@ class WorkloadWindow(QMainWindow):
         self._global_search: GlobalSearch | None = None
         for action, run in actions.items():
             shortcut = QShortcut(self)
-            if action == "assistant":  # Gabi, also from her window
-                shortcut.setContext(Qt.ShortcutContext.ApplicationShortcut)
             shortcut.activated.connect(run)
             self._shortcuts[action] = shortcut
         self._apply_shortcuts()
@@ -2568,7 +2529,6 @@ class WorkloadWindow(QMainWindow):
                 assert isinstance(tab, DetailTab)
                 restyle(tab.editor, tab.highlighter)
                 tab.restyle()
-        self.gabi.restyle()
         self.extension_host.events.emit(THEME_CHANGED)
         self._render_rows()
         if self._overview is not None:
@@ -2889,7 +2849,6 @@ class WorkloadWindow(QMainWindow):
 
     def _context_changed(self, *_args: object) -> None:
         logger.info("Context changed to %s", self._context())
-        self.gabi.context_changed()
         self.extension_host.events.emit(
             CONTEXT_CHANGED, context=self._context() or None
         )
@@ -5667,7 +5626,6 @@ class WorkloadWindow(QMainWindow):
             "refresh_alt": self.tr("Refresh (second shortcut)"),
             "search": self.tr("Global search"),
             "search_alt": self.tr("Global search (second shortcut)"),
-            "assistant": self.tr("Ask the assistant"),
             "overview": self.tr("Go to the cluster overview"),
             "pods": self.tr("Go to Pods"),
             "deployments": self.tr("Go to Deployments"),
@@ -6488,12 +6446,12 @@ class WorkloadWindow(QMainWindow):
         self._render_integrations()
 
     def _show_settings_section(self, section: int) -> None:
-        """Show the cards of one section of the Settings: 0 is General, 1 the
-        assistant, 2 Kube, the files and the contexts of the clusters, and 3
-        the keyboard shortcuts."""
+        """Show the cards of one section of the Settings: 0 is General, 2 Kube,
+        the files and the contexts of the clusters, 3 the keyboard shortcuts, 4
+        the integrations, 5 the extensions, and the ones from 100 are the
+        sections that the extensions add."""
         form = self.settings_ui
         sections = {
-            form.assistantCard: 1,
             form.kubeconfigCard: 2,
             form.loginCard: 2,
             form.contextsCard: 2,
@@ -6507,7 +6465,6 @@ class WorkloadWindow(QMainWindow):
         ):
             card.setVisible(sections.get(card, 0) == section)
         form.generalSectionButton.setChecked(section == 0)
-        form.assistantSectionButton.setChecked(section == 1)
         form.kubeSectionButton.setChecked(section == 2)
         form.shortcutsSectionButton.setChecked(section == 3)
         form.integrationsSectionButton.setChecked(section == 4)
@@ -6517,13 +6474,6 @@ class WorkloadWindow(QMainWindow):
         if section == 5:
             self.extensions_panel.refresh()  # it may have changed on disk
         form.settingsScroll.verticalScrollBar().setValue(0)
-
-    def _show_assistant_settings(self) -> None:
-        """Go to the Settings, to the section of the assistant."""
-        self.raise_()  # the chat may be in a window of its own
-        self.activateWindow()
-        self._show_page(2)
-        self._show_settings_section(1)
 
     def _register_commands(self) -> None:
         """Offer what a person does by hand under a name, for the extensions.
@@ -6867,7 +6817,6 @@ class WorkloadWindow(QMainWindow):
         form.backgroundCheck.setChecked(self.settings.run_in_background)
         form.titleBarCheck.setChecked(self.settings.system_title_bar)
         form.animationsCheck.setChecked(self.settings.animations)
-        self._load_assistant_form()
         form.debugHint.setText(
             self.tr(
                 "Off by default. When on, KubeScope writes what it does, "
@@ -6910,133 +6859,6 @@ class WorkloadWindow(QMainWindow):
             self._add_login_row(program, command)
         self._show_config_tables()
         form.noticeLabel.setText("")
-
-    def _load_assistant_form(self) -> None:
-        """Show the settings of the assistant in its card."""
-        form = self.settings_ui
-        form.assistantCheck.setChecked(self.settings.assistant_enabled)
-        self._fill_assistant_paths()
-        self._fill_assistant_models()
-        form.assistantCombo.clear()
-        form.assistantCombo.addItem(self.tr("Automatic: the first one found"), "")
-        for one in installed_assistants():  # only what this computer has
-            form.assistantCombo.addItem(one.name, one.key)
-        form.assistantCombo.setCurrentIndex(
-            max(form.assistantCombo.findData(self.settings.assistant), 0)
-        )
-
-    def _fill_assistant_models(self) -> None:
-        """One line for each assistant to choose its model and its effort, from
-        what that program allows."""
-        layout = self.settings_ui.assistantModelsLayout
-        while (item := layout.takeAt(0)) is not None:
-            if (widget := item.widget()) is not None:
-                widget.deleteLater()
-        self._assistant_models: dict[str, tuple[QComboBox, QComboBox]] = {}
-        found = installed_assistants()  # only the programs this computer has
-        self.settings_ui.assistantModelsLabel.setVisible(bool(found))
-        for one in found:
-            model = QComboBox()
-            model.addItem(self.tr("Default model"), "")
-            for name in one.models:
-                model.addItem(name, name)
-            kept = self.settings.assistant_models.get(one.key, "")
-            if kept and model.findData(kept) < 0:
-                model.addItem(kept, kept)  # a model the program no longer lists
-            model.setCurrentIndex(max(model.findData(kept), 0))
-            effort = QComboBox()
-            effort.addItem(self.tr("Default effort"), "")
-            for level in one.efforts:
-                effort.addItem(level, level)
-            saved = self.settings.assistant_efforts.get(one.key, "")
-            if saved and effort.findData(saved) < 0:
-                effort.addItem(saved, saved)  # a level the program no longer lists
-            effort.setCurrentIndex(max(effort.findData(saved), 0))
-            effort.setEnabled(one.effort_options is not None)
-            for box in (model, effort):
-                box.setProperty("variant", "filter")
-            model.setFixedWidth(240)
-            effort.setFixedWidth(170)
-            row = QHBoxLayout()
-            row.setContentsMargins(0, 0, 0, 0)
-            name = QLabel(one.name)
-            name.setFixedWidth(100)
-            row.addWidget(name)
-            row.addWidget(model)
-            row.addWidget(effort)
-            row.addStretch(1)
-            holder = QWidget()
-            holder.setLayout(row)
-            layout.addWidget(holder)
-            self._assistant_models[one.key] = (model, effort)
-
-    def _fill_assistant_paths(self) -> None:
-        """One line for each assistant to say where its program is, which the
-        system may not find by itself."""
-        layout = self.settings_ui.assistantPathsLayout
-        while (item := layout.takeAt(0)) is not None:
-            if (widget := item.widget()) is not None:
-                widget.deleteLater()
-        self._assistant_paths: dict[str, QLineEdit] = {}
-        saved = self.settings.assistant_programs
-        for one in ASSISTANTS.values():
-            edit = QLineEdit(saved.get(one.key, ""))
-            found = is_available_assistant(one)
-            missing = self.tr("Not found: {program} is not on the path").format(
-                program=one.program
-            )
-            edit.setPlaceholderText(
-                self.tr("Found on the path of the system") if found else missing
-            )
-            browse = QPushButton(self.tr("Browse..."))
-            browse.setProperty("variant", "secondary")
-            edit.setProperty("variant", "filter")
-            browse.clicked.connect(
-                lambda _checked=False, field=edit, name=one.name: self._browse_program(
-                    field, name
-                )
-            )
-            row = QHBoxLayout()
-            row.setContentsMargins(0, 0, 0, 0)
-            name = QLabel(one.name)
-            name.setFixedWidth(100)
-            row.addWidget(name)
-            row.addWidget(edit, 1)
-            row.addWidget(browse)
-            holder = QWidget()
-            holder.setLayout(row)
-            layout.addWidget(holder)
-            self._assistant_paths[one.key] = edit
-
-    def _browse_program(self, edit: QLineEdit, name: str) -> None:
-        path, _filter = QFileDialog.getOpenFileName(
-            self,
-            self.tr("Where is {name}?").format(name=name),
-            str(Path.home()),
-        )
-        if path:
-            edit.setText(path)
-
-    def _assistant_programs_from_form(self) -> dict[str, str] | None:
-        """The paths in the settings; None, with a notice, when one is not a
-        program that can be run.
-
-        Empty ones are left out.
-        """
-        programs: dict[str, str] = {}
-        for one in ASSISTANTS.values():
-            path = self._assistant_paths[one.key].text().strip()
-            if not path:
-                continue
-            if not runner.is_runnable(str(Path(path).expanduser())):
-                self.settings_ui.noticeLabel.setText(
-                    self.tr("{path} is not a program that can be run ({name}).").format(
-                        path=path, name=one.name
-                    )
-                )
-                return None
-            programs[one.key] = path
-        return programs
 
     def _show_config_tables(self) -> None:
         """The kubeconfig list and the sign-in table (and their Remove buttons)
@@ -7244,9 +7066,6 @@ class WorkloadWindow(QMainWindow):
         commands = self._login_commands_from_form()
         if commands is None:
             return  # nothing is saved until every command is valid
-        programs = self._assistant_programs_from_form()
-        if programs is None:
-            return  # nor until every path of an assistant is a program
         if not self._save_extension_sections():
             return  # nor until every section of an extension agrees
         keys = self._shortcuts_from_form()
@@ -7291,25 +7110,6 @@ class WorkloadWindow(QMainWindow):
         self.settings.run_in_background = form.backgroundCheck.isChecked()
         self.settings.animations = form.animationsCheck.isChecked()
         motion.ENABLED = self.settings.animations
-        self.gabi.apply_settings(
-            form.assistantCheck.isChecked(),
-            form.assistantCombo.currentData() or "",
-            programs,
-            {  # what was chosen for a program that is not here now is kept
-                **self.settings.assistant_models,
-                **{
-                    key: box.currentData() or ""
-                    for key, (box, _) in self._assistant_models.items()
-                },
-            },
-            {
-                **self.settings.assistant_efforts,
-                **{
-                    key: box.currentData() or ""
-                    for key, (_, box) in self._assistant_models.items()
-                },
-            },
-        )
         self._sync_tray()
         self.settings.system_title_bar = form.titleBarCheck.isChecked()
         self._frame.set_custom(not self.settings.system_title_bar)
@@ -7322,7 +7122,6 @@ class WorkloadWindow(QMainWindow):
             logger.info("Write mode %s", "on" if self.settings.write_mode else "off")
             self._show_access_note()
             self._apply_view_buttons()
-            self.gabi.refresh_system()  # nothing to change without it
             self.extension_host.events.emit(
                 WRITE_MODE_CHANGED, write_mode=self.settings.write_mode
             )
@@ -7336,7 +7135,6 @@ class WorkloadWindow(QMainWindow):
         self._fill_contexts(self._context())
         if self.settings.language != previous_language:
             apply_language(self.settings.language)
-            self.gabi.refresh_system()  # the chat answers in the new one
             self.extension_host.events.emit(
                 LANGUAGE_CHANGED, language=self.settings.language
             )
@@ -7405,7 +7203,6 @@ class WorkloadWindow(QMainWindow):
         self.ui.retranslateUi(self)
         self._name_the_menu_entries()
         self._show_access_note()
-        self.gabi.retranslate()
         self.search_case_button.setToolTip(self.tr("Match case"))
         self.search_regex_button.setToolTip(self.tr("Regular expression"))
         self.rds_case_button.setToolTip(self.tr("Match case"))
@@ -7654,7 +7451,6 @@ class WorkloadWindow(QMainWindow):
     def closeEvent(self, event: QCloseEvent) -> None:
         self._remember_geometry()
         if self._tray is None or self._quitting:
-            self.gabi.shutdown()
             self.extension_host.events.emit(SHUTDOWN)
             if self._extension_loader is not None:
                 self._extension_loader.unload_all()
