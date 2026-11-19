@@ -6,12 +6,12 @@ It reaches `api.github.com` (which sends the zip from
 with the app version.
 """
 
-import json
 import re
 import urllib.error
 import urllib.request
 from dataclasses import dataclass
 from urllib.parse import quote, urlparse
+from xml.etree import ElementTree
 
 from kubescope.sdk.errors import first_line
 
@@ -19,7 +19,8 @@ from kubescope.about import __version__
 from kubescope.extensions.archive import MAX_ARCHIVE
 
 TIMEOUT = 30  # seconds
-_HOSTS = ("api.github.com", "codeload.github.com")
+_HOSTS = ("github.com", "codeload.github.com")  # the website, never the API,
+# whose limit of anonymous requests (60 an hour for an address) a first run can use up
 _NAME = r"[A-Za-z0-9_.-]{1,100}"
 _REPO = re.compile(
     rf"(?:https://github\.com/)?({_NAME})/({_NAME}?)(?:\.git)?"
@@ -48,8 +49,8 @@ class Repo:
 
     @property
     def zip_url(self) -> str:
-        url = f"https://api.github.com/repos/{self.owner}/{self.name}/zipball"
-        return f"{url}/{quote(self.ref, safe='/')}" if self.ref else url
+        ref = quote(self.ref, safe="/") if self.ref else "HEAD"
+        return f"https://codeload.github.com/{self.owner}/{self.name}/zip/{ref}"
 
 
 def parse_repo(text: str) -> Repo:
@@ -95,21 +96,19 @@ def download(repo: Repo) -> bytes:
 
 
 MAX_TAGS_BYTES = 1024 * 1024
+_ATOM = "{http://www.w3.org/2005/Atom}"
 
 
 def list_tags(repo: Repo) -> list[str]:
     """The names of the tags of the repository, the newest first as GitHub
-    lists them (the first hundred)."""
+    lists them, read from the feed of its tags on the website."""
     request = urllib.request.Request(
-        f"https://api.github.com/repos/{repo.owner}/{repo.name}/tags?per_page=100",
-        headers={
-            "User-Agent": f"KubeScope/{__version__}",
-            "Accept": "application/vnd.github+json",
-        },
+        f"https://github.com/{repo.owner}/{repo.name}/tags.atom",
+        headers={"User-Agent": f"KubeScope/{__version__}"},
     )
     try:
         with urllib.request.urlopen(request, timeout=TIMEOUT) as response:
-            if urlparse(response.geturl()).hostname != "api.github.com":
+            if urlparse(response.geturl()).hostname != "github.com":
                 raise GithubError("GitHub answered from somewhere else")
             data = response.read(MAX_TAGS_BYTES + 1)
     except urllib.error.HTTPError as error:
@@ -121,15 +120,10 @@ def list_tags(repo: Repo) -> list[str]:
     if len(data) > MAX_TAGS_BYTES:
         raise GithubError("GitHub sent too much")
     try:
-        document = json.loads(data)
-    except ValueError as error:
+        feed = ElementTree.fromstring(data)
+    except ElementTree.ParseError as error:
         raise GithubError("GitHub answered with something unexpected") from error
-    if not isinstance(document, list):
-        raise GithubError("GitHub answered with something unexpected")
-    return [
-        item["name"]
-        for item in document
-        if isinstance(item, dict)
-        and isinstance(item.get("name"), str)
-        and len(item["name"]) <= 100
+    names = [
+        entry.findtext(f"{_ATOM}title") or "" for entry in feed.iter(f"{_ATOM}entry")
     ]
+    return [name for name in names if name and len(name) <= 100]

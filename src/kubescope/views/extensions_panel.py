@@ -629,11 +629,12 @@ class ExtensionsPanel(QObject):
         self._download(repo)
 
     def offer_defaults(self, settings: Settings) -> None:
-        """The first time, offer what the app recommends: it is downloaded and
-        a dialog asks before anything is installed.
+        """The first time, install what the app recommends, without a dialog.
 
-        It is asked once, whatever the answer, and what is left can be
-        installed from the cards.
+        It is quiet: when GitHub cannot be reached nothing is said and it is
+        tried again at the next start. Once an extension is installed it is
+        not offered again, so what the person uninstalls does not come back;
+        it can be installed from the table.
         """
         have = {one.manifest.id for one in self.store.installed()}
         for one in self.defaults():
@@ -643,9 +644,16 @@ class ExtensionsPanel(QObject):
                 or one.id in settings.extensions_offered
             ):
                 continue
-            settings.offered(one.id)
-            settings.save()
-            self._download(one.repo, one, review=False)
+            self._download(
+                one.repo,
+                one,
+                review=False,
+                installed=partial(self._offered, settings, one.id),
+            )
+
+    def _offered(self, settings: Settings, extension: str) -> None:
+        settings.offered(extension)
+        settings.save()
 
     def update(self, update: Update) -> None:
         """Download the newer version; the same dialog as any install shows
@@ -658,16 +666,30 @@ class ExtensionsPanel(QObject):
         self._download(wanted.repo, wanted)
 
     def _download(
-        self, repo: Repo, pin: DefaultExtension | None = None, review: bool = True
+        self,
+        repo: Repo,
+        pin: DefaultExtension | None = None,
+        review: bool = True,
+        installed: Callable[[], None] | None = None,
     ) -> None:
         self.run_action(
             self._fetch,
             lambda found: self._prepared(
-                self.store.prepare, found[1], found[0].source, pin=pin, review=review
+                self.store.prepare,
+                found[1],
+                found[0].source,
+                pin=pin,
+                review=review,
+                installed=installed,
             ),
             repo,
             pin is not None,
-            on_error=self._download_failed,
+            on_error=self._download_failed if review else self._download_quiet,
+        )
+
+    def _download_quiet(self, text: str) -> None:
+        logger.info(
+            "Could not download an extension that is installed by default: %s", text
         )
 
     @staticmethod
@@ -695,6 +717,7 @@ class ExtensionsPanel(QObject):
         *arguments: object,
         pin: DefaultExtension | None = None,
         review: bool = True,
+        installed: Callable[[], None] | None = None,
     ) -> None:
         try:
             candidate = prepare(*arguments)
@@ -705,13 +728,16 @@ class ExtensionsPanel(QObject):
                     self.store.discard(candidate)
                     raise
         except StoreError as error:
-            self._warn(str(error))
+            if review:
+                self._warn(str(error))
+            else:
+                logger.info("An extension installed by default was refused: %s", error)
             self._next_update()
             return
         if review:
             self._review(candidate)
-        else:  # only a pinned one gets here
-            self._install(candidate)
+        elif self._install(candidate) and installed is not None:
+            installed()
 
     def _review(self, candidate: Candidate) -> None:
         """Show what the extension is and install it if the person agrees."""
@@ -723,14 +749,18 @@ class ExtensionsPanel(QObject):
         self._install(candidate)
         self._next_update()
 
-    def _install(self, candidate: Candidate) -> None:
+    def _install(self, candidate: Candidate) -> bool:
+        """Put it in place; False, after saying why, when it could not be."""
+        done = True
         try:
             self.store.install(candidate)
         except (StoreError, OSError) as error:
             logger.warning("Could not install an extension: %s", error)
             self._warn(str(error))
+            done = False
         self.refresh()
         self.changed()
+        return done
 
     # uninstall and reinstall
 

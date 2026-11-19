@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file. The format 
 
 ### Added
 
+- The extensions download from `codeload.github.com` and read the tags from the feed of the repository on `github.com`, not from the GitHub API, whose limit of 60 anonymous requests an hour a first run could use up (`GitHub answered 403`); what is installed by default is now quiet when GitHub cannot be reached and is tried again at the next start by @danilogco
 - The global search is the extension [`kubescope-search`](https://github.com/dcotecnologia/kubescope-search), recommended by the app and installed the first time it runs (`/` and `Ctrl+K` as before, and the keys you chose are kept); it can be uninstalled in **Settings → Extensions**, and an extension can now search the resources of the cluster and read the lists of the side menu by @danilogco
 - The global search leaves the app and is the extension `kubescope-search`, installed by default like Gabi: `/` and `Ctrl+K` still open it, the keys you chose are kept, and an extension can now search the resources of the cluster (`search_resources`) and read the lists of the side menu (the command `views`) by @danilogco
 - **Settings → Extensions** shows the author and latest available version of recommended extensions that are not installed by @danilogco
