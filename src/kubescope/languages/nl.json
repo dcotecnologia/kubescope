@@ -196,7 +196,8 @@
             "change your clusters, in the write mode": "je clusters wijzigen, in de schrijfmodus",
             "none": "geen",
             "read your clusters": "je clusters lezen",
-            "run programs of this computer": "programma's van deze computer uitvoeren"
+            "run programs of this computer": "programma's van deze computer uitvoeren",
+            "use the window: show messages, run tasks and add shortcuts": "het venster gebruiken: berichten tonen, taken uitvoeren en sneltoetsen toevoegen"
         },
         "LogTab": {
             "Auto-refresh": "Automatisch verversen",

@@ -25,6 +25,7 @@ PERMISSIONS = (
     "ui.dock",
     "ui.tab",
     "ui.settings",
+    "ui.window",
     "cli",
 )
 
@@ -68,6 +69,73 @@ class Writes(Protocol):
         ...
 
 
+class Ui(Protocol):
+    """The window, for an extension that asked for `ui.window`; it is None when
+    the app runs without one (a command of the terminal)."""
+
+    window: Any  # the main window: the parent of the boxes the extension shows
+    central: Any  # the widget that panels in the corner sit on
+
+    def show_message(self, icon: str, title: str, text: str) -> None:
+        """Tell the person something; `icon` is information, warning or
+        critical."""
+        ...
+
+    def run_action(
+        self,
+        function: Callable[..., Any],
+        on_success: Callable[[Any], None],
+        *arguments: Any,
+        on_error: Callable[[str], None] | None = None,
+        quiet: bool = False,
+    ) -> None:
+        """Call `function` off the UI thread; the answer comes to
+        `on_success`."""
+        ...
+
+    def style_box(self, box: Any) -> None:
+        """Give a message box the buttons of the window."""
+        ...
+
+    def show_settings(self, section: str = "") -> None:
+        """Go to the Settings, to the section of the extension named
+        `section`."""
+        ...
+
+    def reserve_corner(self, owner: str, pixels: int) -> None:
+        """Keep `pixels` of the corner of the window clear for `owner`; 0 gives
+        it back."""
+        ...
+
+
+class App(Protocol):
+    """What the extension may know about the app."""
+
+    @property
+    def write_mode(self) -> bool:
+        """Whether the person turned on the write mode."""
+        ...
+
+    @property
+    def language(self) -> str:
+        """The language chosen in the Settings (`auto` follows the system)."""
+        ...
+
+
+class SettingsPanel(Protocol):
+    """What the factory of a section of the Settings builds: a widget that has
+    these two methods."""
+
+    def load(self) -> None:
+        """Show the preferences as they are saved."""
+        ...
+
+    def save(self) -> bool:
+        """Keep what the person typed; False (after saying why) stops the
+        save."""
+        ...
+
+
 class Context(Protocol):
     """What `activate(ctx)` receives."""
 
@@ -97,6 +165,27 @@ class Context(Protocol):
 
     def invoke(self, command: str, /, **arguments: Any) -> Any:
         """Do in the window what the person could do by hand."""
+        ...
+
+    @property
+    def ui(self) -> Ui | None:
+        """The window; needs `ui.window`, and is None without one."""
+        ...
+
+    @property
+    def app(self) -> App:
+        """What the app says about itself."""
+        ...
+
+    def register_command(self, name: str, command: Callable[..., Any]) -> None:
+        """Offer a command to the app, named `<id of the extension>.<name>`."""
+        ...
+
+    def add_shortcut(
+        self, action: str, label: str, default: str, handler: Callable[[], None]
+    ) -> None:
+        """Add a keyboard shortcut the person can change in the Settings; needs
+        `ui.window`."""
         ...
 
     def on_unload(self, callback: Callable[[], None]) -> None:

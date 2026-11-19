@@ -196,7 +196,8 @@
             "change your clusters, in the write mode": "تغییر خوشه‌های شما، در حالت نوشتن",
             "none": "هیچ",
             "read your clusters": "خواندن خوشه‌های شما",
-            "run programs of this computer": "اجرای برنامه‌های این رایانه"
+            "run programs of this computer": "اجرای برنامه‌های این رایانه",
+            "use the window: show messages, run tasks and add shortcuts": "استفاده از پنجره: نمایش پیام، اجرای کارها و افزودن میان‌بر"
         },
         "LogTab": {
             "Auto-refresh": "تازه‌سازی خودکار",

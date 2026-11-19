@@ -196,7 +196,8 @@
             "change your clusters, in the write mode": "mengubah klaster Anda, dalam mode tulis",
             "none": "tidak ada",
             "read your clusters": "membaca klaster Anda",
-            "run programs of this computer": "menjalankan program di komputer ini"
+            "run programs of this computer": "menjalankan program di komputer ini",
+            "use the window: show messages, run tasks and add shortcuts": "menggunakan jendela: menampilkan pesan, menjalankan tugas, dan menambahkan pintasan"
         },
         "LogTab": {
             "Auto-refresh": "Segarkan otomatis",

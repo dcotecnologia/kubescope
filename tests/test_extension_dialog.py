@@ -102,3 +102,12 @@ def test_development_mode_says_it_runs_from_the_folder_and_has_no_hash() -> None
     assert "Development mode: it runs from this folder" in text
     assert "SHA-256" not in text
     assert "SHA-256" in texts(InstallExtensionDialog(PARENT, candidate()))
+
+
+def test_every_permission_the_sdk_knows_is_explained_to_the_person() -> None:
+    from kubescope.sdk import PERMISSIONS
+
+    dialog = InstallExtensionDialog(PARENT, candidate(permissions=PERMISSIONS))
+
+    for name in PERMISSIONS:
+        assert f"({name})" in texts(dialog)

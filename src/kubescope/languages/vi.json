@@ -196,7 +196,8 @@
             "change your clusters, in the write mode": "thay đổi cụm của bạn, ở chế độ ghi",
             "none": "không có",
             "read your clusters": "đọc các cụm của bạn",
-            "run programs of this computer": "chạy các chương trình của máy tính này"
+            "run programs of this computer": "chạy các chương trình của máy tính này",
+            "use the window: show messages, run tasks and add shortcuts": "dùng cửa sổ: hiển thị thông báo, chạy tác vụ và thêm phím tắt"
         },
         "LogTab": {
             "Auto-refresh": "Tự động làm mới",

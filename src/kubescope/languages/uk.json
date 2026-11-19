@@ -196,7 +196,8 @@
             "change your clusters, in the write mode": "змінювати ваші кластери, у режимі запису",
             "none": "немає",
             "read your clusters": "читати ваші кластери",
-            "run programs of this computer": "запускати програми цього комп'ютера"
+            "run programs of this computer": "запускати програми цього комп'ютера",
+            "use the window: show messages, run tasks and add shortcuts": "використовувати вікно: показувати повідомлення, виконувати завдання та додавати скорочення"
         },
         "LogTab": {
             "Auto-refresh": "Автооновлення",

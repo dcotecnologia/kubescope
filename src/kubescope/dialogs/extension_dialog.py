@@ -100,6 +100,9 @@ class InstallExtensionDialog(QDialog):
             "ui.dock": self.tr("add a panel to the window"),
             "ui.tab": self.tr("add a kind of tab"),
             "ui.settings": self.tr("add a section to the Settings"),
+            "ui.window": self.tr(
+                "use the window: show messages, run tasks and add shortcuts"
+            ),
             "cli": self.tr("add a command to kubescope"),
         }
         names = sorted(candidate.manifest.permissions)

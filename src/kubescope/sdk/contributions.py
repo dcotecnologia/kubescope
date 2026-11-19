@@ -40,6 +40,18 @@ class SettingsSection:
 
 
 @dataclass(frozen=True)
+class ShortcutContribution:
+    """A keyboard shortcut of the window that runs a function of the extension;
+    `default` is the key the person gets until they change it."""
+
+    extension: str
+    action: str
+    label: str
+    default: str
+    handler: Callable[[], None]
+
+
+@dataclass(frozen=True)
 class CliCommand:
     """A subcommand of `kubescope`, run with the rest of the arguments."""
 

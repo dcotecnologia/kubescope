@@ -9,10 +9,13 @@ from kubescope.sdk.commands import CommandError
 from kubescope.sdk.context import (
     API_VERSION,
     PERMISSIONS,
+    App,
     ClusterAccess,
     Context,
     PermissionDenied,
     Settings,
+    SettingsPanel,
+    Ui,
     WriteModeOff,
     Writes,
 )
@@ -20,6 +23,7 @@ from kubescope.sdk.contributions import (
     CliCommand,
     DockContribution,
     SettingsSection,
+    ShortcutContribution,
     TabKind,
 )
 from kubescope.sdk.events import (
@@ -33,6 +37,7 @@ from kubescope.sdk.events import (
 
 __all__ = [
     "API_VERSION",
+    "App",
     "CONTEXT_CHANGED",
     "EVENTS",
     "LANGUAGE_CHANGED",
@@ -47,8 +52,11 @@ __all__ = [
     "Events",
     "PermissionDenied",
     "Settings",
+    "SettingsPanel",
     "SettingsSection",
+    "ShortcutContribution",
     "TabKind",
+    "Ui",
     "WriteModeOff",
     "Writes",
 ]

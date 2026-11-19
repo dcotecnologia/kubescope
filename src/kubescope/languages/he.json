@@ -196,7 +196,8 @@
             "change your clusters, in the write mode": "לשנות את האשכולות שלך, במצב כתיבה",
             "none": "ללא",
             "read your clusters": "לקרוא את האשכולות שלך",
-            "run programs of this computer": "להריץ תוכניות של מחשב זה"
+            "run programs of this computer": "להריץ תוכניות של מחשב זה",
+            "use the window: show messages, run tasks and add shortcuts": "להשתמש בחלון: להציג הודעות, להריץ משימות ולהוסיף קיצורי דרך"
         },
         "LogTab": {
             "Auto-refresh": "רענון אוטומטי",
