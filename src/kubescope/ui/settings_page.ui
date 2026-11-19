@@ -104,6 +104,22 @@
       </widget>
      </item>
      <item>
+      <widget class="QPushButton" name="extensionsSectionButton">
+       <property name="text">
+        <string>Extensions</string>
+       </property>
+       <property name="checkable">
+        <bool>true</bool>
+       </property>
+       <property name="checked">
+        <bool>false</bool>
+       </property>
+       <property name="variant" stdset="0">
+        <string notr="true">secondary</string>
+       </property>
+      </widget>
+     </item>
+     <item>
       <spacer name="settingsSectionsSpacer">
        <property name="orientation">
         <enum>Qt::Horizontal</enum>
@@ -1010,6 +1026,158 @@
           <property name="bottomMargin">
            <number>14</number>
           </property>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QFrame" name="extensionsCard">
+         <property name="card" stdset="0">
+          <string notr="true">true</string>
+         </property>
+         <layout class="QVBoxLayout" name="extensionsCardLayout">
+          <property name="spacing">
+           <number>10</number>
+          </property>
+          <property name="leftMargin">
+           <number>16</number>
+          </property>
+          <property name="topMargin">
+           <number>14</number>
+          </property>
+          <property name="rightMargin">
+           <number>16</number>
+          </property>
+          <property name="bottomMargin">
+           <number>14</number>
+          </property>
+          <item>
+           <widget class="QLabel" name="extensionsHeading">
+            <property name="text">
+             <string>EXTENSIONS</string>
+            </property>
+            <property name="variant" stdset="0">
+             <string notr="true">cardTitle</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="extensionsHint">
+            <property name="text">
+             <string>An extension adds a feature to KubeScope, like Gabi. It is code that runs with your permissions, so install only the ones you trust. Changes apply the next time KubeScope starts.</string>
+            </property>
+            <property name="wordWrap">
+             <bool>true</bool>
+            </property>
+            <property name="variant" stdset="0">
+             <string notr="true">muted</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QTableWidget" name="extensionsTable">
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>220</height>
+             </size>
+            </property>
+            <property name="editTriggers">
+             <set>QAbstractItemView::NoEditTriggers</set>
+            </property>
+            <property name="selectionBehavior">
+             <enum>QAbstractItemView::SelectRows</enum>
+            </property>
+            <property name="selectionMode">
+             <enum>QAbstractItemView::SingleSelection</enum>
+            </property>
+            <attribute name="verticalHeaderVisible">
+             <bool>false</bool>
+            </attribute>
+            <attribute name="horizontalHeaderStretchLastSection">
+             <bool>true</bool>
+            </attribute>
+            <column>
+             <property name="text">
+              <string>EXTENSION</string>
+             </property>
+            </column>
+            <column>
+             <property name="text">
+              <string>VERSION</string>
+             </property>
+            </column>
+            <column>
+             <property name="text">
+              <string>SOURCE</string>
+             </property>
+            </column>
+            <column>
+             <property name="text">
+              <string>STATUS</string>
+             </property>
+            </column>
+            <property name="variant" stdset="0">
+             <string notr="true">data</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="extensionsButtonsRow">
+            <item>
+             <widget class="QPushButton" name="extensionsInstallFileButton">
+              <property name="text">
+               <string>Install from a zip...</string>
+              </property>
+              <property name="variant" stdset="0">
+               <string notr="true">primary</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="extensionsInstallRepoButton">
+              <property name="text">
+               <string>Install from GitHub...</string>
+              </property>
+              <property name="variant" stdset="0">
+               <string notr="true">secondary</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="extensionsReinstallButton">
+              <property name="text">
+               <string>Reinstall</string>
+              </property>
+              <property name="variant" stdset="0">
+               <string notr="true">secondary</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="extensionsUninstallButton">
+              <property name="text">
+               <string>Uninstall</string>
+              </property>
+              <property name="variant" stdset="0">
+               <string notr="true">secondary</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <spacer name="extensionsButtonsSpacer">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+           </layout>
+          </item>
          </layout>
         </widget>
        </item>

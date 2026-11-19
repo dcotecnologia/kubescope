@@ -133,6 +133,7 @@ from kubescope.dialogs.global_search import GlobalSearch, SearchEntry
 from kubescope.dialogs.plugin_update_dialog import PluginUpdateDialog
 from kubescope.dialogs.theme_editor import ThemeEditor
 from kubescope.dialogs.update_dialog import UpdateDialog
+from kubescope.extensions import bundled as bundled_extensions
 from kubescope.extensions.bundled.gabi import ASSISTANTS, runner
 from kubescope.extensions.bundled.gabi import actions as assistant_actions
 from kubescope.extensions.bundled.gabi import installed as installed_assistants
@@ -155,6 +156,7 @@ from kubescope.extensions.bundled.gabi.screen import (
 from kubescope.extensions.bundled.gabi.session import ChatSession
 from kubescope.extensions.bundled.gabi.tab import AssistantTab
 from kubescope.extensions.registries import CommandRegistry
+from kubescope.extensions.store import ExtensionStore
 from kubescope.forwards import Forward
 from kubescope.i18n import (
     apply_language,
@@ -248,6 +250,7 @@ from kubescope.views.container_states import (
 from kubescope.views.detail_tab import USAGE_REFRESH_MS, DetailTab
 from kubescope.views.dialog_frame import frames
 from kubescope.views.error_banner import ErrorBanner
+from kubescope.views.extensions_panel import ExtensionsPanel
 from kubescope.views.forward_runner import ForwardRunner
 from kubescope.views.log_tab import LOG_REFRESH_MS, LogTab
 from kubescope.views.nav_chevron import NavChevron
@@ -1188,6 +1191,17 @@ class WorkloadWindow(QMainWindow):
         self._settings_sections.addButton(self.settings_ui.kubeSectionButton, 2)
         self._settings_sections.addButton(self.settings_ui.shortcutsSectionButton, 3)
         self._settings_sections.addButton(self.settings_ui.integrationsSectionButton, 4)
+        self._settings_sections.addButton(self.settings_ui.extensionsSectionButton, 5)
+        self.extensions_panel = ExtensionsPanel(
+            self.settings_ui,
+            ExtensionStore(
+                config_directory() / "extensions",
+                Path(bundled_extensions.__file__).parent,
+            ),
+            self,
+            self._run_action,
+            self._show_message,
+        )
         self.settings_ui.shortcutsResetButton.clicked.connect(
             lambda: self._fill_shortcuts(shortcuts.DEFAULTS)
         )
@@ -6512,6 +6526,7 @@ class WorkloadWindow(QMainWindow):
             form.contextsCard: 2,
             form.shortcutsCard: 3,
             form.integrationsCard: 4,
+            form.extensionsCard: 5,
         }
         for card in form.settingsContent.findChildren(
             QFrame, options=Qt.FindChildOption.FindDirectChildrenOnly
@@ -6522,6 +6537,9 @@ class WorkloadWindow(QMainWindow):
         form.kubeSectionButton.setChecked(section == 2)
         form.shortcutsSectionButton.setChecked(section == 3)
         form.integrationsSectionButton.setChecked(section == 4)
+        form.extensionsSectionButton.setChecked(section == 5)
+        if section == 5:
+            self.extensions_panel.refresh()  # it may have changed on disk
         form.settingsScroll.verticalScrollBar().setValue(0)
 
     def _show_assistant_settings(self) -> None:
