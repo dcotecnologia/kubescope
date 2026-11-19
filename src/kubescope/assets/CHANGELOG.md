@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file. The format 
 
 ### Added
 
+- The card of an extension in **Settings → Extensions** says, in lowercase, when it was installed and when it was last updated; the app keeps both days and the first one never changes on a reinstall by @danilogco
 - A page of an extension can ask for the refresh button of the header of the window, the same as the other pages have, so its own page does not draw one by @danilogco
 - The AWS RDS instances page leaves the app and is the extension `kubescope-aws` (**Settings → Extensions → AWS**, recommended and not installed by itself), with the same list, details, logs and Systems Manager forward by @danilogco
 - An extension brings its own translations: the JSON files of its `languages` folder are added to the languages of the app while it runs, in contexts of their own that can never replace one of the app by @danilogco

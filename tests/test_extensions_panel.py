@@ -678,3 +678,33 @@ def test_the_cards_fill_the_width_after_the_page_gets_narrower(setup, tmp_path) 
 
     row = widths[700][:2] if host.width() >= 2 * 260 + 14 else widths[700][:1]
     assert sum(row) + 14 * (len(row) - 1) >= host.width() - 4  # the whole width
+
+
+def test_a_card_says_in_lowercase_when_it_was_installed_and_last_updated(
+    setup, tmp_path, monkeypatch
+) -> None:
+    from kubescope.extensions import store as store_module
+
+    moments = iter(["2026-01-05T10:00:00+00:00", "2026-03-20T08:30:00+00:00"])
+    monkeypatch.setattr(store_module, "_now", lambda: next(moments))
+    monkeypatch.setattr("kubescope.sdk.timezone.to_zone", lambda moment: moment)
+    monkeypatch.setattr(extensions_panel, "to_zone", lambda moment: moment)
+    setup.decide(True)
+    setup.pick_manifest(make_folder(tmp_path / "tool"))
+    setup.panel.install_from_folder()
+    setup.pick_manifest(make_folder(tmp_path / "tool", "1.1.0"))
+    setup.panel.install_from_folder()
+
+    card = setup.card("Tool")
+
+    assert "installed 2026-01-05 · updated 2026-03-20" in card.texts
+    assert not any(text.startswith("Installed ") for text in card.texts)
+
+
+def test_what_comes_with_the_app_or_is_only_recommended_has_no_dates(
+    setup, tmp_path
+) -> None:
+    with_defaults(setup, offered(tmp_path))
+
+    assert not [t for t in setup.card("Tool").texts if "installed " in t]
+    assert not [t for t in setup.card("Gabi").texts if "installed " in t]

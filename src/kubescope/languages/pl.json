@@ -105,6 +105,8 @@
             "Uninstall": "Odinstaluj",
             "Uninstall {name}? Its files are deleted.": "Odinstalować {name}? Jego pliki zostaną usunięte.",
             "Uninstalled": "Odinstalowano",
+            "installed {date}": "zainstalowano {date}",
+            "updated {date}": "zaktualizowano {date}",
             "{name} comes with KubeScope. Uninstall it? You can reinstall it here.": "{name} jest dołączone do KubeScope. Odinstalować? Możesz zainstalować je ponownie tutaj."
         },
         "ForwardsPage": {

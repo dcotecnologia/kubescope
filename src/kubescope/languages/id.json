@@ -105,6 +105,8 @@
             "Uninstall": "Copot",
             "Uninstall {name}? Its files are deleted.": "Copot {name}? Filenya dihapus.",
             "Uninstalled": "Dicopot",
+            "installed {date}": "dipasang {date}",
+            "updated {date}": "diperbarui {date}",
             "{name} comes with KubeScope. Uninstall it? You can reinstall it here.": "{name} disertakan dengan KubeScope. Copot? Anda dapat memasangnya kembali di sini."
         },
         "ForwardsPage": {

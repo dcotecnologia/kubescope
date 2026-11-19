@@ -105,6 +105,8 @@
             "Uninstall": "Verwijderen",
             "Uninstall {name}? Its files are deleted.": "{name} verwijderen? De bestanden worden gewist.",
             "Uninstalled": "Verwijderd",
+            "installed {date}": "geïnstalleerd {date}",
+            "updated {date}": "bijgewerkt {date}",
             "{name} comes with KubeScope. Uninstall it? You can reinstall it here.": "{name} wordt met KubeScope meegeleverd. Verwijderen? Je kunt hem hier opnieuw installeren."
         },
         "ForwardsPage": {

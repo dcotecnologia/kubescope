@@ -17,6 +17,7 @@ import re
 import shutil
 import uuid
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -53,6 +54,21 @@ class Candidate:
     dev: bool = False  # linked, not copied: `folder` is the author's own
 
 
+def _now() -> str:
+    return datetime.now(UTC).isoformat(timespec="seconds")
+
+
+def _modified(folder: Path) -> str:
+    """When the folder of an extension that was installed before the dates were
+    kept last changed."""
+    try:
+        return datetime.fromtimestamp(folder.stat().st_mtime, UTC).isoformat(
+            timespec="seconds"
+        )
+    except OSError:
+        return ""
+
+
 @dataclass(frozen=True)
 class Installed:
     manifest: Manifest
@@ -61,6 +77,8 @@ class Installed:
     sha256: str
     bundled: bool
     dev: bool = False  # run from the author's folder, which is watched
+    installed_at: str = ""  # when it was first installed, UTC; empty for a bundled one
+    updated_at: str = ""  # when its files were last put in place
 
 
 class ExtensionStore:
@@ -98,6 +116,9 @@ class ExtensionStore:
                     }
                     if isinstance(entry.get("path"), str):
                         kept["path"] = entry["path"][:_SOURCE_MAX]
+                    for moment in ("installed_at", "updated_at"):
+                        if isinstance(entry.get(moment), str):
+                            kept[moment] = entry[moment][:40]
                     self._installed[key] = kept
         removed = document.get("removed")
         if isinstance(removed, list):
@@ -155,6 +176,8 @@ class ExtensionStore:
                     entry["sha256"],
                     False,
                     dev="path" in entry,
+                    installed_at=entry.get("installed_at") or _modified(folder),
+                    updated_at=entry.get("updated_at") or _modified(folder),
                 )
             )
         taken = {one.manifest.id for one in found}
@@ -305,16 +328,26 @@ class ExtensionStore:
         candidate.folder.replace(target)
         shutil.rmtree(previous, ignore_errors=True)
         shutil.rmtree(staged, ignore_errors=True)
+        now = _now()
+        before = self._installed.get(extension, {})
         self._installed[extension] = {
             "source": candidate.source,
             "sha256": candidate.sha256,
+            "installed_at": before.get("installed_at") or now,
+            "updated_at": now,
         }
         self._save()
         logger.info(
             "Installed the extension %s %s", extension, candidate.manifest.version
         )
         return Installed(
-            candidate.manifest, target, candidate.source, candidate.sha256, False
+            candidate.manifest,
+            target,
+            candidate.source,
+            candidate.sha256,
+            False,
+            installed_at=self._installed[extension]["installed_at"],
+            updated_at=now,
         )
 
     def _link(self, candidate: Candidate) -> Installed:
@@ -322,15 +355,26 @@ class ExtensionStore:
         extension = candidate.manifest.id
         if "path" not in self._installed.get(extension, {}):
             shutil.rmtree(self._folder(extension), ignore_errors=True)  # a copy
+        now = _now()
+        before = self._installed.get(extension, {})
         self._installed[extension] = {
             "source": candidate.source,
             "sha256": "",
             "path": str(candidate.folder),
+            "installed_at": before.get("installed_at") or now,
+            "updated_at": now,
         }
         self._save()
         logger.info("Linked the extension %s to %s", extension, candidate.folder)
         return Installed(
-            candidate.manifest, candidate.folder, candidate.source, "", False, dev=True
+            candidate.manifest,
+            candidate.folder,
+            candidate.source,
+            "",
+            False,
+            dev=True,
+            installed_at=self._installed[extension]["installed_at"],
+            updated_at=now,
         )
 
     def discard(self, candidate: Candidate) -> None:

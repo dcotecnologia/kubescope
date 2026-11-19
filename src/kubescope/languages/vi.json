@@ -105,6 +105,8 @@
             "Uninstall": "Gỡ cài đặt",
             "Uninstall {name}? Its files are deleted.": "Gỡ cài đặt {name}? Các tệp của nó sẽ bị xóa.",
             "Uninstalled": "Đã gỡ cài đặt",
+            "installed {date}": "đã cài đặt {date}",
+            "updated {date}": "đã cập nhật {date}",
             "{name} comes with KubeScope. Uninstall it? You can reinstall it here.": "{name} đi kèm với KubeScope. Gỡ cài đặt? Bạn có thể cài lại tại đây."
         },
         "ForwardsPage": {

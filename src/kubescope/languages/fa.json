@@ -105,6 +105,8 @@
             "Uninstall": "حذف نصب",
             "Uninstall {name}? Its files are deleted.": "{name} حذف شود؟ فایل‌های آن پاک می‌شوند.",
             "Uninstalled": "حذف نصب شد",
+            "installed {date}": "نصب‌شده {date}",
+            "updated {date}": "به‌روزرسانی {date}",
             "{name} comes with KubeScope. Uninstall it? You can reinstall it here.": "{name} همراه KubeScope عرضه می‌شود. حذف شود؟ می‌توانید آن را از همین‌جا دوباره نصب کنید."
         },
         "ForwardsPage": {

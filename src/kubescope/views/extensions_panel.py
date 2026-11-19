@@ -12,9 +12,11 @@ downloaded off the UI thread.
 import logging
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass, replace
+from datetime import datetime
 from functools import partial
 from pathlib import Path
 
+from kubescope.sdk.timezone import to_zone
 from PySide6.QtCore import QEvent, QObject, Qt
 from PySide6.QtWidgets import (
     QDialog,
@@ -56,6 +58,8 @@ class Row:
     source: str  # "bundled", "folder /x", "github o/r", "dev /x"
     installed: bool
     default: DefaultExtension | None = None  # one the app offers, not installed
+    installed_at: str = ""  # UTC, as the store keeps it
+    updated_at: str = ""
 
     @property
     def bundled(self) -> bool:
@@ -110,7 +114,14 @@ class ExtensionsPanel(QObject):
     def refresh(self) -> None:
         """Read the store again and draw the cards."""
         self.rows = [
-            Row(one.manifest, one.source, True) for one in self.store.installed()
+            Row(
+                one.manifest,
+                one.source,
+                True,
+                installed_at=one.installed_at,
+                updated_at=one.updated_at,
+            )
+            for one in self.store.installed()
         ] + [
             Row(manifest, "bundled", False) for manifest in self.store.removed_bundled()
         ]
@@ -173,6 +184,12 @@ class ExtensionsPanel(QObject):
             f" · {manifest.author}" if manifest.author else ""
         )
         layout.addWidget(QLabel(meta))
+        dates = self._dates(row)
+        if dates:
+            when = QLabel(dates)
+            when.setObjectName("extensionCardDates")
+            when.setProperty("variant", "muted")
+            layout.addWidget(when)
         description = QLabel(manifest.description)
         description.setWordWrap(True)
         description.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
@@ -211,6 +228,21 @@ class ExtensionsPanel(QObject):
         buttons.addStretch(1)
         layout.addLayout(buttons)
         return card
+
+    def _dates(self, row: Row) -> str:
+        """When it was installed and last updated, in lowercase, in the time
+        zone of the settings; nothing for what was never installed here."""
+        parts = []
+        for text, moment in (
+            (self.tr("installed {date}"), row.installed_at),
+            (self.tr("updated {date}"), row.updated_at),
+        ):
+            try:
+                day = to_zone(datetime.fromisoformat(moment)).strftime("%Y-%m-%d")
+            except ValueError:
+                continue
+            parts.append(text.format(date=day).lower())
+        return " · ".join(parts)
 
     @staticmethod
     def _can_reinstall(row: Row) -> bool:
