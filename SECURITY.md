@@ -230,6 +230,14 @@ configure` so you type the keys there. Apart from the integrations below, the ap
   time the app runs it downloads and installs each of them once, from GitHub, with no
   dialog, because the files are the pinned ones; uninstalled, one does not come back
   by itself.
+- **An extension with `aws.read` can read your AWS account, not change it.** It
+  runs the AWS CLI with the profile or keys of the cluster context, only for
+  `rds`, `ec2`, `eks` and `ssm describe-instance-information`, and only for verbs
+  that read (`describe-`, `list-`, and the download of an RDS log). Anything else
+  (including `get-` verbs, which can return secrets), and the options `--profile`,
+  `--region`, `--endpoint-url`, `--output`, `--cli-*`, `--debug` and `file://`
+  values, is refused, so it cannot ask another account, region or server. The
+  permission is shown in the install dialog.
 - **Development mode runs a folder in place.** With **Development mode** ticked, a
   folder is not copied: the extension runs from where it is, and is reloaded when
   its files change, so whoever can edit that folder can change what runs. There is

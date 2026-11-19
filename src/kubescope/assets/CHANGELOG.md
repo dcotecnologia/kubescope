@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file. The format 
 
 ### Added
 
+- An extension can read the AWS account of a cluster context (permission `aws.read`): only commands of `rds`, `ec2`, `eks` and `ssm` that read are run, with the profile or keys of the context, and never one that changes something, reveals a secret or moves the request to another account, region or server by @danilogco
 - An extension can add a page to the side menu, in a section and a group of its own (with the permission `ui.page`), shown only while the extension says it should, which is what lets features like the AWS RDS instances leave the app and become extensions by @danilogco
 - Extensions the app recommends, such as Gabi, show in **Settings → Extensions** as a Recommended card with an Install button; they come from GitHub and are installed only if the files downloaded are the ones whose sha256 the app pinned (also when reinstalled), and one that is not pinned yet is not offered; the first time the app runs it installs them once, without a dialog since they are the pinned files, so that Gabi is there by default and can be uninstalled by @danilogco
 - The SDK that extensions are written against, a project of its own (`kubescope-sdk`) that the app depends on: events, named commands, the contributions of an extension to the window, the settings of each extension, and the cluster read paths and writes behind the permissions its manifest asks for by @danilogco

@@ -149,6 +149,7 @@
             "add a section to the Settings": "додати розділ до Налаштувань",
             "change your clusters, in the write mode": "змінювати ваші кластери, у режимі запису",
             "none": "немає",
+            "read your AWS account (RDS, EC2, EKS, Systems Manager)": "читати ваш обліковий запис AWS (RDS, EC2, EKS, Systems Manager)",
             "read your clusters": "читати ваші кластери",
             "run programs of this computer": "запускати програми цього комп'ютера",
             "use the window: show messages, run tasks and add shortcuts": "використовувати вікно: показувати повідомлення, виконувати завдання та додавати скорочення"

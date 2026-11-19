@@ -96,6 +96,9 @@ class InstallExtensionDialog(QDialog):
         meaning = {
             "cluster.read": self.tr("read your clusters"),
             "cluster.write": self.tr("change your clusters, in the write mode"),
+            "aws.read": self.tr(
+                "read your AWS account (RDS, EC2, EKS, Systems Manager)"
+            ),
             "subprocess": self.tr("run programs of this computer"),
             "ui.dock": self.tr("add a panel to the window"),
             "ui.tab": self.tr("add a kind of tab"),

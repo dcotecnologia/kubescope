@@ -149,6 +149,7 @@
             "add a section to the Settings": "إضافة قسم إلى الإعدادات",
             "change your clusters, in the write mode": "تغيير عناقيدك، في وضع الكتابة",
             "none": "لا شيء",
+            "read your AWS account (RDS, EC2, EKS, Systems Manager)": "قراءة حسابك في AWS (RDS وEC2 وEKS وSystems Manager)",
             "read your clusters": "قراءة عناقيدك",
             "run programs of this computer": "تشغيل برامج هذا الحاسوب",
             "use the window: show messages, run tasks and add shortcuts": "استخدام النافذة: عرض الرسائل وتشغيل المهام وإضافة اختصارات"

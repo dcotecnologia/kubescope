@@ -149,6 +149,7 @@
             "add a section to the Settings": "為設定新增區段",
             "change your clusters, in the write mode": "修改你的叢集(在寫入模式下)",
             "none": "無",
+            "read your AWS account (RDS, EC2, EKS, Systems Manager)": "讀取你的 AWS 帳戶（RDS、EC2、EKS、Systems Manager）",
             "read your clusters": "讀取你的叢集",
             "run programs of this computer": "執行這台電腦上的程式",
             "use the window: show messages, run tasks and add shortcuts": "使用視窗:顯示訊息、執行工作並新增快速鍵"
