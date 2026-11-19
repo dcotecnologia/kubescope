@@ -4,8 +4,11 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+## [2.0.0] - 2026-11-19
+
 ### Added
 
+- **Settings → Extensions** shows the author and latest available version of recommended extensions that are not installed by @danilogco
 - When extensions have a newer version, a window like the one of the app's own updates lists them, from which version to which, and **Update** goes through them one at a time, each shown with its permissions and hash before it replaces the one installed; it shows once for each new version, and the **Update...** button of **Settings → Extensions** opens it again by @danilogco
 - The README, CONTRIBUTING and AGENTS point to the SDK and to the extensions (Gabi and AWS), each a project of its own with a pipeline of tests and releases, and the README has a section on extensions by @danilogco
 - **Settings → Extensions** shows the extensions in a table like the other lists (name, version, status, author, when installed and updated, source and description), with a star on the ones KubeScope recommends, and what can be done with one (Details, Install, Update, Reinstall, Uninstall) is in its right-click menu; a double click opens **Details**, a dialog with a dialog with its id, source, folder, sha256, permissions, commands and any load error by @danilogco
@@ -25,6 +28,10 @@ All notable changes to this project will be documented in this file. The format 
 - An extension can add keyboard shortcuts, which show in the shortcuts of the Settings and can be changed there, and sections of its own to the Settings, saved with the rest; one that runs from its own folder (development mode) is reloaded when its files change by @danilogco
 - An extension can add commands to `kubescope`, named in its manifest so that the app knows them without running it: the app sets the cluster up as configured, runs only that extension with no window, lends it the choice of a context and the confirmation of the terminal, and unloads it by @danilogco
 - **Changed:** Gabi, the assistant, is an extension of its own project (`kubescope-gabi`), installed from **Settings → Extensions**: her chat, her section of the Settings, her shortcut and the command `chat` are hers, and what the app kept for her (the preferences, the consent, the size of the panel and the key of her shortcut) moves under her id the first time the settings are read by @danilogco
+
+### Changed
+
+- The README and the site put Gabi, the Kubernetes assistant, in the foreground with examples of her investigation, navigation, attachments and safeguards by @danilogco
 
 ## [1.12.0] - 2026-11-18
 
@@ -605,7 +612,8 @@ The first release.
 
 - Pod logs and resource details are still never written to disk by the app on its own. **Save** is the only exception, and it writes only to the file the user chooses. SECURITY.md says so by @danilogco
 
-[Unreleased]: https://github.com/dcotecnologia/kubescope/compare/v1.12.0...HEAD
+[Unreleased]: https://github.com/dcotecnologia/kubescope/compare/v2.0.0...HEAD
+[2.0.0]: https://github.com/dcotecnologia/kubescope/compare/v1.12.0...v2.0.0
 [1.12.0]: https://github.com/dcotecnologia/kubescope/compare/v1.11.0...v1.12.0
 [1.11.0]: https://github.com/dcotecnologia/kubescope/compare/v1.10.0...v1.11.0
 [1.10.0]: https://github.com/dcotecnologia/kubescope/compare/v1.9.1...v1.10.0

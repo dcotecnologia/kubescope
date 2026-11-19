@@ -101,7 +101,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from kubescope import forwards, integrations
+from kubescope import about, forwards, integrations
 from kubescope.about import (
     COMPANY_URL,
     LICENSE_URL,
@@ -547,12 +547,6 @@ def _nav_icon(shape: str, colors: tuple[str, str] | None = None) -> QIcon:
             painter.drawRoundedRect(QRectF(3, 10, 12, 5), 1.2, 1.2)
             painter.drawPoint(QPointF(5.8, 5.5))
             painter.drawPoint(QPointF(5.8, 12.5))
-        elif shape == "database":  # a cylinder
-            painter.drawEllipse(QRectF(3.5, 2.5, 11, 4))
-            painter.drawLine(QPointF(3.5, 4.5), QPointF(3.5, 13.5))
-            painter.drawLine(QPointF(14.5, 4.5), QPointF(14.5, 13.5))
-            painter.drawArc(QRectF(3.5, 11.5, 11, 4), 180 * 16, 180 * 16)
-            painter.drawArc(QRectF(3.5, 7, 11, 4), 180 * 16, 180 * 16)
         elif shape == "config":  # two sliders
             painter.drawLine(QPointF(3, 6), QPointF(15, 6))
             painter.drawLine(QPointF(3, 12), QPointF(15, 12))
@@ -2252,7 +2246,7 @@ class WorkloadWindow(QMainWindow):
 
     def _show_version(self) -> None:
         """The version in the footer's corner; the link opens the project."""
-        self.ui.footerVersion.setText(f"v{__version__}")
+        self.ui.footerVersion.setText(f"v{about.__version__}")
         self.ui.githubLink.setToolTip(
             self.tr("Open the project on GitHub") + f"\n{PROJECT_URL}"
         )

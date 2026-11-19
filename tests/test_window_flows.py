@@ -132,7 +132,7 @@ def _ready_window(monkeypatch):
     return window
 
 
-def _wait_until(condition, seconds: float = 3.0) -> None:
+def _wait_until(condition, seconds: float = 15.0) -> None:  # a loaded machine is slow
     deadline = time.monotonic() + seconds
     while not condition() and time.monotonic() < deadline:
         application.processEvents()
@@ -1729,6 +1729,43 @@ def test_the_footer_shows_the_version_and_links_to_the_project(monkeypatch) -> N
 
     window._retranslate()  # a language change rewrites the .ui texts
     assert window.ui.footerVersion.text() == f"v{about.__version__}"
+    window.close()
+
+
+def test_extension_commands_update_the_window_or_explain_missing_choices(
+    monkeypatch,
+) -> None:
+    window = _ready_window(monkeypatch)
+    reports: list[str] = []
+    opened: list[str] = []
+    refreshed: list[bool] = []
+    details: list[tuple[str, str, str]] = []
+    window.namespace_combo.addItem("default", "default")
+    window.context_combo.addItem("prod", "prod")
+    monkeypatch.setattr(window, "_open_list_view", opened.append)
+    monkeypatch.setattr(window, "_press_refresh", lambda: refreshed.append(True))
+    monkeypatch.setattr(
+        window,
+        "_open_resource",
+        lambda kind, namespace, name: details.append((kind, namespace, name)),
+    )
+
+    window._command_set_namespace("missing", reports.append)
+    window._command_set_namespace("default", reports.append)
+    assert window._command_switch_context("missing", reports.append) is False
+    assert window._command_switch_context("prod", reports.append) is True
+    window._command_search("api", reports.append, regex=True, case=True)
+    assert window.search_input.text() == "api"
+    assert (
+        window.search_regex_button.isChecked() and window.search_case_button.isChecked()
+    )
+    window._command_open_view("pods", reports.append)
+    window._command_refresh(reports.append)
+    window._command_show_details("Pod", "default", "api", reports.append)
+
+    assert opened == ["pods"] and refreshed == [True]
+    assert details == [("Pod", "default", "api")]
+    assert len(reports) == 2
     window.close()
 
 

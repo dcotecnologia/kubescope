@@ -4,7 +4,18 @@ title: Gabi, the assistant
 permalink: /assistant/
 ---
 
-Gabi is the AI assistant of KubeScope, made by DCO Tecnologia. She is an expert in Kubernetes and KubeScope, she only talks about them, and she answers in the language of the app, in any of its 21 languages.
+Gabi is the AI assistant of KubeScope, made by DCO Tecnologia. She is an expert in Kubernetes and KubeScope, she only talks about them, and she answers in the language of the app, in any of its 21 languages. Ask her to investigate a restart, make sense of a log, find a resource or guide you to the next useful screen.
+
+## Start with a question
+
+Open the round button in the corner and ask something concrete, such as:
+
+- “Why is this Pod restarting?”
+- “What errors appeared in this namespace in the last hour?”
+- “Show me the Deployment behind this Pod.”
+- “Explain this manifest and what I should check next.”
+
+Gabi uses the active context and the information you let her read to investigate. She tells you what she checked, the evidence it found and how sure she is, then can take you to the corresponding list, details, logs, overview, namespace or context.
 
 ## How it works
 
@@ -26,6 +37,8 @@ The button is there even before any of this. If KubeScope finds neither program,
 - **Look into a problem:** she reads the details of a resource, the logs of a Pod, lists and events, and tells you what she checked, what the evidence shows and how sure she is.
 - **Take you there:** she goes to a list, an overview, Settings, a namespace, a context, a search, the details of a resource, the logs of a Pod or a tab that is open, as if you had clicked.
 - **Propose a change:** only with the write mode on, as a card with **Run** and **Cancel**. She never does it herself.
+
+You can also attach up to four images or text files with **+**, or paste an image into the chat. This is useful for a screenshot, manifest or a log you want to discuss alongside the live cluster information.
 
 In the default **read-only mode** she cannot edit, update or delete anything, and she says so when you ask. She may still show the command or YAML for you to review and run yourself.
 

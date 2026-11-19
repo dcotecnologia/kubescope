@@ -144,9 +144,6 @@ class ExtensionPages(QObject):
         ):
             self.leave()  # its entry went away while it was open
 
-    def owns(self, index: int) -> bool:
-        return any(self.stack.indexOf(entry.host) == index for entry in self._entries)
-
     def shown(self, index: int) -> tuple[str, str, Callable[[], None] | None] | None:
         """Check the entry of the page opened and build it the first time; the
         title, the subtitle and what its refresh button does, if it is one of

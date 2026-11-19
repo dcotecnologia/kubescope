@@ -156,3 +156,29 @@ def test_a_page_added_by_an_extension_is_removed_with_it() -> None:
     contributions.remove_extension("dco.a")
 
     assert [one.extension for one in contributions.pages] == ["dco.b"]
+
+
+def test_a_page_whose_entry_goes_away_while_it_is_open_is_left() -> None:
+    window, _menu, stack, pages, events = make()
+    using = [True]
+    pages.apply([page(visible=lambda: using[0])])
+    stack.setCurrentIndex(stack.count() - 1)
+
+    using[0] = False
+    pages.sync()
+
+    assert events == ["left"]
+
+
+def test_a_page_that_fails_when_it_is_opened_does_not_stop_the_window(caplog) -> None:
+    class Broken(QLabel):
+        def shown(self) -> None:
+            raise RuntimeError("boom")
+
+    window, _menu, stack, pages, _events = make()
+    pages.apply([page(factory=lambda: Broken("x"))])
+
+    found = pages.shown(stack.count() - 1)
+
+    assert found == ("Instances", "Subtitle", None)
+    assert "The page Instances failed" in caplog.text

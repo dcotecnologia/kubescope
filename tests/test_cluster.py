@@ -3565,3 +3565,59 @@ def test_a_failure_reading_the_latest_versions_never_costs_the_list(
         "—",
         "EKS",
     )
+
+
+def test_the_region_profile_and_account_of_an_eks_context(monkeypatch) -> None:
+    arn = "arn:aws:eks:sa-east-1:123456789012:cluster/prod"
+    monkeypatch.setattr(
+        cluster,
+        "_eks_target",
+        lambda context: ["--region", "us-west-2", "--profile", "work"],
+    )
+
+    assert cluster._aws_scope(arn) == ("us-west-2", "work", "123456789012")
+    monkeypatch.setattr(cluster, "_eks_target", lambda context: [])
+    assert cluster._aws_scope(arn) == ("sa-east-1", "", "123456789012")  # from the ARN
+    assert cluster._aws_scope("plain") == ("", "", "")  # nothing to read it from
+    monkeypatch.setattr(cluster, "_eks_target", lambda context: ["--profile", "work"])
+    assert cluster._aws_scope("plain") == (
+        "",
+        "work",
+        "work",
+    )  # the profile is the account
+
+
+def test_an_aws_command_runs_with_the_profile_and_region_of_the_context(
+    monkeypatch,
+) -> None:
+    ran = []
+    monkeypatch.setattr(
+        cluster, "_aws_scope", lambda context: ("us-east-1", "work", "1")
+    )
+    monkeypatch.setattr(cluster, "_context_env", lambda context: {"K": "V"})
+    monkeypatch.setattr(
+        cluster,
+        "_run_aws",
+        lambda command, env: ran.append((command, env)) or '{"a": 1}',
+    )
+
+    assert cluster._aws_json("ctx", ["rds", "describe-db-instances"]) == {"a": 1}
+    cluster._aws_json("ctx", ["ec2", "describe-instances"], "sa-east-1")
+
+    first, second = ran
+    assert first[0] == [
+        "aws", "rds", "describe-db-instances", "--region", "us-east-1",
+        "--profile", "work", "--output", "json",
+    ]  # fmt: skip
+    assert "sa-east-1" in second[0] and first[1] == {"K": "V"}
+
+
+def test_what_the_aws_cli_answers_that_is_not_an_object_is_handled(monkeypatch) -> None:
+    monkeypatch.setattr(cluster, "_aws_scope", lambda context: ("", "", ""))
+    monkeypatch.setattr(cluster, "_context_env", lambda context: None)
+    answers = iter(["[1, 2]", "not json"])
+    monkeypatch.setattr(cluster, "_run_aws", lambda command, env: next(answers))
+
+    assert cluster._aws_json("ctx", ["rds", "x"]) == {}
+    with pytest.raises(cluster.ClusterError, match="something unexpected"):
+        cluster._aws_json("ctx", ["rds", "x"])

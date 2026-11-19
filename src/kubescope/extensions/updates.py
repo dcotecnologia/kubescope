@@ -35,6 +35,34 @@ def latest_tag(names: Sequence[str]) -> str | None:
     return max(finals, key=lambda name: version_key(name) or (0, 0, 0), default=None)
 
 
+def recommended_versions(
+    defaults: Sequence[DefaultExtension],
+    present: set[str],
+    tags: Callable[[Repo], list[str]] | None,
+) -> dict[str, str]:
+    """The latest versions of recommended extensions that are not installed."""
+    if tags is None:
+        return {}
+    found = {}
+    for one in defaults:
+        if one.id in present:
+            continue
+        if one.repo.ref:
+            continue
+        try:
+            newest = latest_tag(tags(one.repo))
+        except GithubError as error:
+            logger.info(
+                "Could not look for the recommended version of %s: %s",
+                one.id,
+                error,
+            )
+            continue
+        if newest is not None:
+            found[one.id] = newest.removeprefix("v")
+    return found
+
+
 @dataclass(frozen=True)
 class Update:
     extension: str

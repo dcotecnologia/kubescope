@@ -409,7 +409,7 @@
             "Add file...": "ファイルを追加...",
             "Add row": "行を追加",
             "All namespaces": "すべての namespaces",
-            "An extension adds a feature to KubeScope, like Gabi. It is code that runs with your permissions, so install only the ones you trust. KubeScope looks for the kubescope-extension.toml in the folder or the repository you give it. Changes apply the next time KubeScope starts.": "拡張機能は、Gabi のように KubeScope に機能を追加します。あなたの権限で動くコードなので、信頼できるものだけをインストールしてください。KubeScope は、指定したフォルダーまたはリポジトリから kubescope-extension.toml を探します。変更は次に KubeScope を起動したときに反映されます。",
+            "An extension adds a feature to KubeScope. It is code that runs with your permissions, so install only the ones you trust. KubeScope looks for the kubescope-extension.toml in the folder or the repository you give it. Changes apply the next time KubeScope starts.": "",
             "Animate windows and lists as they open": "ウィンドウやリストを開くときにアニメーションを表示",
             "Asks the public GitHub API for the latest release and sends nothing but the app version. The icon in the footer checks on demand.": "GitHub の公開 API に最新リリースを問い合わせ、アプリのバージョン以外は何も送信しません。フッターのアイコンでいつでも確認できます。",
             "CLUSTER ACCESS": "クラスターへのアクセス",

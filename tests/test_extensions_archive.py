@@ -154,3 +154,20 @@ def test_the_digest_follows_the_paths_and_the_content(tmp_path) -> None:
     (two / "b.txt").write_text("b")
     (two / "b.txt").rename(two / "c.txt")
     assert archive.tree_digest(two) != same
+
+
+def test_a_file_that_would_land_outside_through_a_link_in_the_folder_is_refused(
+    tmp_path,
+) -> None:
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    destination = tmp_path / "out"
+    destination.mkdir()
+    (destination / "link").symlink_to(outside)  # the folder already has a link
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, "w") as zipped:
+        zipped.writestr("link/evil.txt", "x")
+
+    with pytest.raises(ArchiveError, match="leaves the folder"):
+        extract(buffer.getvalue(), destination)
+    assert not (outside / "evil.txt").exists()

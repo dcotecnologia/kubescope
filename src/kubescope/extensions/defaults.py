@@ -21,6 +21,7 @@ class DefaultExtension:
     repo: Repo  # without a ref: the latest release; with one, that tag
     sha256: str = ""  # of the files of that tag; empty: whatever the release has
     automatic: bool = True  # installed on the first run; else only a card
+    author: str = ""
 
     @property
     def pinned(self) -> bool:
@@ -40,6 +41,7 @@ DEFAULTS = (
             "Uses the coding assistant you already signed in to."
         ),
         repo=Repo("dcotecnologia", "kubescope-ai-gabi"),
+        author="DCO Tecnologia",
     ),
     DefaultExtension(
         id="kubescope.aws",
@@ -52,6 +54,7 @@ DEFAULTS = (
         ),
         repo=Repo("dcotecnologia", "kubescope-aws"),
         automatic=False,
+        author="DCO Tecnologia",
     ),
 )
 

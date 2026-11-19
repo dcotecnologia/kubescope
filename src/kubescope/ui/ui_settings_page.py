@@ -710,7 +710,7 @@ class Ui_SettingsPage(object):
         self.loginAddButton.setText(QCoreApplication.translate("SettingsPage", u"Add row", None))
         self.loginRemoveButton.setText(QCoreApplication.translate("SettingsPage", u"Remove", None))
         self.extensionsHeading.setText(QCoreApplication.translate("SettingsPage", u"EXTENSIONS", None))
-        self.extensionsHint.setText(QCoreApplication.translate("SettingsPage", u"An extension adds a feature to KubeScope, like Gabi. It is code that runs with your permissions, so install only the ones you trust. KubeScope looks for the kubescope-extension.toml in the folder or the repository you give it. Changes apply the next time KubeScope starts.", None))
+        self.extensionsHint.setText(QCoreApplication.translate("SettingsPage", u"An extension adds a feature to KubeScope. It is code that runs with your permissions, so install only the ones you trust. KubeScope looks for the kubescope-extension.toml in the folder or the repository you give it. Changes apply the next time KubeScope starts.", None))
         self.extensionsInstallFolderButton.setText(QCoreApplication.translate("SettingsPage", u"Install from a folder...", None))
         self.extensionsInstallRepoButton.setText(QCoreApplication.translate("SettingsPage", u"Install from GitHub...", None))
         self.extensionsDevCheck.setText(QCoreApplication.translate("SettingsPage", u"Development mode", None))

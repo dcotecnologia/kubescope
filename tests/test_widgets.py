@@ -88,8 +88,8 @@ def test_usage_chart_marks_the_samples_that_start_a_minute() -> None:
 
 
 def test_usage_chart_shows_the_time_and_value_under_the_mouse() -> None:
-    from PySide6.QtCore import QEvent, QPoint
-    from PySide6.QtTest import QTest
+    from PySide6.QtCore import QEvent, QPointF, Qt
+    from PySide6.QtGui import QMouseEvent
 
     chart = UsageChart("CPU", str)
     chart.resize(400, chart.HEIGHT)
@@ -102,7 +102,16 @@ def test_usage_chart_shows_the_time_and_value_under_the_mouse() -> None:
     assert chart.sample_at(plot.left()) is None  # before the first sample
 
     def move(x: float) -> None:
-        QTest.mouseMove(chart, QPoint(int(x), 60))
+        chart.mouseMoveEvent(
+            QMouseEvent(
+                QEvent.Type.MouseMove,
+                QPointF(x, 60),
+                QPointF(x, 60),
+                Qt.MouseButton.NoButton,
+                Qt.MouseButton.NoButton,
+                Qt.KeyboardModifier.NoModifier,
+            )
+        )
 
     plain = chart.grab().toImage()
     move(plot.right())
