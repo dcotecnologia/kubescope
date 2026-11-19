@@ -80,3 +80,77 @@ def test_more_data_than_allowed_is_refused_as_it_is_written(
 
     with pytest.raises(ArchiveError, match="too big once unpacked"):
         extract(make_zip({"a": b"x" * 200}), tmp_path)
+
+
+def make_tree(root):
+    (root / "src").mkdir(parents=True)
+    (root / "src" / "a.py").write_text("a")
+    (root / "b.txt").write_text("b")
+    return root
+
+
+def test_a_folder_is_copied_in_order_and_what_is_ignored_is_left_out(tmp_path) -> None:
+    source = make_tree(tmp_path / "source")
+    (source / ".git").mkdir()
+    (source / ".git" / "HEAD").write_text("x")
+    (source / "src" / "__pycache__").mkdir()
+    (source / "src" / "__pycache__" / "a.pyc").write_bytes(b"x")
+    target = tmp_path / "target"
+    target.mkdir()
+
+    archive.copy_tree(source, target)
+
+    assert sorted(p.relative_to(target).as_posix() for p in target.rglob("*")) == [
+        "b.txt",
+        "src",
+        "src/a.py",
+    ]
+
+
+def test_a_folder_with_a_link_is_refused_whether_file_or_folder(tmp_path) -> None:
+    source = make_tree(tmp_path / "source")
+    target = tmp_path / "target"
+    target.mkdir()
+    (source / "alias.py").symlink_to(source / "b.txt")
+    with pytest.raises(ArchiveError, match="It has a link: 'alias.py'"):
+        archive.copy_tree(source, target)
+
+    (source / "alias.py").unlink()
+    (source / "elsewhere").symlink_to(tmp_path)
+    with pytest.raises(ArchiveError, match="It has a link: 'elsewhere'"):
+        archive.copy_tree(source, target)
+
+
+def test_a_missing_folder_is_refused(tmp_path) -> None:
+    with pytest.raises(ArchiveError, match="not a folder"):
+        archive.copy_tree(tmp_path / "missing", tmp_path)
+
+
+def test_a_folder_with_too_many_files_or_bytes_is_refused(
+    tmp_path, monkeypatch
+) -> None:
+    source = make_tree(tmp_path / "source")
+    target = tmp_path / "target"
+    target.mkdir()
+
+    monkeypatch.setattr(archive, "MAX_FILES", 1)
+    with pytest.raises(ArchiveError, match="too many files"):
+        archive.copy_tree(source, target)
+
+    monkeypatch.setattr(archive, "MAX_FILES", 10)
+    monkeypatch.setattr(archive, "MAX_UNPACKED", 1)
+    with pytest.raises(ArchiveError, match="It is too big"):
+        archive.copy_tree(source, target)
+
+
+def test_the_digest_follows_the_paths_and_the_content(tmp_path) -> None:
+    one = make_tree(tmp_path / "one")
+    two = make_tree(tmp_path / "two")
+    same = archive.tree_digest(one)
+
+    assert archive.tree_digest(two) == same
+    (two / "b.txt").write_text("changed")
+    assert archive.tree_digest(two) != same
+    (two / "b.txt").write_text("b")
+    (two / "b.txt").rename(two / "c.txt")
+    assert archive.tree_digest(two) != same

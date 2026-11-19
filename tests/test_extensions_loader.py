@@ -186,3 +186,71 @@ def test_a_package_without_an_init_file_is_refused(tmp_path) -> None:
     (one.folder / package / "__init__.py").unlink()
 
     assert not ExtensionLoader(make_host()).load(one).ok
+
+
+def test_reloading_runs_the_code_again_as_it_is_now(tmp_path) -> None:
+    host = make_host()
+    loader = ExtensionLoader(host)
+    one, package = make_extension(tmp_path, GOOD)
+    loader.load(one)
+    (one.folder / package / "__init__.py").write_text(GOOD.replace('"chat"', '"chat2"'))
+
+    loaded = loader.reload(one)
+
+    assert loaded.ok
+    assert [d.key for d in host.contributions.docks] == ["chat2"]  # and not both
+
+
+def test_reloading_something_that_broke_reports_it_and_keeps_the_app_up(
+    tmp_path,
+) -> None:
+    host = make_host()
+    loader = ExtensionLoader(host)
+    one, package = make_extension(tmp_path, GOOD)
+    loader.load(one)
+    (one.folder / package / "__init__.py").write_text("def activate(ctx:\n")  # syntax
+
+    loaded = loader.reload(one)
+
+    assert not loaded.ok
+    assert "never closed" in loaded.error  # the first line of the syntax error
+    assert host.contributions.docks == []
+    (one.folder / package / "__init__.py").write_text(GOOD)
+    assert loader.reload(one).ok  # fixed: it comes back
+
+
+def test_what_the_extension_asked_to_close_is_closed_when_it_unloads(tmp_path) -> None:
+    host = make_host()
+    loader = ExtensionLoader(host)
+    one, package = make_extension(
+        tmp_path,
+        "CLOSED = []\n"
+        "def activate(ctx):\n"
+        "    ctx.on_unload(lambda: CLOSED.append('first'))\n"
+        "    ctx.on_unload(lambda: CLOSED.append('second'))\n",
+    )
+    loader.load(one)
+    closed = sys.modules[package].CLOSED
+
+    loader.unload(one.manifest.id)
+
+    assert closed == ["second", "first"]  # the last one made is the first undone
+
+
+def test_a_cleanup_that_fails_does_not_stop_the_others(tmp_path, caplog) -> None:
+    loader = ExtensionLoader(make_host())
+    one, package = make_extension(
+        tmp_path,
+        "CLOSED = []\n"
+        "def activate(ctx):\n"
+        "    ctx.on_unload(lambda: CLOSED.append('ok'))\n"
+        "    ctx.on_unload(lambda: 1 / 0)\n",
+    )
+    loader.load(one)
+    closed = sys.modules[package].CLOSED
+
+    with caplog.at_level(logging.ERROR):
+        loader.unload(one.manifest.id)
+
+    assert closed == ["ok"]
+    assert "A cleanup of the extension" in caplog.text
