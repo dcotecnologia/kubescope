@@ -16,10 +16,13 @@ from kubescope.sdk import (
     PERMISSIONS,
     CliCommand,
     ClusterAccess,
+    CommandError,
     DockContribution,
     PermissionDenied,
     SettingsSection,
+    ShortcutContribution,
     TabKind,
+    Ui,
     WriteModeOff,
 )
 
@@ -36,9 +39,26 @@ class Host:
     write_mode: Callable[[], bool]
     settings_data: Callable[[str], dict[str, Any]]  # the store of one extension
     save_settings: Callable[[], None]
+    language: Callable[[], str] = lambda: "auto"
+    ui: Ui | None = None  # None while the app runs without a window
     events: EventBus = field(default_factory=EventBus)
     commands: CommandRegistry = field(default_factory=CommandRegistry)
     contributions: Contributions = field(default_factory=Contributions)
+
+
+class AppInfo:
+    """What the app says about itself, read when asked."""
+
+    def __init__(self, host: Host) -> None:
+        self._host = host
+
+    @property
+    def write_mode(self) -> bool:
+        return self._host.write_mode()
+
+    @property
+    def language(self) -> str:
+        return self._host.language()
 
 
 class ExtensionSettings:
@@ -94,6 +114,8 @@ class ExtensionContext:
         self._host = host
         self.events = ScopedEvents(host.events)
         self._cleanups: list[Callable[[], None]] = []
+        self._commands: list[str] = []
+        self.app = AppInfo(host)
         self.settings = ExtensionSettings(
             host.settings_data(extension), host.save_settings
         )
@@ -111,6 +133,9 @@ class ExtensionContext:
                 self._cleanups.pop()()
             except Exception:
                 logger.exception("A cleanup of the extension %s failed", self.id)
+        for name in self._commands:
+            self._host.commands.unregister(name)
+        self._commands.clear()
         self.events.close()
         self._host.contributions.remove_extension(self.id)
 
@@ -137,6 +162,27 @@ class ExtensionContext:
 
     def invoke(self, command: str, /, **arguments: Any) -> Any:
         return self._host.commands.invoke(command, **arguments)
+
+    @property
+    def ui(self) -> Ui | None:
+        self._require("ui.window")
+        return self._host.ui
+
+    def register_command(self, name: str, command: Callable[..., Any]) -> None:
+        if not name.startswith(f"{self.id}."):
+            raise CommandError(
+                f"the name of a command of {self.id} starts with {self.id}."
+            )
+        self._host.commands.register(name, command)
+        self._commands.append(name)
+
+    def add_shortcut(
+        self, action: str, label: str, default: str, handler: Callable[[], None]
+    ) -> None:
+        self._require("ui.window")
+        self._host.contributions.shortcuts.append(
+            ShortcutContribution(self.id, action, label, default, handler)
+        )
 
     def add_dock(
         self, key: str, factory: Callable[..., Any], shortcut: str = ""

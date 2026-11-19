@@ -196,7 +196,8 @@
             "change your clusters, in the write mode": "modificar tus clústeres, en el modo de escritura",
             "none": "ninguno",
             "read your clusters": "leer tus clústeres",
-            "run programs of this computer": "ejecutar programas de este equipo"
+            "run programs of this computer": "ejecutar programas de este equipo",
+            "use the window: show messages, run tasks and add shortcuts": "usar la ventana: mostrar mensajes, ejecutar tareas y añadir atajos"
         },
         "LogTab": {
             "Auto-refresh": "Actualización automática",

@@ -196,7 +196,8 @@
             "change your clusters, in the write mode": "kümelerinizi değiştirmek, yazma kipinde",
             "none": "yok",
             "read your clusters": "kümelerinizi okumak",
-            "run programs of this computer": "bu bilgisayarın programlarını çalıştırmak"
+            "run programs of this computer": "bu bilgisayarın programlarını çalıştırmak",
+            "use the window: show messages, run tasks and add shortcuts": "pencereyi kullanmak: ileti göstermek, görev çalıştırmak ve kısayol eklemek"
         },
         "LogTab": {
             "Auto-refresh": "Otomatik yenile",

@@ -250,3 +250,100 @@ def test_an_extension_hears_the_events_until_it_is_closed() -> None:
 
     assert heard == ["a"]
     assert host.contributions.docks == []
+
+
+class FakeUi:
+    window = "the window"
+    central = "the central widget"
+
+    def __init__(self) -> None:
+        self.calls: list[tuple] = []
+
+    def show_message(self, icon, title, text) -> None:
+        self.calls.append(("message", icon, title, text))
+
+    def run_action(self, function, on_success, *arguments, on_error=None, quiet=False):
+        self.calls.append(("run", function, arguments, quiet))
+
+    def style_box(self, box) -> None:
+        self.calls.append(("style", box))
+
+    def show_settings(self, section="") -> None:
+        self.calls.append(("settings", section))
+
+    def reserve_corner(self, owner, pixels) -> None:
+        self.calls.append(("corner", owner, pixels))
+
+
+def test_the_window_is_lent_only_to_an_extension_that_asked_for_it() -> None:
+    host, _, _ = make_host()
+    host.ui = FakeUi()
+
+    with pytest.raises(PermissionDenied, match="did not ask for ui.window"):
+        _ = ExtensionContext("dco.test", frozenset(), host).ui
+
+    ui = ExtensionContext("dco.test", frozenset({"ui.window"}), host).ui
+    assert ui is host.ui and ui is not None and ui.window == "the window"
+
+
+def test_without_a_window_the_ui_is_none() -> None:
+    host, _, _ = make_host()
+
+    assert ExtensionContext("dco.test", frozenset({"ui.window"}), host).ui is None
+
+
+def test_the_app_tells_the_write_mode_and_the_language_as_they_are_now() -> None:
+    state = {"write": False, "language": "pt_BR"}
+    host, _, _ = make_host()
+    host.write_mode = lambda: state["write"]
+    host.language = lambda: state["language"]
+    app = ExtensionContext("dco.test", frozenset(), host).app
+
+    assert (app.write_mode, app.language) == (False, "pt_BR")
+    state.update(write=True, language="de")
+    assert (app.write_mode, app.language) == (True, "de")
+
+
+def test_the_language_is_auto_until_the_app_says_otherwise() -> None:
+    host, _, _ = make_host()
+
+    assert ExtensionContext("dco.test", frozenset(), host).app.language == "auto"
+
+
+def test_an_extension_offers_commands_under_its_own_name_and_they_go_with_it() -> None:
+    host, _, _ = make_host()
+    context = ExtensionContext("dco.test", frozenset(), host)
+
+    context.register_command("dco.test.apply", lambda value: value * 2)
+
+    assert host.commands.invoke("dco.test.apply", value=2) == 4
+    with pytest.raises(CommandError, match="starts with dco.test."):
+        context.register_command("open_tab", lambda: None)
+    with pytest.raises(CommandError, match="already registered"):
+        context.register_command("dco.test.apply", lambda: None)
+    context.close()
+    assert not host.commands.has("dco.test.apply")
+
+
+def test_a_shortcut_is_a_contribution_that_goes_with_the_extension() -> None:
+    host, _, _ = make_host()
+    context = ExtensionContext("dco.test", frozenset({"ui.window"}), host)
+
+    def handler() -> None:
+        return None
+
+    context.add_shortcut("dco.test.ask", "Ask", "Ctrl+G", handler)
+
+    [shortcut] = host.contributions.shortcuts
+    assert (shortcut.action, shortcut.label, shortcut.default) == (
+        "dco.test.ask",
+        "Ask",
+        "Ctrl+G",
+    )
+    assert shortcut.handler is handler
+    context.close()
+    assert host.contributions.shortcuts == []
+    with pytest.raises(PermissionDenied):
+        ExtensionContext("dco.test", frozenset(), host).add_shortcut(
+            "a", "A", "", handler
+        )

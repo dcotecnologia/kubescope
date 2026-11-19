@@ -14,6 +14,7 @@ from kubescope.sdk import (
     CommandError,
     DockContribution,
     SettingsSection,
+    ShortcutContribution,
     TabKind,
 )
 
@@ -90,6 +91,7 @@ class Contributions:
     tab_kinds: list[TabKind] = field(default_factory=list)
     settings_sections: list[SettingsSection] = field(default_factory=list)
     cli_commands: list[CliCommand] = field(default_factory=list)
+    shortcuts: list[ShortcutContribution] = field(default_factory=list)
 
     def remove_extension(self, extension: str) -> None:
         """Drop everything `extension` added."""
@@ -101,3 +103,4 @@ class Contributions:
         self.cli_commands = [
             one for one in self.cli_commands if one.extension != extension
         ]
+        self.shortcuts = [one for one in self.shortcuts if one.extension != extension]

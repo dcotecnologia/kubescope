@@ -196,7 +196,8 @@
             "change your clusters, in the write mode": "تغيير عناقيدك، في وضع الكتابة",
             "none": "لا شيء",
             "read your clusters": "قراءة عناقيدك",
-            "run programs of this computer": "تشغيل برامج هذا الحاسوب"
+            "run programs of this computer": "تشغيل برامج هذا الحاسوب",
+            "use the window: show messages, run tasks and add shortcuts": "استخدام النافذة: عرض الرسائل وتشغيل المهام وإضافة اختصارات"
         },
         "LogTab": {
             "Auto-refresh": "تحديث تلقائي",
