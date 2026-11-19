@@ -7,6 +7,7 @@ from PySide6.QtWidgets import QMessageBox
 
 from kubescope import window as window_module
 from kubescope.extensions.bundled.gabi import actions
+from kubescope.extensions.bundled.gabi import controller as controller_module
 from kubescope.extensions.bundled.gabi.runner import Assistant
 from kubescope.extensions.bundled.gabi.tab import AssistantTab
 from kubescope.i18n import apply_language
@@ -14,6 +15,14 @@ from tests.test_window_flows import _ready_window
 
 ONE = Assistant("one", "One", "one-ai", lambda m, s: [], lambda line: ("", ""))
 TWO = Assistant("two", "Two", "two-ai", lambda m, s: [], lambda line: ("", ""))
+
+
+def _patch(monkeypatch, name: str, value) -> None:
+    """Replace a name in the window and in Gabi's controller, whichever uses
+    it."""
+    for module in (window_module, controller_module):
+        if hasattr(module, name):
+            monkeypatch.setattr(module, name, value)
 
 
 @pytest.fixture(autouse=True)
@@ -28,7 +37,7 @@ def _request(action: str, **args) -> actions.Request:
 
 
 def _open(monkeypatch, found=(ONE,), consent=True):
-    monkeypatch.setattr(window_module, "installed_assistants", lambda: list(found))
+    _patch(monkeypatch, "installed_assistants", lambda: list(found))
     window = _ready_window(monkeypatch)
     window.settings.assistant_consent = consent
     messages: list[tuple[str, str]] = []
@@ -41,7 +50,7 @@ def _open(monkeypatch, found=(ONE,), consent=True):
 
 
 def _tab(window) -> AssistantTab:
-    tab = window._assistant_tab
+    tab = window.gabi.tab
     assert isinstance(tab, AssistantTab)
     return tab
 
@@ -49,11 +58,11 @@ def _tab(window) -> AssistantTab:
 def test_the_corner_button_opens_and_puts_away_the_chat(monkeypatch) -> None:
     window, _messages = _open(monkeypatch)
     window.show()
-    dock = window.assistant_dock
+    dock = window.gabi.dock
     assert dock.bubble.isVisible() and not dock.is_open
 
     dock.bubble.click()
-    assert dock.is_open and window._assistant_tab is not None
+    assert dock.is_open and window.gabi.tab is not None
 
     tab = _tab(window)
     dock.bubble.click()  # the same button puts it away
@@ -87,9 +96,9 @@ def test_without_a_context_there_is_no_chat(monkeypatch) -> None:
     window, messages = _open(monkeypatch)
     window.context_combo.clear()
 
-    window._open_assistant()
+    window.gabi.open()
 
-    assert "Choose a context" in messages[-1][1] and window._assistant_tab is None
+    assert "Choose a context" in messages[-1][1] and window.gabi.tab is None
     window.close()
 
 
@@ -97,10 +106,10 @@ def test_without_a_program_the_button_guides_to_the_setup(monkeypatch) -> None:
     window, _messages = _open(monkeypatch, found=())
     boxes = _answer_the_guide(monkeypatch, "Close")
 
-    window.assistant_dock.bubble.click()  # the button is there, to be found
+    window.gabi.dock.bubble.click()  # the button is there, to be found
 
     (box,) = boxes
-    assert window.assistant_dock.bubble.isVisibleTo(window)
+    assert window.gabi.dock.bubble.isVisibleTo(window)
     assert box.text() == "Gabi needs Claude Code or Codex."
     steps = box.informativeText()
     for phrase in (
@@ -117,7 +126,7 @@ def test_without_a_program_the_button_guides_to_the_setup(monkeypatch) -> None:
         "Close",
     }
     assert "Install the Claude Code CLI (claude) or the Codex CLI (codex)" in steps
-    assert window._assistant_tab is None and not window.assistant_dock.is_open
+    assert window.gabi.tab is None and not window.gabi.dock.is_open
     assert window.pages.currentIndex() != 2
     window.close()
 
@@ -129,7 +138,7 @@ def test_the_guide_opens_the_settings_at_the_section_of_the_assistant(
     window.show()
     _answer_the_guide(monkeypatch, "Open Settings")
 
-    window._open_assistant()
+    window.gabi.open()
 
     assert window.pages.currentIndex() == 2
     assert window.settings_ui.assistantCard.isVisibleTo(window)
@@ -148,9 +157,9 @@ def test_the_guide_links_to_how_each_program_is_installed(monkeypatch) -> None:
 
     window.settings.language = "en"
     _answer_the_guide(monkeypatch, "Claude Code guide")
-    window._open_assistant()
+    window.gabi.open()
     _answer_the_guide(monkeypatch, "Codex guide")
-    window._open_assistant()
+    window.gabi.open()
 
     assert opened == [
         "https://code.claude.com/docs/en/quickstart",
@@ -172,7 +181,7 @@ def test_the_guide_of_claude_is_in_portuguese_for_a_portuguese_app(monkeypatch) 
     window.settings.language = "pt_BR"
     _answer_the_guide(monkeypatch, "Claude Code guide")
 
-    window._open_assistant()
+    window.gabi.open()
 
     assert opened == ["https://code.claude.com/docs/pt/quickstart"]
     assert claude.guide("pt") == "https://code.claude.com/docs/pt/quickstart"
@@ -190,15 +199,15 @@ def test_the_guide_says_when_a_path_that_was_set_is_no_longer_a_program(
     window, _messages = _open(monkeypatch, found=())
     window.settings.assistant_programs = {"claude": str(tmp_path / "gone")}
     boxes = _answer_the_guide(monkeypatch, "Close")
-    monkeypatch.setattr(window_module, "is_available_assistant", lambda one: False)
+    _patch(monkeypatch, "is_available_assistant", lambda one: False)
 
-    window._open_assistant()
+    window.gabi.open()
 
     assert "The path set for Claude Code is not a program that can be run." in (
         boxes[0].informativeText()
     )
     window.settings.assistant_programs = {}
-    window._open_assistant()
+    window.gabi.open()
     assert "The path set for" not in boxes[1].informativeText()
     window.close()
 
@@ -215,15 +224,15 @@ def test_the_chat_asks_once_before_anything_can_leave_the_computer(monkeypatch) 
     monkeypatch.setattr(window_module.QMessageBox, "question", question)
     monkeypatch.setattr(window, "_save_settings", lambda: None)
 
-    window._open_assistant()
-    assert window._assistant_tab is None and not window.settings.assistant_consent
+    window.gabi.open()
+    assert window.gabi.tab is None and not window.settings.assistant_consent
 
-    window._open_assistant()
+    window.gabi.open()
     assert window.settings.assistant_consent
-    assert window._assistant_tab is not None and "sent to One" in asked[0]
+    assert window.gabi.tab is not None and "sent to One" in asked[0]
     assert "type and attach" in asked[0]
 
-    window._open_assistant()  # agreed already: it does not ask again
+    window.gabi.open()  # agreed already: it does not ask again
     assert len(asked) == 2
     window.close()
 
@@ -232,12 +241,12 @@ def test_images_are_offered_only_to_a_program_that_takes_them(monkeypatch) -> No
     from kubescope.extensions.bundled.gabi.claude import CLAUDE
 
     window, _messages = _open(monkeypatch, found=(ONE,))
-    window._open_assistant()
+    window.gabi.open()
     assert _tab(window)._takes_images is False
-    window._end_assistant_chat()
+    window.gabi.end_chat()
 
-    monkeypatch.setattr(window_module, "installed_assistants", lambda: [CLAUDE])
-    window._open_assistant()
+    _patch(monkeypatch, "installed_assistants", lambda: [CLAUDE])
+    window.gabi.open()
     assert _tab(window)._takes_images is True
     window.close()
 
@@ -246,9 +255,9 @@ def test_the_assistant_chosen_is_used_and_otherwise_the_first_one(monkeypatch) -
     window, _messages = _open(monkeypatch, found=(ONE, TWO))
 
     window.settings.assistant = "two"
-    assert window._assistant_program() is TWO
+    assert window.gabi.program() is TWO
     window.settings.assistant = "gone"
-    assert window._assistant_program() is ONE
+    assert window.gabi.program() is ONE
     window.close()
 
 
@@ -256,18 +265,18 @@ def test_the_conversation_is_kept_and_found_again_in_the_same_context(
     monkeypatch,
 ) -> None:
     window, _messages = _open(monkeypatch)
-    window._open_assistant()
+    window.gabi.open()
     first = _tab(window)
     first.note("a note worth keeping")
-    window.assistant_dock.close()
-    window._end_assistant_chat()  # as when the app is closed and opened again
+    window.gabi.dock.close()
+    window.gabi.end_chat()  # as when the app is closed and opened again
 
-    window._open_assistant()
+    window.gabi.open()
 
     second = _tab(window)
     assert second is not first
     assert ("app", "a note worth keeping") in second.entries()
-    assert window._assistant_history.entries("prod")[-1] == (
+    assert window.gabi.history.entries("prod")[-1] == (
         "app",
         "a note worth keeping",
     )
@@ -276,19 +285,19 @@ def test_the_conversation_is_kept_and_found_again_in_the_same_context(
 
 def test_the_history_is_forgotten_only_after_the_person_agrees(monkeypatch) -> None:
     window, _messages = _open(monkeypatch)
-    window._open_assistant()
+    window.gabi.open()
     _tab(window).note("old")
     answers = [QMessageBox.StandardButton.No, QMessageBox.StandardButton.Yes]
     monkeypatch.setattr(
         window_module.QMessageBox, "question", lambda *_a: answers.pop(0)
     )
 
-    window.assistant_dock.panel.clear_button.click()
+    window.gabi.dock.panel.clear_button.click()
     assert ("app", "old") in _tab(window).entries()
 
-    window.assistant_dock.panel.clear_button.click()
-    assert window._assistant_history.entries("prod") == []
-    assert _tab(window).entries() == [] and window.assistant_dock.is_open
+    window.gabi.dock.panel.clear_button.click()
+    assert window.gabi.history.entries("prod") == []
+    assert _tab(window).entries() == [] and window.gabi.dock.is_open
     window.close()
 
 
@@ -298,28 +307,28 @@ def test_the_settings_turn_the_chat_on_or_off_and_choose_the_program(
     window, _messages = _open(monkeypatch, found=(ONE, TWO))
     window._load_settings_form()
     form = window.settings_ui
-    assert form.assistantCheck.isChecked() and window.assistant_dock.bubble.isVisibleTo(
+    assert form.assistantCheck.isChecked() and window.gabi.dock.bubble.isVisibleTo(
         window
     )
     assert form.assistantCombo.itemData(0) == ""
     assert [form.assistantCombo.itemText(i) for i in range(3)][1:] == ["One", "Two"]
 
-    window._open_assistant()
+    window.gabi.open()
     form.assistantCheck.setChecked(False)
     form.assistantCombo.setCurrentIndex(form.assistantCombo.findData("two"))
     window._save_preferences()
 
     assert not window.settings.assistant_enabled and window.settings.assistant == "two"
-    assert not window.assistant_dock.bubble.isVisibleTo(window)
-    assert not window.assistant_dock.is_open
+    assert not window.gabi.dock.bubble.isVisibleTo(window)
+    assert not window.gabi.dock.is_open
     window.close()
 
 
 def test_every_conversation_can_be_forgotten_from_the_settings(monkeypatch) -> None:
     window, _messages = _open(monkeypatch)
-    window._open_assistant()
+    window.gabi.open()
     _tab(window).note("a")
-    window.assistant_dock.close()
+    window.gabi.dock.close()
     monkeypatch.setattr(
         window_module.QMessageBox,
         "question",
@@ -328,10 +337,7 @@ def test_every_conversation_can_be_forgotten_from_the_settings(monkeypatch) -> N
 
     window.settings_ui.assistantClearButton.click()
 
-    assert (
-        window._assistant_history.entries("prod") == []
-        and window._assistant_tab is None
-    )
+    assert window.gabi.history.entries("prod") == [] and window.gabi.tab is None
     window.close()
 
 
@@ -341,22 +347,22 @@ def test_a_chat_belongs_to_its_cluster_unless_the_assistant_moves_it(
     window, _messages = _open(monkeypatch)
     window.context_combo.addItem("dev", "dev")
     window.context_combo.addItem("qa", "qa")
-    window._open_assistant()
+    window.gabi.open()
     tab = _tab(window)
 
     tab.navigate.emit(_request("switch_context", context="dev"))
-    assert window._assistant_tab is tab and tab.context == "dev"
-    assert window.assistant_dock.is_open
+    assert window.gabi.tab is tab and tab.context == "dev"
+    assert window.gabi.dock.is_open
 
     window.context_combo.setCurrentIndex(window.context_combo.findData("qa"))
-    assert window._assistant_tab is None and tab.closed
-    assert not window.assistant_dock.is_open
+    assert window.gabi.tab is None and tab.closed
+    assert not window.gabi.dock.is_open
     window.close()
 
 
 def test_the_assistant_navigates_the_window_as_the_person_would(monkeypatch) -> None:
     window, _messages = _open(monkeypatch)
-    window._open_assistant()
+    window.gabi.open()
     tab = _tab(window)
     window.context_combo.addItem("dev", "dev")
     opened: list = []
@@ -393,7 +399,7 @@ def test_the_assistant_navigates_the_window_as_the_person_would(monkeypatch) -> 
 
 def test_a_list_of_eks_only_is_not_opened_in_another_context(monkeypatch) -> None:
     window, _messages = _open(monkeypatch)
-    window._open_assistant()
+    window.gabi.open()
     tab = _tab(window)
     window.ui.navNodeGroups.setVisible(False)
 
@@ -405,7 +411,7 @@ def test_a_list_of_eks_only_is_not_opened_in_another_context(monkeypatch) -> Non
 
 def test_a_confirmed_change_runs_only_with_the_write_mode_on(monkeypatch) -> None:
     window, _messages = _open(monkeypatch)
-    window._open_assistant()
+    window.gabi.open()
     tab = _tab(window)
     runs: list = []
     monkeypatch.setattr(
@@ -436,11 +442,11 @@ def test_closing_the_window_stops_the_chat_and_a_language_change_retitles_it(
     monkeypatch,
 ) -> None:
     window, _messages = _open(monkeypatch)
-    window._open_assistant()
+    window.gabi.open()
     tab = _tab(window)
 
     window._retranslate()
-    assert window.assistant_dock.panel.title.text() == "Gabi"
+    assert window.gabi.dock.panel.title.text() == "Gabi"
     window.close()
 
     assert tab.closed
@@ -501,7 +507,7 @@ def test_the_chat_answers_in_the_language_of_the_app_and_follows_a_change(
 ) -> None:
     window, _messages = _open(monkeypatch)
     window.settings.language = "pt"
-    window._open_assistant()
+    window.gabi.open()
     tab = _tab(window)
     assert "Answer in Portuguese" in tab.session.system
 
@@ -545,7 +551,7 @@ def test_the_assistant_moves_to_a_page_an_open_tab_and_the_logs_of_a_pod(
     from kubescope.models import PodInfo
 
     window, _messages = _open(monkeypatch)
-    window._open_assistant()
+    window.gabi.open()
     tab = _tab(window)
 
     for page, index in (("settings", 2), ("workloads_overview", 4), ("overview", 0)):
@@ -605,7 +611,7 @@ def test_the_logs_are_the_main_container_and_never_a_migration(monkeypatch) -> N
     from kubescope.models import PodInfo
 
     window, _messages = _open(monkeypatch)
-    window._open_assistant()
+    window.gabi.open()
     tab = _tab(window)
     # a migration that runs first, then the container that is wanted
     pods = [
@@ -641,7 +647,7 @@ def test_with_several_main_containers_and_none_said_the_person_is_asked(
     from kubescope.models import PodInfo
 
     window, _messages = _open(monkeypatch)
-    window._open_assistant()
+    window.gabi.open()
     tab = _tab(window)
     pods = [
         PodInfo(
@@ -688,7 +694,7 @@ def test_with_several_main_containers_and_none_said_the_person_is_asked(
 
 def test_a_failed_search_for_the_pod_is_said_in_the_chat(monkeypatch) -> None:
     window, _messages = _open(monkeypatch)
-    window._open_assistant()
+    window.gabi.open()
     tab = _tab(window)
     monkeypatch.setattr(
         window,
@@ -726,7 +732,7 @@ def test_the_panel_state_is_read_at_the_start_and_written_when_it_changes(
     saved.save()
     window, _messages = _open(monkeypatch)
 
-    dock = window.assistant_dock
+    dock = window.gabi.dock
     assert dock.is_floating and dock._size.width() == 500
 
     dock.set_floating(False)
@@ -757,7 +763,7 @@ def test_the_settings_take_the_path_of_a_program_the_system_does_not_find(
     program.write_text("#!/bin/sh\n")
     program.chmod(0o755)
     window, _messages = _open(monkeypatch)
-    monkeypatch.setattr(window_module, "ASSISTANTS", {"one": ONE, "two": TWO})
+    _patch(monkeypatch, "ASSISTANTS", {"one": ONE, "two": TWO})
     window._load_settings_form()
     paths = window._assistant_paths
     assert set(paths) == {"one", "two"}
@@ -820,7 +826,7 @@ def test_the_assistant_is_told_the_mode_and_follows_it_when_it_changes(
 ) -> None:
     window, _messages = _open(monkeypatch)
     window.settings.write_mode = False
-    window._open_assistant()
+    window.gabi.open()
     tab = _tab(window)
     assert "READ-ONLY mode" in tab.session.system
     assert "- scale [" not in tab.session.system
@@ -990,7 +996,7 @@ def test_changing_the_theme_repaints_the_chat_that_is_open(monkeypatch) -> None:
     from kubescope import theme
 
     window, _messages = _open(monkeypatch)
-    window._open_assistant()
+    window.gabi.open()
     tab = _tab(window)
     tab.note("a note")
     light = tab._bubbles[0].styleSheet()
@@ -1010,7 +1016,7 @@ def test_the_settings_button_of_the_chat_opens_the_assistant_section(
     window.show()
     window._show_page(0)
 
-    window.assistant_dock.panel.settings_button.click()
+    window.gabi.dock.panel.settings_button.click()
 
     assert window.pages.currentIndex() == 2
     assert window.settings_ui.assistantSectionButton.isChecked()
@@ -1055,7 +1061,7 @@ def test_the_model_and_effort_are_chosen_for_each_program(monkeypatch) -> None:
         effort_options=lambda effort: ["--effort", effort],
     )
     window, _messages = _open(monkeypatch, found=(many, ONE))
-    monkeypatch.setattr(window_module, "ASSISTANTS", {"many": many, "one": ONE})
+    _patch(monkeypatch, "ASSISTANTS", {"many": many, "one": ONE})
     window.settings.assistant_efforts = {"many": "old"}  # no longer listed
     window._load_settings_form()
     model, effort = window._assistant_models["many"]
@@ -1082,15 +1088,15 @@ def test_the_header_of_the_chat_says_what_answers(monkeypatch) -> None:
     monkeypatch.setattr(runner, "CUSTOM_MODELS", {})
     monkeypatch.setattr(runner, "CUSTOM_EFFORTS", {})
     window, _messages = _open(monkeypatch)
-    monkeypatch.setattr(window_module, "ASSISTANTS", {"one": ONE})
+    _patch(monkeypatch, "ASSISTANTS", {"one": ONE})
     window.show()
-    panel = window.assistant_dock.panel
+    panel = window.gabi.dock.panel
     assert not panel.engine.isVisibleTo(panel)
 
-    window._open_assistant()
+    window.gabi.open()
     assert panel.engine.text() == "One · unknown model · unknown effort"
 
-    window._apply_assistant_settings(True, "", {}, {"one": "big"}, {"one": "high"})
+    window.gabi.apply_settings(True, "", {}, {"one": "big"}, {"one": "high"})
     assert panel.engine.text() == "One · big · unknown effort"  # ONE sets no effort
 
     many = Assistant(
@@ -1102,9 +1108,9 @@ def test_the_header_of_the_chat_says_what_answers(monkeypatch) -> None:
         effort_options=lambda effort: [],
     )
     runner.CUSTOM_EFFORTS["many"] = "low"
-    assert window._assistant_engine(many, "m") == "Many · m · low"
+    assert window.gabi.engine(many, "m") == "Many · m · low"
 
-    window._end_assistant_chat()
+    window.gabi.end_chat()
     assert not panel.engine.isVisibleTo(panel)
     window.close()
 
@@ -1124,14 +1130,14 @@ def test_what_the_program_is_set_to_use_is_told_to_it_and_shown(monkeypatch) -> 
         defaults=lambda: ("big", "low"),
     )
     window, _messages = _open(monkeypatch, found=(set_up,))
-    monkeypatch.setattr(window_module, "ASSISTANTS", {"up": set_up})
+    _patch(monkeypatch, "ASSISTANTS", {"up": set_up})
 
-    window._sync_assistant_choices()
-    assert window._assistant_engine(set_up, None) == "Up · big · low"
+    window.gabi.sync_choices()
+    assert window.gabi.engine(set_up, None) == "Up · big · low"
 
     window.settings.assistant_models = {"up": "small"}  # the settings win
-    window._sync_assistant_choices()
-    assert window._assistant_engine(set_up, None) == "Up · small · low"
+    window.gabi.sync_choices()
+    assert window.gabi.engine(set_up, None) == "Up · small · low"
     window.close()
 
 
@@ -1140,15 +1146,15 @@ def test_the_open_chat_goes_on_with_the_program_chosen_in_the_settings(
 ) -> None:
     window, _messages = _open(monkeypatch, found=(ONE, TWO))
     window.show()
-    window._open_assistant()
+    window.gabi.open()
     tab = _tab(window)
     assert tab.session.assistant is ONE
-    assert window.assistant_dock.panel.engine.text().startswith("One")
+    assert window.gabi.dock.panel.engine.text().startswith("One")
 
-    window._apply_assistant_settings(True, "two", {}, {}, {})
+    window.gabi.apply_settings(True, "two", {}, {}, {})
 
     assert tab.session.assistant is TWO
-    assert window.assistant_dock.panel.engine.text().startswith("Two")
+    assert window.gabi.dock.panel.engine.text().startswith("Two")
     window.close()
 
 
@@ -1185,10 +1191,10 @@ def test_debug_tells_what_answers_and_all_of_its_configuration(monkeypatch) -> N
         defaults=lambda: ("big", "low"),
     )
     window, _messages = _open(monkeypatch, found=(set_up,))
-    monkeypatch.setattr(window_module, "ASSISTANTS", {"up": set_up})
+    _patch(monkeypatch, "ASSISTANTS", {"up": set_up})
     window.settings.assistant_efforts = {"up": "high"}
-    window._sync_assistant_choices()
-    window._open_assistant()
+    window.gabi.sync_choices()
+    window.gabi.open()
     tab = _tab(window)
     calls: list[str] = []
     monkeypatch.setattr(tab, "_ask", lambda *a: calls.append("asked"))
@@ -1207,8 +1213,8 @@ def test_debug_tells_what_answers_and_all_of_its_configuration(monkeypatch) -> N
     assert "--effort high" in report
 
     tab.session.assistant = ONE  # no way to tell an effort
-    assert "Effort: this program cannot be told" in window._assistant_debug_report()
-    assert "Model: not told: the program decides" in window._assistant_debug_report()
+    assert "Effort: this program cannot be told" in window.gabi.debug_report()
+    assert "Model: not told: the program decides" in window.gabi.debug_report()
     window.close()
 
 
@@ -1238,7 +1244,7 @@ def test_kube_reports_the_local_kubectl_setup_without_asking_the_program(
 ) -> None:
     window, _messages = _open(monkeypatch)
     window.show()
-    window._open_assistant()
+    window.gabi.open()
     tab = _tab(window)
     calls: list[str] = []
     monkeypatch.setattr(tab, "_ask", lambda *a: calls.append("asked"))
@@ -1251,7 +1257,7 @@ def test_kube_reports_the_local_kubectl_setup_without_asking_the_program(
             on_error(str(error))
 
     monkeypatch.setattr(window, "_run_action", inline)
-    monkeypatch.setattr(window_module, "describe_kube", lambda: "kubectl: /bin/kubectl")
+    _patch(monkeypatch, "describe_kube", lambda: "kubectl: /bin/kubectl")
 
     tab.input.setPlainText("/kube")
     tab.submit()
@@ -1261,7 +1267,7 @@ def test_kube_reports_the_local_kubectl_setup_without_asking_the_program(
     def broken() -> str:
         raise RuntimeError("no way\nmore")
 
-    monkeypatch.setattr(window_module, "describe_kube", broken)
+    _patch(monkeypatch, "describe_kube", broken)
     tab.input.setPlainText("/kubectl")  # the same command, by its other name
     tab.submit()
     assert tab.entries()[-1] == ("app", "/kube\nno way")
@@ -1275,7 +1281,7 @@ def test_ctrl_g_opens_the_chat_with_the_cursor_in_it(monkeypatch) -> None:
     window.show()
     window.activateWindow()
     window_module.QApplication.processEvents()
-    dock = window.assistant_dock
+    dock = window.gabi.dock
     shortcut = next(
         one
         for one in window.findChildren(QShortcut)
@@ -1308,7 +1314,7 @@ def test_a_program_this_computer_does_not_have_is_not_offered(monkeypatch) -> No
     monkeypatch.setattr(runner, "CUSTOM_MODELS", {})
     monkeypatch.setattr(runner, "CUSTOM_EFFORTS", {})
     window, _messages = _open(monkeypatch, found=(ONE,))
-    monkeypatch.setattr(window_module, "ASSISTANTS", {"one": ONE, "two": TWO})
+    _patch(monkeypatch, "ASSISTANTS", {"one": ONE, "two": TWO})
     window.settings.assistant_models = {"two": "kept"}  # chosen when it was here
     window._load_settings_form()
     form = window.settings_ui
@@ -1322,7 +1328,7 @@ def test_a_program_this_computer_does_not_have_is_not_offered(monkeypatch) -> No
     window._save_preferences()
     assert window.settings.assistant_models["two"] == "kept"  # not lost on saving
 
-    monkeypatch.setattr(window_module, "installed_assistants", lambda: [])
+    _patch(monkeypatch, "installed_assistants", lambda: [])
     window._load_settings_form()
     assert window._assistant_models == {}
     assert not form.assistantModelsLabel.isVisibleTo(window)
@@ -1339,7 +1345,7 @@ def test_a_model_the_program_no_longer_lists_stays_in_its_select(monkeypatch) ->
         models=("big",),
     )
     window, _messages = _open(monkeypatch, found=(many,))
-    monkeypatch.setattr(window_module, "ASSISTANTS", {"many": many})
+    _patch(monkeypatch, "ASSISTANTS", {"many": many})
     window.settings.assistant_models = {"many": "gone"}
 
     window._load_settings_form()

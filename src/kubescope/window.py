@@ -96,7 +96,6 @@ from kubescope.cluster import (
     check_login,
     context_environment,
     context_region,
-    describe_kube,
     forget_clients,
     get_cluster_info,
     get_cluster_overview,
@@ -135,25 +134,17 @@ from kubescope.dialogs.theme_editor import ThemeEditor
 from kubescope.dialogs.update_dialog import UpdateDialog
 from kubescope.extensions import bundled as bundled_extensions
 from kubescope.extensions.bundled.gabi import ASSISTANTS, runner
-from kubescope.extensions.bundled.gabi import actions as assistant_actions
 from kubescope.extensions.bundled.gabi import installed as installed_assistants
-from kubescope.extensions.bundled.gabi.dispatch import write_call
-from kubescope.extensions.bundled.gabi.history import History
-from kubescope.extensions.bundled.gabi.knowledge import system_prompt
-from kubescope.extensions.bundled.gabi.panel import BUBBLE, MARGIN, AssistantDock
-from kubescope.extensions.bundled.gabi.runner import NAME, Assistant
+from kubescope.extensions.bundled.gabi.controller import GabiController, GabiPort
 from kubescope.extensions.bundled.gabi.runner import (
     is_available as is_available_assistant,
 )
-from kubescope.extensions.bundled.gabi.session import ChatSession
-from kubescope.extensions.bundled.gabi.tab import AssistantTab
 from kubescope.extensions.registries import CommandRegistry
 from kubescope.extensions.store import ExtensionStore
 from kubescope.forwards import Forward
 from kubescope.i18n import (
     apply_language,
     language_choices,
-    language_name,
     resolve_language,
 )
 from kubescope.models import (
@@ -1209,7 +1200,7 @@ class WorkloadWindow(QMainWindow):
         self._show_settings_section(0)
         self.settings_ui.openLogsButton.clicked.connect(self._open_log_folder)
         self.settings_ui.assistantClearButton.clicked.connect(
-            self._clear_assistant_history
+            lambda: self.gabi.clear_history()
         )
         self.settings_ui.clearCacheButton.clicked.connect(self._clear_cache)
         self.settings_ui.kubeconfigAddButton.clicked.connect(self._add_kubeconfig_file)
@@ -1382,25 +1373,9 @@ class WorkloadWindow(QMainWindow):
         self.table.itemSelectionChanged.connect(self._update_workload_actions)
         self.table.cellDoubleClicked.connect(lambda _row, _column: self._view_details())
         motion.ENABLED = self.settings.animations
-        runner.CUSTOM_PROGRAMS.clear()
-        runner.CUSTOM_PROGRAMS.update(self.settings.assistant_programs)
-        self._sync_assistant_choices()
         self._shown_once = False
-        self._assistant_history = History(config_directory() / "assistant_history.json")
-        self._assistant_tab: AssistantTab | None = None
-        self._assistant_switching = False  # the assistant itself changes the context
         self.commands = CommandRegistry()
         self._register_commands()
-        central = self.centralWidget()
-        assert central is not None
-        self.assistant_dock = AssistantDock(central)
-        self.assistant_dock.bubble.clicked.connect(self._toggle_assistant)
-        self.assistant_dock.panel.closed.connect(self.assistant_dock.close)
-        self.assistant_dock.panel.clear_requested.connect(self._clear_assistant_chat)
-        self.assistant_dock.panel.settings_requested.connect(
-            self._show_assistant_settings
-        )
-        self.assistant_dock.bubble.setVisible(self.settings.assistant_enabled)
         self.sidebar_resizer = SidebarResizer(ui.sidebar, SIDEBAR_WIDTH)
         if self.settings.sidebar_width:
             self.sidebar_resizer.set_width(self.settings.sidebar_width)
@@ -1409,9 +1384,28 @@ class WorkloadWindow(QMainWindow):
             layout: layout.contentsMargins()
             for layout in (ui.footerRow, ui.appFooterLayout)
         }
-        self._make_room_for_assistant()
-        self.assistant_dock.restore(self.settings.assistant_panel)
-        self.assistant_dock.state_changed.connect(self._keep_assistant_panel)
+        central = self.centralWidget()
+        assert central is not None
+        # every call is looked up when it is made, so a test (or an extension)
+        # that replaces a method of the window is heard
+        self.gabi = GabiController(
+            GabiPort(
+                settings=self.settings,
+                parent=self,
+                central=central,
+                commands=self.commands,
+                context=lambda: self._context(),
+                screen=lambda: self._screen_snapshot(),
+                save_settings=lambda: self._save_settings(),
+                show_message=lambda icon, title, text: self._show_message(
+                    icon, title, text
+                ),
+                run_action=lambda *args, **kwargs: self._run_action(*args, **kwargs),
+                style_box=lambda box: self._style_box_buttons(box),
+                show_settings=lambda: self._show_assistant_settings(),
+                reserve_corner=lambda pixels: self._reserve_corner(pixels),
+            )
+        )
         ui.settingsButton.setIcon(_gear_icon())
         ui.settingsButton.clicked.connect(lambda: self._show_page(2))
         # "/" is left to the text fields: typing in one does not open the search
@@ -1420,7 +1414,7 @@ class WorkloadWindow(QMainWindow):
             "refresh_alt": self._press_refresh,
             "search": self._open_global_search,
             "search_alt": self._open_global_search,
-            "assistant": self._shortcut_assistant,
+            "assistant": self.gabi.shortcut,
             "overview": lambda: self._show_page(0),
             "pods": lambda: self._open_list_view("pods"),
             "deployments": lambda: self._open_list_view("deployments"),
@@ -2503,9 +2497,7 @@ class WorkloadWindow(QMainWindow):
                 assert isinstance(tab, DetailTab)
                 restyle(tab.editor, tab.highlighter)
                 tab.restyle()
-        self.assistant_dock.restyle()
-        if self._assistant_tab is not None:
-            self._assistant_tab.restyle()
+        self.gabi.restyle()
         self._render_rows()
         if self._overview is not None:
             self._render_overview(self._overview)
@@ -2825,15 +2817,7 @@ class WorkloadWindow(QMainWindow):
 
     def _context_changed(self, *_args: object) -> None:
         logger.info("Context changed to %s", self._context())
-        tab = self._assistant_tab
-        # a chat belongs to one cluster, unless the assistant itself moved it
-        if (
-            tab is not None
-            and tab.context != self._context()
-            and not self._assistant_switching
-        ):
-            self._end_assistant_chat()
-            self.assistant_dock.close()
+        self.gabi.context_changed()
         self._rds = None  # the instances are those of the context
         self._sync_aws_menu()  # an EKS context brings the AWS part of the menu
         if self.pages.currentIndex() == 5:
@@ -5282,213 +5266,6 @@ class WorkloadWindow(QMainWindow):
             return
         logger.info("Saved a tab to a file")
 
-    def _assistant_program(self) -> Assistant | None:
-        """The assistant the person chose, or the first one the system has."""
-        found = installed_assistants()
-        chosen = next(
-            (one for one in found if one.key == self.settings.assistant), None
-        )
-        return chosen or (found[0] if found else None)
-
-    def _consent_to_assistant(self, assistant: Assistant) -> bool:
-        """Ask once whether what the assistant is told may leave this
-        computer."""
-        answer = QMessageBox.question(
-            self,
-            self.tr("Assistant"),
-            self.tr(
-                "What you type and attach, and what the assistant reads from the "
-                "cluster to answer (resource documents and log lines), are sent to "
-                "{name}, "
-                "the program of this computer, and from it to its service. Secret "
-                "values are hidden and tokens and keys are redacted, but other "
-                "text of a log can still go. Changes to the cluster are asked of "
-                "you before they run, and only with the write mode on.\n\n"
-                "Use the assistant?"
-            ).format(name=assistant.name),
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-            QMessageBox.StandardButton.No,
-        )
-        if answer != QMessageBox.StandardButton.Yes:
-            return False
-        self.settings.assistant_consent = True
-        self._save_settings()
-        return True
-
-    def _shortcut_assistant(self) -> None:
-        """Ctrl+G opens the chat and puts the cursor in it; when it is open and
-        has the cursor already, it puts it away.
-
-        Nothing happens while the assistant is off in Settings.
-        """
-        if not self.settings.assistant_enabled:
-            return
-        tab = self._assistant_tab
-        if self.assistant_dock.is_open and tab is not None:
-            if tab.input.hasFocus():
-                self.assistant_dock.close()
-                return
-        else:
-            self._open_assistant()
-            tab = self._assistant_tab
-        if tab is not None and self.assistant_dock.is_open:
-            tab.input.window().activateWindow()  # it may be in a window of its own
-            tab.input.setFocus()
-
-    def _toggle_assistant(self) -> None:
-        """The button of the corner: open the chat, or put it away."""
-        if self.assistant_dock.is_open:
-            self.assistant_dock.close()
-        else:
-            self._open_assistant()
-
-    def _open_assistant(self) -> None:
-        """Open the chat with the assistant of the system, for this context."""
-        assistant = self._assistant_program()
-        if assistant is None:
-            self._guide_assistant_setup()
-            return
-        if not self._context():
-            self._show_message(
-                QMessageBox.Icon.Information,
-                self.tr("Assistant"),
-                self.tr("Choose a context first."),
-            )
-            return
-        if not self.settings.assistant_consent and not self._consent_to_assistant(
-            assistant
-        ):
-            return
-        tab = self._assistant_tab
-        if tab is None:
-            session = ChatSession(assistant, system=self._assistant_system())
-            tab = AssistantTab(
-                session,
-                self._context(),
-                lambda: self.settings.write_mode,
-                screen=self._screen_snapshot,
-                history=self._assistant_history.entries(self._context()),
-                takes_images=assistant.takes_images,
-            )
-            tab.debug_report = self._assistant_debug_report
-            tab.kube_requested.connect(lambda: self._assistant_kube_report(tab))
-            tab.changed.connect(lambda: self._keep_assistant_chat(tab))
-            tab.navigate.connect(lambda request: self._assistant_navigate(tab, request))
-            tab.write.connect(lambda request: self._assistant_write(tab, request))
-            self._assistant_tab = tab
-            self.assistant_dock.panel.show_chat(tab)
-            self._show_assistant_engine()
-        self.assistant_dock.open()
-        tab.input.setFocus()
-
-    def _assistant_engine(self, assistant: Assistant, model: str | None) -> str:
-        """What answers, in words: the program, its model and its effort."""
-        chosen = model or runner.CUSTOM_MODELS.get(assistant.key)
-        effort = runner.CUSTOM_EFFORTS.get(assistant.key)
-        if assistant.effort_options is None:
-            effort = None
-        return " · ".join(
-            (
-                assistant.name,
-                chosen or self.tr("unknown model"),
-                effort or self.tr("unknown effort"),
-            )
-        )
-
-    def _assistant_debug_report(self) -> str:
-        """What the /debug command says: the program that answers and all of
-        its configuration, from the settings and the program itself.
-
-        No credentials are in it, and neither is the long instruction
-        sent with each question.
-        """
-        tab = self._assistant_tab
-        assert tab is not None
-        assistant = tab.session.assistant
-        settings = self.settings
-        default_model, default_effort = (
-            assistant.defaults() if assistant.defaults else ("", "")
-        )
-
-        def source(chosen: str, default: str) -> str:
-            if chosen:
-                return f"{chosen} (set in Settings)"
-            if default:
-                return f"{default} (what {assistant.name} is set to use)"
-            return "not told: the program decides"
-
-        arguments = runner.command(assistant, tab.session.model, tab.session.system)
-        shown = [
-            f"<{len(arguments[index])} characters>"
-            if index and arguments[index - 1] == "--system-prompt"
-            else argument
-            for index, argument in enumerate(arguments)
-        ]
-        path = runner.program_of(assistant)
-        installed = ", ".join(one.name for one in installed_assistants()) or "none"
-        efforts = ", ".join(assistant.efforts) or "none"
-        models = ", ".join(assistant.models) or "none listed"
-        lines = [
-            "/debug",
-            f"Assistant: {NAME}",
-            f"Program: {assistant.name} ({assistant.key})",
-            f"Program file: {path}"
-            + (" (set in Settings)" if assistant.key in runner.CUSTOM_PROGRAMS else ""),
-            f"Chosen in Settings: {settings.assistant or 'automatic, the first found'}",
-            f"Installed: {installed}",
-            "Model: "
-            + source(settings.assistant_models.get(assistant.key, ""), default_model),
-            "Effort: "
-            + (
-                source(
-                    settings.assistant_efforts.get(assistant.key, ""), default_effort
-                )
-                if assistant.effort_options
-                else "this program cannot be told"
-            ),
-            f"Models it lists: {models}",
-            f"Efforts it allows: {efforts}",
-            f"Takes images: {'yes' if assistant.takes_images else 'no'}",
-            f"Write mode: {'on' if settings.write_mode else 'off'}",
-            f"Language: {resolve_language(settings.language)}",
-            f"Command: {' '.join(shown)}",
-        ]
-        return "\n".join(lines)
-
-    def _assistant_kube_report(self, tab: AssistantTab) -> None:
-        """What /kube says, read off the UI thread, and put in the chat."""
-        self._run_action(
-            describe_kube,
-            lambda text: tab.note(f"/kube\n{text}"),
-            quiet=True,
-            on_error=lambda message: tab.note(f"/kube\n{first_line(message)}"),
-        )
-
-    def _show_assistant_engine(self) -> None:
-        """Keep the header of the chat telling what answers it."""
-        tab = self._assistant_tab
-        if tab is None:
-            return
-        found = self._assistant_program()
-        if found is not None and found is not tab.session.assistant:
-            tab.use(found)  # the program chosen in the settings takes over
-        self.assistant_dock.panel.set_engine(
-            self._assistant_engine(tab.session.assistant, tab.session.model)
-        )
-
-    def _assistant_system(self) -> str:
-        """What the assistant is told: the language of the app and the mode it
-        is in, since with the write mode off it has nothing that changes a
-        cluster."""
-        return system_prompt(
-            language_name(self.settings.language), self.settings.write_mode
-        )
-
-    def _refresh_assistant_system(self) -> None:
-        """Tell the open chat about a change of language or of mode."""
-        if self._assistant_tab is not None:
-            self._assistant_tab.session.system = self._assistant_system()
-
     def _screen_snapshot(self) -> str:
         """What the window shows, in words, for the assistant."""
         page = self.pages.currentIndex()
@@ -5556,120 +5333,22 @@ class WorkloadWindow(QMainWindow):
             )
         )
 
-    def _end_assistant_chat(self) -> None:
-        """Drop the conversation, stopping what it runs."""
-        tab, self._assistant_tab = self._assistant_tab, None
-        self.assistant_dock.panel.show_chat(None)
-        self.assistant_dock.panel.set_engine("")
-        if tab is not None:
-            tab.shutdown()
-            tab.deleteLater()
+    def _reserve_corner(self, pixels: int) -> None:
+        """Keep what is at the right of the footer and of the note under the
+        lists clear of what sits in that corner."""
+        for layout, margins in self._corner_margins.items():
+            layout.setContentsMargins(
+                margins.left(),
+                margins.top(),
+                margins.right() + pixels,
+                margins.bottom(),
+            )
 
     def _keep_sidebar_width(self, width: int) -> None:
         """Write down the width the person gave the side menu; the usual width
         is kept as none."""
         self.settings.sidebar_width = 0 if width == SIDEBAR_WIDTH else width
         self._save_settings()
-
-    def _make_room_for_assistant(self) -> None:
-        """Keep what is at the right of the footer and of the note under the
-        lists clear of the button of the assistant, which sits in that
-        corner."""
-        gutter = BUBBLE + MARGIN if self.settings.assistant_enabled else 0
-        for layout, margins in self._corner_margins.items():
-            layout.setContentsMargins(
-                margins.left(),
-                margins.top(),
-                margins.right() + gutter,
-                margins.bottom(),
-            )
-
-    def _keep_assistant_panel(self) -> None:
-        """Write down the size and the place of the chat panel."""
-        self.settings.assistant_panel = self.assistant_dock.state()
-        self._save_settings()
-
-    def _keep_assistant_chat(self, tab: AssistantTab) -> None:
-        """Write the conversation down, to find it again."""
-        self._assistant_history.set(tab.context, tab.entries())
-
-    def _forget_assistant_history(self, context: str | None, text: str) -> None:
-        """Ask, then forget the conversation of a context, or all of them."""
-        answer = QMessageBox.question(
-            self,
-            self.tr("Assistant"),
-            text,
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-            QMessageBox.StandardButton.No,
-        )
-        if answer != QMessageBox.StandardButton.Yes:
-            return
-        self._end_assistant_chat()
-        self._assistant_history.clear(context)
-        if self.assistant_dock.is_open:
-            self._open_assistant()
-
-    def _clear_assistant_chat(self) -> None:
-        """Forget the conversation of this context."""
-        self._forget_assistant_history(
-            self._context(),
-            self.tr("Forget the conversation with the assistant in this context?"),
-        )
-
-    def _clear_assistant_history(self) -> None:
-        """Forget every conversation, from the settings."""
-        self._forget_assistant_history(
-            None, self.tr("Forget every conversation with the assistant?")
-        )
-
-    def _guide_assistant_setup(self) -> None:
-        """There is no program to run Gabi on: say what to install, offer the
-        settings where its place is told, and the instructions."""
-        broken = [
-            one.name
-            for one in ASSISTANTS.values()
-            if self.settings.assistant_programs.get(one.key)
-            and not is_available_assistant(one)
-        ]
-        steps = self.tr(
-            "KubeScope found neither of them on this computer. They are programs "
-            "that you install and sign in to yourself, as you would in a terminal; "
-            "KubeScope asks for no credentials and stores none.\n\n"
-            "1. Install the Claude Code CLI (claude) or the Codex CLI (codex) and sign "
-            "in.\n"
-            "2. If it is installed where the system does not look, tell KubeScope "
-            "where in Settings.\n"
-            "3. Open this button again."
-        )
-        if broken:
-            steps += "\n\n" + self.tr(
-                "The path set for {names} is not a program that can be run."
-            ).format(names=", ".join(broken))
-        box = QMessageBox(self)
-        box.setIcon(QMessageBox.Icon.Information)
-        box.setWindowTitle(NAME)
-        box.setText(self.tr("{name} needs Claude Code or Codex.").format(name=NAME))
-        box.setInformativeText(steps)
-        settings = box.addButton(
-            self.tr("Open Settings"), QMessageBox.ButtonRole.AcceptRole
-        )
-        language = resolve_language(self.settings.language)
-        for one in ASSISTANTS.values():
-            if one.guide is not None:
-                address = one.guide(language)
-                button = box.addButton(
-                    self.tr("{name} guide").format(name=one.name),
-                    QMessageBox.ButtonRole.ActionRole,
-                )
-                button.clicked.connect(
-                    lambda _checked=False, url=address: QDesktopServices.openUrl(
-                        QUrl(url)
-                    )
-                )
-        box.addButton(self.tr("Close"), QMessageBox.ButtonRole.RejectRole)
-        settings.clicked.connect(self._show_assistant_settings)
-        self._style_box_buttons(box)
-        box.exec()
 
     def _focus_context(self) -> None:
         """Open the list of clusters, to switch to another."""
@@ -6626,21 +6305,6 @@ class WorkloadWindow(QMainWindow):
     ) -> None:
         self._open_resource(kind, namespace, name)
 
-    def _assistant_navigate(
-        self, tab: AssistantTab, request: assistant_actions.Request
-    ) -> None:
-        """Do in the window what the assistant asked, as the person would."""
-        name = request.action.name
-        if name != "switch_context":
-            self.commands.invoke(name, report=tab.note, **request.args)
-            return
-        self._assistant_switching = True
-        try:
-            if self.commands.invoke(name, report=tab.note, **request.args):
-                tab.context = self._context()  # the chat follows
-        finally:
-            self._assistant_switching = False
-
     def _open_tabs(self) -> list[tuple[int, str]]:
         """The Details and Logs tabs of this context, with their index."""
         return [
@@ -6711,26 +6375,6 @@ class WorkloadWindow(QMainWindow):
             )
 
         self._run_action(get_pods, found, context, namespace, on_error=report)
-
-    def _assistant_write(
-        self, tab: AssistantTab, request: assistant_actions.Request
-    ) -> None:
-        """Run a change the person confirmed on a card of the chat."""
-        what = assistant_actions.describe(request)
-        if not self.settings.write_mode:
-            tab.note(
-                self.tr("Not run, the write mode is off: {what}").format(what=what)
-            )
-            return
-        function, arguments = write_call(request, tab.context)
-        self._run_action(
-            function,
-            lambda _result: tab.note(self.tr("Done: {what}").format(what=what)),
-            *arguments,
-            on_error=lambda message: tab.note(
-                self.tr("Failed: {what}\n{message}").format(what=what, message=message)
-            ),
-        )
 
     def _add_viewer_tab(self, widget: QWidget, title: str) -> None:
         self._viewer_contexts[widget] = self._context()
@@ -7065,44 +6709,6 @@ class WorkloadWindow(QMainWindow):
             layout.addWidget(holder)
             self._assistant_paths[one.key] = edit
 
-    def _apply_assistant_settings(
-        self,
-        enabled: bool,
-        assistant: str,
-        programs: dict[str, str],
-        models: dict[str, str],
-        efforts: dict[str, str],
-    ) -> None:
-        """Keep the settings of the assistant and make the window follow
-        them."""
-        self.settings.assistant_programs = programs
-        runner.CUSTOM_PROGRAMS.clear()
-        runner.CUSTOM_PROGRAMS.update(programs)
-        self.settings.assistant_models = models
-        self.settings.assistant_efforts = efforts
-        self._sync_assistant_choices()
-        self.settings.assistant_enabled = enabled
-        self.settings.assistant = assistant
-        self.assistant_dock.bubble.setVisible(enabled)
-        self._make_room_for_assistant()
-        if not enabled:
-            self.assistant_dock.close()
-        self._show_assistant_engine()
-
-    def _sync_assistant_choices(self) -> None:
-        """Tell the runner the model and the effort of each assistant: the ones
-        in the settings, or else the ones its program is set to use."""
-        runner.CUSTOM_MODELS.clear()
-        runner.CUSTOM_EFFORTS.clear()
-        for one in ASSISTANTS.values():
-            model, effort = one.defaults() if one.defaults else ("", "")
-            model = self.settings.assistant_models.get(one.key, model)
-            effort = self.settings.assistant_efforts.get(one.key, effort)
-            if model:
-                runner.CUSTOM_MODELS[one.key] = model
-            if effort:
-                runner.CUSTOM_EFFORTS[one.key] = effort
-
     def _browse_program(self, edit: QLineEdit, name: str) -> None:
         path, _filter = QFileDialog.getOpenFileName(
             self,
@@ -7384,7 +6990,7 @@ class WorkloadWindow(QMainWindow):
         self.settings.run_in_background = form.backgroundCheck.isChecked()
         self.settings.animations = form.animationsCheck.isChecked()
         motion.ENABLED = self.settings.animations
-        self._apply_assistant_settings(
+        self.gabi.apply_settings(
             form.assistantCheck.isChecked(),
             form.assistantCombo.currentData() or "",
             programs,
@@ -7415,7 +7021,7 @@ class WorkloadWindow(QMainWindow):
             logger.info("Write mode %s", "on" if self.settings.write_mode else "off")
             self._show_access_note()
             self._apply_view_buttons()
-            self._refresh_assistant_system()  # nothing to change without it
+            self.gabi.refresh_system()  # nothing to change without it
         was_debugging = self.settings.debug_logging
         self.settings.debug_logging = form.debugCheck.isChecked()
         self._save_settings()
@@ -7426,7 +7032,7 @@ class WorkloadWindow(QMainWindow):
         self._fill_contexts(self._context())
         if self.settings.language != previous_language:
             apply_language(self.settings.language)
-            self._refresh_assistant_system()  # the chat answers in the new one
+            self.gabi.refresh_system()  # the chat answers in the new one
         if self.settings.theme != previous_theme:
             logger.info("Theme changed to %s", self.settings.theme)
             self._apply_theme()
@@ -7492,7 +7098,7 @@ class WorkloadWindow(QMainWindow):
         self.ui.retranslateUi(self)
         self._name_the_menu_entries()
         self._show_access_note()
-        self.assistant_dock.retranslate()
+        self.gabi.retranslate()
         self.search_case_button.setToolTip(self.tr("Match case"))
         self.search_regex_button.setToolTip(self.tr("Regular expression"))
         self.rds_case_button.setToolTip(self.tr("Match case"))
@@ -7740,8 +7346,8 @@ class WorkloadWindow(QMainWindow):
 
     def closeEvent(self, event: QCloseEvent) -> None:
         self._remember_geometry()
-        if self._assistant_tab is not None and (self._tray is None or self._quitting):
-            self._assistant_tab.shutdown()
+        if self._tray is None or self._quitting:
+            self.gabi.shutdown()
         if self._tray is not None and not self._quitting:
             logger.info("Closing to the system tray")
             self.hide()
