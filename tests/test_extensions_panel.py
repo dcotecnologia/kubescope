@@ -1292,3 +1292,44 @@ def test_a_default_that_cannot_be_installed_is_not_marked_as_offered(
     setup.panel.offer_defaults(settings)
 
     assert setup.messages == [] and settings.extensions_offered == []
+
+
+def test_what_ships_with_the_app_is_installed_without_the_network(
+    setup, monkeypatch
+) -> None:
+    from kubescope.extensions.offline import Snapshot
+    from kubescope.settings import Settings
+
+    settings = Settings()
+    with_defaults(setup, latest_of_tool())
+    setup.panel.snapshots = lambda extension: Snapshot(
+        tool_zip(version="1.3.0"), Repo("dco", "tool", "v1.3.0")
+    )
+    monkeypatch.setattr(
+        extensions_panel, "list_tags", lambda repo: pytest.fail("looked for tags")
+    )
+    monkeypatch.setattr(
+        extensions_panel, "download", lambda repo: pytest.fail("downloaded")
+    )
+
+    setup.panel.offer_defaults(settings)
+
+    assert setup.card("Tool").badge == "Installed"
+    assert setup.store.source_of("dco.tool") == "github dco/tool@v1.3.0"
+    assert settings.extensions_offered == ["dco.tool"] and setup.messages == []
+
+
+def test_a_copy_that_is_not_the_extension_is_not_installed(setup) -> None:
+    from kubescope.extensions.offline import Snapshot
+    from kubescope.settings import Settings
+
+    settings = Settings()
+    with_defaults(setup, latest_of_tool())
+    setup.panel.snapshots = lambda extension: Snapshot(
+        tool_zip("dco.other"), Repo("dco", "tool", "v1.0.0")
+    )
+
+    setup.panel.offer_defaults(settings)
+
+    assert settings.extensions_offered == [] and setup.messages == []
+    assert [card.title for card in setup.cards()] == ["Gabi", "Tool"]

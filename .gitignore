@@ -226,3 +226,6 @@ vendor/linux/
 vendor/appimagetool/
 .wine/
 src/kubescope/_commit.txt
+
+# the extensions installed by default, downloaded by the build (tools/bundle_extensions.py)
+src/kubescope/assets/extensions/
