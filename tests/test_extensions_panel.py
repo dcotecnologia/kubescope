@@ -14,7 +14,6 @@ from PySide6.QtWidgets import (
     QInputDialog,
     QLabel,
     QMessageBox,
-    QPushButton,
     QWidget,
 )
 
@@ -53,13 +52,23 @@ def make_folder(root: Path, version: str = "1.0.0") -> Path:
     return root
 
 
+class Action:
+    """An entry of the menu of an extension, pressed like a button."""
+
+    def __init__(self, callback) -> None:
+        self.callback = callback
+
+    def click(self) -> None:
+        self.callback()
+
+
 @dataclass
 class Card:
     title: str
     badge: str
     texts: list[str]
-    buttons: dict[str, QPushButton]
-    details: QPushButton | None = None
+    buttons: dict[str, Action]
+    details: Action | None = None
 
 
 class Setup:
@@ -115,18 +124,18 @@ class Setup:
         return found
 
     def card(self, title: str) -> Card:
-        """The row of an extension, selected, with the buttons it then has."""
+        """The row of an extension, selected, with what can be done with it
+        (the entries of its menu)."""
         table = self.panel.table
         row = next(i for i, one in enumerate(self.cards()) if one.title == title)
         table.selectRow(row)
         shown = self.cards()[row]
-        buttons = {
-            b.text(): b
-            for b in self.panel.actions.findChildren(QPushButton)
-            if not b.isHidden()  # not one that waits to be deleted
+        actions = {
+            label: Action(callback)
+            for label, _variant, callback in self.panel._actions(self.panel.rows[row])
         }
-        details = buttons.pop("Details", None)
-        return Card(shown.title, shown.badge, shown.texts, buttons, details)
+        details = actions.pop("Details", None)
+        return Card(shown.title, shown.badge, shown.texts, actions, details)
 
     def summary(self) -> list[tuple[str, str]]:
         return [(card.title, card.badge) for card in self.cards()]
