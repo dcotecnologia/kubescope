@@ -8,6 +8,8 @@ from kubescope.extensions.store import Candidate, StoreError
 
 PIN = "a" * 64
 
+REAL = defaults.DEFAULTS  # the tests start with none, so that none reaches GitHub
+
 
 def wanted(sha256: str = PIN, ref: str = "v1.0.0") -> DefaultExtension:
     return DefaultExtension(
@@ -34,15 +36,15 @@ def test_only_what_is_pinned_is_offered(monkeypatch) -> None:
 
 
 def test_gabi_is_offered_by_a_tag_and_only_once_it_is_pinned() -> None:
-    [gabi] = defaults.DEFAULTS
+    [gabi] = REAL
 
     assert (gabi.id, gabi.repo.owner, gabi.repo.name) == (
         "kubescope.gabi",
         "dcotecnologia",
-        "kubescope-gabi",
+        "kubescope-ai-gabi",
     )
     assert gabi.repo.ref  # a tag, never the default branch
-    assert gabi.pinned == bool(gabi.sha256)  # nothing is offered without a hash
+    assert gabi.pinned  # published, so it is offered; never without a hash
 
 
 def test_what_was_pinned_is_accepted() -> None:

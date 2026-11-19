@@ -40,6 +40,7 @@ from kubescope.extensions.github import (
 )
 from kubescope.extensions.manifest import Manifest
 from kubescope.extensions.store import Candidate, ExtensionStore, StoreError
+from kubescope.settings import Settings
 from kubescope.ui.ui_settings_page import Ui_SettingsPage
 
 logger = logging.getLogger(__name__)
@@ -258,6 +259,21 @@ class ExtensionsPanel(QObject):
             self._warn(str(error))
             return
         self._download(repo)
+
+    def offer_defaults(self, settings: Settings) -> None:
+        """The first time, offer what the app recommends: it is downloaded and
+        a dialog asks before anything is installed.
+
+        It is asked once, whatever the answer, and what is left can be
+        installed from the cards.
+        """
+        have = {one.manifest.id for one in self.store.installed()}
+        for one in self.defaults():
+            if one.id in have or one.id in settings.extensions_offered:
+                continue
+            settings.offered(one.id)
+            settings.save()
+            self.install_default(one)
 
     def install_default(self, wanted: DefaultExtension) -> None:
         """Download the version of an extension that the app offers, which is
