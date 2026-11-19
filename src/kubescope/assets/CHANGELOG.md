@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file. The format 
 - **Settings → Extensions** shows a card for each extension and installs one from a folder (pick its `kubescope-extension.toml`) or a GitHub repository after a dialog shows where it comes from, its permissions and its sha256, with a development mode that runs the folder in place, and uninstalls and reinstalls them; Gabi, which ships with the app, can be uninstalled and reinstalled there by @danilogco
 - Extensions installed from Settings run in the app without restarting it: they hear the context, the theme, the language and the shutdown, they can use the window, the settings of their own and the commands of the window, and one that fails to load shows why on its card without stopping the others by @danilogco
 - An extension can add keyboard shortcuts, which show in the shortcuts of the Settings and can be changed there, and sections of its own to the Settings, saved with the rest; one that runs from its own folder (development mode) is reloaded when its files change by @danilogco
+- An extension can add commands to `kubescope`, named in its manifest so that the app knows them without running it: the app sets the cluster up as configured, runs only that extension with no window, lends it the choice of a context and the confirmation of the terminal, and unloads it by @danilogco
 
 ## [1.12.0] - 2026-11-18
 

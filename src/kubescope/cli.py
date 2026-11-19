@@ -9,7 +9,10 @@ from pathlib import Path
 
 from kubescope import cli_cluster
 from kubescope.about import __version__
+from kubescope.extensions import bundled as bundled_extensions
 from kubescope.extensions.bundled.gabi import cli as cli_chat
+from kubescope.extensions.store import ExtensionStore
+from kubescope.extensions.terminal import owner_of, run_command
 from kubescope.settings import Settings, config_directory, log_directory
 from kubescope.utils.diagnostics import MAX_AGE_DAYS, commit, log_files
 from kubescope.utils.selfupdate import UpdateError, detect_install, restart, run_update
@@ -156,15 +159,32 @@ def _parser() -> argparse.ArgumentParser:
     return parser
 
 
+def _extension_store() -> ExtensionStore:
+    return ExtensionStore(
+        config_directory() / "extensions", Path(bundled_extensions.__file__).parent
+    )
+
+
+def _extension_command(arguments: Sequence[str]) -> int | None:
+    """A command that an extension adds; None when it is not one, so that the
+    window opens (Qt's own options come here too)."""
+    return run_command(_extension_store(), arguments[0], arguments[1:])
+
+
 def run(arguments: Sequence[str]) -> int | None:
     """Run a command line command and return its exit code, or None when the
     arguments are not one, so the window opens (Qt's own options pass through
     to it)."""
-    if not arguments or arguments[0] not in (*COMMANDS, *FLAGS):
+    if not arguments:
         return None
+    if arguments[0] not in (*COMMANDS, *FLAGS):
+        return _extension_command(arguments)
     parser = _parser()
     namespace = parser.parse_args(arguments)
     if namespace.command == "help":
+        added = namespace.topic and owner_of(_extension_store(), namespace.topic)
+        if added:  # the help of a command of an extension is its own
+            return _extension_command([namespace.topic, "--help"])
         # `kubescope help pods` is `kubescope pods --help`
         parser.parse_args(
             [namespace.topic, "--help"] if namespace.topic else ["--help"]

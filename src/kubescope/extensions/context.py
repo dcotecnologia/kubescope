@@ -12,6 +12,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+from kubescope.sdk.paths import config_directory
+
 from kubescope.extensions.cluster_access import WritesBridge
 from kubescope.extensions.registries import CommandRegistry, Contributions, EventBus
 from kubescope.sdk import (
@@ -30,6 +32,11 @@ from kubescope.sdk import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+def data_directory(extension: str) -> Path:
+    """The folder that is an extension's own, for what it writes down."""
+    return config_directory() / "extension-data" / extension
 
 
 @dataclass
