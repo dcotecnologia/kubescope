@@ -390,20 +390,15 @@ class ExtensionsPanel(QObject):
         return themed("#505963"), themed("#eff1f3")
 
     def _sync_actions(self) -> None:
-        """The buttons above the table are those of the row selected."""
+        """The line above the table only counts; what can be done with an
+        extension is in its right-click menu, and Details is a double click."""
         while (item := self.actions_row.takeAt(0)) is not None:
             widget = item.widget()
             if widget is not None and widget is not self.count_label:
                 widget.hide()
                 widget.deleteLater()
-        row = self._selected_row()
         self.actions_row.addWidget(self.count_label)
         self.actions_row.addStretch(1)
-        for label, variant, callback in self._actions(row) if row else []:
-            button = QPushButton(label)
-            button.setProperty("variant", variant)
-            button.clicked.connect(callback)
-            self.actions_row.addWidget(button)
 
     def _actions(self, row: Row) -> list[tuple[str, str, Callable[[], None]]]:
         """What can be done with an extension, as (label, variant, what to
