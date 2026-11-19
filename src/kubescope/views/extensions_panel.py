@@ -18,7 +18,7 @@ from functools import partial
 from pathlib import Path
 
 from kubescope.sdk.timezone import to_zone
-from PySide6.QtCore import QEvent, QObject, Qt
+from PySide6.QtCore import QObject, Qt
 from PySide6.QtWidgets import (
     QDialog,
     QFileDialog,
@@ -28,6 +28,7 @@ from PySide6.QtWidgets import (
     QLabel,
     QMessageBox,
     QPushButton,
+    QSizePolicy,
     QVBoxLayout,
     QWidget,
 )
@@ -52,8 +53,6 @@ logger = logging.getLogger(__name__)
 
 FOLDER_SOURCE = "folder "  # how the store remembers an extension from a folder
 UPDATE_CHECK_SECONDS = 24 * 3600  # how often GitHub is asked for newer tags
-CARD_WIDTH = 260  # pixels a card needs at least; two fit in a narrow window
-GAP = 14
 
 
 @dataclass(frozen=True)
@@ -115,23 +114,17 @@ class ExtensionsPanel(QObject):
             self.updates_label,
         )
         self.check_button.clicked.connect(lambda: self.check_updates(force=True))
+        # Development mode goes under the buttons: all four in a row make the
+        # page wider than a narrow window
+        form.extensionsButtonsRow.removeWidget(form.extensionsDevCheck)
+        form.extensionsCardLayout.insertWidget(
+            form.extensionsCardLayout.indexOf(form.extensionsButtonsRow) + 1,
+            form.extensionsDevCheck,
+        )
         self.rows: list[Row] = []
-        self._columns = 1
         form.extensionsInstallFolderButton.clicked.connect(self.install_from_folder)
         form.extensionsInstallRepoButton.clicked.connect(self.install_from_github)
-        form.extensionsCardsHost.installEventFilter(self)
         self.refresh()
-
-    def eventFilter(self, watched: QObject, event: QEvent) -> bool:
-        """More cards side by side when the page gives room for them."""
-        shown = event.type() in (QEvent.Type.Resize, QEvent.Type.Show)
-        if shown and self._fit_columns() != self._columns:
-            self.render()
-        return False
-
-    def _fit_columns(self) -> int:
-        width = self.form.extensionsCardsHost.width()
-        return max(1, (width + GAP) // (CARD_WIDTH + GAP))
 
     # what is shown
 
@@ -238,22 +231,22 @@ class ExtensionsPanel(QObject):
         self.refresh()
 
     def render(self) -> None:
+        """One row for each extension, the whole width of the page."""
         grid = self.form.extensionsCardsGrid
         while (item := grid.takeAt(0)) is not None:
             if widget := item.widget():
+                widget.hide()  # until it is deleted
                 widget.deleteLater()
         for column in range(grid.columnCount()):
-            grid.setColumnStretch(column, 0)  # the ones of the last drawing
+            grid.setColumnStretch(column, 0)
             grid.setColumnMinimumWidth(column, 0)
-        columns = self._columns = self._fit_columns()
         if not self.rows:
             grid.addWidget(QLabel(self.tr("No extension is installed")), 0, 0)
             return
         for index, row in enumerate(self.rows):
-            grid.addWidget(self._card(row), index // columns, index % columns)
-        for column in range(columns):
-            grid.setColumnStretch(column, 1)
-        grid.setRowStretch((len(self.rows) + columns - 1) // columns, 1)
+            grid.addWidget(self._card(row), index, 0)
+        grid.setColumnStretch(0, 1)
+        grid.setRowStretch(len(self.rows), 1)
 
     def _badge(self, row: Row) -> str:
         if row.default is not None:
@@ -267,51 +260,52 @@ class ExtensionsPanel(QObject):
         return self.tr("Bundled") if row.bundled else self.tr("Installed")
 
     def _card(self, row: Row) -> QFrame:
+        """A row: what the extension is on the left, and its buttons on the
+        right."""
         manifest = row.manifest
         card = QFrame()
         card.setObjectName("extensionCard")
         card.setProperty("card", "true")  # the look of the app's other cards
-        card.setMinimumHeight(170)
-        layout = QVBoxLayout(card)
+        layout = QHBoxLayout(card)
+        layout.setSpacing(16)
+        about = QVBoxLayout()
+        about.setSpacing(4)
         top = QHBoxLayout()
+        top.setSpacing(10)
         title = QLabel(manifest.name)
         title.setObjectName("extensionCardTitle")
         title.setStyleSheet("font-size: 16px; font-weight: 700;")
-        title.setWordWrap(True)
-        top.addWidget(title, 1)
+        top.addWidget(title)
         badge = QLabel(self._badge(row))
         badge.setObjectName("extensionCardBadge")
         badge.setStyleSheet("font-weight: 700;")
         top.addWidget(badge)
-        layout.addLayout(top)
+        top.addStretch(1)
+        about.addLayout(top)
         meta = f"v{manifest.version}" + (
             f" · {manifest.author}" if manifest.author else ""
         )
-        layout.addWidget(QLabel(meta))
+        about.addWidget(self._text(meta))
         dates = self._dates(row)
         if dates:
-            when = QLabel(dates)
+            when = self._text(dates, muted=True)
             when.setObjectName("extensionCardDates")
-            when.setProperty("variant", "muted")
-            layout.addWidget(when)
-        description = QLabel(manifest.description)
-        description.setWordWrap(True)
-        description.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
-        layout.addWidget(description, 1)
+            about.addWidget(when)
+        if manifest.description:
+            about.addWidget(self._text(manifest.description))
         error = self.load_errors().get(manifest.id)
         if error:
-            problem = QLabel(self.tr("Could not load: {error}").format(error=error))
+            problem = self._text(self.tr("Could not load: {error}").format(error=error))
             problem.setObjectName("extensionCardError")
-            problem.setWordWrap(True)
             problem.setStyleSheet("color: #c0392b;")
-            layout.addWidget(problem)
+            about.addWidget(problem)
         if not row.bundled:
-            source = QLabel(row.source)
-            source.setWordWrap(True)
-            source.setProperty("variant", "muted")
+            source = self._text(row.source, muted=True)
             source.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
-            layout.addWidget(source)
-        buttons = QHBoxLayout()
+            about.addWidget(source)
+        layout.addLayout(about, 1)
+        buttons = QVBoxLayout()
+        buttons.setSpacing(6)
         if row.default is not None:
             install = QPushButton(self.tr("Install"))
             install.setProperty("variant", "primary")
@@ -344,6 +338,16 @@ class ExtensionsPanel(QObject):
         buttons.addStretch(1)
         layout.addLayout(buttons)
         return card
+
+    @staticmethod
+    def _text(text: str, muted: bool = False) -> QLabel:
+        """A line that wraps and never makes the page wider than the window."""
+        label = QLabel(text)
+        label.setWordWrap(True)
+        label.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Minimum)
+        if muted:
+            label.setProperty("variant", "muted")
+        return label
 
     def _dates(self, row: Row) -> str:
         """When it was installed and last updated, in lowercase, in the time

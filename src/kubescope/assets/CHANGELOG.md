@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file. The format 
 
 ### Added
 
+- The extensions in **Settings → Extensions** are a list, a row for each with its buttons on the right, instead of cards in columns, and the buttons no longer make the page wider than a narrow window by @danilogco
 - The app looks for newer versions of the extensions that were installed from GitHub and suggests them: a card says **Update available** with a button to update, a line above the cards counts them, and **Check for updates** looks again. What the app recommends is updated to the version it pins; the other repositories are asked for their tags at most once a day, only while the check for updates is on in the Settings, and a new version is downloaded and reviewed like any install by @danilogco
 - The card of an extension in **Settings → Extensions** says, in lowercase, when it was installed and when it was last updated; the app keeps both days and the first one never changes on a reinstall by @danilogco
 - A page of an extension can ask for the refresh button of the header of the window, the same as the other pages have, so its own page does not draw one by @danilogco
