@@ -109,6 +109,16 @@
         "ExtensionPages": {
             "This page could not be built.": "无法创建此页面。"
         },
+        "ExtensionUpdatesDialog": {
+            "EXTENSION": "扩展",
+            "Each one is downloaded and shown to you, with its permissions, before it replaces the one you have.": "每个扩展都会先下载并连同其权限一起展示给你，然后才会替换你现有的版本。",
+            "INSTALLED": "已安装",
+            "Later": "稍后",
+            "NEW": "新版本",
+            "Update": "更新",
+            "Update extensions": "更新扩展",
+            "{count} extensions have a newer version": "{count} 个扩展有新版本"
+        },
         "ExtensionsPanel": {
             "AUTHOR": "作者",
             "Bundled": "内置",
@@ -139,6 +149,7 @@
             "Uninstalled": "已卸载",
             "Update available": "有可用更新",
             "Update to {version}": "更新到 {version}",
+            "Update...": "更新...",
             "VERSION": "版本",
             "{count} extensions": "{count} 个扩展",
             "{count} updates available": "有 {count} 个可用更新",

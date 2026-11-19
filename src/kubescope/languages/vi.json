@@ -109,6 +109,16 @@
         "ExtensionPages": {
             "This page could not be built.": "Không thể tạo trang này."
         },
+        "ExtensionUpdatesDialog": {
+            "EXTENSION": "TIỆN ÍCH MỞ RỘNG",
+            "Each one is downloaded and shown to you, with its permissions, before it replaces the one you have.": "Từng tiện ích được tải xuống và hiển thị cho bạn cùng quyền của nó trước khi thay thế bản bạn đang có.",
+            "INSTALLED": "ĐÃ CÀI",
+            "Later": "Để sau",
+            "NEW": "MỚI",
+            "Update": "Cập nhật",
+            "Update extensions": "Cập nhật tiện ích mở rộng",
+            "{count} extensions have a newer version": "{count} tiện ích mở rộng có phiên bản mới hơn"
+        },
         "ExtensionsPanel": {
             "AUTHOR": "TÁC GIẢ",
             "Bundled": "Tích hợp sẵn",
@@ -139,6 +149,7 @@
             "Uninstalled": "Đã gỡ cài đặt",
             "Update available": "Có bản cập nhật",
             "Update to {version}": "Cập nhật lên {version}",
+            "Update...": "Cập nhật...",
             "VERSION": "PHIÊN BẢN",
             "{count} extensions": "{count} tiện ích mở rộng",
             "{count} updates available": "Có {count} bản cập nhật",

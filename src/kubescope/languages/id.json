@@ -109,6 +109,16 @@
         "ExtensionPages": {
             "This page could not be built.": "Halaman ini tidak dapat dibuat."
         },
+        "ExtensionUpdatesDialog": {
+            "EXTENSION": "EKSTENSI",
+            "Each one is downloaded and shown to you, with its permissions, before it replaces the one you have.": "Masing-masing diunduh dan ditunjukkan kepada Anda, beserta izinnya, sebelum menggantikan yang Anda miliki.",
+            "INSTALLED": "TERPASANG",
+            "Later": "Nanti",
+            "NEW": "BARU",
+            "Update": "Perbarui",
+            "Update extensions": "Perbarui ekstensi",
+            "{count} extensions have a newer version": "{count} ekstensi punya versi lebih baru"
+        },
         "ExtensionsPanel": {
             "AUTHOR": "PENULIS",
             "Bundled": "Bawaan",
@@ -139,6 +149,7 @@
             "Uninstalled": "Dicopot",
             "Update available": "Pembaruan tersedia",
             "Update to {version}": "Perbarui ke {version}",
+            "Update...": "Perbarui...",
             "VERSION": "VERSI",
             "{count} extensions": "{count} ekstensi",
             "{count} updates available": "{count} pembaruan tersedia",

@@ -109,6 +109,16 @@
         "ExtensionPages": {
             "This page could not be built.": "تعذّر إنشاء هذه الصفحة."
         },
+        "ExtensionUpdatesDialog": {
+            "EXTENSION": "الامتداد",
+            "Each one is downloaded and shown to you, with its permissions, before it replaces the one you have.": "يتم تنزيل كل واحد وعرضه عليك مع أذوناته قبل أن يحل محل الإصدار الحالي.",
+            "INSTALLED": "مثبّت",
+            "Later": "لاحقًا",
+            "NEW": "الجديد",
+            "Update": "تحديث",
+            "Update extensions": "تحديث الامتدادات",
+            "{count} extensions have a newer version": "{count} امتدادات لها إصدار أحدث"
+        },
         "ExtensionsPanel": {
             "AUTHOR": "المؤلف",
             "Bundled": "مضمّنة",
@@ -139,6 +149,7 @@
             "Uninstalled": "تم إلغاء التثبيت",
             "Update available": "تحديث متاح",
             "Update to {version}": "التحديث إلى {version}",
+            "Update...": "تحديث...",
             "VERSION": "الإصدار",
             "{count} extensions": "{count} امتدادات",
             "{count} updates available": "{count} تحديثات متاحة",

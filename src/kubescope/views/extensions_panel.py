@@ -40,6 +40,7 @@ from kubescope.dialogs.extension_details_dialog import (
     ExtensionDetailsDialog,
 )
 from kubescope.dialogs.extension_dialog import InstallExtensionDialog
+from kubescope.dialogs.extension_updates_dialog import ExtensionUpdatesDialog
 from kubescope.extensions.defaults import DefaultExtension, offered, verify
 from kubescope.extensions.github import (
     GithubError,
@@ -130,10 +131,20 @@ class ExtensionsPanel(QObject):
         self.save_settings = save_settings
         self.updates: list[Update] = []  # newer versions of what is installed
         self._checking = False
+        self.updates_row = QWidget()
+        updates_layout = QHBoxLayout(self.updates_row)
+        updates_layout.setContentsMargins(0, 0, 0, 0)
         self.updates_label = QLabel()
         self.updates_label.setObjectName("extensionUpdatesLabel")
         self.updates_label.setProperty("variant", "muted")
-        self.updates_label.hide()
+        self.updates_button = QPushButton(self.tr("Update..."))
+        self.updates_button.setProperty("variant", "primary")
+        self.updates_button.clicked.connect(self.show_updates)
+        updates_layout.addWidget(self.updates_label)
+        updates_layout.addWidget(self.updates_button)
+        updates_layout.addStretch(1)
+        self.updates_row.hide()
+        self._queue: list[Update] = []  # what is being updated, one at a time
         self.check_button = QPushButton(self.tr("Check for updates"))
         self.check_button.setProperty("variant", "secondary")
         form.extensionsButtonsRow.insertWidget(
@@ -142,7 +153,7 @@ class ExtensionsPanel(QObject):
         )
         form.extensionsCardLayout.insertWidget(
             form.extensionsCardLayout.indexOf(form.extensionsCardsHost),
-            self.updates_label,
+            self.updates_row,
         )
         self.check_button.clicked.connect(lambda: self.check_updates(force=True))
         self._build_table()
@@ -229,7 +240,7 @@ class ExtensionsPanel(QObject):
         installed = self.store.installed()
         defaults = list(self.defaults())
         self.updates = find(installed, defaults, None)
-        self._after_check()
+        self._after_check(settings, announce=not force)
         if self._checking:
             return
         allowed = settings is None or settings.check_updates
@@ -252,7 +263,7 @@ class ExtensionsPanel(QObject):
             if settings is not None:
                 settings.record_extension_updates_check(time.time())
                 self.save_settings()
-            self._after_check(told=force)
+            self._after_check(settings, told=force, announce=True, force=force)
 
         def failed(_message: str) -> None:
             self._checking = False
@@ -265,15 +276,60 @@ class ExtensionsPanel(QObject):
             quiet=True,
         )
 
-    def _after_check(self, told: bool = False) -> None:
+    def _after_check(
+        self,
+        settings: Settings | None = None,
+        told: bool = False,
+        announce: bool = False,
+        force: bool = False,
+    ) -> None:
         count = len(self.updates)
-        self.updates_label.setVisible(count > 0 or told)
+        self.updates_row.setVisible(count > 0 or told)
+        self.updates_button.setVisible(count > 0)
         self.updates_label.setText(
             self.tr("{count} updates available").format(count=count)
             if count
             else self.tr("Everything is up to date")
         )
         self.refresh()
+        if announce and count and settings is not None:
+            self._announce(settings, force)
+
+    def _announce(self, settings: Settings, force: bool) -> None:
+        """Show the window of the updates, once for each new version found, or
+        whenever the person asked to look."""
+        keys = [f"{one.extension}@{one.latest}" for one in self.updates]
+        new = [key for key in keys if key not in settings.extension_updates_seen]
+        if not new and not force:
+            return
+        settings.see_extension_updates(keys)
+        self.save_settings()
+        self.show_updates()
+
+    def show_updates(self) -> None:
+        """The window that offers the newer versions: Update goes through them
+        one at a time."""
+        if not self.updates:
+            return
+        dialog = ExtensionUpdatesDialog(self.window, self.updates)
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            self._queue = list(self.updates)
+            self._next_update()
+
+    def _next_update(self) -> None:
+        """Download the next version of the queue, the way any install is: the
+        person is shown it before it replaces what is installed."""
+        while self._queue:
+            update = self._queue.pop(0)
+            current = {one.manifest.id: one for one in self.store.installed()}.get(
+                update.extension
+            )
+            if current is None or (version_key(update.latest) or (0, 0, 0)) <= (
+                version_key(current.manifest.version) or (0, 0, 0)
+            ):
+                continue  # already updated, or gone
+            self.update(update)
+            return
 
     def _build_table(self) -> None:
         """The table of the extensions, with the buttons for the one selected
@@ -591,8 +647,12 @@ class ExtensionsPanel(QObject):
                 self.store.prepare, data, repo.source, pin=pin, review=review
             ),
             repo,
-            on_error=self._warn,
+            on_error=self._download_failed,
         )
+
+    def _download_failed(self, text: str) -> None:
+        self._warn(text)
+        self._next_update()
 
     def _prepared(
         self,
@@ -611,6 +671,7 @@ class ExtensionsPanel(QObject):
                     raise
         except StoreError as error:
             self._warn(str(error))
+            self._next_update()
             return
         if review:
             self._review(candidate)
@@ -622,8 +683,10 @@ class ExtensionsPanel(QObject):
         dialog = InstallExtensionDialog(self.window, candidate)
         if dialog.exec() != QDialog.DialogCode.Accepted:
             self.store.discard(candidate)
+            self._next_update()
             return
         self._install(candidate)
+        self._next_update()
 
     def _install(self, candidate: Candidate) -> None:
         try:

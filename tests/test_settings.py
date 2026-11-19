@@ -589,3 +589,16 @@ def test_the_time_the_extensions_were_last_looked_at_is_kept_and_read_safely() -
     assert settings.extension_updates_checked_at == 0.0
     settings._data["extension_updates_checked_at"] = -5
     assert settings.extension_updates_checked_at == 0.0
+
+
+def test_the_updates_the_person_was_told_about_are_remembered_without_repeats() -> None:
+    settings = Settings()
+
+    settings.see_extension_updates(["dco.tool@v1.1.0"])
+    settings.see_extension_updates(["dco.tool@v1.1.0", "dco.aws@v2.0.0"])
+
+    assert settings.extension_updates_seen == ["dco.tool@v1.1.0", "dco.aws@v2.0.0"]
+    settings._data["extension_updates_seen"] = ["ok", 5, "x" * 500]
+    assert settings.extension_updates_seen == ["ok"]
+    settings._data["extension_updates_seen"] = "nope"
+    assert settings.extension_updates_seen == []

@@ -46,6 +46,7 @@ DEFAULTS: dict[str, Any] = {
     "extensions": {},
     "extensions_offered": [],
     "extension_updates_checked_at": 0.0,
+    "extension_updates_seen": [],
 }
 
 
@@ -333,6 +334,23 @@ class Settings:
         value = self._data["extension_updates_checked_at"]
         valid = isinstance(value, int | float) and not isinstance(value, bool)
         return float(value) if valid and value > 0 else 0.0
+
+    @property
+    def extension_updates_seen(self) -> list[str]:
+        """The newer versions of extensions that the person was told about, as
+        `id@version`, so that the window that offers them shows once for each,
+        not at every start."""
+        value = self._data["extension_updates_seen"]
+        return (
+            [one for one in value if isinstance(one, str) and len(one) <= 120][-200:]
+            if isinstance(value, list)
+            else []
+        )
+
+    def see_extension_updates(self, keys: list[str]) -> None:
+        self._data["extension_updates_seen"] = [
+            *dict.fromkeys([*self.extension_updates_seen, *keys])
+        ][-200:]
 
     def record_extension_updates_check(self, now: float) -> None:
         self._data["extension_updates_checked_at"] = float(now)
