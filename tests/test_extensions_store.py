@@ -1,5 +1,6 @@
 import io
 import json
+import shutil
 import zipfile
 from pathlib import Path
 
@@ -14,6 +15,14 @@ from kubescope.extensions.store import (
     StoreError,
 )
 
+REQUIRED_FILES = {"LICENSE": b"MIT", "README.md": b"x", "src/__init__.py": b""}
+
+
+def add_required(folder: Path) -> None:
+    for name, data in REQUIRED_FILES.items():
+        (folder / name).parent.mkdir(parents=True, exist_ok=True)
+        (folder / name).write_bytes(data)
+
 
 def manifest(extension: str = "dco.tool", version: str = "1.0.0") -> bytes:
     return (
@@ -23,6 +32,12 @@ def manifest(extension: str = "dco.tool", version: str = "1.0.0") -> bytes:
 
 
 def make_zip(files: dict[str, bytes]) -> bytes:
+    """A zip; next to each manifest it has what an extension must have."""
+    files = dict(files)
+    for name in [one for one in files if one.endswith(MANIFEST_NAME)]:
+        top = name.removesuffix(MANIFEST_NAME)
+        for required, data in REQUIRED_FILES.items():
+            files.setdefault(f"{top}{required}", data)
     buffer = io.BytesIO()
     with zipfile.ZipFile(buffer, "w") as zipped:
         for name, content in files.items():
@@ -34,7 +49,7 @@ def tool_zip(version: str = "1.0.0", top: str = "", extra: bytes = b"") -> bytes
     return make_zip(
         {
             f"{top}{MANIFEST_NAME}": manifest(version=version),
-            f"{top}tool.py": b"def activate(ctx): pass\n" + extra,
+            f"{top}src/tool.py": b"def activate(ctx): pass\n" + extra,
         }
     )
 
@@ -66,7 +81,7 @@ def test_an_archive_is_prepared_and_nothing_is_installed(tmp_path) -> None:
     assert candidate.source == "file tool.zip"
     assert candidate.sha256 == tree_digest(candidate.folder)  # of the files
     assert candidate.replaces is None and not candidate.content_changed
-    assert (candidate.folder / "tool.py").is_file()
+    assert (candidate.folder / "src" / "tool.py").is_file()
     assert store.installed() == []
 
 
@@ -150,7 +165,7 @@ def test_installing_puts_it_in_place_and_remembers_it(tmp_path) -> None:
 
     assert installed.manifest.id == "dco.tool" and not installed.bundled
     assert installed.source == "github dco/tool@v1"
-    assert (installed.folder / "tool.py").is_file()
+    assert (installed.folder / "src" / "tool.py").is_file()
     assert [one.manifest.id for one in store.installed()] == ["dco.tool"]
     assert store.source_of("dco.tool") == "github dco/tool@v1"
     assert list((tmp_path / "ext" / "staging").iterdir()) == []
@@ -359,6 +374,9 @@ def test_the_same_version_has_the_same_hash_from_a_repository_and_from_a_folder(
     (source / "pkg").mkdir(parents=True)
     for name, data in files.items():
         (source / name).write_bytes(data)
+    (source / "LICENSE").write_bytes(b"MIT")  # what the zip above gets by itself
+    (source / "src").mkdir()
+    (source / "src" / "__init__.py").write_bytes(b"")
     (source / ".git").mkdir()
     (source / ".git" / "HEAD").write_text("ref")  # what a checkout carries
     from_folder = store.prepare_folder(source)
@@ -414,6 +432,7 @@ def test_a_folder_run_in_place_keeps_its_dates_too(tmp_path) -> None:
     store = store_in(tmp_path)
     folder = tmp_path / "author"
     folder.mkdir()
+    add_required(folder)
     (folder / MANIFEST_NAME).write_bytes(manifest())
 
     linked = store.install(store.prepare_link(folder))
@@ -474,7 +493,7 @@ def test_an_installed_extension_keeps_only_what_runs(tmp_path) -> None:
         for path in installed.folder.rglob("*")
         if path.is_file()
     )
-    assert kept == sorted([*KEPT_FILES, MANIFEST_NAME])
+    assert kept == sorted([*KEPT_FILES, MANIFEST_NAME, "src/__init__.py"])
     # what was checked and what is shown is the whole of what was downloaded
     assert candidate.sha256 == whole and tree_digest(installed.folder) != whole
     assert installed.sha256 == candidate.sha256
@@ -484,6 +503,7 @@ def test_an_installed_extension_keeps_only_what_runs(tmp_path) -> None:
 def test_a_folder_run_in_place_is_never_pruned(tmp_path) -> None:
     store = store_in(tmp_path)
     folder = tmp_path / "author"
+    add_required(folder)
     for name, data in {**DEVELOPMENT_FILES, MANIFEST_NAME: manifest()}.items():
         (folder / name).parent.mkdir(parents=True, exist_ok=True)
         (folder / name).write_bytes(data)
@@ -495,20 +515,61 @@ def test_a_folder_run_in_place_is_never_pruned(tmp_path) -> None:
     ).is_file()
 
 
-def test_pruning_removes_the_top_level_names_only(tmp_path) -> None:
+def test_pruning_keeps_the_top_level_names_it_is_told_to_only(tmp_path) -> None:
     from kubescope.extensions.archive import prune
 
-    (tmp_path / "pkg" / "tests").mkdir(parents=True)  # a package's own folder stays
-    (tmp_path / "pkg" / "tests" / "data.json").write_text("{}")
+    (tmp_path / "src" / "tests").mkdir(parents=True)  # inside a kept folder, it stays
+    (tmp_path / "src" / "tests" / "data.json").write_text("{}")
     (tmp_path / "tests").mkdir()
     (tmp_path / "Makefile").write_text("x")
     (tmp_path / "keep.py").write_text("x")
 
-    removed = prune(tmp_path)
+    removed = prune(tmp_path, {"src", "keep.py"})
 
     assert removed == ["Makefile", "tests"]
-    assert (tmp_path / "pkg" / "tests" / "data.json").is_file()
+    assert (tmp_path / "src" / "tests" / "data.json").is_file()
     assert (tmp_path / "keep.py").is_file()
+
+
+def test_the_manifest_says_what_else_is_for_production(tmp_path) -> None:
+    store = store_in(tmp_path)
+    text = manifest().decode() + 'production = ["assets/"]\n'
+    data = make_zip(
+        {
+            MANIFEST_NAME: text.encode(),
+            "languages/pt_BR.json": b"{}",
+            "assets/a.png": b"x",
+            "notes.txt": b"x",
+        }
+    )
+
+    installed = store.install(store.prepare(data, "file tool.zip"))
+
+    assert installed.manifest.production == ("assets",)  # languages is known
+    assert sorted(path.name for path in installed.folder.iterdir()) == sorted(
+        ["assets", "languages", "src", "LICENSE", "README.md", MANIFEST_NAME]
+    )
+
+
+@pytest.mark.parametrize("missing", ["LICENSE", "README.md", "src/__init__.py"])
+def test_an_extension_without_what_is_required_is_refused(tmp_path, missing) -> None:
+    store = store_in(tmp_path)
+    files = {MANIFEST_NAME: manifest(), **REQUIRED_FILES}
+    del files[missing]
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, "w") as zipped:
+        for name, content in files.items():
+            zipped.writestr(name, content)
+
+    with pytest.raises(StoreError, match=f"It lacks {missing.split('/')[0]}"):
+        store.prepare(buffer.getvalue(), "file tool.zip")
+    folder = tmp_path / "author"
+    add_required(folder)
+    (folder / MANIFEST_NAME).write_bytes(manifest())
+    top = folder / missing.split("/")[0]
+    shutil.rmtree(top) if top.is_dir() else top.unlink()
+    with pytest.raises(StoreError, match="It lacks"):
+        store.prepare_link(folder)
 
 
 def test_what_was_installed_with_its_whole_repository_is_pruned_later(tmp_path) -> None:
@@ -519,6 +580,7 @@ def test_what_was_installed_with_its_whole_repository_is_pruned_later(tmp_path) 
     (installed.folder / "Makefile").write_text("x")
     author = tmp_path / "author"
     author.mkdir()
+    add_required(author)
     (author / MANIFEST_NAME).write_bytes(manifest("dco.dev"))
     (author / "tests").mkdir()
     store.install(store.prepare_link(author))

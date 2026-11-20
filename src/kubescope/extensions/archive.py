@@ -12,6 +12,7 @@ import os
 import shutil
 import stat
 import zipfile
+from collections.abc import Collection
 from pathlib import Path
 
 MAX_ARCHIVE = 20 * 1024 * 1024  # bytes of the zip
@@ -120,52 +121,13 @@ def copy_tree(source: Path, destination: Path) -> None:
             shutil.copyfile(path, target / name)
 
 
-# What a repository has for the people who work on it and an installed extension does
-# not need: its tests, its pipeline, its documents of the project and its tooling.
-# The manifest, the code, the translations, the README and the LICENSE stay.
-DEVELOPMENT = frozenset(
-    {
-        "tests",
-        "test",
-        "tools",
-        "docs",
-        ".github",
-        ".git",
-        ".gitignore",
-        ".gitattributes",
-        ".pre-commit-config.yaml",
-        ".markdownlint.json",
-        ".python-version",
-        ".idea",
-        ".vscode",
-        ".venv",
-        "venv",
-        ".pytest_cache",
-        ".ruff_cache",
-        ".mypy_cache",
-        ".coverage",
-        "coverage.xml",
-        "dist",
-        "build",
-        "Makefile",
-        "uv.lock",
-        "pyproject.toml",
-        "CHANGELOG.md",
-        "CONTRIBUTING.md",
-        "SECURITY.md",
-        "CODE_OF_CONDUCT.md",
-        "noxfile.py",
-        "tox.ini",
-    }
-)
-
-
-def prune(folder: Path) -> list[str]:
-    """Delete from an installed extension what is only for developing it (see
-    `DEVELOPMENT`), at the top of its folder; the names removed."""
+def prune(folder: Path, keep: Collection[str]) -> list[str]:
+    """Delete from an installed extension everything at the top of its folder
+    that is not in `keep`, what its manifest says is for production; the names
+    removed."""
     removed = []
     for path in sorted(folder.iterdir()):
-        if path.name not in DEVELOPMENT:
+        if path.name in keep:
             continue
         if path.is_dir() and not path.is_symlink():
             shutil.rmtree(path, ignore_errors=True)

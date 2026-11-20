@@ -128,3 +128,26 @@ def test_commands_that_do_not_fit_are_refused(commands) -> None:
 def test_commands_need_the_permission_to_add_them() -> None:
     with pytest.raises(ManifestError, match="need the permission cli"):
         parse_manifest(GOOD + b'commands = ["chat"]\n')
+
+
+def test_what_is_for_production_is_read_and_the_required_is_always_kept() -> None:
+    manifest = parse_manifest(GOOD + b'production = ["languages", "src", "assets/"]\n')
+
+    assert manifest.production == ("assets",)  # languages and src are known
+    assert manifest.kept == {
+        MANIFEST_NAME,
+        "LICENSE",
+        "README.md",
+        "src",
+        "languages",
+        "assets",
+    }
+    assert parse_manifest(GOOD).production == ()
+
+
+@pytest.mark.parametrize(
+    "value", ['"src"', "[1]", '["../x"]', '["a/b"]', '["/etc"]', '[""]', '["."]']
+)
+def test_production_must_list_names_at_the_top(value) -> None:
+    with pytest.raises(ManifestError, match="production"):
+        parse_manifest(GOOD + f"production = {value}\n".encode())

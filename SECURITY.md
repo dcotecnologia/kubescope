@@ -221,7 +221,7 @@ configure` so you type the keys there. Apart from the integrations below, the ap
   files), refuses links and names that leave its folder, and leaves out `.git`, a
   virtual environment and caches. The repository is downloaded only when you ask,
   over HTTPS from `codeload.github.com`, sending a `User-Agent` with the app version and nothing
-  else. An installed extension keeps only what runs (its tests, pipeline, tooling and project documents are left out); the sha256 in the install dialog is of everything that was downloaded. Uninstalling an extension deletes its folder. Writes by an extension still need
+  else. An installed extension keeps only what its `kubescope-extension.toml` says is for production, besides the manifest, `LICENSE`, `README.md` and `src`, which every extension must have (the rest is left out); the sha256 in the install dialog is of everything that was downloaded. Uninstalling an extension deletes its folder. Writes by an extension still need
   the write mode. The extensions the app recommends (shown with a star, and only
   Gabi installed by itself) are the **latest release** of a repository of the
   `dcotecnologia` organization, the same one that publishes KubeScope: the highest final

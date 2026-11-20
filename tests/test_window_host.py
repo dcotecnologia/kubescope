@@ -50,8 +50,10 @@ def make_extension(
     package = f"host_ext_{number}"
     extension = f"dco.host{number}"
     folder = tmp_path / package
-    (folder / package).mkdir(parents=True)
-    (folder / package / "__init__.py").write_text(code)
+    (folder / "src" / package).mkdir(parents=True)
+    (folder / "src" / package / "__init__.py").write_text(code)
+    (folder / "LICENSE").write_text("MIT")
+    (folder / "README.md").write_text("x")
     (folder / MANIFEST_NAME).write_text(
         f'id = "{extension}"\nname = "Host {number}"\nversion = "1.0.0"\napi = "0"\n'
         f'entry = "{package}:activate"\npermissions = [{permissions}]\n'
@@ -464,7 +466,7 @@ def test_an_extension_run_from_its_folder_is_reloaded_when_its_files_change(
     window, tmp_path
 ) -> None:
     folder, module, extension = contributing(tmp_path, window)
-    package_file = next(folder.glob("host_ext_*/__init__.py"))
+    package_file = next(folder.glob("src/host_ext_*/__init__.py"))
     assert extension in window._extension_watchers
 
     window._reload_changed_extensions()  # nothing changed

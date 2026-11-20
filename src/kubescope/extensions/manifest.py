@@ -14,6 +14,12 @@ from kubescope.sdk import API_VERSION, PERMISSIONS
 
 MANIFEST_NAME = "kubescope-extension.toml"
 MAX_MANIFEST_BYTES = 16 * 1024
+# what every extension has, and what its manifest does not need to list
+REQUIRED = (MANIFEST_NAME, "LICENSE", "README.md", "src")
+# what is for production when it is there, so the manifest does not list it
+OPTIONAL = ("languages",)
+_PRODUCTION = re.compile(r"[A-Za-z0-9_.][A-Za-z0-9_. -]{0,99}")
+_MAX_PRODUCTION = 20
 
 _ID = re.compile(r"[a-z0-9][a-z0-9_-]*(\.[a-z0-9][a-z0-9_-]*)+")
 _VERSION = re.compile(r"\d{1,6}\.\d{1,6}\.\d{1,6}")
@@ -39,6 +45,14 @@ class Manifest:
     # the commands it adds to `kubescope`, so that the app knows them without
     # running the extension
     commands: tuple[str, ...] = ()
+    # what else, at the top of its folder, is for production and stays when it is
+    # installed; REQUIRED is always there, and OPTIONAL when it exists
+    production: tuple[str, ...] = ()
+
+    @property
+    def kept(self) -> frozenset[str]:
+        """The names at the top of the folder that stay once installed."""
+        return frozenset((*REQUIRED, *OPTIONAL, *self.production))
 
 
 def _text(document: dict[str, object], key: str, required: bool = True) -> str:
@@ -48,6 +62,21 @@ def _text(document: dict[str, object], key: str, required: bool = True) -> str:
     if len(value) > _MAX_TEXT:
         raise ManifestError(f"{key} is too long")
     return value.strip()
+
+
+def _production(value: object) -> tuple[str, ...]:
+    if not isinstance(value, list) or len(value) > _MAX_PRODUCTION:
+        raise ManifestError("production must be a list of at most 20 names")
+    names: list[str] = []
+    for one in value:
+        name = one.rstrip("/") if isinstance(one, str) else ""
+        if not _PRODUCTION.fullmatch(name) or name in {".", ".."}:
+            raise ManifestError(
+                "production must list names at the top of the extension, like assets"
+            )
+        if name not in (*REQUIRED, *OPTIONAL) and name not in names:
+            names.append(name)
+    return tuple(names)
 
 
 def parse_manifest(content: bytes) -> Manifest:
@@ -92,6 +121,7 @@ def parse_manifest(content: bytes) -> Manifest:
         )
     if commands and "cli" not in permissions:
         raise ManifestError("commands need the permission cli")
+    production = _production(document.get("production", []))
     return Manifest(
         id=extension,
         name=_text(document, "name"),
@@ -101,6 +131,7 @@ def parse_manifest(content: bytes) -> Manifest:
         description=_text(document, "description", required=False),
         author=_text(document, "author", required=False),
         commands=tuple(commands),
+        production=production,
     )
 
 
@@ -113,3 +144,8 @@ def read_manifest(folder: Path) -> Manifest:
         return parse_manifest(path.read_bytes())
     except OSError as error:
         raise ManifestError(f"{MANIFEST_NAME} could not be read") from error
+
+
+def missing_required(folder: Path) -> list[str]:
+    """What every extension must have and `folder` does not."""
+    return [name for name in REQUIRED if not (folder / name).exists()]

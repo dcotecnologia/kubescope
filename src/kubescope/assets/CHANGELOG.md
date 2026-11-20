@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+### Changed
+
+- The `kubescope-extension.toml` of an extension says what is for production: an optional `production` list of the folders and files at the top of the extension that stay when it is installed. The manifest itself, `LICENSE`, `README.md` and `src` are required (an extension without one is refused) and always stay, and so does `languages` when there is one; everything else not listed is left out by @danilogco
+
 ## [2.1.0] - 2026-11-20
 
 ### Added

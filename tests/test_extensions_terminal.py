@@ -47,8 +47,12 @@ def make_extension(
     package = f"terminal_ext_{number}"
     extension = f"dco.terminal{number}"
     folder = tmp_path / package
-    (folder / package).mkdir(parents=True)
-    (folder / package / "__init__.py").write_text(code.replace("COMMAND", command))
+    (folder / "src" / package).mkdir(parents=True)
+    (folder / "src" / package / "__init__.py").write_text(
+        code.replace("COMMAND", command)
+    )
+    (folder / "LICENSE").write_text("MIT")
+    (folder / "README.md").write_text("x")
     (folder / MANIFEST_NAME).write_text(
         f'id = "{extension}"\nname = "T"\nversion = "1.0.0"\napi = "0"\n'
         f'entry = "{package}:activate"\npermissions = [{permissions}]\n'

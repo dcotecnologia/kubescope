@@ -1,5 +1,6 @@
 import io
 import os
+import shutil
 import time
 import zipfile
 from dataclasses import dataclass
@@ -43,13 +44,19 @@ def tool_zip(extension: str = "dco.tool", version: str = "1.0.0") -> bytes:
     buffer = io.BytesIO()
     with zipfile.ZipFile(buffer, "w") as zipped:
         zipped.writestr(MANIFEST_NAME, manifest(extension, version))
+        zipped.writestr("LICENSE", "MIT")
+        zipped.writestr("README.md", "x")
+        zipped.writestr("src/__init__.py", "")
     return buffer.getvalue()
 
 
 def make_folder(root: Path, version: str = "1.0.0") -> Path:
     root.mkdir(parents=True, exist_ok=True)
     (root / MANIFEST_NAME).write_bytes(manifest("dco.tool", version))
-    (root / "tool.py").write_text("x = 1\n")
+    (root / "LICENSE").write_text("MIT")
+    (root / "README.md").write_text("x")
+    (root / "src").mkdir(exist_ok=True)
+    (root / "src" / "tool.py").write_text("x = 1\n")
     return root
 
 
@@ -235,7 +242,7 @@ def test_declining_installs_nothing_and_keeps_the_folder_of_the_author(
     setup.panel.install_from_folder()
 
     assert setup.summary() == [("Gabi", "Bundled")]
-    assert (folder / MANIFEST_NAME).is_file() and (folder / "tool.py").is_file()
+    assert (folder / MANIFEST_NAME).is_file() and (folder / "src" / "tool.py").is_file()
     assert list((tmp_path / "ext" / "staging").iterdir()) == []
 
 
@@ -360,7 +367,7 @@ def test_an_installed_extension_is_uninstalled_and_its_files_deleted(
 
     assert setup.summary() == [("Gabi", "Bundled")]
     assert not (tmp_path / "ext" / "installed" / "dco.tool").exists()
-    assert (folder / "tool.py").is_file()  # the original stays
+    assert (folder / "src" / "tool.py").is_file()  # the original stays
 
 
 def test_a_linked_extension_is_uninstalled_without_touching_its_folder(
@@ -376,7 +383,7 @@ def test_a_linked_extension_is_uninstalled_without_touching_its_folder(
     setup.card("Tool").buttons["Uninstall"].click()
 
     assert setup.summary() == [("Gabi", "Bundled")]
-    assert (folder / "tool.py").is_file()
+    assert (folder / "src" / "tool.py").is_file()
 
 
 def test_a_store_that_refuses_is_reported(setup, monkeypatch) -> None:
@@ -429,9 +436,7 @@ def test_a_folder_that_is_gone_is_asked_for_again_on_reinstall(setup, tmp_path) 
     folder = make_folder(tmp_path / "tool")
     setup.pick_manifest(folder)
     setup.panel.install_from_folder()
-    (folder / MANIFEST_NAME).unlink()
-    (folder / "tool.py").unlink()
-    folder.rmdir()
+    shutil.rmtree(folder)
     new = make_folder(tmp_path / "moved", version="2.0.0")
     setup.pick_manifest(new)  # where the person points this time
 

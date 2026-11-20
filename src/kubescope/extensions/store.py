@@ -26,6 +26,7 @@ from kubescope.extensions.manifest import (
     MANIFEST_NAME,
     Manifest,
     ManifestError,
+    missing_required,
     read_manifest,
 )
 
@@ -200,7 +201,11 @@ class ExtensionStore:
             folder = self._folder(extension)
             if "path" in entry or not folder.is_dir():
                 continue
-            if names := archive.prune(folder):
+            try:
+                kept = read_manifest(folder).kept
+            except ManifestError:
+                continue  # damaged: nothing is deleted from what cannot be read
+            if names := archive.prune(folder, kept):
                 removed[extension] = names
         return removed
 
@@ -234,6 +239,7 @@ class ExtensionStore:
         repository."""
         root = self._root(staging)
         manifest = read_manifest(root)
+        self._require(root)
         digest = archive.tree_digest(root)
         current = next(
             (one for one in self.installed() if one.manifest.id == manifest.id), None
@@ -279,6 +285,7 @@ class ExtensionStore:
         try:
             root = self._root(source.resolve())
             manifest = read_manifest(root)
+            self._require(root)
         except (ManifestError, StoreError, OSError) as error:
             raise StoreError(str(error)) from error
         current = next(
@@ -292,6 +299,11 @@ class ExtensionStore:
             replaces=current.manifest if current else None,
             dev=True,
         )
+
+    @staticmethod
+    def _require(root: Path) -> None:
+        if missing := missing_required(root):
+            raise StoreError(f"It lacks {', '.join(missing)}")
 
     @staticmethod
     def _root(staging: Path) -> Path:
@@ -342,7 +354,8 @@ class ExtensionStore:
         if target.exists():
             target.replace(previous)
         candidate.folder.replace(target)
-        archive.prune(target)  # only what runs stays; the digest was of everything
+        # only production stays; the digest was of everything
+        archive.prune(target, candidate.manifest.kept)
         shutil.rmtree(previous, ignore_errors=True)
         shutil.rmtree(staged, ignore_errors=True)
         now = _now()
