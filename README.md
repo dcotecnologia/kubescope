@@ -465,8 +465,9 @@ make windows    # installer and portable zip; on Linux it builds inside Wine
 ```
 
 Each of these packages the bundle in `dist/KubeScope`, so build one platform at a
-time. `make windows` keeps its Wine prefix in `.wine/` and downloads Python and
-Inno Setup on the first run.
+time. `make windows` keeps its Wine prefix in `~/.cache/kubescope/wine` (outside the
+project, or where `KUBESCOPE_WINE_PREFIX` says) and downloads Python and Inno
+Setup on the first run.
 
 The Flatpak (`com.dcotecnologia.KubeScope`) reads `~/.kube` (read-only) and carries no
 cloud CLI: for every cloud (EKS, GKE, AKS, OCI...) it asks the host to run the programs

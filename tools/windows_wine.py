@@ -1,10 +1,15 @@
 """Build the Windows packages from Linux by running the Windows toolchain in
 Wine.
 
-PyInstaller cannot cross-build, so this keeps a Wine prefix in .wine/
-with a Windows Python (and Inno Setup, for the installer) and runs
+PyInstaller cannot cross-build, so this keeps a Wine prefix with a
+Windows Python (and Inno Setup, for the installer) and runs
 build_windows.py in it. The first run downloads and installs those;
 later runs reuse them.
+
+The prefix is in ~/.cache/kubescope/wine (or where KUBESCOPE_WINE_PREFIX
+says), outside the project: the Z: drive of a Wine prefix is a link to
+the whole disk, which an editor that follows links while it indexes the
+project would walk through.
 """
 
 import os
@@ -16,7 +21,12 @@ from pathlib import Path
 from urllib.request import urlopen
 
 ROOT = Path(__file__).resolve().parents[1]
-PREFIX = ROOT / ".wine"
+PREFIX = Path(
+    os.environ.get("KUBESCOPE_WINE_PREFIX")
+    or Path(os.environ.get("XDG_CACHE_HOME") or Path.home() / ".cache")
+    / "kubescope"
+    / "wine"
+)
 PYTHON_VERSION = "3.15.0"
 PYTHON_URL = (
     f"https://www.python.org/ftp/python/{PYTHON_VERSION}/"
