@@ -781,8 +781,6 @@
             "Show KubeScope": "顯示 KubeScope",
             "Show the shortcuts": "顯示快速鍵",
             "Sign in": "登入",
-            "Sign in to {provider}": "登入 {provider}",
-            "Sign in to {provider} ({profile})": "登入 {provider}（{profile}）",
             "Signed in.": "已登入。",
             "Sponsor on GitHub": "在 GitHub 上贊助",
             "Starting": "正在啟動",

@@ -781,8 +781,6 @@
             "Show KubeScope": "KubeScope 표시",
             "Show the shortcuts": "단축키 보기",
             "Sign in": "로그인",
-            "Sign in to {provider}": "{provider}에 로그인",
-            "Sign in to {provider} ({profile})": "{provider}에 로그인 ({profile})",
             "Signed in.": "로그인했습니다.",
             "Sponsor on GitHub": "GitHub에서 후원하기",
             "Starting": "시작 중",

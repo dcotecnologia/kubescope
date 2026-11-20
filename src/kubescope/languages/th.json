@@ -781,8 +781,6 @@
             "Show KubeScope": "แสดง KubeScope",
             "Show the shortcuts": "แสดงปุ่มลัด",
             "Sign in": "เข้าสู่ระบบ",
-            "Sign in to {provider}": "ลงชื่อเข้าใช้ {provider}",
-            "Sign in to {provider} ({profile})": "ลงชื่อเข้าใช้ {provider} ({profile})",
             "Signed in.": "เข้าสู่ระบบแล้ว",
             "Sponsor on GitHub": "สนับสนุนบน GitHub",
             "Starting": "กำลังเริ่ม",

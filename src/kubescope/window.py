@@ -2889,18 +2889,13 @@ class WorkloadWindow(QMainWindow):
                 ).format(profile=profile)
             )
         elif profile is None:
-            self.login_button.setText(
-                self.tr("Sign in to {provider}").format(provider=provider)
-            )
+            self.login_button.setText(self.tr("Sign in"))
             self._set_status(
                 lambda: self.tr("Not signed in to {provider}").format(provider=provider)
             )
         else:
-            self.login_button.setText(
-                self.tr("Sign in to {provider} ({profile})").format(
-                    provider=provider, profile=profile
-                )
-            )
+            # the status says which profile; the button only says what it does
+            self.login_button.setText(self.tr("Sign in"))
             self._set_status(
                 lambda: self.tr(
                     "Not signed in to {provider} (profile {profile})"

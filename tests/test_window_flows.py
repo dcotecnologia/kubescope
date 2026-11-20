@@ -931,7 +931,7 @@ def test_login_check_runs_once_per_context_and_shows_the_profile(monkeypatch) ->
 
     ran[0][1]((True, SSO))
     assert not window.login_button.isHidden()
-    assert window.login_button.text() == "Sign in to AWS (work)"
+    assert window.login_button.text() == "Sign in"
     assert "Not signed in to AWS (profile work)" in window.status_label.text()
     assert window._login_checking is False
     window.close()
@@ -955,16 +955,16 @@ def test_google_cloud_and_azure_contexts_offer_to_sign_in(monkeypatch) -> None:
 
     google = LoginAction(["gcloud", "auth", "login"], None, False, "Google Cloud")
     window._show_login("prod", (True, google))
-    assert window.login_button.text() == "Sign in to Google Cloud"
+    assert window.login_button.text() == "Sign in"
     assert "Not signed in to Google Cloud" in window.status_label.text()
 
     azure = LoginAction(["az", "login"], None, False, "Azure")
     window._show_login("prod", (True, azure))
-    assert window.login_button.text() == "Sign in to Azure"
+    assert window.login_button.text() == "Sign in"
 
     named = LoginAction(["az", "login"], "my-subscription", False, "Azure")
     window._show_login("prod", (True, named))
-    assert window.login_button.text() == "Sign in to Azure (my-subscription)"
+    assert window.login_button.text() == "Sign in"
     window.close()
 
 

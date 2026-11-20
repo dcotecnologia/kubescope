@@ -781,8 +781,6 @@
             "Show KubeScope": "KubeScope を表示",
             "Show the shortcuts": "ショートカットを表示",
             "Sign in": "サインイン",
-            "Sign in to {provider}": "{provider} にサインイン",
-            "Sign in to {provider} ({profile})": "{provider} にサインイン（{profile}）",
             "Signed in.": "サインインしました。",
             "Sponsor on GitHub": "GitHub でスポンサーになる",
             "Starting": "開始中",

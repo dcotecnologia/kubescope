@@ -781,8 +781,6 @@
             "Show KubeScope": "KubeScope'u göster",
             "Show the shortcuts": "Kısayolları göster",
             "Sign in": "Oturum aç",
-            "Sign in to {provider}": "{provider} oturumu aç",
-            "Sign in to {provider} ({profile})": "{provider} oturumu aç ({profile})",
             "Signed in.": "Oturum açıldı.",
             "Sponsor on GitHub": "GitHub'da sponsor ol",
             "Starting": "Başlıyor",
