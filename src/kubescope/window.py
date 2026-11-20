@@ -1189,6 +1189,7 @@ class WorkloadWindow(QMainWindow):
         self.settings_ui.saveButton.clicked.connect(self._save_preferences)
         self._settings_sections = QButtonGroup(self)
         self._filled_cards: set[QWidget] = set()  # settings cards with a tail spacer
+        self._page_before_settings = 0  # where the gear takes the person back to
         self._settings_sections.addButton(self.settings_ui.generalSectionButton, 0)
         self._settings_sections.addButton(self.settings_ui.kubeSectionButton, 2)
         self._settings_sections.addButton(self.settings_ui.shortcutsSectionButton, 3)
@@ -1458,7 +1459,7 @@ class WorkloadWindow(QMainWindow):
         self._extension_timer.timeout.connect(self._reload_changed_extensions)
         self._extension_timer.start()
         ui.settingsButton.setIcon(_gear_icon())
-        ui.settingsButton.clicked.connect(lambda: self._show_page(2))
+        ui.settingsButton.clicked.connect(self._toggle_settings)
         # "/" is left to the text fields: typing in one does not open the search
         actions = {
             "refresh": self._press_refresh,
@@ -2121,7 +2122,18 @@ class WorkloadWindow(QMainWindow):
         self._status_message = message
         self.status_label.setText(message())
 
+    def _toggle_settings(self) -> None:
+        """The gear opens the Settings, and on the Settings it takes the person
+        back to the page they came from, as the bell does with its panel."""
+        if self.pages.currentIndex() != 2:
+            self._show_page(2)
+            return
+        back = self._page_before_settings
+        self._show_page(back if 0 <= back < self.pages.count() and back != 2 else 0)
+
     def _show_page(self, index: int) -> None:
+        if index == 2 and self.pages.currentIndex() != 2:
+            self._page_before_settings = self.pages.currentIndex()
         self.pages.setCurrentIndex(index)
         self.nav_overview.setChecked(index == 0)
         for view, button in self._nav_views.items():
@@ -6279,10 +6291,12 @@ class WorkloadWindow(QMainWindow):
         return self._choose(self.context_combo, context, "context", report)
 
     def _command_open_page(self, page: str, report: Callable[[str], None]) -> None:
+        if page == "settings":
+            self._show_page(2)  # go there; the gear itself would come back
+            return
         {
             "overview": self.nav_overview,
             "workloads_overview": self.nav_workloads_overview,
-            "settings": self.ui.settingsButton,
         }[page].click()  # as the person would
 
     def _command_refresh(self, report: Callable[[str], None]) -> None:

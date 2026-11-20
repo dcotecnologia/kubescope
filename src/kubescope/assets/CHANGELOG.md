@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file. The format 
 
 ### Changed
 
+- The gear in the top bar opens the Settings and, on the Settings, takes you back to the page you came from when clicked again, as the bell does with its panel by @danilogco
 - The title of a block of the side menu (MONITORING, AWS, ...) folds the whole block when clicked and brings it back when clicked again, with the arrow of the entries that fold; the blocks you fold stay folded the next time you open the app, and a screen reached by a shortcut unfolds its block by @danilogco
 - The card of each section of the Settings goes down to the bottom of the page instead of stopping under what is in it, and the table of the extensions grows with it by @danilogco
 - A button at the start of the page header hides the side menu, which slides away toward the left, and brings it back when clicked again; it stays as you left it the next time you open the app by @danilogco

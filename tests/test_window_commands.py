@@ -299,6 +299,53 @@ def test_a_screen_reached_by_a_shortcut_unfolds_its_block_without_keeping_it(
     window.close()
 
 
+def test_the_gear_opens_the_settings_and_on_the_settings_goes_back(monkeypatch) -> None:
+    window = _ready_window(monkeypatch)
+    gear = window.ui.settingsButton
+
+    window._show_page(1)  # a list
+    gear.click()
+    assert window.pages.currentIndex() == 2 and gear.isChecked()
+
+    gear.click()  # again: back to where the person was
+    assert window.pages.currentIndex() == 1 and not gear.isChecked()
+    gear.click()
+    gear.click()
+    assert window.pages.currentIndex() == 1  # every time
+    window.close()
+
+
+def test_the_gear_goes_back_to_the_overview_when_there_is_nowhere_else(
+    monkeypatch,
+) -> None:
+    window = _ready_window(monkeypatch)
+    gear = window.ui.settingsButton
+
+    window._show_page(2)  # opened without the gear, from the overview
+    window._page_before_settings = 99  # a page that is gone
+    gear.click()
+    assert window.pages.currentIndex() == 0
+
+    window._show_page(2)
+    window._page_before_settings = 2  # never itself
+    gear.click()
+    assert window.pages.currentIndex() == 0
+    window.close()
+
+
+def test_going_to_the_settings_by_a_command_never_comes_back(monkeypatch) -> None:
+    window = _ready_window(monkeypatch)
+    window._show_page(4)
+
+    window._command_open_page("settings", lambda text: None)
+    window._command_open_page("settings", lambda text: None)  # already there
+
+    assert window.pages.currentIndex() == 2
+    window._toggle_settings()
+    assert window.pages.currentIndex() == 4  # the page it came from, not the Settings
+    window.close()
+
+
 def test_a_text_log_that_fails_or_whose_tab_closed_is_handled(
     window, monkeypatch
 ) -> None:
