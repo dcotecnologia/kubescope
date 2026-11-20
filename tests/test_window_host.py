@@ -233,6 +233,23 @@ def test_a_button_of_an_extension_sits_before_the_settings_until_it_unloads(
     window._remove_top_bar_buttons(extension)  # nothing left to take out
 
 
+def test_an_extension_may_show_a_notification_of_the_system(
+    window, tmp_path, monkeypatch
+) -> None:
+    folder, package, _extension = make_extension(tmp_path)
+    install_linked(window, folder)
+    ctx = sys.modules[package].CTX[0]
+    asked: list[tuple] = []
+    monkeypatch.setattr(
+        window,
+        "_system_notification",
+        lambda title, message, click: asked.append((title, message, click)) or True,
+    )
+
+    assert ctx.ui.show_system_notification("T", "m", None) is True
+    assert asked == [("T", "m", None)]
+
+
 def heard_notifications(window) -> list[dict]:
     heard: list[dict] = []
     window.extension_host.events.on(NOTIFICATION, lambda **notice: heard.append(notice))

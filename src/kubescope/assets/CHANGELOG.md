@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file. The format 
 ### Added
 
 - An extension can read the Warning events of the cluster with their identity and times (`ClusterAccess.get_events`) and add a button to the top bar, beside the Settings (`Ui.add_top_bar_button`), which the app takes out when the extension is unloaded by @danilogco
+- An extension can list the contexts of the kubeconfig (`ClusterAccess.list_contexts`) and show a notification of the operating system, through the tray, whose click brings the window forward (`Ui.show_system_notification`) by @danilogco
 - The app tells the extensions about the errors it shows in the banner, the warnings and errors of its message boxes and a new version of KubeScope (the event `notification`), so an extension can list them by @danilogco
 
 ### Changed

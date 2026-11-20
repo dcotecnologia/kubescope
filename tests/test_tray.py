@@ -296,3 +296,74 @@ def test_the_last_update_notice_keeps_a_day_and_ignores_anything_else(
 
     path.write_text('{"last_update_notice": 5}', encoding="utf-8")
     assert Settings(path).last_update_notice == ""
+
+
+def _record_messages(monkeypatch) -> list[tuple]:
+    shown: list[tuple] = []
+    monkeypatch.setattr(
+        QSystemTrayIcon,
+        "showMessage",
+        lambda self, title, message, icon=None, ms=0: shown.append((title, message)),
+    )
+    return shown
+
+
+def test_a_system_notification_goes_through_the_tray_and_its_click_brings_the_app(
+    monkeypatch,
+) -> None:
+    window = _with_tray(monkeypatch)
+    window._sync_tray()
+    shown = _record_messages(monkeypatch)
+    clicked: list[str] = []
+
+    assert window._system_notification("Title", "Text", lambda: clicked.append("on"))
+    window._tray.messageClicked.emit()  # type: ignore[union-attr]
+
+    assert shown == [("Title", "Text")] and clicked == ["on"]
+    window._message_clicked()  # nothing is left to call
+    assert clicked == ["on"]
+    window._quit()
+
+
+def test_without_the_background_mode_a_tray_only_for_the_notice_is_made(
+    monkeypatch,
+) -> None:
+    window = _with_tray(monkeypatch)
+    window.settings.run_in_background = False
+    window._sync_tray()
+    assert window._tray is None
+    shown = _record_messages(monkeypatch)
+
+    assert window._system_notification("A", "b", None)
+    assert window._system_notification("C", "d", None)  # the same one again
+
+    assert shown == [("A", "b"), ("C", "d")]
+    assert window._notice_tray is not None
+    window.settings.run_in_background = True
+    window._sync_tray()  # the real tray takes over
+    assert window._tray is not None and window._notice_tray is None
+    window._quit()
+
+
+def test_a_desktop_without_a_tray_cannot_show_a_system_notification(
+    monkeypatch,
+) -> None:
+    window = _with_tray(monkeypatch, available=False)
+    window._sync_tray()
+
+    assert window._system_notification("A", "b", None) is False
+    window.close()
+
+
+def test_a_new_version_clears_the_click_of_the_last_notification(monkeypatch) -> None:
+    window = _with_tray(monkeypatch)
+    window._sync_tray()
+    _record_messages(monkeypatch)
+    clicked: list[str] = []
+    window._system_notification("A", "b", lambda: clicked.append("stale"))
+
+    window._notify_update(Release("9.9.9", "https://example.invalid"), daily=False)
+    window._message_clicked()
+
+    assert clicked == []
+    window._quit()

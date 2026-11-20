@@ -36,6 +36,9 @@ class WindowUi:
         show_json: Callable[[str, dict[str, Any]], None] = lambda *_: None,
         open_log: Callable[[str, str, Callable[[], str]], None] = lambda *_: None,
         add_top_bar_button: Callable[[str, QWidget], None] = lambda *_: None,
+        system_notification: Callable[
+            [str, str, Callable[[], None] | None], bool
+        ] = lambda *_: False,
     ) -> None:
         self.window = window
         self.central = central
@@ -49,6 +52,7 @@ class WindowUi:
         self._show_json = show_json
         self._open_log = open_log
         self._add_top_bar_button = add_top_bar_button
+        self._system_notification = system_notification
 
     def show_message(self, icon: str, title: str, text: str) -> None:
         self._message(_ICONS.get(icon, QMessageBox.Icon.Information), title, text)
@@ -76,3 +80,11 @@ class WindowUi:
 
     def add_top_bar_button(self, owner: str, button: QWidget) -> None:
         self._add_top_bar_button(owner, button)
+
+    def show_system_notification(
+        self,
+        title: str,
+        message: str,
+        on_click: Callable[[], None] | None = None,
+    ) -> bool:
+        return self._system_notification(title, message, on_click)

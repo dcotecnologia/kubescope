@@ -125,3 +125,9 @@ def test_a_change_is_made_only_with_the_write_mode_on(
 
 def test_the_module_keeps_to_the_cluster_and_the_writes_of_the_app() -> None:
     assert cluster_access.cluster is cluster and cluster_access.writes is writes
+
+
+def test_the_contexts_are_the_names_of_the_kubeconfig(monkeypatch) -> None:
+    monkeypatch.setattr(cluster, "list_contexts", lambda: (["a", "b"], "a"))
+
+    assert ClusterBridge().list_contexts() == ["a", "b"]

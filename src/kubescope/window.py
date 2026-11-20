@@ -1030,6 +1030,8 @@ class WorkloadWindow(QMainWindow):
         self.nav_config = ui.navConfig
         self._pinned_buttons: list[QPushButton] = []
         self._tray: QSystemTrayIcon | None = None
+        self._notice_tray: QSystemTrayIcon | None = None  # only to carry a notice
+        self._notice_click: Callable[[], None] | None = None
         self._quitting = False
         self._name_fitted: set[str] = set()  # the lists whose NAME column was fitted
         self._viewer_contexts: dict[QWidget | None, str] = {}  # the context of each tab
@@ -1441,6 +1443,9 @@ class WorkloadWindow(QMainWindow):
                 lambda title, document: self._show_json_dialog(title, document),
                 lambda title, name, read: self._open_text_log(title, name, read),
                 lambda owner, button: self._add_top_bar_button(owner, button),
+                lambda title, message, click: self._system_notification(
+                    title, message, click
+                ),
             ),
             begin_forward=lambda *args: self._begin_forward(*args),
             commands=self.commands,
@@ -2381,11 +2386,42 @@ class WorkloadWindow(QMainWindow):
                 return
             self.settings.last_update_notice = today
             self._save_settings()
+        self._notice_click = None
         self._tray.showMessage(
             self.tr("KubeScope update available"),
             self.tr("Version {version} is available").format(version=release.version),
             QSystemTrayIcon.MessageIcon.Information,
         )
+
+    def _system_notification(
+        self, title: str, message: str, on_click: Callable[[], None] | None
+    ) -> bool:
+        """Show a notification of the operating system through a tray icon, the
+        one of the background mode or, without it, one made to carry the
+        notice; clicking it brings the window forward and calls `on_click`.
+
+        False when the desktop has no tray to show it with.
+        """
+        tray = self._tray
+        if tray is None:
+            if not QSystemTrayIcon.isSystemTrayAvailable():
+                return False
+            if self._notice_tray is None:
+                self._notice_tray = QSystemTrayIcon(QIcon(str(TRAY_ICON_PATH)), self)
+                self._notice_tray.setToolTip("KubeScope")
+                self._notice_tray.messageClicked.connect(self._message_clicked)
+                self._notice_tray.show()
+            tray = self._notice_tray
+        self._notice_click = on_click
+        tray.showMessage(title, message, QSystemTrayIcon.MessageIcon.Warning, 10000)
+        return True
+
+    def _message_clicked(self) -> None:
+        """The person clicked a notification of the system."""
+        self.bring_to_front()
+        click, self._notice_click = self._notice_click, None
+        if click is not None:
+            click()
 
     def _set_update_state(self, state: str) -> None:
         self._update_state = state
@@ -7081,9 +7117,13 @@ class WorkloadWindow(QMainWindow):
             menu.addAction(self.tr("Quit"), self._quit)
             tray.setContextMenu(menu)
             tray.activated.connect(self._tray_activated)
-            tray.messageClicked.connect(self.bring_to_front)
+            tray.messageClicked.connect(self._message_clicked)
             tray.show()
             self._tray = tray
+            if self._notice_tray is not None:  # this one carries the notices now
+                self._notice_tray.hide()
+                self._notice_tray.deleteLater()
+                self._notice_tray = None
         elif not wanted and self._tray is not None:
             self._tray.hide()
             self._tray.deleteLater()

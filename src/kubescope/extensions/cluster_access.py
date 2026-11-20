@@ -84,6 +84,9 @@ class ClusterBridge:
     def search_resources(self, context: str) -> list[SearchHit]:
         return cluster.search_resources(context)
 
+    def list_contexts(self) -> list[str]:
+        return cluster.list_contexts()[0]
+
     def get_events(
         self, context: str, types: tuple[str, ...] = ("Warning",)
     ) -> list[ClusterEvent]:
