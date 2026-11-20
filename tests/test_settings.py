@@ -331,6 +331,25 @@ def test_a_hidden_side_menu_is_kept_and_anything_else_is_shown(tmp_path) -> None
         assert Settings(path).sidebar_collapsed is False
 
 
+def test_the_blocks_of_the_menu_the_person_folded_are_kept(tmp_path) -> None:
+    path = tmp_path / "settings.json"
+    settings = Settings(path)
+    assert settings.folded_sections == []
+
+    settings.folded_sections = ["section:aws", "section:monitoring", "section:aws"]
+    settings.save()
+    assert Settings(path).folded_sections == ["section:aws", "section:monitoring"]
+
+    path.write_text('{"folded_sections": "aws"}', encoding="utf-8")
+    assert Settings(path).folded_sections == []
+    long_name = "x" * 100
+    path.write_text(
+        f'{{"folded_sections": [1, "", "{long_name}", null, "section:aws"]}}',
+        encoding="utf-8",
+    )
+    assert Settings(path).folded_sections == ["section:aws"]
+
+
 def test_the_sections_of_the_menu_the_person_closed_are_kept(tmp_path) -> None:
     path = tmp_path / "settings.json"
     settings = Settings(path)

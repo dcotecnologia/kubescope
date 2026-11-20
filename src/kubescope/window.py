@@ -246,6 +246,7 @@ from kubescope.views.extensions_panel import ExtensionsPanel
 from kubescope.views.forward_runner import ForwardRunner
 from kubescope.views.log_tab import LOG_REFRESH_MS, LogTab
 from kubescope.views.nav_chevron import NavChevron
+from kubescope.views.nav_section import SectionFold
 from kubescope.views.plugins_catalog import PluginsCatalog
 from kubescope.views.search_bar import compile_query, switch_button
 from kubescope.views.sidebar_resizer import SidebarResizer
@@ -297,6 +298,7 @@ LIST_DEBOUNCE_MS = 150
 LIST_REFRESH_MS = 5_000  # the list on screen is read again this often
 LIST_REFRESH_MAX_MS = 60_000  # ... and this rarely while the cluster keeps failing
 PERMISSIONS_TTL_S = 300  # what the cluster allows is asked again after this long
+MONITORING_FOLD = "section:monitoring"  # how the settings call that block folded
 MENU_OPEN = 16777215  # no limit: a section of the side menu that shows all its entries
 SIDEBAR_WIDTH = 240  # the usual width of the side menu, which can be dragged
 UPDATE_RECHECK_MS = 60 * 60 * 1000  # look for a new version again every hour
@@ -1193,11 +1195,15 @@ class WorkloadWindow(QMainWindow):
         self.extension_store.prune_installed()  # what an older version kept whole
         self._extension_loader: ExtensionLoader | None = None  # made below
         self._extension_sections: list[_ExtensionSection] = []
+        self.monitoring_fold = self._fold_the_monitoring_block()
         self.extension_pages = ExtensionPages(
             ui.sidebarNavLayout,
             self.pages,
             self._show_page,
             lambda: self._show_page(0),
+            lambda name: name in self.settings.folded_sections,
+            lambda: motion.ENABLED,
+            self._keep_section_fold,
         )
         self._extension_shortcuts: dict[str, QShortcut] = {}
         self._extension_watchers: dict[str, FolderWatcher] = {}
@@ -2544,6 +2550,7 @@ class WorkloadWindow(QMainWindow):
 
         Unlike a click on the section, it is not kept for the next run.
         """
+        self._unfold_around(button)
         parent = button.parentWidget()
         while parent is not None and parent not in self._submenus:
             parent = parent.parentWidget()
@@ -2555,6 +2562,52 @@ class WorkloadWindow(QMainWindow):
         if scroll is not None:
             # with the scroll area as receiver, the call is dropped with it
             QTimer.singleShot(0, scroll, partial(scroll.ensureWidgetVisible, button))
+
+    def _fold_the_monitoring_block(self) -> SectionFold:
+        """Put the entries under the title MONITORING in a block of their own,
+        which the title folds."""
+        layout = self.ui.sidebarNavLayout
+        body = QFrame()
+        inner = QVBoxLayout(body)
+        inner.setContentsMargins(0, 0, 0, 0)
+        inner.setSpacing(0)
+        start = layout.indexOf(self.ui.navSection) + 1
+        while (item := layout.itemAt(start)) is not None and not item.spacerItem():
+            layout.takeAt(start)
+            if (widget := item.widget()) is not None:
+                inner.addWidget(widget)
+        layout.insertWidget(start, body)
+        fold = SectionFold(
+            self.ui.navSection,
+            body,
+            MONITORING_FOLD in self.settings.folded_sections,
+            lambda: motion.ENABLED,
+        )
+        fold.toggled.connect(
+            lambda folded: self._keep_section_fold(MONITORING_FOLD, folded)
+        )
+        return fold
+
+    def _keep_section_fold(self, name: str, folded: bool) -> None:
+        """Write down that a block of the side menu was folded or unfolded."""
+        closed = set(self.settings.folded_sections)
+        if folded:
+            closed.add(name)
+        else:
+            closed.discard(name)
+        self.settings.folded_sections = sorted(closed)
+        self._save_settings()
+
+    def _unfold_around(self, button: QWidget) -> None:
+        """Bring back the folded block that an entry is in, for a screen
+        reached by a shortcut; it is not kept for the next run."""
+        folds = [self.monitoring_fold, *self.extension_pages.folds.values()]
+        parent = button.parentWidget()
+        while parent is not None:
+            for fold in folds:
+                if fold.body is parent:
+                    fold.set_folded(False, remember=False)
+            parent = parent.parentWidget()
 
     def _toggle_submenu(
         self,

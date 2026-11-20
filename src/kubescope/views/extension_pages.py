@@ -20,6 +20,8 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from kubescope.views.nav_section import SectionFold
+
 logger = logging.getLogger(__name__)
 
 
@@ -40,6 +42,11 @@ class _Entry:
         self.built = False
 
 
+def fold_name(section: str) -> str:
+    """How the settings call the block of a section that is folded."""
+    return f"section:{section.lower()}"
+
+
 class ExtensionPages(QObject):
     def __init__(
         self,
@@ -47,6 +54,9 @@ class ExtensionPages(QObject):
         stack: QStackedWidget,
         open_page: Callable[[int], None],
         leave: Callable[[], None],
+        is_folded: Callable[[str], bool] = lambda _name: False,
+        animated: Callable[[], bool] = lambda: True,
+        on_fold: Callable[[str, bool], None] = lambda _name, _folded: None,
     ) -> None:
         super().__init__(stack)
         self.menu = menu  # its last item is the spacer that ends it
@@ -55,6 +65,10 @@ class ExtensionPages(QObject):
         self.leave = leave  # the page shown went away
         self._entries: list[_Entry] = []
         self._widgets: list[QWidget] = []  # what was added to the menu
+        self._is_folded = is_folded  # whether the person folded a block
+        self._animated = animated
+        self._on_fold = on_fold  # the person folded or unfolded a block
+        self.folds: dict[QLabel, SectionFold] = {}  # by the title of the block
 
     def apply(self, pages: Sequence[PageContribution]) -> None:
         """Build the entries of the pages that the running extensions added."""
@@ -67,14 +81,26 @@ class ExtensionPages(QObject):
             widget.hide()  # until it is deleted
             widget.deleteLater()
         self._entries, self._widgets = [], []
+        self.folds = {}
         sections: dict[str, QLabel] = {}
+        bodies: dict[str, QVBoxLayout] = {}
         groups: dict[tuple[str, str], tuple[QPushButton, QFrame]] = {}
         for page in pages:
             if page.section not in sections:
                 label = QLabel(page.section.upper())
                 label.setObjectName("navSection")
+                body = QFrame()
+                body_layout = QVBoxLayout(body)
+                body_layout.setContentsMargins(0, 0, 0, 0)
+                body_layout.setSpacing(0)
                 self._add(label)
+                self._add(body)
+                name = fold_name(page.section)
+                fold = SectionFold(label, body, self._is_folded(name), self._animated)
+                fold.toggled.connect(partial(self._on_fold, name))
+                self.folds[label] = fold
                 sections[page.section] = label
+                bodies[page.section] = body_layout
             if (page.section, page.group) not in groups:
                 header = QPushButton(page.group)
                 header.setProperty("nav", "true")
@@ -88,8 +114,8 @@ class ExtensionPages(QObject):
                         not box.isVisible()
                     )
                 )
-                self._add(header)
-                self._add(submenu)
+                bodies[page.section].addWidget(header)
+                bodies[page.section].addWidget(submenu)
                 groups[(page.section, page.group)] = (header, submenu)
             header, submenu = groups[(page.section, page.group)]
             button = QPushButton(page.title)
@@ -133,7 +159,7 @@ class ExtensionPages(QObject):
                 shown.update((entry.group, entry.section))
         for entry in self._entries:
             entry.group.setVisible(entry.group in shown)
-            entry.section.setVisible(entry.section in shown)
+            self.folds[entry.section].set_available(entry.section in shown)
             submenu = entry.button.parentWidget()
             if submenu is not None:
                 submenu.setVisible(entry.group in shown)

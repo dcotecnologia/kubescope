@@ -1,6 +1,6 @@
 from PySide6.QtCore import QEvent, QObject, QPointF, Qt
 from PySide6.QtGui import QColor, QPainter, QPen, QPixmap
-from PySide6.QtWidgets import QLabel, QPushButton
+from PySide6.QtWidgets import QLabel, QWidget
 
 from kubescope.theme import themed
 
@@ -12,7 +12,7 @@ class NavChevron(QLabel):
     """The arrow at the right of a side menu entry that has entries under it:
     pointing down while they show, to the right while they are folded."""
 
-    def __init__(self, button: QPushButton) -> None:
+    def __init__(self, button: QWidget) -> None:
         super().__init__(button)
         self._button = button
         self._open = True

@@ -264,6 +264,41 @@ def test_the_card_of_a_section_of_the_settings_goes_down_to_the_bottom(
     window.close()
 
 
+def test_the_title_of_a_block_of_the_menu_folds_it_and_it_stays_folded(
+    monkeypatch,
+) -> None:
+    window = _ready_window(monkeypatch)
+    window_module.motion.ENABLED = False
+    fold = window.monitoring_fold
+    assert not fold.body.isHidden()
+
+    fold.toggle()
+    assert fold.body.isHidden()
+    assert window.settings.folded_sections == ["section:monitoring"]
+    window.close()
+
+    again = _ready_window(monkeypatch)  # read at the start
+    assert again.monitoring_fold.folded and again.monitoring_fold.body.isHidden()
+    again.monitoring_fold.toggle()
+    assert again.settings.folded_sections == []
+    again.close()
+
+
+def test_a_screen_reached_by_a_shortcut_unfolds_its_block_without_keeping_it(
+    monkeypatch,
+) -> None:
+    window = _ready_window(monkeypatch)
+    window_module.motion.ENABLED = False
+    window.monitoring_fold.toggle()
+    assert window.monitoring_fold.body.isHidden()
+
+    window._reveal_in_menu(window.nav_forwards)
+
+    assert not window.monitoring_fold.body.isHidden()
+    assert window.settings.folded_sections == ["section:monitoring"]  # as it was kept
+    window.close()
+
+
 def test_a_text_log_that_fails_or_whose_tab_closed_is_handled(
     window, monkeypatch
 ) -> None:

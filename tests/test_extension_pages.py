@@ -182,3 +182,43 @@ def test_a_page_that_fails_when_it_is_opened_does_not_stop_the_window(caplog) ->
 
     assert found == ("Instances", "Subtitle", None)
     assert "The page Instances failed" in caplog.text
+
+
+def test_each_section_has_a_title_that_folds_its_entries_and_remembers() -> None:
+    window = QWidget()
+    menu = QVBoxLayout(window)
+    menu.addItem(QSpacerItem(0, 0))
+    stack = QStackedWidget(window)
+    stack.addWidget(QWidget())
+    kept: list[tuple[str, bool]] = []
+    pages = ExtensionPages(
+        menu,
+        stack,
+        stack.setCurrentIndex,
+        lambda: None,
+        lambda name: name == "section:aws",  # it was folded last time
+        lambda: False,
+        lambda name, folded: kept.append((name, folded)),
+    )
+    window.show()
+    pages.apply([page("Instances")])
+
+    (fold,) = pages.folds.values()
+    assert fold.folded and "Instances" not in labels(window)
+
+    fold.toggle()
+    assert "Instances" in labels(window) and kept == [("section:aws", False)]
+    assert fold.title.text() == "AWS"
+
+    pages.apply([page("Instances")])  # built again: the folds are too
+    (again,) = pages.folds.values()
+    assert again is not fold and again.folded
+
+
+def test_a_section_without_a_visible_entry_has_no_title_and_no_block() -> None:
+    window, _menu, _stack, pages, _events = make()
+    pages.apply([page("Instances", visible=lambda: False)])
+
+    (fold,) = pages.folds.values()
+
+    assert fold.title.isHidden() and fold.body.isHidden()

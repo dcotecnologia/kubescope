@@ -36,6 +36,7 @@ DEFAULTS: dict[str, Any] = {
     "sidebar_width": 0,
     "sidebar_collapsed": False,
     "menu_collapsed": [],
+    "folded_sections": [],
     "run_in_background": True,
     "system_title_bar": False,
     "welcome_dismissed": False,
@@ -527,6 +528,25 @@ class Settings:
     @menu_collapsed.setter
     def menu_collapsed(self, value: list[str]) -> None:
         self._data["menu_collapsed"] = list(value)
+
+    @property
+    def folded_sections(self) -> list[str]:
+        """The blocks of the side menu (MONITORING, AWS, ...) the person folded
+        from their title, by name; every one is open until they do."""
+        value = self._data["folded_sections"]
+        if not isinstance(value, list):
+            return []
+        return sorted(
+            {
+                name
+                for name in value
+                if isinstance(name, str) and name and len(name) <= 80
+            }
+        )
+
+    @folded_sections.setter
+    def folded_sections(self, value: list[str]) -> None:
+        self._data["folded_sections"] = list(value)
 
     @property
     def sidebar_width(self) -> int:
