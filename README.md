@@ -461,13 +461,10 @@ make snap       # dist/dco-kubescope_<version>_amd64.snap (needs snapcraft; Linu
 make flatpak    # dist/KubeScope-<version>.flatpak, built from source (needs flatpak-builder)
 make flatpak-lint         # validate the Flatpak files like Flathub does
 make flathub-submission   # gather the files for a Flathub pull request (steps in packaging/FLATHUB.md)
-make windows    # installer and portable zip; on Linux it builds inside Wine
 ```
 
 Each of these packages the bundle in `dist/KubeScope`, so build one platform at a
-time. `make windows` keeps its Wine prefix in `~/.cache/kubescope/wine` (outside the
-project, or where `KUBESCOPE_WINE_PREFIX` says) and downloads Python and Inno
-Setup on the first run.
+time.
 
 The Flatpak (`com.dcotecnologia.KubeScope`) reads `~/.kube` (read-only) and carries no
 cloud CLI: for every cloud (EKS, GKE, AKS, OCI...) it asks the host to run the programs
@@ -485,7 +482,7 @@ packs the same PyInstaller bundle as the `.deb`, with `snapcraft` (in LXD by def
 Flathub has no upload: its app is a pull request made by a person
 (`make flathub-submission` gathers the files), and Flathub builds the app from there.
 
-Windows packages can also be built without Wine: the **Release** workflow
+The **Release** workflow
 (`.github/workflows/release.yml`) builds everything on GitHub runners: the Linux
 `.deb`, AppImage and snap on Ubuntu 22.04 (lower glibc requirement) and the Windows
 installer plus a portable zip on Windows. Run it from the Actions tab, or push a

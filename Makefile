@@ -2,7 +2,7 @@
 
 UV ?= uv
 
-.PHONY: help setup run changelog dev debug preview language screenshot store-screenshots designer ui i18n appimage deb snap docker-build docker-flatpak flatpak flatpak-lint flathub-submission windows windows-remote lint format test qt-libs build clean
+.PHONY: help setup run changelog dev debug preview language screenshot store-screenshots designer ui i18n appimage deb snap docker-build docker-flatpak flatpak flatpak-lint flathub-submission windows-remote lint format test qt-libs build clean
 
 help: ## List the available commands
 	@awk 'BEGIN { FS = ":.*##" } /^[a-zA-Z0-9_-]+:.*##/ { printf "  %-12s %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
@@ -80,13 +80,6 @@ flatpak-lint: ## Validate the Flatpak metainfo, desktop file and manifest like F
 
 flathub-submission: ## Gather the files for a Flathub pull request in dist/flathub/ and print the steps
 	$(UV) run python tools/flathub.py package
-
-windows: changelog $(UI_PY) ## Build the Windows installer and zip (on Linux it runs in Wine)
-ifeq ($(shell uname -s),Linux)
-	$(UV) run python tools/windows_wine.py
-else
-	$(UV) run python tools/build_windows.py
-endif
 
 windows-remote: ## Build the Windows packages on GitHub Actions and download them to dist/
 	$(UV) run python tools/windows_remote.py

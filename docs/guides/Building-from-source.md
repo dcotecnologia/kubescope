@@ -48,9 +48,7 @@ data.
 | `make appimage` | nothing: `appimagetool` is downloaded and checked, and it runs without FUSE (Linux x86_64 only) |
 | `make flatpak` | `flatpak` and `flatpak-builder`, with the runtimes `org.kde.Platform//6.11`, `org.kde.Sdk//6.11` and `io.qt.PySide.BaseApp//6.11` (`flatpak install flathub ...`) |
 | `make flatpak-lint` | `appstreamcli` (package `appstream`), `desktop-file-validate` (package `desktop-file-utils`) and `flatpak install flathub org.flatpak.Builder` for the Flathub linter |
-| `make windows` on Linux | Wine (`sudo apt install wine64`); Python and Inno Setup are downloaded into `.wine/` |
-| `make windows` on Windows | Inno Setup with `iscc` on the `PATH` |
-| `make windows-remote` | the [GitHub CLI](https://cli.github.com) (`gh auth login`) |
+| `make windows-remote` | the [GitHub CLI](https://cli.github.com) (`gh auth login`); the Windows packages are built only by the Release workflow, which this runs and downloads |
 | `make designer` | nothing more: Qt Designer comes with PySide6 |
 | Edit translations | any text editor, or Qt Linguist (`pyside6-linguist` in `.venv`) |
 | The install script tests | `curl`; `wget` and PowerShell (`pwsh`) are optional, and their tests are skipped without them. To lint the script: `uvx --from shellcheck-py shellcheck install.sh` |
@@ -71,7 +69,7 @@ make build      # PyInstaller bundle in dist/KubeScope
 make deb        # Debian and Ubuntu
 make appimage   # any Linux
 make flatpak    # builds from source; needs flatpak-builder and its runtimes
-make windows    # installer and zip; on Linux it builds inside Wine
+make windows-remote   # installer and zip, built by the Release workflow on GitHub
 ```
 
 All packages use the bundle in `dist/KubeScope`, so build one platform at a time.

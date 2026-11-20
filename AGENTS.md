@@ -79,7 +79,7 @@ Keep the layers separate and the dependency direction one-way
   - Qt Designer layouts. `ui_*.py` next to them are generated, never edit them by
     hand.
 - `tools/`
-  - Build and packaging scripts (deb, AppImage, Flatpak, Windows/Wine). `packaging/` holds the static packaging files.
+  - Build and packaging scripts (deb, AppImage, Flatpak, Windows). `packaging/` holds the static packaging files.
 - `tests/`
   - Mirrors `src/kubescope/`: `test_cluster.py`, `test_settings.py`,
     `test_window.py`, `test_app.py`, `test_theme.py`. What lives in the SDK is
@@ -213,7 +213,7 @@ Requirements:
 - Keep dependencies on their latest stable versions; pin an older one only with a
   documented reason.
 - Do not edit generated or vendored output: `ui_*.py`, `vendor/`, `dist/`,
-  `build/`, `.wine/`.
+  `build/`.
 
 ## 6) Packaging
 
@@ -225,8 +225,9 @@ Requirements:
   `packaging/windows/kubescope.iss`) are what the scripts look for, so change them
   together; `tests/test_install_script.py` checks the Linux script against a fake
   GitHub API.
-- `make windows` builds the Windows zip and installer (in Wine on Linux);
-  `make windows-remote` builds them on GitHub Actions.
+- The Windows zip and installer are built only by the Release workflow
+  (`.github/workflows/release.yml`); `make windows-remote` runs it and downloads
+  the result.
 - Building for another platform replaces `dist/KubeScope`, so run the Linux
   packages and the Windows build one after the other, not at the same time.
 - `make snap` packs the same bundle as a snap (`tools/build_snap.py`, `packaging/snap/`). It

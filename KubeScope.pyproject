@@ -43,7 +43,6 @@
         "tools/fetch_linux_qt_libs.py",
         "tools/make_icon.py",
         "tools/preview.py",
-        "tools/windows_remote.py",
-        "tools/windows_wine.py"
+        "tools/windows_remote.py"
     ]
 }

@@ -12,12 +12,15 @@ All notable changes to this project will be documented in this file. The format 
 
 ### Changed
 
-- `make windows` keeps its Wine prefix in `~/.cache/kubescope/wine` instead of in the project, because Wine's Z: drive is a link to the whole disk and an editor that follows links while it indexes the project walked through all of it by @danilogco
 - The title of a block of the side menu (MONITORING, AWS, ...) folds the whole block when clicked and brings it back when clicked again, with the arrow of the entries that fold; the blocks you fold stay folded the next time you open the app, and a screen reached by a shortcut unfolds its block by @danilogco
 - The card of each section of the Settings goes down to the bottom of the page instead of stopping under what is in it, and the table of the extensions grows with it by @danilogco
 - A button at the start of the page header hides the side menu, which slides away toward the left, and brings it back when clicked again; it stays as you left it the next time you open the app by @danilogco
 - The app icon has slightly rounded corners and a small margin, so it sits at the same size as the other icons in the launcher and the dock, with a soft sheen and edge; the tray icon is a tighter version of it, to fill its small slot by @danilogco
 - The **Sign in** button in the top bar just says **Sign in**, with no cloud or profile name; the status bar still says which one by @danilogco
+
+### Removed
+
+- `make windows` and the Wine tooling (`tools/windows_wine.py`): the Windows installer and zip are built only by the Release workflow, which `make windows-remote` runs from here by @danilogco
 
 ## [2.1.0] - 2026-11-20
 

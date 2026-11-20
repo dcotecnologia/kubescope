@@ -1,7 +1,8 @@
 """Build the Windows packages: installer (needs Inno Setup) and a portable zip.
 
-Run it on Windows (`make windows`). On Linux, `make windows` runs it in
-Wine through windows_wine.py, because PyInstaller cannot cross-build.
+It runs on Windows, in the Release workflow (`make windows-remote` runs
+that workflow from here and downloads the result): PyInstaller cannot
+cross-build.
 """
 
 import shutil
@@ -42,8 +43,8 @@ def find_iscc() -> str | None:
 def main() -> int:
     if sys.platform != "win32":
         raise SystemExit(
-            "Windows packages must be built on Windows or in Wine. From Linux run "
-            "`make windows`, or `make windows-remote` to build on GitHub Actions."
+            "Windows packages are built on Windows, by the Release workflow. "
+            "Run `make windows-remote` to build them on GitHub Actions."
         )
     with (ROOT / "pyproject.toml").open("rb") as handle:
         version = tomllib.load(handle)["project"]["version"]
