@@ -17,6 +17,7 @@ from typing import Any, cast
 from kubescope.sdk import (
     CONTEXT_CHANGED,
     LANGUAGE_CHANGED,
+    NOTIFICATION,
     SHUTDOWN,
     THEME_CHANGED,
     WRITE_MODE_CHANGED,
@@ -2299,6 +2300,15 @@ class WorkloadWindow(QMainWindow):
             self._save_settings()
         rechecking, self._rechecking = self._rechecking, False
         if result.release is not None:
+            self._tell_extensions(
+                "info",
+                self.tr("KubeScope update available"),
+                self.tr("Version {version} is available").format(
+                    version=result.release.version
+                ),
+                f"update:{result.release.version}",
+                False,
+            )
             self._notify_update(result.release, daily=rechecking)
         notice = {
             "current": self.tr("Up to date"),
@@ -4551,6 +4561,12 @@ class WorkloadWindow(QMainWindow):
         text: str,
     ) -> None:
         """Tell the person something, in a box styled like the window."""
+        level = {
+            QMessageBox.Icon.Warning: "warning",
+            QMessageBox.Icon.Critical: "error",
+        }.get(icon)
+        if level is not None:
+            self._tell_extensions(level, title, text, f"message:{title}:{text}", True)
         box = QMessageBox(self)
         box.setIcon(icon)
         box.setWindowTitle(title)
@@ -6807,12 +6823,27 @@ class WorkloadWindow(QMainWindow):
         info = describe_error(message)
         return f"{info.title}. {info.hint}" if info.hint else info.title
 
+    def _tell_extensions(
+        self, level: str, title: str, message: str, key: str, repeat: bool
+    ) -> None:
+        """Tell the extensions about an error, a warning or an update, for the
+        ones that list them; `repeat` says whether the same `key` happening
+        again counts."""
+        self.extension_host.events.emit(
+            NOTIFICATION,
+            level=level,
+            title=title,
+            message=message,
+            key=key,
+            repeat=repeat,
+        )
+
     def _show_error_banner(self, message: str) -> None:
         """Show an error of the cluster, the AWS CLI or kubectl in the banner
         at the top of the window, with the original text one click away."""
-        self.error_banner.show_error(
-            self._banner_text(message), message.strip(), self._banner_words()
-        )
+        text = self._banner_text(message)
+        self.error_banner.show_error(text, message.strip(), self._banner_words())
+        self._tell_extensions("error", text, message.strip(), f"error:{text}", True)
 
     def _hide_permission_banner(self) -> None:
         self.error_banner.dismiss()

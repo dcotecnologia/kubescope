@@ -3,11 +3,13 @@ from itertools import count
 from pathlib import Path
 
 import pytest
+from kubescope.sdk import NOTIFICATION
 from PySide6.QtGui import QKeySequence
 from PySide6.QtWidgets import QKeySequenceEdit, QMessageBox, QPushButton
 
 from kubescope.extensions.manifest import MANIFEST_NAME
 from kubescope.i18n import apply_language, language_name, resolve_language
+from kubescope.utils.updates import Release, UpdateCheck
 from kubescope.window import EXTENSION_SECTION_FIRST, EXTENSION_WATCH_MS
 from tests.qt import present
 from tests.test_window_flows import _ready_window
@@ -229,6 +231,55 @@ def test_a_button_of_an_extension_sits_before_the_settings_until_it_unloads(
     window._remove_top_bar_buttons(extension)
     assert layout.indexOf(button) == -1
     window._remove_top_bar_buttons(extension)  # nothing left to take out
+
+
+def heard_notifications(window) -> list[dict]:
+    heard: list[dict] = []
+    window.extension_host.events.on(NOTIFICATION, lambda **notice: heard.append(notice))
+    return heard
+
+
+def test_an_error_of_the_banner_is_told_to_the_extensions(window) -> None:
+    heard = heard_notifications(window)
+
+    window._show_error_banner("connection refused")
+
+    (notice,) = heard
+    assert notice["level"] == "error" and notice["repeat"] is True
+    assert notice["message"] == "connection refused"
+    assert notice["key"] == f"error:{notice['title']}"
+
+
+def test_a_warning_or_an_error_box_is_told_but_a_plain_message_is_not(
+    window, monkeypatch
+) -> None:
+    monkeypatch.setattr(QMessageBox, "exec", lambda self: 0)
+    heard = heard_notifications(window)
+
+    window._show_message(QMessageBox.Icon.Information, "Hello", "Just so you know")
+    window._show_message(QMessageBox.Icon.Warning, "Careful", "It may fail")
+    window._show_message(QMessageBox.Icon.Critical, "Broken", "It failed")
+
+    assert [(n["level"], n["title"], n["message"]) for n in heard] == [
+        ("warning", "Careful", "It may fail"),
+        ("error", "Broken", "It failed"),
+    ]
+
+
+def test_a_new_version_is_told_once_per_version_and_the_failed_check_is_not(
+    window,
+) -> None:
+    heard = heard_notifications(window)
+    release = Release("9.9.9", "https://example.invalid/v9.9.9")
+
+    window._update_result = UpdateCheck("failed")
+    window._update_checked()
+    window._update_result = UpdateCheck("available", release)
+    window._update_checked()
+
+    (notice,) = heard
+    assert notice["level"] == "info" and notice["repeat"] is False
+    assert notice["key"] == "update:9.9.9" and "9.9.9" in notice["message"]
 
 
 def test_the_window_offers_the_settings_to_an_extension(window, tmp_path) -> None:
