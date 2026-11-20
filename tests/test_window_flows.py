@@ -1516,6 +1516,7 @@ def test_the_overview_follows_a_language_change(monkeypatch) -> None:
 def test_the_theme_is_chosen_in_settings_and_applied_at_once(monkeypatch) -> None:
     window = _ready_window(monkeypatch)
     window.settings.theme = "light"
+    window._apply_theme()
     window._open_list_view("pods")
     window._show_pods(["ns"], [POD])
     window._overview = ClusterOverview()
@@ -2402,6 +2403,8 @@ def test_the_save_button_is_an_icon_with_a_tooltip(monkeypatch) -> None:
 
 def test_a_theme_change_redraws_the_icons_of_open_log_tabs(monkeypatch) -> None:
     window = _ready_window(monkeypatch)
+    window.settings.theme = "light"
+    window._apply_theme()
     window._show_logs_dialog(POD, "app", "2026-10-08T05:00:01Z INFO started")
     tab = current_tab(window.viewer_tabs, LogTab)
     before = tab.ui.refreshButton.icon().pixmap(18, 18).toImage()
@@ -2418,6 +2421,8 @@ def test_a_theme_change_redraws_the_icons_of_open_log_tabs(monkeypatch) -> None:
 
 def test_a_theme_change_recolors_open_json_and_log_tabs(monkeypatch) -> None:
     window = _ready_window(monkeypatch)
+    window.settings.theme = "light"
+    window._apply_theme()
     window._show_json_dialog("Pod: api", {"kind": "Pod"})
     json_editor = _detail_tab(window).editor
     window._show_logs_dialog(POD, "app", "2026-10-08T05:00:01Z INFO started")

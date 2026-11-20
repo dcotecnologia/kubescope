@@ -590,3 +590,15 @@ def test_what_was_installed_with_its_whole_repository_is_pruned_later(tmp_path) 
     assert removed == {"dco.tool": ["Makefile", "tests"]}
     assert (author / "tests").is_dir()  # the folder of an author is never touched
     assert store.prune_installed() == {}  # nothing more
+
+
+def test_pruning_leaves_alone_an_extension_whose_manifest_cannot_be_read(
+    tmp_path,
+) -> None:
+    store = store_in(tmp_path)
+    installed = install(store, tool_zip(), "github dco/tool@v1")
+    (installed.folder / "Makefile").write_text("x")
+    (installed.folder / MANIFEST_NAME).write_text("not = [valid")
+
+    assert store.prune_installed() == {}
+    assert (installed.folder / "Makefile").is_file()  # nothing is deleted
