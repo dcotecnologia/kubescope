@@ -2353,6 +2353,7 @@ class WorkloadWindow(QMainWindow):
                 ),
                 f"update:{result.release.version}",
                 False,
+                about_context=False,
             )
             self._notify_update(result.release, daily=rechecking)
         notice = {
@@ -4690,7 +4691,9 @@ class WorkloadWindow(QMainWindow):
             QMessageBox.Icon.Critical: "error",
         }.get(icon)
         if level is not None:
-            self._tell_extensions(level, title, text, f"message:{title}:{text}", True)
+            self._tell_extensions(
+                level, title, text, f"message:{self._context()}:{title}:{text}", True
+            )
         box = QMessageBox(self)
         box.setIcon(icon)
         box.setWindowTitle(title)
@@ -6996,11 +6999,19 @@ class WorkloadWindow(QMainWindow):
         return f"{info.title}. {info.hint}" if info.hint else info.title
 
     def _tell_extensions(
-        self, level: str, title: str, message: str, key: str, repeat: bool
+        self,
+        level: str,
+        title: str,
+        message: str,
+        key: str,
+        repeat: bool,
+        about_context: bool = True,
     ) -> None:
         """Tell the extensions about an error, a warning or an update, for the
         ones that list them; `repeat` says whether the same `key` happening
-        again counts."""
+        again counts, and the notice is about the context in use unless
+        `about_context` is off (a new version is about none)."""
+        context = self._context() if about_context else ""
         self.extension_host.events.emit(
             NOTIFICATION,
             level=level,
@@ -7008,6 +7019,7 @@ class WorkloadWindow(QMainWindow):
             message=message,
             key=key,
             repeat=repeat,
+            context=context,
         )
 
     def _show_error_banner(self, message: str) -> None:
@@ -7015,7 +7027,9 @@ class WorkloadWindow(QMainWindow):
         at the top of the window, with the original text one click away."""
         text = self._banner_text(message)
         self.error_banner.show_error(text, message.strip(), self._banner_words())
-        self._tell_extensions("error", text, message.strip(), f"error:{text}", True)
+        self._tell_extensions(
+            "error", text, message.strip(), f"error:{self._context()}:{text}", True
+        )
 
     def _hide_permission_banner(self) -> None:
         self.error_banner.dismiss()

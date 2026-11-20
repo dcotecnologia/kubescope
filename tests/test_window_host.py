@@ -258,13 +258,18 @@ def heard_notifications(window) -> list[dict]:
 
 def test_an_error_of_the_banner_is_told_to_the_extensions(window) -> None:
     heard = heard_notifications(window)
+    window.context_combo.blockSignals(True)  # no load: only a name to be in use
+    window.context_combo.addItem("Prod", "arn:real-prod")
+    window.context_combo.setCurrentIndex(window.context_combo.findData("arn:real-prod"))
+    window.context_combo.blockSignals(False)
 
     window._show_error_banner("connection refused")
 
     (notice,) = heard
     assert notice["level"] == "error" and notice["repeat"] is True
     assert notice["message"] == "connection refused"
-    assert notice["key"] == f"error:{notice['title']}"
+    assert notice["context"] == "arn:real-prod"  # the real name, what it is about
+    assert notice["key"] == f"error:arn:real-prod:{notice['title']}"
 
 
 def test_a_warning_or_an_error_box_is_told_but_a_plain_message_is_not(
@@ -297,6 +302,7 @@ def test_a_new_version_is_told_once_per_version_and_the_failed_check_is_not(
     (notice,) = heard
     assert notice["level"] == "info" and notice["repeat"] is False
     assert notice["key"] == "update:9.9.9" and "9.9.9" in notice["message"]
+    assert notice["context"] == ""  # a new version is about no context
 
 
 def test_the_window_offers_the_settings_to_an_extension(window, tmp_path) -> None:
