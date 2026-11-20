@@ -13,7 +13,7 @@ from kubescope import about, cli
 from kubescope.dialogs.crash_dialog import show_pending_crash_report
 from kubescope.i18n import apply_language
 from kubescope.settings import Settings
-from kubescope.theme import apply_theme, install_bundled_themes
+from kubescope.theme import apply_theme, install_bundled_themes, remove_legacy_copies
 from kubescope.utils import crashreport
 from kubescope.utils.diagnostics import (
     CRASH_FILE,
@@ -111,6 +111,7 @@ def main() -> int:
         trace_input(application)
     application.setWindowIcon(load_app_icon())
     apply_fonts(application)
+    remove_legacy_copies()  # the themes that are an extension now
     install_bundled_themes()
     apply_theme(application, settings.theme)
     apply_language(settings.language)

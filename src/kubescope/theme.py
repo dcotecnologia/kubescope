@@ -15,6 +15,7 @@ themes folder:
 It starts from its base theme and replaces the roles it lists.
 """
 
+import hashlib
 import json
 import logging
 import re
@@ -223,6 +224,51 @@ def install_bundled_themes(source: Path | None = None) -> list[str]:
     if added:
         logger.info("Installed bundled themes: %s", ", ".join(added))
     return added
+
+
+# The themes the app used to copy to the themes folder, which are now the
+# extension kubescope-themes, with the sha256 of the file that was copied.
+_LEGACY_LINES = """
+    abyss 7553fb9879a919adf2de1f2b0c1ac9a7adc8003889af5a057bc59a3792fe6627
+    dark-modern 66764da724098b1feaaed19eaff6f60be7de69087f89a14e7202fc290bdb0a36
+    high-contrast 30752e5beb06dfe3485e6ab611fd3a4cad3729735722222ce2470d60b810c3bf
+    light-modern 831a23241f0e1cf16f4ae4f9986822121d5a07455dd47206ad2193ebf1d82029
+    macos-dark b5cf3fa1fc83e83e8834f63b070859b05807a92db7a31deb1ad7b36263204560
+    macos-light 44217060907953bffe9d1e5bdc8355490693d6de4a9b28e02e04116fc8293922
+    midnight 6370a720d84d315428109b0743dcca5ff076567610342f6c9ffa444c43dff088
+    monokai 4284f99a07c25c2381a5613fa1f1bcef897b297455cdab0ca51c7f782b49b628
+    quiet-light 9d85ad99b9cb98e587fa17bdd3ca2c27ac961529a37f5d4cc5b99fd23ed8769c
+    sepia 8adc32095723fe932855e1b7bf492ab714b23f1120ae2d36c738c810c4ef474c
+    solarized-dark 8c20d4a7885610b240644a13e16b599ca81e2fe39010fc835c598b5f907f0f49
+    solarized-light a5968de8629301c8a1dd0dd9191f4f86b99372d8b7092abc350a06b69fe74766
+    tomorrow-night-blue 3d2673b8bdfbb9cb48c595bf56f42d813771c2d49c55fd9169814c1f72706c70
+"""
+LEGACY_THEMES: dict[str, str] = {
+    name: digest
+    for name, digest in (line.split() for line in _LEGACY_LINES.strip().splitlines())
+}
+
+
+def remove_legacy_copies() -> list[str]:
+    """Delete the copies of the themes that became an extension, so that they
+    show only while the extension is installed.
+
+    Only a file that is exactly what the app copied goes; one the person
+    edited stays. Returns the ids removed.
+    """
+    removed: list[str] = []
+    for theme_id, digest in LEGACY_THEMES.items():
+        path = themes_directory() / f"{theme_id}.json"
+        try:
+            if hashlib.sha256(path.read_bytes()).hexdigest() != digest:
+                continue
+            path.unlink()
+        except OSError:
+            continue
+        removed.append(theme_id)
+    if removed:
+        logger.info("Removed the copies of the themes of the extension: %s", removed)
+    return removed
 
 
 def load_custom_themes() -> dict[str, Theme]:

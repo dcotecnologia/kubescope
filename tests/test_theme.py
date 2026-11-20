@@ -601,3 +601,38 @@ def test_a_contributed_theme_can_be_applied_and_is_forgotten_with_its_extension(
     theme.set_contributed_themes([])
     theme.set_theme("ocean")
     assert theme.active_theme() == "dark"  # an unknown theme is the default
+
+
+def test_the_copies_of_the_themes_that_became_an_extension_are_removed(
+    themes_dir,
+) -> None:
+    import hashlib
+
+    original = b'{"name": "Midnight", "base": "dark"}'
+    monkeypatched = {
+        "midnight": hashlib.sha256(original).hexdigest(),
+        "sepia": "0" * 64,
+    }
+    (themes_dir).mkdir(parents=True, exist_ok=True)
+    (themes_dir / "midnight.json").write_bytes(original)  # as it was copied
+    (themes_dir / "sepia.json").write_bytes(b'{"name": "My sepia"}')  # edited
+    (themes_dir / "mine.json").write_bytes(b'{"name": "Mine"}')  # the person's own
+    theme.LEGACY_THEMES, saved = monkeypatched, theme.LEGACY_THEMES
+    try:
+        removed = theme.remove_legacy_copies()
+        again = theme.remove_legacy_copies()
+    finally:
+        theme.LEGACY_THEMES = saved
+
+    assert removed == ["midnight"] and again == []
+    assert not (themes_dir / "midnight.json").exists()
+    assert (themes_dir / "sepia.json").exists() and (themes_dir / "mine.json").exists()
+
+
+def test_the_legacy_themes_are_the_ones_of_the_extension() -> None:
+    assert set(theme.LEGACY_THEMES) == {
+        "abyss", "dark-modern", "high-contrast", "light-modern", "macos-dark",
+        "macos-light", "midnight", "monokai", "quiet-light", "sepia",
+        "solarized-dark", "solarized-light", "tomorrow-night-blue",
+    }  # fmt: skip
+    assert all(len(digest) == 64 for digest in theme.LEGACY_THEMES.values())

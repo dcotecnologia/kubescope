@@ -178,6 +178,7 @@ def test_main_records_the_runtime_and_the_input_when_debugging(monkeypatch) -> N
     monkeypatch.setattr(app, "apply_theme", lambda _app, _name: None)
     monkeypatch.setattr(app, "apply_language", lambda _code: None)
     monkeypatch.setattr(app, "install_bundled_themes", lambda: None)
+    monkeypatch.setattr(app, "remove_legacy_copies", lambda: [])
     monkeypatch.setattr(app, "WorkloadWindow", FakeWindow)
     monkeypatch.setattr(app, "record_runtime", lambda: events.append("runtime"))
     monkeypatch.setattr(app, "trace_input", lambda _app: events.append("input"))
