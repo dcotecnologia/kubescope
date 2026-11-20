@@ -334,6 +334,13 @@ class FakeUi:
     def open_log(self, title, name, read) -> None:
         self.calls.append(("log", title, name))
 
+    def add_top_bar_button(self, owner, button) -> None:
+        self.calls.append(("button", owner))
+
+    def show_system_notification(self, title, message, on_click=None) -> bool:
+        self.calls.append(("system", title))
+        return True
+
 
 def test_the_window_is_lent_only_to_an_extension_that_asked_for_it() -> None:
     host, _, _ = make_host()

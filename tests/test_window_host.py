@@ -278,6 +278,20 @@ def test_an_error_of_the_banner_is_told_to_the_extensions(window) -> None:
     assert notice["key"] == f"error:arn:real-prod:{notice['title']}"
 
 
+def test_a_failure_to_sign_in_is_in_the_banner_and_not_told_to_the_extensions(
+    window, monkeypatch
+) -> None:
+    monkeypatch.setattr(QMessageBox, "exec", lambda self: 0)
+    heard = heard_notifications(window)
+    expired = "exec: process returned 255. aws: Token has expired and refresh failed"
+
+    window._show_error_banner(expired)  # the banner shows it
+    window._show_message(QMessageBox.Icon.Critical, "Sign in", expired)
+    window._show_error_banner("connection refused")  # another failure is told
+
+    assert [notice["message"] for notice in heard] == ["connection refused"]
+
+
 def test_a_warning_or_an_error_box_is_told_but_a_plain_message_is_not(
     window, monkeypatch
 ) -> None:

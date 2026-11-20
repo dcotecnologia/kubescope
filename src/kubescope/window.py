@@ -4691,7 +4691,7 @@ class WorkloadWindow(QMainWindow):
             QMessageBox.Icon.Warning: "warning",
             QMessageBox.Icon.Critical: "error",
         }.get(icon)
-        if level is not None:
+        if level is not None and not is_auth_error(text):
             self._tell_extensions(
                 level, title, text, f"message:{self._context()}:{title}:{text}", True
             )
@@ -7031,6 +7031,8 @@ class WorkloadWindow(QMainWindow):
         at the top of the window, with the original text one click away."""
         text = self._banner_text(message)
         self.error_banner.show_error(text, message.strip(), self._banner_words())
+        if is_auth_error(message):
+            return  # not signed in: the banner says it, and that is enough
         self._tell_extensions(
             "error", text, message.strip(), f"error:{self._context()}:{text}", True
         )
