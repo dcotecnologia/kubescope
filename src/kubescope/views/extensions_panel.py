@@ -410,15 +410,17 @@ class ExtensionsPanel(QObject):
         self.empty_label = QLabel(self.tr("No extension is installed"))
         grid.addWidget(self.actions, 0, 0)
         grid.addWidget(self.table, 1, 0)
-        grid.addWidget(self.empty_label, 2, 0)
+        grid.addWidget(self.empty_label, 2, 0, Qt.AlignmentFlag.AlignTop)
         grid.setColumnStretch(0, 1)
-        grid.setRowStretch(1, 1)
 
     def render(self) -> None:
         """One row for each extension; the one that was selected stays so."""
         selected = self._selected_id()
         self.empty_label.setVisible(not self.rows)
         self.table.setVisible(bool(self.rows))
+        grid = self.form.extensionsCardsGrid  # the room of the page goes to what shows
+        grid.setRowStretch(1, 1 if self.rows else 0)
+        grid.setRowStretch(2, 0 if self.rows else 1)
         self.table.setRowCount(len(self.rows))
         for index, row in enumerate(self.rows):
             manifest = row.manifest

@@ -101,6 +101,8 @@ from PySide6.QtWidgets import (
     QProgressBar,
     QPushButton,
     QScrollArea,
+    QSizePolicy,
+    QSpacerItem,
     QSpinBox,
     QSystemTrayIcon,
     QTableWidget,
@@ -1181,6 +1183,7 @@ class WorkloadWindow(QMainWindow):
         self.settings_ui.contextsTable.setRowCount(0)
         self.settings_ui.saveButton.clicked.connect(self._save_preferences)
         self._settings_sections = QButtonGroup(self)
+        self._filled_cards: set[QWidget] = set()  # settings cards with a tail spacer
         self._settings_sections.addButton(self.settings_ui.generalSectionButton, 0)
         self._settings_sections.addButton(self.settings_ui.kubeSectionButton, 2)
         self._settings_sections.addButton(self.settings_ui.shortcutsSectionButton, 3)
@@ -6084,6 +6087,37 @@ class WorkloadWindow(QMainWindow):
             self.extensions_panel.refresh()  # it may have changed on disk
             self.extensions_panel.check_updates(self.settings)
         form.settingsScroll.verticalScrollBar().setValue(0)
+        self._fill_settings_height()
+
+    def _fill_settings_height(self) -> None:
+        """Let the last card of the section go down to the bottom of the page,
+        with what is in it kept at the top (the table of the extensions takes
+        the room instead)."""
+        form = self.settings_ui
+        layout = form.settingsContentLayout
+        shown = []
+        for index in range(layout.count()):
+            item = layout.itemAt(index)
+            card = item.widget() if item is not None else None
+            if card is None:
+                continue
+            layout.setStretchFactor(card, 0)
+            if not card.isHidden():
+                shown.append(card)
+        if not shown:
+            return
+        last = shown[-1]
+        layout.setStretchFactor(last, 1)
+        inner = cast(QVBoxLayout, last.layout())
+        if last is form.extensionsCard:
+            inner.setStretchFactor(form.extensionsCardsHost, 1)
+        if last not in self._filled_cards:  # a spacer under what is in the card
+            self._filled_cards.add(last)
+            inner.addSpacerItem(
+                QSpacerItem(
+                    0, 0, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding
+                )
+            )
 
     def _register_commands(self) -> None:
         """Offer what a person does by hand under a name, for the extensions.

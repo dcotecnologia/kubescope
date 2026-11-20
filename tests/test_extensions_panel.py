@@ -468,6 +468,18 @@ def test_without_extensions_the_page_says_so(tmp_path, monkeypatch) -> None:
     assert not empty.panel.empty_label.isHidden() and empty.panel.table.isHidden()
 
 
+def test_the_room_of_the_page_goes_to_the_table_or_to_the_empty_note(
+    setup, tmp_path, monkeypatch
+) -> None:
+    grid = setup.panel.form.extensionsCardsGrid
+    assert (grid.rowStretch(1), grid.rowStretch(2)) == (1, 0)  # a table to fill
+
+    (tmp_path / "empty").mkdir()
+    empty = Setup(tmp_path / "empty", monkeypatch, with_bundled=False)
+    grid = empty.panel.form.extensionsCardsGrid
+    assert (grid.rowStretch(1), grid.rowStretch(2)) == (0, 1)  # the note, at the top
+
+
 def test_the_window_is_told_when_something_was_installed_or_removed(
     setup, tmp_path
 ) -> None:

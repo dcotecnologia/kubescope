@@ -3,6 +3,7 @@ the screen: the commands, the snapshot and the text logs."""
 
 import pytest
 from kubescope.sdk.models import PodInfo
+from PySide6.QtWidgets import QApplication
 
 from kubescope import window as window_module
 from kubescope.settings import Settings
@@ -229,6 +230,38 @@ def test_the_button_of_the_header_hides_the_menu_and_it_stays_hidden(
     again.ui.sidebarToggleButton.click()
     assert not again.ui.sidebar.isHidden() and not again.settings.sidebar_collapsed
     again.close()
+
+
+def test_the_card_of_a_section_of_the_settings_goes_down_to_the_bottom(
+    monkeypatch,
+) -> None:
+    window = _ready_window(monkeypatch)
+    window.resize(1200, 800)
+    window.show()
+    window._show_page(2)
+    form = window.settings_ui
+    room = form.settingsScroll.viewport().height()
+
+    for section, card in (
+        (3, form.shortcutsCard),
+        (4, form.integrationsCard),
+        (5, form.extensionsCard),
+    ):
+        window._show_settings_section(section)
+        QApplication.processEvents()
+        assert card.height() >= room - 30, section  # no gap under the card
+
+    window._show_settings_section(3)  # filled before: not filled twice
+    window._show_settings_section(3)
+    inner = form.shortcutsCard.layout()
+    assert inner is not None
+    spacers = [
+        index
+        for index in range(inner.count())
+        if (item := inner.itemAt(index)) is not None and item.spacerItem()
+    ]
+    assert len(spacers) == 1
+    window.close()
 
 
 def test_a_text_log_that_fails_or_whose_tab_closed_is_handled(
