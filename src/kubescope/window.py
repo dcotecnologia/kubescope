@@ -1163,6 +1163,7 @@ class WorkloadWindow(QMainWindow):
         self._settings_sections.addButton(self.settings_ui.integrationsSectionButton, 4)
         self._settings_sections.addButton(self.settings_ui.extensionsSectionButton, 5)
         self.extension_store = ExtensionStore(config_directory() / "extensions")
+        self.extension_store.prune_installed()  # what an older version kept whole
         self._extension_loader: ExtensionLoader | None = None  # made below
         self._extension_sections: list[_ExtensionSection] = []
         self.extension_pages = ExtensionPages(

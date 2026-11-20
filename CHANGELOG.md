@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file. The format 
 ### Added
 
 - The color themes besides Light and Dark leave the app and are the extension `kubescope-themes`, installed by default like Gabi: they show in **Settings → Theme** as before, and an extension can now offer themes (`add_theme`, with the permission `ui.theme`); a theme you chose is put on as soon as the extension has run, and the default is used if it is uninstalled by @danilogco; the copies of those themes that older versions put in your themes folder are removed at the start when you never edited them, so they show only while the extension is installed
+- An installed extension keeps only what runs (its manifest, code, translations, README and LICENSE): its tests, pipeline, tooling and project documents are left out, and the ones installed whole by an earlier version are cleaned at the start; the sha256 shown is still that of everything that was downloaded, and an extension run from the folder of its author is never touched by @danilogco
 
 ## [2.0.0] - 2026-11-19
 

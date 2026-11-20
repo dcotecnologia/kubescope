@@ -188,6 +188,22 @@ class ExtensionStore:
         ]
         return sorted(found, key=lambda one: one.manifest.id)
 
+    def prune_installed(self) -> dict[str, list[str]]:
+        """Delete from the extensions that were installed with their whole
+        repository what is only for developing them; one run from its author's
+        folder is never touched.
+
+        What was removed, by id.
+        """
+        removed: dict[str, list[str]] = {}
+        for extension, entry in self._installed.items():
+            folder = self._folder(extension)
+            if "path" in entry or not folder.is_dir():
+                continue
+            if names := archive.prune(folder):
+                removed[extension] = names
+        return removed
+
     def removed_bundled(self) -> list[Manifest]:
         """The bundled extensions the person uninstalled, to reinstall."""
         return [
@@ -326,6 +342,7 @@ class ExtensionStore:
         if target.exists():
             target.replace(previous)
         candidate.folder.replace(target)
+        archive.prune(target)  # only what runs stays; the digest was of everything
         shutil.rmtree(previous, ignore_errors=True)
         shutil.rmtree(staged, ignore_errors=True)
         now = _now()

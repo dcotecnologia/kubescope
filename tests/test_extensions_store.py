@@ -437,3 +437,94 @@ def test_what_has_an_id_that_is_not_one_is_not_installed(tmp_path) -> None:
 
     with pytest.raises(StoreError, match="not a valid id"):
         store.install(bad)
+
+
+DEVELOPMENT_FILES = {
+    "tests/test_x.py": b"x",
+    ".github/workflows/ci.yml": b"x",
+    "tools/i18n.py": b"x",
+    "docs/guide.md": b"x",
+    "Makefile": b"x",
+    "uv.lock": b"x",
+    "pyproject.toml": b"x",
+    ".pre-commit-config.yaml": b"x",
+    "CHANGELOG.md": b"x",
+    "CONTRIBUTING.md": b"x",
+    "SECURITY.md": b"x",
+    ".gitignore": b"x",
+}
+KEPT_FILES = {
+    "src/dco_tool/__init__.py": b"def go(ctx): ...\n",
+    "languages/pt_BR.json": b"{}",
+    "README.md": b"readme",
+    "LICENSE": b"MIT",
+}
+
+
+def test_an_installed_extension_keeps_only_what_runs(tmp_path) -> None:
+    store = store_in(tmp_path)
+    files = {**KEPT_FILES, **DEVELOPMENT_FILES, MANIFEST_NAME: manifest()}
+    candidate = store.prepare(make_zip(files), "github dco/tool@v1")
+    whole = tree_digest(candidate.folder)
+
+    installed = store.install(candidate)
+
+    kept = sorted(
+        str(path.relative_to(installed.folder))
+        for path in installed.folder.rglob("*")
+        if path.is_file()
+    )
+    assert kept == sorted([*KEPT_FILES, MANIFEST_NAME])
+    # what was checked and what is shown is the whole of what was downloaded
+    assert candidate.sha256 == whole and tree_digest(installed.folder) != whole
+    assert installed.sha256 == candidate.sha256
+    assert [one.sha256 for one in store_in(tmp_path).installed()] == [candidate.sha256]
+
+
+def test_a_folder_run_in_place_is_never_pruned(tmp_path) -> None:
+    store = store_in(tmp_path)
+    folder = tmp_path / "author"
+    for name, data in {**DEVELOPMENT_FILES, MANIFEST_NAME: manifest()}.items():
+        (folder / name).parent.mkdir(parents=True, exist_ok=True)
+        (folder / name).write_bytes(data)
+
+    store.install(store.prepare_link(folder))
+
+    assert (folder / "tests" / "test_x.py").is_file() and (
+        folder / "Makefile"
+    ).is_file()
+
+
+def test_pruning_removes_the_top_level_names_only(tmp_path) -> None:
+    from kubescope.extensions.archive import prune
+
+    (tmp_path / "pkg" / "tests").mkdir(parents=True)  # a package's own folder stays
+    (tmp_path / "pkg" / "tests" / "data.json").write_text("{}")
+    (tmp_path / "tests").mkdir()
+    (tmp_path / "Makefile").write_text("x")
+    (tmp_path / "keep.py").write_text("x")
+
+    removed = prune(tmp_path)
+
+    assert removed == ["Makefile", "tests"]
+    assert (tmp_path / "pkg" / "tests" / "data.json").is_file()
+    assert (tmp_path / "keep.py").is_file()
+
+
+def test_what_was_installed_with_its_whole_repository_is_pruned_later(tmp_path) -> None:
+    store = store_in(tmp_path)
+    installed = install(store, tool_zip(), "github dco/tool@v1")
+    (installed.folder / "tests").mkdir()
+    (installed.folder / "tests" / "t.py").write_text("x")
+    (installed.folder / "Makefile").write_text("x")
+    author = tmp_path / "author"
+    author.mkdir()
+    (author / MANIFEST_NAME).write_bytes(manifest("dco.dev"))
+    (author / "tests").mkdir()
+    store.install(store.prepare_link(author))
+
+    removed = store.prune_installed()
+
+    assert removed == {"dco.tool": ["Makefile", "tests"]}
+    assert (author / "tests").is_dir()  # the folder of an author is never touched
+    assert store.prune_installed() == {}  # nothing more
