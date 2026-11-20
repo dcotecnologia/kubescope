@@ -196,12 +196,16 @@ def configure(
     kubeconfig_files: list[str] | None = None,
     sign_in_commands: dict[str, str] | None = None,
     integration_files: list[str] | None = None,
+    terminal: str = "",
 ) -> None:
     """Apply the preferences that change how clusters are reached: the
     kubeconfig files to read (none means KUBECONFIG, or ~/.kube/config), the
     commands that sign in for sign-in programs the app does not know and the
-    kubeconfigs the integrations wrote, which are read besides the others."""
+    kubeconfigs the integrations wrote, which are read besides the others, and
+    the terminal the person chose to open the programs that need one."""
     global _kubeconfig_files, _custom_logins, _integration_files
+    global _preferred_terminal
+    _preferred_terminal = terminal
     _kubeconfig_files = list(kubeconfig_files or [])
     _custom_logins = dict(sign_in_commands or {})
     _integration_files = list(integration_files or [])
@@ -1185,13 +1189,27 @@ def check_login(context: str) -> tuple[bool, LoginAction | None]:
     return False, None
 
 
-_TERMINALS = (
-    ("x-terminal-emulator", "-e"),
-    ("gnome-terminal", "--"),
-    ("konsole", "-e"),
-    ("xfce4-terminal", "-x"),
-    ("xterm", "-e"),
+# The terminals the app knows, with what each one puts before the command it
+# runs. The first found is used unless the person chose one.
+_TERMINALS: tuple[tuple[str, tuple[str, ...]], ...] = (
+    ("x-terminal-emulator", ("-e",)),
+    ("gnome-terminal", ("--",)),
+    ("konsole", ("-e",)),
+    ("xfce4-terminal", ("-x",)),
+    ("xterm", ("-e",)),
+    ("alacritty", ("-e",)),
+    ("kitty", ()),
+    ("wezterm", ("start", "--")),
+    ("tilix", ("-e",)),
+    ("terminator", ("-x",)),
+    ("foot", ()),
+    ("ghostty", ("-e",)),
+    ("mate-terminal", ("-x",)),
+    ("lxterminal", ("-e",)),
+    ("urxvt", ("-e",)),
+    ("st", ("-e",)),
 )
+_preferred_terminal = ""  # the one the person chose; empty is the first found
 
 
 def _in_a_shell(command: list[str]) -> list[str]:
@@ -1200,24 +1218,57 @@ def _in_a_shell(command: list[str]) -> list[str]:
     return ["sh", "-c", shlex.join(command)]
 
 
+def available_terminals() -> list[str]:
+    """The known terminals this computer has (the host's, in a Flatpak)."""
+    found = host_has if in_flatpak() else lambda name: bool(shutil.which(name))
+    return [name for name, _flags in _TERMINALS if found(name)]
+
+
+def _chosen_terminal() -> tuple[str, list[str]] | None:
+    """The program and the arguments before the command of the terminal the
+    person chose: one the app knows by its name, or a command line of their own
+    (`alacritty -e`); None when they chose none or it cannot be read."""
+    chosen = _preferred_terminal.strip()
+    if not chosen:
+        return None
+    known = dict(_TERMINALS)
+    if chosen in known:
+        return chosen, list(known[chosen])
+    try:
+        parts = parse_command(chosen)
+    except ValueError:
+        return None
+    return parts[0], parts[1:]
+
+
 def _terminal_launcher(command: list[str]) -> list[str] | None:
     """The command that opens a terminal running `command`, or None when there
     is no terminal to open."""
+    chosen = _chosen_terminal()
+    if chosen is not None:
+        name, flags = chosen
+        if in_flatpak():
+            if host_has(name):
+                return [*HOST, name, *flags, *_in_a_shell(command)]
+        elif path := shutil.which(name):
+            tail = command if sys.platform == "win32" else _in_a_shell(command)
+            return [path, *flags, *tail]
+        logger.info("The terminal %s was not found: using the first one", name)
     if sys.platform == "win32":
         return ["cmd", "/c", "start", "", "cmd", "/k", *command]
     if in_flatpak():  # the terminals and the programs are the host's
         return next(
             (
-                [*HOST, name, flag, *_in_a_shell(command)]
-                for name, flag in _TERMINALS
+                [*HOST, name, *flags, *_in_a_shell(command)]
+                for name, flags in _TERMINALS
                 if host_has(name)
             ),
             None,
         )
     return next(
         (
-            [path, flag, *_in_a_shell(command)]
-            for name, flag in _TERMINALS
+            [path, *flags, *_in_a_shell(command)]
+            for name, flags in _TERMINALS
             if (path := shutil.which(name))
         ),
         None,

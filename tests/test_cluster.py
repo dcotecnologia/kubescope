@@ -3672,3 +3672,114 @@ def test_what_the_aws_cli_answers_that_is_not_an_object_is_handled(monkeypatch) 
     assert cluster._aws_json("ctx", ["rds", "x"]) == {}
     with pytest.raises(cluster.ClusterError, match="something unexpected"):
         cluster._aws_json("ctx", ["rds", "x"])
+
+
+def _terminals_on(monkeypatch, found: dict[str, str], platform: str = "linux") -> None:
+    monkeypatch.setattr(cluster.sys, "platform", platform)
+    monkeypatch.setattr(cluster, "in_flatpak", lambda: False)
+    monkeypatch.setattr(cluster.shutil, "which", lambda name: found.get(name))
+
+
+def test_the_terminal_the_person_chose_is_the_one_that_opens(monkeypatch) -> None:
+    _terminals_on(
+        monkeypatch,
+        {"konsole": "/usr/bin/konsole", "alacritty": "/usr/bin/alacritty"},
+    )
+    command = ["aws", "configure"]
+
+    cluster.configure(terminal="alacritty")
+    assert cluster._terminal_launcher(command) == [
+        "/usr/bin/alacritty",
+        "-e",
+        "sh",
+        "-c",
+        "aws configure",
+    ]
+
+    cluster.configure(terminal="")  # Automatic: the first one found
+    launcher = cluster._terminal_launcher(command)
+    assert launcher is not None and launcher[0] == "/usr/bin/konsole"
+
+
+def test_a_terminal_with_no_flag_or_with_two_gets_them_as_the_app_knows(
+    monkeypatch,
+) -> None:
+    _terminals_on(monkeypatch, {"kitty": "/k", "wezterm": "/w"})
+
+    cluster.configure(terminal="kitty")
+    assert cluster._terminal_launcher(["a"]) == ["/k", "sh", "-c", "a"]
+    cluster.configure(terminal="wezterm")
+    assert cluster._terminal_launcher(["a"]) == ["/w", "start", "--", "sh", "-c", "a"]
+    cluster.configure()
+
+
+def test_a_command_line_of_their_own_is_used_as_it_was_typed(monkeypatch) -> None:
+    _terminals_on(monkeypatch, {"mytty": "/opt/mytty"})
+
+    cluster.configure(terminal="mytty --hold -x")
+
+    assert cluster._terminal_launcher(["a", "b"]) == [
+        "/opt/mytty",
+        "--hold",
+        "-x",
+        "sh",
+        "-c",
+        "a b",
+    ]
+    cluster.configure()
+
+
+def test_a_terminal_that_is_not_there_or_cannot_be_read_falls_back_to_the_first(
+    monkeypatch,
+) -> None:
+    _terminals_on(monkeypatch, {"xterm": "/usr/bin/xterm"})
+
+    for chosen in ("gone -e", 'broken "quote', "   "):
+        cluster.configure(terminal=chosen)
+        launcher = cluster._terminal_launcher(["a"])
+        assert launcher is not None and launcher[0] == "/usr/bin/xterm"
+    cluster.configure()
+
+
+def test_a_terminal_chosen_on_windows_runs_the_command_as_it_is(monkeypatch) -> None:
+    _terminals_on(monkeypatch, {"wt": "C:/wt.exe"}, platform="win32")
+
+    cluster.configure(terminal="wt -d .")
+
+    assert cluster._terminal_launcher(["aws", "configure"]) == [
+        "C:/wt.exe",
+        "-d",
+        ".",
+        "aws",
+        "configure",
+    ]
+    cluster.configure()
+    launcher = cluster._terminal_launcher(["a"])
+    assert launcher is not None and launcher[:3] == ["cmd", "/c", "start"]
+
+
+def test_in_a_flatpak_the_chosen_terminal_is_the_hosts(monkeypatch) -> None:
+    monkeypatch.setattr(cluster.sys, "platform", "linux")
+    monkeypatch.setattr(cluster, "in_flatpak", lambda: True)
+    monkeypatch.setattr(cluster, "host_has", lambda name: name == "alacritty")
+
+    cluster.configure(terminal="alacritty")
+    launcher = cluster._terminal_launcher(["a"])
+    assert launcher == [*cluster.HOST, "alacritty", "-e", "sh", "-c", "a"]
+    cluster.configure(terminal="konsole")  # the host has no konsole: the first
+    assert cluster._terminal_launcher(["a"]) == [
+        *cluster.HOST,
+        "alacritty",
+        "-e",
+        "sh",
+        "-c",
+        "a",
+    ]
+    assert cluster.available_terminals() == ["alacritty"]
+    cluster.configure()
+
+
+def test_the_terminals_the_computer_has_are_listed(monkeypatch) -> None:
+    _terminals_on(monkeypatch, {"konsole": "/k", "st": "/st"})
+
+    assert cluster.available_terminals() == ["konsole", "st"]

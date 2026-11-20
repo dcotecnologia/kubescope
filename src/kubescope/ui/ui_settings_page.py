@@ -160,33 +160,53 @@ class Ui_SettingsPage(object):
 
         self.generalForm.setWidget(2, QFormLayout.ItemRole.FieldRole, self.defaultNamespaceEdit)
 
+        self.terminalLabel = QLabel(self.generalCard)
+        self.terminalLabel.setObjectName(u"terminalLabel")
+
+        self.generalForm.setWidget(3, QFormLayout.ItemRole.LabelRole, self.terminalLabel)
+
+        self.terminalCombo = QComboBox(self.generalCard)
+        self.terminalCombo.setObjectName(u"terminalCombo")
+        self.terminalCombo.setMinimumSize(QSize(200, 0))
+        self.terminalCombo.setProperty(u"variant", u"filter")
+
+        self.generalForm.setWidget(3, QFormLayout.ItemRole.FieldRole, self.terminalCombo)
+
+        self.terminalCommandEdit = QLineEdit(self.generalCard)
+        self.terminalCommandEdit.setObjectName(u"terminalCommandEdit")
+        self.terminalCommandEdit.setMinimumSize(QSize(200, 0))
+        self.terminalCommandEdit.setPlaceholderText(u"alacritty -e")
+        self.terminalCommandEdit.setProperty(u"variant", u"filter")
+
+        self.generalForm.setWidget(4, QFormLayout.ItemRole.FieldRole, self.terminalCommandEdit)
+
         self.rememberCheck = QCheckBox(self.generalCard)
         self.rememberCheck.setObjectName(u"rememberCheck")
         self.rememberCheck.setChecked(True)
 
-        self.generalForm.setWidget(3, QFormLayout.ItemRole.SpanningRole, self.rememberCheck)
+        self.generalForm.setWidget(5, QFormLayout.ItemRole.SpanningRole, self.rememberCheck)
 
         self.updatesCheck = QCheckBox(self.generalCard)
         self.updatesCheck.setObjectName(u"updatesCheck")
         self.updatesCheck.setChecked(True)
 
-        self.generalForm.setWidget(4, QFormLayout.ItemRole.SpanningRole, self.updatesCheck)
+        self.generalForm.setWidget(6, QFormLayout.ItemRole.SpanningRole, self.updatesCheck)
 
         self.backgroundCheck = QCheckBox(self.generalCard)
         self.backgroundCheck.setObjectName(u"backgroundCheck")
         self.backgroundCheck.setChecked(True)
 
-        self.generalForm.setWidget(5, QFormLayout.ItemRole.SpanningRole, self.backgroundCheck)
+        self.generalForm.setWidget(7, QFormLayout.ItemRole.SpanningRole, self.backgroundCheck)
 
         self.titleBarCheck = QCheckBox(self.generalCard)
         self.titleBarCheck.setObjectName(u"titleBarCheck")
 
-        self.generalForm.setWidget(6, QFormLayout.ItemRole.SpanningRole, self.titleBarCheck)
+        self.generalForm.setWidget(8, QFormLayout.ItemRole.SpanningRole, self.titleBarCheck)
 
         self.animationsCheck = QCheckBox(self.generalCard)
         self.animationsCheck.setObjectName(u"animationsCheck")
 
-        self.generalForm.setWidget(7, QFormLayout.ItemRole.SpanningRole, self.animationsCheck)
+        self.generalForm.setWidget(9, QFormLayout.ItemRole.SpanningRole, self.animationsCheck)
 
 
         self.generalCardLayout.addLayout(self.generalForm)
@@ -661,6 +681,13 @@ class Ui_SettingsPage(object):
         self.defaultNamespaceEdit.setToolTip(QCoreApplication.translate("SettingsPage", u"The namespace each context opens on. Leave empty to show all of them.", None))
 #endif // QT_CONFIG(tooltip)
         self.defaultNamespaceEdit.setPlaceholderText(QCoreApplication.translate("SettingsPage", u"All namespaces", None))
+        self.terminalLabel.setText(QCoreApplication.translate("SettingsPage", u"Terminal", None))
+#if QT_CONFIG(tooltip)
+        self.terminalCombo.setToolTip(QCoreApplication.translate("SettingsPage", u"The terminal that opens for a shell in a Pod, a port-forward or a sign-in that asks for keys. Automatic uses the first one the computer has.", None))
+#endif // QT_CONFIG(tooltip)
+#if QT_CONFIG(tooltip)
+        self.terminalCommandEdit.setToolTip(QCoreApplication.translate("SettingsPage", u"The program and what it needs before the command it runs, for example: alacritty -e", None))
+#endif // QT_CONFIG(tooltip)
         self.rememberCheck.setText(QCoreApplication.translate("SettingsPage", u"Remember the last used context", None))
         self.updatesCheck.setText(QCoreApplication.translate("SettingsPage", u"Check GitHub for a new version when the app starts and every hour", None))
 #if QT_CONFIG(tooltip)

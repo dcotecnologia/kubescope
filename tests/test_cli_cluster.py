@@ -15,6 +15,7 @@ class FakeSettings:
     kubeconfig_files: list[str] = []
     sign_in_commands: dict[str, str] = {}
     integration_accounts: list[dict] = []
+    terminal = ""
 
 
 @pytest.fixture(autouse=True)

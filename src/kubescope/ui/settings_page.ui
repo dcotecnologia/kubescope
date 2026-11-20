@@ -286,7 +286,49 @@
               </property>
              </widget>
             </item>
-            <item row="3" column="0" colspan="2">
+            <item row="3" column="0">
+             <widget class="QLabel" name="terminalLabel">
+              <property name="text">
+               <string>Terminal</string>
+              </property>
+             </widget>
+            </item>
+            <item row="3" column="1">
+             <widget class="QComboBox" name="terminalCombo">
+              <property name="minimumSize">
+               <size>
+                <width>200</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="toolTip">
+               <string>The terminal that opens for a shell in a Pod, a port-forward or a sign-in that asks for keys. Automatic uses the first one the computer has.</string>
+              </property>
+              <property name="variant" stdset="0">
+               <string notr="true">filter</string>
+              </property>
+             </widget>
+            </item>
+            <item row="4" column="1">
+             <widget class="QLineEdit" name="terminalCommandEdit">
+              <property name="minimumSize">
+               <size>
+                <width>200</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="toolTip">
+               <string>The program and what it needs before the command it runs, for example: alacritty -e</string>
+              </property>
+              <property name="placeholderText">
+               <string notr="true">alacritty -e</string>
+              </property>
+              <property name="variant" stdset="0">
+               <string notr="true">filter</string>
+              </property>
+             </widget>
+            </item>
+            <item row="5" column="0" colspan="2">
              <widget class="QCheckBox" name="rememberCheck">
               <property name="text">
                <string>Remember the last used context</string>
@@ -296,7 +338,7 @@
               </property>
              </widget>
             </item>
-            <item row="4" column="0" colspan="2">
+            <item row="6" column="0" colspan="2">
              <widget class="QCheckBox" name="updatesCheck">
               <property name="text">
                <string>Check GitHub for a new version when the app starts and every hour</string>
@@ -309,7 +351,7 @@
               </property>
              </widget>
             </item>
-            <item row="5" column="0" colspan="2">
+            <item row="7" column="0" colspan="2">
              <widget class="QCheckBox" name="backgroundCheck">
               <property name="text">
                <string>Keep running in the background, with an icon in the system tray</string>
@@ -322,7 +364,7 @@
               </property>
              </widget>
             </item>
-            <item row="6" column="0" colspan="2">
+            <item row="8" column="0" colspan="2">
              <widget class="QCheckBox" name="titleBarCheck">
               <property name="text">
                <string>Use the title bar of the system</string>
@@ -332,7 +374,7 @@
               </property>
              </widget>
             </item>
-            <item row="7" column="0" colspan="2">
+            <item row="9" column="0" colspan="2">
              <widget class="QCheckBox" name="animationsCheck">
               <property name="text">
                <string>Animate windows and lists as they open</string>

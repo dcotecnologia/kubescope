@@ -43,6 +43,7 @@ DEFAULTS: dict[str, Any] = {
     "window_geometry": "",
     "kubeconfig_files": [],
     "sign_in_commands": {},
+    "terminal": "",
     "shortcuts": {},
     "integration_accounts": [],
     "extensions": {},
@@ -469,6 +470,18 @@ class Settings:
         to be the newest, so asking GitHub again would only spend its limit."""
         at = self.update_checked_at
         return self.update_checked_for == version and at > 0 and 0 <= now - at < within
+
+    @property
+    def terminal(self) -> str:
+        """The terminal the person chose to open the programs that need one:
+        the name of one the app knows, or a command line of their own (like
+        `alacritty -e`); empty uses the first one found."""
+        value = self._data["terminal"]
+        return value.strip() if isinstance(value, str) and len(value) <= 300 else ""
+
+    @terminal.setter
+    def terminal(self, value: str) -> None:
+        self._data["terminal"] = str(value).strip()
 
     @property
     def sidebar_collapsed(self) -> bool:

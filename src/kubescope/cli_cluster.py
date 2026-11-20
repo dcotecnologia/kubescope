@@ -438,6 +438,7 @@ def _dispatch(namespace: argparse.Namespace) -> int:
         settings.kubeconfig_files,
         settings.sign_in_commands,
         integrations.kubeconfig_files(),
+        settings.terminal,
     )
     if command == "contexts":
         return _contexts(namespace.output)

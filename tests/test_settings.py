@@ -350,6 +350,22 @@ def test_the_blocks_of_the_menu_the_person_folded_are_kept(tmp_path) -> None:
     assert Settings(path).folded_sections == ["section:aws"]
 
 
+def test_the_terminal_the_person_chose_is_kept_and_nothing_odd_is_used(
+    tmp_path,
+) -> None:
+    path = tmp_path / "settings.json"
+    settings = Settings(path)
+    assert settings.terminal == ""  # Automatic
+
+    settings.terminal = "  alacritty -e  "
+    settings.save()
+    assert Settings(path).terminal == "alacritty -e"
+
+    for stored in ("1", "null", "[]", f'"{"x" * 301}"'):
+        path.write_text(f'{{"terminal": {stored}}}', encoding="utf-8")
+        assert Settings(path).terminal == ""
+
+
 def test_the_sections_of_the_menu_the_person_closed_are_kept(tmp_path) -> None:
     path = tmp_path / "settings.json"
     settings = Settings(path)

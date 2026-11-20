@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file. The format 
 
 ### Added
 
+- **Settings → General → Terminal** chooses the terminal that opens for a shell in a Pod, a port-forward or a sign-in that asks for keys: Automatic (the first one the computer has), one of the terminals it finds (gnome-terminal, konsole, alacritty, kitty, wezterm, tilix, foot, ghostty and others), or a command line of your own, such as `alacritty -e`; a choice that is not installed falls back to the first one by @danilogco
 - An extension can read the Warning events of the cluster with their identity and times (`ClusterAccess.get_events`) and add a button to the top bar, beside the Settings (`Ui.add_top_bar_button`), which the app takes out when the extension is unloaded by @danilogco
 - An extension can list the contexts of the kubeconfig (`ClusterAccess.list_contexts`) and show a notification of the operating system, through the tray, whose click brings the window forward (`Ui.show_system_notification`) by @danilogco
 - The app tells the extensions about the errors it shows in the banner (except a failed sign-in, which the banner already says), the warnings and errors of its message boxes and a new version of KubeScope (the event `notification`, which now names the context in use), so an extension can list them by @danilogco

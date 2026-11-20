@@ -346,6 +346,60 @@ def test_going_to_the_settings_by_a_command_never_comes_back(monkeypatch) -> Non
     window.close()
 
 
+def test_the_settings_choose_the_terminal_and_the_cluster_layer_uses_it(
+    monkeypatch,
+) -> None:
+    from kubescope import cluster
+
+    monkeypatch.setattr(
+        window_module, "available_terminals", lambda: ["konsole", "alacritty"]
+    )
+    window = _ready_window(monkeypatch)
+    form = window.settings_ui
+    window.settings.terminal = "alacritty"
+
+    window._load_settings_form()
+    labels = [form.terminalCombo.itemText(i) for i in range(form.terminalCombo.count())]
+    assert labels == ["Automatic", "konsole", "alacritty", "Other..."]
+    assert form.terminalCombo.currentData() == "alacritty"
+    assert form.terminalCommandEdit.isHidden()  # the line is for Other only
+
+    form.terminalCombo.setCurrentIndex(form.terminalCombo.findData("konsole"))
+    window._save_preferences()
+    assert window.settings.terminal == "konsole"
+    assert cluster._preferred_terminal == "konsole"  # applied at once
+
+    form.terminalCombo.setCurrentIndex(form.terminalCombo.count() - 1)  # Other...
+    assert not form.terminalCommandEdit.isHidden()
+    assert window._chosen_terminal() == ""  # nothing typed yet
+    form.terminalCommandEdit.setText("  mytty -x  ")
+    window._save_preferences()
+    assert window.settings.terminal == "mytty -x"
+
+    form.terminalCombo.setCurrentIndex(0)  # Automatic
+    window._save_preferences()
+    assert window.settings.terminal == "" and cluster._preferred_terminal == ""
+    window.close()
+
+
+def test_a_saved_terminal_that_is_gone_or_typed_by_hand_is_shown_not_lost(
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(window_module, "available_terminals", lambda: ["konsole"])
+    window = _ready_window(monkeypatch)
+    form = window.settings_ui
+
+    window._fill_terminal_combo("kitty")  # a terminal that is not installed now
+    assert form.terminalCombo.currentText() == "kitty"
+    window._fill_terminal_combo("mytty --hold -e")  # a command line of their own
+    assert form.terminalCombo.currentText() == "Other..."
+    assert form.terminalCommandEdit.text() == "mytty --hold -e"
+    window._fill_terminal_combo("")
+    assert form.terminalCombo.currentText() == "Automatic"
+    assert form.terminalCommandEdit.text() == ""
+    window.close()
+
+
 def test_a_text_log_that_fails_or_whose_tab_closed_is_handled(
     window, monkeypatch
 ) -> None:

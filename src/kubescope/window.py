@@ -125,6 +125,7 @@ from kubescope.cloud_addons import AKS_KIND, GKE_KIND, aks_cluster
 from kubescope.cluster import (
     ClusterError,
     LoginAction,
+    available_terminals,
     cancel_running,
     check_login,
     context_environment,
@@ -299,6 +300,7 @@ LIST_DEBOUNCE_MS = 150
 LIST_REFRESH_MS = 5_000  # the list on screen is read again this often
 LIST_REFRESH_MAX_MS = 60_000  # ... and this rarely while the cluster keeps failing
 PERMISSIONS_TTL_S = 300  # what the cluster allows is asked again after this long
+CUSTOM_TERMINAL = "?custom"  # the entry of the terminals for a command of their own
 MONITORING_FOLD = "section:monitoring"  # how the settings call that block folded
 MENU_OPEN = 16777215  # no limit: a section of the side menu that shows all its entries
 SIDEBAR_WIDTH = 240  # the usual width of the side menu, which can be dragged
@@ -1243,6 +1245,9 @@ class WorkloadWindow(QMainWindow):
         self.settings_ui.editThemeButton.clicked.connect(self._edit_theme)
         self.settings_ui.deleteThemeButton.clicked.connect(self._delete_theme)
         self.settings_ui.openThemesButton.clicked.connect(self._open_themes_folder)
+        self.settings_ui.terminalCombo.currentIndexChanged.connect(
+            self._sync_terminal_edit
+        )
         self.settings_ui.themeCombo.currentIndexChanged.connect(
             self._update_theme_buttons
         )
@@ -6573,6 +6578,7 @@ class WorkloadWindow(QMainWindow):
         for entry in self._extension_sections:
             self._call_extension(entry.extension, entry.panel.load)
         self._fill_theme_combo(self.settings.theme)
+        self._fill_terminal_combo(self.settings.terminal)
         self._fill_default_namespaces()
         form.rememberCheck.setChecked(self.settings.remember_last_context)
         form.debugCheck.setChecked(self.settings.debug_logging)
@@ -6635,6 +6641,47 @@ class WorkloadWindow(QMainWindow):
         form.loginTable.setVisible(has_commands)
         form.loginRemoveButton.setVisible(has_commands)
 
+    def _fill_terminal_combo(self, chosen: str) -> None:
+        """List the terminals the computer has, Automatic and a command line of
+        the person's own; what was saved is selected, and a saved terminal that
+        is not installed any more is kept in the list so it is not lost."""
+        form = self.settings_ui
+        combo = form.terminalCombo
+        combo.blockSignals(True)
+        combo.clear()
+        combo.addItem(self.tr("Automatic"), "")
+        names = available_terminals()
+        if chosen and " " not in chosen and chosen not in names:
+            names.append(chosen)  # one that is not here: shown, not dropped
+        for name in names:
+            combo.addItem(name, name)
+        combo.addItem(self.tr("Other..."), CUSTOM_TERMINAL)
+        index = combo.findData(chosen)
+        if index < 0:  # a command line of their own
+            index = combo.findData(CUSTOM_TERMINAL)
+            form.terminalCommandEdit.setText(chosen)
+        else:
+            form.terminalCommandEdit.clear()
+        combo.setCurrentIndex(index)
+        combo.blockSignals(False)
+        self._sync_terminal_edit()
+
+    def _sync_terminal_edit(self) -> None:
+        """The line for a command of their own shows only for Other."""
+        form = self.settings_ui
+        form.terminalCommandEdit.setVisible(
+            form.terminalCombo.currentData() == CUSTOM_TERMINAL
+        )
+
+    def _chosen_terminal(self) -> str:
+        """The terminal the Settings show: empty for Automatic, a name, or the
+        command line typed."""
+        form = self.settings_ui
+        data = form.terminalCombo.currentData()
+        if data == CUSTOM_TERMINAL:
+            return form.terminalCommandEdit.text().strip()
+        return str(data or "")
+
     def _apply_cluster_settings(self) -> None:
         """Tell the cluster layer which kubeconfig files to read and which
         commands sign in for programs the app does not know."""
@@ -6642,6 +6689,7 @@ class WorkloadWindow(QMainWindow):
             self.settings.kubeconfig_files,
             self.settings.sign_in_commands,
             integrations.kubeconfig_files(),
+            self.settings.terminal,
         )
 
     def _add_kubeconfig_file(self) -> None:
@@ -6842,6 +6890,7 @@ class WorkloadWindow(QMainWindow):
         files_changed = files != self.settings.kubeconfig_files
         self.settings.kubeconfig_files = files
         self.settings.sign_in_commands = commands
+        self.settings.terminal = self._chosen_terminal()
         self.settings.shortcuts = keys
         self._apply_shortcuts()
         self._apply_cluster_settings()
