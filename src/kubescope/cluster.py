@@ -29,6 +29,7 @@ from kubescope.sdk.models import (
     BAD_STATUSES,
     OK_STATUSES,
     WARNING_STATUSES,
+    ClusterEvent,
     ClusterInfo,
     ClusterOverview,
     ClusterResource,
@@ -2590,6 +2591,67 @@ def _parse_event(item: dict[str, Any], now: datetime) -> tuple[float, EventInfo]
             last_seen=format_age(last_seen) if last_seen is not None else "unknown",
         ),
     )
+
+
+def _epoch(timestamp: str | None) -> float | None:
+    if not timestamp:
+        return None
+    try:
+        return datetime.fromisoformat(timestamp.replace("Z", "+00:00")).timestamp()
+    except ValueError:
+        return None
+
+
+def _parse_cluster_event(item: dict[str, Any]) -> ClusterEvent | None:
+    """An event with its identity and its times; None when it has no message or
+    no usable time."""
+    metadata = item.get("metadata") or {}
+    involved = item.get("involvedObject") or {}
+    series = item.get("series") or {}
+    message = item.get("message")
+    created = _epoch(metadata.get("creationTimestamp"))
+    last_seen = next(
+        (
+            moment
+            for moment in (
+                _epoch(item.get("lastTimestamp")),
+                _epoch(series.get("lastObservedTime")),
+                _epoch(item.get("eventTime")),
+                created,
+            )
+            if moment is not None
+        ),
+        None,
+    )
+    if not message or last_seen is None:
+        return None
+    first_seen = _epoch(item.get("firstTimestamp")) or created or last_seen
+    return ClusterEvent(
+        uid=str(metadata.get("uid") or ""),
+        type=item.get("type") or "Normal",
+        reason=item.get("reason") or "",
+        namespace=metadata.get("namespace") or involved.get("namespace") or "",
+        kind=involved.get("kind") or "",
+        name=involved.get("name") or "",
+        message=message,
+        count=item.get("count") or series.get("count") or 1,
+        first_seen=first_seen,
+        last_seen=last_seen,
+    )
+
+
+def get_events(
+    context: str, types: tuple[str, ...] = ("Warning",)
+) -> list[ClusterEvent]:
+    """The most recent events of every namespace of the given types, the newest
+    first."""
+    parsed = (
+        _parse_cluster_event(item)
+        for item in _list("events", context).get("items") or []
+    )
+    events = [event for event in parsed if event is not None and event.type in types]
+    events.sort(key=lambda event: event.last_seen, reverse=True)
+    return events[:EVENT_LIMIT]
 
 
 def get_workloads_overview(context: str) -> WorkloadsOverview:

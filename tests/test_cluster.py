@@ -1636,6 +1636,57 @@ def test_events_use_whichever_timestamp_the_cluster_provides() -> None:
     assert cluster._parse_event({"metadata": {}}, NOW) is None  # nothing to say
 
 
+def test_get_events_keeps_the_types_asked_the_newest_first(monkeypatch) -> None:
+    def item(uid, kind, moment, message="m"):
+        return {
+            "metadata": {"uid": uid, "namespace": "ns", "creationTimestamp": moment},
+            "type": kind,
+            "reason": "BackOff",
+            "message": message,
+            "lastTimestamp": moment,
+            "involvedObject": {"kind": "Pod", "name": "api"},
+        }
+
+    items = [
+        item("old", "Warning", "2025-01-02T01:00:00Z"),
+        item("fine", "Normal", "2025-01-02T05:00:00Z"),
+        item("new", "Warning", "2025-01-02T09:00:00Z"),
+        {"metadata": {"uid": "mute"}, "type": "Warning"},  # no message
+        item("odd", "Warning", "not a date"),  # no usable time
+    ]
+    monkeypatch.setattr(cluster, "_list", lambda *_: {"items": items})
+
+    events = cluster.get_events("dev")
+
+    assert [event.uid for event in events] == ["new", "old"]
+    first = events[0]
+    assert (first.reason, first.namespace, first.kind, first.name) == (
+        "BackOff",
+        "ns",
+        "Pod",
+        "api",
+    )
+    assert first.first_seen == first.last_seen  # one sighting
+    both = cluster.get_events("dev", ("Warning", "Normal"))
+    assert [event.uid for event in both] == ["new", "fine", "old"]
+
+
+def test_get_events_uses_the_series_and_counts_a_repeated_event(monkeypatch) -> None:
+    repeated = {
+        "metadata": {"uid": "u", "creationTimestamp": "2025-01-02T01:00:00Z"},
+        "type": "Warning",
+        "message": "m",
+        "firstTimestamp": "2025-01-02T01:00:00Z",
+        "series": {"lastObservedTime": "2025-01-02T03:00:00Z", "count": 4},
+    }
+    monkeypatch.setattr(cluster, "_list", lambda *_: {"items": [repeated]})
+
+    (event,) = cluster.get_events("dev")
+
+    assert event.count == 4 and event.last_seen > event.first_seen
+    assert (event.namespace, event.kind, event.name) == ("", "", "")
+
+
 def _overview_documents(extra_events=0):
     events = [
         {

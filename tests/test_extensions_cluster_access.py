@@ -57,6 +57,7 @@ def test_the_kinds_of_the_sdk_are_the_ones_the_app_reads_and_changes() -> None:
             "get_resource_details",
             ("dev", "Pod", "ns", "p"),
         ),
+        ("get_events", ("dev", ("Warning",)), "get_events", ("dev", ("Warning",))),
         ("describe_kube", (), "describe_kube", ()),
     ],
 )

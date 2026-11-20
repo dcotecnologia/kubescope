@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+### Added
+
+- An extension can read the Warning events of the cluster with their identity and times (`ClusterAccess.get_events`) and add a button to the top bar, beside the Settings (`Ui.add_top_bar_button`), which the app takes out when the extension is unloaded by @danilogco
+
 ### Changed
 
 - The app icon has slightly rounded corners and a small margin, so it sits at the same size as the other icons in the launcher and the dock, with a soft sheen and edge; the tray icon is a tighter version of it, to fill its small slot by @danilogco

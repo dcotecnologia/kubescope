@@ -1368,6 +1368,7 @@ class WorkloadWindow(QMainWindow):
             self.sidebar_resizer.set_width(self.settings.sidebar_width)
         self.sidebar_resizer.width_changed.connect(self._keep_sidebar_width)
         self._corner_owners: dict[str, int] = {}  # pixels each one keeps clear
+        self._top_bar_buttons: dict[str, list[QWidget]] = {}  # by extension
         self._corner_margins = {
             layout: layout.contentsMargins()
             for layout in (ui.footerRow, ui.appFooterLayout)
@@ -1398,6 +1399,7 @@ class WorkloadWindow(QMainWindow):
                 lambda title, label, items: self._pick_item(title, label, items),
                 lambda title, document: self._show_json_dialog(title, document),
                 lambda title, name, read: self._open_text_log(title, name, read),
+                lambda owner, button: self._add_top_bar_button(owner, button),
             ),
             begin_forward=lambda *args: self._begin_forward(*args),
             commands=self.commands,
@@ -5260,6 +5262,17 @@ class WorkloadWindow(QMainWindow):
         assert self._extension_loader is not None
         return self._extension_loader
 
+    def _add_top_bar_button(self, owner: str, button: QWidget) -> None:
+        """Put a button of an extension in the top bar, before the Settings."""
+        layout = self.ui.topLayout
+        layout.insertWidget(layout.indexOf(self.ui.settingsButton), button)
+        self._top_bar_buttons.setdefault(owner, []).append(button)
+
+    def _remove_top_bar_buttons(self, owner: str) -> None:
+        for button in self._top_bar_buttons.pop(owner, []):
+            self.ui.topLayout.removeWidget(button)
+            button.deleteLater()
+
     def _reserve_corner_for(self, owner: str, pixels: int) -> None:
         """Keep `pixels` of the corner clear for `owner`; the corner is as wide
         as what everyone asked for together."""
@@ -5310,6 +5323,7 @@ class WorkloadWindow(QMainWindow):
                 now
             ) != self._extension_signature(loaded.installed):
                 loader.unload(extension)
+                self._remove_top_bar_buttons(extension)
                 translations_changed |= set_extension_languages(extension, None)
         for extension, one in wanted.items():
             if extension not in loader.loaded:  # its texts first: it builds with them

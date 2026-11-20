@@ -10,7 +10,13 @@ from collections.abc import Callable
 from typing import Any
 
 from kubescope.sdk import WriteModeOff
-from kubescope.sdk.models import ClusterResource, PodInfo, SearchHit, Workload
+from kubescope.sdk.models import (
+    ClusterEvent,
+    ClusterResource,
+    PodInfo,
+    SearchHit,
+    Workload,
+)
 
 from kubescope import cluster, writes
 
@@ -77,6 +83,11 @@ class ClusterBridge:
 
     def search_resources(self, context: str) -> list[SearchHit]:
         return cluster.search_resources(context)
+
+    def get_events(
+        self, context: str, types: tuple[str, ...] = ("Warning",)
+    ) -> list[ClusterEvent]:
+        return cluster.get_events(context, types)
 
     def describe_kube(self) -> str:
         return cluster.describe_kube()

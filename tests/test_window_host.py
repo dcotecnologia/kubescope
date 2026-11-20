@@ -214,6 +214,23 @@ def test_the_extension_is_lent_the_window_and_the_corner_is_shared(
     assert window.ui.footerRow.contentsMargins().right() - base == gutter - 30
 
 
+def test_a_button_of_an_extension_sits_before_the_settings_until_it_unloads(
+    window, tmp_path
+) -> None:
+    folder, package, extension = make_extension(tmp_path)
+    install_linked(window, folder)
+    ctx = sys.modules[package].CTX[0]
+    button = QPushButton("bell")
+
+    ctx.ui.add_top_bar_button(extension, button)
+
+    layout = window.ui.topLayout
+    assert layout.indexOf(button) == layout.indexOf(window.ui.settingsButton) - 1
+    window._remove_top_bar_buttons(extension)
+    assert layout.indexOf(button) == -1
+    window._remove_top_bar_buttons(extension)  # nothing left to take out
+
+
 def test_the_window_offers_the_settings_to_an_extension(window, tmp_path) -> None:
     folder, package, _ = make_extension(tmp_path)
     install_linked(window, folder)

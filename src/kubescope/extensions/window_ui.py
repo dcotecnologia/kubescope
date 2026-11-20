@@ -35,6 +35,7 @@ class WindowUi:
         ),
         show_json: Callable[[str, dict[str, Any]], None] = lambda *_: None,
         open_log: Callable[[str, str, Callable[[], str]], None] = lambda *_: None,
+        add_top_bar_button: Callable[[str, QWidget], None] = lambda *_: None,
     ) -> None:
         self.window = window
         self.central = central
@@ -47,6 +48,7 @@ class WindowUi:
         self._pick_item = pick_item
         self._show_json = show_json
         self._open_log = open_log
+        self._add_top_bar_button = add_top_bar_button
 
     def show_message(self, icon: str, title: str, text: str) -> None:
         self._message(_ICONS.get(icon, QMessageBox.Icon.Information), title, text)
@@ -71,3 +73,6 @@ class WindowUi:
 
     def open_log(self, title: str, name: str, read: Callable[[], str]) -> None:
         self._open_log(title, name, read)
+
+    def add_top_bar_button(self, owner: str, button: QWidget) -> None:
+        self._add_top_bar_button(owner, button)
