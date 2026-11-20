@@ -1,0 +1,199 @@
+{
+  "folders": [
+    {
+      "path": ".",
+    },
+    {
+      "path": "../kubescope-gabi",
+    },
+    {
+      "path": "../kubescope-sdk",
+    },
+    {
+      "path": "../kubescope-aws",
+    },
+    {
+      "path": "../kubescope-search",
+    },
+    {
+      "path": "../kubescope-themes",
+    },
+  ],
+  "settings": {
+    // ── Editor ────────────────────────────────────────────────────────────
+    "editor.foldingImportsByDefault": true,
+    "editor.formatOnSave": true,
+    "editor.inlineSuggest.enabled": true,
+    "editor.minimap.enabled": false,
+    "editor.quickSuggestions": {
+      "other": true,
+      "comments": true,
+      "strings": true,
+    },
+    "editor.renderWhitespace": "boundary",
+    "editor.rulers": [80, 160],
+    "editor.suggestOnTriggerCharacters": true,
+    "editor.wordBasedSuggestions": "matchingDocuments",
+    "files.autoSave": "onFocusChange",
+    "files.eol": "\n",
+    "files.insertFinalNewline": true,
+    "files.trimFinalNewlines": true,
+    "files.trimTrailingWhitespace": true,
+
+    // ── Per-language formatters ───────────────────────────────────────────
+    "[jsonc]": {
+      "editor.defaultFormatter": "esbenp.prettier-vscode",
+      "editor.insertSpaces": true,
+      "editor.tabSize": 4,
+    },
+    "[markdown]": {
+      "editor.codeActionsOnSave": {
+        "source.fixAll.markdownlint": "explicit",
+      },
+    },
+    "[python]": {
+      "editor.codeActionsOnSave": {
+        "source.fixAll": "explicit",
+        "source.organizeImports": "explicit",
+      },
+      "editor.defaultFormatter": "charliermarsh.ruff",
+      "editor.formatOnSave": true,
+      "editor.insertSpaces": true,
+      "editor.tabSize": 4,
+    },
+    "[shellscript]": {
+      "editor.defaultFormatter": "mkhl.shfmt",
+    },
+    "[toml]": {
+      "editor.defaultFormatter": "tamasfe.even-better-toml",
+    },
+    "[typescript]": {
+      "editor.codeActionsOnSave": {
+        "source.fixAll.eslint": "explicit",
+      },
+      "editor.defaultFormatter": "esbenp.prettier-vscode",
+    },
+    "[vue]": {
+      "editor.codeActionsOnSave": {
+        "source.fixAll.eslint": "explicit",
+      },
+      "editor.defaultFormatter": "esbenp.prettier-vscode",
+    },
+    "[yaml]": {
+      "editor.defaultFormatter": "esbenp.prettier-vscode",
+    },
+
+    // ── Python ────────────────────────────────────────────────────────────
+    // Each module has its own .venv; Pylance resolves it per folder.
+    "python.analysis.autoImportCompletions": true,
+    "python.analysis.diagnosticMode": "openFilesOnly",
+    "python.analysis.diagnosticSeverityOverrides": {
+      "reportMissingModuleSource": "none",
+      "reportMissingParameterType": "none",
+      "reportMissingTypeStubs": "none",
+      "reportUnknownArgumentType": "none",
+      "reportUnknownLambdaType": "none",
+      "reportUnknownMemberType": "none",
+      "reportUnknownParameterType": "none",
+      "reportUnknownVariableType": "none",
+      "reportUntypedFunctionDecorator": "none",
+    },
+    "python.analysis.exclude": [
+      "**/node_modules",
+      "**/.venv",
+      "**/__pycache__",
+      "**/build",
+      "**/*.egg-info",
+    ],
+    "python.analysis.extraPaths": ["${workspaceFolder:common}"],
+    "python.analysis.typeCheckingMode": "strict",
+    "python.defaultInterpreterPath": ".venv/bin/python",
+    "python.experiments.enabled": false,
+    "python.terminal.activateEnvironment": true,
+    "python.terminal.useEnvFile": true,
+    "python.testing.pytestEnabled": true,
+    "python.testing.unittestEnabled": false,
+    "ruff.enable": true,
+    "ruff.format.enable": true,
+    "ruff.lint.enable": true,
+
+    // ── Shell / Make ──────────────────────────────────────────────────────
+    "makefile.configureOnOpen": false,
+    "shellcheck.customArgs": ["--severity=warning", "--external-sources"],
+    "shfmt.executableArgs": ["--indent", "2", "--case-indent"],
+
+    // ── Frontend (Nuxt) ───────────────────────────────────────────────────
+    "eslint.useFlatConfig": true,
+    "eslint.workingDirectories": [{ "pattern": "modules/front-*" }],
+    "js/ts.preferences.importModuleSpecifier": "non-relative",
+
+    // ── Performance: keep generated/vendored trees out of watch + search ──
+    "files.exclude": {
+      "**/*.git": true,
+      "**/*.pyc": true,
+      "**/*.pyo": true,
+      "**/__pycache__": true,
+    },
+    "files.watcherExclude": {
+      "**/.git/objects/**": true,
+      "**/.git/subtree-cache/**": true,
+      "**/.nuxt/**": true,
+      "**/.output/**": true,
+      "**/.pytest_cache/**": true,
+      "**/.ruff_cache/**": true,
+      "**/.venv/**": true,
+      "**/__pycache__/**": true,
+      "**/coverage/**": true,
+      "**/node_modules/**": true,
+    },
+    "search.exclude": {
+      "**/*.egg-info": true,
+      "**/.nuxt": true,
+      "**/.output": true,
+      "**/.venv": true,
+      "**/bun.lock": true,
+      "**/coverage": true,
+      "**/coverage.xml": true,
+      "**/node_modules": true,
+      "**/uv.lock": true,
+    },
+
+    // ── Git ───────────────────────────────────────────────────────────────
+    "git.autofetch": true,
+
+    // ── AI assistants ─────────────────────────────────────────────────────
+    "chat.agentFilesLocations": {
+      ".": true,
+      "../..": true,
+    },
+    "chat.tools.terminal.autoApprove": {
+      "git add": true,
+    },
+    "chat.useAgentsMdFile": true,
+    "github.copilot.enable": {
+      "*": true,
+      "plaintext": true,
+      "markdown": true,
+      "scminput": false,
+    },
+  },
+  "extensions": {
+    "recommendations": [
+      "carlos-algms.make-task-provider",
+      "charliermarsh.ruff",
+      "davidanson.vscode-markdownlint",
+      "dbaeumer.vscode-eslint",
+      "esbenp.prettier-vscode",
+      "formulahendry.docker-explorer",
+      "github.vscode-github-actions",
+      "mkhl.shfmt",
+      "ms-python.debugpy",
+      "ms-python.vscode-pylance",
+      "ms-vscode.makefile-tools",
+      "tamasfe.even-better-toml",
+      "timonwong.shellcheck",
+      "unjinjang.rest-api-client",
+      "vue.volar",
+    ],
+  },
+}
