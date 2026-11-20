@@ -72,6 +72,7 @@ analysis = Analysis(
         # the footer shows the version, which the app reads from this metadata
         *copy_metadata("kubescope"),
         (str(root / "src" / "kubescope" / "assets" / "icon.png"), "kubescope/assets"),
+        (str(root / "src" / "kubescope" / "assets" / "tray.png"), "kubescope/assets"),
         (str(root / "src" / "kubescope" / "assets" / "CHANGELOG.md"), "kubescope/assets"),
         (
             str(root / "src" / "kubescope" / "assets" / "THIRD_PARTY_NOTICES.txt"),

@@ -302,6 +302,7 @@ UPDATE_NOTICE_MS = 4000  # how long "Up to date" stays next to the icon
 
 NOTICES_PATH = Path(__file__).resolve().parent / "assets" / "THIRD_PARTY_NOTICES.txt"
 LOGO_PATH = Path(__file__).resolve().parent / "assets" / "icon.png"
+TRAY_ICON_PATH = LOGO_PATH.with_name("tray.png")  # tighter, for a 22 px slot
 
 # Overview rows that open a list when clicked, and the list each opens.
 WORKLOAD_LINKS = {
@@ -6892,7 +6893,7 @@ class WorkloadWindow(QMainWindow):
             self.settings.run_in_background and QSystemTrayIcon.isSystemTrayAvailable()
         )
         if wanted and self._tray is None:
-            tray = QSystemTrayIcon(self.windowIcon(), self)
+            tray = QSystemTrayIcon(QIcon(str(TRAY_ICON_PATH)), self)
             tray.setToolTip("KubeScope")
             menu = QMenu(self)
             menu.addAction(self.tr("Show KubeScope"), self.bring_to_front)
