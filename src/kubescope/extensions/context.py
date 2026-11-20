@@ -7,7 +7,7 @@ it. No Qt.
 
 import json
 import logging
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -26,6 +26,7 @@ from kubescope.sdk import (
     SettingsSection,
     ShortcutContribution,
     TabKind,
+    ThemeContribution,
     Ui,
     Writes,
 )
@@ -266,6 +267,12 @@ class ExtensionContext:
         self._require("ui.settings")
         self._host.contributions.settings_sections.append(
             SettingsSection(self.id, title, factory)
+        )
+
+    def add_theme(self, theme_id: str, document: Mapping[str, Any]) -> None:
+        self._require("ui.theme")
+        self._host.contributions.themes.append(
+            ThemeContribution(self.id, theme_id, dict(document))
         )
 
     def add_cli_command(self, name: str, run: Callable[[list[str]], int]) -> None:

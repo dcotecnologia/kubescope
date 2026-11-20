@@ -17,6 +17,7 @@ from kubescope.sdk import (
     SettingsSection,
     ShortcutContribution,
     TabKind,
+    ThemeContribution,
 )
 
 logger = logging.getLogger(__name__)
@@ -94,6 +95,7 @@ class Contributions:
     settings_sections: list[SettingsSection] = field(default_factory=list)
     cli_commands: list[CliCommand] = field(default_factory=list)
     shortcuts: list[ShortcutContribution] = field(default_factory=list)
+    themes: list[ThemeContribution] = field(default_factory=list)
 
     def remove_extension(self, extension: str) -> None:
         """Drop everything `extension` added."""
@@ -107,3 +109,4 @@ class Contributions:
             one for one in self.cli_commands if one.extension != extension
         ]
         self.shortcuts = [one for one in self.shortcuts if one.extension != extension]
+        self.themes = [one for one in self.themes if one.extension != extension]

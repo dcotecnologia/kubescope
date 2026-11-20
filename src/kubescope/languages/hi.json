@@ -190,6 +190,7 @@
             "add a page to the side menu": "साइड मेनू में एक पेज जोड़ना",
             "add a panel to the window": "विंडो में पैनल जोड़ना",
             "add a section to the Settings": "सेटिंग्स में अनुभाग जोड़ना",
+            "add color themes": "रंग थीम जोड़ना",
             "change your clusters, in the write mode": "आपके क्लस्टर बदलना, राइट मोड में",
             "read your AWS account (RDS, EC2, EKS, Systems Manager)": "आपका AWS खाता पढ़ना (RDS, EC2, EKS, Systems Manager)",
             "read your clusters": "आपके क्लस्टर पढ़ना",

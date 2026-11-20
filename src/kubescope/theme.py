@@ -19,6 +19,7 @@ import json
 import logging
 import re
 import shutil
+from collections.abc import Iterable
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -145,6 +146,7 @@ SURFACE = DARK_THEME.colors[WHITE]  # white as a background or border, in Dark
 
 _active = DARK_THEME
 _custom: dict[str, Theme] = {}
+_contributed: dict[str, Theme] = {}  # the themes the extensions that run offer
 
 
 def themes_directory() -> Path:
@@ -236,13 +238,43 @@ def load_custom_themes() -> dict[str, Theme]:
     return themes
 
 
+def set_contributed_themes(offered: Iterable[tuple[str, object]]) -> None:
+    """Take the themes the running extensions offer, as (id, document): the
+    ones that are not valid are skipped and logged; what is there is replaced.
+
+    A theme of the person with the same id wins.
+    """
+    global _contributed
+    found: dict[str, Theme] = {}
+    for theme_id, document in offered:
+        if theme_id in BUILTIN:
+            logger.warning("An extension offers %s, which is built in", theme_id)
+            continue
+        try:
+            found[theme_id] = parse_theme(theme_id, document)
+        except ValueError as error:
+            logger.warning("Skipping the theme %s of an extension: %s", theme_id, error)
+    _contributed = found
+
+
+def is_contributed(theme_id: str) -> bool:
+    """Whether an extension offers the theme (and the person has no file of
+    their own that takes its place)."""
+    return theme_id in _contributed
+
+
 def available_themes() -> list[Theme]:
-    """The built-in themes, then the custom ones by name."""
-    custom = sorted(
-        (t for t in load_custom_themes().values() if t.id not in BUILTIN),
-        key=lambda theme: theme.name.casefold(),
-    )
-    return [LIGHT_THEME, DARK_THEME, *custom]
+    """The built-in themes, then the custom ones and the ones the extensions
+    offer, by name."""
+    chosen = {
+        **_contributed,
+        **{k: v for k, v in load_custom_themes().items() if k not in BUILTIN},
+    }
+    return [
+        LIGHT_THEME,
+        DARK_THEME,
+        *sorted(chosen.values(), key=lambda theme: theme.name.casefold()),
+    ]
 
 
 def bundled_theme_ids() -> set[str]:
@@ -257,7 +289,11 @@ def bundled_theme_ids() -> set[str]:
 def can_delete_theme(theme_id: str) -> bool:
     """Only the themes the person made: the ones that come with the app
     stay."""
-    return theme_id not in BUILTIN and theme_id not in bundled_theme_ids()
+    return (
+        theme_id not in BUILTIN
+        and theme_id not in bundled_theme_ids()
+        and theme_id not in _contributed
+    )
 
 
 def delete_custom_theme(theme_id: str) -> None:
@@ -337,7 +373,12 @@ def set_theme(name: str) -> None:
     """Make a theme the active one; an unknown name means the default."""
     global _active, _custom
     _custom = load_custom_themes() if name not in BUILTIN else {}
-    _active = BUILTIN.get(name) or _custom.get(name) or BUILTIN[DEFAULT_THEME]
+    _active = (
+        BUILTIN.get(name)
+        or _custom.get(name)
+        or _contributed.get(name)
+        or BUILTIN[DEFAULT_THEME]
+    )
 
 
 def themed(color: str, *, text: bool = False) -> str:

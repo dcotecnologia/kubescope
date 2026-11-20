@@ -190,6 +190,7 @@
             "add a page to the side menu": "إضافة صفحة إلى القائمة الجانبية",
             "add a panel to the window": "إضافة لوحة إلى النافذة",
             "add a section to the Settings": "إضافة قسم إلى الإعدادات",
+            "add color themes": "إضافة سمات ألوان",
             "change your clusters, in the write mode": "تغيير عناقيدك، في وضع الكتابة",
             "read your AWS account (RDS, EC2, EKS, Systems Manager)": "قراءة حسابك في AWS (RDS وEC2 وEKS وSystems Manager)",
             "read your clusters": "قراءة عناقيدك",

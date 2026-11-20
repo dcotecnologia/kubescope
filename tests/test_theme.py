@@ -357,22 +357,6 @@ def test_installed_themes_are_not_overwritten_but_come_back_when_deleted(
     )  # regenerated from the app's own copy
 
 
-def test_the_themes_folder_is_filled_again_when_every_file_is_gone(
-    themes_dir,
-) -> None:
-    theme.install_bundled_themes()
-    shipped = {p.stem for p in theme.BUNDLED_DIRECTORY.glob("*.json")} - set(
-        theme.BUILTIN
-    )
-    assert shipped and {p.stem for p in themes_dir.glob("*.json")} == shipped
-
-    for path in themes_dir.glob("*.json"):
-        path.unlink()
-    assert set(theme.install_bundled_themes()) == shipped
-    assert {p.stem for p in themes_dir.glob("*.json")} == shipped
-    assert not (themes_dir / "light.json").exists()  # built in: not copied
-
-
 def test_unusable_bundled_themes_are_skipped(bundled, themes_dir, caplog) -> None:
     _write(bundled, "broken.json", "{not json")
     _write(bundled, "wrong.json", {"name": "Wrong", "base": "neon"})
@@ -406,21 +390,8 @@ def test_a_missing_bundled_folder_or_unwritable_config_is_harmless(
 def test_every_bundled_theme_that_ships_is_valid() -> None:
     files = sorted(theme.BUNDLED_DIRECTORY.glob("*.json"))
 
-    assert {f.stem for f in files} >= {
-        "light",
-        "dark",
-        "midnight",
-        "high-contrast",
-        "sepia",
-        "dark-modern",
-        "light-modern",
-        "solarized-dark",
-        "solarized-light",
-        "monokai",
-        "tomorrow-night-blue",
-        "abyss",
-        "quiet-light",
-    }
+    # the others are the extension kubescope-themes
+    assert {f.stem for f in files} == {"light", "dark"}
     for path in files:
         assert path.stem == theme.slugify(path.stem), "use a lowercase-with-dashes name"
         document = json.loads(path.read_text(encoding="utf-8"))
@@ -495,7 +466,7 @@ def test_every_theme_that_ships_is_protected_from_deletion(
 ) -> None:
     mine = theme.save_custom_theme("Mine", "dark", theme.theme_tokens(theme.DARK_THEME))
 
-    shipped = {"light", "dark", "midnight", "sepia", "high-contrast", "monokai"}
+    shipped = {"light", "dark"}
     assert shipped <= theme.bundled_theme_ids()
     for theme_id in shipped:
         assert not theme.can_delete_theme(theme_id)
@@ -573,3 +544,60 @@ def test_white_text_ignores_the_opacity_of_the_surface_role() -> None:
 
     assert "background: rgba(236, 238, 242, 128)" in sheet  # Light softens white
     assert "color: #ffffff" in sheet
+
+
+@pytest.fixture
+def offered():
+    yield
+    theme.set_contributed_themes([])
+    theme.set_theme("light")
+
+
+def test_the_themes_an_extension_offers_are_listed_with_the_others(
+    themes_dir, offered
+) -> None:
+    _write(themes_dir, "mine.json", {"name": "Zed", "base": "dark"})
+
+    theme.set_contributed_themes(
+        [
+            ("ocean", {"name": "Ocean", "colors": {"page": "#001122"}}),
+            ("bad", {"name": "Bad", "base": "nope"}),  # skipped
+            ("dark", {"name": "Dark again", "base": "dark"}),  # built in: skipped
+        ]
+    )
+
+    assert [t.id for t in theme.available_themes()] == [
+        "light",
+        "dark",
+        "ocean",
+        "mine",
+    ]
+    assert theme.is_contributed("ocean") and not theme.is_contributed("bad")
+    assert not theme.can_delete_theme("ocean")  # it goes with the extension
+    assert theme.can_delete_theme("mine")
+
+
+def test_a_theme_of_the_person_takes_the_place_of_one_with_the_same_id(
+    themes_dir, offered
+) -> None:
+    _write(themes_dir, "ocean.json", {"name": "My ocean", "base": "dark"})
+    theme.set_contributed_themes([("ocean", {"name": "Ocean", "base": "dark"})])
+
+    [ocean] = [t for t in theme.available_themes() if t.id == "ocean"]
+
+    assert ocean.name == "My ocean"
+
+
+def test_a_contributed_theme_can_be_applied_and_is_forgotten_with_its_extension(
+    offered,
+) -> None:
+    theme.set_contributed_themes(
+        [("ocean", {"name": "Ocean", "colors": {"page": "#001122"}})]
+    )
+    apply_theme(application, "ocean")
+
+    assert theme.active_theme() == "ocean"
+    assert application.palette().color(QPalette.ColorRole.Window).name() == "#001122"
+    theme.set_contributed_themes([])
+    theme.set_theme("ocean")
+    assert theme.active_theme() == "dark"  # an unknown theme is the default

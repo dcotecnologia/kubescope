@@ -575,3 +575,32 @@ def test_the_texts_of_an_extension_join_the_language_before_it_runs(
         window.extension_store.uninstall(extension)
         window._sync_extensions()
         i18n.set_extension_languages(extension, None)
+
+
+def test_the_themes_of_an_extension_are_listed_and_the_one_chosen_is_put_on(
+    window, tmp_path
+) -> None:
+    from kubescope import theme
+
+    code = (
+        "def activate(ctx):\n"
+        "    ctx.add_theme('ocean', {'name': 'Ocean', 'colors': {'page': '#001122'}})\n"
+    )
+    folder, _package, extension = make_extension(tmp_path, code, '"ui.theme"')
+    window.settings.theme = "ocean"  # chosen before the extension ran
+    try:
+        install_linked(window, folder)
+
+        combo = window.settings_ui.themeCombo
+        assert [combo.itemData(row) for row in range(combo.count())] == [
+            "light",
+            "dark",
+            "ocean",
+        ]
+        assert theme.active_theme() == "ocean" and combo.currentData() == "ocean"
+        window.extension_store.uninstall(extension)
+        window._sync_extensions()
+        assert theme.active_theme() == "dark"  # the extension is gone: the default
+    finally:
+        theme.set_contributed_themes([])
+        theme.set_theme("light")

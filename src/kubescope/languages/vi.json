@@ -190,6 +190,7 @@
             "add a page to the side menu": "thêm một trang vào menu bên",
             "add a panel to the window": "thêm một bảng vào cửa sổ",
             "add a section to the Settings": "thêm một mục vào Cài đặt",
+            "add color themes": "thêm chủ đề màu",
             "change your clusters, in the write mode": "thay đổi cụm của bạn, ở chế độ ghi",
             "read your AWS account (RDS, EC2, EKS, Systems Manager)": "đọc tài khoản AWS của bạn (RDS, EC2, EKS, Systems Manager)",
             "read your clusters": "đọc các cụm của bạn",

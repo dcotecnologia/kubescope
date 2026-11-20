@@ -395,14 +395,14 @@ The color names are the ones the editor shows (`page`, `surface`, `text`, `accen
 `topbar`, `good`, `bad`, ...; see `ROLES` in `src/kubescope/theme.py`). A file that
 is damaged or uses an unknown name is skipped and noted in the debug log.
 
-The themes that ship with the app live in `src/kubescope/themes/`, one JSON file
-each. Light and Dark (`light.json` and `dark.json`) are built in and read at start;
-for each of the others (Midnight, High contrast, Sepia,Dark Modern, Light Modern, Solarized Dark and Light, Monokai,
-Tomorrow Night Blue, Abyss and Quiet Light) KubeScope copies the file into your themes folder when it
-starts, whenever that file is missing: the first time, and again if you deleted it
-from the folder. A file that is there is never overwritten, so your edits are kept.
-None of them can be deleted from the app. To share a theme, add its file there and open a pull request
-(the folder's README has the steps).
+Light and Dark are built into the app (`src/kubescope/themes/light.json` and `dark.json`). The other
+themes (Midnight, High Contrast, Sepia, Dark Modern, Light Modern, Solarized Dark and Light, Monokai, Tomorrow
+Night Blue, Abyss, Quiet Light and the macOS ones) are the extension
+[`kubescope-themes`](https://github.com/dcotecnologia/kubescope-themes), which comes with the app and can be
+uninstalled in **Settings → Extensions**; they show in **Settings → Theme** with yours and cannot be deleted
+from there. An extension of your own can offer themes too (`ctx.add_theme` of the
+[SDK](https://github.com/dcotecnologia/kubescope-sdk)). To share a theme, open a pull request on that
+repository (its README has the steps).
 
 ### Languages
 

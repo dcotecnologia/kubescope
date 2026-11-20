@@ -190,6 +190,7 @@
             "add a page to the side menu": "der Seitenleiste eine Seite hinzufügen",
             "add a panel to the window": "ein Panel zum Fenster hinzufügen",
             "add a section to the Settings": "einen Abschnitt zu den Einstellungen hinzufügen",
+            "add color themes": "Farbthemen hinzufügen",
             "change your clusters, in the write mode": "Ihre Cluster ändern, im Schreibmodus",
             "read your AWS account (RDS, EC2, EKS, Systems Manager)": "dein AWS-Konto lesen (RDS, EC2, EKS, Systems Manager)",
             "read your clusters": "Ihre Cluster lesen",

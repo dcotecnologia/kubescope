@@ -190,6 +190,7 @@
             "add a page to the side menu": "yan menüye bir sayfa eklemek",
             "add a panel to the window": "pencereye bir panel eklemek",
             "add a section to the Settings": "Ayarlar'a bir bölüm eklemek",
+            "add color themes": "renk temaları eklemek",
             "change your clusters, in the write mode": "kümelerinizi değiştirmek, yazma kipinde",
             "read your AWS account (RDS, EC2, EKS, Systems Manager)": "AWS hesabınızı okumak (RDS, EC2, EKS, Systems Manager)",
             "read your clusters": "kümelerinizi okumak",

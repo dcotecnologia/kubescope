@@ -190,6 +190,7 @@
             "add a page to the side menu": "向侧边菜单添加页面",
             "add a panel to the window": "向窗口添加面板",
             "add a section to the Settings": "向设置添加分区",
+            "add color themes": "添加颜色主题",
             "change your clusters, in the write mode": "修改你的集群(在写入模式下)",
             "read your AWS account (RDS, EC2, EKS, Systems Manager)": "读取你的 AWS 账户（RDS、EC2、EKS、Systems Manager）",
             "read your clusters": "读取你的集群",

@@ -190,6 +190,7 @@
             "add a page to the side menu": "додавати сторінку до бічного меню",
             "add a panel to the window": "додати панель до вікна",
             "add a section to the Settings": "додати розділ до Налаштувань",
+            "add color themes": "додавати кольорові теми",
             "change your clusters, in the write mode": "змінювати ваші кластери, у режимі запису",
             "read your AWS account (RDS, EC2, EKS, Systems Manager)": "читати ваш обліковий запис AWS (RDS, EC2, EKS, Systems Manager)",
             "read your clusters": "читати ваші кластери",

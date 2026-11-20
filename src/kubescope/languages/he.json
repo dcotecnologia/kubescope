@@ -190,6 +190,7 @@
             "add a page to the side menu": "הוספת דף לתפריט הצד",
             "add a panel to the window": "להוסיף חלונית לחלון",
             "add a section to the Settings": "להוסיף מדור להגדרות",
+            "add color themes": "הוספת ערכות נושא צבעוניות",
             "change your clusters, in the write mode": "לשנות את האשכולות שלך, במצב כתיבה",
             "read your AWS account (RDS, EC2, EKS, Systems Manager)": "קריאת חשבון ה-AWS שלך (RDS, EC2, EKS, Systems Manager)",
             "read your clusters": "לקרוא את האשכולות שלך",

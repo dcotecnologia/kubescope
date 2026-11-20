@@ -190,6 +190,7 @@
             "add a page to the side menu": "menambahkan halaman ke menu samping",
             "add a panel to the window": "menambahkan panel ke jendela",
             "add a section to the Settings": "menambahkan bagian ke Pengaturan",
+            "add color themes": "menambahkan tema warna",
             "change your clusters, in the write mode": "mengubah klaster Anda, dalam mode tulis",
             "read your AWS account (RDS, EC2, EKS, Systems Manager)": "membaca akun AWS Anda (RDS, EC2, EKS, Systems Manager)",
             "read your clusters": "membaca klaster Anda",

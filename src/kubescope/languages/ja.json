@@ -190,6 +190,7 @@
             "add a page to the side menu": "サイドメニューにページを追加する",
             "add a panel to the window": "ウィンドウにパネルを追加する",
             "add a section to the Settings": "設定にセクションを追加する",
+            "add color themes": "カラーテーマを追加する",
             "change your clusters, in the write mode": "クラスターを変更する (書き込みモード時)",
             "read your AWS account (RDS, EC2, EKS, Systems Manager)": "AWS アカウントを読み取る (RDS、EC2、EKS、Systems Manager)",
             "read your clusters": "クラスターを読み取る",

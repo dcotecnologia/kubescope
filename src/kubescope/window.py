@@ -194,6 +194,7 @@ from kubescope.theme import (
     can_delete_theme,
     delete_custom_theme,
     save_custom_theme,
+    set_contributed_themes,
     theme_opacity,
     theme_tokens,
     themed,
@@ -5389,8 +5390,23 @@ class WorkloadWindow(QMainWindow):
         their sections of the Settings."""
         self._apply_extension_shortcuts()
         self._apply_extension_sections()
+        self._apply_extension_themes()
         self.extension_pages.apply(self.extension_host.contributions.pages)
         self._fill_shortcuts(self._shortcut_values())
+
+    def _apply_extension_themes(self) -> None:
+        """Take the themes the running extensions offer, list them, and put the
+        one chosen in the settings on as soon as it exists (it did not when the
+        window opened, before the extension ran) or the default when the
+        extension that offered the one in use is gone."""
+        set_contributed_themes(
+            (one.id, one.document) for one in self.extension_host.contributions.themes
+        )
+        self._fill_theme_combo(self.settings.theme)
+        known = {theme.id for theme in available_themes()}
+        wanted = self.settings.theme if self.settings.theme in known else DEFAULT_THEME
+        if wanted != active_theme():
+            self._apply_theme()
 
     def _apply_extension_shortcuts(self) -> None:
         for action, shortcut in self._extension_shortcuts.items():

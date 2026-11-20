@@ -48,6 +48,9 @@ def permission_lines(permissions: Iterable[str]) -> str:
         "ui.page": QCoreApplication.translate(
             "InstallExtensionDialog", "add a page to the side menu"
         ),
+        "ui.theme": QCoreApplication.translate(
+            "InstallExtensionDialog", "add color themes"
+        ),
         "ui.settings": QCoreApplication.translate(
             "InstallExtensionDialog", "add a section to the Settings"
         ),

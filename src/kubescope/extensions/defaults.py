@@ -66,6 +66,17 @@ DEFAULTS = (
         repo=Repo("dcotecnologia", "kubescope-search"),
         author="DCO Tecnologia",
     ),
+    DefaultExtension(
+        id="kubescope.themes",
+        name="Themes",
+        description=(
+            "Thirteen color themes, light and dark: Abyss, Dark Modern, High "
+            "Contrast, Light Modern, macOS Dark and Light, Midnight, Monokai, "
+            "Quiet Light, Sepia, Solarized Dark and Light, and Tomorrow Night Blue."
+        ),
+        repo=Repo("dcotecnologia", "kubescope-themes"),
+        author="DCO Tecnologia",
+    ),
 )
 
 

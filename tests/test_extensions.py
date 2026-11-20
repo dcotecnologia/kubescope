@@ -485,3 +485,23 @@ def test_an_extension_searches_the_resources_through_the_cluster_bridge(
     monkeypatch.setattr(cluster, "search_resources", lambda context: hits)
 
     assert ClusterBridge().search_resources("prod") == hits
+
+
+def test_an_extension_offers_a_theme_and_it_goes_with_the_extension() -> None:
+    host, _, _ = make_host()
+    context = ExtensionContext("dco.a", frozenset({"ui.theme"}), host)
+    document = {"name": "Ocean", "base": "dark"}
+
+    context.add_theme("ocean", document)
+    document["name"] = "changed afterwards"
+
+    [theme] = host.contributions.themes
+    assert (theme.extension, theme.id, theme.document["name"]) == (
+        "dco.a",
+        "ocean",
+        "Ocean",
+    )
+    with pytest.raises(PermissionDenied, match="ui.theme"):
+        ExtensionContext("dco.b", frozenset(), host).add_theme("x", {})
+    context.close()
+    assert host.contributions.themes == []

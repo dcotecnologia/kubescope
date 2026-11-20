@@ -190,6 +190,7 @@
             "add a page to the side menu": "사이드 메뉴에 페이지 추가",
             "add a panel to the window": "창에 패널 추가",
             "add a section to the Settings": "설정에 섹션 추가",
+            "add color themes": "색 테마 추가",
             "change your clusters, in the write mode": "클러스터 변경 (쓰기 모드에서)",
             "read your AWS account (RDS, EC2, EKS, Systems Manager)": "AWS 계정 읽기 (RDS, EC2, EKS, Systems Manager)",
             "read your clusters": "클러스터 읽기",

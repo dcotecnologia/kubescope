@@ -190,6 +190,7 @@
             "add a page to the side menu": "een pagina toevoegen aan het zijmenu",
             "add a panel to the window": "een paneel aan het venster toevoegen",
             "add a section to the Settings": "een sectie aan de Instellingen toevoegen",
+            "add color themes": "kleurthema's toevoegen",
             "change your clusters, in the write mode": "je clusters wijzigen, in de schrijfmodus",
             "read your AWS account (RDS, EC2, EKS, Systems Manager)": "je AWS-account lezen (RDS, EC2, EKS, Systems Manager)",
             "read your clusters": "je clusters lezen",
