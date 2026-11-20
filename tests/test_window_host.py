@@ -4,8 +4,14 @@ from pathlib import Path
 
 import pytest
 from kubescope.sdk import NOTIFICATION
+from PySide6.QtCore import QEvent
 from PySide6.QtGui import QKeySequence
-from PySide6.QtWidgets import QKeySequenceEdit, QMessageBox, QPushButton
+from PySide6.QtWidgets import (
+    QApplication,
+    QKeySequenceEdit,
+    QMessageBox,
+    QPushButton,
+)
 
 from kubescope.extensions.manifest import MANIFEST_NAME
 from kubescope.i18n import apply_language, language_name, resolve_language
@@ -572,6 +578,55 @@ def test_an_extension_run_from_its_folder_is_reloaded_when_its_files_change(
     assert [one.title for one in window._extension_sections] == ["Host Test"]
     window._reload_changed_extensions()  # and it is told once
     assert shortcut_row(window, "Ask the reloaded one") is not None
+
+
+BELL = """
+from PySide6.QtWidgets import QPushButton
+
+
+def activate(ctx):
+    ctx.ui.add_top_bar_button(ctx.id, QPushButton("bell"))
+# MARK
+"""
+
+
+def bells(window) -> int:
+    layout = window.ui.topLayout
+    return sum(
+        1
+        for index in range(layout.count())
+        if (item := layout.itemAt(index)) is not None
+        and isinstance(widget := item.widget(), QPushButton)
+        and widget.text() == "bell"
+    )
+
+
+def test_a_button_of_a_reloaded_extension_is_not_left_behind(window, tmp_path) -> None:
+    folder, _package, _extension = make_extension(tmp_path, BELL)
+    install_linked(window, folder)
+    package_file = next(folder.glob("src/host_ext_*/__init__.py"))
+    assert bells(window) == 1
+
+    for round_ in range(3):  # saved again and again while it is written
+        package_file.write_text(package_file.read_text().replace("MARK", f"M{round_}"))
+        window._reload_changed_extensions()
+        QApplication.sendPostedEvents(None, QEvent.Type.DeferredDelete)
+
+    assert bells(window) == 1
+
+
+def test_a_button_the_extension_took_out_itself_is_not_taken_out_twice(
+    window, tmp_path
+) -> None:
+    folder, _package, extension = make_extension(tmp_path, BELL)
+    install_linked(window, folder)
+    (button,) = window._top_bar_buttons[extension]
+    button.deleteLater()
+    QApplication.sendPostedEvents(None, QEvent.Type.DeferredDelete)
+
+    window._remove_top_bar_buttons(extension)  # nothing to do, and no error
+
+    assert bells(window) == 0
 
 
 def test_only_what_runs_from_its_folder_is_watched(window, tmp_path) -> None:

@@ -111,6 +111,7 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+from shiboken6 import isValid
 
 from kubescope import about, forwards, integrations
 from kubescope.about import (
@@ -5413,6 +5414,8 @@ class WorkloadWindow(QMainWindow):
 
     def _remove_top_bar_buttons(self, owner: str) -> None:
         for button in self._top_bar_buttons.pop(owner, []):
+            if not isValid(button):  # the extension took it out itself
+                continue
             self.ui.topLayout.removeWidget(button)
             button.deleteLater()
 
@@ -5512,6 +5515,7 @@ class WorkloadWindow(QMainWindow):
             one = current.get(name)
             if one is not None:
                 logger.info("Reloading the extension %s: its files changed", name)
+                self._remove_top_bar_buttons(name)  # it adds its own again
                 self.extension_loader.reload(one)
         self._watch_extensions()
         self._apply_extension_contributions()
