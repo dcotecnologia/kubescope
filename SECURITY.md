@@ -267,6 +267,7 @@ configure` so you type the keys there. Apart from the integrations below, the ap
   user configuration directory (`~/.config/kubescope` on Linux). Next to it, the
   `languages` folder can hold translation files you add, plain text that the app only
   reads as a dictionary of texts.
+- **The Notifications extension is the one exception for events.** If you install it, it keeps the Warning events of the clusters you use (reason, object, namespace and message) in a file in its own data folder, readable only by you, up to 500 of them; **Clear** in its panel deletes them. It keeps no credentials, and nothing is sent anywhere. Without it the app writes no event to disk.
 - **Logs and resource details are shown on screen.** The app does not write them
   to disk or send them anywhere on its own, not even in the debug log below. The
   assistant, when you ask it, sends what it reads to its program, as above. The one
