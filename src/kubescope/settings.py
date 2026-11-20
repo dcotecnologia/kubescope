@@ -34,6 +34,7 @@ DEFAULTS: dict[str, Any] = {
     "write_mode": False,
     "animations": True,
     "sidebar_width": 0,
+    "sidebar_collapsed": False,
     "menu_collapsed": [],
     "run_in_background": True,
     "system_title_bar": False,
@@ -467,6 +468,15 @@ class Settings:
         to be the newest, so asking GitHub again would only spend its limit."""
         at = self.update_checked_at
         return self.update_checked_for == version and at > 0 and 0 <= now - at < within
+
+    @property
+    def sidebar_collapsed(self) -> bool:
+        """Whether the side menu was hidden with the button of the header."""
+        return self._data["sidebar_collapsed"] is True
+
+    @sidebar_collapsed.setter
+    def sidebar_collapsed(self, value: bool) -> None:
+        self._data["sidebar_collapsed"] = bool(value)
 
     @property
     def run_in_background(self) -> bool:

@@ -168,6 +168,11 @@ QPushButton[variant="secondary"]:checked:hover:enabled {
 QPushButton[iconOnly="true"] {
     padding: 0; min-width: 36px; max-width: 36px;
 }
+QPushButton#sidebarToggleButton {
+    background: transparent; border: 1px solid #e1e3e9; border-radius: 6px;
+    padding: 0; min-width: 32px; max-width: 32px; min-height: 32px; max-height: 32px;
+}
+QPushButton#sidebarToggleButton:hover { background: #f3f4f7; }
 QLabel#summaryLabel { color: #4f5966; font-size: 11px; font-weight: 600; }
 QTableWidget[variant="data"] {
     background: #ffffff; color: #242a33;
@@ -2028,6 +2033,16 @@ Resources in read-only mode</string>
             <property name="bottomMargin">
              <number>8</number>
             </property>
+            <item>
+             <widget class="QPushButton" name="sidebarToggleButton">
+              <property name="toolTip">
+               <string>Hide the side menu</string>
+              </property>
+              <property name="flat">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
             <item>
              <layout class="QVBoxLayout" name="titleBlock">
               <property name="spacing">

@@ -210,6 +210,27 @@ def test_the_width_the_person_gave_the_menu_is_kept_and_restored(monkeypatch) ->
     again.close()
 
 
+def test_the_button_of_the_header_hides_the_menu_and_it_stays_hidden(
+    monkeypatch,
+) -> None:
+    window = _ready_window(monkeypatch)
+    window_module.motion.ENABLED = False  # no slide: the result at once
+    button = window.ui.sidebarToggleButton
+    assert button.toolTip() == "Hide the side menu"
+
+    button.click()
+    assert window.ui.sidebar.isHidden() and window.settings.sidebar_collapsed
+    assert button.toolTip() == "Show the side menu"
+    window.close()
+
+    again = _ready_window(monkeypatch)  # read at the start
+    assert again.ui.sidebar.isHidden()
+    assert again.ui.sidebarToggleButton.toolTip() == "Show the side menu"
+    again.ui.sidebarToggleButton.click()
+    assert not again.ui.sidebar.isHidden() and not again.settings.sidebar_collapsed
+    again.close()
+
+
 def test_a_text_log_that_fails_or_whose_tab_closed_is_handled(
     window, monkeypatch
 ) -> None:

@@ -317,6 +317,20 @@ def test_the_width_the_person_gave_the_side_menu_is_kept_when_it_makes_sense(
         assert Settings(path).sidebar_width == 0
 
 
+def test_a_hidden_side_menu_is_kept_and_anything_else_is_shown(tmp_path) -> None:
+    path = tmp_path / "settings.json"
+    settings = Settings(path)
+    assert settings.sidebar_collapsed is False
+
+    settings.sidebar_collapsed = True
+    settings.save()
+    assert Settings(path).sidebar_collapsed is True
+
+    for stored in ('"yes"', "1", "null"):
+        path.write_text(f'{{"sidebar_collapsed": {stored}}}', encoding="utf-8")
+        assert Settings(path).sidebar_collapsed is False
+
+
 def test_the_sections_of_the_menu_the_person_closed_are_kept(tmp_path) -> None:
     path = tmp_path / "settings.json"
     settings = Settings(path)

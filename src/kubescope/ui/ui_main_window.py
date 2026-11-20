@@ -182,6 +182,11 @@ class Ui_MainWindow(object):
 "QPushButton[iconOnly=\"true\"] {\n"
 "    padding: 0; min-width: 36px; max-width: 36px;\n"
 "}\n"
+"QPushButton#sidebarToggleButton {\n"
+"    background: transparent; border: 1px solid #e1e3e9; border-radius: 6px;\n"
+"    padding: 0; min-width: 32px; max-width: 32px; min-height: 32px; max-height: 32px;\n"
+"}\n"
+"QPushButton#sidebarToggleButton:hover { background: #f3f4f7; }\n"
 "QLabel#summaryLabel { color: #4f5966; font-size: 11px; font-weight: 600; }\n"
 "QTableWidget[variant=\"data\"] {\n"
 "    background: #ffffff; color: #242a33;\n"
@@ -189,13 +194,13 @@ class Ui_MainWindow(object):
 "    gridline-color: #e8e9ee; selection-background-color: #f0edfa;\n"
 "    selection-color: #28213f;\n"
 "}\n"
-"QHeaderView { background: #fbfbfc; }\n"
+"QHeaderView {"
+                        " background: #fbfbfc; }\n"
 "QHeaderView::up-arrow { image: url(SORT_UP); width: 9px; height: 6px; }\n"
 "QHeaderView::down-arrow { image: url(SORT_DOWN); width: 9px; height: 6px; }\n"
 "QHeaderView::section {\n"
 "    background: #fbfbfc; color: #3c4149; border: 0;\n"
-"    border-bot"
-                        "tom: 1px solid #dfe2e9; padding: 10px 11px;\n"
+"    border-bottom: 1px solid #dfe2e9; padding: 10px 11px;\n"
 "    font-size: 9px; font-weight: 700;\n"
 "}\n"
 "QTableWidget[variant=\"data\"]::item {\n"
@@ -212,15 +217,15 @@ class Ui_MainWindow(object):
 "    border: 0; border-left: 1px solid #d9dce4; margin-left: 19px;\n"
 "}\n"
 "QPushButton[nav=\"true\"]:checked {\n"
-"    color: #3220a0; background: #f3f1f9; border-right: 3px solid #3220a0;\n"
+"    color: #3220a0; b"
+                        "ackground: #f3f1f9; border-right: 3px solid #3220a0;\n"
 "    font-weight: 700;\n"
 "}\n"
 "QFrame[card=\"true\"] {\n"
 "    background: #ffffff; border: 1px solid #dfe2e9; border-radius: 8px;\n"
 "}\n"
 "QFrame[card=\"true\"] QLabel { background: transparent; border: 0; }\n"
-"QLabel[va"
-                        "riant=\"cardTitle\"] { color: #535d69; font-size: 9px; font-weight: 700; }\n"
+"QLabel[variant=\"cardTitle\"] { color: #535d69; font-size: 9px; font-weight: 700; }\n"
 "QLabel[variant=\"cardValue\"] { color: #17191e; font-size: 20px; font-weight: 700; }\n"
 "QLabel[variant=\"cardCaption\"] { color: #4f5966; font-size: 10px; }\n"
 "QProgressBar {\n"
@@ -233,14 +238,14 @@ class Ui_MainWindow(object):
 "QCheckBox { color: #20232a; spacing: 8px; font-size: 11px; }\n"
 "QLabel { color: #20232a; }\n"
 "QTabBar { qproperty-drawBase: 0; }\n"
-"QTabWidget::pane { border: 0; border-top: 1px solid #dfe2e9; top: -1px; }\n"
+"QTabWidget::pane { border: 0; border-top: "
+                        "1px solid #dfe2e9; top: -1px; }\n"
 "QTabBar::tab {\n"
 "    background: transparent; color: #4f5966; padding: 9px 14px;\n"
 "    border: 0; border-bottom: 2px solid transparent; font-size: 11px;\n"
 "    font-weight: 600; max-width: 260px;\n"
 "}\n"
-"QTabBar::tab:hover { color: #3220a"
-                        "0; }\n"
+"QTabBar::tab:hover { color: #3220a0; }\n"
 "QTabBar::tab:selected { color: #3220a0; border-bottom: 2px solid #3220a0; }\n"
 "QTabBar::close-button {\n"
 "    image: url(CLOSE_ICON); subcontrol-position: right; margin-left: 6px;\n"
@@ -253,14 +258,14 @@ class Ui_MainWindow(object):
 "    selection-color: #20232a;\n"
 "}\n"
 "QFrame#noContextsBanner { background: #fff2de; border-bottom: 1px solid #985415; }\n"
-"QFrame#noContextsBanner QLabel { color: #985415; font-size: 11px; background: transparent; }\n"
+"QFrame#noContextsBanner QLabel { color: #985415; font-size: 11px; background: transparen"
+                        "t; }\n"
 "QFrame#permissionBanner, QFrame#rdsBanner {\n"
 "    background: #fce9ea; border-bottom: 1px solid #a33d45;\n"
 "}\n"
 "QFrame#rdsBanner { border: 1px solid #a33d45; border-radius: 6px; }\n"
 "QFrame#permissionBanner QLabel, QFrame#rdsBanner QLabel {\n"
-"    color: #a33d45; f"
-                        "ont-size: 11px; background: transparent;\n"
+"    color: #a33d45; font-size: 11px; background: transparent;\n"
 "}\n"
 "QFrame#permissionBanner QPushButton, QFrame#rdsBanner QPushButton {\n"
 "    color: #a33d45; font-size: 11px; padding: 0 0 0 12px;\n"
@@ -949,6 +954,12 @@ class Ui_MainWindow(object):
         self.pageHeaderLayout = QHBoxLayout(self.pageHeader)
         self.pageHeaderLayout.setObjectName(u"pageHeaderLayout")
         self.pageHeaderLayout.setContentsMargins(32, 8, 32, 8)
+        self.sidebarToggleButton = QPushButton(self.pageHeader)
+        self.sidebarToggleButton.setObjectName(u"sidebarToggleButton")
+        self.sidebarToggleButton.setFlat(True)
+
+        self.pageHeaderLayout.addWidget(self.sidebarToggleButton)
+
         self.titleBlock = QVBoxLayout()
         self.titleBlock.setSpacing(0)
         self.titleBlock.setObjectName(u"titleBlock")
@@ -1483,6 +1494,9 @@ class Ui_MainWindow(object):
         self.navPluginsInstalled.setText(QCoreApplication.translate("MainWindow", u"Installed", None))
         self.sidebarNote.setText(QCoreApplication.translate("MainWindow", u"SECURE ACCESS\n"
 "Resources in read-only mode", None))
+#if QT_CONFIG(tooltip)
+        self.sidebarToggleButton.setToolTip(QCoreApplication.translate("MainWindow", u"Hide the side menu", None))
+#endif // QT_CONFIG(tooltip)
         self.pageTitle.setText(QCoreApplication.translate("MainWindow", u"Overview", None))
         self.pageSubtitle.setText(QCoreApplication.translate("MainWindow", u"Cluster resources and capacity", None))
 #if QT_CONFIG(tooltip)

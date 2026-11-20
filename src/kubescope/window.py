@@ -247,6 +247,7 @@ from kubescope.views.nav_chevron import NavChevron
 from kubescope.views.plugins_catalog import PluginsCatalog
 from kubescope.views.search_bar import compile_query, switch_button
 from kubescope.views.sidebar_resizer import SidebarResizer
+from kubescope.views.sidebar_toggle import SidebarToggle
 from kubescope.views.widgets import TabScrollArea
 from kubescope.views.window_frame import WindowFrame
 from kubescope.writes import (
@@ -377,6 +378,27 @@ def _check_icon_path() -> str:
         )
 
     return _icon_path("check", draw, QSize(14, 14))
+
+
+def _sidebar_icon(collapsed: bool) -> QIcon:
+    """A window with its side panel: the panel is drawn solid while the menu is
+    shown and only outlined while it is hidden."""
+
+    def draw(painter: QPainter) -> None:
+        color = QColor(themed("#4f5966", text=True))
+        pen = QPen(color, 1.4)
+        pen.setJoinStyle(Qt.PenJoinStyle.RoundJoin)
+        painter.setPen(pen)
+        painter.setBrush(Qt.BrushStyle.NoBrush)
+        painter.drawRoundedRect(QRectF(1.5, 2.5, 15, 13), 2.5, 2.5)
+        painter.drawLine(QPointF(7, 2.5), QPointF(7, 15.5))
+        if not collapsed:
+            painter.setPen(Qt.PenStyle.NoPen)
+            painter.setBrush(color)
+            painter.drawRoundedRect(QRectF(2.2, 3.2, 4.1, 11.6), 1.4, 1.4)
+
+    name = "sidebar-hidden" if collapsed else "sidebar-shown"
+    return QIcon(_icon_path(name, draw, QSize(18, 18)))
 
 
 def _gear_icon() -> QIcon:
@@ -1368,6 +1390,15 @@ class WorkloadWindow(QMainWindow):
         if self.settings.sidebar_width:
             self.sidebar_resizer.set_width(self.settings.sidebar_width)
         self.sidebar_resizer.width_changed.connect(self._keep_sidebar_width)
+        self.sidebar_toggle = SidebarToggle(
+            ui.sidebar,
+            ui.sidebarToggleButton,
+            lambda: self.settings.sidebar_width or SIDEBAR_WIDTH,
+            lambda: motion.ENABLED,
+            self.settings.sidebar_collapsed,
+        )
+        self.sidebar_toggle.toggled.connect(self._keep_sidebar_collapsed)
+        self._style_sidebar_toggle()
         self._corner_owners: dict[str, int] = {}  # pixels each one keeps clear
         self._top_bar_buttons: dict[str, list[QWidget]] = {}  # by extension
         self._corner_margins = {
@@ -2485,6 +2516,7 @@ class WorkloadWindow(QMainWindow):
         the old colors."""
         apply_theme(cast(QApplication, QApplication.instance()), self.settings.theme)
         self._apply_style()
+        self._style_sidebar_toggle()
         accent = _pair(themed("#3220a0"))
         for index in range(self.viewer_tabs.count()):
             tab = self.viewer_tabs.widget(index)
@@ -5533,6 +5565,23 @@ class WorkloadWindow(QMainWindow):
                 margins.right() + pixels,
                 margins.bottom(),
             )
+
+    def _keep_sidebar_collapsed(self, collapsed: bool) -> None:
+        """Write down whether the side menu is hidden, and say what the button
+        does now."""
+        self.settings.sidebar_collapsed = collapsed
+        self._save_settings()
+        self._style_sidebar_toggle()
+
+    def _style_sidebar_toggle(self) -> None:
+        collapsed = self.sidebar_toggle.collapsed
+        button = self.ui.sidebarToggleButton
+        button.setIcon(_sidebar_icon(collapsed))
+        button.setToolTip(
+            self.tr("Show the side menu")
+            if collapsed
+            else self.tr("Hide the side menu")
+        )
 
     def _keep_sidebar_width(self, width: int) -> None:
         """Write down the width the person gave the side menu; the usual width
