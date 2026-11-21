@@ -52,7 +52,7 @@ restart` does). Each of these asks for confirmation first (Cancel is the
   namespace and the container) for you to copy and run in your own terminal, or
   to open in the terminal of the system with **Open in terminal**; the same
   button opens `aws ssm start-session` on a node. The terminal and the shell are
-  yours, and so is the choice of the terminal: **Settings → General → Terminal** takes one the app knows or a command line you type (like `alacritty -e`), which is run, with the command to open in it, only when you open a terminal, and never through a shell of the app; the app starts the terminal with the command and sees nothing of what
+  yours, and so is the choice of the terminal: **Settings → General → Terminal** takes one the app knows or a command line you type (like `alacritty -e`), which is run, with the command to open in it, only when you open a terminal, and never through a shell of the app. On macOS the terminal is opened through `osascript`, and the variables a command needs (such as an AWS profile or keys) are put in a temporary script that only you can read and that deletes itself as it starts, not in the arguments of a program, which other programs can see; the app starts the terminal with the command and sees nothing of what
   is typed or printed. The
   same goes for **Forward** on a Service, a Pod or a StatefulSet, which shows the
   complete `kubectl port-forward` command for a port it exposes (or its

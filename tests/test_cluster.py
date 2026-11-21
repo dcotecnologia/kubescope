@@ -9,6 +9,7 @@ import threading
 import time
 from datetime import UTC, datetime
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
 from types import SimpleNamespace
 from typing import cast
 
@@ -3783,3 +3784,200 @@ def test_the_terminals_the_computer_has_are_listed(monkeypatch) -> None:
     _terminals_on(monkeypatch, {"konsole": "/k", "st": "/st"})
 
     assert cluster.available_terminals() == ["konsole", "st"]
+
+
+def _mac(monkeypatch, apps=("Terminal",), programs=()) -> None:
+    monkeypatch.setattr(cluster.sys, "platform", "darwin")
+    monkeypatch.setattr(cluster, "in_flatpak", lambda: False)
+    monkeypatch.setattr(cluster, "_mac_app_present", lambda name: name in apps)
+    monkeypatch.setattr(
+        cluster.shutil,
+        "which",
+        lambda name: f"/opt/{name}" if name in programs else None,
+    )
+
+
+def test_on_a_mac_the_terminal_app_runs_the_command_through_applescript(
+    monkeypatch,
+) -> None:
+    _mac(monkeypatch)
+
+    launcher = cluster._terminal_launcher(["aws", "configure", "--profile", "my work"])
+
+    assert launcher == [
+        "osascript",
+        "-e",
+        'tell application "Terminal" to do script '
+        "\"aws configure --profile 'my work'\"",
+        "-e",
+        'tell application "Terminal" to activate',
+    ]
+
+
+def test_applescript_text_is_quoted_so_nothing_typed_can_leave_the_string() -> None:
+    assert cluster._applescript_text('say "hi" \\ now') == '"say \\"hi\\" \\\\ now"'
+    assert cluster._applescript_text("plain") == '"plain"'
+
+
+def test_on_a_mac_iterm_is_asked_for_a_new_window_with_the_command(monkeypatch) -> None:
+    _mac(monkeypatch, apps=("Terminal", "iTerm2"))
+    cluster.configure(terminal="iTerm2")
+
+    launcher = cluster._terminal_launcher(["kubectl", "exec", "-it", "api", "--", "sh"])
+
+    assert launcher is not None and launcher[0] == "osascript"
+    assert "create window with default profile command" in " ".join(launcher)
+    assert launcher[-1] == "end tell" and "activate" in launcher
+    cluster.configure()
+
+
+def test_on_a_mac_a_terminal_that_is_not_installed_falls_back_to_the_terminal_app(
+    monkeypatch,
+) -> None:
+    _mac(monkeypatch, apps=("Terminal",))
+    cluster.configure(terminal="iTerm2")
+
+    launcher = cluster._terminal_launcher(["a"])
+
+    assert launcher is not None and 'application "Terminal"' in launcher[2]
+    _mac(monkeypatch, apps=())  # not even Terminal: nothing to open
+    assert cluster._terminal_launcher(["a"]) is None
+    cluster.configure()
+
+
+def test_on_a_mac_a_terminal_that_is_a_program_is_found_on_the_path(
+    monkeypatch,
+) -> None:
+    _mac(monkeypatch, programs=("alacritty",))
+    cluster.configure(terminal="alacritty")
+
+    assert cluster._terminal_launcher(["a"]) == [
+        "/opt/alacritty",
+        "-e",
+        "sh",
+        "-c",
+        "a",
+    ]
+    assert cluster.available_terminals() == ["Terminal", "alacritty"]
+    cluster.configure()
+
+
+def test_the_terminals_of_a_mac_are_the_apps_installed_and_the_programs_found(
+    monkeypatch,
+) -> None:
+    _mac(monkeypatch, apps=("Terminal", "iTerm2"), programs=("kitty", "wezterm"))
+
+    assert cluster.available_terminals() == ["Terminal", "iTerm2", "kitty", "wezterm"]
+
+
+def test_the_places_of_the_mac_apps_are_looked_at(monkeypatch, tmp_path) -> None:
+    monkeypatch.setattr(
+        cluster,
+        "_MAC_APPS",
+        {"Terminal": ("Terminal", (str(tmp_path / "Terminal.app"),))},
+    )
+
+    assert not cluster._mac_app_present("Terminal")
+    (tmp_path / "Terminal.app").mkdir()
+    assert cluster._mac_app_present("Terminal")
+
+
+def test_on_a_mac_the_environment_goes_in_a_script_only_the_person_reads(
+    monkeypatch,
+) -> None:
+    import stat
+
+    _mac(monkeypatch)
+    ran: list = []
+    monkeypatch.setattr(
+        cluster.subprocess, "Popen", lambda cmd, **kwargs: ran.append((cmd, kwargs))
+    )
+
+    cluster._open_terminal(
+        ["aws", "ssm", "start-session"],
+        {"AWS_PROFILE": "work", "AWS_SECRET": "it's a secret", "bad name": "x"},
+    )
+
+    ((launcher, kwargs),) = ran
+    assert kwargs == {}  # the secret is not in the environment of osascript...
+    assert "secret" not in " ".join(launcher)  # ...nor in its arguments
+    script = launcher[2].split("sh ")[-1].rstrip('"')
+    content = Path(script).read_text(encoding="utf-8")
+    assert content.startswith('#!/bin/sh\nrm -f "$0"\n')  # it deletes itself first
+    assert "export AWS_PROFILE=work\n" in content
+    assert "export AWS_SECRET='it'\"'\"'s a secret'\n" in content
+    assert "bad name" not in content  # a name the shell would not take is left out
+    assert content.endswith("exec aws ssm start-session\n")
+    assert stat.S_IMODE(os.stat(script).st_mode) == 0o700
+    os.unlink(script)
+
+
+def test_the_script_is_taken_away_when_no_terminal_can_open(monkeypatch) -> None:
+    _mac(monkeypatch, apps=())
+    made: list[str] = []
+    real = cluster._private_script
+    monkeypatch.setattr(
+        cluster,
+        "_private_script",
+        lambda command, env: (lambda out: (made.append(out[1]), out)[1])(
+            real(command, env)
+        ),
+    )
+
+    with pytest.raises(cluster.ClusterError, match="aws configure"):
+        cluster._open_terminal(["aws", "configure"], {"AWS_PROFILE": "x"})
+
+    assert made and not os.path.exists(made[0])
+
+
+def test_the_script_is_taken_away_when_the_terminal_does_not_start(monkeypatch) -> None:
+    _mac(monkeypatch)
+    made: list[str] = []
+    real = cluster._private_script
+    monkeypatch.setattr(
+        cluster,
+        "_private_script",
+        lambda command, env: (lambda out: (made.append(out[1]), out)[1])(
+            real(command, env)
+        ),
+    )
+
+    def broken(*_a, **_k):
+        raise OSError("no osascript")
+
+    monkeypatch.setattr(cluster.subprocess, "Popen", broken)
+
+    with pytest.raises(cluster.ClusterError, match="Could not open a terminal"):
+        cluster._open_terminal(["aws", "configure"], {"AWS_PROFILE": "x"})
+
+    assert made and not os.path.exists(made[0])
+
+
+def test_on_windows_the_terminals_are_the_ones_found_and_cmd_is_always_there(
+    monkeypatch,
+) -> None:
+    _terminals_on(monkeypatch, {"wt": "C:/wt.exe", "powershell": "C:/ps.exe"}, "win32")
+
+    assert cluster.available_terminals() == ["wt", "powershell", "cmd"]
+    cluster.configure(terminal="wt")
+    assert cluster._terminal_launcher(["aws", "configure"]) == [
+        "C:/wt.exe",
+        "cmd",
+        "/k",
+        "aws",
+        "configure",
+    ]
+    cluster.configure(terminal="powershell")
+    assert cluster._terminal_launcher(["aws", "x y"]) == [
+        "C:/ps.exe",
+        "-NoExit",
+        "-Command",
+        '& aws "x y"',
+    ]
+    cluster.configure(terminal="cmd")
+    launcher = cluster._terminal_launcher(["a"])
+    assert launcher is not None and launcher[:3] == ["cmd", "/c", "start"]
+    cluster.configure(terminal="pwsh")  # not installed: the usual one
+    launcher = cluster._terminal_launcher(["a"])
+    assert launcher is not None and launcher[:3] == ["cmd", "/c", "start"]
+    cluster.configure()

@@ -12,6 +12,7 @@ import shutil
 import signal
 import subprocess
 import sys
+import tempfile
 import threading
 import time
 from collections.abc import Callable
@@ -1218,44 +1219,126 @@ def _in_a_shell(command: list[str]) -> list[str]:
     return ["sh", "-c", shlex.join(command)]
 
 
+# Windows: the terminals the app knows by name (cmd is always there).
+_WINDOWS_TERMINALS = ("wt", "pwsh", "powershell", "cmd")
+# macOS: the terminals that are applications, by the name shown -> the name
+# AppleScript knows and where each is installed; the ones that are programs
+# (alacritty, kitty, wezterm) are looked for on the PATH.
+_MAC_APPS = {
+    "Terminal": (
+        "Terminal",
+        (
+            "/System/Applications/Utilities/Terminal.app",
+            "/Applications/Utilities/Terminal.app",
+        ),
+    ),
+    "iTerm2": ("iTerm", ("/Applications/iTerm.app",)),
+}
+_MAC_PROGRAMS = ("alacritty", "kitty", "wezterm")
+
+
+def _mac_app_present(name: str) -> bool:
+    return any(Path(place).exists() for place in _MAC_APPS[name][1])
+
+
 def available_terminals() -> list[str]:
     """The known terminals this computer has (the host's, in a Flatpak)."""
+    if sys.platform == "win32":
+        return [
+            name for name in _WINDOWS_TERMINALS if name == "cmd" or shutil.which(name)
+        ]
+    if sys.platform == "darwin":
+        apps = [name for name in _MAC_APPS if _mac_app_present(name)]
+        return apps + [name for name in _MAC_PROGRAMS if shutil.which(name)]
     found = host_has if in_flatpak() else lambda name: bool(shutil.which(name))
     return [name for name, _flags in _TERMINALS if found(name)]
 
 
-def _chosen_terminal() -> tuple[str, list[str]] | None:
-    """The program and the arguments before the command of the terminal the
-    person chose: one the app knows by its name, or a command line of their own
-    (`alacritty -e`); None when they chose none or it cannot be read."""
-    chosen = _preferred_terminal.strip()
-    if not chosen:
+def _applescript_text(text: str) -> str:
+    """`text` as a string of AppleScript, which reads a backslash and a double
+    quote as the start of an escape."""
+    return '"' + text.replace("\\", "\\\\").replace('"', '\\"') + '"'
+
+
+def _mac_launcher(name: str, command: list[str]) -> list[str]:
+    """Ask a terminal that is an application, through AppleScript, to run the
+    command in a new window."""
+    line = _applescript_text(shlex.join(command))
+    if name == "iTerm2":
+        return [
+            "osascript",
+            "-e",
+            'tell application "iTerm"',
+            "-e",
+            "activate",
+            "-e",
+            f"create window with default profile command {line}",
+            "-e",
+            "end tell",
+        ]
+    return [
+        "osascript",
+        "-e",
+        f'tell application "Terminal" to do script {line}',
+        "-e",
+        'tell application "Terminal" to activate',
+    ]
+
+
+def _windows_launcher(name: str, command: list[str]) -> list[str] | None:
+    """Open a Windows terminal the app knows running `command`; None when it is
+    not installed."""
+    if name == "cmd":
+        return ["cmd", "/c", "start", "", "cmd", "/k", *command]
+    path = shutil.which(name)
+    if path is None:
         return None
+    if name == "wt":  # Windows Terminal runs what follows in a new tab
+        return [path, "cmd", "/k", *command]
+    return [path, "-NoExit", "-Command", "& " + subprocess.list2cmdline(command)]
+
+
+def _chosen_launcher(chosen: str, command: list[str]) -> list[str] | None:
+    """The command that opens the terminal the person chose: one the app knows
+    by its name, or a command line of their own (`alacritty -e`); None when it
+    is not installed or the line cannot be read."""
+    if sys.platform == "win32" and chosen in _WINDOWS_TERMINALS:
+        return _windows_launcher(chosen, command)
+    if sys.platform == "darwin" and chosen in _MAC_APPS:
+        return _mac_launcher(chosen, command) if _mac_app_present(chosen) else None
     known = dict(_TERMINALS)
     if chosen in known:
-        return chosen, list(known[chosen])
-    try:
-        parts = parse_command(chosen)
-    except ValueError:
+        name, flags = chosen, list(known[chosen])
+    else:
+        try:
+            parts = parse_command(chosen)
+        except ValueError:
+            return None
+        name, flags = parts[0], parts[1:]
+    if in_flatpak():
+        return [*HOST, name, *flags, *_in_a_shell(command)] if host_has(name) else None
+    path = shutil.which(name)
+    if path is None:
         return None
-    return parts[0], parts[1:]
+    tail = command if sys.platform == "win32" else _in_a_shell(command)
+    return [path, *flags, *tail]
 
 
 def _terminal_launcher(command: list[str]) -> list[str] | None:
     """The command that opens a terminal running `command`, or None when there
     is no terminal to open."""
-    chosen = _chosen_terminal()
-    if chosen is not None:
-        name, flags = chosen
-        if in_flatpak():
-            if host_has(name):
-                return [*HOST, name, *flags, *_in_a_shell(command)]
-        elif path := shutil.which(name):
-            tail = command if sys.platform == "win32" else _in_a_shell(command)
-            return [path, *flags, *tail]
-        logger.info("The terminal %s was not found: using the first one", name)
+    chosen = _preferred_terminal.strip()
+    if chosen:
+        launcher = _chosen_launcher(chosen, command)
+        if launcher is not None:
+            return launcher
+        logger.info("The terminal %s was not found: using the first one", chosen)
     if sys.platform == "win32":
-        return ["cmd", "/c", "start", "", "cmd", "/k", *command]
+        return _windows_launcher("cmd", command)
+    if sys.platform == "darwin":
+        return (
+            _mac_launcher("Terminal", command) if _mac_app_present("Terminal") else None
+        )
     if in_flatpak():  # the terminals and the programs are the host's
         return next(
             (
@@ -1282,20 +1365,54 @@ def open_in_terminal(command: list[str], env: dict[str, str] | None = None) -> N
     _open_terminal(command, env)
 
 
+_ENVIRONMENT_NAME = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
+
+
+def _private_script(command: list[str], env: dict[str, str]) -> tuple[list[str], str]:
+    """On macOS a terminal opened through AppleScript does not inherit the
+    environment of the app, and a command line is visible to the other programs
+    of the computer, so the variables go in a script that only the person can
+    read and that deletes itself as it starts.
+
+    Returns what to run and where the file is.
+    """
+    descriptor, path = tempfile.mkstemp(prefix="kubescope-", suffix=".sh")
+    exports = "".join(
+        f"export {name}={shlex.quote(value)}\n"
+        for name, value in env.items()
+        if _ENVIRONMENT_NAME.fullmatch(name)
+    )
+    with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
+        handle.write(f'#!/bin/sh\nrm -f "$0"\n{exports}exec {shlex.join(command)}\n')
+    os.chmod(path, 0o700)
+    return ["sh", path], path
+
+
 def _open_terminal(command: list[str], env: dict[str, str] | None = None) -> None:
     """Run a command in a new terminal window and return without waiting."""
-    launcher = _terminal_launcher(command)
-    if launcher is None:
-        raise ClusterError(
-            "No terminal found. Run this in a terminal: " + " ".join(command)
-        )
+    script = None
+    shown = command
+    if sys.platform == "darwin" and env:
+        command, script = _private_script(command, env)
+        env = None
     try:
-        if env:
-            subprocess.Popen(launcher, env={**os.environ, **env})
-        else:
-            subprocess.Popen(launcher)
-    except OSError as error:
-        raise ClusterError(f"Could not open a terminal: {error}") from error
+        launcher = _terminal_launcher(command)
+        if launcher is None:
+            raise ClusterError(
+                "No terminal found. Run this in a terminal: " + " ".join(shown)
+            )
+        try:
+            if env:
+                subprocess.Popen(launcher, env={**os.environ, **env})
+            else:
+                subprocess.Popen(launcher)
+        except OSError as error:
+            raise ClusterError(f"Could not open a terminal: {error}") from error
+    except ClusterError:
+        if script is not None:
+            with contextlib.suppress(OSError):
+                os.unlink(script)  # nothing will run it
+        raise
 
 
 def run_login_here(action: LoginAction) -> None:
