@@ -118,6 +118,7 @@ def finish_workers_with_the_test(monkeypatch):
     """
     from PySide6.QtCore import QCoreApplication, QEvent, QThread
     from PySide6.QtWidgets import QApplication
+    from shiboken6 import isValid
 
     started: list[QThread] = []
     original = QThread.start
@@ -133,8 +134,11 @@ def finish_workers_with_the_test(monkeypatch):
     for worker in started:
         worker.wait(10_000)
     # a signal sent before the signals were cut waits in the queue of the window
+    # (a widget the window deleted meanwhile is skipped: asking Qt about it reads
+    # freed memory, which showed up as a crash at a random test)
     for widget in QApplication.allWidgets():
-        QCoreApplication.removePostedEvents(widget, QEvent.Type.MetaCall.value)
+        if isValid(widget):
+            QCoreApplication.removePostedEvents(widget, QEvent.Type.MetaCall.value)
 
 
 @pytest.fixture(autouse=True)
