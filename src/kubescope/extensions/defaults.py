@@ -77,6 +77,19 @@ DEFAULTS = (
         repo=Repo("dcotecnologia", "kubescope-themes"),
         author="DCO Tecnologia",
     ),
+    DefaultExtension(
+        id="kubescope.notifications",
+        name="Notifications",
+        description=(
+            "A bell in the top bar that keeps the Warning and Error events of every "
+            "context, and the errors and new versions KubeScope itself reports, and "
+            "lists them in a panel that slides in from the right. A new one also "
+            "shows a notice of the operating system that opens the app when clicked."
+        ),
+        repo=Repo("dcotecnologia", "kubescope-notifications"),
+        automatic=False,
+        author="DCO Tecnologia",
+    ),
 )
 
 

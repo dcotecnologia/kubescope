@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file. The format 
 
 ### Added
 
+- The extension [`kubescope-notifications`](https://github.com/dcotecnologia/kubescope-notifications) is recommended in **Settings → Extensions**, as a card to install, and is not installed by default by @danilogco
 - **Settings → General → Terminal** chooses the terminal that opens for a shell in a Pod, a port-forward or a sign-in that asks for keys: Automatic (the first one the computer has), one of the terminals it finds (gnome-terminal, konsole, alacritty, kitty, wezterm, tilix, foot, ghostty and others on Linux, Windows Terminal and PowerShell on Windows, Terminal and iTerm2 on macOS), or a command line of your own, such as `alacritty -e`; macOS has a terminal now, which it did not before, and the variables a command needs reach it in a script that only you can read and that deletes itself; a choice that is not installed falls back to the first one by @danilogco
 - An extension can read the Warning events of the cluster with their identity and times (`ClusterAccess.get_events`) and add a button to the top bar, beside the Settings (`Ui.add_top_bar_button`), which the app takes out when the extension is unloaded by @danilogco
 - An extension can list the contexts of the kubeconfig (`ClusterAccess.list_contexts`) and show a notification of the operating system, through the tray, whose click brings the window forward (`Ui.show_system_notification`) by @danilogco
