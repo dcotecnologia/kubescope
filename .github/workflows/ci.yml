@@ -91,7 +91,7 @@ jobs:
         run: uv sync --extra dev --frozen
 
       - name: Run tests
-        run: uv run pytest -q
+        run: uv run pytest -vv
 
       - name: Keep the coverage report for the badge
         if: matrix.python-version == '3.15'
