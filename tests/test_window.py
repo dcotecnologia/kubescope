@@ -1023,19 +1023,17 @@ def test_a_context_that_is_not_connected_is_left_out_of_the_list_at_the_top(
     window, path, _ = _connections_window(monkeypatch, tmp_path, {"gone"})
     table = window.settings_ui.contextsTable
     assert table.columnCount() == 3
-    assert [cell(table, row, 2).checkState() for row in range(3)] == [
-        Qt.CheckState.Checked
-    ] * 3
+    assert [window._connected_box(row).isChecked() for row in range(3)] == [True] * 3
     assert _listed(window) == ["a", "b", "c"]
 
-    cell(table, 1, 2).setCheckState(Qt.CheckState.Unchecked)
+    window._connected_box(1).setChecked(False)
     window.settings_ui.saveButton.click()
 
     assert _listed(window) == ["a", "c"]
     assert window._context() == "a"  # the one in use stays
     assert Settings(path).disabled_contexts == {"b", "gone"}  # a gone one is kept
 
-    cell(table, 1, 2).setCheckState(Qt.CheckState.Checked)
+    window._connected_box(1).setChecked(True)
     window.settings_ui.saveButton.click()
     assert _listed(window) == ["a", "b", "c"]
     window.close()
@@ -1044,8 +1042,7 @@ def test_a_context_that_is_not_connected_is_left_out_of_the_list_at_the_top(
 def test_the_table_shows_what_was_disconnected_before(monkeypatch, tmp_path) -> None:
     window, _, _ = _connections_window(monkeypatch, tmp_path, {"c"})
 
-    table = window.settings_ui.contextsTable
-    assert cell(table, 2, 2).checkState() == Qt.CheckState.Unchecked
+    assert not window._connected_box(2).isChecked()
     assert _listed(window) == ["a", "b"]
     window.close()
 
@@ -1054,10 +1051,9 @@ def test_disconnecting_the_context_in_use_moves_to_another(
     monkeypatch, tmp_path
 ) -> None:
     window, _, refreshed = _connections_window(monkeypatch, tmp_path)
-    table = window.settings_ui.contextsTable
     before = len(refreshed)
 
-    cell(table, 0, 2).setCheckState(Qt.CheckState.Unchecked)
+    window._connected_box(0).setChecked(False)
     window.settings_ui.saveButton.click()
 
     assert _listed(window) == ["b", "c"]
@@ -1070,11 +1066,10 @@ def test_with_every_context_disconnected_the_list_is_empty_and_the_kube_settings
     monkeypatch, tmp_path
 ) -> None:
     window, _, _ = _connections_window(monkeypatch, tmp_path)
-    table = window.settings_ui.contextsTable
     assert window.ui.sidebarToggleButton.isVisibleTo(window)
 
     for row in range(3):
-        cell(table, row, 2).setCheckState(Qt.CheckState.Unchecked)
+        window._connected_box(row).setChecked(False)
     window.settings_ui.saveButton.click()
 
     assert _listed(window) == []
@@ -1086,7 +1081,7 @@ def test_with_every_context_disconnected_the_list_is_empty_and_the_kube_settings
     window.ui.settingsButton.click()  # there is nowhere else to go
     assert window.pages.currentIndex() == 2
 
-    cell(table, 1, 2).setCheckState(Qt.CheckState.Checked)
+    window._connected_box(1).setChecked(True)
     window.settings_ui.saveButton.click()
     assert _listed(window) == ["b"]
     assert not window.ui.sidebar.isHidden()

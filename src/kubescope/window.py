@@ -83,6 +83,7 @@ from PySide6.QtGui import (
 from PySide6.QtWidgets import (
     QApplication,
     QButtonGroup,
+    QCheckBox,
     QComboBox,
     QCompleter,
     QDialog,
@@ -1595,6 +1596,12 @@ class WorkloadWindow(QMainWindow):
         self._check_login()
         self._update_eks_entries()
         self._restore_screen()
+
+    def _connected_box(self, row: int) -> QCheckBox:
+        """The checkbox that says whether the context of a row is connected."""
+        holder = self.settings_ui.contextsTable.cellWidget(row, 2)
+        assert holder is not None
+        return cast(QCheckBox, holder.findChild(QCheckBox))
 
     def _apply_connections(self) -> None:
         """With no context connected there is nothing for the side menu to open:
@@ -6639,16 +6646,14 @@ class WorkloadWindow(QMainWindow):
             table.setItem(row, 0, name_item)
             alias = aliases.get(context, default_context_name(context))
             table.setItem(row, 1, QTableWidgetItem(alias))
-            connected = QTableWidgetItem()
-            connected.setFlags(
-                Qt.ItemFlag.ItemIsUserCheckable | Qt.ItemFlag.ItemIsEnabled
-            )
-            connected.setCheckState(
-                Qt.CheckState.Unchecked
-                if context in disabled
-                else Qt.CheckState.Checked
-            )
-            table.setItem(row, 2, connected)
+            box = QCheckBox()  # the app's own checkbox, not the one of the table
+            box.setChecked(context not in disabled)
+            holder = QWidget()
+            holder_layout = QHBoxLayout(holder)
+            holder_layout.setContentsMargins(0, 0, 0, 0)
+            holder_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            holder_layout.addWidget(box)
+            table.setCellWidget(row, 2, holder)
         table.resizeColumnToContents(0)  # a starting width; the user can drag it
         if self._contexts:
             form.contextsHint.setText(
@@ -6949,8 +6954,7 @@ class WorkloadWindow(QMainWindow):
             off = {
                 context
                 for row, context in enumerate(self._contexts)
-                if (item := table.item(row, 2)) is not None
-                and item.checkState() == Qt.CheckState.Unchecked
+                if not self._connected_box(row).isChecked()
             }
             self.settings.set_disabled_contexts(
                 off | {c for c in self.settings.disabled_contexts if c not in edited}
