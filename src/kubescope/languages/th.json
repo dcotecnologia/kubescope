@@ -694,6 +694,7 @@
             "Network Policies": "Network Policies",
             "Network Policies of the cluster": "Network Policies ของคลัสเตอร์",
             "No Pods are associated with this workload": "ไม่มี Pod ที่เกี่ยวข้องกับเวิร์กโหลดนี้",
+            "No context is connected": "ไม่มีคอนเท็กซ์ที่เชื่อมต่ออยู่",
             "No contexts found in kubeconfig": "ไม่พบคอนเท็กซ์ใน kubeconfig",
             "No contexts were found in kubeconfig.": "ไม่พบคอนเท็กซ์ใน kubeconfig",
             "Node Groups": "Node Groups",

@@ -694,6 +694,7 @@
             "Network Policies": "Network Policies",
             "Network Policies of the cluster": "Kümenin Network Policies",
             "No Pods are associated with this workload": "Bu iş yüküyle ilişkili Pod yok",
+            "No context is connected": "Bağlı bir bağlam yok",
             "No contexts found in kubeconfig": "kubeconfig içinde bağlam bulunamadı",
             "No contexts were found in kubeconfig.": "kubeconfig içinde bağlam bulunamadı.",
             "Node Groups": "Node Groups",

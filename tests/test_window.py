@@ -1066,15 +1066,64 @@ def test_disconnecting_the_context_in_use_moves_to_another(
     window.close()
 
 
-def test_one_context_always_stays_connected(monkeypatch, tmp_path) -> None:
+def test_with_every_context_disconnected_the_list_is_empty_and_the_kube_settings_open(
+    monkeypatch, tmp_path
+) -> None:
     window, _, _ = _connections_window(monkeypatch, tmp_path)
     table = window.settings_ui.contextsTable
+    assert window.ui.sidebarToggleButton.isVisibleTo(window)
 
     for row in range(3):
         cell(table, row, 2).setCheckState(Qt.CheckState.Unchecked)
     window.settings_ui.saveButton.click()
 
-    assert _listed(window) == ["a"]
+    assert _listed(window) == []
+    assert window.ui.sidebar.isHidden()
+    assert not window.ui.sidebarToggleButton.isVisibleTo(window)
+    assert not window.context_combo.isVisibleTo(window)  # an empty box has no use
+    assert window.pages.currentIndex() == 2
+
+    window.ui.settingsButton.click()  # there is nowhere else to go
+    assert window.pages.currentIndex() == 2
+
+    cell(table, 1, 2).setCheckState(Qt.CheckState.Checked)
+    window.settings_ui.saveButton.click()
+    assert _listed(window) == ["b"]
+    assert not window.ui.sidebar.isHidden()
+    assert window.ui.sidebarToggleButton.isVisibleTo(window)
+    assert window.context_combo.isVisibleTo(window)
+    assert window._context() == "b"
+    window.close()
+
+
+def test_a_window_that_starts_with_no_context_connected_opens_the_kube_settings(
+    monkeypatch, tmp_path
+) -> None:
+    window, _, _ = _connections_window(monkeypatch, tmp_path, {"a", "b", "c"})
+    form = window.settings_ui
+
+    assert _listed(window) == []
+    assert window.ui.sidebar.isHidden()
+    assert window.pages.currentIndex() == 2
+    assert form.contextsCard.isVisibleTo(window)
+    assert form.kubeconfigCard.isVisibleTo(window)
+    assert not form.integrationsCard.isVisibleTo(window)
+    assert window.status_label.text() == "No context is connected"
+    assert not window.refresh_button.isEnabled()
+    window.close()
+
+
+def test_a_window_with_no_context_in_the_kubeconfig_opens_the_kube_settings(
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(window_module, "list_contexts", lambda: ([], None))
+    monkeypatch.setattr(window_module.WorkloadWindow, "refresh", lambda *_a: None)
+    monkeypatch.setattr(window_module.WorkloadWindow, "_run_action", _inline_actions)
+    window = window_module.WorkloadWindow()
+
+    assert window.ui.sidebar.isHidden()
+    assert window.pages.currentIndex() == 2
+    assert window.status_label.text() == "No contexts found in kubeconfig"
     window.close()
 
 

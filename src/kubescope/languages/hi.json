@@ -694,6 +694,7 @@
             "Network Policies": "Network Policies",
             "Network Policies of the cluster": "क्लस्टर के Network Policies",
             "No Pods are associated with this workload": "इस workload से कोई Pod जुड़ा नहीं है",
+            "No context is connected": "कोई कॉन्टेक्स्ट कनेक्टेड नहीं है",
             "No contexts found in kubeconfig": "kubeconfig में कोई कॉन्टेक्स्ट नहीं मिला",
             "No contexts were found in kubeconfig.": "kubeconfig में कोई कॉन्टेक्स्ट नहीं मिला।",
             "Node Groups": "Node Groups",

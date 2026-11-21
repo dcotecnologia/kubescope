@@ -694,6 +694,7 @@
             "Network Policies": "Network Policies",
             "Network Policies of the cluster": "集群的 Network Policies",
             "No Pods are associated with this workload": "此 workload 没有关联的 Pod",
+            "No context is connected": "没有已连接的上下文",
             "No contexts found in kubeconfig": "在 kubeconfig 中未找到上下文",
             "No contexts were found in kubeconfig.": "在 kubeconfig 中未找到上下文。",
             "Node Groups": "Node Groups",

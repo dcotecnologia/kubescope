@@ -6,7 +6,8 @@ All notable changes to this project will be documented in this file. The format 
 
 ### Added
 
-- **Settings → Kube → Contexts** (before, *Context names*) has a **Connected** column to connect or disconnect each context: one that is not connected is left out of the selector in the top bar, and the choice is kept; if the one in use is disconnected the app moves to another, and one context always stays connected by @danilogco
+- **Settings → Kube → Contexts** (before, *Context names*) has a **Connected** column to connect or disconnect each context: one that is not connected is left out of the selector in the top bar, and the choice is kept; if the one in use is disconnected the app moves to another by @danilogco
+- With no context in the kubeconfig, or none of them connected, the side menu, its button and the selector of contexts go away and the **Kube** section of the Settings opens, to add a kubeconfig file or connect a context by @danilogco
 
 ### Changed
 

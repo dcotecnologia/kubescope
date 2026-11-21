@@ -694,6 +694,7 @@
             "Network Policies": "Network Policies",
             "Network Policies of the cluster": "Network Policies des Clusters",
             "No Pods are associated with this workload": "Dieser Workload sind keine Pods zugeordnet",
+            "No context is connected": "Kein Kontext ist verbunden",
             "No contexts found in kubeconfig": "Keine Kontexte in der kubeconfig gefunden",
             "No contexts were found in kubeconfig.": "In der kubeconfig wurden keine Kontexte gefunden.",
             "Node Groups": "Node Groups",

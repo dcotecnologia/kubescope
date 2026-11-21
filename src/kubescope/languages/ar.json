@@ -694,6 +694,7 @@
             "Network Policies": "Network Policies",
             "Network Policies of the cluster": "Network Policies العنقود",
             "No Pods are associated with this workload": "لا توجد Pods مرتبطة بهذا workload",
+            "No context is connected": "لا يوجد سياق متصل",
             "No contexts found in kubeconfig": "لم يتم العثور على سياقات في kubeconfig",
             "No contexts were found in kubeconfig.": "لم يتم العثور على سياقات في kubeconfig.",
             "Node Groups": "Node Groups",

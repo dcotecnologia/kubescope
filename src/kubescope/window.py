@@ -1578,15 +1578,36 @@ class WorkloadWindow(QMainWindow):
         self._fill_contexts(selected)
         self._select_default_namespace()
         self.no_contexts_banner.setVisible(not contexts)
-        if not contexts:
-            self._set_status(lambda: self.tr("No contexts found in kubeconfig"))
+        if not self.context_combo.count():
+            self._set_status(
+                lambda: (
+                    self.tr("No contexts found in kubeconfig")
+                    if not contexts
+                    else self.tr("No context is connected")
+                )
+            )
             self.refresh_button.setEnabled(False)
+            self._apply_connections()
             return
+        self._apply_connections()
         self.refresh()
         self._ensure_overview()
         self._check_login()
         self._update_eks_entries()
         self._restore_screen()
+
+    def _apply_connections(self) -> None:
+        """With no context connected there is nothing for the side menu to open:
+        it goes away with its button and with the selector of contexts, and the
+        Kube section of the Settings, where contexts are found and connected,
+        opens."""
+        connected = self.context_combo.count() > 0
+        self.ui.sidebarToggleButton.setVisible(connected)
+        self.context_combo.setVisible(connected)
+        self.ui.sidebar.setVisible(connected and not self.sidebar_toggle.collapsed)
+        if not connected and self.pages.currentIndex() != 2:
+            self._show_page(2)
+            self._show_settings_section(2)
 
     def _restore_screen(self) -> None:
         """Back to the page and list the app was left on, when it remembers the
@@ -2132,6 +2153,8 @@ class WorkloadWindow(QMainWindow):
         back to the page they came from, as the bell does with its panel."""
         if self.pages.currentIndex() != 2:
             self._show_page(2)
+            return
+        if not self.context_combo.count():  # nowhere else to go
             return
         back = self._page_before_settings
         self._show_page(back if 0 <= back < self.pages.count() and back != 2 else 0)
@@ -6930,8 +6953,6 @@ class WorkloadWindow(QMainWindow):
                 if (item := table.item(row, 2)) is not None
                 and item.checkState() == Qt.CheckState.Unchecked
             }
-            if off >= set(self._contexts):  # one stays: the list is never empty
-                off.discard(self._context() or self._contexts[0])
             self.settings.set_disabled_contexts(
                 off | {c for c in self.settings.disabled_contexts if c not in edited}
             )
@@ -6978,6 +6999,7 @@ class WorkloadWindow(QMainWindow):
         if self._context() != before:  # the one in use was disconnected
             self._context_changed()
             self.refresh()
+        self._apply_connections()
         if self.settings.language != previous_language:
             apply_language(self.settings.language)
             self.extension_host.events.emit(
