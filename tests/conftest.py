@@ -1,7 +1,13 @@
+import faulthandler
 import os
 import sys
 
 import pytest
+
+# A window turns the diagnostics on, and that turns faulthandler off, which pytest
+# had on: a crash of Qt in the middle of the suite then ends the process with no
+# traceback at all. Nothing in a test needs it off.
+faulthandler.disable = lambda: None
 
 
 @pytest.fixture(autouse=True)
