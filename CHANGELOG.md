@@ -4,14 +4,13 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
-### Added
+## [2.3.1] - 2026-11-21
 
-- A **Third-party licenses** link in the footer, and the **Third-party notices** button of the About box, open the licenses of the software KubeScope uses in a window of the app: a list of the components with a filter, and the text of the one chosen, with a button to open the file by @danilogco
+### Fixed
 
-### Changed
-
-- The packages meet what the LGPL-3.0 of Qt asks for: the third-party notices say which Qt version is shipped, link its source code and that of Qt for Python, offer the code on request, say that Qt is not changed and how to replace its libraries in each kind of package, and that nothing in the license of KubeScope limits those rights; the license texts of Qt and Python are files of their own in the `licenses` folder of the bundles, the Windows installer shows a notice about Qt before it installs, the Debian `copyright` file declares Qt under the LGPL-3, and the README has a section about it by @danilogco
-- The third-party notices cover what the other licenses ask for: the credit that the FreeType License wants for the FreeType inside Qt and where to read the notices of the other projects built into Qt, where the source code of certifi is (Mozilla Public License 2.0), the AppImage runtime, the Microsoft Visual C++ runtime on Windows, where the colors of the themes come from and the licenses of the extensions that ship with the app by @danilogco
+- The packages did not meet what the LGPL-3.0 of Qt asks for: the third-party notices now say which Qt version is shipped, link its source code and that of Qt for Python, offer the code on request, say that Qt is not changed and how to replace its libraries in each kind of package, and that nothing in the license of KubeScope limits those rights; the license texts of Qt and Python are files of their own in the `licenses` folder of the bundles, the Windows installer shows a notice about Qt before it installs, the Debian `copyright` file declares Qt under the LGPL-3, and the README has a section about it by @danilogco
+- The third-party notices left out what the other licenses ask for: the credit that the FreeType License wants for the FreeType inside Qt and where to read the notices of the other projects built into Qt, where the source code of certifi is (Mozilla Public License 2.0), the AppImage runtime, the Microsoft Visual C++ runtime on Windows, where the colors of the themes come from and the licenses of the extensions that ship with the app by @danilogco
+- The third-party notices could only be opened by handing the file to the system, which may have no program for it: the **Third-party notices** button of the About box now opens them in a window of the app, with a list of the components, a filter and the text of the one chosen, and a **Third-party licenses** link in the footer opens it too by @danilogco
 
 ## [2.3.0] - 2026-11-21
 
@@ -673,7 +672,8 @@ The first release.
 
 - Pod logs and resource details are still never written to disk by the app on its own. **Save** is the only exception, and it writes only to the file the user chooses. SECURITY.md says so by @danilogco
 
-[Unreleased]: https://github.com/dcotecnologia/kubescope/compare/v2.3.0...HEAD
+[Unreleased]: https://github.com/dcotecnologia/kubescope/compare/v2.3.1...HEAD
+[2.3.1]: https://github.com/dcotecnologia/kubescope/compare/v2.3.0...v2.3.1
 [2.3.0]: https://github.com/dcotecnologia/kubescope/compare/v2.2.0...v2.3.0
 [2.2.0]: https://github.com/dcotecnologia/kubescope/compare/v2.1.0...v2.2.0
 [2.1.0]: https://github.com/dcotecnologia/kubescope/compare/v2.0.0...v2.1.0
