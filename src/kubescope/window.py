@@ -4712,16 +4712,15 @@ class WorkloadWindow(QMainWindow):
         dialog.accept()
         callback()
 
-    def _style_box_buttons(self, box: QMessageBox) -> None:
+    def _style_box_buttons(self, box: QMessageBox, outlined: bool = False) -> None:
         """Give a message box the window's own buttons: the accepting one
-        filled, the others outlined, and none of the style's stock icons."""
+        filled, the others outlined (all outlined when `outlined`), and none of
+        the style's stock icons."""
         accepting = (QMessageBox.ButtonRole.AcceptRole, QMessageBox.ButtonRole.YesRole)
         for button in box.buttons():
             button.setIcon(QIcon())
-            button.setProperty(
-                "variant",
-                "primary" if box.buttonRole(button) in accepting else "secondary",
-            )
+            filled = box.buttonRole(button) in accepting and not outlined
+            button.setProperty("variant", "primary" if filled else "secondary")
             # the box polished its buttons already, before the variant
             style = button.style()
             style.unpolish(button)
@@ -7185,7 +7184,7 @@ class WorkloadWindow(QMainWindow):
             self.tr("Don't show again"), QMessageBox.ButtonRole.DestructiveRole
         )
         box.setDefaultButton(github)
-        self._style_box_buttons(box)
+        self._style_box_buttons(box, outlined=True)  # four choices, none above another
         box.exec()
         if box.clickedButton() is github:
             QDesktopServices.openUrl(QUrl(PROJECT_URL))

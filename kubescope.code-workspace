@@ -18,6 +18,9 @@
     {
       "path": "../kubescope-themes",
     },
+    {
+      "path": "../kubescope-notifications",
+    },
   ],
   "settings": {
     // ── Editor ────────────────────────────────────────────────────────────

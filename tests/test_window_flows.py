@@ -3332,6 +3332,32 @@ def test_the_welcome_invites_to_contribute_and_opens_github(monkeypatch) -> None
     window.close()
 
 
+def test_the_four_buttons_of_the_welcome_look_alike(monkeypatch) -> None:
+    window, _shown, _opened = _welcome_window(monkeypatch, "Maybe later")
+    variants: list[tuple[str, object]] = []
+
+    class SeeingBox(QMessageBox):
+        def exec(self) -> int:
+            variants.extend((b.text(), b.property("variant")) for b in self.buttons())
+            return 0
+
+        def clickedButton(self) -> QAbstractButton:
+            return cast(QAbstractButton, None)
+
+    monkeypatch.setattr(window_module, "QMessageBox", SeeingBox)
+
+    window.show_welcome()
+
+    assert [text for text, _ in variants] == [
+        "Open on GitHub",
+        "Sponsor on GitHub",
+        "Maybe later",
+        "Don't show again",
+    ]
+    assert {variant for _, variant in variants} == {"secondary"}
+    window.close()
+
+
 def test_the_welcome_can_open_the_sponsor_page(monkeypatch) -> None:
     window, _shown, opened = _welcome_window(monkeypatch, "Sponsor on GitHub")
 

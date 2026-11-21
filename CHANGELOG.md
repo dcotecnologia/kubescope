@@ -15,6 +15,7 @@ All notable changes to this project will be documented in this file. The format 
 
 ### Fixed
 
+- The four buttons of the welcome message look alike (outlined), where two of them were filled and two outlined by @danilogco
 - The update button in the top bar, its menu and the tray menu look for newer versions of the extensions too, as the button in **Settings → Extensions** does, and not only for a new version of the app by @danilogco
 
 ## [2.2.0] - 2026-11-20
