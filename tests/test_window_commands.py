@@ -3,6 +3,7 @@ the screen: the commands, the snapshot and the text logs."""
 
 import pytest
 from kubescope.sdk.models import PodInfo
+from PySide6.QtCore import QPoint
 from PySide6.QtWidgets import QApplication
 
 from kubescope import window as window_module
@@ -250,6 +251,9 @@ def test_the_card_of_a_section_of_the_settings_goes_down_to_the_bottom(
         window._show_settings_section(section)
         QApplication.processEvents()
         assert card.height() >= room - 30, section  # no gap under the card
+        if section == 5:  # the list of the extensions takes what is left
+            host = form.extensionsCardsHost
+            assert host.mapTo(card, QPoint(0, host.height())).y() >= card.height() - 60
 
     window._show_settings_section(3)  # filled before: not filled twice
     window._show_settings_section(3)

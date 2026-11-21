@@ -6232,7 +6232,7 @@ class WorkloadWindow(QMainWindow):
             inner.setStretchFactor(form.extensionsCardsHost, 1)
         if last not in self._filled_cards:  # a spacer under what is in the card
             self._filled_cards.add(last)
-            inner.addStretch(1)  # the layout owns it: no spacer made in Python
+            inner.addStretch()  # no stretch of its own: the table takes the room
 
     def _register_commands(self) -> None:
         """Offer what a person does by hand under a name, for the extensions.
