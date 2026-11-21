@@ -101,8 +101,6 @@ from PySide6.QtWidgets import (
     QProgressBar,
     QPushButton,
     QScrollArea,
-    QSizePolicy,
-    QSpacerItem,
     QSpinBox,
     QSystemTrayIcon,
     QTableWidget,
@@ -6228,11 +6226,7 @@ class WorkloadWindow(QMainWindow):
             inner.setStretchFactor(form.extensionsCardsHost, 1)
         if last not in self._filled_cards:  # a spacer under what is in the card
             self._filled_cards.add(last)
-            inner.addSpacerItem(
-                QSpacerItem(
-                    0, 0, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding
-                )
-            )
+            inner.addStretch(1)  # the layout owns it: no spacer made in Python
 
     def _register_commands(self) -> None:
         """Offer what a person does by hand under a name, for the extensions.
