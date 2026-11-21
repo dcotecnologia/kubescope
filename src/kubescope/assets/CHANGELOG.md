@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+### Added
+
+- **Settings → Kube → Contexts** (before, *Context names*) has a **Connected** column to connect or disconnect each context: one that is not connected is left out of the selector in the top bar, and the choice is kept; if the one in use is disconnected the app moves to another, and one context always stays connected by @danilogco
+
 ### Changed
 
 - The word **CONTEXT** over the context selector in the top bar is gone: the selector says what it is by itself by @danilogco

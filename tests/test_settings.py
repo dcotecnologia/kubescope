@@ -17,6 +17,7 @@ def test_defaults_when_no_file_exists(tmp_path) -> None:
     assert settings.remember_last_context is True
     assert settings.last_context is None
     assert settings.context_aliases == {}
+    assert settings.disabled_contexts == set()
 
 
 def test_save_and_reload_round_trip(tmp_path) -> None:
@@ -26,6 +27,7 @@ def test_save_and_reload_round_trip(tmp_path) -> None:
     settings.remember_last_context = False
     settings.last_context = "prod-eks"
     settings.set_context_aliases({"prod-eks": " Prod ✓ ", "dev": "  "})
+    settings.set_disabled_contexts({"dev", "old"})
     settings.save()
 
     reloaded = Settings(path)
@@ -34,6 +36,7 @@ def test_save_and_reload_round_trip(tmp_path) -> None:
     assert reloaded.remember_last_context is False
     assert reloaded.last_context == "prod-eks"
     assert reloaded.context_aliases == {"prod-eks": "Prod ✓"}
+    assert reloaded.disabled_contexts == {"dev", "old"}
     assert reloaded.display_name("prod-eks") == "Prod ✓"
     assert reloaded.display_name("dev") == "dev"
     assert not path.with_suffix(".tmp").exists()
@@ -51,6 +54,11 @@ def test_damaged_or_foreign_files_fall_back_to_defaults(tmp_path) -> None:
     settings = Settings(path)
     assert settings.language == "auto"
     assert settings.context_aliases == {}
+
+    path.write_text(json.dumps({"disabled_contexts": "a"}), encoding="utf-8")
+    assert Settings(path).disabled_contexts == set()  # not a list
+    path.write_text(json.dumps({"disabled_contexts": [1, "a", None]}), encoding="utf-8")
+    assert Settings(path).disabled_contexts == {"a"}  # only the names are kept
 
 
 def test_unknown_language_is_ignored_on_assignment(tmp_path) -> None:

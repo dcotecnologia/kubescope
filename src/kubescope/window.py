@@ -2086,8 +2086,9 @@ class WorkloadWindow(QMainWindow):
         name."""
         self.context_combo.blockSignals(True)
         self.context_combo.clear()
+        off = self.settings.disabled_contexts
         for context in sorted(
-            self._contexts,
+            (name for name in self._contexts if name not in off),
             key=lambda name: (self.settings.display_name(name).casefold(), name),
         ):
             self.context_combo.addItem(self.settings.display_name(context), context)
@@ -6604,8 +6605,11 @@ class WorkloadWindow(QMainWindow):
         # column to its content and let the editable name take the rest.
         header = table.horizontalHeader()
         header.setSectionResizeMode(0, QHeaderView.ResizeMode.Interactive)
-        header.setStretchLastSection(True)
+        header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
+        header.setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
+        header.setStretchLastSection(False)
         table.setTextElideMode(Qt.TextElideMode.ElideMiddle)
+        disabled = self.settings.disabled_contexts
         for row, context in enumerate(self._contexts):
             name_item = QTableWidgetItem(context)
             name_item.setToolTip(context)
@@ -6613,13 +6617,24 @@ class WorkloadWindow(QMainWindow):
             table.setItem(row, 0, name_item)
             alias = aliases.get(context, default_context_name(context))
             table.setItem(row, 1, QTableWidgetItem(alias))
+            connected = QTableWidgetItem()
+            connected.setFlags(
+                Qt.ItemFlag.ItemIsUserCheckable | Qt.ItemFlag.ItemIsEnabled
+            )
+            connected.setCheckState(
+                Qt.CheckState.Unchecked
+                if context in disabled
+                else Qt.CheckState.Checked
+            )
+            table.setItem(row, 2, connected)
         table.resizeColumnToContents(0)  # a starting width; the user can drag it
         if self._contexts:
             form.contextsHint.setText(
                 QCoreApplication.translate(
                     "SettingsPage",
-                    "Give your contexts friendlier names. "
-                    "Leave a name empty to use the end of the context name.",
+                    "Give your contexts friendlier names and choose which ones are "
+                    "connected: one that is not connected is left out of the list at "
+                    "the top. Leave a name empty to use the end of the context name.",
                 )
             )
         else:
@@ -6909,6 +6924,17 @@ class WorkloadWindow(QMainWindow):
                 c: a for c, a in edited.items() if a != default_context_name(c)
             }
             self.settings.set_context_aliases({**kept, **given})
+            off = {
+                context
+                for row, context in enumerate(self._contexts)
+                if (item := table.item(row, 2)) is not None
+                and item.checkState() == Qt.CheckState.Unchecked
+            }
+            if off >= set(self._contexts):  # one stays: the list is never empty
+                off.discard(self._context() or self._contexts[0])
+            self.settings.set_disabled_contexts(
+                off | {c for c in self.settings.disabled_contexts if c not in edited}
+            )
         previous_language = self.settings.language
         previous_theme = self.settings.theme
         self.settings.language = form.languageCombo.currentData()
@@ -6947,7 +6973,11 @@ class WorkloadWindow(QMainWindow):
             configure_logging(to_file=self.settings.debug_logging)
             logger.info("Debug mode %s", "on" if self.settings.debug_logging else "off")
         logger.info("Settings saved")
-        self._fill_contexts(self._context())
+        before = self._context()
+        self._fill_contexts(before)
+        if self._context() != before:  # the one in use was disconnected
+            self._context_changed()
+            self.refresh()
         if self.settings.language != previous_language:
             apply_language(self.settings.language)
             self.extension_host.events.emit(

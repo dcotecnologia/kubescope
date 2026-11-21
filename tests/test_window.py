@@ -990,6 +990,94 @@ def test_the_contexts_table_starts_with_the_end_of_each_name_and_keeps_no_alias_
     window.close()
 
 
+def _connections_window(monkeypatch, tmp_path, disabled: set[str] | None = None):
+    """A window over three contexts: `a` is the one in use."""
+    from kubescope.settings import Settings
+
+    path = tmp_path / "settings.json"
+    settings = Settings(path)
+    if disabled:
+        settings.set_disabled_contexts(disabled)
+        settings.save()
+    refreshed: list[str] = []
+    monkeypatch.setattr(window_module, "list_contexts", lambda: (["a", "b", "c"], "a"))
+    monkeypatch.setattr(
+        window_module.WorkloadWindow, "refresh", lambda self: refreshed.append("x")
+    )
+    monkeypatch.setattr(window_module.WorkloadWindow, "_run_action", _inline_actions)
+    window = window_module.WorkloadWindow(Settings(path))
+    window.ui.settingsButton.click()
+    return window, path, refreshed
+
+
+def _listed(window) -> list[str]:
+    combo = window.context_combo
+    return [combo.itemData(index) for index in range(combo.count())]
+
+
+def test_a_context_that_is_not_connected_is_left_out_of_the_list_at_the_top(
+    monkeypatch, tmp_path
+) -> None:
+    from kubescope.settings import Settings
+
+    window, path, _ = _connections_window(monkeypatch, tmp_path, {"gone"})
+    table = window.settings_ui.contextsTable
+    assert table.columnCount() == 3
+    assert [cell(table, row, 2).checkState() for row in range(3)] == [
+        Qt.CheckState.Checked
+    ] * 3
+    assert _listed(window) == ["a", "b", "c"]
+
+    cell(table, 1, 2).setCheckState(Qt.CheckState.Unchecked)
+    window.settings_ui.saveButton.click()
+
+    assert _listed(window) == ["a", "c"]
+    assert window._context() == "a"  # the one in use stays
+    assert Settings(path).disabled_contexts == {"b", "gone"}  # a gone one is kept
+
+    cell(table, 1, 2).setCheckState(Qt.CheckState.Checked)
+    window.settings_ui.saveButton.click()
+    assert _listed(window) == ["a", "b", "c"]
+    window.close()
+
+
+def test_the_table_shows_what_was_disconnected_before(monkeypatch, tmp_path) -> None:
+    window, _, _ = _connections_window(monkeypatch, tmp_path, {"c"})
+
+    table = window.settings_ui.contextsTable
+    assert cell(table, 2, 2).checkState() == Qt.CheckState.Unchecked
+    assert _listed(window) == ["a", "b"]
+    window.close()
+
+
+def test_disconnecting_the_context_in_use_moves_to_another(
+    monkeypatch, tmp_path
+) -> None:
+    window, _, refreshed = _connections_window(monkeypatch, tmp_path)
+    table = window.settings_ui.contextsTable
+    before = len(refreshed)
+
+    cell(table, 0, 2).setCheckState(Qt.CheckState.Unchecked)
+    window.settings_ui.saveButton.click()
+
+    assert _listed(window) == ["b", "c"]
+    assert window._context() == "b"
+    assert len(refreshed) > before  # the new one is read
+    window.close()
+
+
+def test_one_context_always_stays_connected(monkeypatch, tmp_path) -> None:
+    window, _, _ = _connections_window(monkeypatch, tmp_path)
+    table = window.settings_ui.contextsTable
+
+    for row in range(3):
+        cell(table, row, 2).setCheckState(Qt.CheckState.Unchecked)
+    window.settings_ui.saveButton.click()
+
+    assert _listed(window) == ["a"]
+    window.close()
+
+
 def test_a_reload_that_ends_well_turns_its_button_green_for_a_moment(
     monkeypatch,
 ) -> None:

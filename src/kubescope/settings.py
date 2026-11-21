@@ -23,6 +23,7 @@ DEFAULTS: dict[str, Any] = {
     "last_screen": [0, ""],
     "default_namespace": "",
     "context_aliases": {},
+    "disabled_contexts": [],
     "hidden_columns": {},
     "pinned_views": [],
     "debug_logging": False,
@@ -152,6 +153,12 @@ class Settings:
             ).items()
             if str(alias).strip()
         }
+        disabled = self._data["disabled_contexts"]
+        self._data["disabled_contexts"] = (
+            sorted({context for context in disabled if isinstance(context, str)})
+            if isinstance(disabled, list)
+            else []
+        )
         stored_columns = self._data["hidden_columns"]
         self._data["hidden_columns"] = {
             str(view): sorted({int(column) for column in columns})
@@ -636,6 +643,15 @@ class Settings:
             for context, alias in aliases.items()
             if alias.strip()
         }
+
+    @property
+    def disabled_contexts(self) -> set[str]:
+        """The contexts the person disconnected: the app leaves them out of the
+        selector at the top."""
+        return set(self._data["disabled_contexts"])
+
+    def set_disabled_contexts(self, contexts: set[str]) -> None:
+        self._data["disabled_contexts"] = sorted(contexts)
 
     def hidden_columns(self, view: str) -> set[int]:
         return set(self._data["hidden_columns"].get(view, []))

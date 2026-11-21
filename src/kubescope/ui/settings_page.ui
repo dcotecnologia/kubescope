@@ -1158,7 +1158,7 @@
           <item>
            <widget class="QLabel" name="contextsHeading">
             <property name="text">
-             <string>CONTEXT NAMES</string>
+             <string>CONTEXTS</string>
             </property>
             <property name="variant" stdset="0">
              <string notr="true">cardTitle</string>
@@ -1209,6 +1209,11 @@
             <column>
              <property name="text">
               <string>DISPLAY NAME</string>
+             </property>
+            </column>
+            <column>
+             <property name="text">
+              <string>CONNECTED</string>
              </property>
             </column>
             <row />
