@@ -208,7 +208,7 @@ def test_each_section_has_a_title_that_folds_its_entries_and_remembers() -> None
 
     fold.toggle()
     assert "Instances" in labels(window) and kept == [("section:aws", False)]
-    assert fold.title.text() == "AWS"
+    assert isinstance(fold.title, QLabel) and fold.title.text() == "AWS"
 
     pages.apply([page("Instances")])  # built again: the folds are too
     (again,) = pages.folds.values()
@@ -222,3 +222,66 @@ def test_a_section_without_a_visible_entry_has_no_title_and_no_block() -> None:
     (fold,) = pages.folds.values()
 
     assert fold.title.isHidden() and fold.body.isHidden()
+
+
+def test_a_group_looks_as_the_ones_of_the_app_with_an_icon_and_an_arrow() -> None:
+    from PySide6.QtGui import QIcon, QPixmap
+
+    window = QWidget()
+    menu = QVBoxLayout(window)
+    menu.addItem(QSpacerItem(0, 0))
+    stack = QStackedWidget(window)
+    stack.addWidget(QWidget())
+    icon = QIcon(QPixmap(16, 16))
+    kept: list[tuple[str, bool]] = []
+    pages = ExtensionPages(
+        menu,
+        stack,
+        stack.setCurrentIndex,
+        lambda: None,
+        lambda name: False,
+        lambda: False,
+        lambda name, folded: kept.append((name, folded)),
+        lambda: icon,
+    )
+    window.show()
+    pages.apply([page("Instances"), page("Snapshots")])
+
+    (header,) = [b for b in window.findChildren(QPushButton) if b.text() == "RDS"]
+    assert not header.icon().isNull() and header.minimumHeight() == 24
+    assert header.findChildren(QLabel)  # the arrow of the entries that fold
+    submenu = next(e.button.parentWidget() for e in pages._entries)
+    assert submenu is not None and submenu.property("submenu") == "true"
+    assert "Instances" in labels(window)
+
+    header.click()  # the whole group goes, the entries with it
+    assert "Instances" not in labels(window) and "RDS" in labels(window)
+    assert kept == [("section:aws/rds", True)]
+    header.click()
+    assert "Instances" in labels(window) and "Snapshots" in labels(window)
+
+    pages.restyle()  # the theme changed: the icon is asked again
+    assert not header.icon().isNull()
+
+
+def test_a_group_folded_last_time_starts_folded_and_waits_for_its_entries() -> None:
+    window = QWidget()
+    menu = QVBoxLayout(window)
+    menu.addItem(QSpacerItem(0, 0))
+    stack = QStackedWidget(window)
+    stack.addWidget(QWidget())
+    pages = ExtensionPages(
+        menu,
+        stack,
+        stack.setCurrentIndex,
+        lambda: None,
+        lambda name: name == "section:aws/rds",
+        lambda: False,
+    )
+    window.show()
+
+    pages.apply([page("Instances", visible=lambda: False)])
+    assert "RDS" not in labels(window)  # no entry shows: no group either
+
+    pages.apply([page("Instances")])
+    assert "RDS" in labels(window) and "Instances" not in labels(window)

@@ -16,7 +16,7 @@ from PySide6.QtCore import (
     Signal,
 )
 from PySide6.QtGui import QMouseEvent
-from PySide6.QtWidgets import QLabel, QWidget
+from PySide6.QtWidgets import QAbstractButton, QWidget
 
 from kubescope.views.nav_chevron import NavChevron
 
@@ -31,7 +31,7 @@ class SectionFold(QObject):
 
     def __init__(
         self,
-        title: QLabel,
+        title: QWidget,
         body: QWidget,
         folded: bool,
         animated: Callable[[], bool],
@@ -48,8 +48,11 @@ class SectionFold(QObject):
         self.animation.setDuration(DURATION_MS)
         self.animation.setEasingCurve(QEasingCurve.Type.InOutCubic)
         self.animation.finished.connect(self._settled)
-        title.setCursor(Qt.CursorShape.PointingHandCursor)
-        title.installEventFilter(self)
+        if isinstance(title, QAbstractButton):  # an entry of the menu: it clicks
+            title.clicked.connect(self.toggle)
+        else:  # a title: its release is the click
+            title.setCursor(Qt.CursorShape.PointingHandCursor)
+            title.installEventFilter(self)
         self._apply()
 
     def set_available(self, available: bool) -> None:

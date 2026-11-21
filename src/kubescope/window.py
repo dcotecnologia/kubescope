@@ -1210,6 +1210,7 @@ class WorkloadWindow(QMainWindow):
             lambda name: name in self.settings.folded_sections,
             lambda: motion.ENABLED,
             self._keep_section_fold,
+            lambda: _nav_icon("workloads"),
         )
         self._extension_shortcuts: dict[str, QShortcut] = {}
         self._extension_watchers: dict[str, FolderWatcher] = {}
@@ -2552,6 +2553,7 @@ class WorkloadWindow(QMainWindow):
         self.nav_network.setIcon(_nav_icon("network"))
         self.nav_config.setIcon(_nav_icon("config"))
         self.nav_plugins.setIcon(_nav_icon("workloads"))
+        self.extension_pages.restyle()
         self.nav_forwards.setIcon(_nav_icon("forward"))
         self.save_button.setIcon(_nav_icon("save"))
         icon_only(

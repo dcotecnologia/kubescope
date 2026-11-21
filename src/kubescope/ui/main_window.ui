@@ -198,7 +198,7 @@ QPushButton[nav="true"] {
 }
 QPushButton[nav="true"]:hover { background: #f6f6fa; }
 QFrame#workloadsSubmenu, QFrame#networkSubmenu, QFrame#configSubmenu,
-QFrame#pluginsSubmenu {
+QFrame#pluginsSubmenu, QFrame[submenu="true"] {
     border: 0; border-left: 1px solid #d9dce4; margin-left: 19px;
 }
 QPushButton[nav="true"]:checked {

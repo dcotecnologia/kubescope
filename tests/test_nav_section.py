@@ -93,3 +93,23 @@ def test_a_block_with_nothing_to_show_is_hidden_whole_and_a_fold_waits_for_it() 
     fold.toggle()
     fold.animation.setCurrentTime(fold.animation.duration())
     assert not body.isHidden()
+
+
+def test_the_header_of_a_group_is_a_button_that_clicks() -> None:
+    from PySide6.QtWidgets import QPushButton
+
+    window = QWidget()
+    layout = QVBoxLayout(window)
+    header = QPushButton("RDS")
+    body = QFrame()
+    QVBoxLayout(body).addWidget(QLabel("Instances"))
+    layout.addWidget(header)
+    layout.addWidget(body)
+    window.show()
+    fold = SectionFold(header, body, False, lambda: False)
+
+    header.click()
+    assert fold.folded and body.isHidden()
+    header.click()
+    assert not fold.folded and not body.isHidden()
+    assert header.cursor().shape() != Qt.CursorShape.PointingHandCursor  # its own
