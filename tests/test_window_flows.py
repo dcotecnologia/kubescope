@@ -1515,6 +1515,7 @@ def test_the_overview_follows_a_language_change(monkeypatch) -> None:
 
 def test_the_theme_is_chosen_in_settings_and_applied_at_once(monkeypatch) -> None:
     window = _ready_window(monkeypatch)
+    window._contexts = ["prod"]  # the box lists what the kubeconfig has
     window.settings.theme = "light"
     window._apply_theme()
     window._open_list_view("pods")
