@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+## [2.3.0] - 2026-11-21
+
 ### Added
 
 - **Settings → Kube → Contexts** (before, *Context names*) has a **Connected** column to connect or disconnect each context: one that is not connected is left out of the selector in the top bar, and the choice is kept; if the one in use is disconnected the app moves to another by @danilogco
@@ -662,7 +664,8 @@ The first release.
 
 - Pod logs and resource details are still never written to disk by the app on its own. **Save** is the only exception, and it writes only to the file the user chooses. SECURITY.md says so by @danilogco
 
-[Unreleased]: https://github.com/dcotecnologia/kubescope/compare/v2.2.0...HEAD
+[Unreleased]: https://github.com/dcotecnologia/kubescope/compare/v2.3.0...HEAD
+[2.3.0]: https://github.com/dcotecnologia/kubescope/compare/v2.2.0...v2.3.0
 [2.2.0]: https://github.com/dcotecnologia/kubescope/compare/v2.1.0...v2.2.0
 [2.1.0]: https://github.com/dcotecnologia/kubescope/compare/v2.0.0...v2.1.0
 [2.0.0]: https://github.com/dcotecnologia/kubescope/compare/v1.12.0...v2.0.0
