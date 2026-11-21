@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+## [2.2.0] - 2026-11-20
+
 ### Added
 
 - The extension [`kubescope-notifications`](https://github.com/dcotecnologia/kubescope-notifications) is recommended in **Settings → Extensions**, as a card to install, and is not installed by default by @danilogco
@@ -21,10 +23,7 @@ All notable changes to this project will be documented in this file. The format 
 - A button at the start of the page header hides the side menu, which slides away toward the left, and brings it back when clicked again; it stays as you left it the next time you open the app by @danilogco
 - The app icon has slightly rounded corners and a small margin, so it sits at the same size as the other icons in the launcher and the dock, with a soft sheen and edge; the tray icon is a tighter version of it, to fill its small slot by @danilogco
 - The **Sign in** button in the top bar just says **Sign in**, with no cloud or profile name; the status bar still says which one by @danilogco
-
-### Removed
-
-- `make windows` and the Wine tooling (`tools/windows_wine.py`): the Windows installer and zip are built only by the Release workflow, which `make windows-remote` runs from here by @danilogco
+- Removed `make windows` and the Wine tooling (`tools/windows_wine.py`): the Windows installer and zip are built only by the Release workflow, which `make windows-remote` runs from here by @danilogco
 
 ## [2.1.0] - 2026-11-20
 
@@ -649,7 +648,8 @@ The first release.
 
 - Pod logs and resource details are still never written to disk by the app on its own. **Save** is the only exception, and it writes only to the file the user chooses. SECURITY.md says so by @danilogco
 
-[Unreleased]: https://github.com/dcotecnologia/kubescope/compare/v2.1.0...HEAD
+[Unreleased]: https://github.com/dcotecnologia/kubescope/compare/v2.2.0...HEAD
+[2.2.0]: https://github.com/dcotecnologia/kubescope/compare/v2.1.0...v2.2.0
 [2.1.0]: https://github.com/dcotecnologia/kubescope/compare/v2.0.0...v2.1.0
 [2.0.0]: https://github.com/dcotecnologia/kubescope/compare/v1.12.0...v2.0.0
 [1.12.0]: https://github.com/dcotecnologia/kubescope/compare/v1.11.0...v1.12.0
