@@ -2687,6 +2687,23 @@ def test_the_update_menu_checks_again(monkeypatch) -> None:
     window.close()
 
 
+def test_asking_for_updates_looks_at_the_extensions_too(monkeypatch) -> None:
+    window, ran = _update_window(monkeypatch)
+    asked = []
+    monkeypatch.setattr(
+        window.extensions_panel,
+        "check_updates",
+        lambda settings=None, force=False: asked.append((settings, force)),
+    )
+
+    window.ui.updateButton.click()  # the icon
+    window.check_updates_by_hand()  # the menu and the tray come here too
+
+    assert [name for name, *_rest in ran] == ["check_for_update"]  # one at a time
+    assert asked == [(window.settings, True)] * 2  # whatever was looked at today
+    window.close()
+
+
 def test_the_update_check_runs_at_start_only_when_settings_allow(monkeypatch) -> None:
     window, ran = _update_window(monkeypatch)
     window.settings.check_updates = False

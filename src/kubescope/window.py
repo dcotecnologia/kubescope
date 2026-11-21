@@ -2491,7 +2491,13 @@ class WorkloadWindow(QMainWindow):
         if self._update_state == "available":
             self._update_app()
         else:
-            self.check_updates()
+            self.check_updates_by_hand()
+
+    def check_updates_by_hand(self) -> None:
+        """The person asked to look: for a new version of the app and for newer
+        versions of the extensions, whatever was looked at today."""
+        self.check_updates()
+        self.extensions_panel.check_updates(self.settings, force=True)
 
     def _update_app(self) -> None:
         """Confirm the update, install it as this app was installed, and start
@@ -2508,7 +2514,7 @@ class WorkloadWindow(QMainWindow):
 
     def _show_update_menu(self, position: QPoint) -> None:
         menu = QMenu(self)
-        menu.addAction(self.tr("Check for updates again"), self.check_updates)
+        menu.addAction(self.tr("Check for updates again"), self.check_updates_by_hand)
         menu.exec(self.ui.updateButton.mapToGlobal(position))
 
     def _open_project(self) -> None:
@@ -7272,7 +7278,7 @@ class WorkloadWindow(QMainWindow):
 
     def _check_updates_from_tray(self) -> None:
         self.bring_to_front()
-        self.check_updates()
+        self.check_updates_by_hand()
 
     def _quit(self) -> None:
         """Quit for real, which closing the window does not while it lives in
