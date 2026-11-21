@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+### Changed
+
+- The word **CONTEXT** over the context selector in the top bar is gone: the selector says what it is by itself by @danilogco
+
 ### Fixed
 
 - The update button in the top bar, its menu and the tray menu look for newer versions of the extensions too, as the button in **Settings → Extensions** does, and not only for a new version of the app by @danilogco

@@ -37,7 +37,6 @@ QFrame[pinTab="true"] QPushButton:hover, QFrame[pinTab="true"][active="true"] QP
 QFrame[pinTab="true"] QPushButton[closeTab="true"] { font-size: 16px; padding: 2px 6px; }
 QLabel#topTitle { color: #ffffff; font-size: 14px; font-weight: 700; }
 QLabel#topSubtitle { color: #b8c7dc; font-size: 9px; }
-QLabel#topCaption { color: #b8c7dc; font-size: 9px; font-weight: 700; }
 QPushButton#settingsButton {
     background: transparent; border: 1px solid transparent; border-radius: 4px;
     padding: 0;
@@ -392,13 +391,6 @@ QPushButton#updateButton:hover { background: #f6f6fa; }
           </size>
          </property>
         </spacer>
-       </item>
-       <item>
-        <widget class="QLabel" name="topCaption">
-         <property name="text">
-          <string>CONTEXT</string>
-         </property>
-        </widget>
        </item>
        <item>
         <widget class="QComboBox" name="contextCombo">
