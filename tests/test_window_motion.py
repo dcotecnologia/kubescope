@@ -13,7 +13,8 @@ from kubescope.sdk.models import (
     NodeInfo,
     WorkloadsOverview,
 )
-from PySide6.QtWidgets import QApplication
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QApplication, QFrame
 
 from kubescope.views import motion
 from tests.test_window_flows import _ready_window
@@ -140,4 +141,20 @@ def test_the_animations_follow_the_setting(monkeypatch) -> None:
     form.animationsCheck.setChecked(True)
     window._save_preferences()
     assert motion.ENABLED is True
+    window.close()
+
+
+def test_a_section_of_the_settings_with_no_card_has_nothing_to_stretch(
+    monkeypatch,
+) -> None:
+    window = _ready_window(monkeypatch)
+    window._load_settings_form()
+
+    window._show_settings_section(1)
+
+    form = window.settings_ui
+    cards = form.settingsContent.findChildren(
+        QFrame, options=Qt.FindChildOption.FindDirectChildrenOnly
+    )
+    assert cards and all(not card.isVisibleTo(window) for card in cards)
     window.close()

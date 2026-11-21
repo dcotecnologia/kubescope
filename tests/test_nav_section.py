@@ -106,10 +106,11 @@ def test_the_header_of_a_group_is_a_button_that_clicks() -> None:
     layout.addWidget(header)
     layout.addWidget(body)
     window.show()
+    cursor = header.cursor().shape()  # whatever the app gives every button
     fold = SectionFold(header, body, False, lambda: False)
 
     header.click()
     assert fold.folded and body.isHidden()
     header.click()
     assert not fold.folded and not body.isHidden()
-    assert header.cursor().shape() != Qt.CursorShape.PointingHandCursor  # its own
+    assert header.cursor().shape() == cursor  # the fold leaves its own
