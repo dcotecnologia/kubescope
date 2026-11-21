@@ -1,4 +1,5 @@
 import faulthandler
+import gc
 import os
 import sys
 
@@ -8,6 +9,19 @@ import pytest
 # had on: a crash of Qt in the middle of the suite then ends the process with no
 # traceback at all. Nothing in a test needs it off.
 faulthandler.disable = lambda: None
+
+
+@pytest.fixture(autouse=True)
+def collect_garbage_with_each_test():
+    """With `KUBESCOPE_TEST_GC` set, a test that leaves a wrapper of a deleted
+    Qt object behind crashes at its own end and not somewhere further on (it is
+    slow:
+
+    for hunting such a crash only).
+    """
+    yield
+    if os.environ.get("KUBESCOPE_TEST_GC"):
+        gc.collect()
 
 
 @pytest.fixture(autouse=True)
