@@ -1,5 +1,4 @@
 import pytest
-from PySide6.QtCore import QUrl
 from PySide6.QtGui import QCloseEvent
 from PySide6.QtWidgets import QApplication, QMessageBox, QSystemTrayIcon
 
@@ -186,6 +185,12 @@ def test_about_gives_the_legal_details_and_opens_what_is_asked(monkeypatch) -> N
     monkeypatch.setattr(
         window_module.QDesktopServices, "openUrl", lambda url: opened.append(url)
     )
+    shown = []
+    monkeypatch.setattr(
+        window_module,
+        "NoticesDialog",
+        lambda parent: type("Seen", (), {"exec": lambda self: shown.append(parent)})(),
+    )
     seen = []
 
     class FakeBox(QMessageBox):
@@ -214,9 +219,8 @@ def test_about_gives_the_legal_details_and_opens_what_is_asked(monkeypatch) -> N
     assert [url.toString() for url in opened] == [
         window_module.PROJECT_URL,
         window_module.LICENSE_URL,
-        QUrl.fromLocalFile(str(window_module.NOTICES_PATH)).toString(),
     ]
-    assert window_module.NOTICES_PATH.is_file()
+    assert shown == [window]  # the notices open in the app
     window.close()
 
 

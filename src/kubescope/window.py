@@ -154,6 +154,7 @@ from kubescope.cluster import (
 )
 from kubescope.dialogs.account_dialog import AccountDialog
 from kubescope.dialogs.changelog_dialog import ChangelogDialog
+from kubescope.dialogs.notices_dialog import NoticesDialog
 from kubescope.dialogs.plugin_update_dialog import PluginUpdateDialog
 from kubescope.dialogs.theme_editor import ThemeEditor
 from kubescope.dialogs.update_dialog import UpdateDialog
@@ -308,7 +309,6 @@ UPDATE_FRESH_SECONDS = 3600  # an "up to date" that a start trusts, in seconds
 UPDATE_SEARCH_MS = 5000  # an update check shows as searching for at least this long
 UPDATE_NOTICE_MS = 4000  # how long "Up to date" stays next to the icon
 
-NOTICES_PATH = Path(__file__).resolve().parent / "assets" / "THIRD_PARTY_NOTICES.txt"
 LOGO_PATH = Path(__file__).resolve().parent / "assets" / "icon.png"
 TRAY_ICON_PATH = LOGO_PATH.with_name("tray.png")  # tighter, for a 22 px slot
 
@@ -1370,6 +1370,7 @@ class WorkloadWindow(QMainWindow):
         self.ui.updateButton.customContextMenuRequested.connect(self._show_update_menu)
         self.ui.githubLink.clicked.connect(self._open_project)
         self.ui.licenseLink.clicked.connect(self._open_license)
+        self.ui.thirdPartyLink.clicked.connect(self._show_notices)
         self.ui.footerVersion.clicked.connect(self._show_changelog)
         self.ui.companyLink.clicked.connect(self._open_company)
 
@@ -2559,6 +2560,10 @@ class WorkloadWindow(QMainWindow):
 
     def _open_license(self) -> None:
         QDesktopServices.openUrl(QUrl(LICENSE_URL))
+
+    def _show_notices(self) -> None:
+        """The licenses of the software KubeScope uses, read in the app."""
+        NoticesDialog(self).exec()
 
     def _apply_style(self) -> None:
         """Style the window for the active theme; the icons Qt style sheets
@@ -7325,7 +7330,7 @@ class WorkloadWindow(QMainWindow):
         elif box.clickedButton() is license_button:
             self._open_license()
         elif box.clickedButton() is notices:
-            QDesktopServices.openUrl(QUrl.fromLocalFile(str(NOTICES_PATH)))
+            self._show_notices()
 
     def _show_preferences(self) -> None:
         self.bring_to_front()

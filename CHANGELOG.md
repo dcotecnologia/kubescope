@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+### Added
+
+- A **Third-party licenses** link in the footer, and the **Third-party notices** button of the About box, open the licenses of the software KubeScope uses in a window of the app: a list of the components with a filter, and the text of the one chosen, with a button to open the file by @danilogco
+
+### Changed
+
+- The packages meet what the LGPL-3.0 of Qt asks for: the third-party notices say which Qt version is shipped, link its source code and that of Qt for Python, offer the code on request, say that Qt is not changed and how to replace its libraries in each kind of package, and that nothing in the license of KubeScope limits those rights; the license texts of Qt and Python are files of their own in the `licenses` folder of the bundles, the Windows installer shows a notice about Qt before it installs, the Debian `copyright` file declares Qt under the LGPL-3, and the README has a section about it by @danilogco
+- The third-party notices cover what the other licenses ask for: the credit that the FreeType License wants for the FreeType inside Qt and where to read the notices of the other projects built into Qt, where the source code of certifi is (Mozilla Public License 2.0), the AppImage runtime, the Microsoft Visual C++ runtime on Windows, where the colors of the themes come from and the licenses of the extensions that ship with the app by @danilogco
+
 ## [2.3.0] - 2026-11-21
 
 ### Added

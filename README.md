@@ -526,6 +526,27 @@ To write an extension, start with the [SDK](https://github.com/dcotecnologia/kub
 [AWS](https://github.com/dcotecnologia/kubescope-aws/blob/main/CONTRIBUTING.md) has its own contributing guide.
 Report vulnerabilities privately as described in [SECURITY.md](SECURITY.md).
 
+## Qt and the LGPL
+
+KubeScope is built with Qt for Python (PySide6) and Qt, which are used under the
+[GNU Lesser General Public License, version 3](packaging/licenses/LGPL-3.0.txt). KubeScope
+does not change the code of Qt, and the license of KubeScope (MIT) does not limit what the
+LGPL gives you:
+
+- **The license texts** (the LGPL-3.0 and the GPL-3.0 it refers to) are in the
+  `licenses` folder of every package, and in
+  [THIRD_PARTY_NOTICES.txt](src/kubescope/assets/THIRD_PARTY_NOTICES.txt), which every
+  package carries and the **Third-party notices** button of the **About** box opens.
+- **The source code** of the Qt and Qt for Python versions that ship with a release is
+  linked from that file; if you cannot get it from there, ask in the
+  [issues](https://github.com/dcotecnologia/kubescope/issues) and it is sent to you.
+- **You can replace the Qt libraries** with your own build of the same Qt version: they are
+  separate shared libraries (in `_internal/PySide6/` of the application), not linked into
+  the program, and KubeScope does not check them. The notices say where they are in each
+  package (`.deb`, Windows, AppImage, tarball, macOS, Flatpak and Snap, pip).
+- **Only the LGPL parts of Qt are shipped**: the Qt modules that are GPL-only (Virtual
+  Keyboard, Charts, Data Visualization) are left out of the packages.
+
 ## Author
 
 Danilo Carolino <danilogcarolino@gmail.com>

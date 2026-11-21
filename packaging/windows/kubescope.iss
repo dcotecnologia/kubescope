@@ -16,6 +16,7 @@ DefaultGroupName=KubeScope
 UninstallDisplayIcon={app}\KubeScope.exe
 SetupIconFile=..\..\src\kubescope\assets\icon.ico
 LicenseFile=..\..\LICENSE
+InfoBeforeFile=QT_NOTICE.txt
 OutputDir=..\..\dist
 OutputBaseFilename=KubeScope-{#AppVersion}-windows-x64-setup
 Compression=lzma2

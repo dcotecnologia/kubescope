@@ -1,0 +1,13 @@
+KubeScope is free and open source software, released under the MIT License.
+
+It is built with Qt for Python (PySide6) and Qt, which are used under the GNU
+Lesser General Public License, version 3 (LGPL-3.0). The Qt libraries are
+installed as separate files, in the _internal\PySide6 folder of the install
+folder, so you can replace them with your own build of the same Qt version.
+KubeScope does not change the code of Qt.
+
+The source code of the Qt version that ships with this release, the texts of
+the licenses and how to replace the libraries are in THIRD_PARTY_NOTICES.txt,
+in the install folder, and the license texts are in its licenses folder.
+
+Nothing in the license of KubeScope limits what the LGPL-3.0 gives you for Qt.

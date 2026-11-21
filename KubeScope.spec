@@ -80,6 +80,12 @@ analysis = Analysis(
         ),
         # next to the app's files, where a person who got the bundle finds them
         (str(root / "LICENSE"), "."),
+        # the texts of the licenses of Qt (LGPL-3.0, which refers to the GPL-3.0) and of
+        # Python, as files of their own as well as inside the notices
+        *(
+            (str(path), "licenses")
+            for path in sorted((root / "packaging" / "licenses").glob("*.txt"))
+        ),
         (str(root / "src" / "kubescope" / "assets" / "THIRD_PARTY_NOTICES.txt"), "."),
         *((str(path), "kubescope/assets/extensions") for path in extensions.glob("*")),
         *(

@@ -3039,6 +3039,19 @@ Resources in read-only mode</string>
         </widget>
        </item>
        <item>
+        <widget class="QPushButton" name="thirdPartyLink">
+         <property name="text">
+          <string>Third-party licenses</string>
+         </property>
+         <property name="flat">
+          <bool>true</bool>
+         </property>
+         <property name="variant" stdset="0">
+          <string notr="true">link</string>
+         </property>
+        </widget>
+       </item>
+       <item>
         <spacer name="appFooterSpacer">
          <property name="orientation">
           <enum>Qt::Horizontal</enum>

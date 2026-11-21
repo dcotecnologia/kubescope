@@ -1376,6 +1376,13 @@ class Ui_MainWindow(object):
 
         self.appFooterLayout.addWidget(self.licenseLink)
 
+        self.thirdPartyLink = QPushButton(self.appFooter)
+        self.thirdPartyLink.setObjectName(u"thirdPartyLink")
+        self.thirdPartyLink.setFlat(True)
+        self.thirdPartyLink.setProperty(u"variant", u"link")
+
+        self.appFooterLayout.addWidget(self.thirdPartyLink)
+
         self.appFooterSpacer = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
 
         self.appFooterLayout.addItem(self.appFooterSpacer)
@@ -1559,6 +1566,7 @@ class Ui_MainWindow(object):
 #if QT_CONFIG(tooltip)
         self.licenseLink.setToolTip(QCoreApplication.translate("MainWindow", u"KubeScope is open source software released under the MIT License", None))
 #endif // QT_CONFIG(tooltip)
+        self.thirdPartyLink.setText(QCoreApplication.translate("MainWindow", u"Third-party licenses", None))
         self.updateLink.setText(QCoreApplication.translate("MainWindow", u"Update available", None))
 #if QT_CONFIG(tooltip)
         self.updateLink.setToolTip(QCoreApplication.translate("MainWindow", u"Open the download page of the new version", None))
