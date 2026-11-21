@@ -91,9 +91,7 @@ jobs:
         run: uv sync --extra dev --frozen
 
       - name: Run tests
-        run: uv run pytest -vv
-        env:
-          KUBESCOPE_TEST_GC: "1"
+        run: uv run pytest -q
 
       - name: Keep the coverage report for the badge
         if: matrix.python-version == '3.15'

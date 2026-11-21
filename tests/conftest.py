@@ -13,15 +13,16 @@ faulthandler.disable = lambda: None
 
 @pytest.fixture(autouse=True)
 def collect_garbage_with_each_test():
-    """With `KUBESCOPE_TEST_GC` set, a test that leaves a wrapper of a deleted
-    Qt object behind crashes at its own end and not somewhere further on (it is
-    slow:
+    """The windows of a test are cleared away at its end, not many tests later.
 
-    for hunting such a crash only).
+    Left to Python, the garbage of hundreds of windows piles up until
+    one collection drops the wrappers of Qt objects that Qt has already
+    deleted, and that ended the run of the suite on the CI with a crash
+    of the process after about 1,300 tests, at a different test every
+    time.
     """
     yield
-    if os.environ.get("KUBESCOPE_TEST_GC"):
-        gc.collect()
+    gc.collect()
 
 
 @pytest.fixture(autouse=True)
