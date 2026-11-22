@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+## [2.4.0] - 2026-11-22
+
 ### Added
 
 - An extension can declare the oldest version of KubeScope it works with (`min_app` in `kubescope-extension.toml`, such as `2.4.0`): the app refuses to install or update to one that needs a newer app and says to update the app first, and it offers (and installs, for a recommended one) the newest version of an extension that works with the app, reading the manifest of its newest few tags by @danilogco
@@ -682,7 +684,8 @@ The first release.
 
 - Pod logs and resource details are still never written to disk by the app on its own. **Save** is the only exception, and it writes only to the file the user chooses. SECURITY.md says so by @danilogco
 
-[Unreleased]: https://github.com/dcotecnologia/kubescope/compare/v2.3.1...HEAD
+[Unreleased]: https://github.com/dcotecnologia/kubescope/compare/v2.4.0...HEAD
+[2.4.0]: https://github.com/dcotecnologia/kubescope/compare/v2.3.1...v2.4.0
 [2.3.1]: https://github.com/dcotecnologia/kubescope/compare/v2.3.0...v2.3.1
 [2.3.0]: https://github.com/dcotecnologia/kubescope/compare/v2.2.0...v2.3.0
 [2.2.0]: https://github.com/dcotecnologia/kubescope/compare/v2.1.0...v2.2.0
