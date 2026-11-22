@@ -12,6 +12,8 @@ from pathlib import Path
 
 from kubescope.sdk import API_VERSION, PERMISSIONS
 
+from kubescope.about import __version__
+
 MANIFEST_NAME = "kubescope-extension.toml"
 MAX_MANIFEST_BYTES = 16 * 1024
 # what every extension has, and what its manifest does not need to list
@@ -48,6 +50,8 @@ class Manifest:
     # what else, at the top of its folder, is for production and stays when it is
     # installed; REQUIRED is always there, and OPTIONAL when it exists
     production: tuple[str, ...] = ()
+    # the oldest version of the app it works with, such as 2.4.0; empty when any
+    min_app: str = ""
 
     @property
     def kept(self) -> frozenset[str]:
@@ -77,6 +81,31 @@ def _production(value: object) -> tuple[str, ...]:
         if name not in (*REQUIRED, *OPTIONAL) and name not in names:
             names.append(name)
     return tuple(names)
+
+
+def _numbers(version: str) -> tuple[int, ...] | None:
+    """The numbers of a version such as 2.4.0, None when it is not one (a
+    development build, say)."""
+    found = _VERSION.fullmatch(version.strip())
+    return tuple(int(part) for part in version.split(".")) if found else None
+
+
+def _min_app(document: dict[str, object]) -> str:
+    """The oldest app the extension works with, refused when this app is
+    older, so that an update that would not work is not installed."""
+    wanted = _text(document, "min_app", required=False)
+    if not wanted:
+        return ""
+    needed = _numbers(wanted)
+    if needed is None:
+        raise ManifestError("min_app must look like 2.4.0")
+    have = _numbers(__version__)
+    if have is not None and have < needed:
+        raise ManifestError(
+            f"it needs KubeScope {wanted} or later and this is KubeScope "
+            f"{__version__}: update the app first"
+        )
+    return wanted
 
 
 def parse_manifest(content: bytes) -> Manifest:
@@ -122,6 +151,7 @@ def parse_manifest(content: bytes) -> Manifest:
     if commands and "cli" not in permissions:
         raise ManifestError("commands need the permission cli")
     production = _production(document.get("production", []))
+    min_app = _min_app(document)
     return Manifest(
         id=extension,
         name=_text(document, "name"),
@@ -132,6 +162,7 @@ def parse_manifest(content: bytes) -> Manifest:
         author=_text(document, "author", required=False),
         commands=tuple(commands),
         production=production,
+        min_app=min_app,
     )
 
 

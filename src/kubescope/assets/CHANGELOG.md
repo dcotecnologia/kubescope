@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file. The format 
 
 ### Added
 
+- An extension can declare the oldest version of KubeScope it works with (`min_app` in `kubescope-extension.toml`, such as `2.4.0`): the app refuses to install or update to one that needs a newer app and says to update the app first by @danilogco
 - An extension is told when the Settings are opened or left (the event `SETTINGS_SHOWN`), so a panel over the pages can step aside by @danilogco
 - An extension can ask where the pages are (`Ui.content_area`), to fill them and leave the top bar and the footer as they are, and hide the side menu while it needs the whole width (`Ui.hide_side_menu`); the choice of the person is kept and comes back when the extension lets go or is unloaded by @danilogco
 
