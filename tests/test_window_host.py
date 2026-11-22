@@ -815,3 +815,17 @@ def test_the_extensions_are_told_when_the_settings_are_opened_and_left(
     window._show_page(0)
 
     assert told == [True, False]
+
+
+def test_the_extensions_are_not_lent_a_context_the_person_disconnected(
+    window, monkeypatch
+) -> None:
+    from kubescope import cluster
+
+    monkeypatch.setattr(cluster, "list_contexts", lambda: (["a", "b"], "a"))
+    window.settings.set_disabled_contexts({"b"})
+
+    assert window.extension_host.cluster.list_contexts() == ["a"]
+
+    window.settings.set_disabled_contexts(set())  # connected again
+    assert window.extension_host.cluster.list_contexts() == ["a", "b"]

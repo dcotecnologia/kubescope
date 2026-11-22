@@ -131,3 +131,13 @@ def test_the_contexts_are_the_names_of_the_kubeconfig(monkeypatch) -> None:
     monkeypatch.setattr(cluster, "list_contexts", lambda: (["a", "b"], "a"))
 
     assert ClusterBridge().list_contexts() == ["a", "b"]
+
+
+def test_a_context_the_person_disconnected_is_not_listed(monkeypatch) -> None:
+    monkeypatch.setattr(cluster, "list_contexts", lambda: (["a", "b", "c"], "a"))
+    off = {"b"}
+    bridge = ClusterBridge(lambda: off)
+
+    assert bridge.list_contexts() == ["a", "c"]
+    off.clear()  # connected again: it is asked each time
+    assert bridge.list_contexts() == ["a", "b", "c"]

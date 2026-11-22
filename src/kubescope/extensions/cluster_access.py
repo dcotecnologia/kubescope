@@ -24,6 +24,10 @@ from kubescope import cluster, writes
 class ClusterBridge:
     LOG_WINDOW_BYTES: int = cluster.LOG_WINDOW_BYTES
 
+    def __init__(self, disconnected: Callable[[], set[str]] = set) -> None:
+        # the contexts the person disconnected, asked when they are listed
+        self._disconnected = disconnected
+
     def get_workloads(
         self,
         context: str,
@@ -85,7 +89,11 @@ class ClusterBridge:
         return cluster.search_resources(context)
 
     def list_contexts(self) -> list[str]:
-        return cluster.list_contexts()[0]
+        """The contexts of the kubeconfig that are connected: one the person
+        disconnected is left out, as it is from the selector, so that an
+        extension does not read it."""
+        off = self._disconnected()
+        return [name for name in cluster.list_contexts()[0] if name not in off]
 
     def get_events(
         self, context: str, types: tuple[str, ...] = ("Warning",)

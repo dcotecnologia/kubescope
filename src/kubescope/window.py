@@ -1433,7 +1433,7 @@ class WorkloadWindow(QMainWindow):
         central = self.centralWidget()
         assert central is not None
         self.extension_host = Host(
-            cluster=ClusterBridge(),
+            cluster=ClusterBridge(lambda: self.settings.disabled_contexts),
             snapshot=lambda: self._screen_snapshot(),
             current_context=lambda: self._context() or None,
             write_mode=lambda: self.settings.write_mode,
