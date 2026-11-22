@@ -48,7 +48,8 @@ def newest_compatible(
     each tag, newest first, is read and one that needs a newer app is passed
     over. None when there is no tag, or none of the newest few works.
 
-    Without `manifest_of` it is the highest final tag, as `latest_tag` says.
+    Without `manifest_of` it is the highest final tag, as `latest_tag`
+    says.
     """
     if manifest_of is None:
         return latest_tag(names)
@@ -69,8 +70,8 @@ def recommended_versions(
     tags: Callable[[Repo], list[str]] | None,
     manifest_of: Callable[[Repo], bytes] | None = None,
 ) -> dict[str, str]:
-    """The latest versions of recommended extensions that are not installed, the
-    newest that works with this app."""
+    """The latest versions of recommended extensions that are not installed,
+    the newest that works with this app."""
     if tags is None:
         return {}
     found = {}
@@ -116,9 +117,9 @@ def find(
     """The updates there are.
 
     `tags` lists the tags of a repository; None means the network is not
-    to be used, and only the pinned ones are looked at. `manifest_of` reads
-    the manifest of a tag, so that a version that needs a newer app is not
-    offered, and an older one that works is.
+    to be used, and only the pinned ones are looked at. `manifest_of`
+    reads the manifest of a tag, so that a version that needs a newer
+    app is not offered, and an older one that works is.
     """
     found = []
     for one in installed:

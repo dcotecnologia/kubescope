@@ -187,8 +187,8 @@ def setup(tmp_path, monkeypatch):
 
 @pytest.fixture(autouse=True)
 def every_version_works(monkeypatch):
-    """The manifest of a tag is not asked of GitHub: any version works with
-    the app, unless a test says otherwise."""
+    """The manifest of a tag is not asked of GitHub: any version works with the
+    app, unless a test says otherwise."""
     monkeypatch.setattr(extensions_panel, "fetch_manifest", lambda repo: b"")
 
 

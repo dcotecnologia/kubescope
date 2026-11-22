@@ -106,8 +106,8 @@ def needs_newer_app(content: bytes) -> str:
 
 
 def _min_app(document: dict[str, object]) -> str:
-    """The oldest app the extension works with, refused when this app is
-    older, so that an update that would not work is not installed."""
+    """The oldest app the extension works with, refused when this app is older,
+    so that an update that would not work is not installed."""
     wanted = _text(document, "min_app", required=False)
     if not wanted:
         return ""
