@@ -4352,3 +4352,24 @@ def test_the_welcome_has_small_icons_to_follow_the_company(monkeypatch) -> None:
 
     assert [url.toString() for url in opened] == [one[1] for one in about.SOCIAL]
     window.close()
+
+
+def test_the_text_of_the_news_is_as_tall_as_its_width_needs(monkeypatch) -> None:
+    changelog = "## [9.9.9] - 2030-01-01\n\n### Added\n\n- " + "A long thing. " * 40
+    window, _opened = _welcome_window(monkeypatch, changelog + "\n")
+    window.resize(1100, 800)
+    window.show()
+    window.show_welcome()
+    page = _welcome_of(window)
+
+    page._fit_news()
+
+    news = page.news_text
+    assert news.minimumHeight() == news.heightForWidth(news.width()) > 0
+    window.settings.welcome_dismissed = False
+    window._close_welcome(False)
+    window.settings.last_seen_version = ""
+    monkeypatch.setattr(window_module, "read_changelog", lambda: None)
+    window.show_welcome()
+    _welcome_of(window)._fit_news()  # nothing to fit without news
+    window.close()
