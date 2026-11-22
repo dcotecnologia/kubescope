@@ -443,7 +443,7 @@
             "Language": "语言",
             "New theme...": "新建主题...",
             "Off by default: the window draws its own title bar in the top bar, which saves a row of space. Turn it on if moving or resizing the window misbehaves on your desktop.": "默认关闭:窗口在顶部栏中绘制自己的标题栏,可节省一行空间。如果在您的桌面上移动或调整窗口大小出现问题,请开启。",
-            "On by default: a page with what is useful to know, and what is new after an update, opens over the middle of the window. Turn it off to start straight on your clusters.": "默认开启：包含实用信息以及更新后新功能的页面会在窗口中央打开。关闭后将直接从你的集群开始。",
+            "On by default: a page with what is useful to know, and what is new after an update, opens over the middle of the window. Turn it off to start straight on your clusters; after an update it still opens, to tell what is new.": "默认开启：包含实用信息以及更新后新功能的页面会在窗口中央打开。关闭后将直接从你的集群开始。关闭后，更新之后仍会打开，以介绍新功能。",
             "On by default: a window or a list rises into place as it first shows. Turn it off to show everything at once.": "默认开启：窗口或列表首次显示时会渐渐升起到位。关闭后将立即显示全部内容。",
             "Open the log folder": "打开日志文件夹",
             "Open the themes folder": "打开主题文件夹",

@@ -7215,12 +7215,15 @@ class WorkloadWindow(QMainWindow):
     def show_welcome(self) -> None:
         """Greet the person on opening the app with a page over the middle of
         the window, unless they asked never to see it again; after an update it
-        says what is new."""
+        comes whatever they asked, and says what is new."""
         previous = self.settings.last_seen_version
+        updated = bool(previous) and previous != __version__
         self.settings.last_seen_version = __version__
         self._save_settings()
-        if self.settings.welcome_dismissed:
+        if self.settings.welcome_dismissed and not updated:
             return
+        if not updated:
+            previous = ""
         text = read_changelog()
         released = [
             one for one in parse_changelog(text or "") if one.name != "Unreleased"

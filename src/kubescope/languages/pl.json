@@ -443,7 +443,7 @@
             "Language": "Język",
             "New theme...": "Nowy motyw...",
             "Off by default: the window draws its own title bar in the top bar, which saves a row of space. Turn it on if moving or resizing the window misbehaves on your desktop.": "Domyślnie wyłączone: okno rysuje własny pasek tytułu w górnym pasku, co oszczędza jeden wiersz miejsca. Włącz, jeśli przesuwanie lub zmiana rozmiaru okna nie działa poprawnie na Twoim pulpicie.",
-            "On by default: a page with what is useful to know, and what is new after an update, opens over the middle of the window. Turn it off to start straight on your clusters.": "Domyślnie włączone: strona z tym, co warto wiedzieć, oraz nowościami po aktualizacji, otwiera się na środku okna. Wyłącz, aby zaczynać od razu od swoich klastrów.",
+            "On by default: a page with what is useful to know, and what is new after an update, opens over the middle of the window. Turn it off to start straight on your clusters; after an update it still opens, to tell what is new.": "Domyślnie włączone: strona z tym, co warto wiedzieć, oraz nowościami po aktualizacji, otwiera się na środku okna. Wyłącz, aby zaczynać od razu od swoich klastrów. Nawet wyłączona, po aktualizacji otwiera się, aby pokazać nowości.",
             "On by default: a window or a list rises into place as it first shows. Turn it off to show everything at once.": "Domyślnie włączone: okno lub lista płynnie wsuwa się na miejsce przy pierwszym wyświetleniu. Wyłącz, aby wszystko pokazywać od razu.",
             "Open the log folder": "Otwórz folder logów",
             "Open the themes folder": "Otwórz folder motywów",

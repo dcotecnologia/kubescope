@@ -714,7 +714,7 @@ class Ui_SettingsPage(object):
 #endif // QT_CONFIG(tooltip)
         self.welcomeCheck.setText(QCoreApplication.translate("SettingsPage", u"Show the welcome page when the app starts", None))
 #if QT_CONFIG(tooltip)
-        self.welcomeCheck.setToolTip(QCoreApplication.translate("SettingsPage", u"On by default: a page with what is useful to know, and what is new after an update, opens over the middle of the window. Turn it off to start straight on your clusters.", None))
+        self.welcomeCheck.setToolTip(QCoreApplication.translate("SettingsPage", u"On by default: a page with what is useful to know, and what is new after an update, opens over the middle of the window. Turn it off to start straight on your clusters; after an update it still opens, to tell what is new.", None))
 #endif // QT_CONFIG(tooltip)
         self.appearanceHeading.setText(QCoreApplication.translate("SettingsPage", u"APPEARANCE", None))
         self.themeLabel.setText(QCoreApplication.translate("SettingsPage", u"Theme", None))

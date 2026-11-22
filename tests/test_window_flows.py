@@ -4304,3 +4304,34 @@ def test_never_showing_it_again_from_the_page_unchecks_the_setting(monkeypatch) 
 
     assert not window.settings_ui.welcomeCheck.isChecked()
     window.close()
+
+
+def test_an_update_shows_the_welcome_even_when_it_was_turned_off(monkeypatch) -> None:
+    changelog = "## [9.9.9] - 2030-01-01\n\n### Added\n\n- The latest thing\n"
+    window, _opened = _welcome_window(monkeypatch, changelog)
+    monkeypatch.setattr(window_module, "__version__", "9.9.9")
+    window.settings.welcome_dismissed = True
+
+    window.settings.last_seen_version = "9.9.9"  # the same version: still off
+    window.show_welcome()
+    assert window._welcome is None
+
+    window.settings.last_seen_version = "1.0.0"  # updated: it comes
+    window.show_welcome()
+    page = _welcome_of(window)
+    assert page.title.text() == "KubeScope 9.9.9"
+    assert "The latest thing" in page.news_text.text()
+    assert window.settings.welcome_dismissed is True  # the choice is not undone
+    window.close()
+
+
+def test_the_same_version_is_not_told_as_an_update(monkeypatch) -> None:
+    window, _opened = _welcome_window(monkeypatch, "## [9.9.9]\n\n### Added\n\n- N\n")
+    window.settings.last_seen_version = window_module.__version__
+
+    window.show_welcome()
+
+    page = _welcome_of(window)
+    assert page.title.text() == "Welcome to KubeScope"
+    assert not [x for x in page.findChildren(QLabel) if "Updated from" in x.text()]
+    window.close()
