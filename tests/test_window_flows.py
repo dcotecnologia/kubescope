@@ -45,6 +45,7 @@ from PySide6.QtWidgets import (
     QApplication,
     QComboBox,
     QDialog,
+    QLabel,
     QMenu,
     QMessageBox,
     QPushButton,
@@ -3420,17 +3421,36 @@ def test_the_news_of_the_welcome_open_the_full_changelog(monkeypatch) -> None:
     window.close()
 
 
-def test_a_first_run_has_no_news_and_a_dismissed_welcome_still_notes_the_version(
+def test_a_first_run_shows_the_latest_release_and_a_dismissed_one_notes_the_version(
     monkeypatch,
 ) -> None:
-    window, _opened = _welcome_window(monkeypatch, "## [9.9.9]\n\n### Added\n\n- N\n")
+    changelog = (
+        "## [Unreleased]\n\n### Added\n\n- Not out yet\n\n"
+        "## [9.9.9] - 2030-01-01\n\n### Added\n\n- The latest thing\n\n"
+        "## [1.0.0] - 2020-01-01\n\n### Added\n\n- Old thing\n"
+    )
+    window, _opened = _welcome_window(monkeypatch, changelog)
     window.show_welcome()
-    assert not hasattr(window._welcome, "news_text")  # nothing to say to a new person
+    page = _welcome_of(window)
+
+    text = page.news_text.text()  # a card with the newest release, nothing else
+    assert "The latest thing" in text and "Old thing" not in text
+    assert "Not out yet" not in text
+    assert page.title.text() == "Welcome to KubeScope"  # it is not an update
+    assert not [
+        label for label in page.findChildren(QLabel) if "Updated from" in label.text()
+    ]
 
     window.settings.welcome_dismissed = True
     window.settings.last_seen_version = "0.1.0"
     window.show_welcome()
     assert window.settings.last_seen_version == window_module.__version__
+
+    window.settings.welcome_dismissed = False
+    window.settings.last_seen_version = ""
+    monkeypatch.setattr(window_module, "read_changelog", lambda: None)
+    window.show_welcome()  # no changelog in this installation: no card
+    assert not hasattr(_welcome_of(window), "news_text")
     window.close()
 
 
