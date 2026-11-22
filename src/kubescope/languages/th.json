@@ -443,7 +443,7 @@
             "Language": "ภาษา",
             "New theme...": "ธีมใหม่...",
             "Off by default: the window draws its own title bar in the top bar, which saves a row of space. Turn it on if moving or resizing the window misbehaves on your desktop.": "ปิดไว้เป็นค่าเริ่มต้น: หน้าต่างจะวาดแถบชื่อเรื่องของตัวเองในแถบด้านบน ซึ่งช่วยประหยัดพื้นที่หนึ่งแถว เปิดใช้หากการย้ายหรือปรับขนาดหน้าต่างทำงานผิดปกติบนเดสก์ท็อปของคุณ",
-            "On by default: a page with what is useful to know, and what is new after an update, opens over the middle of the window. Turn it off to start straight on your clusters.": "เปิดไว้เป็นค่าเริ่มต้น: หน้าที่มีสิ่งที่ควรรู้ และสิ่งใหม่หลังการอัปเดต จะเปิดที่กลางหน้าต่าง ปิดเพื่อเริ่มที่คลัสเตอร์ของคุณทันที",
+            "On by default: a page with what is useful to know, and what is new after an update, opens over the middle of the window. Turn it off to start straight on your clusters; after an update it still opens, to tell what is new.": "เปิดไว้เป็นค่าเริ่มต้น: หน้าที่มีสิ่งที่ควรรู้ และสิ่งใหม่หลังการอัปเดต จะเปิดที่กลางหน้าต่าง ปิดเพื่อเริ่มที่คลัสเตอร์ของคุณทันที แม้จะปิดไว้ หลังการอัปเดตหน้านี้ก็ยังเปิดเพื่อบอกสิ่งใหม่",
             "On by default: a window or a list rises into place as it first shows. Turn it off to show everything at once.": "เปิดไว้เป็นค่าเริ่มต้น: หน้าต่างหรือรายการจะเลื่อนขึ้นสู่ตำแหน่งเมื่อแสดงครั้งแรก ปิดตัวเลือกนี้เพื่อแสดงทุกอย่างทันที",
             "Open the log folder": "เปิดโฟลเดอร์บันทึก",
             "Open the themes folder": "เปิดโฟลเดอร์ธีม",

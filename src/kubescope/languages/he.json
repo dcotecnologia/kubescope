@@ -443,7 +443,7 @@
             "Language": "שפה",
             "New theme...": "ערכת נושא חדשה...",
             "Off by default: the window draws its own title bar in the top bar, which saves a row of space. Turn it on if moving or resizing the window misbehaves on your desktop.": "כבוי כברירת מחדל: החלון מצייר את שורת הכותרת שלו בסרגל העליון, וכך חוסך שורה של מקום. הפעילו זאת אם הזזה או שינוי גודל של החלון אינם פועלים כראוי בשולחן העבודה שלכם.",
-            "On by default: a page with what is useful to know, and what is new after an update, opens over the middle of the window. Turn it off to start straight on your clusters.": "מופעל כברירת מחדל: דף עם מה שכדאי לדעת, ומה חדש אחרי עדכון, נפתח במרכז החלון. כבו כדי להתחיל ישר באשכולות שלכם.",
+            "On by default: a page with what is useful to know, and what is new after an update, opens over the middle of the window. Turn it off to start straight on your clusters; after an update it still opens, to tell what is new.": "מופעל כברירת מחדל: דף עם מה שכדאי לדעת, ומה חדש אחרי עדכון, נפתח במרכז החלון. כבו כדי להתחיל ישר באשכולות שלכם. גם כשהיא כבויה, אחרי עדכון היא נפתחת כדי לספר מה חדש.",
             "On by default: a window or a list rises into place as it first shows. Turn it off to show everything at once.": "מופעל כברירת מחדל: חלון או רשימה עולים למקומם עם הופעתם הראשונה. כבו כדי להציג הכול בבת אחת.",
             "Open the log folder": "פתח את תיקיית היומנים",
             "Open the themes folder": "פתח את תיקיית ערכות הנושא",

@@ -443,7 +443,7 @@
             "Language": "Dil",
             "New theme...": "Yeni tema...",
             "Off by default: the window draws its own title bar in the top bar, which saves a row of space. Turn it on if moving or resizing the window misbehaves on your desktop.": "Varsayılan olarak kapalı: pencere kendi başlık çubuğunu üst çubukta çizer ve bir satırlık yer kazandırır. Masaüstünüzde pencereyi taşımak veya yeniden boyutlandırmak düzgün çalışmıyorsa açın.",
-            "On by default: a page with what is useful to know, and what is new after an update, opens over the middle of the window. Turn it off to start straight on your clusters.": "Varsayılan olarak açık: bilinmesi yararlı olanları ve güncellemeden sonra yenilikleri içeren bir sayfa pencerenin ortasında açılır. Doğrudan kümelerinizle başlamak için kapatın.",
+            "On by default: a page with what is useful to know, and what is new after an update, opens over the middle of the window. Turn it off to start straight on your clusters; after an update it still opens, to tell what is new.": "Varsayılan olarak açık: bilinmesi yararlı olanları ve güncellemeden sonra yenilikleri içeren bir sayfa pencerenin ortasında açılır. Doğrudan kümelerinizle başlamak için kapatın. Kapalı olsa bile güncellemeden sonra yenilikleri anlatmak için açılır.",
             "On by default: a window or a list rises into place as it first shows. Turn it off to show everything at once.": "Varsayılan olarak açık: bir pencere veya liste ilk göründüğünde yerine yükselir. Her şeyi bir anda göstermek için kapatın.",
             "Open the log folder": "Günlük klasörünü aç",
             "Open the themes folder": "Tema klasörünü aç",
