@@ -62,6 +62,7 @@ def test_window_ui_delegates_every_extension_callback() -> None:
         lambda *args: None,
         lambda *args: False,
         lambda owner, hidden: calls.append(("menu", owner, hidden)),
+        lambda: (1, 2, 3, 4),
     )
 
     ui.show_message("warning", "Title", "Text")
@@ -69,6 +70,7 @@ def test_window_ui_delegates_every_extension_callback() -> None:
     ui.show_settings("extensions")
     ui.reserve_corner("tool", 24)
     ui.hide_side_menu("tool", True)
+    assert ui.content_area() == (1, 2, 3, 4)
     assert ui.themed("#fff", True) == "#fff:True"
     assert ui.pick_item("Pick", "One", ["a"]) == ("chosen", True)
     ui.show_json("Document", {"name": "api"})
@@ -326,6 +328,9 @@ class FakeUi:
 
     def show_settings(self, section="") -> None:
         self.calls.append(("settings", section))
+
+    def content_area(self):
+        return (0, 0, 0, 0)
 
     def hide_side_menu(self, owner, hidden) -> None:
         self.calls.append(("menu", owner, hidden))

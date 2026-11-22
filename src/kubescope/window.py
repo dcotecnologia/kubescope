@@ -1457,6 +1457,7 @@ class WorkloadWindow(QMainWindow):
                     title, message, click
                 ),
                 lambda owner, hidden: self._hide_side_menu_for(owner, hidden),
+                lambda: self._content_area(),
             ),
             begin_forward=lambda *args: self._begin_forward(*args),
             commands=self.commands,
@@ -5479,6 +5480,12 @@ class WorkloadWindow(QMainWindow):
                 continue
             self.ui.topLayout.removeWidget(button)
             button.deleteLater()
+
+    def _content_area(self) -> tuple[int, int, int, int]:
+        """Where the pages are in the central widget: between the top bar and
+        the footer, the side menu included."""
+        area = self.ui.shell.geometry()
+        return area.x(), area.y(), area.width(), area.height()
 
     def _hide_side_menu_for(self, owner: str, hidden: bool) -> None:
         """Hide the side menu while any extension asks it; what the person
