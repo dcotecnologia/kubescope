@@ -208,6 +208,11 @@ class Ui_SettingsPage(object):
 
         self.generalForm.setWidget(9, QFormLayout.ItemRole.SpanningRole, self.animationsCheck)
 
+        self.welcomeCheck = QCheckBox(self.generalCard)
+        self.welcomeCheck.setObjectName(u"welcomeCheck")
+
+        self.generalForm.setWidget(10, QFormLayout.ItemRole.SpanningRole, self.welcomeCheck)
+
 
         self.generalCardLayout.addLayout(self.generalForm)
 
@@ -706,6 +711,10 @@ class Ui_SettingsPage(object):
         self.animationsCheck.setText(QCoreApplication.translate("SettingsPage", u"Animate windows and lists as they open", None))
 #if QT_CONFIG(tooltip)
         self.animationsCheck.setToolTip(QCoreApplication.translate("SettingsPage", u"On by default: a window or a list rises into place as it first shows. Turn it off to show everything at once.", None))
+#endif // QT_CONFIG(tooltip)
+        self.welcomeCheck.setText(QCoreApplication.translate("SettingsPage", u"Show the welcome page when the app starts", None))
+#if QT_CONFIG(tooltip)
+        self.welcomeCheck.setToolTip(QCoreApplication.translate("SettingsPage", u"On by default: a page with what is useful to know, and what is new after an update, opens over the middle of the window. Turn it off to start straight on your clusters.", None))
 #endif // QT_CONFIG(tooltip)
         self.appearanceHeading.setText(QCoreApplication.translate("SettingsPage", u"APPEARANCE", None))
         self.themeLabel.setText(QCoreApplication.translate("SettingsPage", u"Theme", None))

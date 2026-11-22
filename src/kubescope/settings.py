@@ -41,6 +41,7 @@ DEFAULTS: dict[str, Any] = {
     "run_in_background": True,
     "system_title_bar": False,
     "welcome_dismissed": False,
+    "last_seen_version": "",
     "window_geometry": "",
     "kubeconfig_files": [],
     "sign_in_commands": {},
@@ -598,6 +599,17 @@ class Settings:
     @welcome_dismissed.setter
     def welcome_dismissed(self, value: bool) -> None:
         self._data["welcome_dismissed"] = bool(value)
+
+    @property
+    def last_seen_version(self) -> str:
+        """The version of the app that last showed the welcome page; empty when
+        none did, which is also what an update is told from."""
+        value = self._data["last_seen_version"]
+        return value if isinstance(value, str) and len(value) <= 40 else ""
+
+    @last_seen_version.setter
+    def last_seen_version(self, value: str) -> None:
+        self._data["last_seen_version"] = str(value)
 
     @property
     def last_context(self) -> str | None:

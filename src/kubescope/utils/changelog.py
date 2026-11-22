@@ -54,6 +54,30 @@ def parse_changelog(text: str) -> list[Version]:
     return versions
 
 
+def _number(name: str) -> tuple[int, ...] | None:
+    """The numbers of a version such as 2.3.1, or None when it is not one."""
+    parts = name.removeprefix("v").split(".")
+    return (
+        tuple(int(part) for part in parts) if all(p.isdigit() for p in parts) else None
+    )
+
+
+def news_since(versions: list[Version], previous: str, current: str) -> list[Version]:
+    """The released versions after `previous` up to `current`, newest first:
+    what is new to someone who updated from one to the other.
+
+    Nothing when there was no `previous` or it is not a version.
+    """
+    before, now = _number(previous), _number(current)
+    if before is None or now is None:
+        return []
+    return [
+        one
+        for one in versions
+        if (number := _number(one.name)) is not None and before < number <= now
+    ]
+
+
 def inline_html(text: str, muted: str, code: str) -> str:
     """The inline Markdown of an item (bold, code, links and the author at the
     end) as rich text.

@@ -9,6 +9,10 @@ All notable changes to this project will be documented in this file. The format 
 - An extension is told when the Settings are opened or left (the event `SETTINGS_SHOWN`), so a panel over the pages can step aside by @danilogco
 - An extension can ask where the pages are (`Ui.content_area`), to fill them and leave the top bar and the footer as they are, and hide the side menu while it needs the whole width (`Ui.hide_side_menu`); the choice of the person is kept and comes back when the extension lets go or is unloaded by @danilogco
 
+### Changed
+
+- The welcome message is now a page over the middle of the app, between the top bar and the footer, with what is useful to know, the links to contribute and, after an update, what is new since the version you had; **Settings → General** has an option to show it or not when the app starts, and the page can turn it off for good by @danilogco
+
 ## [2.3.1] - 2026-11-21
 
 ### Fixed
