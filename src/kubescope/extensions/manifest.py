@@ -90,6 +90,21 @@ def _numbers(version: str) -> tuple[int, ...] | None:
     return tuple(int(part) for part in version.split(".")) if found else None
 
 
+def needs_newer_app(content: bytes) -> str:
+    """The `min_app` of a manifest when this app is older than it, and an empty
+    text when the app is enough or the manifest says nothing; a manifest that
+    cannot be read is left to the install, which refuses it with the reason."""
+    try:
+        document = tomllib.loads(content.decode("utf-8"))
+    except UnicodeDecodeError, tomllib.TOMLDecodeError:
+        return ""
+    wanted = document.get("min_app")
+    if not isinstance(wanted, str):
+        return ""
+    needed, have = _numbers(wanted), _numbers(__version__)
+    return wanted if needed and have and have < needed else ""
+
+
 def _min_app(document: dict[str, object]) -> str:
     """The oldest app the extension works with, refused when this app is
     older, so that an update that would not work is not installed."""

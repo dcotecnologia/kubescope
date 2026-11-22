@@ -19,8 +19,8 @@ def bundle(target: Path = TARGET) -> int:
     """Write the copies; the number of extensions that have one."""
     sys.path.insert(0, str(ROOT / "src"))  # the app, from the sources
     from kubescope.extensions.defaults import DEFAULTS
-    from kubescope.extensions.github import Repo, download, list_tags
-    from kubescope.extensions.updates import latest_tag
+    from kubescope.extensions.github import Repo, download, fetch_manifest, list_tags
+    from kubescope.extensions.updates import newest_compatible
 
     target.mkdir(parents=True, exist_ok=True)
     done = 0
@@ -28,7 +28,9 @@ def bundle(target: Path = TARGET) -> int:
         if not one.automatic:
             continue
         try:
-            tag = one.repo.ref or latest_tag(list_tags(one.repo))
+            tag = one.repo.ref or newest_compatible(
+                list_tags(one.repo), one.repo, fetch_manifest
+            )
             if tag is None:
                 raise ValueError(f"{one.repo.label} has no release yet")
             repo = Repo(one.repo.owner, one.repo.name, tag)

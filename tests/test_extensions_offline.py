@@ -97,6 +97,7 @@ def test_the_build_keeps_the_latest_release_of_each_extension_installed_by_defau
         "down": ["v1.0.0"],
     }
     monkeypatch.setattr(github, "list_tags", lambda repo: tags[repo.name])
+    monkeypatch.setattr(github, "fetch_manifest", lambda repo: b"")
 
     def fetch(repo):
         if repo.name == "down":
