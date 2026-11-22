@@ -7222,7 +7222,11 @@ class WorkloadWindow(QMainWindow):
         if self.settings.welcome_dismissed:
             return
         text = read_changelog()
-        news = news_since(parse_changelog(text), previous, __version__) if text else []
+        released = [
+            one for one in parse_changelog(text or "") if one.name != "Unreleased"
+        ]
+        # what changed since the version they had, or else the latest release
+        news = news_since(released, previous, __version__) or released[:1]
         central = self.centralWidget()
         assert central is not None
         page = WelcomePage(central, str(LOGO_PATH), __version__, news, previous)
