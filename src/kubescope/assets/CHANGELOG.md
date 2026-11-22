@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+### Changed
+
+- The welcome message is now a page over the middle of the app, between the top bar and the footer, with what is useful to know, the links to contribute and, after an update, what is new since the version you had; **Settings → General** has an option to show it or not when the app starts, and the page can turn it off for good by @danilogco
+
 ## [2.3.1] - 2026-11-21
 
 ### Fixed

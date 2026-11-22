@@ -691,3 +691,18 @@ def test_what_the_extension_of_the_search_already_has_is_not_replaced(tmp_path) 
     )
 
     assert Settings(path).shortcuts["kubescope.search.open"] == "Ctrl+Space"
+
+
+def test_the_last_seen_version_defaults_to_none_and_persists(tmp_path) -> None:
+    path = tmp_path / "settings.json"
+    settings = Settings(path)
+    assert settings.last_seen_version == ""
+
+    settings.last_seen_version = "2.3.1"
+    settings.save()
+    assert Settings(path).last_seen_version == "2.3.1"
+
+    path.write_text('{"last_seen_version": 3}', encoding="utf-8")
+    assert Settings(path).last_seen_version == ""
+    path.write_text('{"last_seen_version": "' + "9" * 50 + '"}', encoding="utf-8")
+    assert Settings(path).last_seen_version == ""

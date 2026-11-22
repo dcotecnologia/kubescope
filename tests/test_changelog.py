@@ -210,3 +210,19 @@ def test_the_bundle_ships_the_language_files() -> None:
     )
 
     assert '"kubescope/languages"' in spec and '"languages").glob("*.json")' in spec
+
+
+def test_the_news_are_the_versions_between_the_one_before_and_the_one_in_use() -> None:
+    versions = [
+        changelog.Version(name)
+        for name in ("Unreleased", "2.4.0", "2.3.1", "2.3.0", "weird")
+    ]
+
+    def names(previous: str, current: str) -> list[str]:
+        return [v.name for v in changelog.news_since(versions, previous, current)]
+
+    assert names("2.3.0", "2.4.0") == ["2.4.0", "2.3.1"]
+    assert names("2.3.1", "2.3.1") == []  # not updated
+    assert names("v2.3.0", "2.3.1") == ["2.3.1"]
+    assert names("", "2.4.0") == []  # a new installation has no news
+    assert names("2.3.0", "dev") == []

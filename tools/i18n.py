@@ -37,6 +37,7 @@ SOURCES = [
             "dialogs/changelog_dialog.py",
             "dialogs/notices_dialog.py",
             "dialogs/crash_dialog.py",
+            "views/welcome_page.py",
             "dialogs/update_dialog.py",
         )
     ),
