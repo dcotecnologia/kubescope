@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+## [2.4.1] - 2026-11-22
+
+### Fixed
+
+- Set Ctrl+O, Ctrl+P, Ctrl+D, Ctrl+S and Ctrl+C as the default shortcuts for Overview, Pods, Deployments, Services and Settings by @danilogco
+- Let the shortcuts table fill the remaining height of the Settings page by @danilogco
+
 ## [2.4.0] - 2026-11-22
 
 ### Added
@@ -691,7 +698,8 @@ The first release.
 
 - Pod logs and resource details are still never written to disk by the app on its own. **Save** is the only exception, and it writes only to the file the user chooses. SECURITY.md says so by @danilogco
 
-[Unreleased]: https://github.com/dcotecnologia/kubescope/compare/v2.4.0...HEAD
+[Unreleased]: https://github.com/dcotecnologia/kubescope/compare/v2.4.1...HEAD
+[2.4.1]: https://github.com/dcotecnologia/kubescope/compare/v2.4.0...v2.4.1
 [2.4.0]: https://github.com/dcotecnologia/kubescope/compare/v2.3.1...v2.4.0
 [2.3.1]: https://github.com/dcotecnologia/kubescope/compare/v2.3.0...v2.3.1
 [2.3.0]: https://github.com/dcotecnologia/kubescope/compare/v2.2.0...v2.3.0
