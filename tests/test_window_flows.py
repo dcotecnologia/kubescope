@@ -42,7 +42,6 @@ from PySide6.QtGui import (
 )
 from PySide6.QtTest import QTest
 from PySide6.QtWidgets import (
-    QAbstractButton,
     QApplication,
     QComboBox,
     QDialog,
@@ -56,8 +55,8 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from kubescope import about, theme
 from kubescope import cluster as cluster_module
-from kubescope import theme
 from kubescope import window as window_module
 from kubescope.cluster import ClusterError, LoginAction
 from kubescope.settings import Settings
@@ -3304,98 +3303,134 @@ def test_open_details_and_logs_tabs_move_and_close_like_the_pinned_ones(
     window.close()
 
 
-def _welcome_window(monkeypatch, pressed: str | None):
-    """A window whose welcome box is answered by pressing the button
-    `pressed`."""
+def _welcome_window(monkeypatch, changelog: str | None = None):
+    """A window that has not dismissed the welcome page, with the changelog it
+    reads and the links it opens kept."""
     window = _ready_window(monkeypatch)
     window.settings.welcome_dismissed = False
-    shown = []
+    window.settings.last_seen_version = ""
     opened = []
-
-    class FakeBox(QMessageBox):
-        def exec(self) -> int:
-            shown.append(self.text())
-            buttons = {b.text(): b for b in self.buttons()}
-            self._pressed = buttons.get(pressed or "")
-            return 0
-
-        def clickedButton(self) -> QAbstractButton:
-            return cast(QAbstractButton, self._pressed)
-
-    monkeypatch.setattr(window_module, "QMessageBox", FakeBox)
+    monkeypatch.setattr(window_module, "read_changelog", lambda: changelog)
     monkeypatch.setattr(
         window_module.QDesktopServices, "openUrl", lambda url: opened.append(url)
     )
-    return window, shown, opened
+    return window, opened
+
+
+def _welcome_of(window):
+    page = window._welcome
+    assert page is not None
+    return page
+
+
+def _button(page, text: str):
+    return next(b for b in page.findChildren(QPushButton) if b.text() == text)
+
+
+def test_the_welcome_is_a_page_over_the_middle_of_the_app(monkeypatch) -> None:
+    window, _opened = _welcome_window(monkeypatch)
+    window.resize(1100, 800)
+    window.show()
+
+    window.show_welcome()
+    page = _welcome_of(window)
+
+    assert page is not None and page.isVisibleTo(window)
+    assert page.geometry() == window.ui.shell.geometry()  # not the top bar or footer
+    assert page.title.text() == "Welcome to KubeScope"
+    assert window.settings.last_seen_version == window_module.__version__
+
+    window.resize(1200, 850)  # it follows the window
+    assert page.geometry() == window.ui.shell.geometry()
+    window.close()
 
 
 def test_the_welcome_invites_to_contribute_and_opens_github(monkeypatch) -> None:
-    window, shown, opened = _welcome_window(monkeypatch, "Open on GitHub")
-
+    window, opened = _welcome_window(monkeypatch)
     window.show_welcome()
 
-    assert shown == ["Welcome to KubeScope"]
-    assert [url.toString() for url in opened] == [window_module.PROJECT_URL]
-    assert window.settings.welcome_dismissed is False  # it comes back next time
-    window.close()
+    _button(window._welcome, "Open on GitHub").click()
+    _button(window._welcome, "Sponsor on GitHub").click()
 
-
-def test_the_four_buttons_of_the_welcome_look_alike(monkeypatch) -> None:
-    window, _shown, _opened = _welcome_window(monkeypatch, "Maybe later")
-    variants: list[tuple[str, object]] = []
-
-    class SeeingBox(QMessageBox):
-        def exec(self) -> int:
-            variants.extend((b.text(), b.property("variant")) for b in self.buttons())
-            return 0
-
-        def clickedButton(self) -> QAbstractButton:
-            return cast(QAbstractButton, None)
-
-    monkeypatch.setattr(window_module, "QMessageBox", SeeingBox)
-
-    window.show_welcome()
-
-    assert [text for text, _ in variants] == [
-        "Open on GitHub",
-        "Sponsor on GitHub",
-        "Maybe later",
-        "Don't show again",
+    assert [url.toString() for url in opened] == [
+        window_module.PROJECT_URL,
+        about.SPONSOR_URL,
     ]
-    assert {variant for _, variant in variants} == {"secondary"}
+    assert window.settings.welcome_dismissed is False
     window.close()
 
 
-def test_the_welcome_can_open_the_sponsor_page(monkeypatch) -> None:
-    window, _shown, opened = _welcome_window(monkeypatch, "Sponsor on GitHub")
-
+def test_starting_closes_the_welcome_but_it_comes_back_next_time(monkeypatch) -> None:
+    window, _opened = _welcome_window(monkeypatch)
     window.show_welcome()
+    page = _welcome_of(window)
 
-    assert [url.toString() for url in opened] == [window_module.SPONSOR_URL]
+    page.start.click()
+
+    assert window._welcome is None and page.isHidden()
     assert window.settings.welcome_dismissed is False
     window.close()
 
 
 def test_the_welcome_can_be_dismissed_for_good(monkeypatch) -> None:
-    window, shown, _opened = _welcome_window(monkeypatch, "Don't show again")
-
+    window, _opened = _welcome_window(monkeypatch)
     window.show_welcome()
-    assert window.settings.welcome_dismissed is True
-    window.show_welcome()  # dismissed: no second box
+    _welcome_of(window).never.setChecked(True)
 
-    assert len(shown) == 1
+    _welcome_of(window).start.click()
+    assert window.settings.welcome_dismissed is True
+    window.show_welcome()  # dismissed: no second page
+
+    assert window._welcome is None
     window.close()
 
 
-def test_maybe_later_closes_the_welcome_but_keeps_it_for_next_time(
-    monkeypatch,
-) -> None:
-    window, shown, opened = _welcome_window(monkeypatch, "Maybe later")
+def test_after_an_update_the_welcome_says_what_is_new(monkeypatch) -> None:
+    changelog = (
+        "# Changelog\n\n## [Unreleased]\n\n## [9.9.9] - 2030-01-01\n\n"
+        "### Added\n\n- A brand new thing by @someone\n\n"
+        "## [1.0.0] - 2020-01-01\n\n### Added\n\n- Old thing\n"
+    )
+    window, _opened = _welcome_window(monkeypatch, changelog)
+    monkeypatch.setattr(window_module, "__version__", "9.9.9")
+    window.settings.last_seen_version = "1.0.0"
 
     window.show_welcome()
+    page = _welcome_of(window)
 
-    assert len(shown) == 1 and not opened
-    assert window.settings.welcome_dismissed is False
+    assert page.title.text() == "KubeScope 9.9.9"
+    assert "A brand new thing" in page.news_text.text()
+    assert "Old thing" not in page.news_text.text()
+    assert window.settings.last_seen_version == "9.9.9"
+    window.close()
+
+
+def test_the_news_of_the_welcome_open_the_full_changelog(monkeypatch) -> None:
+    changelog = "## [9.9.9] - 2030-01-01\n\n### Added\n\n- New\n"
+    window, _opened = _welcome_window(monkeypatch, changelog)
+    monkeypatch.setattr(window_module, "__version__", "9.9.9")
+    window.settings.last_seen_version = "1.0.0"
+    shown = []
+    monkeypatch.setattr(window, "_show_changelog", lambda: shown.append(True))
+    window.show_welcome()
+
+    _button(window._welcome, "Full changelog").click()
+
+    assert shown == [True]
+    window.close()
+
+
+def test_a_first_run_has_no_news_and_a_dismissed_welcome_still_notes_the_version(
+    monkeypatch,
+) -> None:
+    window, _opened = _welcome_window(monkeypatch, "## [9.9.9]\n\n### Added\n\n- N\n")
+    window.show_welcome()
+    assert not hasattr(window._welcome, "news_text")  # nothing to say to a new person
+
+    window.settings.welcome_dismissed = True
+    window.settings.last_seen_version = "0.1.0"
+    window.show_welcome()
+    assert window.settings.last_seen_version == window_module.__version__
     window.close()
 
 
@@ -4216,4 +4251,36 @@ def test_an_addon_with_a_newer_version_shows_an_icon_in_the_latest_column(
             assert item.toolTip().endswith("v2")
     assert icons == {"vpc-cni": True, "kube-proxy": False}
     assert window.table.columnCount() == 8
+    window.close()
+
+
+def test_the_welcome_page_at_startup_is_a_setting(monkeypatch) -> None:
+    window, _opened = _welcome_window(monkeypatch)
+    window._load_settings_form()
+    form = window.settings_ui
+    assert form.welcomeCheck.isChecked()  # on by default
+
+    form.welcomeCheck.setChecked(False)
+    window._save_preferences()
+    assert window.settings.welcome_dismissed is True
+    window.show_welcome()
+    assert window._welcome is None
+
+    window._load_settings_form()
+    assert not form.welcomeCheck.isChecked()
+    form.welcomeCheck.setChecked(True)
+    window._save_preferences()
+    assert window.settings.welcome_dismissed is False
+    window.close()
+
+
+def test_never_showing_it_again_from_the_page_unchecks_the_setting(monkeypatch) -> None:
+    window, _opened = _welcome_window(monkeypatch)
+    window.show_welcome()
+    _welcome_of(window).never.setChecked(True)
+    _welcome_of(window).start.click()
+
+    window._load_settings_form()
+
+    assert not window.settings_ui.welcomeCheck.isChecked()
     window.close()

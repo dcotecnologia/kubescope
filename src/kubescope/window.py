@@ -56,6 +56,7 @@ from PySide6.QtCore import (
     QPoint,
     QPointF,
     QPropertyAnimation,
+    QRect,
     QRectF,
     QSize,
     Qt,
@@ -118,7 +119,6 @@ from kubescope.about import (
     COMPANY_URL,
     LICENSE_URL,
     PROJECT_URL,
-    SPONSOR_URL,
     __version__,
 )
 from kubescope.cloud_addons import AKS_KIND, GKE_KIND, aks_cluster
@@ -217,6 +217,7 @@ from kubescope.ui.ui_settings_page import Ui_SettingsPage
 from kubescope.ui.ui_viewer_page import Ui_ViewerPage
 from kubescope.ui.ui_workloads_overview_page import Ui_WorkloadsOverviewPage
 from kubescope.utils import shortcuts
+from kubescope.utils.changelog import news_since, parse_changelog, read_changelog
 from kubescope.utils.diagnostics import configure_logging, log_file
 from kubescope.utils.errors import (
     describe_error,
@@ -254,6 +255,7 @@ from kubescope.views.plugins_catalog import PluginsCatalog
 from kubescope.views.search_bar import compile_query, switch_button
 from kubescope.views.sidebar_resizer import SidebarResizer
 from kubescope.views.sidebar_toggle import SidebarToggle
+from kubescope.views.welcome_page import Overlay, WelcomePage
 from kubescope.views.widgets import TabScrollArea
 from kubescope.views.window_frame import WindowFrame
 from kubescope.writes import (
@@ -1423,6 +1425,7 @@ class WorkloadWindow(QMainWindow):
         self._corner_owners: dict[str, int] = {}  # pixels each one keeps clear
         self._menu_hiders: set[str] = set()  # the extensions that hide the side menu
         self._hiding_menu = False  # the menu moves for an extension, not the person
+        self._welcome: WelcomePage | None = None  # the page of the first minutes
         self._top_bar_buttons: dict[str, list[QWidget]] = {}  # by extension
         self._corner_margins = {
             layout: layout.contentsMargins()
@@ -6666,6 +6669,7 @@ class WorkloadWindow(QMainWindow):
         form.backgroundCheck.setChecked(self.settings.run_in_background)
         form.titleBarCheck.setChecked(self.settings.system_title_bar)
         form.animationsCheck.setChecked(self.settings.animations)
+        form.welcomeCheck.setChecked(not self.settings.welcome_dismissed)
         form.debugHint.setText(
             self.tr(
                 "Off by default. When on, KubeScope writes what it does, "
@@ -7021,6 +7025,7 @@ class WorkloadWindow(QMainWindow):
             self.check_updates()
         self.settings.run_in_background = form.backgroundCheck.isChecked()
         self.settings.animations = form.animationsCheck.isChecked()
+        self.settings.welcome_dismissed = not form.welcomeCheck.isChecked()
         motion.ENABLED = self.settings.animations
         self._sync_tray()
         self.settings.system_title_bar = form.titleBarCheck.isChecked()
@@ -7208,42 +7213,40 @@ class WorkloadWindow(QMainWindow):
         self.error_banner.dismiss()
 
     def show_welcome(self) -> None:
-        """Greet the person on opening the app and invite them to contribute,
-        unless they asked never to see this again."""
+        """Greet the person on opening the app with a page over the middle of
+        the window, unless they asked never to see it again; after an update it
+        says what is new."""
+        previous = self.settings.last_seen_version
+        self.settings.last_seen_version = __version__
+        self._save_settings()
         if self.settings.welcome_dismissed:
             return
-        box = QMessageBox(self)
-        box.setIconPixmap(QPixmap(str(LOGO_PATH)).scaledToWidth(56))
-        box.setWindowTitle(self.tr("Welcome to KubeScope"))
-        box.setText(self.tr("Welcome to KubeScope"))
-        box.setInformativeText(
-            self.tr(
-                "KubeScope is free and open source software. If it helps you, "
-                "please consider contributing: star the project on GitHub, report "
-                "a problem, suggest an idea, translate it into your language, send "
-                "a pull request or become a sponsor."
-            )
-        )
-        github = box.addButton(
-            self.tr("Open on GitHub"), QMessageBox.ButtonRole.AcceptRole
-        )
-        sponsor = box.addButton(
-            self.tr("Sponsor on GitHub"), QMessageBox.ButtonRole.AcceptRole
-        )
-        box.addButton(self.tr("Maybe later"), QMessageBox.ButtonRole.RejectRole)
-        never = box.addButton(
-            self.tr("Don't show again"), QMessageBox.ButtonRole.DestructiveRole
-        )
-        box.setDefaultButton(github)
-        self._style_box_buttons(box, outlined=True)  # four choices, none above another
-        box.exec()
-        if box.clickedButton() is github:
-            QDesktopServices.openUrl(QUrl(PROJECT_URL))
-        elif box.clickedButton() is sponsor:
-            QDesktopServices.openUrl(QUrl(SPONSOR_URL))
-        elif box.clickedButton() is never:
+        text = read_changelog()
+        news = news_since(parse_changelog(text), previous, __version__) if text else []
+        central = self.centralWidget()
+        assert central is not None
+        page = WelcomePage(central, str(LOGO_PATH), __version__, news, previous)
+        page.closed.connect(self._close_welcome)
+        page.changelog_requested.connect(self._show_changelog)
+        self._welcome = page
+        self._welcome_overlay = Overlay(central, page, self._shell_rect)
+        page.show()
+
+    def _shell_rect(self) -> QRect:
+        """Where the side menu and the pages are: between the top bar and the
+        footer."""
+        return self.ui.shell.geometry()
+
+    def _close_welcome(self, never: bool) -> None:
+        """The person is done with the welcome page; never again if they said
+        so."""
+        if never:
             self.settings.welcome_dismissed = True
             self._save_settings()
+        page, self._welcome = self._welcome, None
+        if page is not None:
+            page.hide()
+            page.deleteLater()
 
     def _show_action_error(self, message: str) -> None:
         self._load_ok = False
