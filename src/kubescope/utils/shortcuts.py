@@ -1,8 +1,7 @@
 """The keyboard shortcuts of the app and their defaults.
 
 No Qt. A shortcut is the text Qt writes for a key, like `Ctrl+K`, or for
-two keys one after the other, like `G, P` (go to Pods); an empty one is
-off. The keys follow the ones of Headlamp.
+two keys one after the other, like `G, P`; an empty one is off.
 """
 
 import re
@@ -11,11 +10,11 @@ import re
 DEFAULTS: dict[str, str] = {
     "refresh": "Ctrl+R",
     "refresh_alt": "F5",
-    "overview": "G, O",
-    "pods": "G, P",
-    "deployments": "G, D",
-    "services": "G, S",
-    "settings": "G, C",
+    "overview": "Ctrl+O",
+    "pods": "Ctrl+P",
+    "deployments": "Ctrl+D",
+    "services": "Ctrl+S",
+    "settings": "Ctrl+C",
     "filter": "Ctrl+Shift+F",
     "context": "Ctrl+Shift+L",
     "help": "?",

@@ -11,6 +11,19 @@ def test_defaults_do_not_share_a_key():
     assert duplicate(DEFAULTS) is None
 
 
+def test_navigation_defaults_use_common_shortcuts():
+    assert {
+        action: DEFAULTS[action]
+        for action in ("overview", "pods", "deployments", "services", "settings")
+    } == {
+        "overview": "Ctrl+O",
+        "pods": "Ctrl+P",
+        "deployments": "Ctrl+D",
+        "services": "Ctrl+S",
+        "settings": "Ctrl+C",
+    }
+
+
 def test_empty_turns_an_action_off():
     assert clean({"refresh": " "})["refresh"] == ""
 

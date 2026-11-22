@@ -61,16 +61,16 @@ def test_the_filter_and_the_cluster_switch_take_the_focus(window, monkeypatch) -
 
 def test_the_shortcuts_are_edited_saved_and_applied(window, monkeypatch) -> None:
     window._load_settings_form()
-    assert _edit(window, "overview").keySequence().toString() == "G, O"
+    assert _edit(window, "overview").keySequence().toString() == "Ctrl+O"
 
-    _edit(window, "overview").setKeySequence(QKeySequence("Ctrl+P"))
+    _edit(window, "overview").setKeySequence(QKeySequence("Ctrl+Alt+P"))
     window._save_preferences()
 
-    assert window.settings.shortcuts["overview"] == "Ctrl+P"
-    assert window._shortcuts["overview"].key().toString() == "Ctrl+P"
+    assert window.settings.shortcuts["overview"] == "Ctrl+Alt+P"
+    assert window._shortcuts["overview"].key().toString() == "Ctrl+Alt+P"
 
     window.settings_ui.shortcutsResetButton.click()  # back to the defaults
-    assert _edit(window, "overview").keySequence().toString() == "G, O"
+    assert _edit(window, "overview").keySequence().toString() == "Ctrl+O"
 
 
 def test_two_actions_cannot_share_a_key(window, monkeypatch) -> None:

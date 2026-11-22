@@ -251,7 +251,13 @@ def test_the_card_of_a_section_of_the_settings_goes_down_to_the_bottom(
         window._show_settings_section(section)
         QApplication.processEvents()
         assert card.height() >= room - 30, section  # no gap under the card
-        if section == 5:  # the list of the extensions takes what is left
+        if section == 3:
+            table = form.shortcutsTable
+            table_bottom = table.mapTo(card, QPoint(0, table.height())).y()
+            button_top = form.shortcutsResetButton.mapTo(card, QPoint(0, 0)).y()
+            assert table.height() > table.minimumHeight()
+            assert 0 <= button_top - table_bottom <= 20
+        elif section == 5:  # the list of the extensions takes what is left
             host = form.extensionsCardsHost
             assert host.mapTo(card, QPoint(0, host.height())).y() >= card.height() - 60
 
