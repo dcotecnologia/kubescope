@@ -14,7 +14,22 @@ google_analytics_id: "G-17B6Y96186"
 repo_url: https://github.com/dcotecnologia/kubescope
 company_name: DCO Tecnologia
 company_url: https://dcotecnologia.com
-x_url: https://x.com/dcotecnologia
+# The social profiles of the company: the footer shows them as icons (assets/social/<icon>.svg,
+# from Simple Icons, CC0) and the head lists them as `rel="me"` and in the structured data
+x_handle: dcotecnologia
+social:
+  - name: X
+    url: https://x.com/dcotecnologia
+    icon: x
+  - name: Instagram
+    url: https://www.instagram.com/dcotecnologia/
+    icon: instagram
+  - name: Facebook
+    url: https://www.facebook.com/dcotecnologia/
+    icon: facebook
+  - name: LinkedIn
+    url: https://www.linkedin.com/company/86377820/
+    icon: linkedin
 
 # Links of the top bar
 nav:
