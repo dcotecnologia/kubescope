@@ -443,7 +443,7 @@
             "Language": "Idioma",
             "New theme...": "Novo tema...",
             "Off by default: the window draws its own title bar in the top bar, which saves a row of space. Turn it on if moving or resizing the window misbehaves on your desktop.": "Desligado por padrão: a janela desenha a própria barra de título na barra superior, o que economiza uma linha de espaço. Ligue se mover ou redimensionar a janela der problema no seu desktop.",
-            "On by default: a page with what is useful to know, and what is new after an update, opens over the middle of the window. Turn it off to start straight on your clusters.": "Ligado por padrão: uma página com o que é útil saber, e o que há de novo após uma atualização, abre sobre o centro da janela. Desligue para começar direto nos seus clusters.",
+            "On by default: a page with what is useful to know, and what is new after an update, opens over the middle of the window. Turn it off to start straight on your clusters; after an update it still opens, to tell what is new.": "Ligado por padrão: uma página com o que é útil saber, e o que há de novo após uma atualização, abre sobre o centro da janela. Desligue para começar direto nos seus clusters. Mesmo desligado, após uma atualização ela abre para contar o que há de novo.",
             "On by default: a window or a list rises into place as it first shows. Turn it off to show everything at once.": "Ativado por padrão: uma janela ou lista sobe até o lugar ao aparecer pela primeira vez. Desative para mostrar tudo de uma vez.",
             "Open the log folder": "Abrir a pasta de logs",
             "Open the themes folder": "Abrir a pasta de temas",

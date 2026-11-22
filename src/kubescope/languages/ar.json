@@ -443,7 +443,7 @@
             "Language": "اللغة",
             "New theme...": "سمة جديدة...",
             "Off by default: the window draws its own title bar in the top bar, which saves a row of space. Turn it on if moving or resizing the window misbehaves on your desktop.": "افتراضيًا مُعطّل: ترسم النافذة شريط عنوانها في الشريط العلوي، مما يوفر صفًا من المساحة. فعّله إذا لم يعمل تحريك النافذة أو تغيير حجمها جيدًا على سطح مكتبك.",
-            "On by default: a page with what is useful to know, and what is new after an update, opens over the middle of the window. Turn it off to start straight on your clusters.": "مفعّل افتراضيًا: تُفتح صفحة بما يفيد معرفته، وبالجديد بعد التحديث، في منتصف النافذة. عطّله للبدء مباشرة من عناقيدك.",
+            "On by default: a page with what is useful to know, and what is new after an update, opens over the middle of the window. Turn it off to start straight on your clusters; after an update it still opens, to tell what is new.": "مفعّل افتراضيًا: تُفتح صفحة بما يفيد معرفته، وبالجديد بعد التحديث، في منتصف النافذة. عطّله للبدء مباشرة من عناقيدك. حتى لو عُطّلت، تُفتح بعد التحديث لتعرض الجديد.",
             "On by default: a window or a list rises into place as it first shows. Turn it off to show everything at once.": "مفعّل افتراضيًا: تظهر النافذة أو القائمة بحركة انسيابية عند أول عرض لها. أوقفه لعرض كل شيء دفعة واحدة.",
             "Open the log folder": "افتح مجلد السجلات",
             "Open the themes folder": "افتح مجلد السمات",

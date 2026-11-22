@@ -443,7 +443,7 @@
             "Language": "言語",
             "New theme...": "新しいテーマ...",
             "Off by default: the window draws its own title bar in the top bar, which saves a row of space. Turn it on if moving or resizing the window misbehaves on your desktop.": "既定ではオフ: ウィンドウは上部バーに独自のタイトルバーを描画し、1 行分の領域を節約します。お使いのデスクトップでウィンドウの移動やサイズ変更がうまく動作しない場合はオンにしてください。",
-            "On by default: a page with what is useful to know, and what is new after an update, opens over the middle of the window. Turn it off to start straight on your clusters.": "既定でオン: 知っておくと便利な情報と、更新後の新機能を載せたページがウィンドウの中央に開きます。オフにするとクラスターからそのまま始まります。",
+            "On by default: a page with what is useful to know, and what is new after an update, opens over the middle of the window. Turn it off to start straight on your clusters; after an update it still opens, to tell what is new.": "既定でオン: 知っておくと便利な情報と、更新後の新機能を載せたページがウィンドウの中央に開きます。オフにするとクラスターからそのまま始まります。 オフでも、更新後は新機能をお知らせするために開きます。",
             "On by default: a window or a list rises into place as it first shows. Turn it off to show everything at once.": "デフォルトでオンです。ウィンドウやリストは、最初に表示されるときに所定の位置へせり上がります。オフにすると、すべてが一度に表示されます。",
             "Open the log folder": "ログフォルダーを開く",
             "Open the themes folder": "テーマフォルダーを開く",

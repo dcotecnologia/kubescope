@@ -443,7 +443,7 @@
             "Language": "語言",
             "New theme...": "新增主題...",
             "Off by default: the window draws its own title bar in the top bar, which saves a row of space. Turn it on if moving or resizing the window misbehaves on your desktop.": "預設關閉:視窗會在頂端列中繪製自己的標題列,可節省一列空間。如果在您的桌面上移動或調整視窗大小發生問題,請開啟。",
-            "On by default: a page with what is useful to know, and what is new after an update, opens over the middle of the window. Turn it off to start straight on your clusters.": "預設開啟：包含實用資訊與更新後新功能的頁面會在視窗中央開啟。關閉後將直接從你的叢集開始。",
+            "On by default: a page with what is useful to know, and what is new after an update, opens over the middle of the window. Turn it off to start straight on your clusters; after an update it still opens, to tell what is new.": "預設開啟：包含實用資訊與更新後新功能的頁面會在視窗中央開啟。關閉後將直接從你的叢集開始。關閉後，更新之後仍會開啟，以介紹新功能。",
             "On by default: a window or a list rises into place as it first shows. Turn it off to show everything at once.": "預設為開啟：視窗或清單在首次顯示時會以動畫浮現到位。關閉後將一次顯示所有內容。",
             "Open the log folder": "開啟記錄資料夾",
             "Open the themes folder": "開啟主題資料夾",

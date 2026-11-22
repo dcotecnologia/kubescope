@@ -443,7 +443,7 @@
             "Language": "Bahasa",
             "New theme...": "Tema baru...",
             "Off by default: the window draws its own title bar in the top bar, which saves a row of space. Turn it on if moving or resizing the window misbehaves on your desktop.": "Nonaktif secara default: jendela menggambar bilah judulnya sendiri di bilah atas, yang menghemat satu baris ruang. Aktifkan jika memindahkan atau mengubah ukuran jendela bermasalah di desktop Anda.",
-            "On by default: a page with what is useful to know, and what is new after an update, opens over the middle of the window. Turn it off to start straight on your clusters.": "Aktif secara default: halaman berisi hal yang berguna untuk diketahui, dan yang baru setelah pembaruan, terbuka di tengah jendela. Matikan untuk langsung memulai di klaster Anda.",
+            "On by default: a page with what is useful to know, and what is new after an update, opens over the middle of the window. Turn it off to start straight on your clusters; after an update it still opens, to tell what is new.": "Aktif secara default: halaman berisi hal yang berguna untuk diketahui, dan yang baru setelah pembaruan, terbuka di tengah jendela. Matikan untuk langsung memulai di klaster Anda. Meski dimatikan, setelah pembaruan halaman tetap terbuka untuk menyampaikan yang baru.",
             "On by default: a window or a list rises into place as it first shows. Turn it off to show everything at once.": "Aktif secara bawaan: jendela atau daftar naik ke tempatnya saat pertama kali tampil. Nonaktifkan untuk menampilkan semuanya sekaligus.",
             "Open the log folder": "Buka folder log",
             "Open the themes folder": "Buka folder tema",

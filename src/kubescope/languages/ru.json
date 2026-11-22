@@ -443,7 +443,7 @@
             "Language": "Язык",
             "New theme...": "Новая тема...",
             "Off by default: the window draws its own title bar in the top bar, which saves a row of space. Turn it on if moving or resizing the window misbehaves on your desktop.": "По умолчанию выключено: окно рисует собственный заголовок в верхней панели, что экономит одну строку места. Включите, если перемещение или изменение размера окна работает неправильно на вашем рабочем столе.",
-            "On by default: a page with what is useful to know, and what is new after an update, opens over the middle of the window. Turn it off to start straight on your clusters.": "Включено по умолчанию: страница с полезной информацией и новинками после обновления открывается в центре окна. Отключите, чтобы сразу начинать с ваших кластеров.",
+            "On by default: a page with what is useful to know, and what is new after an update, opens over the middle of the window. Turn it off to start straight on your clusters; after an update it still opens, to tell what is new.": "Включено по умолчанию: страница с полезной информацией и новинками после обновления открывается в центре окна. Отключите, чтобы сразу начинать с ваших кластеров. Даже если отключено, после обновления она откроется, чтобы рассказать о новинках.",
             "On by default: a window or a list rises into place as it first shows. Turn it off to show everything at once.": "Включено по умолчанию: окно или список плавно появляется на месте при первом показе. Выключите, чтобы всё показывалось сразу.",
             "Open the log folder": "Открыть папку журналов",
             "Open the themes folder": "Открыть папку тем",

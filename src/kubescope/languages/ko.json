@@ -443,7 +443,7 @@
             "Language": "언어",
             "New theme...": "새 테마...",
             "Off by default: the window draws its own title bar in the top bar, which saves a row of space. Turn it on if moving or resizing the window misbehaves on your desktop.": "기본값은 꺼짐입니다. 창이 상단 바에 자체 제목 표시줄을 그려 한 줄의 공간을 절약합니다. 데스크톱에서 창 이동이나 크기 조절이 제대로 되지 않으면 켜세요.",
-            "On by default: a page with what is useful to know, and what is new after an update, opens over the middle of the window. Turn it off to start straight on your clusters.": "기본값은 켜짐: 알아두면 좋은 내용과 업데이트 후 새로운 기능을 담은 페이지가 창 가운데에 열립니다. 끄면 클러스터에서 바로 시작합니다.",
+            "On by default: a page with what is useful to know, and what is new after an update, opens over the middle of the window. Turn it off to start straight on your clusters; after an update it still opens, to tell what is new.": "기본값은 켜짐: 알아두면 좋은 내용과 업데이트 후 새로운 기능을 담은 페이지가 창 가운데에 열립니다. 끄면 클러스터에서 바로 시작합니다. 꺼 두어도 업데이트 후에는 새로운 기능을 알리기 위해 열립니다.",
             "On by default: a window or a list rises into place as it first shows. Turn it off to show everything at once.": "기본값은 켜짐입니다. 창이나 목록이 처음 표시될 때 제자리로 부드럽게 올라옵니다. 끄면 모든 것이 한꺼번에 표시됩니다.",
             "Open the log folder": "로그 폴더 열기",
             "Open the themes folder": "테마 폴더 열기",
