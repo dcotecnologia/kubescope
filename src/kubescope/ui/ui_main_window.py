@@ -272,7 +272,7 @@ class Ui_MainWindow(object):
 "QFrame#appFooter { background: #ffffff; border-top: 1px solid #e4e5eb; }\n"
 "QLabel#footerLicense, QLabel#footerDot, QLabel#updateNotice { color: #6b7380; font-size: 10px; }\n"
 "QFrame#appFooter QPushButton[variant=\"link\"] { font-size: 10px; padding: 0 0 0 6px; }\n"
-"QPushButton#companyLink, QPushButton#licenseLink { padding: 0; }\n"
+"QPushButton#companyLink { padding: 0; }\n"
 "QPushButton#updateButton { border: none; background: transparent; padding: 0; border-radius: 4px; }\n"
 "QPushButton#updateButton:hover { background: #f6f6fa; }\n"
 "")
@@ -1369,13 +1369,6 @@ class Ui_MainWindow(object):
 
         self.appFooterLayout.addWidget(self.footerDot)
 
-        self.licenseLink = QPushButton(self.appFooter)
-        self.licenseLink.setObjectName(u"licenseLink")
-        self.licenseLink.setFlat(True)
-        self.licenseLink.setProperty(u"variant", u"link")
-
-        self.appFooterLayout.addWidget(self.licenseLink)
-
         self.thirdPartyLink = QPushButton(self.appFooter)
         self.thirdPartyLink.setObjectName(u"thirdPartyLink")
         self.thirdPartyLink.setFlat(True)
@@ -1562,11 +1555,10 @@ class Ui_MainWindow(object):
 #if QT_CONFIG(tooltip)
         self.companyLink.setToolTip(QCoreApplication.translate("MainWindow", u"Open the DCO Tecnologia website", None))
 #endif // QT_CONFIG(tooltip)
-        self.licenseLink.setText(QCoreApplication.translate("MainWindow", u"MIT License", None))
+        self.thirdPartyLink.setText(QCoreApplication.translate("MainWindow", u"Licenses", None))
 #if QT_CONFIG(tooltip)
-        self.licenseLink.setToolTip(QCoreApplication.translate("MainWindow", u"KubeScope is open source software released under the MIT License", None))
+        self.thirdPartyLink.setToolTip(QCoreApplication.translate("MainWindow", u"KubeScope is open source software released under the MIT License; see also the licenses of what it uses", None))
 #endif // QT_CONFIG(tooltip)
-        self.thirdPartyLink.setText(QCoreApplication.translate("MainWindow", u"Third-party licenses", None))
         self.updateLink.setText(QCoreApplication.translate("MainWindow", u"Update available", None))
 #if QT_CONFIG(tooltip)
         self.updateLink.setToolTip(QCoreApplication.translate("MainWindow", u"Open the download page of the new version", None))

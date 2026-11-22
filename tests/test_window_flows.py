@@ -1726,15 +1726,13 @@ def test_the_footer_shows_the_version_and_links_to_the_project(monkeypatch) -> N
     window.ui.companyLink.click()
     assert opened[-1] == "https://dcotecnologia.com"
 
-    window.ui.licenseLink.click()  # the real license, on GitHub
-    assert opened[-1] == f"{about.PROJECT_URL}/blob/main/LICENSE"
-
     shown = []
     monkeypatch.setattr(
         window_module.NoticesDialog, "exec", lambda dialog: shown.append(dialog)
     )
-    window.ui.thirdPartyLink.click()  # the licenses of what it uses, in the app
-    assert len(shown) == 1 and len(opened) == 3
+    window.ui.thirdPartyLink.click()  # every license, in a window of the app
+    assert len(shown) == 1 and len(opened) == 2
+    assert not hasattr(window.ui, "licenseLink")  # one item, not two
 
     window._retranslate()  # a language change rewrites the .ui texts
     assert window.ui.footerVersion.text() == f"v{about.__version__}"

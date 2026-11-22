@@ -254,7 +254,7 @@ QFrame#permissionBanner QPushButton, QFrame#rdsBanner QPushButton {
 QFrame#appFooter { background: #ffffff; border-top: 1px solid #e4e5eb; }
 QLabel#footerLicense, QLabel#footerDot, QLabel#updateNotice { color: #6b7380; font-size: 10px; }
 QFrame#appFooter QPushButton[variant="link"] { font-size: 10px; padding: 0 0 0 6px; }
-QPushButton#companyLink, QPushButton#licenseLink { padding: 0; }
+QPushButton#companyLink { padding: 0; }
 QPushButton#updateButton { border: none; background: transparent; padding: 0; border-radius: 4px; }
 QPushButton#updateButton:hover { background: #f6f6fa; }
 </string>
@@ -3023,25 +3023,12 @@ Resources in read-only mode</string>
         </widget>
        </item>
        <item>
-        <widget class="QPushButton" name="licenseLink">
-         <property name="text">
-          <string>MIT License</string>
-         </property>
-         <property name="toolTip">
-          <string>KubeScope is open source software released under the MIT License</string>
-         </property>
-         <property name="flat">
-          <bool>true</bool>
-         </property>
-         <property name="variant" stdset="0">
-          <string notr="true">link</string>
-         </property>
-        </widget>
-       </item>
-       <item>
         <widget class="QPushButton" name="thirdPartyLink">
          <property name="text">
-          <string>Third-party licenses</string>
+          <string>Licenses</string>
+         </property>
+         <property name="toolTip">
+          <string>KubeScope is open source software released under the MIT License; see also the licenses of what it uses</string>
          </property>
          <property name="flat">
           <bool>true</bool>
