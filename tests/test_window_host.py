@@ -785,3 +785,16 @@ def test_an_extension_hides_the_side_menu_without_changing_the_choice_of_the_per
     assert not window.sidebar_toggle.collapsed
     assert window.ui.sidebarToggleButton.isEnabled()
     assert window.settings.sidebar_collapsed is False
+
+
+def test_an_extension_is_told_where_the_pages_are(window, tmp_path) -> None:
+    folder, package, _extension = make_extension(tmp_path)
+    install_linked(window, folder)
+    ctx = sys.modules[package].CTX[0]
+    window.resize(1000, 700)
+    window.show()
+
+    x, y, width, height = ctx.ui.content_area()
+
+    assert (x, width) == (0, window.centralWidget().width())
+    assert y >= window.ui.topBar.height() and y + height <= window.ui.appFooter.y()
