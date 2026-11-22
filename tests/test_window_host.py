@@ -766,3 +766,22 @@ def test_the_themes_of_an_extension_are_listed_and_the_one_chosen_is_put_on(
     finally:
         theme.set_contributed_themes([])
         theme.set_theme("light")
+
+
+def test_an_extension_hides_the_side_menu_without_changing_the_choice_of_the_person(
+    window, tmp_path
+) -> None:
+    folder, package, extension = make_extension(tmp_path)
+    install_linked(window, folder)
+    ctx = sys.modules[package].CTX[0]
+    window.settings.sidebar_collapsed = False
+
+    ctx.ui.hide_side_menu(extension, True)
+    assert window.sidebar_toggle.collapsed
+    assert not window.ui.sidebarToggleButton.isEnabled()
+    assert window.settings.sidebar_collapsed is False
+
+    ctx.ui.hide_side_menu(extension, False)
+    assert not window.sidebar_toggle.collapsed
+    assert window.ui.sidebarToggleButton.isEnabled()
+    assert window.settings.sidebar_collapsed is False

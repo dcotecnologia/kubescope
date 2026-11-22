@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+### Added
+
+- An extension can hide the side menu while it needs the whole width (`Ui.hide_side_menu`); the choice of the person is kept and comes back when the extension lets go or is unloaded by @danilogco
+
 ## [2.3.1] - 2026-11-21
 
 ### Fixed
