@@ -798,3 +798,20 @@ def test_an_extension_is_told_where_the_pages_are(window, tmp_path) -> None:
 
     assert (x, width) == (0, window.centralWidget().width())
     assert y >= window.ui.topBar.height() and y + height <= window.ui.appFooter.y()
+
+
+def test_the_extensions_are_told_when_the_settings_are_opened_and_left(
+    window, tmp_path
+) -> None:
+    folder, package, _extension = make_extension(tmp_path)
+    install_linked(window, folder)
+    ctx = sys.modules[package].CTX[0]
+    window._show_page(0)  # the window may start on the Settings
+    told: list[bool] = []
+    ctx.events.on("settings_shown", lambda shown: told.append(shown))
+
+    window._show_page(2)
+    window._show_page(2)  # again: nothing new to tell
+    window._show_page(0)
+
+    assert told == [True, False]

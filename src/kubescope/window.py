@@ -18,6 +18,7 @@ from kubescope.sdk import (
     CONTEXT_CHANGED,
     LANGUAGE_CHANGED,
     NOTIFICATION,
+    SETTINGS_SHOWN,
     SHUTDOWN,
     THEME_CHANGED,
     WRITE_MODE_CHANGED,
@@ -1191,6 +1192,7 @@ class WorkloadWindow(QMainWindow):
         self._settings_sections = QButtonGroup(self)
         self._filled_cards: set[QWidget] = set()  # settings cards with a tail spacer
         self._page_before_settings = 0  # where the gear takes the person back to
+        self._settings_shown = False  # what the extensions were last told
         self._settings_sections.addButton(self.settings_ui.generalSectionButton, 0)
         self._settings_sections.addButton(self.settings_ui.kubeSectionButton, 2)
         self._settings_sections.addButton(self.settings_ui.shortcutsSectionButton, 3)
@@ -2171,10 +2173,19 @@ class WorkloadWindow(QMainWindow):
         back = self._page_before_settings
         self._show_page(back if 0 <= back < self.pages.count() and back != 2 else 0)
 
+    def _tell_settings_shown(self, shown: bool) -> None:
+        """Tell the extensions when the Settings are opened or left."""
+        host = getattr(self, "extension_host", None)
+        if shown == self._settings_shown or host is None:
+            return
+        self._settings_shown = shown
+        host.events.emit(SETTINGS_SHOWN, shown=shown)
+
     def _show_page(self, index: int) -> None:
         if index == 2 and self.pages.currentIndex() != 2:
             self._page_before_settings = self.pages.currentIndex()
         self.pages.setCurrentIndex(index)
+        self._tell_settings_shown(index == 2)
         self.nav_overview.setChecked(index == 0)
         for view, button in self._nav_views.items():
             active = index == 1 and self._view == view
