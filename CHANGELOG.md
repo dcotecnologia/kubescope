@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file. The format 
 
 ### Added
 
+- Small icons to follow us on X, Instagram, Facebook and LinkedIn in the **Contribute** card of the welcome page, out of the way of the rest of the app by @danilogco
 - Links to our X, Instagram, Facebook and LinkedIn as icons in the footer of the site, with the profiles in its meta tags (`twitter:site`, `rel="me"` and the structured data of the company), and badges in the README by @danilogco
 - An extension can declare the oldest version of KubeScope it works with (`min_app` in `kubescope-extension.toml`, such as `2.4.0`): the app refuses to install or update to one that needs a newer app and says to update the app first, and it offers (and installs, for a recommended one) the newest version of an extension that works with the app, reading the manifest of its newest few tags by @danilogco
 - An extension is told when the Settings are opened or left (the event `SETTINGS_SHOWN`), so a panel over the pages can step aside by @danilogco

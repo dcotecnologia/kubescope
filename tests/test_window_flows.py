@@ -4335,3 +4335,22 @@ def test_the_same_version_is_not_told_as_an_update(monkeypatch) -> None:
     assert page.title.text() == "Welcome to KubeScope"
     assert not [x for x in page.findChildren(QLabel) if "Updated from" in x.text()]
     window.close()
+
+
+def test_the_welcome_has_small_icons_to_follow_the_company(monkeypatch) -> None:
+    window, opened = _welcome_window(monkeypatch)
+    window.show_welcome()
+    page = _welcome_of(window)
+
+    assert [b.toolTip() for b in page.social_buttons] == [
+        "X",
+        "Instagram",
+        "Facebook",
+        "LinkedIn",
+    ]
+    assert all(not b.icon().isNull() for b in page.social_buttons)
+    for button in page.social_buttons:
+        button.click()
+
+    assert [url.toString() for url in opened] == [one[1] for one in about.SOCIAL]
+    window.close()
