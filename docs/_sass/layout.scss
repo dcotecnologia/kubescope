@@ -231,6 +231,33 @@ footer {
 	font-size: 1.7rem;
 }
 
+.socialLinks {
+	display: flex;
+	justify-content: center;
+	gap: 22px;
+	width: 100%;
+	padding-bottom: 70px;
+	margin-top: -40px;
+
+	a { display: inline-flex; }
+
+	span {
+		display: block;
+		width: 24px;
+		height: 24px;
+		background-color: $feature-text-color;
+		-webkit-mask-repeat: no-repeat;
+		mask-repeat: no-repeat;
+		-webkit-mask-position: center;
+		mask-position: center;
+		-webkit-mask-size: contain;
+		mask-size: contain;
+		transition: background-color 0.15s;
+	}
+
+	a:hover span { background-color: $accent-color; }
+}
+
 @media only screen and (max-width: 992px) {
 	.hero .container {
 		grid-template-areas: "h" "i" "p";

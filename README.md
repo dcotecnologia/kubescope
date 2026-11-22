@@ -8,6 +8,9 @@
 [![Platforms](https://img.shields.io/badge/platforms-Linux%20%7C%20Windows%20%7C%20macOS-lightgrey.svg)](#packaging)
 [![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-D7FF64.svg?logo=ruff&logoColor=black)](https://docs.astral.sh/ruff/)
 [![Follow on X](https://img.shields.io/badge/follow-%40dcotecnologia-000000.svg?logo=x&logoColor=white)](https://x.com/dcotecnologia)
+[![Instagram](https://img.shields.io/badge/instagram-dcotecnologia-E4405F.svg?logo=instagram&logoColor=white)](https://www.instagram.com/dcotecnologia/)
+[![Facebook](https://img.shields.io/badge/facebook-dcotecnologia-1877F2.svg?logo=facebook&logoColor=white)](https://www.facebook.com/dcotecnologia/)
+[![LinkedIn](https://img.shields.io/badge/linkedin-DCO%20Tecnologia-0A66C2.svg?logo=linkedin&logoColor=white)](https://www.linkedin.com/company/86377820/)
 [![Kubernetes](https://img.shields.io/badge/Kubernetes-EKS%20ready-326CE5.svg?logo=kubernetes&logoColor=white)](https://kubernetes.io/)
 
 Desktop IDE for Kubernetes, including Amazon EKS, Google GKE and
