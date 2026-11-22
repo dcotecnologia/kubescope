@@ -151,3 +151,31 @@ def test_what_is_for_production_is_read_and_the_required_is_always_kept() -> Non
 def test_production_must_list_names_at_the_top(value) -> None:
     with pytest.raises(ManifestError, match="production"):
         parse_manifest(GOOD + f"production = {value}\n".encode())
+
+
+def test_an_extension_that_needs_a_newer_app_is_refused(monkeypatch) -> None:
+    from kubescope.extensions import manifest as manifest_module
+
+    monkeypatch.setattr(manifest_module, "__version__", "2.3.1")
+    needing = GOOD + b'min_app = "2.4.0"\n'
+
+    with pytest.raises(ManifestError, match="needs KubeScope 2.4.0 or later"):
+        parse_manifest(needing)
+
+    monkeypatch.setattr(manifest_module, "__version__", "2.4.0")
+    assert parse_manifest(needing).min_app == "2.4.0"  # this app is enough
+    monkeypatch.setattr(manifest_module, "__version__", "2.10.0")
+    assert parse_manifest(needing).min_app == "2.4.0"  # compared as numbers
+
+
+def test_min_app_is_optional_and_must_be_a_version(monkeypatch) -> None:
+    from kubescope.extensions import manifest as manifest_module
+
+    assert parse_manifest(GOOD).min_app == ""
+    with pytest.raises(ManifestError, match="min_app must look like 2.4.0"):
+        parse_manifest(GOOD + b'min_app = "soon"\n')
+    with pytest.raises(ManifestError, match="min_app must be a text"):
+        parse_manifest(GOOD + b"min_app = 2\n")
+
+    monkeypatch.setattr(manifest_module, "__version__", "dev")  # a build with none
+    assert parse_manifest(GOOD + b'min_app = "9.0.0"\n').min_app == "9.0.0"
