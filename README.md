@@ -7,6 +7,7 @@
 [![Qt for Python](https://img.shields.io/badge/Qt-PySide6-41CD52.svg?logo=qt&logoColor=white)](https://doc.qt.io/qtforpython-6/)
 [![Platforms](https://img.shields.io/badge/platforms-Linux%20%7C%20Windows%20%7C%20macOS-lightgrey.svg)](#packaging)
 [![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-D7FF64.svg?logo=ruff&logoColor=black)](https://docs.astral.sh/ruff/)
+[![Follow on X](https://img.shields.io/badge/follow-%40dcotecnologia-000000.svg?logo=x&logoColor=white)](https://x.com/dcotecnologia)
 [![Kubernetes](https://img.shields.io/badge/Kubernetes-EKS%20ready-326CE5.svg?logo=kubernetes&logoColor=white)](https://kubernetes.io/)
 
 Desktop IDE for Kubernetes, including Amazon EKS, Google GKE and
