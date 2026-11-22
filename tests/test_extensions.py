@@ -59,12 +59,16 @@ def test_window_ui_delegates_every_extension_callback() -> None:
         lambda *args: calls.append(("pick", *args)) or ("chosen", True),
         lambda *args: calls.append(("json", *args)),
         lambda *args: calls.append(("log", *args)),
+        lambda *args: None,
+        lambda *args: False,
+        lambda owner, hidden: calls.append(("menu", owner, hidden)),
     )
 
     ui.show_message("warning", "Title", "Text")
     ui.style_box("box")
     ui.show_settings("extensions")
     ui.reserve_corner("tool", 24)
+    ui.hide_side_menu("tool", True)
     assert ui.themed("#fff", True) == "#fff:True"
     assert ui.pick_item("Pick", "One", ["a"]) == ("chosen", True)
     ui.show_json("Document", {"name": "api"})
@@ -73,6 +77,7 @@ def test_window_ui_delegates_every_extension_callback() -> None:
     assert calls[0][1:] == ("Title", "Text")
     assert ("style", "box") in calls
     assert ("settings", "extensions") in calls
+    assert ("menu", "tool", True) in calls
     assert ("corner", "tool", 24) in calls
     application.processEvents()
 
@@ -321,6 +326,9 @@ class FakeUi:
 
     def show_settings(self, section="") -> None:
         self.calls.append(("settings", section))
+
+    def hide_side_menu(self, owner, hidden) -> None:
+        self.calls.append(("menu", owner, hidden))
 
     def reserve_corner(self, owner, pixels) -> None:
         self.calls.append(("corner", owner, pixels))

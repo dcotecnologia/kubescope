@@ -1419,6 +1419,8 @@ class WorkloadWindow(QMainWindow):
         self.sidebar_toggle.toggled.connect(self._keep_sidebar_collapsed)
         self._style_sidebar_toggle()
         self._corner_owners: dict[str, int] = {}  # pixels each one keeps clear
+        self._menu_hiders: set[str] = set()  # the extensions that hide the side menu
+        self._hiding_menu = False  # the menu moves for an extension, not the person
         self._top_bar_buttons: dict[str, list[QWidget]] = {}  # by extension
         self._corner_margins = {
             layout: layout.contentsMargins()
@@ -1454,6 +1456,7 @@ class WorkloadWindow(QMainWindow):
                 lambda title, message, click: self._system_notification(
                     title, message, click
                 ),
+                lambda owner, hidden: self._hide_side_menu_for(owner, hidden),
             ),
             begin_forward=lambda *args: self._begin_forward(*args),
             commands=self.commands,
@@ -5477,6 +5480,24 @@ class WorkloadWindow(QMainWindow):
             self.ui.topLayout.removeWidget(button)
             button.deleteLater()
 
+    def _hide_side_menu_for(self, owner: str, hidden: bool) -> None:
+        """Hide the side menu while any extension asks it; what the person
+        chose is not written over, and comes back when the last one lets go."""
+        if hidden:
+            self._menu_hiders.add(owner)
+        else:
+            self._menu_hiders.discard(owner)
+        hiding = bool(self._menu_hiders)
+        self.ui.sidebarToggleButton.setEnabled(not hiding)
+        self._hiding_menu = True
+        try:
+            if hiding:
+                self.sidebar_toggle.collapse()
+            elif not self.settings.sidebar_collapsed:
+                self.sidebar_toggle.expand()
+        finally:
+            self._hiding_menu = False
+
     def _reserve_corner_for(self, owner: str, pixels: int) -> None:
         """Keep `pixels` of the corner clear for `owner`; the corner is as wide
         as what everyone asked for together."""
@@ -5528,6 +5549,7 @@ class WorkloadWindow(QMainWindow):
             ) != self._extension_signature(loaded.installed):
                 loader.unload(extension)
                 self._remove_top_bar_buttons(extension)
+                self._hide_side_menu_for(extension, False)
                 translations_changed |= set_extension_languages(extension, None)
         for extension, one in wanted.items():
             if extension not in loader.loaded:  # its texts first: it builds with them
@@ -5574,6 +5596,7 @@ class WorkloadWindow(QMainWindow):
             if one is not None:
                 logger.info("Reloading the extension %s: its files changed", name)
                 self._remove_top_bar_buttons(name)  # it adds its own again
+                self._hide_side_menu_for(name, False)
                 self.extension_loader.reload(one)
         self._watch_extensions()
         self._apply_extension_contributions()
@@ -5726,8 +5749,9 @@ class WorkloadWindow(QMainWindow):
     def _keep_sidebar_collapsed(self, collapsed: bool) -> None:
         """Write down whether the side menu is hidden, and say what the button
         does now."""
-        self.settings.sidebar_collapsed = collapsed
-        self._save_settings()
+        if not self._hiding_menu:  # an extension moved it: not the person's choice
+            self.settings.sidebar_collapsed = collapsed
+            self._save_settings()
         self._style_sidebar_toggle()
 
     def _style_sidebar_toggle(self) -> None:

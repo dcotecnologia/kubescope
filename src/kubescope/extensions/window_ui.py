@@ -39,6 +39,7 @@ class WindowUi:
         system_notification: Callable[
             [str, str, Callable[[], None] | None], bool
         ] = lambda *_: False,
+        hide_side_menu: Callable[[str, bool], None] = lambda *_: None,
     ) -> None:
         self.window = window
         self.central = central
@@ -53,6 +54,7 @@ class WindowUi:
         self._open_log = open_log
         self._add_top_bar_button = add_top_bar_button
         self._system_notification = system_notification
+        self._hide_side_menu = hide_side_menu
 
     def show_message(self, icon: str, title: str, text: str) -> None:
         self._message(_ICONS.get(icon, QMessageBox.Icon.Information), title, text)
@@ -68,6 +70,9 @@ class WindowUi:
 
     def reserve_corner(self, owner: str, pixels: int) -> None:
         self._reserve_corner(owner, pixels)
+
+    def hide_side_menu(self, owner: str, hidden: bool) -> None:
+        self._hide_side_menu(owner, hidden)
 
     def pick_item(self, title: str, label: str, items: list[str]) -> tuple[str, bool]:
         return self._pick_item(title, label, items)
