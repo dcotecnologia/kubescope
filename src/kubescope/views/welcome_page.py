@@ -50,8 +50,9 @@ def _style() -> str:
 class WelcomePage(QFrame):
     """What is useful to know about KubeScope, and what is new after an update.
 
-    `news` are the versions released since the one the person had; none
-    on a first run.
+    `news` are the versions to tell about: the ones released since the
+    version the person had (`previous`, empty on a first run), or else
+    the latest one.
     """
 
     closed = Signal(bool)  # the person is done; whether never to show it again
@@ -87,7 +88,7 @@ class WelcomePage(QFrame):
         inner = QVBoxLayout(self.column)
         inner.setContentsMargins(0, 0, 0, 0)
         inner.setSpacing(18)
-        inner.addLayout(self._header(logo, bool(news)))
+        inner.addLayout(self._header(logo, bool(previous)))
         if news:
             inner.addWidget(self._news(news, previous))
         inner.addWidget(self._heading(self.tr("Good to know")))
@@ -143,13 +144,14 @@ class WelcomePage(QFrame):
         layout.setContentsMargins(20, 16, 20, 16)
         layout.setSpacing(8)
         layout.addWidget(self._heading(self.tr("What's new")))
-        note = QLabel(
-            self.tr("Updated from {previous} to {version}.").format(
-                previous=previous, version=self.version
+        if previous:  # after an update, from which version to which
+            note = QLabel(
+                self.tr("Updated from {previous} to {version}.").format(
+                    previous=previous, version=self.version
+                )
             )
-        )
-        note.setObjectName("welcomeNote")
-        layout.addWidget(note)
+            note.setObjectName("welcomeNote")
+            layout.addWidget(note)
         text = QLabel(changelog_html(news, self.version))
         text.setTextFormat(Qt.TextFormat.RichText)
         text.setWordWrap(True)
