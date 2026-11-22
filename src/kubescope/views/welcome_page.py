@@ -8,8 +8,15 @@ and the footer. The person can ask never to see it again.
 from collections.abc import Callable
 from pathlib import Path
 
-from PySide6.QtCore import QEvent, QObject, QRect, QSize, Qt, QUrl, Signal
-from PySide6.QtGui import QColor, QDesktopServices, QIcon, QPainter, QPixmap
+from PySide6.QtCore import QEvent, QObject, QRect, QSize, Qt, QTimer, QUrl, Signal
+from PySide6.QtGui import (
+    QColor,
+    QDesktopServices,
+    QIcon,
+    QPainter,
+    QPixmap,
+    QResizeEvent,
+)
 from PySide6.QtWidgets import (
     QCheckBox,
     QFrame,
@@ -116,6 +123,17 @@ class WelcomePage(QFrame):
         self.scroller.setWidget(body)
         outer.addWidget(self.scroller, 1)
         outer.addWidget(self._footer())
+
+    def resizeEvent(self, event: QResizeEvent) -> None:
+        super().resizeEvent(event)
+        QTimer.singleShot(0, self._fit_news)  # once the layout has the new width
+
+    def _fit_news(self) -> None:
+        """The text of the news is as tall as the width it ended up with needs."""
+        news = getattr(self, "news_text", None)
+        if news is not None:
+            news.setMinimumHeight(0)
+            news.setMinimumHeight(news.heightForWidth(news.width()))
 
     # the parts
 
@@ -231,6 +249,8 @@ class WelcomePage(QFrame):
         )
         layout = card.layout()
         assert isinstance(layout, QVBoxLayout)
+        layout.setContentsMargins(20, 14, 20, 18)
+        layout.addSpacing(12)  # the buttons breathe under the text
         row = QHBoxLayout()
         row.setSpacing(8)
         for label, address in (
@@ -252,7 +272,7 @@ class WelcomePage(QFrame):
         """Where to follow the company: small icons, which stay out of the way."""
         holder = QWidget()
         row = QHBoxLayout(holder)
-        row.setContentsMargins(0, 6, 0, 0)
+        row.setContentsMargins(0, 10, 0, 0)
         row.setSpacing(6)
         follow = QLabel(self.tr("Follow us"))
         follow.setObjectName("welcomeCardText")
