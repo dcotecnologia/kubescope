@@ -20,9 +20,7 @@ class NoticesDialog(QDialog):
 
     def __init__(self, parent: QWidget | None) -> None:
         super().__init__(parent)
-        self.setWindowTitle(
-            QCoreApplication.translate("WorkloadWindow", "Third-party notices")
-        )
+        self.setWindowTitle(QCoreApplication.translate("WorkloadWindow", "Licenses"))
         self.resize(900, 600)
         layout = QVBoxLayout(self)
         layout.setContentsMargins(16, 16, 16, 16)

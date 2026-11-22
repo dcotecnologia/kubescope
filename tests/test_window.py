@@ -558,12 +558,12 @@ def test_footer_names_the_company_and_the_license(monkeypatch) -> None:
     window = window_module.WorkloadWindow()
     try:
         assert window.ui.companyLink.text() == "DCO Tecnologia"
-        assert window.ui.licenseLink.text() == "MIT License"
+        assert window.ui.thirdPartyLink.text() == "Licenses"
 
         i18n.apply_language("pt")
         application.processEvents()
         assert window.ui.companyLink.text() == "DCO Tecnologia"
-        assert window.ui.licenseLink.text() == "Licença MIT"
+        assert window.ui.thirdPartyLink.text() == "Licenças"
     finally:
         i18n.apply_language("en")
         window.close()

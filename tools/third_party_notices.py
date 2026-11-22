@@ -210,6 +210,11 @@ def fixed_texts(packages: dict[str, str]) -> list[str]:
 
     return [
         *section(
+            "KubeScope (MIT License)",
+            [],
+            (ROOT / "LICENSE").read_text(encoding="utf-8"),
+        ),
+        *section(
             "Noto Sans and Noto Sans Mono (the bundled fonts)",
             [],
             FONTS_LICENSE.read_text(encoding="utf-8"),

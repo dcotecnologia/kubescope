@@ -1373,7 +1373,6 @@ class WorkloadWindow(QMainWindow):
         )
         self.ui.updateButton.customContextMenuRequested.connect(self._show_update_menu)
         self.ui.githubLink.clicked.connect(self._open_project)
-        self.ui.licenseLink.clicked.connect(self._open_license)
         self.ui.thirdPartyLink.clicked.connect(self._show_notices)
         self.ui.footerVersion.clicked.connect(self._show_changelog)
         self.ui.companyLink.clicked.connect(self._open_company)
