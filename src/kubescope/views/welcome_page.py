@@ -129,7 +129,8 @@ class WelcomePage(QFrame):
         QTimer.singleShot(0, self._fit_news)  # once the layout has the new width
 
     def _fit_news(self) -> None:
-        """The text of the news is as tall as the width it ended up with needs."""
+        """The text of the news is as tall as the width it ended up with
+        needs."""
         news = getattr(self, "news_text", None)
         if news is not None:
             news.setMinimumHeight(0)
@@ -269,7 +270,8 @@ class WelcomePage(QFrame):
         return card
 
     def _social(self) -> QWidget:
-        """Where to follow the company: small icons, which stay out of the way."""
+        """Where to follow the company: small icons, which stay out of the
+        way."""
         holder = QWidget()
         row = QHBoxLayout(holder)
         row.setContentsMargins(0, 10, 0, 0)
