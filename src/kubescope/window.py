@@ -6309,6 +6309,8 @@ class WorkloadWindow(QMainWindow):
         inner = cast(QVBoxLayout, last.layout())
         if last is form.extensionsCard:
             inner.setStretchFactor(form.extensionsCardsHost, 1)
+        elif last is form.shortcutsCard:
+            inner.setStretchFactor(form.shortcutsTable, 1)
         if last not in self._filled_cards:  # a spacer under what is in the card
             self._filled_cards.add(last)
             inner.addStretch()  # no stretch of its own: the table takes the room
