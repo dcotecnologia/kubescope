@@ -6,9 +6,10 @@ and the footer. The person can ask never to see it again.
 """
 
 from collections.abc import Callable
+from pathlib import Path
 
-from PySide6.QtCore import QEvent, QObject, QRect, Qt, QUrl, Signal
-from PySide6.QtGui import QDesktopServices, QPixmap
+from PySide6.QtCore import QEvent, QObject, QRect, QSize, Qt, QUrl, Signal
+from PySide6.QtGui import QColor, QDesktopServices, QIcon, QPainter, QPixmap
 from PySide6.QtWidgets import (
     QCheckBox,
     QFrame,
@@ -20,10 +21,25 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from kubescope.about import PROJECT_URL, SPONSOR_URL
+from kubescope.about import PROJECT_URL, SOCIAL, SPONSOR_URL
 from kubescope.dialogs.changelog_dialog import changelog_html
 from kubescope.theme import themed
 from kubescope.utils.changelog import Version
+
+SOCIAL_ICONS = Path(__file__).resolve().parent.parent / "assets" / "social"
+SOCIAL_SIZE = 18  # the drawing on its button
+
+
+def social_icon(name: str, color: str) -> QIcon:
+    """A social icon, a mask that is painted in `color`, which follows the
+    theme."""
+    mask = QPixmap(str(SOCIAL_ICONS / f"{name}.png"))
+    painter = QPainter(mask)
+    painter.setCompositionMode(QPainter.CompositionMode.CompositionMode_SourceIn)
+    painter.fillRect(mask.rect(), QColor(color))
+    painter.end()
+    return QIcon(mask)
+
 
 CONTENT_WIDTH = 880  # the text is read in a column, not across a wide window
 
@@ -229,7 +245,36 @@ class WelcomePage(QFrame):
             row.addWidget(button)
         row.addStretch(1)
         layout.addLayout(row)
+        layout.addWidget(self._social())
         return card
+
+    def _social(self) -> QWidget:
+        """Where to follow the company: small icons, which stay out of the way."""
+        holder = QWidget()
+        row = QHBoxLayout(holder)
+        row.setContentsMargins(0, 6, 0, 0)
+        row.setSpacing(6)
+        follow = QLabel(self.tr("Follow us"))
+        follow.setObjectName("welcomeCardText")
+        row.addWidget(follow)
+        color = themed("#6b7380", text=True)
+        self.social_buttons: list[QPushButton] = []
+        for name, address, icon in SOCIAL:
+            button = QPushButton()
+            button.setIcon(social_icon(icon, color))
+            button.setIconSize(QSize(SOCIAL_SIZE, SOCIAL_SIZE))
+            button.setToolTip(name)
+            button.setAccessibleName(name)
+            button.setFlat(True)
+            button.setCursor(Qt.CursorShape.PointingHandCursor)
+            button.setFixedSize(30, 30)
+            button.clicked.connect(
+                lambda _checked=False, url=address: QDesktopServices.openUrl(QUrl(url))
+            )
+            row.addWidget(button)
+            self.social_buttons.append(button)
+        row.addStretch(1)
+        return holder
 
     def _footer(self) -> QFrame:
         footer = QFrame()

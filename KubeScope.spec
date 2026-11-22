@@ -16,7 +16,9 @@ shutil.copyfile(
 # The extensions installed by default ship with the app, so that a first run needs no
 # network; a build without one just has no copy and the app downloads them.
 extensions = root / "src" / "kubescope" / "assets" / "extensions"
-subprocess.run([sys.executable, str(root / "tools" / "bundle_extensions.py")], check=False)
+subprocess.run(
+    [sys.executable, str(root / "tools" / "bundle_extensions.py")], check=False
+)
 # The commit goes into the bundle, so a crash log can say which build it is from.
 commit_file = root / "src" / "kubescope" / "_commit.txt"
 try:
@@ -31,19 +33,13 @@ try:
         + "\n",
         encoding="utf-8",
     )
-except (OSError, subprocess.SubprocessError):
+except OSError, subprocess.SubprocessError:
     pass  # not a git checkout: the log says "unknown"
 commit_data = [(str(commit_file), "kubescope")] if commit_file.is_file() else []
 
 bundled_binaries = []
 if sys.platform == "linux":
-    xcb_cursor = (
-        root
-        / "vendor"
-        / "linux"
-        / platform.machine()
-        / "libxcb-cursor.so.0"
-    )
+    xcb_cursor = root / "vendor" / "linux" / platform.machine() / "libxcb-cursor.so.0"
     if not xcb_cursor.is_file():
         raise FileNotFoundError(
             "Run python tools/fetch_linux_qt_libs.py before building on Linux"
@@ -73,7 +69,16 @@ analysis = Analysis(
         *copy_metadata("kubescope"),
         (str(root / "src" / "kubescope" / "assets" / "icon.png"), "kubescope/assets"),
         (str(root / "src" / "kubescope" / "assets" / "tray.png"), "kubescope/assets"),
-        (str(root / "src" / "kubescope" / "assets" / "CHANGELOG.md"), "kubescope/assets"),
+        *(
+            (str(path), "kubescope/assets/social")
+            for path in sorted(
+                (root / "src" / "kubescope" / "assets" / "social").glob("*.png")
+            )
+        ),
+        (
+            str(root / "src" / "kubescope" / "assets" / "CHANGELOG.md"),
+            "kubescope/assets",
+        ),
         (
             str(root / "src" / "kubescope" / "assets" / "THIRD_PARTY_NOTICES.txt"),
             "kubescope/assets",
@@ -157,7 +162,9 @@ analysis.binaries = [
     and not any(os.path.basename(entry[0]).startswith(n) for n in system_libraries)
 ]
 analysis.datas = [
-    entry for entry in analysis.datas if not any(n in entry[0].lower() for n in not_shipped)
+    entry
+    for entry in analysis.datas
+    if not any(n in entry[0].lower() for n in not_shipped)
 ]
 pyz = PYZ(analysis.pure)
 executable = EXE(
@@ -166,7 +173,9 @@ executable = EXE(
     [],
     exclude_binaries=True,
     name="KubeScope",
-    icon=str(root / "src" / "kubescope" / "assets" / "icon.ico") if os.name == "nt" else None,
+    icon=str(root / "src" / "kubescope" / "assets" / "icon.ico")
+    if os.name == "nt"
+    else None,
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
