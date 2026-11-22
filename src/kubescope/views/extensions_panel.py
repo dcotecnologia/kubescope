@@ -712,8 +712,9 @@ class ExtensionsPanel(QObject):
         """The files of a repository and the repository they are of.
 
         What the app recommends, with no tag, is its latest release that
-        works with this app (the highest final tag whose manifest it accepts);
-        a repository the person typed is taken as it was typed.
+        works with this app (the highest final tag whose manifest it
+        accepts); a repository the person typed is taken as it was
+        typed.
         """
         if latest and not repo.ref:
             tag = newest_compatible(list_tags(repo), repo, fetch_manifest)
