@@ -2,11 +2,17 @@ from pathlib import Path
 
 import pytest
 
+from kubescope.extensions import updates as updates_module
 from kubescope.extensions.defaults import DefaultExtension
 from kubescope.extensions.github import GithubError, Repo
 from kubescope.extensions.manifest import Manifest
 from kubescope.extensions.store import Installed
-from kubescope.extensions.updates import find, recommended_versions, version_key
+from kubescope.extensions.updates import (
+    find,
+    newest_compatible,
+    recommended_versions,
+    version_key,
+)
 
 
 def installed(
@@ -183,3 +189,74 @@ def test_a_repository_that_cannot_be_reached_does_not_stop_the_others() -> None:
     )
 
     assert [one.extension for one in found] == ["dco.two"]
+
+
+class Manifests:
+    """The manifest of each tag: what it needs of the app, by tag."""
+
+    def __init__(self, needs: dict[str, str]) -> None:
+        self.needs = needs
+        self.asked: list[str] = []
+
+    def __call__(self, repo: Repo) -> bytes:
+        self.asked.append(repo.ref)
+        wanted = self.needs.get(repo.ref, "")
+        return f'min_app = "{wanted}"\n'.encode() if wanted else b""
+
+
+@pytest.fixture
+def app_is_2_3_1(monkeypatch):
+    from kubescope.extensions import manifest
+
+    monkeypatch.setattr(manifest, "__version__", "2.3.1")
+
+
+def test_the_newest_version_that_works_with_the_app_is_the_one_offered(
+    app_is_2_3_1,
+) -> None:
+    manifests = Manifests({"v1.1.0": "2.4.0", "v1.0.5": "2.4.0"})
+
+    [update] = find(
+        [installed("1.0.0")],
+        [],
+        tags_of("v1.1.0", "v1.0.5", "v1.0.1", "v1.0.0"),
+        manifests,
+    )
+
+    assert update.latest == "v1.0.1"  # the two newer ones need a newer app
+    assert manifests.asked == ["v1.1.0", "v1.0.5", "v1.0.1"]  # newest first
+
+
+def test_nothing_is_offered_when_every_newer_version_needs_a_newer_app(
+    app_is_2_3_1,
+) -> None:
+    manifests = Manifests({"v1.1.0": "2.4.0"})
+
+    assert find([installed("1.0.0")], [], tags_of("v1.1.0"), manifests) == []
+
+
+def test_only_the_newest_few_tags_are_looked_at(app_is_2_3_1) -> None:
+    names = [f"v1.{minor}.0" for minor in range(20, 0, -1)]
+    manifests = Manifests({name: "9.0.0" for name in names})
+
+    assert find([installed("0.1.0")], [], tags_of(*names), manifests) == []
+    assert len(manifests.asked) == updates_module.MAX_CHECKED
+
+
+def test_a_manifest_that_cannot_be_read_offers_nothing_for_that_extension(
+    app_is_2_3_1,
+) -> None:
+    def broken(repo: Repo) -> bytes:
+        raise GithubError("down")
+
+    assert find([installed("1.0.0")], [], tags_of("v1.1.0"), broken) == []
+
+
+def test_a_recommendation_shows_the_newest_version_that_works(app_is_2_3_1) -> None:
+    gabi = DefaultExtension("kubescope.gabi", "Gabi", "", Repo("dco", "gabi"))
+    manifests = Manifests({"v1.1.0": "2.4.0"})
+
+    shown = recommended_versions([gabi], set(), tags_of("v1.1.0", "v1.0.1"), manifests)
+
+    assert shown == {"kubescope.gabi": "1.0.1"}
+    assert newest_compatible(["v1.0.0"], Repo("dco", "gabi"), None) == "v1.0.0"

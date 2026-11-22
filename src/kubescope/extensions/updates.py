@@ -15,6 +15,7 @@ from dataclasses import dataclass
 
 from kubescope.extensions.defaults import DefaultExtension
 from kubescope.extensions.github import GithubError, Repo, repo_of
+from kubescope.extensions.manifest import needs_newer_app
 from kubescope.extensions.store import Installed
 
 logger = logging.getLogger(__name__)
@@ -35,12 +36,41 @@ def latest_tag(names: Sequence[str]) -> str | None:
     return max(finals, key=lambda name: version_key(name) or (0, 0, 0), default=None)
 
 
+MAX_CHECKED = 8  # tags looked at, newest first, for one that works with this app
+
+
+def newest_compatible(
+    names: Sequence[str],
+    repo: Repo,
+    manifest_of: Callable[[Repo], bytes] | None,
+) -> str | None:
+    """The highest final tag whose version works with this app: the manifest of
+    each tag, newest first, is read and one that needs a newer app is passed
+    over. None when there is no tag, or none of the newest few works.
+
+    Without `manifest_of` it is the highest final tag, as `latest_tag` says.
+    """
+    if manifest_of is None:
+        return latest_tag(names)
+    finals = sorted(
+        (name for name in names if version_key(name) is not None),
+        key=lambda name: version_key(name) or (0, 0, 0),
+        reverse=True,
+    )
+    for name in finals[:MAX_CHECKED]:
+        if not needs_newer_app(manifest_of(Repo(repo.owner, repo.name, name))):
+            return name
+    return None
+
+
 def recommended_versions(
     defaults: Sequence[DefaultExtension],
     present: set[str],
     tags: Callable[[Repo], list[str]] | None,
+    manifest_of: Callable[[Repo], bytes] | None = None,
 ) -> dict[str, str]:
-    """The latest versions of recommended extensions that are not installed."""
+    """The latest versions of recommended extensions that are not installed, the
+    newest that works with this app."""
     if tags is None:
         return {}
     found = {}
@@ -50,7 +80,7 @@ def recommended_versions(
         if one.repo.ref:
             continue
         try:
-            newest = latest_tag(tags(one.repo))
+            newest = newest_compatible(tags(one.repo), one.repo, manifest_of)
         except GithubError as error:
             logger.info(
                 "Could not look for the recommended version of %s: %s",
@@ -81,11 +111,14 @@ def find(
     installed: Sequence[Installed],
     defaults: Sequence[DefaultExtension],
     tags: Callable[[Repo], list[str]] | None,
+    manifest_of: Callable[[Repo], bytes] | None = None,
 ) -> list[Update]:
     """The updates there are.
 
     `tags` lists the tags of a repository; None means the network is not
-    to be used, and only the pinned ones are looked at.
+    to be used, and only the pinned ones are looked at. `manifest_of` reads
+    the manifest of a tag, so that a version that needs a newer app is not
+    offered, and an older one that works is.
     """
     found = []
     for one in installed:
@@ -128,7 +161,11 @@ def find(
         except GithubError as error:
             logger.info("Could not look for updates of %s: %s", one.manifest.id, error)
             continue
-        newest = latest_tag(names)
+        try:
+            newest = newest_compatible(names, repo, manifest_of)
+        except GithubError as error:
+            logger.info("Could not read a manifest of %s: %s", one.manifest.id, error)
+            continue
         if newest is not None and (version_key(newest) or (0, 0, 0)) > current:
             found.append(
                 Update(

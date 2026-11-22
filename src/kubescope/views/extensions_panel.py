@@ -46,6 +46,7 @@ from kubescope.extensions.github import (
     GithubError,
     Repo,
     download,
+    fetch_manifest,
     list_tags,
     parse_repo,
     repo_of,
@@ -56,7 +57,7 @@ from kubescope.extensions.store import Candidate, ExtensionStore, StoreError
 from kubescope.extensions.updates import (
     Update,
     find,
-    latest_tag,
+    newest_compatible,
     recommended_versions,
     version_key,
 )
@@ -283,8 +284,8 @@ class ExtensionsPanel(QObject):
 
         def lookup() -> tuple[list[Update], dict[str, str]]:
             return (
-                find(installed, defaults, list_tags),
-                recommended_versions(defaults, present, list_tags),
+                find(installed, defaults, list_tags, fetch_manifest),
+                recommended_versions(defaults, present, list_tags, fetch_manifest),
             )
 
         def done(result: tuple[list[Update], dict[str, str]]) -> None:
@@ -710,12 +711,12 @@ class ExtensionsPanel(QObject):
     def _fetch(repo: Repo, latest: bool = False) -> tuple[Repo, bytes]:
         """The files of a repository and the repository they are of.
 
-        What the app recommends, with no tag, is its latest release (its
-        highest final tag); a repository the person typed is taken as it
-        was typed.
+        What the app recommends, with no tag, is its latest release that
+        works with this app (the highest final tag whose manifest it accepts);
+        a repository the person typed is taken as it was typed.
         """
         if latest and not repo.ref:
-            tag = latest_tag(list_tags(repo))
+            tag = newest_compatible(list_tags(repo), repo, fetch_manifest)
             if tag is None:
                 raise GithubError(f"{repo.label} has no release yet")
             repo = Repo(repo.owner, repo.name, tag)

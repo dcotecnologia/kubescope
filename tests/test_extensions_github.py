@@ -12,6 +12,7 @@ from kubescope.extensions.github import (
     parse_repo,
     repo_of,
 )
+from kubescope.extensions.manifest import MAX_MANIFEST_BYTES
 
 
 @pytest.mark.parametrize(
@@ -178,3 +179,39 @@ def test_tags_that_cannot_be_read_say_why(monkeypatch, outcome, message) -> None
 
     with pytest.raises(GithubError, match=message):
         github.list_tags(Repo("dco", "gabi"))
+
+
+def test_the_manifest_of_a_tag_is_read_from_raw_with_only_a_user_agent(
+    monkeypatch,
+) -> None:
+    raw = "https://raw.githubusercontent.com/dco/gabi/v1.1.0/kubescope-extension.toml"
+    sent = fake(monkeypatch, Response(b'id = "x"', raw))
+
+    assert github.fetch_manifest(Repo("dco", "gabi", "v1.1.0")) == b'id = "x"'
+    request, timeout = sent[0]
+    assert request.full_url == (
+        "https://github.com/dco/gabi/raw/v1.1.0/kubescope-extension.toml"
+    )  # not the API
+    assert set(request.headers) == {"User-agent"} and timeout == github.TIMEOUT
+
+    github.fetch_manifest(Repo("dco", "gabi"))  # no ref: the default branch
+    assert sent[1][0].full_url.endswith("/raw/HEAD/kubescope-extension.toml")
+
+
+@pytest.mark.parametrize(
+    ("outcome", "message"),
+    [
+        (Response(b"x", "https://evil.example/m"), "somewhere else"),
+        (
+            Response(b"x" * (MAX_MANIFEST_BYTES + 1), "https://github.com/x"),
+            "too big",
+        ),
+        (urllib.error.URLError("no route"), "could not be reached"),
+        (urllib.error.HTTPError("u", 404, "no", {}, None), "answered 404"),  # type: ignore[arg-type]
+    ],
+)
+def test_a_manifest_that_cannot_be_read_says_why(monkeypatch, outcome, message) -> None:
+    fake(monkeypatch, outcome)
+
+    with pytest.raises(GithubError, match=message):
+        github.fetch_manifest(Repo("dco", "gabi", "v1.0.0"))

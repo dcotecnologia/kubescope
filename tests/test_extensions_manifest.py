@@ -179,3 +179,20 @@ def test_min_app_is_optional_and_must_be_a_version(monkeypatch) -> None:
 
     monkeypatch.setattr(manifest_module, "__version__", "dev")  # a build with none
     assert parse_manifest(GOOD + b'min_app = "9.0.0"\n').min_app == "9.0.0"
+
+
+def test_a_manifest_that_needs_a_newer_app_is_told_without_being_read_whole(
+    monkeypatch,
+) -> None:
+    from kubescope.extensions import manifest as manifest_module
+    from kubescope.extensions.manifest import needs_newer_app
+
+    monkeypatch.setattr(manifest_module, "__version__", "2.3.1")
+
+    assert needs_newer_app(b'min_app = "2.4.0"\n') == "2.4.0"
+    assert needs_newer_app(b'min_app = "2.3.1"\n') == ""  # enough
+    assert needs_newer_app(b"") == ""  # says nothing
+    assert needs_newer_app(b"min_app = 4\n") == ""  # not a text
+    assert needs_newer_app(b'min_app = "soon"\n') == ""
+    assert needs_newer_app(b"\xff") == ""  # left to the install to refuse
+    assert needs_newer_app(b"not = [toml") == ""

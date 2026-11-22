@@ -17,10 +17,12 @@ from kubescope.sdk.errors import first_line
 
 from kubescope.about import __version__
 from kubescope.extensions.archive import MAX_ARCHIVE
+from kubescope.extensions.manifest import MANIFEST_NAME, MAX_MANIFEST_BYTES
 
 TIMEOUT = 30  # seconds
 _HOSTS = ("github.com", "codeload.github.com")  # the website, never the API,
 # whose limit of anonymous requests (60 an hour for an address) a first run can use up
+_RAW_HOSTS = ("github.com", "raw.githubusercontent.com")  # the manifest of a tag
 _NAME = r"[A-Za-z0-9_.-]{1,100}"
 _REPO = re.compile(
     rf"(?:https://github\.com/)?({_NAME})/({_NAME}?)(?:\.git)?"
@@ -92,6 +94,34 @@ def download(repo: Repo) -> bytes:
         ) from error
     if len(data) > MAX_ARCHIVE:
         raise GithubError("The repository is too big to be an extension")
+    return data
+
+
+def fetch_manifest(repo: Repo) -> bytes:
+    """The manifest of the repository at its ref, which is small: what tells
+    whether a version works with this app, without downloading it.
+
+    GitHub sends it from `raw.githubusercontent.com`, and nothing but a
+    User-Agent with the app version leaves the app.
+    """
+    ref = quote(repo.ref, safe="/") if repo.ref else "HEAD"
+    request = urllib.request.Request(
+        f"https://github.com/{repo.owner}/{repo.name}/raw/{ref}/{MANIFEST_NAME}",
+        headers={"User-Agent": f"KubeScope/{__version__}"},
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=TIMEOUT) as response:
+            if urlparse(response.geturl()).hostname not in _RAW_HOSTS:
+                raise GithubError("GitHub sent the file from somewhere else")
+            data = response.read(MAX_MANIFEST_BYTES + 1)
+    except urllib.error.HTTPError as error:
+        raise GithubError(f"GitHub answered {error.code} for {repo.label}") from error
+    except (urllib.error.URLError, OSError) as error:
+        raise GithubError(
+            f"GitHub could not be reached: {first_line(str(error))}"
+        ) from error
+    if len(data) > MAX_MANIFEST_BYTES:
+        raise GithubError("The manifest is too big")
     return data
 
 
