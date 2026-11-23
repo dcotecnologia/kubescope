@@ -6,11 +6,11 @@ permalink: /guides/security/
 
 ## Supported versions
 
-KubeScope is young, so only the latest release receives security fixes.
+KubeScope is young, so only versions `2.4.0` and later are supported, and security fixes go to the latest release.
 
 | Version              | Supported |
 | -------------------- | --------- |
-| latest `1.x` release | Yes       |
+| `2.4.x` and later    | Yes       |
 | anything older       | No        |
 
 ## Reporting a vulnerability
