@@ -21,6 +21,9 @@
     {
       "path": "../kubescope-notifications",
     },
+    {
+      "path": "../kubescope-ext-custom-resources",
+    },
   ],
   "settings": {
     // ── Editor ────────────────────────────────────────────────────────────
