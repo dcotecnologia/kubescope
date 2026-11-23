@@ -49,100 +49,6 @@
     </layout>
    </item>
    <item>
-    <widget class="QFrame" name="clusterInfoCard">
-     <property name="visible">
-      <bool>false</bool>
-     </property>
-     <property name="card" stdset="0">
-      <string notr="true">true</string>
-     </property>
-     <layout class="QVBoxLayout" name="clusterInfoLayout">
-      <property name="spacing">
-       <number>10</number>
-      </property>
-      <property name="leftMargin">
-       <number>16</number>
-      </property>
-      <property name="topMargin">
-       <number>14</number>
-      </property>
-      <property name="rightMargin">
-       <number>16</number>
-      </property>
-      <property name="bottomMargin">
-       <number>14</number>
-      </property>
-      <item>
-       <widget class="QLabel" name="clusterInfoTitle">
-        <property name="text">
-         <string>CLUSTER INFO</string>
-        </property>
-        <property name="variant" stdset="0">
-         <string notr="true">cardTitle</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <layout class="QGridLayout" name="clusterInfoGrid">
-        <property name="horizontalSpacing">
-         <number>24</number>
-        </property>
-        <property name="verticalSpacing">
-         <number>10</number>
-        </property>
-       </layout>
-      </item>
-     </layout>
-    </widget>
-   </item>
-   <item>
-    <widget class="QFrame" name="networkingCard">
-     <property name="visible">
-      <bool>false</bool>
-     </property>
-     <property name="card" stdset="0">
-      <string notr="true">true</string>
-     </property>
-     <layout class="QVBoxLayout" name="networkingLayout">
-      <property name="spacing">
-       <number>10</number>
-      </property>
-      <property name="leftMargin">
-       <number>16</number>
-      </property>
-      <property name="topMargin">
-       <number>14</number>
-      </property>
-      <property name="rightMargin">
-       <number>16</number>
-      </property>
-      <property name="bottomMargin">
-       <number>14</number>
-      </property>
-      <item>
-       <widget class="QLabel" name="networkingTitle">
-        <property name="text">
-         <string>NETWORKING</string>
-        </property>
-        <property name="variant" stdset="0">
-         <string notr="true">cardTitle</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <layout class="QGridLayout" name="networkingGrid">
-        <property name="horizontalSpacing">
-         <number>24</number>
-        </property>
-        <property name="verticalSpacing">
-         <number>10</number>
-        </property>
-       </layout>
-      </item>
-     </layout>
-    </widget>
-   </item>
-   <item>
     <layout class="QHBoxLayout" name="mainCards">
      <property name="spacing">
       <number>14</number>
@@ -626,6 +532,100 @@
       </widget>
      </item>
     </layout>
+   </item>
+   <item>
+    <widget class="QFrame" name="clusterInfoCard">
+     <property name="visible">
+      <bool>false</bool>
+     </property>
+     <property name="card" stdset="0">
+      <string notr="true">true</string>
+     </property>
+     <layout class="QVBoxLayout" name="clusterInfoLayout">
+      <property name="spacing">
+       <number>10</number>
+      </property>
+      <property name="leftMargin">
+       <number>16</number>
+      </property>
+      <property name="topMargin">
+       <number>14</number>
+      </property>
+      <property name="rightMargin">
+       <number>16</number>
+      </property>
+      <property name="bottomMargin">
+       <number>14</number>
+      </property>
+      <item>
+       <widget class="QLabel" name="clusterInfoTitle">
+        <property name="text">
+         <string>CLUSTER INFO</string>
+        </property>
+        <property name="variant" stdset="0">
+         <string notr="true">cardTitle</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <layout class="QGridLayout" name="clusterInfoGrid">
+        <property name="horizontalSpacing">
+         <number>24</number>
+        </property>
+        <property name="verticalSpacing">
+         <number>10</number>
+        </property>
+       </layout>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QFrame" name="networkingCard">
+     <property name="visible">
+      <bool>false</bool>
+     </property>
+     <property name="card" stdset="0">
+      <string notr="true">true</string>
+     </property>
+     <layout class="QVBoxLayout" name="networkingLayout">
+      <property name="spacing">
+       <number>10</number>
+      </property>
+      <property name="leftMargin">
+       <number>16</number>
+      </property>
+      <property name="topMargin">
+       <number>14</number>
+      </property>
+      <property name="rightMargin">
+       <number>16</number>
+      </property>
+      <property name="bottomMargin">
+       <number>14</number>
+      </property>
+      <item>
+       <widget class="QLabel" name="networkingTitle">
+        <property name="text">
+         <string>NETWORKING</string>
+        </property>
+        <property name="variant" stdset="0">
+         <string notr="true">cardTitle</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <layout class="QGridLayout" name="networkingGrid">
+        <property name="horizontalSpacing">
+         <number>24</number>
+        </property>
+        <property name="verticalSpacing">
+         <number>10</number>
+        </property>
+       </layout>
+      </item>
+     </layout>
+    </widget>
    </item>
    <item>
     <spacer name="overviewSpacer">

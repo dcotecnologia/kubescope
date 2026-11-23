@@ -1122,6 +1122,20 @@ def test_a_window_with_no_context_in_the_kubeconfig_opens_the_kube_settings(
     window.close()
 
 
+def test_the_refresh_of_a_page_of_an_extension_also_turns_green(monkeypatch) -> None:
+    monkeypatch.setattr(window_module, "list_contexts", lambda: ([], None))
+    monkeypatch.setattr(window_module.WorkloadWindow, "refresh", lambda *_a: None)
+    window = window_module.WorkloadWindow()
+    button = window.extension_refresh_button
+    monkeypatch.setattr(window_module.QTimer, "singleShot", lambda _ms, _call: None)
+
+    window._begin_loading(button, "Loading...")
+    window._end_loading(button)
+
+    assert button.styleSheet() == window_module.DONE_STYLE
+    window.close()
+
+
 def test_a_reload_that_ends_well_turns_its_button_green_for_a_moment(
     monkeypatch,
 ) -> None:
@@ -1154,4 +1168,22 @@ def test_a_reload_that_ends_well_turns_its_button_green_for_a_moment(
     window._end_loading(button)
     moments.pop()()
     assert button.styleSheet() == "" and button.icon().cacheKey() == resting
+    window.close()
+
+
+def test_the_columns_of_the_events_of_the_workloads_overview_can_be_dragged(
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(window_module, "list_contexts", lambda: ([], None))
+    monkeypatch.setattr(window_module.WorkloadWindow, "refresh", lambda *_a: None)
+    window = window_module.WorkloadWindow()
+    table = window.workloads_table
+    header = table.horizontalHeader()
+
+    for column in range(table.columnCount()):
+        # stretched or sized by the contents, a column cannot be dragged
+        assert header.sectionResizeMode(column) == header.ResizeMode.Interactive
+    assert header.stretchLastSection()  # the message takes the room that is left
+    widths = window_module.EVENTS_COLUMN_WIDTHS
+    assert [table.columnWidth(column) for column in range(len(widths))] == list(widths)
     window.close()

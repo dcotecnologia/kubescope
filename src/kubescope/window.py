@@ -7,7 +7,8 @@ import math
 import re
 import tempfile
 import time
-from collections.abc import Callable
+import zlib
+from collections.abc import Callable, Sequence
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from functools import partial
@@ -231,6 +232,7 @@ from kubescope.utils.selfupdate import detect_install, restart
 from kubescope.utils.updates import Release, UpdateCheck, check_for_update
 from kubescope.views import motion
 from kubescope.views.chat_icons import check_icon, close_icon, icon_only, save_icon
+from kubescope.views.check_header import CheckHeader
 from kubescope.views.container_states import (
     BADGE_ROLE,
     LINK_ROLE,
@@ -245,7 +247,11 @@ from kubescope.views.container_states import (
 from kubescope.views.detail_tab import USAGE_REFRESH_MS, DetailTab
 from kubescope.views.dialog_frame import frames
 from kubescope.views.error_banner import ErrorBanner
-from kubescope.views.extension_pages import ExtensionPages
+from kubescope.views.extension_pages import (
+    SECTION_GAP,
+    ExtensionPages,
+    SectionBlock,
+)
 from kubescope.views.extensions_panel import ExtensionsPanel
 from kubescope.views.forward_runner import ForwardRunner
 from kubescope.views.log_tab import LOG_REFRESH_MS, LogTab
@@ -265,6 +271,7 @@ from kubescope.writes import (
     delete_pod,
     delete_resource,
     evict_pod,
+    for_each,
     forward_commands,
     forward_run,
     node_shell_arguments,
@@ -302,6 +309,19 @@ DESIGNED_COLUMNS = 6  # the columns the table has in main_window.ui
 LIST_DEBOUNCE_MS = 150
 LIST_REFRESH_MS = 5_000  # the list on screen is read again this often
 LIST_REFRESH_MAX_MS = 60_000  # ... and this rarely while the cluster keeps failing
+BULK_SHAPES = frozenset({"evict", "reload", "delete"})  # what works on many rows
+POD_NAMES_SHOWN = 10  # of the rows a confirmation names
+DIVIDER_HEIGHT = 16  # px, of the line between the columns of a table header
+# Added to the style sheet by `_apply_style`, not written in main_window.ui: the
+# icon is made for the theme, and Qt complains when it reads the name before that.
+HEADER_DIVIDER_STYLE = """
+QHeaderView::section:horizontal {
+    background-image: url(DIVIDER_ICON); background-repeat: no-repeat;
+    background-position: right center;
+}
+QHeaderView::section:horizontal:last { background-image: none; }
+"""
+EVENTS_COLUMN_WIDTHS = (96, 200, 150, 340)  # of the events of the workloads overview
 PERMISSIONS_TTL_S = 300  # what the cluster allows is asked again after this long
 CUSTOM_TERMINAL = "?custom"  # the entry of the terminals for a command of their own
 MONITORING_FOLD = "section:monitoring"  # how the settings call that block folded
@@ -387,6 +407,52 @@ def _check_icon_path() -> str:
         )
 
     return _icon_path("check", draw, QSize(14, 14))
+
+
+def _divider_icon_path() -> str:
+    """The short line between two columns of a table header, which shows where to
+    drag to resize one: a style sheet can only draw a border as tall as the
+    section, so the line is an image the section puts at its right edge."""
+
+    def draw(painter: QPainter) -> None:
+        color = QColor(themed("#8a919c"))
+        color.setAlpha(110)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing, False)
+        painter.fillRect(QRectF(1, 0, 1, DIVIDER_HEIGHT), color)
+
+    return _icon_path("divider", draw, QSize(2, DIVIDER_HEIGHT))
+
+
+def _monogram_icon(name: str) -> QIcon:
+    """An icon for a group of an extension, which the app cannot know
+    beforehand (the API groups of a cluster): its first two letters on a square
+    of a color made from the whole name, so the groups tell from each other and
+    the same name has the same icon at every start, in every theme."""
+    scale = 3  # drawn three times larger so the edges stay smooth
+    dark = QColor(themed("#ffffff")).lightness() < 128
+    accent = QColor.fromHsl(zlib.crc32(name.encode()) % 360, 150, 165 if dark else 95)
+    fill, border = QColor(accent), QColor(accent)
+    fill.setAlpha(45)
+    border.setAlpha(150)
+    pixmap = QPixmap(18 * scale, 18 * scale)
+    pixmap.fill(Qt.GlobalColor.transparent)
+    painter = QPainter(pixmap)
+    painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+    box = QRectF(1.5 * scale, 1.5 * scale, 15 * scale, 15 * scale)
+    painter.setPen(QPen(border, 1.2 * scale))
+    painter.setBrush(fill)
+    painter.drawRoundedRect(box, 4 * scale, 4 * scale)
+    font = painter.font()
+    font.setBold(True)
+    font.setPixelSize(8 * scale)
+    painter.setFont(font)
+    painter.setPen(accent)
+    letters = "".join(char for char in name if char.isalnum())[:2]
+    painter.drawText(
+        box, Qt.AlignmentFlag.AlignCenter, letters[:1].upper() + letters[1:]
+    )
+    painter.end()
+    return QIcon(pixmap)
 
 
 def _sidebar_icon(collapsed: bool) -> QIcon:
@@ -529,6 +595,11 @@ def _nav_icon(shape: str, colors: tuple[str, str] | None = None) -> QIcon:
         elif shape == "workloads":  # four tiles
             for x, y in ((3, 3), (10, 3), (3, 10), (10, 10)):
                 painter.drawRoundedRect(QRectF(x, y, 5, 5), 1.2, 1.2)
+        elif shape == "plugins":  # a plug: two prongs, its body and the cable
+            painter.drawLine(QPointF(6.5, 2.5), QPointF(6.5, 6.5))
+            painter.drawLine(QPointF(11.5, 2.5), QPointF(11.5, 6.5))
+            painter.drawRoundedRect(QRectF(4.5, 6.5, 9, 5), 1.5, 1.5)
+            painter.drawLine(QPointF(9, 11.5), QPointF(9, 15.5))
         elif shape == "details":  # an "i" in a circle
             painter.drawEllipse(QPointF(9, 9), 6.5, 6.5)
             painter.drawLine(QPointF(9, 8.3), QPointF(9, 12.3))
@@ -989,6 +1060,14 @@ class WorkloadWindow(QMainWindow):
             ui.summaryRow.addWidget(button)
             self.write_buttons[shape] = button
         self.table = ui.workloadTable
+        self.check_header = CheckHeader(self.table)  # to check every Pod at once
+        self.table.setHorizontalHeader(self.check_header)
+        self.check_header.toggled.connect(self._check_all_rows)
+        self._checked: set[tuple[str, str, str]] = set()  # (kind, namespace, name)
+        self._filling = False  # the boxes are being set by the window, not the person
+        self._stamped_column = -1  # the column that has the boxes now
+        self._hidden_for_many: set[QPushButton] = set()  # hidden while rows are checked
+        self.table.itemChanged.connect(self._item_changed)
         states_delegate = ContainerStatesDelegate(self.table)
         # the containers of a Pod and the replicas of a workload, in READY
         self.table.setItemDelegate(BadgeDelegate(self.table))  # badges and row tints
@@ -1156,25 +1235,25 @@ class WorkloadWindow(QMainWindow):
         header.addWidget(self.extension_refresh_button)
         self.extension_refresh_button.hide()
         self._extension_refresh: Callable[[], None] | None = None
-        self.extension_refresh_button.clicked.connect(
-            lambda: self._call_extension(
-                "", lambda: self._extension_refresh and self._extension_refresh()
-            )
-        )
+        # a method of the window, not a lambda: the button spins only when
+        # `sender()` names it, and that works for the slots of the window
+        self.extension_refresh_button.clicked.connect(self._refresh_extension_page)
         self.workloads_table = self.workloads_ui.eventsTable
         self.workloads_table.setItemDelegateForColumn(
             0, BadgeDelegate(self.workloads_table)
         )
         for linked in (self.table, self.nodes_table, self.workloads_table):
             self._enable_links(linked)
+        # every column can be dragged; the last one (the message) takes the room
+        # the others leave
         events_header = self.workloads_table.horizontalHeader()
         for column in range(self.workloads_table.columnCount()):
             events_header.setSectionResizeMode(
-                column,
-                QHeaderView.ResizeMode.Stretch
-                if column == 4  # the message takes what the others leave
-                else QHeaderView.ResizeMode.ResizeToContents,
+                column, QHeaderView.ResizeMode.Interactive
             )
+        events_header.setStretchLastSection(True)
+        for column, width in enumerate(EVENTS_COLUMN_WIDTHS):
+            self.workloads_table.setColumnWidth(column, width)
         self.viewer_ui = Ui_ViewerPage()
         self.viewer_ui.setupUi(ui.viewerHost)
         self.viewer_tabs = self.viewer_ui.viewerTabs
@@ -1213,8 +1292,19 @@ class WorkloadWindow(QMainWindow):
             lambda name: name in self.settings.folded_sections,
             lambda: motion.ENABLED,
             self._keep_section_fold,
-            lambda: _nav_icon("workloads"),
+            group_icon=_monogram_icon,
+            on_changed=self._sections_changed,
         )
+        monitoring_gap = QWidget()  # the air above a block, as the other blocks have
+        monitoring_gap.setFixedHeight(SECTION_GAP)
+        ui.sidebarNavLayout.insertWidget(
+            ui.sidebarNavLayout.indexOf(ui.navSection), monitoring_gap
+        )
+        self.monitoring_block = SectionBlock(
+            ui.navSection, [monitoring_gap, ui.navSection, self.monitoring_fold.body]
+        )
+        self._connect_section_menu(MONITORING_FOLD, ui.navSection)
+        self._arrange_sections()  # the order of the person, from the start
         self._extension_shortcuts: dict[str, QShortcut] = {}
         self._extension_watchers: dict[str, FolderWatcher] = {}
         self.extensions_panel = ExtensionsPanel(
@@ -1444,6 +1534,9 @@ class WorkloadWindow(QMainWindow):
             language_name=lambda: language_name(self.settings.language),
             language_names=lambda: tuple(english_names()),
             data_directory=data_directory,
+            pages_changed=lambda: self.extension_pages.apply(
+                self.extension_host.contributions.pages
+            ),
             ui=WindowUi(
                 self,
                 central,
@@ -2600,6 +2693,7 @@ class WorkloadWindow(QMainWindow):
             .replace("CHECK_ICON", _check_icon_path())
             .replace("CLOSE_ICON_HOVER", _close_icon_path("#3220a0", "close-hover"))
             .replace("CLOSE_ICON", _close_icon_path("#6b7380", "close"))
+            + HEADER_DIVIDER_STYLE.replace("DIVIDER_ICON", _divider_icon_path())
         )
         for chevron in self._chevrons.values():
             chevron.refresh()  # the colors of the theme
@@ -2609,7 +2703,7 @@ class WorkloadWindow(QMainWindow):
         self.ui.navNodeGroups.setIcon(_nav_icon("nodegroups"))
         self.nav_network.setIcon(_nav_icon("network"))
         self.nav_config.setIcon(_nav_icon("config"))
-        self.nav_plugins.setIcon(_nav_icon("workloads"))
+        self.nav_plugins.setIcon(_nav_icon("plugins"))
         self.extension_pages.restyle()
         self.nav_forwards.setIcon(_nav_icon("forward"))
         self.save_button.setIcon(_nav_icon("save"))
@@ -2702,6 +2796,100 @@ class WorkloadWindow(QMainWindow):
         )
         return fold
 
+    def _section_blocks(self) -> dict[str, SectionBlock]:
+        """The blocks of the side menu, the one of the app first, as they are
+        without an order of the person."""
+        return {MONITORING_FOLD: self.monitoring_block, **self.extension_pages.blocks}
+
+    def _section_order(self, blocks: dict[str, SectionBlock]) -> list[str]:
+        """The names of the blocks in the order the person gave them; the ones
+        they did not place come after, in the usual order."""
+        placed = [name for name in self.settings.section_order if name in blocks]
+        return placed + [name for name in blocks if name not in placed]
+
+    def _arrange_sections(self) -> None:
+        """Put the blocks of the side menu in the order of the person."""
+        blocks = self._section_blocks()
+        layout = self.ui.sidebarNavLayout
+        widgets = [widget for block in blocks.values() for widget in block.widgets]
+        index = min(layout.indexOf(widget) for widget in widgets)
+        for widget in widgets:
+            layout.removeWidget(widget)
+        for name in self._section_order(blocks):
+            for widget in blocks[name].widgets:
+                layout.insertWidget(index, widget)
+                index += 1
+        self._space_sections()
+
+    def _sections_changed(self) -> None:
+        """The blocks of the extensions were built again, or some show or hide:
+
+        they go to their place, their titles get the menu and the air
+        goes where it belongs.
+        """
+        for name, block in self.extension_pages.blocks.items():
+            self._connect_section_menu(name, block.label)
+        self._arrange_sections()
+
+    def _space_sections(self) -> None:
+        """Air above every block that shows, except the first one."""
+        blocks = self._section_blocks()
+        first = True
+        for name in self._section_order(blocks):
+            block = blocks[name]
+            gap = block.widgets[0]
+            gap.setVisible(not first and not block.label.isHidden())
+            first = first and block.label.isHidden()
+
+    def _connect_section_menu(self, name: str, label: QLabel) -> None:
+        label.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        label.customContextMenuRequested.connect(
+            lambda position: self._section_menu(name, label, position)
+        )
+
+    def _visible_sections(self) -> list[str]:
+        blocks = self._section_blocks()
+        return [
+            name
+            for name in self._section_order(blocks)
+            if not blocks[name].label.isHidden()
+        ]
+
+    def _section_menu(self, name: str, label: QLabel, position: QPoint) -> None:
+        """Right click on the title of a block of the side menu: move it."""
+        visible = self._visible_sections()
+        if name not in visible:
+            return
+        index = visible.index(name)
+        menu = QMenu(self)
+        submenu = menu.addMenu(self.tr("Reorganize"))
+        up = submenu.addAction(self.tr("Move up"), lambda: self._move_section(name, -1))
+        up.setEnabled(index > 0)
+        down = submenu.addAction(
+            self.tr("Move down"), lambda: self._move_section(name, 1)
+        )
+        down.setEnabled(index < len(visible) - 1)
+        self._open_section_menu(menu, label.mapToGlobal(position))
+
+    def _open_section_menu(self, menu: QMenu, position: QPoint) -> None:
+        menu.exec(position)
+
+    def _move_section(self, name: str, step: int) -> None:
+        """Move a block of the side menu past the next one that shows, up or
+        down, and keep the order."""
+        visible = self._visible_sections()
+        if name not in visible:
+            return
+        target = visible.index(name) + step
+        if not 0 <= target < len(visible):
+            return
+        order = self._section_order(self._section_blocks())
+        first, second = order.index(name), order.index(visible[target])
+        order[first], order[second] = order[second], order[first]
+        self.settings.section_order = order
+        self._save_settings()
+        self._arrange_sections()
+
     def _keep_section_fold(self, name: str, folded: bool) -> None:
         """Write down that a block of the side menu was folded or unfolded."""
         closed = set(self.settings.folded_sections)
@@ -2768,6 +2956,7 @@ class WorkloadWindow(QMainWindow):
         logger.debug("Opening the %s list", view)
         self._view = view
         if changed:
+            self._checked.clear()  # the rows of another list are other rows
             self._sort = None
             header = self.table.horizontalHeader()
             header.setSortIndicatorShown(False)
@@ -2946,6 +3135,7 @@ class WorkloadWindow(QMainWindow):
         hidden = self.settings.hidden_columns(self._view) | self._always_hidden()
         for column in range(self.table.columnCount()):
             self.table.setColumnHidden(column, column in hidden)
+        self._stamp_checks()  # the boxes are in the first column that shows
 
     def _update_write_buttons(self) -> None:
         """The buttons of the write mode: the ones of this view, only while the
@@ -2967,15 +3157,38 @@ class WorkloadWindow(QMainWindow):
         self._update_workload_actions()
 
     def _write_button_clicked(self, shape: str) -> None:
+        rows = self._checked_rows()
+        if rows:  # rows with the box checked: only what works on all of them
+            for entry_shape, _text, callback in self._bulk_entries(rows):
+                if entry_shape == shape:
+                    callback()
+            return
         for entry_shape, _text, callback in self._write_entries():
             if entry_shape == shape:
                 callback()
+
+    def _show_bulk_menu(self, position: QPoint) -> None:
+        """Right click on a row with the box checked: what works on all of
+        them."""
+        entries = (
+            self._bulk_entries(self._checked_rows()) if self.settings.write_mode else []
+        )
+        if not entries:
+            return
+        menu = QMenu(self)
+        self._add_entries(menu, entries)
+        menu.exec(self.table.viewport().mapToGlobal(position))
 
     def _show_row_menu(self, position: QPoint) -> None:
         """Row right-click: select the row and offer what the buttons above the
         table do for it."""
         row = self.table.rowAt(position.y())
         if row < 0:
+            return
+        rows = self._current_rows()
+        checked = self._checked_rows()
+        if checked and 0 <= row < len(rows) and rows[row] in checked:
+            self._show_bulk_menu(position)  # a row with the box checked: for all
             return
         self.table.selectRow(row)
         menu = QMenu(self)
@@ -3014,6 +3227,7 @@ class WorkloadWindow(QMainWindow):
         self.settings.set_hidden_columns(self._view, hidden)
         self._save_settings()
         self.table.setColumnHidden(column, not visible)
+        self._stamp_checks()  # the first column that shows may be another
 
     def _context_changed(self, *_args: object) -> None:
         logger.info("Context changed to %s", self._context())
@@ -3487,6 +3701,7 @@ class WorkloadWindow(QMainWindow):
                 self.refresh_button,
                 self.overview_refresh_button,
                 self.workloads_refresh_button,
+                self.extension_refresh_button,  # of the page of an extension
             ):
                 self._flash_done(button)
 
@@ -4227,8 +4442,9 @@ class WorkloadWindow(QMainWindow):
                 matches = row.values[1] == reason
             self.table.setRowHidden(row_index, not matches)
             visible_rows += matches
+        self._stamp_checks()  # the boxes, in the rows that show
         self.table.setUpdatesEnabled(True)
-        self._update_workload_actions()
+        self._sync_checks()  # the rows that show may not be the ones that did
         template = {
             "pods": self.tr("{visible} of {total} Pods"),
             "deployments": self.tr("{visible} of {total} Deployments"),
@@ -4291,16 +4507,175 @@ class WorkloadWindow(QMainWindow):
             return self._pods[row]
         return None
 
+    @staticmethod
+    def _row_key(row: Workload | PodInfo | ClusterResource) -> tuple[str, str, str]:
+        """What tells a row from the others of its list, to keep it checked."""
+        return (getattr(row, "kind", "Pod"), row.namespace, row.name)
+
+    def _bulk_shapes(self) -> frozenset[str]:
+        """What the person can do to many rows of this list at once: only in
+        the write mode, and only what the list offers (Evict, Restart,
+        Delete)."""
+        return frozenset(self._shown_shapes) & BULK_SHAPES
+
+    def _checks_available(self) -> bool:
+        """The boxes are there to act on many rows at a time: a list that has
+        such an action has them."""
+        return bool(self._bulk_shapes())
+
+    def _check_column(self) -> int:
+        """The column of the boxes: the first one the list shows."""
+        for column in range(self.table.columnCount()):
+            if not self.table.isColumnHidden(column):
+                return column
+        return -1
+
+    def _apply_checks(self) -> None:
+        """The write mode went on or off: the boxes come or go."""
+        self._update_write_buttons()  # what is for many depends on the mode
+        if not self.settings.write_mode:
+            self._checked.clear()
+        self._render_rows()  # the list is drawn again, with or without them
+
+    def _stamp_checks(self) -> None:
+        """Put the boxes in the rows of the list, or take them away, and forget
+        the rows that are gone.
+
+        The header has the box of them all.
+        """
+        rows = self._current_rows()
+        column = self._check_column() if self._checks_available() else -1
+        self._checked &= {self._row_key(row) for row in rows}
+        self._filling = True
+        try:
+            for old in {self._stamped_column} - {column, -1}:
+                for index in range(self.table.rowCount()):
+                    if (item := self.table.item(index, old)) is not None:
+                        item.setData(Qt.ItemDataRole.CheckStateRole, None)
+            if column >= 0:
+                for index, row in enumerate(rows[: self.table.rowCount()]):
+                    item = self.table.item(index, column)
+                    if item is None:
+                        continue
+                    item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
+                    item.setCheckState(
+                        Qt.CheckState.Checked
+                        if self._row_key(row) in self._checked
+                        else Qt.CheckState.Unchecked
+                    )
+        finally:
+            self._filling = False
+        self._stamped_column = column
+        self.check_header.set_column(column)
+
+    def _checked_rows(self) -> list[Workload | PodInfo | ClusterResource]:
+        """The rows with the box checked that the list shows, in the order they
+        are shown."""
+        if not self._checks_available():
+            return []
+        return [
+            row
+            for index, row in enumerate(self._current_rows())
+            if self._row_key(row) in self._checked and not self.table.isRowHidden(index)
+        ]
+
+    def _item_changed(self, item: QTableWidgetItem) -> None:
+        """The person checked or unchecked a box."""
+        if (
+            self._filling
+            or item.column() != self._stamped_column
+            or item.data(Qt.ItemDataRole.CheckStateRole) is None  # not a box
+        ):
+            return
+        rows = self._current_rows()
+        if not 0 <= item.row() < len(rows):
+            return
+        key = self._row_key(rows[item.row()])
+        if item.checkState() == Qt.CheckState.Checked:
+            self._checked.add(key)
+        else:
+            self._checked.discard(key)
+        self._sync_checks()
+
+    def _check_all_rows(self, checked: bool) -> None:
+        """The box of the header: check or uncheck every row the list shows."""
+        self._filling = True
+        try:
+            for index, row in enumerate(self._current_rows()):
+                if self.table.isRowHidden(index):
+                    continue
+                key = self._row_key(row)
+                (self._checked.add if checked else self._checked.discard)(key)
+                item = self.table.item(index, self._stamped_column)
+                if item is not None:
+                    item.setCheckState(
+                        Qt.CheckState.Checked if checked else Qt.CheckState.Unchecked
+                    )
+        finally:
+            self._filling = False
+        self._sync_checks()
+
+    def _sync_checks(self) -> None:
+        """The box of the header says whether none, some or all of the rows
+        shown are checked, and the buttons follow."""
+        shown = [
+            row
+            for index, row in enumerate(self._current_rows())
+            if not self.table.isRowHidden(index)
+        ]
+        marked = sum(self._row_key(row) in self._checked for row in shown)
+        if not self._checks_available() or not marked:
+            state = Qt.CheckState.Unchecked
+        elif marked == len(shown):
+            state = Qt.CheckState.Checked
+        else:
+            state = Qt.CheckState.PartiallyChecked
+        self.check_header.set_check_state(state)
+        self._update_workload_actions()
+
+    def _allowed_for(
+        self, rows: Sequence[Workload | PodInfo | ClusterResource]
+    ) -> frozenset[str] | None:
+        """What the cluster lets the person do to all of these rows (the
+        namespaces they are in), or None while it has not answered."""
+        allowed: frozenset[str] | None = None
+        for namespace in {row.namespace for row in rows}:
+            one = self._allowed_shapes(namespace)
+            if one is not None:
+                allowed = one if allowed is None else allowed & one
+        return allowed
+
     def _update_workload_actions(self) -> None:
-        enabled = self._selected_row() is not None
+        checked = self._checked_rows()
+        several = bool(checked)  # rows with the box checked: only what is for many
+        bulk = self._bulk_shapes()
+        enabled = self._selected_row() is not None or several
         for button in (self.pods_button, self.details_button, self.logs_button):
             button.setEnabled(enabled and not self._close_when_worker_stops)
+            if several and not button.isHidden():  # not for many: out of the row
+                button.hide()
+                self._hidden_for_many.add(button)
+        if not several:
+            for button in self._hidden_for_many:
+                button.show()
+            self._hidden_for_many.clear()
         row = self._selected_row()
-        allowed = self._allowed_shapes(row.namespace) if row is not None else None
+        allowed = (
+            self._allowed_for(checked)
+            if several
+            else (self._allowed_shapes(row.namespace) if row is not None else None)
+        )
         for shape, button in self.write_buttons.items():
-            button.setEnabled(enabled and not self._close_when_worker_stops)
+            works_on_many = shape in bulk
+            button.setEnabled(
+                enabled
+                and (works_on_many or not several)
+                and not self._close_when_worker_stops
+            )
             button.setVisible(
-                shape in self._shown_shapes and (allowed is None or shape in allowed)
+                shape in self._shown_shapes
+                and (works_on_many or not several)
+                and (allowed is None or shape in allowed)
             )
         if isinstance(row, ClusterResource) and row.kind == GKE_KIND:
             self.write_buttons["update"].setEnabled(False)  # nothing to update to
@@ -4726,6 +5101,26 @@ class WorkloadWindow(QMainWindow):
             ("forward", self.tr("Forward"), partial(self._forward, "Pod", pod)),
         ]
 
+    def _bulk_entries(
+        self, rows: Sequence[Workload | PodInfo | ClusterResource]
+    ) -> list[tuple[str, str, Callable[[], None]]]:
+        """What can be done to many rows at once in this list, as far as the
+        cluster lets the person do it in every namespace they are in."""
+        bulk = self._bulk_shapes()
+        entries: list[tuple[str, str, Callable[[], None]]] = []
+        if "evict" in bulk:
+            entries.append(("evict", self.tr("Evict"), partial(self._evict_pods, rows)))
+        if "reload" in bulk:
+            entries.append(
+                ("reload", self.tr("Restart"), partial(self._restart_deployments, rows))
+            )
+        if "delete" in bulk:
+            entries.append(
+                ("delete", self.tr("Delete"), partial(self._delete_many, rows))
+            )
+        allowed = self._allowed_for(rows)
+        return [e for e in entries if allowed is None or e[0] in allowed]
+
     @staticmethod
     def _add_entries(
         menu: QMenu, entries: list[tuple[str, str, Callable[[], None]]]
@@ -4827,6 +5222,129 @@ class WorkloadWindow(QMainWindow):
                 pod.namespace,
                 pod.name,
             )
+
+    def _confirm_many(
+        self,
+        title: str,
+        question: str,
+        action: str,
+        rows: Sequence[Workload | PodInfo | ClusterResource],
+    ) -> bool:
+        """Ask before an action on many rows, naming them (the first ones)."""
+        shown = [
+            f"{row.namespace}/{row.name}" if row.namespace else row.name
+            for row in rows[:POD_NAMES_SHOWN]
+        ]
+        if len(rows) > POD_NAMES_SHOWN:
+            shown.append("…")
+        return self._confirm(title, question + "\n\n" + "\n".join(shown), action)
+
+    def _delete_many(
+        self, rows: Sequence[Workload | PodInfo | ClusterResource]
+    ) -> None:
+        if len(rows) == 1:
+            row = rows[0]
+            if isinstance(row, PodInfo):
+                self._delete_pod(row)
+            else:
+                self._delete_resource(row)
+            return
+        if all(isinstance(row, PodInfo) for row in rows):
+            question = self.tr("Delete the {count} selected Pods?").format(
+                count=len(rows)
+            )
+            if self._confirm_many(
+                self.tr("Delete Pods"), question, self.tr("Delete"), rows
+            ):
+                self._run_many(
+                    delete_pod, [(row.namespace, row.name) for row in rows], "deleted"
+                )
+            return
+        question = self.tr("Delete the {count} selected resources?").format(
+            count=len(rows)
+        )
+        if self._confirm_many(
+            self.tr("Delete resources"), question, self.tr("Delete"), rows
+        ):
+            self._run_many(
+                delete_resource,
+                [(getattr(row, "kind", ""), row.namespace, row.name) for row in rows],
+                "removed",
+            )
+
+    def _evict_pods(self, pods: Sequence[Workload | PodInfo | ClusterResource]) -> None:
+        if len(pods) == 1 and isinstance(pods[0], PodInfo):
+            self._evict_pod(pods[0])
+            return
+        question = self.tr("Evict the {count} selected Pods?").format(count=len(pods))
+        if self._confirm_many(self.tr("Evict Pods"), question, self.tr("Evict"), pods):
+            self._run_many(
+                evict_pod, [(pod.namespace, pod.name) for pod in pods], "evicted"
+            )
+
+    def _restart_deployments(
+        self, rows: Sequence[Workload | PodInfo | ClusterResource]
+    ) -> None:
+        if len(rows) == 1 and isinstance(rows[0], Workload):
+            self._restart_deployment(rows[0])
+            return
+        question = self.tr("Restart the {count} selected Deployments?").format(
+            count=len(rows)
+        )
+        if self._confirm_many(
+            self.tr("Restart Deployments"), question, self.tr("Restart"), rows
+        ):
+            self._run_many(
+                restart_deployment,
+                [(row.namespace, row.name) for row in rows],
+                "restarted",
+            )
+
+    def _run_many(
+        self,
+        action: Callable[..., None],
+        items: list[tuple[str, ...]],
+        verb: str,
+    ) -> None:
+        """Do `action` to each item, off the UI thread, then say how many went
+        and refresh the list."""
+        self._run_action(
+            for_each,
+            lambda failed: self._many_done(verb, len(items), failed),
+            action,
+            self._context(),
+            items,
+            on_error=self._show_write_error,
+        )
+
+    def _many_done(
+        self, verb: str, total: int, failed: list[tuple[tuple[str, ...], str]]
+    ) -> None:
+        done = total - len(failed)
+        if verb == "evicted":
+            message = self.tr("Evicted {done} of {total} Pods")
+            error = self.tr("{count} Pods could not be evicted: {name}: {message}")
+        elif verb == "deleted":
+            message = self.tr("Deleted {done} of {total} Pods")
+            error = self.tr("{count} Pods could not be deleted: {name}: {message}")
+        elif verb == "restarted":
+            message = self.tr("Restarted {done} of {total} Deployments")
+            error = self.tr(
+                "{count} Deployments could not be restarted: {name}: {message}"
+            )
+        else:
+            message = self.tr("Deleted {done} of {total} resources")
+            error = self.tr("{count} resources could not be deleted: {name}: {message}")
+        if failed:
+            item, reason = failed[0]
+            self._show_write_error(
+                error.format(
+                    count=len(failed),
+                    name="/".join(part for part in item[-2:] if part),
+                    message=first_line(reason),
+                )
+            )
+        self._write_done(message.format(done=done, total=total))
 
     def _delete_resource(self, row: Workload | ClusterResource) -> None:
         question = self.tr("Delete the {kind} {name}?").format(
@@ -5621,6 +6139,12 @@ class WorkloadWindow(QMainWindow):
         self._watch_extensions()
         self._apply_extension_contributions()
         self.extensions_panel.refresh()
+
+    def _refresh_extension_page(self) -> None:
+        """The refresh button of the header, on the page of an extension."""
+        self._call_extension(
+            "", lambda: self._extension_refresh and self._extension_refresh()
+        )
 
     def _call_extension(self, extension: str, function: Callable[[], Any]) -> None:
         """Call what an extension gave the window, so that its failing is its
@@ -7040,6 +7564,7 @@ class WorkloadWindow(QMainWindow):
             logger.info("Write mode %s", "on" if self.settings.write_mode else "off")
             self._show_access_note()
             self._apply_view_buttons()
+            self._apply_checks()
             self.extension_host.events.emit(
                 WRITE_MODE_CHANGED, write_mode=self.settings.write_mode
             )

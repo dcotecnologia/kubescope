@@ -4373,3 +4373,90 @@ def test_the_text_of_the_news_is_as_tall_as_its_width_needs(monkeypatch) -> None
     window.show_welcome()
     _welcome_of(window)._fit_news()  # nothing to fit without news
     window.close()
+
+
+def test_the_header_of_a_table_has_a_short_divider_in_the_colors_of_the_theme(
+    monkeypatch,
+) -> None:
+    from PySide6.QtGui import QImage
+
+    window = _ready_window(monkeypatch)
+
+    path = window_module._divider_icon_path()
+    image = QImage(path)
+    assert (image.width(), image.height()) == (2, window_module.DIVIDER_HEIGHT)
+    assert image.pixelColor(1, 0).alpha() > 0  # the line
+    assert image.pixelColor(0, 0).alpha() == 0  # and the air beside it
+    assert path in window.styleSheet()
+    assert "DIVIDER_ICON" not in window.styleSheet()
+    window.close()
+
+
+def test_the_overview_shows_the_numbers_before_the_details_of_the_cluster(
+    monkeypatch,
+) -> None:
+    window = _ready_window(monkeypatch)
+    layout = window.overview_ui.overviewLayout
+
+    names = []
+    for index in range(layout.count()):
+        item = layout.itemAt(index)
+        assert item is not None
+        child = item.layout() or item.widget()
+        names.append(child.objectName() if child is not None else "")
+
+    assert names[:5] == [
+        "headerRow",
+        "mainCards",  # nodes, Pods, CPU and memory
+        "countCards",  # namespaces, Deployments, ...
+        "clusterInfoCard",
+        "networkingCard",
+    ]
+    window.close()
+
+
+def test_a_group_of_an_extension_gets_an_icon_of_its_own_made_from_its_name(
+    monkeypatch,
+) -> None:
+    _ready_window(monkeypatch)
+    names = [
+        "aga.k8s.aws",
+        "crd.k8s.amazonaws.com",
+        "external-secrets.io",
+        "Definições",
+    ]
+
+    images = [
+        window_module._monogram_icon(name).pixmap(32, 32).toImage() for name in names
+    ]
+
+    assert all(not image.isNull() for image in images)
+    for index, image in enumerate(images):
+        assert image not in images[:index]  # none repeats
+    again = window_module._monogram_icon(names[0]).pixmap(32, 32).toImage()
+    assert again == images[0]  # the same name, the same icon
+    assert window_module._monogram_icon("").pixmap(32, 32).isNull() is False
+
+
+def test_no_two_entries_of_the_side_menu_share_an_icon(monkeypatch) -> None:
+    window = _ready_window(monkeypatch)
+    entries = {
+        "overview": window.nav_overview,
+        "events": window.ui.navEvents,
+        "node groups": window.ui.navNodeGroups,
+        "forwards": window.nav_forwards,
+        "workloads": window.nav_workloads,
+        "network": window.nav_network,
+        "config": window.nav_config,
+        "plugins": window.nav_plugins,
+    }
+
+    images = {
+        name: button.icon().pixmap(32, 32).toImage() for name, button in entries.items()
+    }
+
+    names = list(images)
+    for index, name in enumerate(names):
+        for other in names[:index]:
+            assert images[name] != images[other], f"{name} repeats the icon of {other}"
+    window.close()

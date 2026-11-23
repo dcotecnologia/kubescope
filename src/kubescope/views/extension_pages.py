@@ -7,6 +7,7 @@ opened. The entries leave with the extension that added them.
 
 import logging
 from collections.abc import Callable, Sequence
+from dataclasses import dataclass
 from functools import partial
 
 from kubescope.sdk import PageContribution
@@ -24,6 +25,17 @@ from PySide6.QtWidgets import (
 from kubescope.views.nav_section import SectionFold
 
 logger = logging.getLogger(__name__)
+
+SECTION_GAP = 10  # px of air above the title of a section of an extension
+
+
+@dataclass
+class SectionBlock:
+    """A block of the side menu: its title, and every widget it is made of, in
+    the order they are in the menu."""
+
+    label: QLabel
+    widgets: list[QWidget]
 
 
 class _Entry:
@@ -60,7 +72,8 @@ class ExtensionPages(QObject):
         is_folded: Callable[[str], bool] = lambda _name: False,
         animated: Callable[[], bool] = lambda: True,
         on_fold: Callable[[str, bool], None] = lambda _name, _folded: None,
-        group_icon: Callable[[], QIcon] = QIcon,
+        group_icon: Callable[[str], QIcon] = lambda _group: QIcon(),
+        on_changed: Callable[[], None] = lambda: None,
     ) -> None:
         super().__init__(stack)
         self.menu = menu  # its last item is the spacer that ends it
@@ -72,8 +85,10 @@ class ExtensionPages(QObject):
         self._is_folded = is_folded  # whether the person folded a block
         self._animated = animated
         self._on_fold = on_fold  # the person folded or unfolded a block
-        self._group_icon = group_icon  # what the header of a group wears
-        self._headers: list[QPushButton] = []
+        self._group_icon = group_icon  # what the header of a group wears, by group
+        self._on_changed = on_changed  # the menu was built or its blocks show or not
+        self.blocks: dict[str, SectionBlock] = {}  # by `fold_name` of the section
+        self._headers: list[tuple[str, QPushButton]] = []  # by group
         self.folds: dict[QLabel, SectionFold] = {}  # by the title of the block
 
     def apply(self, pages: Sequence[PageContribution]) -> None:
@@ -89,6 +104,7 @@ class ExtensionPages(QObject):
         self._entries, self._widgets = [], []
         self.folds = {}
         self._headers = []
+        self.blocks = {}
         sections: dict[str, QLabel] = {}
         bodies: dict[str, QVBoxLayout] = {}
         groups: dict[tuple[str, str], tuple[QPushButton, QFrame, SectionFold]] = {}
@@ -96,6 +112,11 @@ class ExtensionPages(QObject):
             if page.section not in sections:
                 label = QLabel(page.section.upper())
                 label.setObjectName("navSection")
+                # the gap is a widget of its own: a margin of the body goes with
+                # the body when the section is folded
+                gap = QWidget()
+                gap.setFixedHeight(SECTION_GAP)
+                self._add(gap)
                 body = QFrame()
                 body_layout = QVBoxLayout(body)
                 body_layout.setContentsMargins(0, 0, 0, 0)
@@ -106,6 +127,7 @@ class ExtensionPages(QObject):
                 fold = SectionFold(label, body, self._is_folded(name), self._animated)
                 fold.toggled.connect(partial(self._on_fold, name))
                 self.folds[label] = fold
+                self.blocks[name] = SectionBlock(label, [gap, label, body])
                 sections[page.section] = label
                 bodies[page.section] = body_layout
             if (page.section, page.group) not in groups:
@@ -115,12 +137,12 @@ class ExtensionPages(QObject):
                 header.setProperty("nav", "true")
                 header.setMinimumHeight(24)
                 header.setIconSize(QSize(16, 16))
-                header.setIcon(self._group_icon())
-                self._headers.append(header)
+                header.setIcon(self._group_icon(page.group))
+                self._headers.append((page.group, header))
                 submenu = QFrame()
                 submenu.setProperty("submenu", "true")
                 layout = QVBoxLayout(submenu)
-                layout.setContentsMargins(0, 0, 0, 0)
+                layout.setContentsMargins(4, 0, 0, 0)  # as the groups of the app
                 layout.setSpacing(0)
                 bodies[page.section].addWidget(header)
                 bodies[page.section].addWidget(submenu)
@@ -152,8 +174,8 @@ class ExtensionPages(QObject):
     def restyle(self) -> None:
         """The icons of the group headers, in the colors of the theme in
         use."""
-        for header in self._headers:
-            header.setIcon(self._group_icon())
+        for group, header in self._headers:
+            header.setIcon(self._group_icon(group))
 
     def _add(self, widget: QWidget) -> None:
         self.menu.insertWidget(self.menu.count() - 1, widget)
@@ -182,6 +204,7 @@ class ExtensionPages(QObject):
         for entry in self._entries:
             entry.group_fold.set_available(entry.group in shown)
             self.folds[entry.section].set_available(entry.section in shown)
+        self._on_changed()
         current = self.stack.currentWidget()
         if any(
             entry.host is current and entry.button.isHidden() for entry in self._entries

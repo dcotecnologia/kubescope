@@ -242,7 +242,7 @@ def test_a_group_looks_as_the_ones_of_the_app_with_an_icon_and_an_arrow() -> Non
         lambda name: False,
         lambda: False,
         lambda name, folded: kept.append((name, folded)),
-        lambda: icon,
+        lambda _group: icon,
     )
     window.show()
     pages.apply([page("Instances"), page("Snapshots")])
@@ -285,3 +285,44 @@ def test_a_group_folded_last_time_starts_folded_and_waits_for_its_entries() -> N
 
     pages.apply([page("Instances")])
     assert "RDS" in labels(window) and "Instances" not in labels(window)
+
+
+def test_the_blocks_are_named_and_the_window_is_told_when_they_are_built() -> None:
+    window, _menu, _stack, pages, _events = make()
+    built: list[list[str]] = []
+    pages._on_changed = lambda: built.append(list(pages.blocks))
+
+    pages.apply([page(), PageContribution("dco.b", "Secrets", "ES", "L", object)])
+
+    assert built == [["section:aws", "section:secrets"]]  # told once, by the sync
+    block = pages.blocks["section:aws"]
+    assert block.label.text() == "AWS"
+    assert [type(widget).__name__ for widget in block.widgets] == [
+        "QWidget",
+        "QLabel",
+        "QFrame",
+    ]  # the air, the title and the body
+    pages.apply([])
+    assert pages.blocks == {}
+
+
+def test_each_group_asks_for_its_own_icon_by_name_and_again_on_a_new_theme() -> None:
+    from PySide6.QtGui import QIcon, QPixmap
+
+    window, menu, stack, _pages, _events = make()
+    asked: list[str] = []
+
+    def icon_of(group: str) -> QIcon:
+        asked.append(group)
+        return QIcon(QPixmap(16, 16))
+
+    pages = ExtensionPages(
+        menu, stack, stack.setCurrentIndex, lambda: None, group_icon=icon_of
+    )
+    other = PageContribution("dco.b", "AWS", "EKS", "Clusters", object)
+
+    pages.apply([page(), other])
+    pages.restyle()
+
+    assert asked == ["RDS", "EKS", "RDS", "EKS"]
+    window.close()

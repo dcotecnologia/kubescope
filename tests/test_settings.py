@@ -706,3 +706,23 @@ def test_the_last_seen_version_defaults_to_none_and_persists(tmp_path) -> None:
     assert Settings(path).last_seen_version == ""
     path.write_text('{"last_seen_version": "' + "9" * 50 + '"}', encoding="utf-8")
     assert Settings(path).last_seen_version == ""
+
+
+def test_the_order_of_the_blocks_of_the_side_menu_is_kept_and_cleaned(tmp_path) -> None:
+    path = tmp_path / "settings.json"
+    settings = Settings(path)
+    assert settings.section_order == []
+
+    settings.section_order = ["section:aws", "section:monitoring", "section:aws"]
+    settings.save()
+    assert Settings(path).section_order == ["section:aws", "section:monitoring"]
+
+    path.write_text('{"section_order": "aws"}', encoding="utf-8")
+    assert Settings(path).section_order == []
+
+    long_name = "x" * 81
+    path.write_text(
+        f'{{"section_order": [1, "", "{long_name}", null, "section:aws"]}}',
+        encoding="utf-8",
+    )
+    assert Settings(path).section_order == ["section:aws"]
