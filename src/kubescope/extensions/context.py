@@ -7,7 +7,7 @@ it. No Qt.
 
 import json
 import logging
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -22,6 +22,7 @@ from kubescope.sdk import (
     DockContribution,
     Forwards,
     PageContribution,
+    PageSpec,
     PermissionDenied,
     SettingsSection,
     ShortcutContribution,
@@ -63,6 +64,7 @@ class Host:
     begin_forward: Callable[[str, str, list[str], dict[str, str], int, str], bool] = (
         lambda *_: False
     )
+    pages_changed: Callable[[], None] = lambda: None  # build the side menu again
     ui: Ui | None = None  # None while the app runs without a window
     cli: Cli | None = None  # set while a command of the terminal runs
     events: EventBus = field(default_factory=EventBus)
@@ -258,6 +260,30 @@ class ExtensionContext:
                 self.id, section, group, title, factory, subtitle, visible, refresh
             )
         )
+
+    def set_pages(self, key: str, pages: Sequence[PageSpec]) -> None:
+        self._require("ui.page")
+        contributions = self._host.contributions
+        contributions.pages = [
+            one
+            for one in contributions.pages
+            if not (one.extension == self.id and one.key == key)
+        ]
+        contributions.pages.extend(
+            PageContribution(
+                self.id,
+                one.section,
+                one.group,
+                one.title,
+                one.factory,
+                one.subtitle,
+                one.visible,
+                one.refresh,
+                key,
+            )
+            for one in pages
+        )
+        self._host.pages_changed()
 
     def add_tab_kind(self, key: str, factory: Callable[..., Any]) -> None:
         self._require("ui.tab")

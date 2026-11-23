@@ -2478,6 +2478,46 @@ def get_resources(
     return namespaces, resources
 
 
+_CRD_PART = re.compile(r"[a-z0-9]([-a-z0-9.]*[a-z0-9])?")
+
+
+def custom_resource_path(
+    group: str,
+    version: str,
+    plural: str,
+    namespace: str | None = None,
+    name: str | None = None,
+) -> str:
+    """The API path of a custom resource (a CRD) or of one object of it.
+
+    The group must have a dot, as a CRD's does: that keeps this away
+    from the built-in groups (Secrets, Pods, RBAC are not reached
+    through it).
+    """
+    if "." not in group or not all(
+        _CRD_PART.fullmatch(part) for part in (group, version, plural)
+    ):
+        raise ValueError(f"Not a custom resource: {group}/{version} {plural}")
+    parts = [f"/apis/{group}/{version}"]
+    if namespace:
+        parts += ["namespaces", quote(namespace, safe="")]
+    parts.append(plural)
+    if name:
+        parts.append(quote(name, safe=""))
+    return "/".join(parts)
+
+
+def get_custom_resources(
+    context: str,
+    group: str,
+    version: str,
+    plural: str,
+    namespace: str | None = None,
+) -> dict[str, Any]:
+    """The list document of a custom resource, as the cluster gives it."""
+    return _get_json(custom_resource_path(group, version, plural, namespace), context)
+
+
 def get_pods(
     context: str,
     namespace: str | None = None,

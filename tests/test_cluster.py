@@ -3981,3 +3981,19 @@ def test_on_windows_the_terminals_are_the_ones_found_and_cmd_is_always_there(
     launcher = cluster._terminal_launcher(["a"])
     assert launcher is not None and launcher[:3] == ["cmd", "/c", "start"]
     cluster.configure()
+
+
+def test_get_custom_resources_lists_a_crd_by_its_path(monkeypatch) -> None:
+    seen: list[str] = []
+
+    def get_json(path, context, query=None, accept=""):
+        seen.append(path)
+        return {"items": []}
+
+    monkeypatch.setattr(cluster, "_get_json", get_json)
+
+    assert cluster.get_custom_resources("ctx", "a.io", "v1", "things") == {"items": []}
+    cluster.get_custom_resources("ctx", "a.io", "v1", "things", "ops")
+    assert seen == ["/apis/a.io/v1/things", "/apis/a.io/v1/namespaces/ops/things"]
+    with pytest.raises(ValueError, match="Not a custom resource"):
+        cluster.get_custom_resources("ctx", "apps", "v1", "deployments")

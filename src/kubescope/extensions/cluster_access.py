@@ -100,6 +100,16 @@ class ClusterBridge:
     ) -> list[ClusterEvent]:
         return cluster.get_events(context, types)
 
+    def get_custom_resources(
+        self,
+        context: str,
+        group: str,
+        version: str,
+        plural: str,
+        namespace: str | None = None,
+    ) -> dict[str, Any]:
+        return cluster.get_custom_resources(context, group, version, plural, namespace)
+
     def describe_kube(self) -> str:
         return cluster.describe_kube()
 
@@ -148,3 +158,18 @@ class WritesBridge:
     ) -> None:
         self._allowed()
         writes.replace_resource(context, kind, namespace, name, document)
+
+    def patch_custom_resource(
+        self,
+        context: str,
+        group: str,
+        version: str,
+        plural: str,
+        namespace: str,
+        name: str,
+        patch: dict[str, Any],
+    ) -> None:
+        self._allowed()
+        writes.patch_custom_resource(
+            context, group, version, plural, namespace, name, patch
+        )

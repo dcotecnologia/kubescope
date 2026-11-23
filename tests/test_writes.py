@@ -514,3 +514,45 @@ def test_the_shell_of_a_node_is_an_ssm_session_on_its_instance(monkeypatch) -> N
     _on(monkeypatch, "win32")
     versions = dict(writes.node_shell_commands("i-0abc", "us-east-1"))
     assert set(versions) == {"PowerShell", "cmd"}
+
+
+def test_patch_custom_resource_sends_a_merge_patch(server) -> None:
+    writes.patch_custom_resource(
+        "dev", "a.io", "v1", "things", "ops", "x", {"metadata": {"labels": {"a": "b"}}}
+    )
+
+    request = server.requests[0]
+    assert request["method"] == "PATCH"
+    assert request["path"] == "/apis/a.io/v1/namespaces/ops/things/x"
+    assert request["type"] == "application/merge-patch+json"
+    assert request["body"] == {"metadata": {"labels": {"a": "b"}}}
+
+
+@pytest.mark.parametrize(
+    ("group", "version", "plural"),
+    [("apps", "v1", "deployments"), ("", "v1", "secrets"), ("a.io", "v1/x", "t"),
+     ("a.io", "v1", "../secrets")],
+)  # fmt: skip
+def test_a_custom_resource_is_never_a_built_in_or_a_path(
+    server, group, version, plural
+) -> None:
+    with pytest.raises(ValueError, match="Not a custom resource"):
+        writes.patch_custom_resource("dev", group, version, plural, "ops", "x", {})
+    assert server.requests == []
+
+
+def test_for_each_goes_on_after_a_failure_and_says_which_failed() -> None:
+    done: list[tuple[str, ...]] = []
+
+    def action(context: str, *item: str) -> None:
+        if item[-1] == "b":
+            raise ClusterError("budget")
+        done.append((context, *item))
+
+    failed = writes.for_each(
+        action, "dev", [("ns", "a"), ("ns", "b"), ("Deployment", "other", "c")]
+    )
+
+    assert done == [("dev", "ns", "a"), ("dev", "Deployment", "other", "c")]
+    assert failed == [(("ns", "b"), "budget")]
+    assert writes.for_each(action, "dev", []) == []

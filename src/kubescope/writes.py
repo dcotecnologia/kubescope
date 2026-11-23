@@ -15,6 +15,7 @@ import re
 import shlex
 import subprocess
 import sys
+from collections.abc import Callable, Sequence
 from datetime import UTC, datetime
 from functools import partial
 from typing import Any
@@ -164,6 +165,27 @@ def delete_pod(context: str, namespace: str, name: str) -> None:
     _write("DELETE", cluster._resource_path("pods", namespace, name), context)
 
 
+def for_each(
+    action: Callable[..., None],
+    context: str,
+    items: Sequence[tuple[str, ...]],
+) -> list[tuple[tuple[str, ...], str]]:
+    """Do `action` (delete, evict or restart) to each item, one after the
+    other, and go on when one fails.
+
+    An item is what comes after the context in the call (a namespace and
+    a name, or a kind too). The ones that failed come back, with the
+    words of the cluster.
+    """
+    failed = []
+    for item in items:
+        try:
+            action(context, *item)
+        except ClusterError as error:
+            failed.append((item, str(error)))
+    return failed
+
+
 def delete_resource(context: str, kind: str, namespace: str, name: str) -> None:
     """Delete one object of a listed kind (a workload, a network or a config
     resource); the namespace is empty for a kind that belongs to the whole
@@ -184,6 +206,21 @@ def replace_resource(
     if resource is None:
         raise ValueError(f"Cannot edit a {kind}")
     _write("PUT", cluster._resource_path(resource, namespace, name), context, document)
+
+
+def patch_custom_resource(
+    context: str,
+    group: str,
+    version: str,
+    plural: str,
+    namespace: str,
+    name: str,
+    patch: dict[str, Any],
+) -> None:
+    """Merge a JSON merge patch into one custom resource (a CRD), the way
+    `kubectl patch --type merge` does."""
+    path = cluster.custom_resource_path(group, version, plural, namespace, name)
+    _write("PATCH", path, context, patch, _MERGE_PATCH)
 
 
 def evict_pod(context: str, namespace: str, name: str) -> None:

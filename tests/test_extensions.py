@@ -493,6 +493,38 @@ def test_a_page_added_by_an_extension_keeps_what_the_refresh_button_does() -> No
     assert called == [1]
 
 
+def test_set_pages_replaces_the_pages_of_its_key_and_builds_the_menu_again() -> None:
+    from kubescope.sdk import PageSpec
+
+    host, _, _ = make_host()
+    rebuilt: list[int] = []
+    host.pages_changed = lambda: rebuilt.append(len(host.contributions.pages))
+    context = ExtensionContext("dco.a", frozenset({"ui.page"}), host)
+    other = ExtensionContext("dco.b", frozenset({"ui.page"}), host)
+    context.add_page("S", "G", "static", object)
+    other.set_pages("crd", [PageSpec("S", "G", "theirs", object)])
+
+    context.set_pages("crd", [PageSpec("C", "a.io", "One", object, "sub")])
+    context.set_pages(
+        "crd",
+        [PageSpec("C", "a.io", "Two", object), PageSpec("C", "b.io", "Three", object)],
+    )
+    context.set_pages("crd", [])
+
+    assert [(p.extension, p.title, p.key) for p in host.contributions.pages] == [
+        ("dco.a", "static", ""),
+        ("dco.b", "theirs", "crd"),
+    ]
+    assert rebuilt == [2, 3, 4, 2]
+
+
+def test_set_pages_needs_the_permission_to_add_pages() -> None:
+    from kubescope.sdk import PageSpec
+
+    with pytest.raises(PermissionDenied):
+        make_context().set_pages("crd", [PageSpec("S", "G", "T", object)])
+
+
 def test_an_extension_searches_the_resources_through_the_cluster_bridge(
     monkeypatch,
 ) -> None:

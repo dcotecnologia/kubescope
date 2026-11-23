@@ -38,7 +38,7 @@ def test_what_the_app_recommends_is_offered(monkeypatch) -> None:
 def test_the_recommended_extensions_are_the_latest_release_of_their_repositories() -> (
     None
 ):
-    gabi, aws, search, themes, notifications = REAL
+    gabi, aws, search, themes, notifications, custom_resources = REAL
 
     assert (gabi.id, gabi.repo.owner, gabi.repo.name) == (
         "kubescope.gabi",
@@ -59,6 +59,11 @@ def test_the_recommended_extensions_are_the_latest_release_of_their_repositories
         "kubescope-notifications",
     )
     assert not notifications.automatic  # recommended, but only a card to install
+    assert (custom_resources.id, custom_resources.repo.name) == (
+        "kubescope.custom-resources",
+        "kubescope-ext-custom-resources",
+    )
+    assert not custom_resources.automatic  # a card too: it adds a section to the menu
     for one in REAL:
         assert one.repo.ref == "" and one.sha256 == "" and not one.pinned  # the latest
     assert gabi.automatic and not aws.automatic  # Gabi comes with the app
@@ -91,4 +96,5 @@ def test_the_names_shown_before_the_download_are_the_ones_of_the_manifests() -> 
         "Global Search",
         "Themes",
         "Notifications",
+        "Custom Resources",
     ]

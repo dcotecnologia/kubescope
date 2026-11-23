@@ -58,6 +58,12 @@ def test_the_kinds_of_the_sdk_are_the_ones_the_app_reads_and_changes() -> None:
             ("dev", "Pod", "ns", "p"),
         ),
         ("get_events", ("dev", ("Warning",)), "get_events", ("dev", ("Warning",))),
+        (
+            "get_custom_resources",
+            ("dev", "a.io", "v1", "things", "ns"),
+            "get_custom_resources",
+            ("dev", "a.io", "v1", "things", "ns"),
+        ),
         ("describe_kube", (), "describe_kube", ()),
     ],
 )
@@ -105,6 +111,7 @@ CHANGES = [
     ("delete_pod", ("dev", "ns", "p")),
     ("delete_resource", ("dev", "Secret", "ns", "s")),
     ("replace_resource", ("dev", "Secret", "ns", "s", {"kind": "Secret"})),
+    ("patch_custom_resource", ("dev", "a.io", "v1", "things", "ns", "x", {"a": 1})),
 ]
 
 

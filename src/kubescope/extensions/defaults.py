@@ -90,6 +90,19 @@ DEFAULTS = (
         automatic=False,
         author="DCO Tecnologia",
     ),
+    DefaultExtension(
+        id="kubescope.custom-resources",
+        name="Custom Resources",
+        description=(
+            "Browse the custom resources of the cluster by API group, as Lens does: "
+            "the definitions and a list for each kind, with the columns its CRD asks "
+            "for. The ExternalSecrets show how their last sync went and can be "
+            "resynced, one or all, in the write mode."
+        ),
+        repo=Repo("dcotecnologia", "kubescope-ext-custom-resources"),
+        automatic=False,
+        author="DCO Tecnologia",
+    ),
 )
 
 
