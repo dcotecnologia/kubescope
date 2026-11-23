@@ -1,0 +1,56 @@
+name: Accessibility barrier
+description: Something in KubeScope is hard or impossible to use with a keyboard, a screen reader, a magnifier or another assistive technology.
+title: "a11y: "
+labels: ["accessibility"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for telling us. Please do not paste tokens, kubeconfig contents, Pod
+        logs or Secret values. A description and a screenshot are enough. The
+        [accessibility statement](https://github.com/dcotecnologia/kubescope/blob/main/ACCESSIBILITY.md)
+        lists what we already know.
+  - type: textarea
+    id: task
+    attributes:
+      label: What were you trying to do?
+      placeholder: Check every Pod of a namespace, change the order of the side menu, ...
+    validations:
+      required: true
+  - type: textarea
+    id: barrier
+    attributes:
+      label: What got in the way?
+      description: Where it happens (the screen or the control) and what you could not do, could not perceive or found hard.
+    validations:
+      required: true
+  - type: textarea
+    id: suggestion
+    attributes:
+      label: What would make it easier?
+      description: Optional.
+    validations:
+      required: false
+  - type: input
+    id: technology
+    attributes:
+      label: Assistive technology
+      description: The screen reader, magnifier, voice control or other tool, and its version. Write "none" if you use only the keyboard or a theme.
+      placeholder: NVDA 2025.1, Orca 46, VoiceOver, keyboard only, ...
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: KubeScope version
+      description: Shown in the footer of the window.
+      placeholder: "2.5.0"
+    validations:
+      required: true
+  - type: input
+    id: system
+    attributes:
+      label: Operating system
+      placeholder: Ubuntu 24.04, Windows 11, macOS 15, ...
+    validations:
+      required: true

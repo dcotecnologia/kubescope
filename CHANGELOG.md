@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+### Added
+
+- An accessibility statement, `ACCESSIBILITY.md`, with what the app does, what is known to be missing and how to report a barrier, and an issue form for it by @danilogco
+
 ## [2.5.0] - 2026-11-23
 
 ### Added

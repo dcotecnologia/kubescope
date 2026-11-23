@@ -536,6 +536,9 @@ To write an extension, start with the [SDK](https://github.com/dcotecnologia/kub
 [AWS](https://github.com/dcotecnologia/kubescope-aws/blob/main/CONTRIBUTING.md) has its own contributing guide.
 Report vulnerabilities privately as described in [SECURITY.md](SECURITY.md).
 
+If something in KubeScope is hard to use with a keyboard, a screen reader or another assistive technology,
+[ACCESSIBILITY.md](ACCESSIBILITY.md) says what we know and how to report it.
+
 ## Qt and the LGPL
 
 KubeScope is built with Qt for Python (PySide6) and Qt, which are used under the

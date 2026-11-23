@@ -19,6 +19,7 @@ two documents disagree, stop and ask instead of picking one.
 | [COMMITING.md](COMMITING.md) | You write any commit message | Source of truth for the commit format |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | You set up, branch, test, or open a PR | The workflow a change goes through |
 | [SECURITY.md](SECURITY.md) | You touch credentials, cluster requests, logs, settings, permissions, or packaging | Do not break its guarantees; update it when they change |
+| [ACCESSIBILITY.md](ACCESSIBILITY.md) | You change the interface: controls, colors, keyboard use, motion or icons | Keep its list of what the app does and of the known limitations true |
 | [README.md](README.md) | You change user-facing behavior, requirements, or packaging | Keep it accurate |
 
 ## 1) Architecture and responsibilities
