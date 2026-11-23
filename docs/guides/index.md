@@ -17,6 +17,7 @@ details and live logs. It uses the official Kubernetes Python client, so it need
   permissions KubeScope needs.
 - [Using KubeScope]({{ '/guides/using-kubescope/' | relative_url }}): a tour of every screen.
 - [Troubleshooting]({{ '/guides/troubleshooting/' | relative_url }}): what the error messages mean.
+- [Extensions]({{ '/extensions/' | relative_url }}): the ones KubeScope recommends, what they do and what they ask for.
 - [Building from source]({{ '/guides/building-from-source/' | relative_url }}): run, test and package it yourself.
 
 ## Project links

@@ -37,6 +37,8 @@ nav:
     url: /install/
   - title: Gabi
     url: /assistant/
+  - title: Extensions
+    url: /extensions/
   - title: Guides
     url: /guides/
   - title: Source

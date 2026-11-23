@@ -4,6 +4,31 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+## [2.5.0] - 2026-11-23
+
+### Added
+
+- An **Extensions** page on the site, in its menu and footer, with an index of the extensions KubeScope recommends, what each does and what it asks for, and a README table with all six by @danilogco
+- The extension [`kubescope-ext-custom-resources`](https://github.com/dcotecnologia/kubescope-ext-custom-resources) is recommended in **Settings → Extensions**, as a card to install, and is not installed by default by @danilogco
+- Lend the extensions a read and a merge patch (the latter only in the write mode) of the custom resources (CRDs) of a cluster, never of a built-in group by @danilogco
+- Let an extension give the side menu pages while the app runs, for entries known only then, such as the custom resources of a cluster by @danilogco
+- In the write mode, every list that has an action for many rows (Evict on the Pods, Restart on the Deployments, Delete on all) has a check box in each row and one in the header to check all that show: those actions then act on the ones checked, after one confirmation that names them, and the buttons of one row leave while some are checked, by @danilogco
+- Draw a divider between the columns of the tables, so it is easy to see where to drag to resize one by @danilogco
+- Right-click the title of a block of the side menu (MONITORING, AWS, ...) and choose **Reorganize** to move it up or down; the order is kept by @danilogco
+
+### Changed
+
+- Show the numbers of the overview (nodes, Pods, CPU, memory and the counts of the workloads) above the details of the cluster and its network by @danilogco
+
+### Fixed
+
+- Give Plugins an icon of its own, a plug, instead of the tiles of Workloads by @danilogco
+- Let the columns of the events table of the workloads overview be dragged to resize, which the contents-sized and stretched columns did not allow by @danilogco
+- Give each group that extensions add to the side menu an icon of its own, its first letters on a color made from its name, so none repeats by @danilogco
+- Indent the entries of the groups that extensions add to the side menu like the groups of the app by @danilogco
+- Make the refresh button of the page of an extension spin while it reads and turn green when it is done, as the ones of the app do by @danilogco
+- Leave some air above each block of the side menu, except the first one that shows, so the titles do not stick together when they are folded by @danilogco
+
 ## [2.4.1] - 2026-11-22
 
 ### Fixed
@@ -698,7 +723,8 @@ The first release.
 
 - Pod logs and resource details are still never written to disk by the app on its own. **Save** is the only exception, and it writes only to the file the user chooses. SECURITY.md says so by @danilogco
 
-[Unreleased]: https://github.com/dcotecnologia/kubescope/compare/v2.4.1...HEAD
+[Unreleased]: https://github.com/dcotecnologia/kubescope/compare/v2.5.0...HEAD
+[2.5.0]: https://github.com/dcotecnologia/kubescope/compare/v2.4.1...v2.5.0
 [2.4.1]: https://github.com/dcotecnologia/kubescope/compare/v2.4.0...v2.4.1
 [2.4.0]: https://github.com/dcotecnologia/kubescope/compare/v2.3.1...v2.4.0
 [2.3.1]: https://github.com/dcotecnologia/kubescope/compare/v2.3.0...v2.3.1

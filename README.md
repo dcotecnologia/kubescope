@@ -100,7 +100,7 @@ _Pod logs with colored levels. These screens are drawn from fake data by
 
 ## Features
 
-- **Extensions:** [Gabi](https://github.com/dcotecnologia/kubescope-ai-gabi), [AWS](https://github.com/dcotecnologia/kubescope-aws) and your own,
+- **Extensions:** [Gabi](https://github.com/dcotecnologia/kubescope-ai-gabi), [AWS](https://github.com/dcotecnologia/kubescope-aws), [Custom Resources](https://github.com/dcotecnologia/kubescope-ext-custom-resources) and more, and your own,
   written against the [SDK](https://github.com/dcotecnologia/kubescope-sdk), installed from a folder or
   GitHub in **Settings → Extensions**. See [Extensions](#extensions).
 - **Overview:** nodes ready, Pod counts, CPU and memory requests against capacity,
@@ -205,7 +205,13 @@ GitHub repository. An extension is a Python project written against the
 | Extension | What it does | Installed |
 | --------- | ------------ | --------- |
 | [Gabi](https://github.com/dcotecnologia/kubescope-ai-gabi) | The AI assistant: ask about your cluster in the corner of the window or with `kubescope chat` | Comes with KubeScope, and can be uninstalled |
+| [Global Search](https://github.com/dcotecnologia/kubescope-search) | Press `/` or `Ctrl+K` to find a screen, a list or a resource by its name | Comes with KubeScope, and can be uninstalled |
+| [Themes](https://github.com/dcotecnologia/kubescope-themes) | Thirteen color themes, light and dark | Comes with KubeScope, and can be uninstalled |
 | [AWS](https://github.com/dcotecnologia/kubescope-aws) | The RDS databases of the account of the selected cluster, with details, logs and a port forward | Recommended (★), you install it |
+| [Notifications](https://github.com/dcotecnologia/kubescope-notifications) | A bell with the Warning and Error events of every context, in a panel | Recommended (★), you install it |
+| [Custom Resources](https://github.com/dcotecnologia/kubescope-ext-custom-resources) | The custom resources of the cluster by API group, as Lens has them, and a resync of the ExternalSecrets | Recommended (★), you install it |
+
+The same list, with what each one asks for, is on the [Extensions page](https://kubescope.dcotecnologia.com/extensions/).
 
 The table of **Settings → Extensions** lists what is installed and what KubeScope recommends, with the
 installed or latest available version, the author, when it was installed and last updated, and where it
