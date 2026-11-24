@@ -24,6 +24,9 @@
     {
       "path": "../kubescope-ext-custom-resources",
     },
+    {
+      "path": "../kubescope-ext-plugins",
+    },
   ],
   "settings": {
     // ── Editor ────────────────────────────────────────────────────────────

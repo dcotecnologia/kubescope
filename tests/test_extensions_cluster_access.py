@@ -195,3 +195,14 @@ def test_the_environment_and_the_chart_of_a_release_are_the_ones_of_the_app(
     monkeypatch.setattr(cluster, "helm_chart_name", lambda *args: "-".join(args))
     assert ClusterBridge().environment("ctx") == {"A": "ctx"}
     assert ClusterBridge().helm_chart_name("c", "n", "r") == "c-n-r"
+
+
+def test_the_cloud_clusters_of_a_context_are_the_ones_of_the_app(monkeypatch) -> None:
+    from kubescope import cloud_addons
+
+    monkeypatch.setattr(
+        cluster, "_eks_target", lambda context: ["--cluster-name", context]
+    )
+    monkeypatch.setattr(cloud_addons, "aks_cluster", lambda context: (context, "group"))
+    assert ClusterBridge().eks_target("c") == ["--cluster-name", "c"]
+    assert ClusterBridge().aks_cluster("c") == ("c", "group")

@@ -18,7 +18,7 @@ from kubescope.sdk.models import (
     Workload,
 )
 
-from kubescope import cluster, plugin_updates, writes
+from kubescope import cloud_addons, cluster, plugin_updates, writes
 
 
 def is_plugin_update(arguments: list[str]) -> bool:
@@ -127,6 +127,12 @@ class ClusterBridge:
 
     def helm_chart_name(self, context: str, namespace: str, release: str) -> str:
         return cluster.helm_chart_name(context, namespace, release)
+
+    def eks_target(self, context: str) -> list[str]:
+        return cluster._eks_target(context)
+
+    def aks_cluster(self, context: str) -> tuple[str, str]:
+        return cloud_addons.aks_cluster(context)
 
     def describe_kube(self) -> str:
         return cluster.describe_kube()
