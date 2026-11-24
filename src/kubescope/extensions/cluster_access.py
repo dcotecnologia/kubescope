@@ -18,7 +18,19 @@ from kubescope.sdk.models import (
     Workload,
 )
 
-from kubescope import cluster, writes
+from kubescope import cluster, plugin_updates, writes
+
+
+def is_plugin_update(arguments: list[str]) -> bool:
+    """Whether a command is one that Plugins updates with: `aws eks update-
+    addon`, `helm --kube-context <context> upgrade` or `az k8s-extension
+    update`, and nothing else."""
+    head = arguments[:4]
+    return (
+        head[:3] == ["aws", "eks", "update-addon"]
+        or (head[:2] == ["helm", "--kube-context"] and head[3:4] == ["upgrade"])
+        or head[:3] == ["az", "k8s-extension", "update"]
+    )
 
 
 class ClusterBridge:
@@ -110,6 +122,12 @@ class ClusterBridge:
     ) -> dict[str, Any]:
         return cluster.get_custom_resources(context, group, version, plural, namespace)
 
+    def environment(self, context: str) -> dict[str, str]:
+        return cluster.context_environment(context)
+
+    def helm_chart_name(self, context: str, namespace: str, release: str) -> str:
+        return cluster.helm_chart_name(context, namespace, release)
+
     def describe_kube(self) -> str:
         return cluster.describe_kube()
 
@@ -173,3 +191,9 @@ class WritesBridge:
         writes.patch_custom_resource(
             context, group, version, plural, namespace, name, patch
         )
+
+    def run_update(self, context: str, arguments: list[str]) -> str:
+        self._allowed()
+        if not is_plugin_update(arguments):
+            raise cluster.ClusterError("That is not a command that updates a plugin")
+        return plugin_updates.run_update(context, arguments)

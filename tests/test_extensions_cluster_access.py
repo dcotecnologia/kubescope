@@ -148,3 +148,50 @@ def test_a_context_the_person_disconnected_is_not_listed(monkeypatch) -> None:
     assert bridge.list_contexts() == ["a", "c"]
     off.clear()  # connected again: it is asked each time
     assert bridge.list_contexts() == ["a", "b", "c"]
+
+
+@pytest.mark.parametrize(
+    ("arguments", "expected"),
+    [
+        (["aws", "eks", "update-addon", "--addon-name", "x"], True),
+        (["helm", "--kube-context", "c", "upgrade", "r", "chart"], True),
+        (["az", "k8s-extension", "update", "--name", "x"], True),
+        (["aws", "eks", "delete-cluster", "--name", "x"], False),
+        (["helm", "--kube-context", "c", "uninstall", "r"], False),
+        (["az", "k8s-extension", "delete", "--name", "x"], False),
+        (["kubectl", "delete", "pod", "x"], False),
+        ([], False),
+    ],
+)
+def test_only_the_commands_that_update_a_plugin_are_run(
+    arguments, expected, monkeypatch
+) -> None:
+    ran = []
+    monkeypatch.setattr(
+        cluster_access.plugin_updates,
+        "run_update",
+        lambda context, command: ran.append(command) or "ok",
+    )
+    bridge = WritesBridge(lambda: True)
+    if expected:
+        assert bridge.run_update("ctx", arguments) == "ok" and ran == [arguments]
+    else:
+        with pytest.raises(cluster.ClusterError):
+            bridge.run_update("ctx", arguments)
+        assert ran == []
+
+
+def test_a_plugin_is_updated_only_with_the_write_mode_on() -> None:
+    with pytest.raises(WriteModeOff):
+        WritesBridge(lambda: False).run_update(
+            "ctx", ["aws", "eks", "update-addon", "--addon-name", "x"]
+        )
+
+
+def test_the_environment_and_the_chart_of_a_release_are_the_ones_of_the_app(
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(cluster, "context_environment", lambda context: {"A": context})
+    monkeypatch.setattr(cluster, "helm_chart_name", lambda *args: "-".join(args))
+    assert ClusterBridge().environment("ctx") == {"A": "ctx"}
+    assert ClusterBridge().helm_chart_name("c", "n", "r") == "c-n-r"
