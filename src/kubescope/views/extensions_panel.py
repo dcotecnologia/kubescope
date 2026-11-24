@@ -17,6 +17,7 @@ from datetime import datetime
 from functools import partial
 from pathlib import Path
 
+from kubescope.sdk.models import natural_key
 from kubescope.sdk.timezone import to_zone
 from PySide6.QtCore import QObject, QPoint, Qt
 from PySide6.QtGui import QColor
@@ -65,6 +66,7 @@ from kubescope.settings import Settings
 from kubescope.theme import themed
 from kubescope.ui.ui_settings_page import Ui_SettingsPage
 from kubescope.views.container_states import BADGE_ROLE, BadgeDelegate
+from kubescope.views.table_sort import HeaderSorter
 
 logger = logging.getLogger(__name__)
 
@@ -397,6 +399,7 @@ class ExtensionsPanel(QObject):
         self.table.setShowGrid(False)
         self.table.setProperty("variant", "data")
         self.table.horizontalHeader().setStretchLastSection(True)
+        self.sorter = HeaderSorter(self.table, lambda _column, _order: self.render())
         self.table.verticalHeader().setVisible(False)
         self.table.verticalHeader().setDefaultSectionSize(46)  # as the Pods table
         self.table.setMinimumHeight(260)
@@ -414,6 +417,27 @@ class ExtensionsPanel(QObject):
         grid.addWidget(self.empty_label, 2, 0, Qt.AlignmentFlag.AlignTop)
         grid.setColumnStretch(0, 1)
 
+    def _cells(self, row: Row) -> tuple[dict[str, str], str | None, str]:
+        """What the cells of a row say, its load error and its status."""
+        manifest = row.manifest
+        error = self.load_errors().get(manifest.id)
+        status = self._badge(row)
+        cells = {
+            "name": f"{STAR} {manifest.name}" if row.recommended else manifest.name,
+            "version": f"v{manifest.version}" if manifest.version else "",
+            "status": status,
+            "author": manifest.author,
+            "installed": self._day(row.installed_at),
+            "updated": self._day(row.updated_at),
+            "source": "" if row.bundled else row.source,
+            "description": (
+                self.tr("Could not load: {error}").format(error=error)
+                if error
+                else manifest.description
+            ),
+        }
+        return cells, error, status
+
     def render(self) -> None:
         """One row for each extension; the one that was selected stays so."""
         selected = self._selected_id()
@@ -422,25 +446,17 @@ class ExtensionsPanel(QObject):
         grid = self.form.extensionsCardsGrid  # the room of the page goes to what shows
         grid.setRowStretch(1, 1 if self.rows else 0)
         grid.setRowStretch(2, 0 if self.rows else 1)
+        if self.sorter.state is not None:  # the header that was clicked
+            column, order = self.sorter.state
+            name = next(one for one, index in COLUMNS.items() if index == column)
+            self.rows.sort(
+                key=lambda row: natural_key(self._cells(row)[0][name]),
+                reverse=order == Qt.SortOrder.DescendingOrder,
+            )
         self.table.setRowCount(len(self.rows))
         for index, row in enumerate(self.rows):
             manifest = row.manifest
-            error = self.load_errors().get(manifest.id)
-            status = self._badge(row)
-            cells = {
-                "name": f"{STAR} {manifest.name}" if row.recommended else manifest.name,
-                "version": f"v{manifest.version}" if manifest.version else "",
-                "status": status,
-                "author": manifest.author,
-                "installed": self._day(row.installed_at),
-                "updated": self._day(row.updated_at),
-                "source": "" if row.bundled else row.source,
-                "description": (
-                    self.tr("Could not load: {error}").format(error=error)
-                    if error
-                    else manifest.description
-                ),
-            }
+            cells, error, status = self._cells(row)
             for name, text in cells.items():
                 item = QTableWidgetItem(text)
                 item.setToolTip(manifest.description or text)

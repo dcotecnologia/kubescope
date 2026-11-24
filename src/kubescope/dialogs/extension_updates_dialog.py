@@ -13,6 +13,7 @@ from PySide6.QtWidgets import (
 )
 
 from kubescope.extensions.updates import Update
+from kubescope.views.table_sort import HeaderSorter
 
 
 class ExtensionUpdatesDialog(QDialog):
@@ -64,6 +65,7 @@ class ExtensionUpdatesDialog(QDialog):
                 (update.name, f"v{update.current}", f"v{update.version}")
             ):
                 self.table.setItem(row, column, QTableWidgetItem(text))
+        HeaderSorter(self.table)  # a click on a header sorts
         layout.addWidget(self.table, 1)
         buttons = QHBoxLayout()
         buttons.addStretch(1)

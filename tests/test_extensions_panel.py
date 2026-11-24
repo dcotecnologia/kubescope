@@ -1357,3 +1357,40 @@ def test_a_copy_that_is_not_the_extension_is_not_installed(setup) -> None:
 
     assert settings.extensions_offered == [] and setup.messages == []
     assert [card.title for card in setup.cards()] == ["Gabi", "Tool"]
+
+
+def test_a_click_on_a_header_sorts_the_extensions_and_the_row_keeps_its_actions(
+    setup, tmp_path
+) -> None:
+    setup.decide(True)
+    setup.pick_manifest(make_folder(tmp_path / "tool"))
+    setup.panel.install_from_folder()
+    assert [card.title for card in setup.cards()] == ["Tool", "Gabi"]
+
+    setup.panel.sorter.clicked(0)  # the name
+    assert [card.title for card in setup.cards()] == ["Gabi", "Tool"]
+
+    setup.panel.sorter.clicked(0)
+    assert [card.title for card in setup.cards()] == ["Tool", "Gabi"]
+
+    assert setup.card("Gabi").title == "Gabi"  # the row selected is its own extension
+
+
+def test_the_table_of_the_updates_sorts_when_a_header_is_clicked() -> None:
+    from kubescope.dialogs.extension_updates_dialog import ExtensionUpdatesDialog
+    from kubescope.extensions.updates import Update
+
+    updates = [
+        Update("dco.b", "Bravo", "1.9.0", "v1.10.0", Repo("dco", "b", "v1.10.0")),
+        Update("dco.a", "Alpha", "1.0.0", "v1.1.0", Repo("dco", "a", "v1.1.0")),
+    ]
+    dialog = ExtensionUpdatesDialog(None, updates)
+
+    def names() -> list[str]:
+        return [present(dialog.table.item(row, 0)).text() for row in range(2)]
+
+    assert names() == ["Bravo", "Alpha"]
+
+    dialog.table.horizontalHeader().sectionClicked.emit(0)
+
+    assert names() == ["Alpha", "Bravo"]
