@@ -2,10 +2,10 @@
     "base": "light",
     "name": "Light",
     "opacity": {
-        "page": 0.9,
-        "topbar": 0.9,
-        "topbar_brand": 0.9,
-        "topbar_field": 0.9
+        "page": 0.98,
+        "topbar": 0.98,
+        "topbar_brand": 0.98,
+        "topbar_field": 0.98
     },
     "palette": {
         "#6b7380": "#5d6571",
