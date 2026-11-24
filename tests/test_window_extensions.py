@@ -475,3 +475,17 @@ def test_the_list_on_screen_says_why_it_shows_no_row(monkeypatch) -> None:
     assert window._empty_text(0, 5) == "No result matches the search"
     assert window._empty_text(3, 5) == ""
     window.close()
+
+
+def test_an_action_of_an_extension_is_dropped_while_the_window_closes(
+    monkeypatch,
+) -> None:
+    window = _ready_window(monkeypatch)
+    window._close_when_worker_stops = True
+    ran: list[object] = []
+
+    window._run_extension_action(lambda: ran.append(1), lambda _value: None)
+
+    assert window._extension_busy == 0 and ran == []
+    window._close_when_worker_stops = False
+    window.close()

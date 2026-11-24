@@ -44,3 +44,23 @@ def test_run_update_gives_the_keys_and_reports_failures(
     monkeypatch.setattr(plugin_updates, "_run", slow)
     with pytest.raises(ClusterError, match="timed out"):
         plugin_updates.run_update("ctx", ["helm", "upgrade"])
+
+
+def test_the_update_runs_the_program_with_the_timeout_and_the_environment(
+    monkeypatch,
+) -> None:
+    seen = {}
+
+    def run_process(program, timeout, env):
+        seen.update(program=program, timeout=timeout, env=env)
+        return subprocess.CompletedProcess(program, 0, "", "")
+
+    monkeypatch.setattr(cluster, "_run_process", run_process)
+
+    plugin_updates._run(["helm", "upgrade"], {"K": "v"})
+
+    assert seen == {
+        "program": ["helm", "upgrade"],
+        "timeout": plugin_updates.UPDATE_TIMEOUT,
+        "env": {"K": "v"},
+    }

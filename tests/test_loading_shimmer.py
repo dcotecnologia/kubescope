@@ -79,8 +79,12 @@ def test_the_bars_are_where_the_columns_are_and_skip_the_hidden_ones() -> None:
     table.setColumnHidden(2, True)
 
     assert shimmer._bar_paths().boundingRect().width() < with_all
+    table.horizontalHeader().setMinimumSectionSize(1)
     table.setColumnWidth(0, 4)  # a column with no room has no bar
     shimmer._bar_paths()
+    table.setColumnWidth(0, 300)
+    shimmer.resize(60, shimmer.height())  # a column beyond the width has none
+    assert shimmer._bar_paths().boundingRect().right() <= 300
 
 
 def test_the_band_crosses_the_bars_and_starts_again() -> None:

@@ -208,3 +208,14 @@ def test_the_details_of_an_extension_and_a_gke_addon_come_from_their_cloud(
 def test_an_age_without_a_time_zone_is_read_as_utc_and_a_bad_one_is_a_dash() -> None:
     assert cloud_addons._age("2026-01-01T00:00:00", NOW) == "10d"
     assert cloud_addons._age("yesterday", NOW) == "—"
+
+
+def test_an_extension_of_a_cluster_with_an_odd_name_is_refused() -> None:
+    with pytest.raises(ClusterError):
+        cloud_addons._extension_target("bad name", "group")
+    with pytest.raises(ClusterError):
+        cloud_addons._extension_target("aks", "bad group")
+    assert cloud_addons._extension_target("aks", "group")[:2] == [
+        "--cluster-name",
+        "aks",
+    ]
