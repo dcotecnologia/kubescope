@@ -337,7 +337,7 @@ wheels = [
 
 [[package]]
 name = "kubescope"
-version = "2.6.1"
+version = "2.7.0"
 source = { editable = "." }
 dependencies = [
     { name = "kubernetes" },
@@ -381,8 +381,8 @@ development = [{ name = "pre-commit", specifier = ">=4.7.0" }]
 
 [[package]]
 name = "kubescope-sdk"
-version = "1.7.0"
-source = { git = "https://github.com/dcotecnologia/kubescope-sdk?branch=main#f46922e5a60230e18f4dac2ca47d28a0f4320116" }
+version = "1.8.0"
+source = { git = "https://github.com/dcotecnologia/kubescope-sdk?branch=main#ad5c5928e092b6762e47a8c77a1bdd4ef41b6a5f" }
 dependencies = [
     { name = "pyside6" },
 ]
