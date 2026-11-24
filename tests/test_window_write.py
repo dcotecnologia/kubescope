@@ -16,6 +16,7 @@ from PySide6.QtWidgets import (
 
 from kubescope import window as window_module
 from kubescope import writes
+from kubescope.cluster import ClusterError
 from kubescope.writes import MAX_REPLICAS
 from tests.test_window_flows import POD, _ready_window
 
@@ -218,7 +219,9 @@ def test_run_write_dispatches_with_the_write_error_handler(monkeypatch) -> None:
         lambda op, ok, *a, **k: captured.append((ok, a, k)),
     )
     done = []
-    monkeypatch.setattr(window, "_write_done", done.append)
+    monkeypatch.setattr(
+        window, "_write_done", lambda message, after=None: done.append(message)
+    )
 
     window._run_write(print, "Did it", "x")
     ok, args, kwargs = captured[0]
@@ -801,3 +804,108 @@ def test_editing_reads_the_event_first(monkeypatch) -> None:
     assert [(n, a) for n, a, _k in ran] == [
         ("get_resource_details", ("prod", "Event", "ns", "api.1"))
     ]
+
+
+def test_what_was_done_is_told_with_a_notice_of_the_system(monkeypatch) -> None:
+    window, _ran = _window(monkeypatch)
+    notices: list[tuple] = []
+    monkeypatch.setattr(
+        window, "_system_notification", lambda *args: notices.append(args) or True
+    )
+    after: list[int] = []
+
+    window._write_done("Deleted the Pod solo", lambda: after.append(1))
+    window._write_done("Scaled api")
+
+    assert notices == [
+        ("KubeScope", "Deleted the Pod solo", None),
+        ("KubeScope", "Scaled api", None),
+    ]
+    assert after == [1]
+    window.close()
+
+
+def test_a_deleted_pod_is_watched_until_another_is_ready_in_its_place(
+    monkeypatch,
+) -> None:
+    window, _ran = _window(monkeypatch)
+    told: list[str] = []
+    monkeypatch.setattr(window, "_notify", told.append)
+    later: list = []
+    monkeypatch.setattr(
+        window_module.QTimer, "singleShot", lambda _ms, call: later.append(call)
+    )
+    answers = iter(
+        [
+            ClusterError("offline"),  # a look that fails is tried again
+            ([], [PodInfo("ns", "solo-new", "Pending", 0, 1, "1s", ("app",))]),
+            ([], [PodInfo("ns", "solo-new", "Running", 1, 1, "3s", ("app",))]),
+        ]
+    )
+
+    def run_action(_operation, on_success, *_arguments, on_error=None, **_kwargs):
+        answer = next(answers)
+        if isinstance(answer, Exception):
+            assert on_error is not None
+            on_error(str(answer))
+        else:
+            on_success(answer)
+
+    monkeypatch.setattr(window, "_run_action", run_action)
+
+    window._watch_replacement(SINGLE)
+    assert told == [] and len(later) == 1
+    later.pop()()  # the next look: a Pod that is not ready yet
+    assert told == [] and len(later) == 1
+    later.pop()()  # the next: it is ready
+
+    assert told == ["solo was replaced by solo-new, which is ready"]
+    assert later == []
+    window.close()
+
+
+def test_a_pod_that_does_not_come_back_in_time_is_told_too(monkeypatch) -> None:
+    window, _ran = _window(monkeypatch)
+    told: list[str] = []
+    monkeypatch.setattr(window, "_notify", told.append)
+    monkeypatch.setattr(window_module, "WATCH_SECONDS", 0.0)
+    monkeypatch.setattr(
+        window,
+        "_run_action",
+        lambda _op, on_success, *_a, **_k: on_success(([], [])),
+    )
+
+    window._watch_replacement(SINGLE)
+
+    assert told == ["No new Pod for solo is ready yet"]
+    monkeypatch.setattr(
+        window,
+        "_run_action",
+        lambda _op, _ok, *_a, on_error, **_k: on_error("offline"),
+    )
+    told.clear()
+    window._watch_replacement(SINGLE)  # a failed look after the time is up
+    assert told == ["No new Pod for solo is ready yet"]
+    window.close()
+
+
+def test_deleting_or_evicting_a_pod_watches_for_its_replacement(monkeypatch) -> None:
+    window, _ran = _window(monkeypatch)
+    monkeypatch.setattr(window, "_confirm", lambda *_a: True)
+    watched: list[str] = []
+    monkeypatch.setattr(
+        window, "_watch_replacement", lambda pod: watched.append(pod.name)
+    )
+    monkeypatch.setattr(
+        window,
+        "_run_action",
+        lambda _op, ok, *_a, **_k: ok(None),
+    )
+    monkeypatch.setattr(window, "refresh", lambda *a, **k: None)
+    monkeypatch.setattr(window, "_system_notification", lambda *a: True)
+
+    window._delete_pod(SINGLE)
+    window._evict_pod(SINGLE)
+
+    assert watched == ["solo", "solo"]
+    window.close()

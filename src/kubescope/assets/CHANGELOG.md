@@ -10,7 +10,8 @@ All notable changes to this project will be documented in this file. The format 
 
 - The **Cluster Plugins** extension (`kubescope-ext-plugins`), recommended in **Settings → Extensions** and not installed by itself: **Installed** lists the add-ons and Helm releases of the cluster with their chart, app and latest versions, the last update and an origin filter, and updates them in the write mode; **Catalog** browses the Helm charts of Artifact Hub by @danilogco
 - A page of an extension whose section is **Monitoring** goes into the section of the app, under a group of its own, instead of a section of its own by @danilogco
-- `ClusterAccess.environment`, `helm_chart_name`, `eks_target` and `aks_cluster`, and `Writes.run_update` (only `aws eks update-addon`, `helm upgrade` and `az k8s-extension update`, in the write mode), in the SDK 1.7 by @danilogco
+- `ClusterAccess.environment`, `helm_chart_name`, `eks_target` and `aks_cluster`, `Writes.run_update` (only `aws eks update-addon`, `helm upgrade` and `az k8s-extension update`) and `Writes.run_remove` (only `aws eks delete-addon`, `helm uninstall` and `az k8s-extension delete`), in the write mode, in the SDK 1.9 by @danilogco
+- What was done to the cluster (a Pod deleted, a workload scaled or restarted) is told with a notice of the system, and after a Pod is deleted or evicted the app tells when another takes its place and is ready, or that none is yet by @danilogco
 
 ### Changed
 

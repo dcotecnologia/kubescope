@@ -224,6 +224,7 @@ from kubescope.utils.errors import (
 )
 from kubescope.utils.fonts import code_font
 from kubescope.utils.json_view import restyle
+from kubescope.utils.replacement import POLL_SECONDS, WATCH_SECONDS, replacement_for
 from kubescope.utils.selfupdate import detect_install, restart
 from kubescope.utils.updates import Release, UpdateCheck, check_for_update
 from kubescope.views import motion
@@ -5260,21 +5261,75 @@ class WorkloadWindow(QMainWindow):
         return box.clickedButton() is confirm
 
     def _run_write(
-        self, operation: Callable[..., Any], done: str, *arguments: Any
+        self,
+        operation: Callable[..., Any],
+        done: str,
+        *arguments: Any,
+        after: Callable[[], None] | None = None,
     ) -> None:
         """Run an action that changes the cluster off the UI thread, then say
-        so and refresh the list."""
+        so (in the status line and with a notice of the system), refresh the
+        list and do what comes `after`."""
         self._run_action(
             operation,
-            lambda _result: self._write_done(done),
+            lambda _result: self._write_done(done, after),
             *arguments,
             on_error=self._show_write_error,
         )
 
-    def _write_done(self, message: str) -> None:
+    def _write_done(
+        self, message: str, after: Callable[[], None] | None = None
+    ) -> None:
         logger.info(message)
         self._set_status(lambda: message)
+        self._notify(message)
         self.refresh()
+        if after is not None:
+            after()
+
+    def _notify(self, message: str) -> None:
+        """Tell the person that what they asked was done, with a notice of the
+        system; a desktop that cannot show one has the status line."""
+        self._system_notification("KubeScope", message, None)
+
+    def _watch_replacement(self, pod: PodInfo) -> None:
+        """After a Pod is deleted or evicted, look until another takes its
+        place and is ready, and tell the person; or tell that it is not yet."""
+        context, started = self._context(), time.monotonic()
+
+        def poll() -> None:
+            self._run_action(
+                get_pods,
+                arrived,
+                context,
+                pod.namespace,
+                on_error=lambda _message: again(),
+                quiet=True,
+            )
+
+        def arrived(answer: tuple[list[str], list[PodInfo]]) -> None:
+            waited = time.monotonic() - started
+            found = replacement_for(pod, answer[1], waited)
+            if found is not None:
+                self._notify(
+                    self.tr("{name} was replaced by {new}, which is ready").format(
+                        name=pod.name, new=found.name
+                    )
+                )
+            elif waited < WATCH_SECONDS:
+                again()
+            else:
+                self._notify(
+                    self.tr("No new Pod for {name} is ready yet").format(name=pod.name)
+                )
+
+        def again() -> None:
+            if time.monotonic() - started < WATCH_SECONDS:
+                QTimer.singleShot(round(POLL_SECONDS * 1000), poll)
+            else:
+                arrived(([], []))  # time is up: say that nothing came
+
+        poll()
 
     def _show_write_error(self, message: str) -> None:
         if self._close_when_worker_stops:
@@ -5292,6 +5347,7 @@ class WorkloadWindow(QMainWindow):
                 self._context(),
                 pod.namespace,
                 pod.name,
+                after=lambda: self._watch_replacement(pod),
             )
 
     def _confirm_many(
@@ -5516,6 +5572,7 @@ class WorkloadWindow(QMainWindow):
                 self._context(),
                 pod.namespace,
                 pod.name,
+                after=lambda: self._watch_replacement(pod),
             )
 
     def _show_shell_command(self, pod: PodInfo) -> None:
