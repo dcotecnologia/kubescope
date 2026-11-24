@@ -29,7 +29,6 @@ GKE_KIND = "GkeAddon"
 TIMEOUT = 60  # seconds the az and gcloud programs may take
 NO_VALUE = "—"
 _NAME = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]{0,99}")
-_VERSION = re.compile(r"[A-Za-z0-9][A-Za-z0-9._+-]{0,99}")
 GKE_CONTEXT = re.compile(r"gke_([^_]+)_([^_]+)_([^_]+)")
 
 
@@ -148,33 +147,6 @@ def aks_extension_details(context: str, name: str) -> dict[str, Any]:
         context,
     )
     return document if isinstance(document, dict) else {}
-
-
-def aks_update_arguments(
-    cluster_name: str, group: str, extension: str, version: str
-) -> list[str]:
-    """The `az k8s-extension update` command that moves an extension to a
-    version; a version that is asked for turns the automatic minor upgrades
-    off, as the command requires."""
-    if not _NAME.fullmatch(extension):
-        raise ClusterError("That is not the name of an extension")
-    if not _VERSION.fullmatch(version):
-        raise ClusterError("Give the version to update to")
-    return [
-        "az",
-        "k8s-extension",
-        "update",
-        "--name",
-        extension,
-        *_extension_target(cluster_name, group),
-        "--version",
-        version,
-        "--auto-upgrade-minor-version",
-        "false",
-        "--yes",
-        "--output",
-        "json",
-    ]
 
 
 def _gke_description(context: str) -> dict[str, Any]:

@@ -2424,22 +2424,15 @@ def _get_addons(
     if not resources and (error := helm_error or eks_error or aks_error or gke_error):
         raise error
     resources.sort(key=lambda row: (row.name.casefold(), row.namespace))
-    return namespaces, _with_latest(context, resources)
+    return namespaces, _with_chart_column(context, resources)
 
 
-def _with_latest(
+def _with_chart_column(
     context: str, resources: list[ClusterResource]
 ) -> list[ClusterResource]:
-    """Each row as status, chart, app, latest, source and last update: a Helm
-    release has its chart and app version, anything else only one version,
-    which is the app's."""
-    from kubescope import plugin_latest
-
-    try:
-        latest = plugin_latest.latest_versions(context, resources)
-    except Exception:  # a version that cannot be found never costs the list
-        logger.exception("Could not read the latest versions")
-        latest = {}
+    """Each row as status, chart, app, source and last update: a Helm release
+    has its chart and app version, anything else only one version, which is the
+    app's, so its chart is a dash."""
     return [
         replace(
             row,
@@ -2450,7 +2443,6 @@ def _with_latest(
                     if row.kind == "HelmRelease"
                     else (_NO_VALUE, row.values[1])
                 ),
-                latest.get((row.kind, row.name), _NO_VALUE),
                 *row.values[3 if row.kind == "HelmRelease" else 2 :],
             ),
         )

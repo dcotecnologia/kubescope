@@ -180,3 +180,33 @@ def test_a_forward_that_fails_is_told_in_the_banner(window) -> None:
 
     assert not window.permission_banner.isHidden()
     assert "RDS orders: error: busy" in window.ui.permissionDetailsText.text()
+
+
+def test_a_click_on_a_header_sorts_the_forwards_and_the_buttons_follow_the_row(
+    window, monkeypatch
+) -> None:
+    runner = window.forward_runner
+    first = Forward(1, "Service b", "kubectl", ["k"], {}, 9000, "b:80", RUNNING)
+    second = Forward(2, "Service a", "kubectl", ["k"], {}, 8000, "a:80", RUNNING)
+    stops = []
+    monkeypatch.setattr(runner, "stop", lambda forward: stops.append(forward.number))
+    _list(window, first, second)
+    table = window.forwards_ui.forwardsTable
+    assert [table.item(row, 0).text() for row in range(2)] == [
+        "Service b",
+        "Service a",
+    ]
+
+    window.forwards_sorter.clicked(0)
+
+    assert [table.item(row, 0).text() for row in range(2)] == [
+        "Service a",
+        "Service b",
+    ]
+    table.selectRow(0)  # the row on screen, not the one the runner keeps first
+    window.forwards_ui.stopButton.click()
+    assert stops == [2]
+
+    window.forwards_sorter.clicked(2)  # the port, a number
+    window.forwards_sorter.clicked(2)
+    assert table.item(0, 2).text() == "127.0.0.1:9000"

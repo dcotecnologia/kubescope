@@ -137,12 +137,9 @@ Click **Config** to slide out the configuration of the cluster. It opens next to
 - **Mutating** and **Validating Webhook Configurations:** how many webhooks each
   declares.
 
-- **Plugins → Installed:** the Helm releases of the cluster (status and revision, one row per
-  release) and, on Amazon EKS, the EKS add-ons (status and version). The Source
-  column tells them apart. Helm releases are read from the labels of the Secrets
-  where Helm 3 stores them, so no `helm` program is needed; the contents of those
-  Secrets are never requested. Releases kept by Helm 2 or by another storage
-  driver are not listed.
+The Helm releases and the add-ons of the cluster are in the **Cluster Plugins** extension (**Settings →
+Extensions**, recommended and not installed by itself): **Plugins → Installed** with their chart, app and
+latest versions, and **Plugins → Catalog** with the Helm charts of Artifact Hub.
 
 Priority Classes, Runtime Classes and the two webhook configurations belong to the
 whole cluster, so the namespace filter does not apply to them.

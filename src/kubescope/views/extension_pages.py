@@ -45,7 +45,7 @@ class _Entry:
         button: QPushButton,
         host: QWidget,
         group: QWidget,
-        section: QLabel,
+        section: QLabel | None,
         group_fold: SectionFold,
     ) -> None:
         self.page = page
@@ -74,8 +74,12 @@ class ExtensionPages(QObject):
         on_fold: Callable[[str, bool], None] = lambda _name, _folded: None,
         group_icon: Callable[[str], QIcon] = lambda _group: QIcon(),
         on_changed: Callable[[], None] = lambda: None,
+        builtin: dict[str, QVBoxLayout] | None = None,
     ) -> None:
         super().__init__(stack)
+        # the sections the app has itself, by their English name in lower case: a
+        # page of an extension whose section is one of them is put into it
+        self._builtin = builtin or {}
         self.menu = menu  # its last item is the spacer that ends it
         self.stack = stack
         self.open_page = open_page  # show the page of this index
@@ -98,17 +102,23 @@ class ExtensionPages(QObject):
             self.stack.removeWidget(entry.host)
             entry.host.deleteLater()
         for widget in self._widgets:
-            self.menu.removeWidget(widget)
+            parent = widget.parentWidget()
+            holder = parent.layout() if parent is not None else None
+            (holder or self.menu).removeWidget(widget)
             widget.hide()  # until it is deleted
             widget.deleteLater()
         self._entries, self._widgets = [], []
         self.folds = {}
         self._headers = []
         self.blocks = {}
-        sections: dict[str, QLabel] = {}
+        sections: dict[str, QLabel | None] = {}
         bodies: dict[str, QVBoxLayout] = {}
         groups: dict[tuple[str, str], tuple[QPushButton, QFrame, SectionFold]] = {}
         for page in pages:
+            own = self._builtin.get(page.section.casefold())
+            if own is not None and page.section not in sections:
+                sections[page.section] = None  # the section is the app's own
+                bodies[page.section] = own
             if page.section not in sections:
                 label = QLabel(page.section.upper())
                 label.setObjectName("navSection")
@@ -146,6 +156,8 @@ class ExtensionPages(QObject):
                 layout.setSpacing(0)
                 bodies[page.section].addWidget(header)
                 bodies[page.section].addWidget(submenu)
+                if sections[page.section] is None:
+                    self._widgets += [header, submenu]  # taken back with the rest
                 group_name = fold_name(f"{page.section}/{page.group}")
                 group_fold = SectionFold(
                     header, submenu, self._is_folded(group_name), self._animated
@@ -187,7 +199,7 @@ class ExtensionPages(QObject):
     def sync(self) -> None:
         """Show the entries that say they are visible, and the sections and
         groups that have one."""
-        shown: set[QWidget] = set()
+        shown: set[QWidget | None] = set()
         for entry in self._entries:
             try:
                 visible = entry.page.visible is None or bool(entry.page.visible())
@@ -203,7 +215,8 @@ class ExtensionPages(QObject):
                 shown.update((entry.group, entry.section))
         for entry in self._entries:
             entry.group_fold.set_available(entry.group in shown)
-            self.folds[entry.section].set_available(entry.section in shown)
+            if entry.section is not None:
+                self.folds[entry.section].set_available(entry.section in shown)
         self._on_changed()
         current = self.stack.currentWidget()
         if any(

@@ -787,17 +787,6 @@ def test_the_app_reopens_on_the_page_and_list_it_was_left_on(monkeypatch) -> Non
         each.close()
 
 
-def test_addons_are_listed_for_every_namespace(monkeypatch) -> None:
-    monkeypatch.setattr(window_module, "list_contexts", lambda: ([], None))
-    window = window_module.WorkloadWindow()
-    window.namespace_combo.addItem("arquitech", "arquitech")
-    window.namespace_combo.setCurrentIndex(window.namespace_combo.count() - 1)
-
-    assert window._list_namespace("deployments") == "arquitech"
-    assert window._list_namespace("addons") is None
-    window.close()
-
-
 def test_a_linked_detail_value_asks_to_open_its_resource(monkeypatch) -> None:
     from PySide6.QtWidgets import QLabel
 

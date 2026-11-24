@@ -1874,9 +1874,8 @@ def test_each_config_list_opens_with_its_own_columns(monkeypatch) -> None:
             1,
         ),
         "nodegroups": ("Node Groups", "NodeGroup", 5),
-        "addons": ("Add-ons", "Addon", 4),
     }
-    assert set(expected) == set(CONFIG_VIEWS)
+    assert set(expected) == set(CONFIG_VIEWS) - {"addons"}  # Plugins is an extension
     for view, (title, kind, extra) in expected.items():
         window._open_list_view(view)
         values = tuple(f"v{n}" for n in range(extra))
@@ -2005,7 +2004,6 @@ def test_the_node_groups_entry_follows_the_context(monkeypatch) -> None:
     window._open_list_view("nodegroups")
     window._context_changed()  # until the new context answers, nothing from AWS
     assert window.ui.navNodeGroups.isHidden()
-    assert not window.ui.navPluginsInstalled.isHidden()  # Helm releases need no AWS
     assert (
         window.overview_ui.clusterInfoCard.isHidden() and window._view == "deployments"
     )
@@ -2028,8 +2026,7 @@ def test_the_config_menu_opens_and_lists_every_entry(monkeypatch) -> None:
     assert window.config_submenu.maximumHeight() > 0  # open from the start
     for view in set(CONFIG_VIEWS) - {"nodegroups", "addons"}:
         assert window._nav_views[view].parent() is window.config_submenu
-    # the Helm releases and EKS add-ons are the Installed plugins, not a Config entry
-    assert window._nav_views["addons"].parent() is window.plugins_submenu
+    assert "addons" not in window._nav_views  # the Plugins are an extension
     assert window._nav_views["nodegroups"].parent() is not window.config_submenu
     window.close()
 
@@ -4243,77 +4240,6 @@ def test_quiet_reads_show_what_the_server_added_and_removed(monkeypatch) -> None
     window.close()
 
 
-def test_an_addon_with_a_newer_version_shows_an_icon_in_the_latest_column(
-    monkeypatch,
-) -> None:
-    window = _resource_window(monkeypatch)
-    window._open_list_view("addons")
-    window._show_resources(
-        [],
-        [
-            ClusterResource(
-                "", "Addon", "vpc-cni", ("ACTIVE", "—", "v1", "v2", "EKS", "1d"), "1d"
-            ),
-            ClusterResource(
-                "",
-                "Addon",
-                "kube-proxy",
-                ("ACTIVE", "—", "v3", "v3", "EKS", "1d"),
-                "1d",
-            ),
-        ],
-    )
-    names = [cell(window.table, r, 2).text() for r in range(2)]
-    icons = {}
-    for row, name in enumerate(names):
-        item = window.table.item(row, 6)
-        assert item is not None
-        icons[name] = not item.icon().isNull()
-        if name == "vpc-cni":
-            assert item.toolTip().endswith("v2")
-    assert icons == {"vpc-cni": True, "kube-proxy": False}
-    assert window.table.columnCount() == 10
-    window.close()
-
-
-def test_the_plugins_are_filtered_by_origin_instead_of_namespace(monkeypatch) -> None:
-    window = _resource_window(monkeypatch)
-    window._open_list_view("addons")
-    window._show_resources(
-        ["ops"],
-        [
-            ClusterResource(
-                "", "Addon", "vpc-cni", ("ACTIVE", "—", "v1", "—", "EKS", "1d"), "1d"
-            ),
-            ClusterResource(
-                "ops",
-                "HelmRelease",
-                "web",
-                ("deployed", "1.0", "v9", "1.1", "Helm"),
-                "1d",
-            ),
-        ],
-    )
-    combo = window.namespace_combo
-    assert [combo.itemData(i) for i in range(combo.count())] == ["", "helm", "cluster"]
-
-    def shown() -> list[str]:
-        return [
-            cell(window.table, r, 2).text()
-            for r in range(window.table.rowCount())
-            if not window.table.isRowHidden(r)
-        ]
-
-    assert shown() == ["vpc-cni", "web"]
-    combo.setCurrentIndex(combo.findData("helm"))
-    assert shown() == ["web"]
-    combo.setCurrentIndex(combo.findData("cluster"))
-    assert shown() == ["vpc-cni"]
-    window._open_list_view("pods")  # the namespaces are back
-    assert combo.itemData(0) == "" and combo.findData("ops") >= 0
-    window.close()
-
-
 def test_the_welcome_page_at_startup_is_a_setting(monkeypatch) -> None:
     window, _opened = _welcome_window(monkeypatch)
     window._load_settings_form()
@@ -4490,7 +4416,6 @@ def test_no_two_entries_of_the_side_menu_share_an_icon(monkeypatch) -> None:
         "workloads": window.nav_workloads,
         "network": window.nav_network,
         "config": window.nav_config,
-        "plugins": window.nav_plugins,
     }
 
     images = {
@@ -4501,4 +4426,70 @@ def test_no_two_entries_of_the_side_menu_share_an_icon(monkeypatch) -> None:
     for index, name in enumerate(names):
         for other in names[:index]:
             assert images[name] != images[other], f"{name} repeats the icon of {other}"
+    window.close()
+
+
+def test_the_plugins_group_wears_the_plug_and_any_other_a_monogram() -> None:
+    plug = window_module._group_icon("Plugins").pixmap(32, 32).toImage()
+    assert plug == window_module._nav_icon("plugins").pixmap(32, 32).toImage()
+    assert window_module._group_icon("Other").pixmap(32, 32).toImage() != plug
+
+
+def test_the_nodes_the_events_and_the_pods_sort_when_a_header_is_clicked(
+    monkeypatch,
+) -> None:
+    window = _ready_window(monkeypatch)
+    window._view = "nodegroups"
+    nodes = tuple(
+        NodeInfo(name, True, "worker", "v1", age, 2.0, 2**30, 10)
+        for name, age in (("n2", "5m"), ("n1", "2d"), ("n3", "1h"))
+    )
+    window._show_nodes(window._context(), ClusterOverview(nodes=nodes))
+    table = window.nodes_table
+    assert [cell(table, row, 0).text() for row in range(3)] == ["n2", "n1", "n3"]
+
+    window.nodes_sorter.clicked(7)  # the age, by how long it is
+    assert [cell(table, row, 0).text() for row in range(3)] == ["n2", "n3", "n1"]
+    window._show_nodes(window._context(), ClusterOverview(nodes=nodes))  # read again
+    assert [cell(table, row, 0).text() for row in range(3)] == ["n2", "n3", "n1"]
+
+    events = tuple(
+        EventInfo("Warning", "kubelet", "ns", f"Pod: {name}", "x", count, "1m", "1m")
+        for name, count in (("a", 10), ("b", 9))
+    )
+    window._render_events(WorkloadsOverview({}, events))
+    window.events_sorter.clicked(5)  # the count, a number
+    assert [cell(window.workloads_table, row, 3).text() for row in range(2)] == [
+        "Pod: b",
+        "Pod: a",
+    ]
+    window._render_events(WorkloadsOverview({}, events))
+    assert cell(window.workloads_table, 0, 3).text() == "Pod: b"
+
+    young = PodInfo("ns", "api-b", "Running", 1, 1, "5m", ("app",))
+    old = PodInfo("ns", "api-a", "Running", 1, 1, "2d", ("app",))
+    seen = {}
+
+    def fake_exec(dialog) -> int:
+        pods_table = dialog.findChild(QTableWidget, "podsTable")
+
+        def names() -> list[str]:
+            return [cell(pods_table, row, 0).text() for row in range(2)]
+
+        seen["first"] = names()
+        pods_table.horizontalHeader().sectionClicked.emit(4)
+        seen["by age"] = names()
+        pods_table.horizontalHeader().sectionClicked.emit(4)
+        seen["reversed"] = names()
+        return 0
+
+    monkeypatch.setattr(QDialog, "exec", fake_exec)
+    window._show_pods_dialog(
+        Workload("ns", "Deployment", "api", 1, 1, "1d"), [old, young]
+    )
+    assert seen == {
+        "first": ["api-a", "api-b"],
+        "by age": ["api-b", "api-a"],
+        "reversed": ["api-a", "api-b"],
+    }
     window.close()

@@ -221,7 +221,7 @@ class Ui_MainWindow(object):
                         "}\n"
 "QPushButton[nav=\"true\"]:hover { background: #f6f6fa; }\n"
 "QFrame#workloadsSubmenu, QFrame#networkSubmenu, QFrame#configSubmenu,\n"
-"QFrame#pluginsSubmenu, QFrame[submenu=\"true\"] {\n"
+"QFrame[submenu=\"true\"] {\n"
 "    border: 0; border-left: 1px solid #d9dce4; margin-left: 19px;\n"
 "}\n"
 "QPushButton[nav=\"true\"]:checked {\n"
@@ -239,9 +239,9 @@ class Ui_MainWindow(object):
 "    background: #eceef3; border: 0; border-radius: 3px;\n"
 "    min-height: 6px; max-height: 6px;\n"
 "}\n"
-"QProgressBar::chunk { background: #6252b5; b"
-                        "order-radius: 3px; }\n"
-"QProgressBar[level=\"warn\"]::chunk { background: #d58a2b; }\n"
+"QProgressBar::chunk { background: #6252b5; border-radius: 3px; }\n"
+""
+                        "QProgressBar[level=\"warn\"]::chunk { background: #d58a2b; }\n"
 "QProgressBar[level=\"high\"]::chunk { background: #c9484f; }\n"
 "QCheckBox { color: #20232a; spacing: 8px; font-size: 11px; }\n"
 "QLabel { color: #20232a; }\n"
@@ -260,8 +260,8 @@ class Ui_MainWindow(object):
 "}\n"
 "QTabBar::close-button:hover { image: url(CLOSE_ICON_HOVER); background: #eee9f7; }\n"
 "QPlainTextEdit {\n"
-"    background: #ffffff; color: #2"
-                        "42a33; border: 1px solid #dfe2e9;\n"
+"    background: #ffffff; color: #242a33; border: 1px solid "
+                        "#dfe2e9;\n"
 "    border-radius: 5px; padding: 8px; selection-background-color: #d9d3f2;\n"
 "    selection-color: #20232a;\n"
 "}\n"
@@ -279,8 +279,8 @@ class Ui_MainWindow(object):
 "}\n"
 "QFrame#appFooter { background: #ffffff; border-top: 1px solid #e4e5eb; }\n"
 "QLabel#footerLicense, QLabel#footerDot, QLabel#updateNotice { color: #6b7380; font-size: 10px; }\n"
-"QFrame#appFooter QPushButton[variant=\"link"
-                        "\"] { font-size: 10px; padding: 0 0 0 6px; }\n"
+"QFrame#appFooter QPushButton[variant=\"link\"] { font-size: 10px; pa"
+                        "dding: 0 0 0 6px; }\n"
 "QPushButton#companyLink { padding: 0; }\n"
 "QPushButton#updateButton { border: none; background: transparent; padding: 0; border-radius: 4px; }\n"
 "QPushButton#updateButton:hover { background: #f6f6fa; }\n"
@@ -884,46 +884,6 @@ class Ui_MainWindow(object):
 
         self.sidebarNavLayout.addWidget(self.configSubmenu)
 
-        self.navPlugins = QPushButton(self.sidebarNav)
-        self.navPlugins.setObjectName(u"navPlugins")
-        self.navPlugins.setMinimumSize(QSize(0, 24))
-        self.navPlugins.setIconSize(QSize(16, 16))
-        self.navPlugins.setCheckable(False)
-        self.navPlugins.setChecked(False)
-        self.navPlugins.setProperty(u"nav", u"true")
-
-        self.sidebarNavLayout.addWidget(self.navPlugins)
-
-        self.pluginsSubmenu = QFrame(self.sidebarNav)
-        self.pluginsSubmenu.setObjectName(u"pluginsSubmenu")
-        self.pluginsSubmenu.setMaximumSize(QSize(16777215, 0))
-        self.pluginsSubmenuLayout = QVBoxLayout(self.pluginsSubmenu)
-        self.pluginsSubmenuLayout.setSpacing(0)
-        self.pluginsSubmenuLayout.setObjectName(u"pluginsSubmenuLayout")
-        self.pluginsSubmenuLayout.setContentsMargins(4, 0, 0, 0)
-        self.navPluginsCatalog = QPushButton(self.pluginsSubmenu)
-        self.navPluginsCatalog.setObjectName(u"navPluginsCatalog")
-        self.navPluginsCatalog.setMinimumSize(QSize(0, 20))
-        self.navPluginsCatalog.setIconSize(QSize(16, 16))
-        self.navPluginsCatalog.setCheckable(True)
-        self.navPluginsCatalog.setChecked(False)
-        self.navPluginsCatalog.setProperty(u"nav", u"true")
-
-        self.pluginsSubmenuLayout.addWidget(self.navPluginsCatalog)
-
-        self.navPluginsInstalled = QPushButton(self.pluginsSubmenu)
-        self.navPluginsInstalled.setObjectName(u"navPluginsInstalled")
-        self.navPluginsInstalled.setMinimumSize(QSize(0, 20))
-        self.navPluginsInstalled.setIconSize(QSize(16, 16))
-        self.navPluginsInstalled.setCheckable(True)
-        self.navPluginsInstalled.setChecked(False)
-        self.navPluginsInstalled.setProperty(u"nav", u"true")
-
-        self.pluginsSubmenuLayout.addWidget(self.navPluginsInstalled)
-
-
-        self.sidebarNavLayout.addWidget(self.pluginsSubmenu)
-
         self.sidebarNavSpacer = QSpacerItem(20, 0, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
 
         self.sidebarNavLayout.addItem(self.sidebarNavSpacer)
@@ -1337,9 +1297,6 @@ class Ui_MainWindow(object):
         self.forwardsHost = QWidget()
         self.forwardsHost.setObjectName(u"forwardsHost")
         self.pages.addWidget(self.forwardsHost)
-        self.pluginsHost = QWidget()
-        self.pluginsHost.setObjectName(u"pluginsHost")
-        self.pages.addWidget(self.pluginsHost)
 
         self.pageLayout.addWidget(self.pages)
 
@@ -1491,9 +1448,6 @@ class Ui_MainWindow(object):
         self.navRuntimeClasses.setText(QCoreApplication.translate("MainWindow", u"Runtime Classes", None))
         self.navSecrets.setText(QCoreApplication.translate("MainWindow", u"Secrets", None))
         self.navValidatingWebhooks.setText(QCoreApplication.translate("MainWindow", u"Validating Webhook Configurations", None))
-        self.navPlugins.setText(QCoreApplication.translate("MainWindow", u"Plugins", None))
-        self.navPluginsCatalog.setText(QCoreApplication.translate("MainWindow", u"Catalog", None))
-        self.navPluginsInstalled.setText(QCoreApplication.translate("MainWindow", u"Installed", None))
         self.sidebarNote.setText(QCoreApplication.translate("MainWindow", u"SECURE ACCESS\n"
 "Resources in read-only mode", None))
 #if QT_CONFIG(tooltip)

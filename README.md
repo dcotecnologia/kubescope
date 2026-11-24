@@ -132,8 +132,8 @@ _Pod logs with colored levels. These screens are drawn from fake data by
   **Limit Ranges**, **Horizontal Pod Autoscalers**, **Pod Disruption Budgets**,
   **Priority Classes**, **Runtime Classes**, **Leases** and the **Mutating** and
   **Validating Webhook Configurations**. **Details** of a Secret shows its keys,
-  never its values. **Plugins → Installed** lists the Helm releases of the cluster and, on Amazon
-  EKS, its EKS add-ons; **Plugins → Catalog** browses the Helm charts of Artifact Hub.
+  never its values. The **Cluster Plugins** extension (recommended, not installed by itself) lists the Helm
+  releases and the add-ons of the cluster with their versions and a catalog of Helm charts.
 - **Cluster info (EKS only):** the Overview shows status, Kubernetes and platform
   versions, creation time, API server endpoint and the cluster and IAM role ARNs,
   and a **Networking** card with the VPC, subnets, security groups, endpoint access

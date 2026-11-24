@@ -103,6 +103,20 @@ DEFAULTS = (
         automatic=False,
         author="DCO Tecnologia",
     ),
+    DefaultExtension(
+        id="kubescope.plugins",
+        name="Cluster Plugins",
+        description=(
+            "The add-ons and Helm releases of the cluster in the Monitoring section, "
+            "with their chart, app and latest versions, the last update and an "
+            "origin filter, and a catalog of the Helm charts of Artifact Hub. In "
+            "the write mode it updates an add-on or a release with the command it "
+            "shows first."
+        ),
+        repo=Repo("dcotecnologia", "kubescope-ext-plugins"),
+        automatic=False,
+        author="DCO Tecnologia",
+    ),
 )
 
 

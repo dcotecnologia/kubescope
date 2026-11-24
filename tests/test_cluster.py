@@ -2531,15 +2531,6 @@ def test_get_resources_lists_events_youngest_first(monkeypatch) -> None:
     assert [resource.name for resource in resources] == ["new", "old"]
 
 
-@pytest.fixture(autouse=True)
-def no_latest_versions(monkeypatch):
-    """The lists do not ask AWS or Artifact Hub for the latest versions
-    here."""
-    from kubescope import plugin_latest
-
-    monkeypatch.setattr(plugin_latest, "latest_versions", lambda *_a: {})
-
-
 def test_get_resources_lists_the_add_ons_of_eks_and_the_helm_releases(
     monkeypatch,
 ) -> None:
@@ -2582,13 +2573,12 @@ def test_get_resources_lists_the_add_ons_of_eks_and_the_helm_releases(
         ("HelmRelease", "web", "ops"),
     ]
     # the last column is when the release or the add-on last changed
-    assert addons[0].values[:5] == ("failed", "—", "—", "—", "Helm")
-    assert addons[0].values[5] not in ("—", "unknown")
-    assert addons[1].values[:5] == ("ACTIVE", "—", "v1.18.1-eksbuild.3", "—", "EKS")
-    assert addons[1].values[5] not in ("—", "unknown")
+    assert addons[0].values[:4] == ("failed", "—", "—", "Helm")
+    assert addons[0].values[4] not in ("—", "unknown")
+    assert addons[1].values[:4] == ("ACTIVE", "—", "v1.18.1-eksbuild.3", "EKS")
+    assert addons[1].values[4] not in ("—", "unknown")
     assert addons[2].values[:-1] == (
         "deployed",
-        "—",
         "—",
         "—",
         "Helm",
@@ -2686,8 +2676,8 @@ def test_outside_eks_the_add_ons_are_the_helm_releases(monkeypatch) -> None:
 
     _, addons = cluster.get_resources("ctx", "ops", "Addon")
 
-    assert [(a.kind, a.values[:5]) for a in addons] == [
-        ("HelmRelease", ("deployed", "—", "—", "—", "Helm"))
+    assert [(a.kind, a.values[:4]) for a in addons] == [
+        ("HelmRelease", ("deployed", "—", "—", "Helm"))
     ]
 
 
@@ -3649,23 +3639,16 @@ def test_get_pod_logs_reads_the_log_from_its_start_up_to_a_limit_of_bytes(
     ]
 
 
-def test_a_failure_reading_the_latest_versions_never_costs_the_list(
-    monkeypatch,
-) -> None:
-    from kubescope import plugin_latest
-
-    def broken(*_a):
-        raise RuntimeError("boom")
-
-    monkeypatch.setattr(plugin_latest, "latest_versions", broken)
-    row = cluster.ClusterResource("", "Addon", "vpc-cni", ("ACTIVE", "v1", "EKS"), "1d")
-    assert cluster._with_latest("ctx", [row])[0].values == (
-        "ACTIVE",
-        "—",
-        "v1",
-        "—",
-        "EKS",
+def test_a_row_has_its_chart_and_app_and_a_cloud_row_only_the_app() -> None:
+    eks = cluster.ClusterResource(
+        "", "Addon", "vpc-cni", ("ACTIVE", "v1", "EKS", "3d"), "1d"
     )
+    helm = cluster.ClusterResource(
+        "ops", "HelmRelease", "web", ("deployed", "1.0", "v9", "Helm", "2d"), "1d"
+    )
+    rows = cluster._with_chart_column("ctx", [eks, helm])
+    assert rows[0].values == ("ACTIVE", "—", "v1", "EKS", "3d")
+    assert rows[1].values == ("deployed", "1.0", "v9", "Helm", "2d")
 
 
 def test_the_region_profile_and_account_of_an_eks_context(monkeypatch) -> None:

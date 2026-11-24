@@ -41,6 +41,7 @@ from kubescope.sdk.models import (
     format_cores,
     format_cpu,
     format_memory,
+    natural_key,
     pod_highlight,
     pod_sort_key,
     resource_sort_key,
@@ -122,7 +123,6 @@ from kubescope.about import (
     PROJECT_URL,
     __version__,
 )
-from kubescope.cloud_addons import AKS_KIND, GKE_KIND, aks_cluster
 from kubescope.cluster import (
     ClusterError,
     LoginAction,
@@ -144,7 +144,6 @@ from kubescope.cluster import (
     get_workload_pods,
     get_workloads,
     get_workloads_overview,
-    helm_chart_name,
     is_eks_context,
     list_contexts,
     open_in_terminal,
@@ -158,7 +157,6 @@ from kubescope.cluster import (
 from kubescope.dialogs.account_dialog import AccountDialog
 from kubescope.dialogs.changelog_dialog import ChangelogDialog
 from kubescope.dialogs.notices_dialog import NoticesDialog
-from kubescope.dialogs.plugin_update_dialog import PluginUpdateDialog
 from kubescope.dialogs.theme_editor import ThemeEditor
 from kubescope.dialogs.update_dialog import UpdateDialog
 from kubescope.extensions.cluster_access import ClusterBridge
@@ -177,8 +175,6 @@ from kubescope.i18n import (
     resolve_language,
     set_extension_languages,
 )
-from kubescope.plugin_latest import helm_match, update_available
-from kubescope.plugin_updates import eks_addon_versions, run_update
 from kubescope.screen import (
     Screen,
     describe_cluster_overview,
@@ -213,7 +209,6 @@ from kubescope.theme import (
 from kubescope.ui.ui_forwards_page import Ui_ForwardsPage
 from kubescope.ui.ui_main_window import Ui_MainWindow
 from kubescope.ui.ui_overview_page import Ui_OverviewPage
-from kubescope.ui.ui_plugins_page import Ui_PluginsPage
 from kubescope.ui.ui_pods_dialog import Ui_PodsDialog
 from kubescope.ui.ui_settings_page import Ui_SettingsPage
 from kubescope.ui.ui_viewer_page import Ui_ViewerPage
@@ -255,13 +250,14 @@ from kubescope.views.extension_pages import (
 )
 from kubescope.views.extensions_panel import ExtensionsPanel
 from kubescope.views.forward_runner import ForwardRunner
+from kubescope.views.loading_shimmer import LoadingShimmer
 from kubescope.views.log_tab import LOG_REFRESH_MS, LogTab
 from kubescope.views.nav_chevron import NavChevron
 from kubescope.views.nav_section import SectionFold
-from kubescope.views.plugins_catalog import PluginsCatalog
 from kubescope.views.search_bar import compile_query, switch_button
 from kubescope.views.sidebar_resizer import SidebarResizer
 from kubescope.views.sidebar_toggle import SidebarToggle
+from kubescope.views.table_sort import HeaderSorter
 from kubescope.views.welcome_page import Overlay, WelcomePage
 from kubescope.views.widgets import TabScrollArea
 from kubescope.views.window_frame import WindowFrame
@@ -292,7 +288,6 @@ WRITE_VIEWS = {
     "statefulsets": ("forward", "delete"),
     "services": ("forward", "delete"),
     "events": ("edit", "delete"),
-    "addons": ("update", "delete"),
 }
 WRITE_VIEWS.update(
     {
@@ -422,6 +417,14 @@ def _divider_icon_path() -> str:
         painter.fillRect(QRectF(1, 0, 1, DIVIDER_HEIGHT), color)
 
     return _icon_path("divider", draw, QSize(2, DIVIDER_HEIGHT))
+
+
+def _group_icon(name: str) -> QIcon:
+    """The icon of the header of a group of an extension: the plug for Plugins,
+    which the app had itself, else a monogram."""
+    if name == "Plugins":
+        return _nav_icon("plugins")
+    return _monogram_icon(name)
 
 
 def _monogram_icon(name: str) -> QIcon:
@@ -719,12 +722,6 @@ def _nav_icon(shape: str, colors: tuple[str, str] | None = None) -> QIcon:
                     ]
                 )
             )
-        elif shape == "update":  # an arrow rising from a base
-            painter.drawLine(QPointF(9, 14), QPointF(9, 4))
-            painter.drawPolyline(
-                QPolygonF([QPointF(5.5, 7.5), QPointF(9, 4), QPointF(12.5, 7.5)])
-            )
-            painter.drawLine(QPointF(4, 15), QPointF(14, 15))
         elif shape == "forward":  # an arrow into a wall
             painter.drawLine(QPointF(3, 9), QPointF(12, 9))
             painter.drawPolyline(
@@ -1051,7 +1048,6 @@ class WorkloadWindow(QMainWindow):
             "reload",
             "forward",
             "edit",
-            "update",
             "delete",
         ):
             button = QPushButton()
@@ -1140,12 +1136,6 @@ class WorkloadWindow(QMainWindow):
         self._drop_marker.setObjectName("dropMarker")
         self._drop_marker.hide()
         self.config_submenu = ui.configSubmenu
-        self.nav_plugins = ui.navPlugins
-        self.plugins_submenu = ui.pluginsSubmenu
-        self.nav_plugins_catalog = ui.navPluginsCatalog
-        self.plugins_ui = Ui_PluginsPage()
-        self.plugins_ui.setupUi(ui.pluginsHost)
-        self.plugins_catalog = PluginsCatalog(self.plugins_ui, ui.pluginsHost)
         # the two overview pages pin like a list does, by the page they show
         self._nav_pages = {
             "cluster-overview": (self.nav_overview, 0),
@@ -1179,7 +1169,6 @@ class WorkloadWindow(QMainWindow):
             "mutatingwebhooks": ui.navMutatingWebhooks,
             "validatingwebhooks": ui.navValidatingWebhooks,
             "nodegroups": ui.navNodeGroups,
-            "addons": ui.navPluginsInstalled,
         }
 
         self.overview_ui = Ui_OverviewPage()
@@ -1204,6 +1193,10 @@ class WorkloadWindow(QMainWindow):
         self.forwards_ui = Ui_ForwardsPage()
         self.forwards_ui.setupUi(ui.forwardsHost)
         self.forward_runner = ForwardRunner(self)
+        self.forwards_sorter = HeaderSorter(
+            self.forwards_ui.forwardsTable,
+            lambda _column, _order: self._render_forwards(),
+        )
         self.nav_forwards = ui.navForwards
         self.forwards_ui.forwardsTable.setItemDelegateForColumn(
             4,
@@ -1243,6 +1236,8 @@ class WorkloadWindow(QMainWindow):
         self.workloads_table.setItemDelegateForColumn(
             0, BadgeDelegate(self.workloads_table)
         )
+        self.nodes_sorter = HeaderSorter(self.nodes_table)  # a click on a header sorts
+        self.events_sorter = HeaderSorter(self.workloads_table)
         for linked in (self.table, self.nodes_table, self.workloads_table):
             self._enable_links(linked)
         # every column can be dragged; the last one (the message) takes the room
@@ -1293,8 +1288,9 @@ class WorkloadWindow(QMainWindow):
             lambda name: name in self.settings.folded_sections,
             lambda: motion.ENABLED,
             self._keep_section_fold,
-            group_icon=_monogram_icon,
+            group_icon=_group_icon,
             on_changed=self._sections_changed,
+            builtin={"monitoring": self.monitoring_body},
         )
         monitoring_gap = QWidget()  # the air above a block, as the other blocks have
         monitoring_gap.setFixedHeight(SECTION_GAP)
@@ -1355,7 +1351,6 @@ class WorkloadWindow(QMainWindow):
             self.nav_workloads,
             self.nav_network,
             self.nav_config,
-            self.nav_plugins_catalog,
             self.nav_forwards,
             self.nav_workloads_overview,
             *self._nav_views.values(),
@@ -1365,7 +1360,6 @@ class WorkloadWindow(QMainWindow):
         self.nav_workloads.setCheckable(False)
         self.nav_network.setCheckable(False)
         self.nav_config.setCheckable(False)
-        self.nav_plugins.setCheckable(False)
         ui.navNodeGroups.setVisible(False)  # only EKS contexts have Node Groups
         for button in (
             self.refresh_button,
@@ -1378,7 +1372,6 @@ class WorkloadWindow(QMainWindow):
             self.submenu,
             self.network_submenu,
             self.config_submenu,
-            self.plugins_submenu,
         ):
             animation = QPropertyAnimation(submenu, b"maximumHeight")
             animation.setDuration(180)
@@ -1389,14 +1382,12 @@ class WorkloadWindow(QMainWindow):
             self.submenu: "workloads",
             self.network_submenu: "network",
             self.config_submenu: "config",
-            self.plugins_submenu: "plugins",
         }
         closed = self.settings.menu_collapsed
         headers = {
             self.submenu: self.nav_workloads,
             self.network_submenu: self.nav_network,
             self.config_submenu: self.nav_config,
-            self.plugins_submenu: self.nav_plugins,
         }
         self._chevrons = {
             submenu: NavChevron(header) for submenu, header in headers.items()
@@ -1470,6 +1461,11 @@ class WorkloadWindow(QMainWindow):
 
         self._spinner_angle = 0
         self._spinner_button: QPushButton | None = None
+        self._extension_busy = 0  # actions of extensions running
+        self._shimmers: dict[QTableWidget, LoadingShimmer] = {}  # tables loading
+        self._extension_tables: list[QTableWidget] = []  # the ones an extension loads
+        self._attempted: set[QTableWidget] = set()  # the tables that tried to load
+        self._extension_spin_end: Callable[..., Any] | None = None
         self._spinner_saved: tuple[QIcon, str] | None = None
         self._load_ok = True  # false once the work the spinner shows failed
         self._done_buttons: dict[
@@ -1484,8 +1480,6 @@ class WorkloadWindow(QMainWindow):
         # the rows the table was last filled with, so a read that changed a few
         # of them rewrites only those
         self._rendered: tuple[str, list] | None = None
-        self._origin_mode = False  # the selector of the bar lists the origins
-        self._saved_namespace = ""  # the namespace chosen before the origins
         self._workloads_overview_context: str | None = None
         self._workloads_overview_busy = False
         self._login_action: LoginAction | None = None
@@ -1544,7 +1538,7 @@ class WorkloadWindow(QMainWindow):
                 self,
                 central,
                 lambda icon, title, text: self._show_message(icon, title, text),
-                lambda *args, **kwargs: self._run_action(*args, **kwargs),
+                lambda *args, **kwargs: self._run_extension_action(*args, **kwargs),
                 lambda box: self._style_box_buttons(box),
                 lambda section: self._show_extension_settings(section),
                 lambda owner, pixels: self._reserve_corner_for(owner, pixels),
@@ -1597,10 +1591,6 @@ class WorkloadWindow(QMainWindow):
         self.nav_config.clicked.connect(
             lambda: self._toggle_submenu(self.config_submenu)
         )
-        self.nav_plugins.clicked.connect(
-            lambda: self._toggle_submenu(self.plugins_submenu)
-        )
-        self.nav_plugins_catalog.clicked.connect(lambda: self._show_page(6))
         for view, button in self._nav_views.items():
             button.clicked.connect(
                 lambda _checked=False, view=view: self._open_list_view(view)
@@ -1632,7 +1622,7 @@ class WorkloadWindow(QMainWindow):
         self.overview_refresh_button.clicked.connect(self.refresh_overview)
         self.context_combo.currentTextChanged.connect(self._context_changed)
         self.context_combo.currentTextChanged.connect(self.refresh)
-        self.namespace_combo.currentIndexChanged.connect(self._filter_combo_changed)
+        self.namespace_combo.currentIndexChanged.connect(self.refresh)
         self.search_input.textChanged.connect(self._filter_rows)
         self.search_case_button.toggled.connect(self._filter_rows)
         self.search_regex_button.toggled.connect(self._filter_rows)
@@ -2293,15 +2283,12 @@ class WorkloadWindow(QMainWindow):
         self.ui.settingsButton.setChecked(index == 2)
         self.nav_workloads_overview.setChecked(index == 4)
         self.nav_forwards.setChecked(index == 5)
-        self.nav_plugins_catalog.setChecked(index == 6)
         if index == 4:
             self._reveal_in_menu(self.nav_workloads_overview)
-        if index == 6:
-            self._reveal_in_menu(self.nav_plugins_catalog)
-            self.plugins_catalog.ensure()
         self._apply_page_titles()
         from_extension = self.extension_pages.shown(index)
         if from_extension is not None:
+            self._hide_permission_banner()  # the error of the list that was open
             self.ui.pageTitle.setText(from_extension[0])
             self.ui.pageSubtitle.setText(from_extension[1])
         self._extension_refresh = from_extension[2] if from_extension else None
@@ -2443,10 +2430,6 @@ class WorkloadWindow(QMainWindow):
                 "nodegroups": (
                     self.tr("Node Groups"),
                     self.tr("Node Groups of the cluster"),
-                ),
-                "addons": (
-                    self.tr("Add-ons"),
-                    self.tr("Add-ons of the cluster"),
                 ),
             }[self._view]
             self.ui.pageTitle.setText(title)
@@ -2706,7 +2689,6 @@ class WorkloadWindow(QMainWindow):
         self.ui.navNodeGroups.setIcon(_nav_icon("nodegroups"))
         self.nav_network.setIcon(_nav_icon("network"))
         self.nav_config.setIcon(_nav_icon("config"))
-        self.nav_plugins.setIcon(_nav_icon("plugins"))
         self.extension_pages.restyle()
         self.nav_forwards.setIcon(_nav_icon("forward"))
         self.save_button.setIcon(_nav_icon("save"))
@@ -2788,6 +2770,7 @@ class WorkloadWindow(QMainWindow):
             if (widget := item.widget()) is not None:
                 inner.addWidget(widget)
         layout.insertWidget(start, body)
+        self.monitoring_body = inner  # where the pages of an extension for it go
         fold = SectionFold(
             self.ui.navSection,
             body,
@@ -2963,7 +2946,6 @@ class WorkloadWindow(QMainWindow):
             self._sort = None
             header = self.table.horizontalHeader()
             header.setSortIndicatorShown(False)
-            self._sync_filter_combo()
             self._apply_view_columns()
             self._render_rows()
             key = (self._context(), self._list_namespace(view), view)
@@ -3061,14 +3043,6 @@ class WorkloadWindow(QMainWindow):
                 translate("MainWindow", "AMI TYPE"),
                 translate("MainWindow", "AMI VERSION"),
             ],
-            "addons": [
-                translate("MainWindow", "STATUS"),
-                translate("MainWindow", "CHART"),
-                translate("MainWindow", "APP"),
-                translate("MainWindow", "LATEST"),
-                translate("MainWindow", "SOURCE"),
-                translate("MainWindow", "LAST UPDATE"),
-            ],
         }[self._view]
 
     def _apply_view_columns(self) -> None:
@@ -3151,7 +3125,6 @@ class WorkloadWindow(QMainWindow):
             "evict": self.tr("Evict"),
             "delete": self.tr("Delete"),
             "edit": self.tr("Edit"),
-            "update": self.tr("Update"),
             "scale": self.tr("Scale"),
             "reload": self.tr("Restart"),
             "forward": self.tr("Forward"),
@@ -3373,6 +3346,7 @@ class WorkloadWindow(QMainWindow):
         if not context or self._workloads_overview_busy:
             return
         self._workloads_overview_busy = True
+        self._table_loading(self.workloads_table, True)
         self.workloads_ui.noticeLabel.setText(self.tr("Loading workloads..."))
         self._run_action(
             get_workloads_overview,
@@ -3384,6 +3358,7 @@ class WorkloadWindow(QMainWindow):
     def _show_workloads_overview_error(self, message: str) -> None:
         logger.info("Workloads overview failed: %s", first_line(message))
         self._workloads_overview_busy = False
+        self._table_loading(self.workloads_table, False)
         if is_auth_error(message):
             self._check_login()
         self.workloads_ui.noticeLabel.setText("")
@@ -3393,6 +3368,7 @@ class WorkloadWindow(QMainWindow):
         self, context: str, overview: WorkloadsOverview
     ) -> None:
         self._workloads_overview_busy = False
+        self._table_loading(self.workloads_table, False)
         self._workloads_overviews[context] = overview
         if context != self._context():
             self._workloads_overview_context = None
@@ -3469,6 +3445,8 @@ class WorkloadWindow(QMainWindow):
                 if column == 0:
                     item.setData(BADGE_ROLE, _badge_colors(event.type))
                 table.setItem(row, column, item)
+        self.events_sorter.reapply()
+        self._table_empty(table)
         self._reveal(table, arriving)
 
     def _show_cached_overviews(self) -> None:
@@ -3668,6 +3646,8 @@ class WorkloadWindow(QMainWindow):
                 if column == 0:
                     self._link_item(item, ("Node", "", node.name))
                 self.nodes_table.setItem(row, column, item)
+        self.nodes_sorter.reapply()
+        self._table_empty(self.nodes_table)
         self._reveal(self.nodes_table, arriving)
 
     def _begin_loading(self, button: QPushButton | None, label: str) -> Callable:
@@ -3822,24 +3802,65 @@ class WorkloadWindow(QMainWindow):
             self._sync_loading()
 
     def _list_namespace(self, view: str) -> str | None:
-        """The namespace a list is asked for.
-
-        Plugins span the cluster: the Helm releases of every namespace sit
-        next to the cluster's EKS add-ons, so the default namespace must not
-        hide them.
-        """
-        if view == "addons":
-            return None
+        """The namespace a list is asked for."""
         return self.namespace_combo.currentData() or None
 
     def _loading(self, view: str) -> bool:
         worker = self._workers.get(view)
         return worker is not None and worker.isRunning()
 
+    def _shimmer_for(self, table: QTableWidget) -> LoadingShimmer:
+        shimmer = self._shimmers.get(table)
+        if shimmer is None:
+            shimmer = LoadingShimmer(
+                table,
+                lambda: themed("#3220a0"),
+                lambda: motion.ENABLED,
+                lambda: themed("#8a919c"),
+                lambda: themed("#7b8089"),
+            )
+            self._shimmers[table] = shimmer
+        return shimmer
+
+    def _table_loading(self, table: QTableWidget, loading: bool) -> None:
+        """Grey bars with a band of light on them stand where the rows will be
+        while the table has none and loads; when it is done and still has none,
+        it says so."""
+        if loading:
+            self._attempted.add(table)
+            self._shimmer_for(table).set_active(True)
+            return
+        shimmer = self._shimmers.get(table)
+        if shimmer is not None:
+            shimmer.set_active(False)
+        self._table_empty(table)
+
+    def _table_empty(self, table: QTableWidget, message: str = "") -> None:
+        """Say in the middle of a table that tried to load why it shows no row.
+
+        The text stays with the table and is drawn only while no row
+        shows, so a search that hides every row of a table of an
+        extension says so too.
+        """
+        if table not in self._attempted:
+            return  # it has not tried yet: it is not empty, it is waiting
+        self._shimmer_for(table).set_message(message or self.tr("Nothing to show here"))
+
+    def _empty_text(self, shown: int, total: int) -> str:
+        """Why the list on screen shows no row: it could not be read, it has
+        none, or the search hides every one."""
+        if shown or not total and self._load_ok:
+            return ""
+        if total:
+            return self.tr("No result matches the search")
+        return self.tr("Could not load this list")
+
     def _sync_loading(self) -> None:
         """Spin the refresh button while the list on screen loads; the context
         and namespace stay fixed while any list is loading."""
         loading = self._loading(self._view)
+        self._table_loading(self.table, loading and self._view != "nodegroups")
+        self._table_loading(self.nodes_table, loading and self._view == "nodegroups")
         self.refresh_button.setEnabled(True)
         if loading:  # the button stops the load
             self._begin_loading(self.refresh_button, self.tr("Cancel"))
@@ -3991,51 +4012,8 @@ class WorkloadWindow(QMainWindow):
         combo.setCurrentIndex(index)
         combo.blockSignals(False)
 
-    def _filter_combo_changed(self, *_args: object) -> None:
-        """The namespace chosen asks the cluster again; an origin only hides
-        the rows of the list that is on screen."""
-        if self._origin_mode:
-            self._filter_rows()
-        else:
-            self.refresh()
-
-    def _sync_filter_combo(self) -> None:
-        """The selector of the bar: the namespaces in every list, the origin
-        (Helm or the cluster) in the Plugins, which span every namespace."""
-        combo = self.namespace_combo
-        want_origin = self._view == "addons"
-        combo.blockSignals(True)
-        if want_origin and not self._origin_mode:
-            self._saved_namespace = combo.currentData() or ""
-            combo.clear()
-            self._fill_origins()
-        elif not want_origin and self._origin_mode:
-            combo.clear()
-            combo.addItem(self.tr("All namespaces"), "")
-            for namespace in self._namespaces:
-                combo.addItem(namespace, namespace)
-            combo.setCurrentIndex(max(combo.findData(self._saved_namespace), 0))
-        self._origin_mode = want_origin
-        combo.blockSignals(False)
-        self._label_filter_combo(want_origin)
-
-    def _label_filter_combo(self, origin: bool) -> None:
-        if origin:
-            text = QCoreApplication.translate("MainWindow", "ORIGIN")
-        else:
-            text = QCoreApplication.translate("MainWindow", "NAMESPACE")
-        self.ui.filterLabel.setText(text)
-
-    def _fill_origins(self) -> None:
-        combo = self.namespace_combo
-        combo.addItem(self.tr("All origins"), "")
-        combo.addItem("Helm", "helm")
-        combo.addItem(self.tr("Cluster"), "cluster")
-
     def _fill_namespaces(self, namespaces: list) -> None:
         self._namespaces = namespaces
-        if self._origin_mode:  # the selector shows the origins now
-            return
         selected_namespace = self.namespace_combo.currentData()
         self.namespace_combo.blockSignals(True)
         self.namespace_combo.clear()
@@ -4162,7 +4140,7 @@ class WorkloadWindow(QMainWindow):
             if row_index < len(kept) and kept[row_index] == resource:
                 continue
             shown = resource.values
-            if self._view in EKS_VIEWS | {"addons"}:  # the first value is a status
+            if self._view in EKS_VIEWS:  # the first value is a status
                 shown = (self._aws_value(shown[0]), *shown[1:])
             values = (
                 resource.namespace or "—",
@@ -4176,22 +4154,8 @@ class WorkloadWindow(QMainWindow):
                 item.setForeground(QColor(themed("#242a33")))
                 if column == len(values) - 1:
                     stamp_age(item, value)
-                if (
-                    self._view == "addons"
-                    and column == 6
-                    and update_available(
-                        values[4] if resource.kind == "HelmRelease" else values[5],
-                        value,
-                    )
-                ):  # a newer version is out: its icon, and the tip says which
-                    item.setIcon(_nav_icon("update", _pair(themed("#3220a0"))))
-                    item.setToolTip(
-                        self.tr("Update available: {latest}").format(latest=value)
-                    )
                 # a badge: the type of an event, the status of an AWS or Helm one
-                if (
-                    self._view == "events" or self._view in EKS_VIEWS | {"addons"}
-                ) and column == 3:
+                if (self._view == "events" or self._view in EKS_VIEWS) and column == 3:
                     item.setData(BADGE_ROLE, _badge_colors(resource.values[0]))
                 self.table.setItem(row_index, column, item)
         self._rendered = (self._view, list(resources))
@@ -4241,7 +4205,6 @@ class WorkloadWindow(QMainWindow):
                 "{count} Validating Webhook Configurations in the cluster"
             ),
             "nodegroups": lambda: self.tr("{count} Node Groups in the cluster"),
-            "addons": lambda: self.tr("{count} Add-ons in the cluster"),
         }
         summary = summaries[self._view]
         self._set_status(
@@ -4492,14 +4455,11 @@ class WorkloadWindow(QMainWindow):
                 and isinstance(row, ClusterResource)
             ):
                 matches = row.values[1] == reason
-            if matches and self._view == "addons" and isinstance(row, ClusterResource):
-                origin = self.namespace_combo.currentData()
-                matches = not origin or origin == (
-                    "helm" if row.kind == "HelmRelease" else "cluster"
-                )
             self.table.setRowHidden(row_index, not matches)
             visible_rows += matches
         self._stamp_checks()  # the boxes, in the rows that show
+        if not self._loading(self._view):
+            self._table_empty(self.table, self._empty_text(visible_rows, len(rows)))
         self.table.setUpdatesEnabled(True)
         self._sync_checks()  # the rows that show may not be the ones that did
         template = {
@@ -4540,7 +4500,6 @@ class WorkloadWindow(QMainWindow):
                 "{visible} of {total} Validating Webhook Configurations"
             ),
             "nodegroups": self.tr("{visible} of {total} Node Groups"),
-            "addons": self.tr("{visible} of {total} Add-ons"),
         }[self._view]
         self.summary_label.setText(
             template.format(visible=visible_rows, total=len(rows))
@@ -4734,8 +4693,6 @@ class WorkloadWindow(QMainWindow):
                 and (works_on_many or not several)
                 and (allowed is None or shape in allowed)
             )
-        if isinstance(row, ClusterResource) and row.kind == GKE_KIND:
-            self.write_buttons["update"].setEnabled(False)  # nothing to update to
 
     def _allowed_shapes(self, namespace: str) -> frozenset[str] | None:
         """The write actions the cluster lets the person do in a namespace, or
@@ -4760,8 +4717,7 @@ class WorkloadWindow(QMainWindow):
                 on_error=lambda _message: self._permissions_loading.discard(key),
                 quiet=True,
             )
-        # an update is guarded by aws and helm, not by an access review
-        return cached[1] | {"update"} if cached else None
+        return cached[1] if cached else None
 
     def _permissions_read(self, key: tuple[str, str], allowed: frozenset[str]) -> None:
         self._permissions_loading.discard(key)
@@ -4778,16 +4734,16 @@ class WorkloadWindow(QMainWindow):
             return entries
         return [entry for entry in entries if entry[0] in allowed]
 
-    def _run_action(
+    def _start_action(
         self,
         operation: Callable[..., Any],
         on_success: Callable[[Any], None],
         *arguments: Any,
         on_error: Callable[[str], None] | None = None,
         quiet: bool = False,
-    ) -> None:
+    ) -> ActionWorker | None:
         if self._close_when_worker_stops:
-            return
+            return None
         logger.debug("Action: %s", getattr(operation, "__name__", operation))
         worker = ActionWorker(operation, arguments)
         self._action_workers.append(worker)
@@ -4804,6 +4760,57 @@ class WorkloadWindow(QMainWindow):
         worker.failed.connect(on_error or self._show_action_error)
         worker.finished.connect(lambda: self._action_worker_finished(worker))
         worker.start()
+        return worker
+
+    def _run_action(
+        self,
+        operation: Callable[..., Any],
+        on_success: Callable[[Any], None],
+        *arguments: Any,
+        on_error: Callable[[str], None] | None = None,
+        quiet: bool = False,
+    ) -> None:
+        self._start_action(
+            operation, on_success, *arguments, on_error=on_error, quiet=quiet
+        )
+
+    def _run_extension_action(
+        self,
+        operation: Callable[..., Any],
+        on_success: Callable[[Any], None],
+        *arguments: Any,
+        on_error: Callable[[str], None] | None = None,
+        quiet: bool = False,
+    ) -> None:
+        """An action of an extension: the refresh button of its page spins for
+        as long as any one of them runs, whether the person pressed it or the
+        page looks again by itself (`quiet` only keeps the status line
+        still)."""
+        worker = self._start_action(
+            operation, on_success, *arguments, on_error=on_error, quiet=True
+        )
+        if worker is None:
+            return
+        button = self.extension_refresh_button
+        self._extension_busy += 1
+        if self._extension_busy == 1:
+            self._extension_spin_end = self._begin_loading(
+                button, self.tr("Loading...")
+            )
+            page = self.pages.currentWidget()
+            self._extension_tables = page.findChildren(QTableWidget) if page else []
+            for table in self._extension_tables:
+                self._table_loading(table, True)
+        worker.finished.connect(self._extension_action_finished)
+
+    def _extension_action_finished(self) -> None:
+        self._extension_busy = max(self._extension_busy - 1, 0)
+        if self._extension_busy == 0 and self._extension_spin_end is not None:
+            end, self._extension_spin_end = self._extension_spin_end, None
+            end()
+            for table in self._extension_tables:
+                self._table_loading(table, False)
+            self._extension_tables = []
 
     def _action_worker_finished(self, worker: ActionWorker) -> None:
         if worker in self._action_workers:
@@ -4945,25 +4952,40 @@ class WorkloadWindow(QMainWindow):
         table = form.podsTable
         details_button = form.detailsButton
         logs_button = form.logsButton
-        table.setRowCount(0)
-        table.setRowCount(len(pods))
         table.horizontalHeader().setStretchLastSection(True)
         for column, width in ((0, 320), (1, 90), (2, 120), (3, 110)):
             table.setColumnWidth(column, width)
-        for row, pod in enumerate(pods):
-            values = (
+
+        def pod_values(pod: PodInfo) -> tuple[str, ...]:
+            return (
                 pod.name,
                 f"{pod.ready}/{pod.total}",
                 self._phase_label(pod.phase),
                 str(len(pod.containers)),
                 pod.age,
             )
-            for column, value in enumerate(values):
-                item = QTableWidgetItem(value)
-                item.setForeground(QColor(themed("#242a33")))
-                if column == len(values) - 1:
-                    stamp_age(item, value)
-                table.setItem(row, column, item)
+
+        def fill_pods(
+            column: int = -1, order: Qt.SortOrder = Qt.SortOrder.AscendingOrder
+        ) -> None:
+            if column >= 0:  # a header was clicked: the Pods in that order
+                pods.sort(
+                    key=lambda pod: natural_key(pod_values(pod)[column]),
+                    reverse=order == Qt.SortOrder.DescendingOrder,
+                )
+            table.setRowCount(0)
+            table.setRowCount(len(pods))
+            for row, pod in enumerate(pods):
+                values = pod_values(pod)
+                for column_, value in enumerate(values):
+                    item = QTableWidgetItem(value)
+                    item.setForeground(QColor(themed("#242a33")))
+                    if column_ == len(values) - 1:
+                        stamp_age(item, value)
+                    table.setItem(row, column_, item)
+
+        fill_pods()
+        HeaderSorter(table, fill_pods)
 
         def selected_pod() -> PodInfo | None:
             row = table.currentRow()
@@ -5134,14 +5156,6 @@ class WorkloadWindow(QMainWindow):
                     partial(self._forward, "StatefulSet", row),
                 )
             ]
-        if (
-            self._view == "addons"
-            and isinstance(row, ClusterResource)
-            and row.kind != GKE_KIND  # a GKE add-on is on or off: no version
-        ):
-            entries.append(
-                ("update", self.tr("Update"), partial(self._update_plugin, row))
-            )
         if self._view == "events" and isinstance(row, ClusterResource):
             entries.append(("edit", self.tr("Edit"), partial(self._edit_resource, row)))
         if isinstance(row, Workload | ClusterResource):
@@ -5424,61 +5438,6 @@ class WorkloadWindow(QMainWindow):
                 row.namespace,
                 row.name,
             )
-
-    def _update_plugin(self, row: ClusterResource) -> None:
-        """Update an EKS add-on or a Helm release: ask for what each one takes,
-        show the command and run it.
-
-        An EKS add-on first reads the versions EKS offers for it.
-        """
-        if row.kind == "Addon":
-            self._run_action(
-                eks_addon_versions,
-                partial(self._plugin_update_dialog, row),
-                self._context(),
-                row.name,
-                on_error=partial(self._versions_failed, row),
-            )
-        elif row.kind == AKS_KIND:  # the cluster and its resource group
-            self._run_action(
-                aks_cluster,
-                lambda target: self._plugin_update_dialog(row, [], "", target),
-                self._context(),
-                on_error=partial(self._versions_failed, row),
-            )
-        else:  # Helm: where the chart most likely comes from and its versions
-            self._run_action(
-                helm_match,
-                lambda found: self._plugin_update_dialog(row, found[1], found[0]),
-                helm_chart_name(self._context(), row.namespace, row.name),
-                row.values[1],
-                on_error=partial(self._versions_failed, row),
-            )
-
-    def _versions_failed(self, row: ClusterResource, message: str) -> None:
-        """The versions could not be read: say so, and let the person type
-        one."""
-        self._show_error_banner(message)
-        self._plugin_update_dialog(row, [])
-
-    def _plugin_update_dialog(
-        self,
-        row: ClusterResource,
-        versions: list[str],
-        repository: str = "",
-        target: tuple[str, str] = ("", ""),
-    ) -> None:
-        dialog = PluginUpdateDialog(
-            self, self._context(), row, versions, repository, target
-        )
-        if dialog.exec() != QDialog.DialogCode.Accepted or not dialog.arguments:
-            return
-        self._run_write(
-            run_update,
-            self.tr("Updated {name}").format(name=row.name),
-            self._context(),
-            dialog.arguments,
-        )
 
     def _edit_resource(self, row: ClusterResource) -> None:
         """Read the object, let the person change its JSON, and replace it."""
@@ -6680,23 +6639,36 @@ class WorkloadWindow(QMainWindow):
         if self._aws_account_ids() != self._aws_accounts:
             self._render_integrations()  # a sign-in came or went: the page follows
 
+    def _forward_cells(self, item: Any) -> tuple[str, ...]:
+        return (
+            item.title,
+            "kubectl" if item.kind == "kubectl" else "SSM",
+            f"127.0.0.1:{item.local}",
+            item.target,
+            self._forward_status_text(item.status),
+            item.detail,
+        )
+
+    def _forwards_in_view(self) -> list[Any]:
+        """The forwards in the order of the header that was clicked."""
+        items = list(self.forward_runner.items)
+        if self.forwards_sorter.state is not None:
+            column, order = self.forwards_sorter.state
+            items.sort(
+                key=lambda item: natural_key(self._forward_cells(item)[column]),
+                reverse=order == Qt.SortOrder.DescendingOrder,
+            )
+        return items
+
     def _render_forwards(self) -> None:
         """The table of the forwards, their status, and the count in the
         menu."""
         table = self.forwards_ui.forwardsTable
         selected = table.currentRow()
-        items = self.forward_runner.items
+        items = self._forwards_in_view()
         table.setRowCount(len(items))
         for row, item in enumerate(items):
-            cells = (
-                item.title,
-                "kubectl" if item.kind == "kubectl" else "SSM",
-                f"127.0.0.1:{item.local}",
-                item.target,
-                self._forward_status_text(item.status),
-                item.detail,
-            )
-            for column, text in enumerate(cells):
+            for column, text in enumerate(self._forward_cells(item)):
                 cell = QTableWidgetItem(text)
                 if column == 4:
                     cell.setData(BADGE_ROLE, _badge_colors(item.status))
@@ -6727,15 +6699,16 @@ class WorkloadWindow(QMainWindow):
     def _render_forwards_buttons(self) -> None:
         ui = self.forwards_ui
         row = ui.forwardsTable.currentRow()
-        items = self.forward_runner.items
+        items = self._forwards_in_view()
         ui.stopButton.setEnabled(0 <= row < len(items) and items[row].active)
         ui.stopAllButton.setEnabled(self.forward_runner.active_count() > 0)
         ui.clearButton.setEnabled(any(not item.active for item in items))
 
     def _stop_selected_forward(self) -> None:
         row = self.forwards_ui.forwardsTable.currentRow()
-        if 0 <= row < len(self.forward_runner.items):
-            self.forward_runner.stop(self.forward_runner.items[row])
+        items = self._forwards_in_view()
+        if 0 <= row < len(items):
+            self.forward_runner.stop(items[row])
 
     def _start_forward(
         self,
@@ -7717,7 +7690,6 @@ class WorkloadWindow(QMainWindow):
         self.settings_ui.retranslateUi(self.ui.settingsHost)
         self.workloads_ui.retranslateUi(self.ui.workloadsOverviewHost)
         self.forwards_ui.retranslateUi(self.ui.forwardsHost)
-        self.plugins_ui.retranslateUi(self.ui.pluginsHost)
         self._render_forwards()
         if self._workloads_overview is not None:
             self._render_workloads_overview(self._workloads_overview)
@@ -7726,12 +7698,7 @@ class WorkloadWindow(QMainWindow):
         self._apply_page_titles()
         self._render_pinned()
         if self.namespace_combo.count():
-            if self._origin_mode:
-                self.namespace_combo.setItemText(0, self.tr("All origins"))
-                self.namespace_combo.setItemText(2, self.tr("Cluster"))
-            else:
-                self.namespace_combo.setItemText(0, self.tr("All namespaces"))
-        self._label_filter_combo(self._origin_mode)
+            self.namespace_combo.setItemText(0, self.tr("All namespaces"))
         self._apply_view_columns()
         self._render_rows()
         if self._overview is not None:

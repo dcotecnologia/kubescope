@@ -4,7 +4,7 @@ from datetime import UTC, datetime
 import pytest
 from kubescope.sdk.models import ClusterResource
 
-from kubescope import cloud_addons, cluster, plugin_latest
+from kubescope import cloud_addons, cluster
 from kubescope.cluster import ClusterError
 
 NOW = datetime(2026, 1, 11, tzinfo=UTC)
@@ -109,7 +109,7 @@ def test_the_extensions_of_an_aks_cluster_are_rows_with_their_version(
     assert cloud_addons.aks_extensions("prod", NOW) == []
 
 
-def test_an_extension_is_shown_and_updated_with_the_cluster_and_group(
+def test_an_extension_is_shown_with_the_cluster_and_group(
     monkeypatch,
 ) -> None:
     seen = _azure(monkeypatch, {"aks": AKS_LIST, "show": {"name": "flux"}})
@@ -119,18 +119,6 @@ def test_an_extension_is_shown_and_updated_with_the_cluster_and_group(
         cloud_addons.aks_extension_details("prod", "a b")
     _azure(monkeypatch, {"aks": AKS_LIST, "show": ["odd"]})
     assert cloud_addons.aks_extension_details("prod", "flux") == {}
-
-    arguments = cloud_addons.aks_update_arguments("prod", "rg1", "flux", "1.3.0")
-    assert arguments[:3] == ["az", "k8s-extension", "update"]
-    assert "--auto-upgrade-minor-version" in arguments and "--yes" in arguments
-    for bad in (
-        ("prod", "rg 1", "flux", "1"),
-        ("prod", "rg1", "a b", "1"),
-        ("prod", "rg1", "flux", ""),
-        ("", "rg1", "flux", "1"),
-    ):
-        with pytest.raises(ClusterError):
-            cloud_addons.aks_update_arguments(*bad)
 
 
 GKE = {
@@ -185,11 +173,12 @@ def test_the_gke_addons_are_on_or_off_and_have_no_version(monkeypatch) -> None:
 def test_the_installed_list_joins_every_source_by_the_kind_of_cluster(
     monkeypatch,
 ) -> None:
-    monkeypatch.setattr(plugin_latest, "latest_versions", lambda *_a: {})
     monkeypatch.setattr(cluster, "_get_namespaces", lambda _c: ["ops"])
     monkeypatch.setattr(cluster, "_eks_addons", lambda *_a: [])
     monkeypatch.setattr(cluster, "_helm_releases", lambda *_a: [])
-    extension = ClusterResource("", "AksExtension", "flux", ("ok", "1", "AKS"), "1d")
+    extension = ClusterResource(
+        "", "AksExtension", "flux", ("ok", "1", "AKS", "—"), "1d"
+    )
     monkeypatch.setattr(cloud_addons, "is_aks_context", lambda c: c == "aks")
     monkeypatch.setattr(cloud_addons, "aks_extensions", lambda *_a: [extension])
     gke = ClusterResource("", "GkeAddon", "lb", ("Enabled", "—", "GKE"), "—")
@@ -200,7 +189,7 @@ def test_the_installed_list_joins_every_source_by_the_kind_of_cluster(
     _, other_rows = cluster._get_addons("other", None)
 
     assert [r.name for r in aks_rows] == ["flux"]
-    assert aks_rows[0].values == ("ok", "—", "1", "—", "AKS")  # no latest to find
+    assert aks_rows[0].values == ("ok", "—", "1", "AKS", "—")
     assert [r.name for r in gke_rows] == ["lb"]
     assert other_rows == []
 
@@ -214,11 +203,6 @@ def test_the_details_of_an_extension_and_a_gke_addon_come_from_their_cloud(
         "a": "flux"
     }
     assert cluster.get_resource_details("ctx", "GkeAddon", "", "lb") == {"g": "lb"}
-
-
-def test_only_eks_and_helm_have_a_latest_version_to_find() -> None:
-    row = ClusterResource("", "AksExtension", "flux", ("ok", "1", "AKS"), "1d")
-    assert plugin_latest._latest_call("ctx", row, "")() == "—"
 
 
 def test_an_age_without_a_time_zone_is_read_as_utc_and_a_bad_one_is_a_dash() -> None:

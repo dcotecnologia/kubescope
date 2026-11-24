@@ -205,7 +205,7 @@ QPushButton[nav="true"] {
 }
 QPushButton[nav="true"]:hover { background: #f6f6fa; }
 QFrame#workloadsSubmenu, QFrame#networkSubmenu, QFrame#configSubmenu,
-QFrame#pluginsSubmenu, QFrame[submenu="true"] {
+QFrame[submenu="true"] {
     border: 0; border-left: 1px solid #d9dce4; margin-left: 19px;
 }
 QPushButton[nav="true"]:checked {
@@ -1853,117 +1853,6 @@ QPushButton#updateButton:hover { background: #f6f6fa; }
               </widget>
              </item>
 
-                          <item>
-              <widget class="QPushButton" name="navPlugins">
-               <property name="text">
-                <string>Plugins</string>
-               </property>
-               <property name="minimumSize">
-                <size>
-                 <width>0</width>
-                 <height>24</height>
-                </size>
-               </property>
-               <property name="iconSize">
-                <size>
-                 <width>16</width>
-                 <height>16</height>
-                </size>
-               </property>
-               <property name="checkable">
-                <bool>false</bool>
-               </property>
-               <property name="checked">
-                <bool>false</bool>
-               </property>
-               <property name="nav" stdset="0">
-                <string notr="true">true</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QFrame" name="pluginsSubmenu">
-               <property name="maximumSize">
-                <size>
-                 <width>16777215</width>
-                 <height>0</height>
-                </size>
-               </property>
-               <layout class="QVBoxLayout" name="pluginsSubmenuLayout">
-                <property name="spacing">
-                 <number>0</number>
-                </property>
-                <property name="leftMargin">
-                 <number>4</number>
-                </property>
-                <property name="topMargin">
-                 <number>0</number>
-                </property>
-                <property name="rightMargin">
-                 <number>0</number>
-                </property>
-                <property name="bottomMargin">
-                 <number>0</number>
-                </property>
-                  <item>
-                   <widget class="QPushButton" name="navPluginsCatalog">
-                    <property name="text">
-                     <string>Catalog</string>
-                    </property>
-                    <property name="minimumSize">
-                     <size>
-                      <width>0</width>
-                      <height>20</height>
-                     </size>
-                    </property>
-                    <property name="iconSize">
-                     <size>
-                      <width>16</width>
-                      <height>16</height>
-                     </size>
-                    </property>
-                    <property name="checkable">
-                     <bool>true</bool>
-                    </property>
-                    <property name="checked">
-                     <bool>false</bool>
-                    </property>
-                    <property name="nav" stdset="0">
-                     <string notr="true">true</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QPushButton" name="navPluginsInstalled">
-                    <property name="text">
-                     <string>Installed</string>
-                    </property>
-                    <property name="minimumSize">
-                     <size>
-                      <width>0</width>
-                      <height>20</height>
-                     </size>
-                    </property>
-                    <property name="iconSize">
-                     <size>
-                      <width>16</width>
-                      <height>16</height>
-                     </size>
-                    </property>
-                    <property name="checkable">
-                     <bool>true</bool>
-                    </property>
-                    <property name="checked">
-                     <bool>false</bool>
-                    </property>
-                    <property name="nav" stdset="0">
-                     <string notr="true">true</string>
-                    </property>
-                   </widget>
-                  </item>
-               </layout>
-              </widget>
-             </item>
 
              <item>
               <spacer name="sidebarNavSpacer">
@@ -2965,7 +2854,6 @@ Resources in read-only mode</string>
            <widget class="QWidget" name="viewerHost" />
            <widget class="QWidget" name="workloadsOverviewHost" />
            <widget class="QWidget" name="forwardsHost" />
-           <widget class="QWidget" name="pluginsHost" />
           </widget>
          </item>
         </layout>

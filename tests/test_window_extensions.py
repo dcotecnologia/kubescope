@@ -322,3 +322,156 @@ def test_a_block_that_does_not_show_has_no_air_and_does_not_count_as_the_first(
         .widgets[0]
         .isVisibleTo(window.ui.sidebarNav)
     )
+
+
+def test_opening_a_page_of_an_extension_dismisses_the_error_of_the_list_before(
+    monkeypatch,
+) -> None:
+    from kubescope.sdk import PageContribution
+
+    window = _ready_window(monkeypatch)
+    window.extension_host.contributions.pages.append(
+        PageContribution(
+            "dco.a", "Cloud", "Databases", "Instances", lambda: QLabel("x")
+        )
+    )
+    window._apply_extension_contributions()
+    window.error_banner.show_error("denied", "denied")
+    entry = [
+        one
+        for one in window.ui.sidebarNav.findChildren(QPushButton)
+        if one.text() == "Instances"
+    ][-1]
+
+    entry.click()
+
+    assert window.permission_banner.isHidden()
+    window.close()
+
+
+def test_the_refresh_button_of_an_extension_spins_while_any_of_its_actions_runs(
+    monkeypatch,
+) -> None:
+    import threading
+    import time
+
+    from PySide6.QtCore import QCoreApplication
+
+    window = _ready_window(monkeypatch)
+    button = window.extension_refresh_button
+    release = threading.Event()
+    answered: list[object] = []
+
+    def slow(_value):
+        release.wait(5)
+        return "ok"
+
+    window._run_extension_action(slow, answered.append, 1, quiet=True)
+    window._run_extension_action(slow, answered.append, 2)
+    assert window._spinner_button is button and window._extension_busy == 2
+
+    release.set()
+    for _ in range(100):
+        QCoreApplication.processEvents()
+        if window._extension_busy == 0:
+            break
+        time.sleep(0.02)
+
+    assert answered == ["ok", "ok"]
+    assert window._spinner_button is None and window._extension_busy == 0
+    window.close()
+
+
+def test_the_tables_of_an_extension_page_show_the_loading_effect_while_it_acts(
+    monkeypatch,
+) -> None:
+    import threading
+    import time
+
+    from kubescope.sdk import PageContribution
+    from PySide6.QtCore import QCoreApplication
+    from PySide6.QtWidgets import QTableWidget, QVBoxLayout, QWidget
+
+    window = _ready_window(monkeypatch)
+    holder = QWidget()
+    QVBoxLayout(holder)
+    table = QTableWidget(1, 1, holder)
+    holder.layout().addWidget(table)  # type: ignore[union-attr]
+    window.extension_host.contributions.pages.append(
+        PageContribution("dco.a", "Cloud", "Databases", "Instances", lambda: holder)
+    )
+    window._apply_extension_contributions()
+    entry = [
+        one
+        for one in window.ui.sidebarNav.findChildren(QPushButton)
+        if one.text() == "Instances"
+    ][-1]
+    entry.click()
+    release = threading.Event()
+
+    window._run_extension_action(lambda: release.wait(5), lambda _value: None)
+
+    shimmer = window._shimmers[table]
+    assert not shimmer.isHidden()
+
+    release.set()
+    for _ in range(100):
+        QCoreApplication.processEvents()
+        if window._extension_busy == 0:
+            break
+        time.sleep(0.02)
+
+    assert not shimmer._active  # the bars go, and the table has no row
+    assert shimmer._message == "Nothing to show here"  # so it says so
+    window.close()
+
+
+def test_the_list_on_screen_shows_the_loading_effect_and_loses_it_when_it_is_read(
+    monkeypatch,
+) -> None:
+    window = _ready_window(monkeypatch)
+
+    window._table_loading(window.table, False)  # nothing to take away yet
+    assert window._shimmers == {}
+
+    window._table_loading(window.table, True)
+    assert not window._shimmers[window.table].isHidden()
+
+    window._sync_loading()  # no list is loading: the bars go, the table is empty
+
+    shimmer = window._shimmers[window.table]
+    assert not shimmer._active and shimmer._message == "Nothing to show here"
+    window._table_loading(window.workloads_table, True)
+    assert not window._shimmers[window.workloads_table].isHidden()
+    window.close()
+
+
+def test_a_table_that_tried_to_load_and_stayed_empty_says_so(monkeypatch) -> None:
+    window = _ready_window(monkeypatch)
+    table = window.nodes_table
+    assert table.rowCount() == 0
+
+    window._table_empty(table)  # it has not tried yet: it is only waiting
+    assert table not in window._shimmers
+
+    window._table_loading(table, True)
+    window._table_loading(table, False)  # done, and nothing came
+    shimmer = window._shimmers[table]
+    assert shimmer._message == "Nothing to show here"
+
+    table.setRowCount(1)  # a row shows: the text stays, and is not drawn
+    window._table_empty(table)
+    assert shimmer._message == "Nothing to show here"
+    window.close()
+
+
+def test_the_list_on_screen_says_why_it_shows_no_row(monkeypatch) -> None:
+    window = _ready_window(monkeypatch)
+    window._attempted.add(window.table)
+
+    assert window._empty_text(0, 0) == ""  # read, and it has none: the default text
+    window._load_ok = False
+    assert window._empty_text(0, 0) == "Could not load this list"
+    assert window._empty_text(0, 5) == "No result matches the search"
+    assert window._empty_text(3, 5) == ""
+    window.close()

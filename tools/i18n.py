@@ -29,8 +29,6 @@ SOURCES = [
             "dialogs/extension_dialog.py",
             "dialogs/extension_details_dialog.py",
             "dialogs/extension_updates_dialog.py",
-            "dialogs/plugin_update_dialog.py",
-            "views/plugins_catalog.py",
             "views/detail_tab.py",
             "utils/errors.py",
             "dialogs/account_dialog.py",

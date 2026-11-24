@@ -326,3 +326,39 @@ def test_each_group_asks_for_its_own_icon_by_name_and_again_on_a_new_theme() -> 
 
     assert asked == ["RDS", "EKS", "RDS", "EKS"]
     window.close()
+
+
+def test_a_page_for_a_section_of_the_app_goes_into_it() -> None:
+    window = QWidget()
+    menu = QVBoxLayout(window)
+    menu.addItem(QSpacerItem(0, 0))
+    own = QWidget()
+    own_body = QVBoxLayout(own)  # the body of the Monitoring section of the app
+    own_body.addWidget(QLabel("Workloads"))
+    menu.insertWidget(0, own)
+    stack = QStackedWidget(window)
+    stack.addWidget(QWidget())
+    pages = ExtensionPages(
+        menu,
+        stack,
+        stack.setCurrentIndex,
+        lambda: None,
+        builtin={"monitoring": own_body},
+    )
+    window.show()
+    mine = PageContribution(
+        "dco.plugins", "Monitoring", "Plugins", "Installed", lambda: Page("x")
+    )
+
+    pages.apply([mine])
+
+    assert labels(window) == [
+        "Workloads",
+        "Plugins",
+        "Installed",
+    ]  # no section of its own
+    assert not pages.blocks and not pages.folds
+
+    pages.apply([])
+
+    assert labels(window) == ["Workloads"]
