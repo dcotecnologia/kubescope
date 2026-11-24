@@ -4,13 +4,21 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+## [2.7.0] - 2026-11-24
+
+### Added
+
+- The **Cluster Plugins** extension (`kubescope-ext-plugins`), recommended in **Settings → Extensions** and not installed by itself: **Installed** lists the add-ons and Helm releases of the cluster with their chart, app and latest versions, the last update and an origin filter, and updates them in the write mode; **Catalog** browses the Helm charts of Artifact Hub by @danilogco
+- A page of an extension whose section is **Monitoring** goes into the section of the app, under a group of its own, instead of a section of its own by @danilogco
+- `ClusterAccess.environment`, `helm_chart_name`, `eks_target` and `aks_cluster`, and `Writes.run_update` (only `aws eks update-addon`, `helm upgrade` and `az k8s-extension update`, in the write mode), in the SDK 1.7 by @danilogco
+
 ### Changed
 
-- Plugins → Installed lists the chart version, the app version, the latest one and the last update in their own columns, and the bar filters by origin (Helm or the cluster) instead of by namespace by @danilogco
-
-### Fixed
-
-- The latest version of a Helm release is looked up by the name of its chart, not of the release, and the chart and app version of a release are the ones its own Secret says (read in memory, nothing else is kept), not the labels of one of its workloads by @danilogco
+- The chart and app version of a Helm release are the ones its own Secret says (read in memory, nothing else is kept), not the labels of one of its workloads, and the add-ons list has the chart, the app, the source and the last update of each by @danilogco
+- The refresh button of the page of an extension spins for as long as any action of the extension runs, also when the page looks again by itself by @danilogco
+- Every table sorts when its header is clicked, and again to reverse it, by what the cells mean (ages by how long they are, numbers by value, versions in order): the nodes, the events of the overview, the forwards, the Pods of a workload, the extensions and their updates by @danilogco
+- A table that is loading and has no rows yet shows grey bars where the rows will be, with a band of light that crosses them (the list on screen, the nodes, the events of the overview and the tables of an extension while it acts); the bars stand still when the animations are off, and a table that tried to load and stayed empty says so in the middle (nothing to show, no result for the search, or could not load) by @danilogco
+- **Plugins → Installed** and **Plugins → Catalog** leave the app: install the **Cluster Plugins** extension to have them back by @danilogco
 
 ## [2.6.1] - 2026-11-24
 
@@ -747,7 +755,8 @@ The first release.
 
 - Pod logs and resource details are still never written to disk by the app on its own. **Save** is the only exception, and it writes only to the file the user chooses. SECURITY.md says so by @danilogco
 
-[Unreleased]: https://github.com/dcotecnologia/kubescope/compare/v2.6.1...HEAD
+[Unreleased]: https://github.com/dcotecnologia/kubescope/compare/v2.7.0...HEAD
+[2.7.0]: https://github.com/dcotecnologia/kubescope/compare/v2.6.1...v2.7.0
 [2.6.1]: https://github.com/dcotecnologia/kubescope/compare/v2.6.0...v2.6.1
 [2.6.0]: https://github.com/dcotecnologia/kubescope/compare/v2.5.0...v2.6.0
 [2.5.0]: https://github.com/dcotecnologia/kubescope/compare/v2.4.1...v2.5.0
