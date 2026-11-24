@@ -4,9 +4,15 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+## [2.6.0] - 2026-11-24
+
 ### Added
 
 - An accessibility statement, `ACCESSIBILITY.md`, with what the app does, what is known to be missing and how to report a barrier, and an issue form for it by @danilogco
+
+### Changed
+
+- Make the Dark and Light themes more opaque, with the page and the top bar at 98% instead of 90%, so what is behind the window shows through less by @danilogco
 
 ## [2.5.0] - 2026-11-23
 
@@ -727,7 +733,8 @@ The first release.
 
 - Pod logs and resource details are still never written to disk by the app on its own. **Save** is the only exception, and it writes only to the file the user chooses. SECURITY.md says so by @danilogco
 
-[Unreleased]: https://github.com/dcotecnologia/kubescope/compare/v2.5.0...HEAD
+[Unreleased]: https://github.com/dcotecnologia/kubescope/compare/v2.6.0...HEAD
+[2.6.0]: https://github.com/dcotecnologia/kubescope/compare/v2.5.0...v2.6.0
 [2.5.0]: https://github.com/dcotecnologia/kubescope/compare/v2.4.1...v2.5.0
 [2.4.1]: https://github.com/dcotecnologia/kubescope/compare/v2.4.0...v2.4.1
 [2.4.0]: https://github.com/dcotecnologia/kubescope/compare/v2.3.1...v2.4.0
