@@ -101,21 +101,20 @@ def test_artifact_hub_down_is_a_dash(monkeypatch) -> None:
 
 
 @pytest.mark.parametrize(
-    ("kind", "installed", "latest", "expected"),
+    ("installed", "latest", "expected"),
     [
-        ("Addon", "v1", "v2", True),
-        ("Addon", "v2", "v2", False),
-        ("Addon", "v2", "—", False),
-        ("Addon", "—", "v2", False),
-        ("HelmRelease", "chart 1.2.0 · app v9", "v1.3.0", True),
-        ("HelmRelease", "chart v1.3.0 · app v9", "1.3.0", False),
-        ("HelmRelease", "—", "1.3.0", False),
+        ("v1", "v2", True),
+        ("v2", "v2", False),
+        ("v2", "—", False),
+        ("—", "v2", False),
+        ("v1.3.0", "1.3.0", False),
+        ("1.2.0", "v1.3.0", True),
     ],
 )
 def test_an_update_is_available_when_the_latest_differs(
-    kind, installed, latest, expected
+    installed, latest, expected
 ) -> None:
-    assert plugin_latest.update_available(kind, installed, latest) is expected
+    assert plugin_latest.update_available(installed, latest) is expected
 
 
 def test_latest_versions_asks_each_row_by_its_kind(monkeypatch) -> None:
@@ -128,13 +127,14 @@ def test_latest_versions_asks_each_row_by_its_kind(monkeypatch) -> None:
     monkeypatch.setattr(
         plugin_latest, "helm_latest", lambda name, installed: f"helm-{name}-{installed}"
     )
+    monkeypatch.setitem(cluster._helm_chart_names, ("ctx", "ops", "web"), "site")
     rows = [
         ClusterResource("", "Addon", "vpc-cni", ("A", "v1", "EKS"), "1d"),
-        ClusterResource("ops", "HelmRelease", "web", ("d", "chart 1", "Helm"), "1d"),
+        ClusterResource("ops", "HelmRelease", "web", ("d", "1", "v9", "Helm"), "1d"),
     ]
     assert plugin_latest.latest_versions("ctx", rows) == {
         ("Addon", "vpc-cni"): "eks-vpc-cni-1.34",
-        ("HelmRelease", "web"): "helm-web-1",
+        ("HelmRelease", "web"): "helm-site-1",  # the chart, not the release,
     }
     assert plugin_latest.latest_versions("ctx", []) == {}
 

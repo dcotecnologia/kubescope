@@ -119,6 +119,7 @@ def aks_extensions(context: str, now: datetime) -> list[ClusterResource]:
                     str(item.get("provisioningState") or NO_VALUE),
                     str(item.get("version") or NO_VALUE),
                     "AKS",
+                    _age((item.get("systemData") or {}).get("lastModifiedAt"), now),
                 ),
                 age=_age(
                     ((item.get("systemData") or {}).get("createdAt")),
@@ -205,7 +206,7 @@ def gke_addons(context: str) -> list[ClusterResource]:
             namespace="",
             kind=GKE_KIND,
             name=name,
-            values=(_state(value), NO_VALUE, "GKE"),
+            values=(_state(value), NO_VALUE, "GKE", NO_VALUE),
             age=NO_VALUE,
         )
         for name, value in sorted(config.items())

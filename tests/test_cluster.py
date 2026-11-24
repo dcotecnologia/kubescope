@@ -2485,6 +2485,19 @@ def _helm_secret(
     }
 
 
+def _helm_payload(name, version, app, gzipped=True):
+    import base64
+    import gzip
+
+    raw = json.dumps(
+        {"chart": {"metadata": {"name": name, "version": version, "appVersion": app}}}
+    ).encode()
+    if gzipped:
+        raw = gzip.compress(raw)
+    # the Secret holds base64 of the base64 that Helm writes
+    return {"data": {"release": base64.b64encode(base64.b64encode(raw)).decode()}}
+
+
 def _fake_cluster_api(monkeypatch, secrets, calls=None):
     def fake_get_json(path, context, query=None, accept="application/json"):
         if calls is not None:
@@ -2542,6 +2555,7 @@ def test_get_resources_lists_the_add_ons_of_eks_and_the_helm_releases(
                         "status": "ACTIVE",
                         "addonVersion": "v1.18.1-eksbuild.3",
                         "createdAt": "2020-01-01T00:00:00+00:00",
+                        "modifiedAt": "2020-03-01T00:00:00+00:00",
                     }
                 }
             ),
@@ -2567,9 +2581,19 @@ def test_get_resources_lists_the_add_ons_of_eks_and_the_helm_releases(
         ("Addon", "vpc-cni", ""),
         ("HelmRelease", "web", "ops"),
     ]
-    assert addons[0].values == ("failed", "—", "—", "Helm")
-    assert addons[1].values == ("ACTIVE", "v1.18.1-eksbuild.3", "—", "EKS")
-    assert addons[2].values == ("deployed", "—", "—", "Helm")  # the latest revision
+    # the last column is when the release or the add-on last changed
+    assert addons[0].values[:5] == ("failed", "—", "—", "—", "Helm")
+    assert addons[0].values[5] not in ("—", "unknown")
+    assert addons[1].values[:5] == ("ACTIVE", "—", "v1.18.1-eksbuild.3", "—", "EKS")
+    assert addons[1].values[5] not in ("—", "unknown")
+    assert addons[2].values[:-1] == (
+        "deployed",
+        "—",
+        "—",
+        "—",
+        "Helm",
+    )  # the latest revision
+    assert addons[2].values[-1] != addons[2].age  # changed after it was created
     secrets = next(call for call in calls if call[0].endswith("/secrets"))
     assert secrets[1] == [("labelSelector", "owner=helm")]
     assert "PartialObjectMetadataList" in secrets[2]  # never the data of a Secret
@@ -2577,7 +2601,7 @@ def test_get_resources_lists_the_add_ons_of_eks_and_the_helm_releases(
     assert "--addon-name" in commands[1]
     bare = cluster._parse_eks("Addon", {"addonName": "x"}, NETWORK_NOW)
     assert bare is not None
-    assert bare.values == ("—", "—", "EKS")
+    assert bare.values == ("—", "—", "EKS", "—")
     assert cluster.get_resource_details("ctx", "Addon", "", "vpc-cni")["addonName"]
 
 
@@ -2610,6 +2634,10 @@ def test_helm_releases_show_the_chart_and_app_version_of_their_workloads(
             return {"items": [workload]}
         if path.endswith("/statefulsets"):
             raise cluster.ClusterError("forbidden")
+        if path.endswith("/secrets/sh.helm.release.v1.web.v2"):  # what it says itself
+            return _helm_payload("kube-prometheus-stack", "93.10.0", "v0.95.2")
+        if path.endswith("/secrets/sh.helm.release.v1.bare.v1"):
+            return {"data": {"release": "not a release"}}  # cannot be read
         if path.endswith("/secrets"):
             return {
                 "items": [
@@ -2623,11 +2651,31 @@ def test_helm_releases_show_the_chart_and_app_version_of_their_workloads(
 
     _, addons = cluster.get_resources("ctx", None, "Addon")
 
-    assert {a.name: a.values[1] for a in addons} == {
-        "web": "chart v1.14.0 · app v1.14.0",
-        "bare": "—",
+    # the release says 93.10.0 even when the labels of a workload of a
+    # subchart say v1.14.0
+    assert {a.name: a.values[1:3] for a in addons} == {
+        "web": ("93.10.0", "v0.95.2"),
+        "bare": ("—", "—"),
     }
-    assert all("PartialObjectMetadataList" in accept for _, accept in calls[1:])
+    assert cluster.helm_chart_name("ctx", "ops", "web") == "kube-prometheus-stack"
+    assert cluster.helm_chart_name("ctx", "ops", "bare") == "bare"
+    listings = [accept for path, accept in calls[1:] if "/secrets/" not in path]
+    assert all("PartialObjectMetadataList" in accept for accept in listings)
+
+
+def test_a_release_secret_that_is_not_gzipped_is_read_too(
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(
+        cluster,
+        "_get_json",
+        lambda *_a, **_k: _helm_payload("loki", "7.5.0", "3.6.11", gzipped=False),
+    )
+    assert cluster._helm_chart_of("ctx", "ops", "loki", 8) == (
+        "loki",
+        "7.5.0",
+        "3.6.11",
+    )
 
 
 def test_outside_eks_the_add_ons_are_the_helm_releases(monkeypatch) -> None:
@@ -2638,8 +2686,8 @@ def test_outside_eks_the_add_ons_are_the_helm_releases(monkeypatch) -> None:
 
     _, addons = cluster.get_resources("ctx", "ops", "Addon")
 
-    assert [(a.kind, a.values) for a in addons] == [
-        ("HelmRelease", ("deployed", "—", "—", "Helm"))
+    assert [(a.kind, a.values[:5]) for a in addons] == [
+        ("HelmRelease", ("deployed", "—", "—", "—", "Helm"))
     ]
 
 
@@ -3613,6 +3661,7 @@ def test_a_failure_reading_the_latest_versions_never_costs_the_list(
     row = cluster.ClusterResource("", "Addon", "vpc-cni", ("ACTIVE", "v1", "EKS"), "1d")
     assert cluster._with_latest("ctx", [row])[0].values == (
         "ACTIVE",
+        "—",
         "v1",
         "—",
         "EKS",

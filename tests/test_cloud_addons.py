@@ -99,8 +99,8 @@ def test_the_extensions_of_an_aks_cluster_are_rows_with_their_version(
     seen = _azure(monkeypatch, {"aks": AKS_LIST, "list": EXTENSIONS})
     rows = cloud_addons.aks_extensions("prod", NOW)
     assert [(r.kind, r.name, r.values) for r in rows] == [
-        ("AksExtension", "flux", ("Succeeded", "1.2.3", "AKS")),
-        ("AksExtension", "bare", ("—", "—", "AKS")),
+        ("AksExtension", "flux", ("Succeeded", "1.2.3", "AKS", "—")),
+        ("AksExtension", "bare", ("—", "—", "AKS", "—")),
     ]
     assert rows[0].age == "10d" and rows[1].age == "—"
     assert seen[-1][:3] == ["az", "k8s-extension", "list"]
@@ -168,8 +168,8 @@ def test_the_gke_addons_are_on_or_off_and_have_no_version(monkeypatch) -> None:
     seen = _gke(monkeypatch, GKE)
     rows = cloud_addons.gke_addons("gke_proj_us-east1_prod")
     assert [(r.kind, r.name, r.values) for r in rows] == [
-        ("GkeAddon", "horizontalPodAutoscaling", ("Disabled", "—", "GKE")),
-        ("GkeAddon", "httpLoadBalancing", ("Enabled", "—", "GKE")),
+        ("GkeAddon", "horizontalPodAutoscaling", ("Disabled", "—", "GKE", "—")),
+        ("GkeAddon", "httpLoadBalancing", ("Enabled", "—", "GKE", "—")),
     ]
     assert seen[-1][:4] == ["gcloud", "container", "clusters", "describe"]
     assert "--project" in seen[-1]
@@ -200,7 +200,7 @@ def test_the_installed_list_joins_every_source_by_the_kind_of_cluster(
     _, other_rows = cluster._get_addons("other", None)
 
     assert [r.name for r in aks_rows] == ["flux"]
-    assert aks_rows[0].values == ("ok", "1", "—", "AKS")  # no latest to find
+    assert aks_rows[0].values == ("ok", "—", "1", "—", "AKS")  # no latest to find
     assert [r.name for r in gke_rows] == ["lb"]
     assert other_rows == []
 

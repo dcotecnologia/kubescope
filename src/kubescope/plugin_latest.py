@@ -9,7 +9,6 @@ that cannot be found is a dash. No Qt.
 """
 
 import logging
-import re
 import time
 from functools import partial
 from typing import Any
@@ -23,7 +22,6 @@ logger = logging.getLogger(__name__)
 NONE = "—"
 HELM_TTL = 600.0  # seconds a chart's latest version is kept
 _helm_cache: dict[str, tuple[float, str]] = {}
-_CHART_IN_VERSION = re.compile(r"chart (\S+)")
 
 
 def eks_latest(context: str, addon: str, cluster_version: str) -> str:
@@ -99,23 +97,14 @@ def helm_latest(chart: str, installed: str = "") -> str:
     return latest
 
 
-def installed_chart(version_text: str) -> str:
-    """The chart version of a Helm row's VERSION ("chart 3.6.2 · app v2")."""
-    found = _CHART_IN_VERSION.match(version_text)
-    return found.group(1) if found else ""
-
-
 def _bare(version: str) -> str:
     return version.strip().removeprefix("v")
 
 
-def update_available(kind: str, installed: str, latest: str) -> bool:
-    """Whether the latest version differs from the installed one: for a Helm
-    release only its chart version is compared, not the app's."""
+def update_available(installed: str, latest: str) -> bool:
+    """Whether the latest version differs from the installed one."""
     if latest in ("", NONE):
         return False
-    if kind == "HelmRelease":
-        installed = installed_chart(installed)
     return bool(installed) and installed != NONE and _bare(installed) != _bare(latest)
 
 
@@ -125,7 +114,8 @@ def _latest_call(context: str, row: Any, cluster_version: str) -> Any:
     if row.kind == "Addon":
         return partial(eks_latest, context, row.name, cluster_version)
     if row.kind == "HelmRelease":
-        return partial(helm_latest, row.name, installed_chart(row.values[1]))
+        chart = cluster.helm_chart_name(context, row.namespace, row.name)
+        return partial(helm_latest, chart, row.values[1])
     return lambda: NONE
 
 

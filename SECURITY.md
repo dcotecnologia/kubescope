@@ -83,13 +83,17 @@ restart` does). Each of these asks for confirmation first (Cancel is the
   `list-addons` and `describe-addon`. They only read. The cluster name, region and
   profile come from the sign-in command of your kubeconfig; no credentials are
   read or stored.
-- **Helm releases are read from Secret metadata only.** **Plugins → Installed** lists the
-  Secrets that carry the label `owner=helm`, asking the API for their metadata
-  alone (`PartialObjectMetadataList`), so the data of a Secret, which holds the
-  release and its values, is not even sent to the app. Only the labels name,
-  status and version are used. The chart and app version of a release come from
-  the labels of the Deployments, StatefulSets and DaemonSets it installed, also
-  metadata only. It needs `list` on `secrets`.
+- **Helm releases are listed from Secret metadata; the chart is read from the latest
+  Secret of each release.** **Plugins → Installed** lists the Secrets that carry the
+  label `owner=helm`, asking the API for their metadata alone
+  (`PartialObjectMetadataList`): the name, status and revision come from the labels.
+  To show the chart and app version that a release really has (the labels of its
+  workloads are wrong for a subchart), the app then reads the one Secret of the
+  latest revision of each release, decodes it in memory and keeps only three texts:
+  the name and version of the chart and its app version. The release, its values and
+  its manifests are neither stored, logged nor shown, and a Secret that cannot be
+  read falls back to the labels of the Deployments, StatefulSets and DaemonSets the
+  release installed. It needs `list` and `get` on `secrets`.
 - **Secret values are never shown.** The Secrets list shows only the type and the
   number of keys. **Details** of a Secret replaces every value in `data` and
   `stringData` with `<redacted>` before it reaches the screen, and drops the
@@ -137,7 +141,7 @@ configure` so you type the keys there. Apart from the integrations below, the ap
   client secret as an argument, which another process of your computer can see
   while it runs.
 - **AKS and GKE add-ons are read with the cloud's program.** On an AKS context **Plugins → Installed** runs `az aks list` (to find the cluster by the address of its API server) and `az k8s-extension list`; **Update** runs `az k8s-extension update` with the version you type, only in the write mode and after the dialog shows the command. On a GKE context it runs `gcloud container clusters describe` for the cluster the context names and lists its add-ons, only to read. They use the keys of the context's account, and `az` or `gcloud` has to be installed.
-- **The Latest column asks AWS and Artifact Hub.** Listing **Plugins → Installed** runs `aws eks describe-addon-versions` (read only) for each EKS add-on and searches Artifact Hub (`artifacthub.io`, over HTTPS) for the name of each Helm release, sending that name; the answer is kept for ten minutes. A failure leaves a dash.
+- **The Latest column asks AWS and Artifact Hub.** Listing **Plugins → Installed** runs `aws eks describe-addon-versions` (read only) for each EKS add-on and searches Artifact Hub (`artifacthub.io`, over HTTPS) for the name of the chart of each Helm release, sending that name; the answer is kept for ten minutes. A failure leaves a dash.
 - **Updating a plugin runs `aws` or `helm`, only in the write mode.** With the write mode on, **Plugins → Installed** offers **Update**. For an EKS add-on the dialog reads the versions with `aws eks describe-addon-versions` and, when you press **Update**, runs `aws eks update-addon`; for a Helm release it runs `helm upgrade` with the chart, repository (https only), version and values file you give, and the values the release has are kept unless you untick that. The dialog shows the exact command first; the inputs are checked against a strict pattern and passed as arguments, never through a shell. The programs run with the keys of the context's account and the kubeconfigs the app reads, and what they do is limited by your AWS and Kubernetes permissions. `aws` or `helm` has to be installed.
 - **The Plugins catalog reads the public Artifact Hub.** Only when you open **Plugins → Catalog** (and when you search in it), the app asks the public Artifact Hub API (`artifacthub.io`, over HTTPS) for Helm charts, sending the text you typed and a `User-Agent` with the app version. It only reads. The logos of the charts are read from `artifacthub.io/image` the same way. **Install** installs nothing: it shows the `helm` commands for you to copy and run in your own terminal. The links of a chart are built by the app, so they always point at Artifact Hub.
 - **No telemetry.** The traffic is what the Kubernetes client sends to your

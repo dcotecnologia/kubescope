@@ -144,6 +144,7 @@ from kubescope.cluster import (
     get_workload_pods,
     get_workloads,
     get_workloads_overview,
+    helm_chart_name,
     is_eks_context,
     list_contexts,
     open_in_terminal,
@@ -176,7 +177,7 @@ from kubescope.i18n import (
     resolve_language,
     set_extension_languages,
 )
-from kubescope.plugin_latest import helm_match, installed_chart, update_available
+from kubescope.plugin_latest import helm_match, update_available
 from kubescope.plugin_updates import eks_addon_versions, run_update
 from kubescope.screen import (
     Screen,
@@ -1483,6 +1484,8 @@ class WorkloadWindow(QMainWindow):
         # the rows the table was last filled with, so a read that changed a few
         # of them rewrites only those
         self._rendered: tuple[str, list] | None = None
+        self._origin_mode = False  # the selector of the bar lists the origins
+        self._saved_namespace = ""  # the namespace chosen before the origins
         self._workloads_overview_context: str | None = None
         self._workloads_overview_busy = False
         self._login_action: LoginAction | None = None
@@ -1629,7 +1632,7 @@ class WorkloadWindow(QMainWindow):
         self.overview_refresh_button.clicked.connect(self.refresh_overview)
         self.context_combo.currentTextChanged.connect(self._context_changed)
         self.context_combo.currentTextChanged.connect(self.refresh)
-        self.namespace_combo.currentIndexChanged.connect(self.refresh)
+        self.namespace_combo.currentIndexChanged.connect(self._filter_combo_changed)
         self.search_input.textChanged.connect(self._filter_rows)
         self.search_case_button.toggled.connect(self._filter_rows)
         self.search_regex_button.toggled.connect(self._filter_rows)
@@ -2960,6 +2963,7 @@ class WorkloadWindow(QMainWindow):
             self._sort = None
             header = self.table.horizontalHeader()
             header.setSortIndicatorShown(False)
+            self._sync_filter_combo()
             self._apply_view_columns()
             self._render_rows()
             key = (self._context(), self._list_namespace(view), view)
@@ -3059,9 +3063,11 @@ class WorkloadWindow(QMainWindow):
             ],
             "addons": [
                 translate("MainWindow", "STATUS"),
-                translate("MainWindow", "VERSION"),
+                translate("MainWindow", "CHART"),
+                translate("MainWindow", "APP"),
                 translate("MainWindow", "LATEST"),
                 translate("MainWindow", "SOURCE"),
+                translate("MainWindow", "LAST UPDATE"),
             ],
         }[self._view]
 
@@ -3985,8 +3991,51 @@ class WorkloadWindow(QMainWindow):
         combo.setCurrentIndex(index)
         combo.blockSignals(False)
 
+    def _filter_combo_changed(self, *_args: object) -> None:
+        """The namespace chosen asks the cluster again; an origin only hides
+        the rows of the list that is on screen."""
+        if self._origin_mode:
+            self._filter_rows()
+        else:
+            self.refresh()
+
+    def _sync_filter_combo(self) -> None:
+        """The selector of the bar: the namespaces in every list, the origin
+        (Helm or the cluster) in the Plugins, which span every namespace."""
+        combo = self.namespace_combo
+        want_origin = self._view == "addons"
+        combo.blockSignals(True)
+        if want_origin and not self._origin_mode:
+            self._saved_namespace = combo.currentData() or ""
+            combo.clear()
+            self._fill_origins()
+        elif not want_origin and self._origin_mode:
+            combo.clear()
+            combo.addItem(self.tr("All namespaces"), "")
+            for namespace in self._namespaces:
+                combo.addItem(namespace, namespace)
+            combo.setCurrentIndex(max(combo.findData(self._saved_namespace), 0))
+        self._origin_mode = want_origin
+        combo.blockSignals(False)
+        self._label_filter_combo(want_origin)
+
+    def _label_filter_combo(self, origin: bool) -> None:
+        if origin:
+            text = QCoreApplication.translate("MainWindow", "ORIGIN")
+        else:
+            text = QCoreApplication.translate("MainWindow", "NAMESPACE")
+        self.ui.filterLabel.setText(text)
+
+    def _fill_origins(self) -> None:
+        combo = self.namespace_combo
+        combo.addItem(self.tr("All origins"), "")
+        combo.addItem("Helm", "helm")
+        combo.addItem(self.tr("Cluster"), "cluster")
+
     def _fill_namespaces(self, namespaces: list) -> None:
         self._namespaces = namespaces
+        if self._origin_mode:  # the selector shows the origins now
+            return
         selected_namespace = self.namespace_combo.currentData()
         self.namespace_combo.blockSignals(True)
         self.namespace_combo.clear()
@@ -4129,8 +4178,11 @@ class WorkloadWindow(QMainWindow):
                     stamp_age(item, value)
                 if (
                     self._view == "addons"
-                    and column == 5
-                    and update_available(resource.kind, values[4], value)
+                    and column == 6
+                    and update_available(
+                        values[4] if resource.kind == "HelmRelease" else values[5],
+                        value,
+                    )
                 ):  # a newer version is out: its icon, and the tip says which
                     item.setIcon(_nav_icon("update", _pair(themed("#3220a0"))))
                     item.setToolTip(
@@ -4440,6 +4492,11 @@ class WorkloadWindow(QMainWindow):
                 and isinstance(row, ClusterResource)
             ):
                 matches = row.values[1] == reason
+            if matches and self._view == "addons" and isinstance(row, ClusterResource):
+                origin = self.namespace_combo.currentData()
+                matches = not origin or origin == (
+                    "helm" if row.kind == "HelmRelease" else "cluster"
+                )
             self.table.setRowHidden(row_index, not matches)
             visible_rows += matches
         self._stamp_checks()  # the boxes, in the rows that show
@@ -5393,8 +5450,8 @@ class WorkloadWindow(QMainWindow):
             self._run_action(
                 helm_match,
                 lambda found: self._plugin_update_dialog(row, found[1], found[0]),
-                row.name,
-                installed_chart(row.values[1]),
+                helm_chart_name(self._context(), row.namespace, row.name),
+                row.values[1],
                 on_error=partial(self._versions_failed, row),
             )
 
@@ -7669,7 +7726,12 @@ class WorkloadWindow(QMainWindow):
         self._apply_page_titles()
         self._render_pinned()
         if self.namespace_combo.count():
-            self.namespace_combo.setItemText(0, self.tr("All namespaces"))
+            if self._origin_mode:
+                self.namespace_combo.setItemText(0, self.tr("All origins"))
+                self.namespace_combo.setItemText(2, self.tr("Cluster"))
+            else:
+                self.namespace_combo.setItemText(0, self.tr("All namespaces"))
+        self._label_filter_combo(self._origin_mode)
         self._apply_view_columns()
         self._render_rows()
         if self._overview is not None:

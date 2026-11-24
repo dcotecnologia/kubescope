@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import base64
 import contextlib
+import gzip
 import importlib
 import importlib.metadata
 import json
@@ -1062,11 +1064,15 @@ def _parse_eks(
     name = item.get(_EKS_KINDS[kind][2])
     if not name:
         return None
+    values = _EKS_VALUES[kind](item)
+    if kind == "Addon":  # the last column of the plugins: when it last changed
+        modified = _eks_age({"createdAt": item.get("modifiedAt")}, now)
+        values = (*values, _NO_VALUE if modified == "unknown" else modified)
     return ClusterResource(
         namespace="",
         kind=kind,
         name=name,
-        values=_EKS_VALUES[kind](item),
+        values=values,
         age=_eks_age(item, now),
     )
 
@@ -2187,19 +2193,29 @@ def _helm_revisions(
     return revisions
 
 
-_CHART_LABEL = re.compile(r"^.*?-(v?\d[^\s]*)$")
+_CHART_LABEL = re.compile(r"^(.*?)-(v?\d[^\s]*)$")
+# the chart each Helm release installed, by (context, namespace, release): the
+# name of a release is not the name of its chart (`monitoring` is a
+# `kube-prometheus-stack`), and the chart is what the catalogs know
+_helm_chart_names: dict[tuple[str, str, str], str] = {}
+
+
+def helm_chart_name(context: str, namespace: str, release: str) -> str:
+    """The chart a Helm release installed, or the name of the release when it
+    is not known."""
+    return _helm_chart_names.get((context, namespace, release), release)
 
 
 def _helm_versions(
     context: str, namespace: str | None
-) -> dict[tuple[str, str], tuple[str, str]]:
-    """The chart and app version of each Helm release, from the labels of the
-    workloads it installed.
+) -> dict[tuple[str, str], tuple[str, str, str]]:
+    """The chart version, app version and chart name of each Helm release, from
+    the labels of the workloads it installed.
 
     The Secret of a release holds them too, but with its values, so it
     is not read. A kind that cannot be listed adds nothing.
     """
-    versions: dict[tuple[str, str], tuple[str, str]] = {}
+    versions: dict[tuple[str, str], tuple[str, str, str]] = {}
     for resource in ("deployments", "statefulsets", "daemonsets"):
         try:
             document = _get_json(
@@ -2215,7 +2231,8 @@ def _helm_versions(
             if not release:
                 continue
             match = _CHART_LABEL.match(labels.get("helm.sh/chart") or "")
-            chart = match.group(1) if match else ""
+            chart = match.group(2) if match else ""
+            chart_name = match.group(1) if match else ""
             app = labels.get("app.kubernetes.io/version") or ""
             key = (
                 annotations.get("meta.helm.sh/release-namespace")
@@ -2224,17 +2241,41 @@ def _helm_versions(
                 release,
             )
             if (chart or app) and key not in versions:
-                versions[key] = (chart, app)
+                versions[key] = (chart, app, chart_name)
     return versions
 
 
-def _helm_version_text(versions: tuple[str, str] | None) -> str:
-    """Always the chart and the app, the missing one as a dash, like the other
-    columns."""
-    if not versions:
-        return _NO_VALUE
-    chart, app = versions
-    return f"chart {chart or _NO_VALUE} · app {app or _NO_VALUE}"
+HELM_READERS = 8  # Secrets of releases read at the same time
+
+
+def _helm_chart_of(
+    context: str, namespace: str, release: str, revision: int
+) -> tuple[str, str, str] | None:
+    """The chart name, chart version and app version a Helm release says of
+    itself, from its latest Secret; None when it cannot be read.
+
+    The Secret holds the release with its values, so it is decoded in memory
+    and only these three texts are kept: nothing else is stored or shown.
+    """
+    try:
+        document = _get_json(
+            _resource_path(
+                "secrets", namespace, f"sh.helm.release.v1.{release}.v{revision}"
+            ),
+            context,
+        )
+        raw = base64.b64decode(base64.b64decode(document["data"]["release"]))
+        if raw[:2] == b"\x1f\x8b":  # Helm gzips it, unless it is tiny
+            raw = gzip.decompress(raw)
+        chart = json.loads(raw)["chart"]["metadata"]
+        found = (
+            str(chart.get("name") or ""),
+            str(chart.get("version") or ""),
+            str(chart.get("appVersion") or ""),
+        )
+    except ClusterError, KeyError, TypeError, ValueError, OSError, EOFError:
+        return None
+    return found
 
 
 def _helm_releases(
@@ -2250,10 +2291,39 @@ def _helm_releases(
         releases.setdefault((revision["namespace"], revision["name"]), []).append(
             revision
         )
+    newest = {
+        key: max(revisions, key=lambda revision: revision["revision"])
+        for key, revisions in releases.items()
+    }
+    with ThreadPoolExecutor(max_workers=HELM_READERS) as pool:
+        said = dict(
+            zip(
+                newest,
+                pool.map(
+                    lambda key: _helm_chart_of(
+                        context, key[0], key[1], newest[key]["revision"]
+                    ),
+                    newest,
+                ),
+                strict=True,
+            )
+        )
     rows = []
     for (release_namespace, name), revisions in releases.items():
-        latest = max(revisions, key=lambda revision: revision["revision"])
+        latest = newest[(release_namespace, name)]
         first = min(revisions, key=lambda revision: revision["revision"])
+        # what the release says of itself; the labels of its workloads, which a
+        # subchart can change, only when it cannot be read
+        label_chart, label_app, label_name = versions.get(
+            (release_namespace, name), ("", "", "")
+        )
+        chart_name, chart, app = said[(release_namespace, name)] or (
+            label_name,
+            label_chart,
+            label_app,
+        )
+        if chart_name:
+            _helm_chart_names[(context, release_namespace, name)] = chart_name
         rows.append(
             ClusterResource(
                 namespace=release_namespace,
@@ -2261,8 +2331,12 @@ def _helm_releases(
                 name=name,
                 values=(
                     latest["status"],
-                    _helm_version_text(versions.get((release_namespace, name))),
+                    chart or _NO_VALUE,
+                    app or _NO_VALUE,
                     "Helm",
+                    _item_age(
+                        {"metadata": {"creationTimestamp": latest["created"]}}, now
+                    ),
                 ),
                 age=_item_age(
                     {"metadata": {"creationTimestamp": first["created"]}}, now
@@ -2356,7 +2430,9 @@ def _get_addons(
 def _with_latest(
     context: str, resources: list[ClusterResource]
 ) -> list[ClusterResource]:
-    """Each row with the latest version of what it lists, after its version."""
+    """Each row as status, chart, app, latest, source and last update: a Helm
+    release has its chart and app version, anything else only one version,
+    which is the app's."""
     from kubescope import plugin_latest
 
     try:
@@ -2368,9 +2444,14 @@ def _with_latest(
         replace(
             row,
             values=(
-                *row.values[:2],
+                row.values[0],
+                *(
+                    row.values[1:3]
+                    if row.kind == "HelmRelease"
+                    else (_NO_VALUE, row.values[1])
+                ),
                 latest.get((row.kind, row.name), _NO_VALUE),
-                *row.values[2:],
+                *row.values[3 if row.kind == "HelmRelease" else 2 :],
             ),
         )
         for row in resources

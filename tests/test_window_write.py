@@ -805,7 +805,7 @@ def test_editing_reads_the_event_first(monkeypatch) -> None:
 
 ADDON = ClusterResource("", "Addon", "vpc-cni", ("ACTIVE", "v1", "v2", "EKS"), "1d")
 RELEASE = ClusterResource(
-    "ops", "HelmRelease", "web", ("deployed", "chart 1.0 · app 1", "1.1", "Helm"), "1d"
+    "ops", "HelmRelease", "web", ("deployed", "1.0", "1", "1.1", "Helm"), "1d"
 )
 
 

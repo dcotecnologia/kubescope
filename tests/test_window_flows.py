@@ -4252,23 +4252,65 @@ def test_an_addon_with_a_newer_version_shows_an_icon_in_the_latest_column(
         [],
         [
             ClusterResource(
-                "", "Addon", "vpc-cni", ("ACTIVE", "v1", "v2", "EKS"), "1d"
+                "", "Addon", "vpc-cni", ("ACTIVE", "—", "v1", "v2", "EKS", "1d"), "1d"
             ),
             ClusterResource(
-                "", "Addon", "kube-proxy", ("ACTIVE", "v3", "v3", "EKS"), "1d"
+                "",
+                "Addon",
+                "kube-proxy",
+                ("ACTIVE", "—", "v3", "v3", "EKS", "1d"),
+                "1d",
             ),
         ],
     )
     names = [cell(window.table, r, 2).text() for r in range(2)]
     icons = {}
     for row, name in enumerate(names):
-        item = window.table.item(row, 5)
+        item = window.table.item(row, 6)
         assert item is not None
         icons[name] = not item.icon().isNull()
         if name == "vpc-cni":
             assert item.toolTip().endswith("v2")
     assert icons == {"vpc-cni": True, "kube-proxy": False}
-    assert window.table.columnCount() == 8
+    assert window.table.columnCount() == 10
+    window.close()
+
+
+def test_the_plugins_are_filtered_by_origin_instead_of_namespace(monkeypatch) -> None:
+    window = _resource_window(monkeypatch)
+    window._open_list_view("addons")
+    window._show_resources(
+        ["ops"],
+        [
+            ClusterResource(
+                "", "Addon", "vpc-cni", ("ACTIVE", "—", "v1", "—", "EKS", "1d"), "1d"
+            ),
+            ClusterResource(
+                "ops",
+                "HelmRelease",
+                "web",
+                ("deployed", "1.0", "v9", "1.1", "Helm"),
+                "1d",
+            ),
+        ],
+    )
+    combo = window.namespace_combo
+    assert [combo.itemData(i) for i in range(combo.count())] == ["", "helm", "cluster"]
+
+    def shown() -> list[str]:
+        return [
+            cell(window.table, r, 2).text()
+            for r in range(window.table.rowCount())
+            if not window.table.isRowHidden(r)
+        ]
+
+    assert shown() == ["vpc-cni", "web"]
+    combo.setCurrentIndex(combo.findData("helm"))
+    assert shown() == ["web"]
+    combo.setCurrentIndex(combo.findData("cluster"))
+    assert shown() == ["vpc-cni"]
+    window._open_list_view("pods")  # the namespaces are back
+    assert combo.itemData(0) == "" and combo.findData("ops") >= 0
     window.close()
 
 

@@ -170,7 +170,7 @@ def test_each_dialog_asks_for_what_its_kind_takes(eks) -> None:
     assert not dialog.update_button.isEnabled() and dialog.problem.text()
 
     release = ClusterResource(
-        "ops", "HelmRelease", "web", ("Deployed", "chart 1", "Helm"), "1d"
+        "ops", "HelmRelease", "web", ("Deployed", "1", "—", "—", "Helm"), "1d"
     )
     helm = PluginUpdateDialog(
         None, "ctx", release, ["2.0", "1.0"], "https://repo.example"
@@ -234,7 +234,7 @@ def test_without_the_program_the_dialog_shows_the_command_but_cannot_run_it(
     eks, monkeypatch
 ) -> None:
     monkeypatch.setattr(plugin_updates, "program_missing", lambda program: True)
-    values = ("Deployed", "chart 1", "Helm")
+    values = ("Deployed", "1", "—", "—", "Helm")
     release = ClusterResource("ops", "HelmRelease", "web", values, "1d")
     dialog = PluginUpdateDialog(None, "ctx", release, ["2.0"])
     assert "helm --kube-context ctx upgrade web" in dialog.command.toPlainText()

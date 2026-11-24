@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+### Changed
+
+- Plugins → Installed lists the chart version, the app version, the latest one and the last update in their own columns, and the bar filters by origin (Helm or the cluster) instead of by namespace by @danilogco
+
+### Fixed
+
+- The latest version of a Helm release is looked up by the name of its chart, not of the release, and the chart and app version of a release are the ones its own Secret says (read in memory, nothing else is kept), not the labels of one of its workloads by @danilogco
+
 ## [2.6.1] - 2026-11-24
 
 ### Fixed
