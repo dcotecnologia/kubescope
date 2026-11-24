@@ -206,3 +206,42 @@ def test_the_cloud_clusters_of_a_context_are_the_ones_of_the_app(monkeypatch) ->
     monkeypatch.setattr(cloud_addons, "aks_cluster", lambda context: (context, "group"))
     assert ClusterBridge().eks_target("c") == ["--cluster-name", "c"]
     assert ClusterBridge().aks_cluster("c") == ("c", "group")
+
+
+@pytest.mark.parametrize(
+    ("arguments", "expected"),
+    [
+        (["aws", "eks", "delete-addon", "--addon-name", "x"], True),
+        (["helm", "--kube-context", "c", "uninstall", "r"], True),
+        (["az", "k8s-extension", "delete", "--name", "x"], True),
+        (["aws", "eks", "delete-cluster", "--name", "x"], False),
+        (["aws", "eks", "update-addon", "--addon-name", "x"], False),
+        (["helm", "--kube-context", "c", "upgrade", "r", "chart"], False),
+        (["az", "k8s-extension", "update", "--name", "x"], False),
+        (["kubectl", "delete", "pod", "x"], False),
+        ([], False),
+    ],
+)
+def test_only_the_commands_that_remove_a_plugin_are_run(
+    arguments, expected, monkeypatch
+) -> None:
+    ran = []
+    monkeypatch.setattr(
+        cluster_access.plugin_updates,
+        "run_update",
+        lambda context, command: ran.append(command) or "ok",
+    )
+    bridge = WritesBridge(lambda: True)
+    if expected:
+        assert bridge.run_remove("ctx", arguments) == "ok" and ran == [arguments]
+    else:
+        with pytest.raises(cluster.ClusterError):
+            bridge.run_remove("ctx", arguments)
+        assert ran == []
+
+
+def test_a_plugin_is_removed_only_with_the_write_mode_on() -> None:
+    with pytest.raises(WriteModeOff):
+        WritesBridge(lambda: False).run_remove(
+            "ctx", ["aws", "eks", "delete-addon", "--addon-name", "x"]
+        )

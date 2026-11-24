@@ -33,6 +33,18 @@ def is_plugin_update(arguments: list[str]) -> bool:
     )
 
 
+def is_plugin_removal(arguments: list[str]) -> bool:
+    """Whether a command is one that Plugins removes with: `aws eks delete-
+    addon`, `helm --kube-context <context> uninstall` or `az k8s-extension
+    delete`, and nothing else."""
+    head = arguments[:4]
+    return (
+        head[:3] == ["aws", "eks", "delete-addon"]
+        or (head[:2] == ["helm", "--kube-context"] and head[3:4] == ["uninstall"])
+        or head[:3] == ["az", "k8s-extension", "delete"]
+    )
+
+
 class ClusterBridge:
     LOG_WINDOW_BYTES: int = cluster.LOG_WINDOW_BYTES
 
@@ -202,4 +214,10 @@ class WritesBridge:
         self._allowed()
         if not is_plugin_update(arguments):
             raise cluster.ClusterError("That is not a command that updates a plugin")
+        return plugin_updates.run_update(context, arguments)
+
+    def run_remove(self, context: str, arguments: list[str]) -> str:
+        self._allowed()
+        if not is_plugin_removal(arguments):
+            raise cluster.ClusterError("That is not a command that removes a plugin")
         return plugin_updates.run_update(context, arguments)

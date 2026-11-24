@@ -381,8 +381,8 @@ development = [{ name = "pre-commit", specifier = ">=4.7.0" }]
 
 [[package]]
 name = "kubescope-sdk"
-version = "1.8.0"
-source = { git = "https://github.com/dcotecnologia/kubescope-sdk?branch=main#ad5c5928e092b6762e47a8c77a1bdd4ef41b6a5f" }
+version = "1.9.0"
+source = { git = "https://github.com/dcotecnologia/kubescope-sdk?branch=main#3a1d1144d89e6583faf9c81b091d26cca57b2dd5" }
 dependencies = [
     { name = "pyside6" },
 ]
