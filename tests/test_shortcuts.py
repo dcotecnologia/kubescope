@@ -19,8 +19,8 @@ def test_navigation_defaults_use_common_shortcuts():
         "overview": "Ctrl+O",
         "pods": "Ctrl+P",
         "deployments": "Ctrl+D",
-        "services": "Ctrl+S",
-        "settings": "Ctrl+C",
+        "services": "Ctrl+Shift+S",
+        "settings": "Ctrl+Shift+C",
     }
 
 

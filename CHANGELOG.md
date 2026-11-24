@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+### Changed
+
+- The default shortcuts of Services and Settings are Ctrl+Shift+S and Ctrl+Shift+C, so that Ctrl+C keeps copying by @danilogco
+
 ## [2.6.0] - 2026-11-24
 
 ### Added
