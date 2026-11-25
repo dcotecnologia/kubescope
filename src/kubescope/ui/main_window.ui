@@ -110,6 +110,13 @@ QComboBox[variant="filter"] QAbstractItemView {
     selection-background-color: #eee9f7; selection-color: #3220a0;
     outline: 0; padding: 2px;
 }
+QComboBox[variant="filter"] QAbstractItemView::item {
+    min-height: 28px; padding: 0 8px; border-radius: 4px;
+}
+QComboBox[variant="filter"] QAbstractItemView::item:hover { background: #f4f1fb; }
+QComboBox[variant="filter"] QAbstractItemView::item:selected {
+    background: #eee9f7; color: #3220a0;
+}
 QSpinBox[variant="filter"] {
     background: #ffffff; color: #20232a; border: 1px solid #d9dce4;
     border-radius: 5px; min-height: 36px; padding: 0 10px; font-size: 11px;

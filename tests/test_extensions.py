@@ -350,7 +350,9 @@ class FakeUi:
     def add_top_bar_button(self, owner, button) -> None:
         self.calls.append(("button", owner))
 
-    def show_system_notification(self, title, message, on_click=None) -> bool:
+    def show_system_notification(
+        self, title, message, on_click=None, category=""
+    ) -> bool:
         self.calls.append(("system", title))
         return True
 

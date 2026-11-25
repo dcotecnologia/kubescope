@@ -47,6 +47,10 @@ class EventBus:
 
         return off
 
+    def listening(self, event: str) -> bool:
+        """Whether an extension subscribed to `event`."""
+        return bool(self._handlers.get(event))
+
     def emit(self, event: str, **payload: Any) -> None:
         """Tell every handler of `event`, in the order they subscribed."""
         if event not in self._handlers:

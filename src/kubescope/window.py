@@ -15,6 +15,7 @@ from functools import partial
 from pathlib import Path
 from typing import Any, cast
 
+import shiboken6
 from kubescope.sdk import (
     CONTEXT_CHANGED,
     LANGUAGE_CHANGED,
@@ -243,6 +244,7 @@ from kubescope.views.container_states import (
 )
 from kubescope.views.detail_tab import USAGE_REFRESH_MS, DetailTab
 from kubescope.views.dialog_frame import frames
+from kubescope.views.drop_down import open_below
 from kubescope.views.error_banner import ErrorBanner
 from kubescope.views.extension_pages import (
     SECTION_GAP,
@@ -250,11 +252,13 @@ from kubescope.views.extension_pages import (
     SectionBlock,
 )
 from kubescope.views.extensions_panel import ExtensionsPanel
+from kubescope.views.flow_layout import FlowLayout
 from kubescope.views.forward_runner import ForwardRunner
 from kubescope.views.loading_shimmer import LoadingShimmer
 from kubescope.views.log_tab import LOG_REFRESH_MS, LogTab
 from kubescope.views.nav_chevron import NavChevron
 from kubescope.views.nav_section import SectionFold
+from kubescope.views.pulse import pulse
 from kubescope.views.search_bar import compile_query, switch_button
 from kubescope.views.sidebar_resizer import SidebarResizer
 from kubescope.views.sidebar_toggle import SidebarToggle
@@ -297,6 +301,8 @@ WRITE_VIEWS.update(
         if view not in WRITE_VIEWS
     }
 )
+
+CONTEXT_PULSE = "#9b8cff"  # the ring around the context on a switch
 
 logger = logging.getLogger(__name__)
 
@@ -1000,6 +1006,27 @@ class WorkloadWindow(QMainWindow):
         self._restore_geometry()
         self._load_contexts()
 
+    @staticmethod
+    def _flow_the_filters(bar: QWidget) -> None:
+        """The widgets of the bar of filters go in rows that wrap, so none of
+        them is over another when the window is made narrower."""
+        old = bar.layout()
+        assert old is not None
+        widgets: list[QWidget] = []
+        for index in range(old.count()):
+            item = old.itemAt(index)
+            if item is not None and (widget := item.widget()) is not None:
+                widgets.append(widget)
+        for widget in widgets:
+            old.removeWidget(widget)  # they stay children of the bar
+        shiboken6.delete(old)
+        flow = FlowLayout(bar, horizontal=12, vertical=8)
+        for widget in widgets:
+            flow.addWidget(widget)
+        policy = bar.sizePolicy()
+        policy.setHeightForWidth(True)
+        bar.setSizePolicy(policy)
+
     def _build_ui(self) -> None:
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
@@ -1031,6 +1058,7 @@ class WorkloadWindow(QMainWindow):
         self.event_reason_combo.setVisible(False)
         self.event_reason_combo.currentIndexChanged.connect(self._filter_rows)
         filters.insertWidget(at + 3, self.event_reason_combo)
+        self._flow_the_filters(ui.filtersBar)
         self.refresh_button = ui.refreshButton
         self.summary_label = ui.summaryLabel
         self.pods_button = ui.podsButton
@@ -1114,6 +1142,7 @@ class WorkloadWindow(QMainWindow):
         self._tray: QSystemTrayIcon | None = None
         self._notice_tray: QSystemTrayIcon | None = None  # only to carry a notice
         self._notice_click: Callable[[], None] | None = None
+        self._notice_count = 0  # makes the key of each notice it tells unique
         self._quitting = False
         self._name_fitted: set[str] = set()  # the lists whose NAME column was fitted
         self._viewer_contexts: dict[QWidget | None, str] = {}  # the context of each tab
@@ -1548,8 +1577,8 @@ class WorkloadWindow(QMainWindow):
                 lambda title, document: self._show_json_dialog(title, document),
                 lambda title, name, read: self._open_text_log(title, name, read),
                 lambda owner, button: self._add_top_bar_button(owner, button),
-                lambda title, message, click: self._system_notification(
-                    title, message, click
+                lambda title, message, click, category: self._tell(
+                    title, message, click, category
                 ),
                 lambda owner, hidden: self._hide_side_menu_for(owner, hidden),
                 lambda: self._content_area(),
@@ -1621,6 +1650,7 @@ class WorkloadWindow(QMainWindow):
                 lambda _checked=False, view=view: self._open_list_view(view)
             )
         self.overview_refresh_button.clicked.connect(self.refresh_overview)
+        open_below(self.context_combo, lambda color, text: themed(color, text=text))
         self.context_combo.currentTextChanged.connect(self._context_changed)
         self.context_combo.currentTextChanged.connect(self.refresh)
         self.namespace_combo.currentIndexChanged.connect(self.refresh)
@@ -2563,6 +2593,39 @@ class WorkloadWindow(QMainWindow):
         tray.showMessage(title, message, QSystemTrayIcon.MessageIcon.Warning, 10000)
         return True
 
+    def _tell(
+        self,
+        title: str,
+        message: str,
+        on_click: Callable[[], None] | None,
+        category: str = "",
+    ) -> bool:
+        """Tell the person something that happened, as one of the `category` of
+        notice (an action done, a Pod replaced, a task finished).
+
+        An extension that lists the notices (the notifications) takes
+        it, keeps it and decides whether the system is told; without one
+        it is a notice of the system at once. Without a category it is
+        that notice too.
+        """
+        bus = self.extension_host.events
+        if category and bus.listening(NOTIFICATION):
+            self._notice_count += 1
+            bus.emit(
+                NOTIFICATION,
+                level="info",
+                title=title,
+                message=message,
+                key=f"{category}:{time.time():.3f}:{self._notice_count}",
+                repeat=True,
+                context=self._context(),
+                category=category,
+                click=on_click,
+                system=True,
+            )
+            return True
+        return self._system_notification(title, message, on_click)
+
     def _message_clicked(self) -> None:
         """The person clicked a notification of the system."""
         self.bring_to_front()
@@ -2719,6 +2782,7 @@ class WorkloadWindow(QMainWindow):
         the old colors."""
         apply_theme(cast(QApplication, QApplication.instance()), self.settings.theme)
         self._apply_style()
+        open_below(self.context_combo, lambda color, text: themed(color, text=text))
         self._style_sidebar_toggle()
         accent = _pair(themed("#3220a0"))
         for index in range(self.viewer_tabs.count()):
@@ -3211,6 +3275,7 @@ class WorkloadWindow(QMainWindow):
 
     def _context_changed(self, *_args: object) -> None:
         logger.info("Context changed to %s", self._context())
+        pulse(self.context_combo, CONTEXT_PULSE)  # says that the context changed
         self.extension_host.events.emit(
             CONTEXT_CHANGED, context=self._context() or None
         )
@@ -5287,10 +5352,11 @@ class WorkloadWindow(QMainWindow):
         if after is not None:
             after()
 
-    def _notify(self, message: str) -> None:
-        """Tell the person that what they asked was done, with a notice of the
-        system; a desktop that cannot show one has the status line."""
-        self._system_notification("KubeScope", message, None)
+    def _notify(self, message: str, category: str = "action") -> None:
+        """Tell the person that what they asked was done, as a notice that the
+        notifications keep and the system shows; a desktop that cannot show one
+        has the status line."""
+        self._tell("KubeScope", message, None, category)
 
     def _watch_replacement(self, pod: PodInfo) -> None:
         """After a Pod is deleted or evicted, look until another takes its
@@ -5314,13 +5380,15 @@ class WorkloadWindow(QMainWindow):
                 self._notify(
                     self.tr("{name} was replaced by {new}, which is ready").format(
                         name=pod.name, new=found.name
-                    )
+                    ),
+                    "pod",
                 )
             elif waited < WATCH_SECONDS:
                 again()
             else:
                 self._notify(
-                    self.tr("No new Pod for {name} is ready yet").format(name=pod.name)
+                    self.tr("No new Pod for {name} is ready yet").format(name=pod.name),
+                    "pod",
                 )
 
         def again() -> None:

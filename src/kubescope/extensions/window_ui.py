@@ -37,7 +37,7 @@ class WindowUi:
         open_log: Callable[[str, str, Callable[[], str]], None] = lambda *_: None,
         add_top_bar_button: Callable[[str, QWidget], None] = lambda *_: None,
         system_notification: Callable[
-            [str, str, Callable[[], None] | None], bool
+            [str, str, Callable[[], None] | None, str], bool
         ] = lambda *_: False,
         hide_side_menu: Callable[[str, bool], None] = lambda *_: None,
         content_area: Callable[[], tuple[int, int, int, int]] = lambda: (0, 0, 0, 0),
@@ -96,5 +96,6 @@ class WindowUi:
         title: str,
         message: str,
         on_click: Callable[[], None] | None = None,
+        category: str = "",
     ) -> bool:
-        return self._system_notification(title, message, on_click)
+        return self._system_notification(title, message, on_click, category)

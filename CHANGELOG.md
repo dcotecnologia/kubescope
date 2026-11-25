@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+## [2.8.0] - 2026-11-24
+
+### Added
+
+- The row of a table under the cursor is lit with a soft band, in the tables of the extensions too, and the items of the selects are lit under the cursor by @danilogco
+- The list of the context select always opens below it, as wide as the select, in a rounded card with roomy rows by @danilogco
+- A ring spreads from the context in the top bar and fades when the context is switched, so the change is seen; it follows the animations of the settings by @danilogco
+- What was done (a Pod deleted, a workload scaled), the state of a Pod after it and what an extension finished are told to the notifications with a category (`Ui.show_system_notification(..., category)`, SDK 1.10), so they are kept in the bell and the person chooses which are listed and told; without the notifications extension they are notices of the system as before by @danilogco
+
+### Fixed
+
+- The filters of a list (the namespace, the search and, in the events, the type and the reason) go on to a second row when the window is made narrower, instead of standing over each other by @danilogco
+
 ## [2.7.0] - 2026-11-24
 
 ### Added
@@ -756,7 +769,8 @@ The first release.
 
 - Pod logs and resource details are still never written to disk by the app on its own. **Save** is the only exception, and it writes only to the file the user chooses. SECURITY.md says so by @danilogco
 
-[Unreleased]: https://github.com/dcotecnologia/kubescope/compare/v2.7.0...HEAD
+[Unreleased]: https://github.com/dcotecnologia/kubescope/compare/v2.8.0...HEAD
+[2.8.0]: https://github.com/dcotecnologia/kubescope/compare/v2.7.0...v2.8.0
 [2.7.0]: https://github.com/dcotecnologia/kubescope/compare/v2.6.1...v2.7.0
 [2.6.1]: https://github.com/dcotecnologia/kubescope/compare/v2.6.0...v2.6.1
 [2.6.0]: https://github.com/dcotecnologia/kubescope/compare/v2.5.0...v2.6.0

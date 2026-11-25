@@ -1,3 +1,4 @@
+from kubescope.sdk import NOTIFICATION
 from kubescope.sdk.models import ClusterResource, PodInfo, Workload
 from PySide6.QtCore import QPoint
 from PySide6.QtGui import QAction
@@ -830,7 +831,9 @@ def test_a_deleted_pod_is_watched_until_another_is_ready_in_its_place(
 ) -> None:
     window, _ran = _window(monkeypatch)
     told: list[str] = []
-    monkeypatch.setattr(window, "_notify", told.append)
+    monkeypatch.setattr(
+        window, "_notify", lambda message, _category="action": told.append(message)
+    )
     later: list = []
     monkeypatch.setattr(
         window_module.QTimer, "singleShot", lambda _ms, call: later.append(call)
@@ -867,7 +870,9 @@ def test_a_deleted_pod_is_watched_until_another_is_ready_in_its_place(
 def test_a_pod_that_does_not_come_back_in_time_is_told_too(monkeypatch) -> None:
     window, _ran = _window(monkeypatch)
     told: list[str] = []
-    monkeypatch.setattr(window, "_notify", told.append)
+    monkeypatch.setattr(
+        window, "_notify", lambda message, _category="action": told.append(message)
+    )
     monkeypatch.setattr(window_module, "WATCH_SECONDS", 0.0)
     monkeypatch.setattr(
         window,
@@ -908,4 +913,29 @@ def test_deleting_or_evicting_a_pod_watches_for_its_replacement(monkeypatch) -> 
     window._evict_pod(SINGLE)
 
     assert watched == ["solo", "solo"]
+    window.close()
+
+
+def test_what_was_done_goes_to_the_notifications_when_they_are_there(
+    monkeypatch,
+) -> None:
+    window, _ran = _window(monkeypatch)
+    direct: list[tuple] = []
+    monkeypatch.setattr(
+        window, "_system_notification", lambda *args: direct.append(args) or True
+    )
+    heard: list[dict] = []
+    window.extension_host.events.on(NOTIFICATION, lambda **notice: heard.append(notice))
+    monkeypatch.setattr(window, "_context", lambda: "prod")
+
+    window._notify("Scaled api")
+    window._notify("web is ready", "pod")
+    window._tell("Gabi", "done", None)  # no category: the system at once
+
+    assert [(n["category"], n["message"], n["context"]) for n in heard] == [
+        ("action", "Scaled api", "prod"),
+        ("pod", "web is ready", "prod"),
+    ]
+    assert heard[0]["key"] != heard[1]["key"] and heard[0]["system"] is True
+    assert direct == [("Gabi", "done", None)]
     window.close()
