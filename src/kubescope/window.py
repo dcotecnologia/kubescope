@@ -1476,6 +1476,10 @@ class WorkloadWindow(QMainWindow):
         self._apply_style()
         self._sync_tray()
         self._show_version()
+        self.access_badge = QLabel(self.ui.appFooter)  # read-only, or write mode
+        self.access_badge.setObjectName("accessBadge")
+        footer = self.ui.appFooterLayout
+        footer.insertWidget(footer.indexOf(self.ui.updateNotice), self.access_badge)
         self._show_access_note()
         self._update_notice_timer.timeout.connect(self.ui.updateNotice.hide)
         self.ui.updateLink.clicked.connect(self._update_app)
@@ -2783,6 +2787,7 @@ class WorkloadWindow(QMainWindow):
         apply_theme(cast(QApplication, QApplication.instance()), self.settings.theme)
         self._apply_style()
         open_below(self.context_combo, lambda color, text: themed(color, text=text))
+        self._show_access_note()  # the badge in the footer takes the colors
         self._style_sidebar_toggle()
         accent = _pair(themed("#3220a0"))
         for index in range(self.viewer_tabs.count()):
@@ -7780,6 +7785,31 @@ class WorkloadWindow(QMainWindow):
                 "MainWindow", "SECURE ACCESS\nResources in read-only mode"
             )
         self.ui.sidebarNote.setText(note)
+        self._show_access_badge(note)
+
+    def _show_access_badge(self, note: str) -> None:
+        """The badge in the footer: the access the app has to the clusters, so
+        it is seen on every page and not only at the foot of the side menu."""
+        writing = self.settings.write_mode
+        if writing:
+            text = self.tr("Write mode")
+            tone = QColor(themed("#985415"))
+        else:
+            text = self.tr("Read-only")
+            tone = QColor("#2f9e5b")
+        color = tone.name()
+        background = f"rgba({tone.red()}, {tone.green()}, {tone.blue()}, 38)"
+        border = f"rgba({tone.red()}, {tone.green()}, {tone.blue()}, 130)"
+        self.access_badge.setText(text.upper())
+        self.access_badge.setToolTip(note.replace("\n", ": "))
+        self.access_badge.setStyleSheet(
+            f"QLabel#accessBadge {{ background: {background}; color: {color};"
+            f" border: 1px solid {border}; border-radius: 9px;"
+            " padding: 1px 9px; font-size: 9px; font-weight: 700; }"
+        )
+        self.access_badge.ensurePolished()  # then the size takes the padding
+        self.access_badge.setMinimumWidth(0)
+        self.access_badge.setMinimumWidth(self.access_badge.sizeHint().width() + 4)
 
     def _restore_designed_headers(self) -> None:
         """Give the table the columns and headers its layout has, which the
