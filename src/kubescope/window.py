@@ -7804,12 +7804,13 @@ class WorkloadWindow(QMainWindow):
         self.access_badge.setToolTip(note.replace("\n", ": "))
         self.access_badge.setStyleSheet(
             f"QLabel#accessBadge {{ background: {background}; color: {color};"
-            f" border: 1px solid {border}; border-radius: 9px;"
-            " padding: 1px 9px; font-size: 9px; font-weight: 700; }"
+            f" border: 1px solid {border}; border-radius: 7px;"
+            " padding: 0 6px; font-size: 8px; font-weight: 700; }"
         )
         self.access_badge.ensurePolished()  # then the size takes the padding
         self.access_badge.setMinimumWidth(0)
-        self.access_badge.setMinimumWidth(self.access_badge.sizeHint().width() + 4)
+        self.access_badge.setMinimumWidth(self.access_badge.sizeHint().width() + 2)
+        self.access_badge.setFixedHeight(15)
 
     def _restore_designed_headers(self) -> None:
         """Give the table the columns and headers its layout has, which the
