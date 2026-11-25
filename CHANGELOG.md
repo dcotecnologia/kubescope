@@ -8,7 +8,7 @@ All notable changes to this project will be documented in this file. The format 
 
 ### Added
 
-- A badge in the footer says whether the app is read-only or in the write mode, on every page, with the note of the side menu as its tip by @danilogco
+- A badge in the middle of the footer says whether the app is read-only (closed padlock) or in the write mode (open padlock), on every page, with the note of the side menu as its tip, and a click on it goes to the Settings, to the choice of the access by @danilogco
 - The row of a table under the cursor is lit with a soft band, in the tables of the extensions too, and the items of the selects are lit under the cursor by @danilogco
 - The list of the context select always opens below it, as wide as the select, in a rounded card with roomy rows by @danilogco
 - A ring spreads from the context in the top bar and fades when the context is switched, so the change is seen; it follows the animations of the settings by @danilogco

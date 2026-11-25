@@ -229,6 +229,7 @@ from kubescope.utils.replacement import POLL_SECONDS, WATCH_SECONDS, replacement
 from kubescope.utils.selfupdate import detect_install, restart
 from kubescope.utils.updates import Release, UpdateCheck, check_for_update
 from kubescope.views import motion
+from kubescope.views.access_badge import AccessBadge
 from kubescope.views.chat_icons import check_icon, close_icon, icon_only, save_icon
 from kubescope.views.check_header import CheckHeader
 from kubescope.views.container_states import (
@@ -302,6 +303,7 @@ WRITE_VIEWS.update(
     }
 )
 
+ACCESS_PULSE = "#e8a23b"  # the ring around the write mode, from the badge
 CONTEXT_PULSE = "#9b8cff"  # the ring around the context on a switch
 
 logger = logging.getLogger(__name__)
@@ -1476,11 +1478,8 @@ class WorkloadWindow(QMainWindow):
         self._apply_style()
         self._sync_tray()
         self._show_version()
-        self.access_badge = QLabel(self.ui.appFooter)  # read-only, or write mode
-        self.access_badge.setObjectName("accessBadge")
-        footer = self.ui.appFooterLayout
-        footer.insertWidget(0, self.access_badge)  # at the left of the footer
-        footer.insertSpacing(1, 10)
+        self.access_badge = AccessBadge(self.ui.appFooter)  # read-only, or write mode
+        self.access_badge.clicked.connect(self._choose_access)
         self._show_access_note()
         self._update_notice_timer.timeout.connect(self.ui.updateNotice.hide)
         self.ui.updateLink.clicked.connect(self._update_app)
@@ -7788,6 +7787,17 @@ class WorkloadWindow(QMainWindow):
         self.ui.sidebarNote.setText(note)
         self._show_access_badge(note)
 
+    def _choose_access(self) -> None:
+        """The badge was clicked: go to the Settings, to the choice between
+        read-only and the write mode, and show which it is."""
+        self._show_page(2)
+        self._show_settings_section(0)  # General, where the write mode is
+        form = self.settings_ui
+        check = form.writeModeCheck
+        form.settingsScroll.ensureWidgetVisible(check)
+        check.setFocus()
+        QTimer.singleShot(0, lambda: pulse(check, ACCESS_PULSE, 4))
+
     def _show_access_badge(self, note: str) -> None:
         """The badge in the footer: the access the app has to the clusters, so
         it is seen on every page and not only at the foot of the side menu."""
@@ -7798,20 +7808,7 @@ class WorkloadWindow(QMainWindow):
         else:
             text = self.tr("Read-only")
             tone = QColor("#2f9e5b")
-        color = tone.name()
-        background = f"rgba({tone.red()}, {tone.green()}, {tone.blue()}, 38)"
-        border = f"rgba({tone.red()}, {tone.green()}, {tone.blue()}, 130)"
-        self.access_badge.setText(text.upper())
-        self.access_badge.setToolTip(note.replace("\n", ": "))
-        self.access_badge.setStyleSheet(
-            f"QLabel#accessBadge {{ background: {background}; color: {color};"
-            f" border: 1px solid {border}; border-radius: 7px;"
-            " padding: 0 6px; font-size: 8px; font-weight: 700; }"
-        )
-        self.access_badge.ensurePolished()  # then the size takes the padding
-        self.access_badge.setMinimumWidth(0)
-        self.access_badge.setMinimumWidth(self.access_badge.sizeHint().width() + 2)
-        self.access_badge.setFixedHeight(15)
+        self.access_badge.show_access(text, tone, writing, note.replace("\n", ": "))
 
     def _restore_designed_headers(self) -> None:
         """Give the table the columns and headers its layout has, which the
