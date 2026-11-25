@@ -7784,7 +7784,9 @@ class WorkloadWindow(QMainWindow):
             note = QCoreApplication.translate(
                 "MainWindow", "SECURE ACCESS\nResources in read-only mode"
             )
-        self.ui.sidebarNote.setText(note)
+        self.ui.sidebarNote.setText(note)  # the badge in the footer says it now
+        self.ui.sidebarNote.hide()
+        self.ui.sidebarRule.hide()
         self._show_access_badge(note)
 
     def _choose_access(self) -> None:

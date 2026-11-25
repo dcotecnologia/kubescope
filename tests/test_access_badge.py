@@ -53,3 +53,11 @@ def test_a_click_on_the_badge_goes_to_the_choice_of_the_access(monkeypatch) -> N
     check = window.settings_ui.writeModeCheck
     assert check.isVisible() and window.focusWidget() is check
     window.close()
+
+
+def test_the_side_menu_no_longer_carries_the_access_note(monkeypatch) -> None:
+    window = _ready_window(monkeypatch)
+    window.show()
+
+    assert window.ui.sidebarNote.isHidden() and window.ui.sidebarRule.isHidden()
+    window.close()
