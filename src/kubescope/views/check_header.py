@@ -30,6 +30,23 @@ class CheckHeader(QHeaderView):
             self.column = column
             self.viewport().update()
 
+    @property
+    def checked(self) -> bool | None:
+        """What the box shows: checked, not, or `None` for some rows."""
+        if self.check_state == Qt.CheckState.PartiallyChecked:
+            return None
+        return self.check_state == Qt.CheckState.Checked
+
+    def set_checked(self, state: bool | None) -> None:
+        """What the box shows: checked, not, or `None` for some rows."""
+        self.set_check_state(
+            Qt.CheckState.PartiallyChecked
+            if state is None
+            else Qt.CheckState.Checked
+            if state
+            else Qt.CheckState.Unchecked
+        )
+
     def set_check_state(self, state: Qt.CheckState) -> None:
         if state != self.check_state:
             self.check_state = state

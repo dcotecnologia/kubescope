@@ -16,13 +16,19 @@ class ErrorBanner(QObject):
         details_button: QPushButton,
         dismiss_button: QPushButton,
         details_label: QLabel,
+        words: tuple[str, str] = ("Details", "Hide"),
     ) -> None:
         super().__init__(frame)
+        self.frame = frame
+        self.label = label
+        self.details_label = details_label
+        self.details_button = details_button
+        self.dismiss_button = dismiss_button
         self._frame = frame
         self._label = label
         self._details_button = details_button
         self._details_label = details_label
-        self._words = ("Details", "Hide")
+        self._words = words
         dismiss_button.clicked.connect(self.dismiss)
         details_button.clicked.connect(self.toggle_details)
 

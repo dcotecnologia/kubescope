@@ -4,7 +4,10 @@
 from collections.abc import Callable
 from typing import Any
 
+from kubescope.sdk import Components
 from PySide6.QtWidgets import QMessageBox, QWidget
+
+from kubescope.extensions.components import UiComponents
 
 _ICONS = {
     "information": QMessageBox.Icon.Information,
@@ -41,7 +44,11 @@ class WindowUi:
         ] = lambda *_: False,
         hide_side_menu: Callable[[str, bool], None] = lambda *_: None,
         content_area: Callable[[], tuple[int, int, int, int]] = lambda: (0, 0, 0, 0),
+        badge_colors: Callable[[str], tuple[str, str]] = lambda _status: ("", ""),
     ) -> None:
+        self.components: Components = UiComponents(
+            badge_colors, lambda color: themed(color, False), style_box, themed
+        )
         self.window = window
         self.central = central
         self._message = message

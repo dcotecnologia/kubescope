@@ -3,6 +3,11 @@
 Saving a .py file restarts the app; saving a .ui file regenerates its
 ui_*.py first, and saving a language .json file restarts it too. It
 polls file times, so it needs no extra dependency. Stop it with Ctrl+C.
+
+Before it starts the app it links every extension in a folder next to
+this one (`../kubescope-*` with a `kubescope-extension.toml`) to run
+from that folder, so the app always runs with the extensions as they are
+in their checkouts; the app follows the changes in them.
 """
 
 import subprocess
@@ -40,6 +45,24 @@ def rebuild(path: Path) -> bool:
     return subprocess.run(command, check=False).returncode == 0
 
 
+def link_extensions() -> None:
+    """Link the extensions of the folders next to this one, to run from
+    them."""
+    from kubescope.extensions.store import ExtensionStore
+    from kubescope.settings import config_directory
+
+    store = ExtensionStore(config_directory() / "extensions")
+    for folder in sorted(ROOT.parent.glob("kubescope-*")):
+        if not (folder / "kubescope-extension.toml").is_file():
+            continue
+        try:
+            candidate = store.prepare_link(folder)
+            store.install(candidate)
+            print(f"dev: linked {candidate.manifest.id} from {folder}", flush=True)
+        except Exception as error:  # one that does not link must not stop the app
+            print(f"dev: {folder.name} not linked: {error}", flush=True)
+
+
 def start() -> subprocess.Popen:
     print("dev: starting KubeScope", flush=True)
     return subprocess.Popen([sys.executable, str(ROOT / "main.py")])
@@ -55,6 +78,7 @@ def stop(app: subprocess.Popen) -> None:
 
 
 def main() -> int:
+    link_extensions()
     known = watched()
     app = start()
     try:

@@ -229,6 +229,7 @@
       "markdown": true,
       "scminput": false,
     },
+    "markdown.validate.enabled": true,
   },
   "extensions": {
     "recommendations": [

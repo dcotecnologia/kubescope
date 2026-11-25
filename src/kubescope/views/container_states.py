@@ -79,12 +79,14 @@ class BadgeDelegate(QStyledItemDelegate):
         painter.save()
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         painter.setFont(font)
-        width = painter.fontMetrics().horizontalAdvance(text) + 2 * BADGE_PADDING
-        rect = QRectF(
+        rect = QRectF(  # every badge as wide as its column, so they line up
             option.rect.left() + PADDING,
             option.rect.top() + (option.rect.height() - BADGE_HEIGHT) / 2,
-            min(width, option.rect.width() - PADDING),
+            option.rect.width() - 2 * PADDING,
             BADGE_HEIGHT,
+        )
+        text = painter.fontMetrics().elidedText(
+            text, Qt.TextElideMode.ElideRight, int(rect.width() - 2 * BADGE_PADDING)
         )
         border = QColor(text_color)
         border.setAlpha(90)

@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+## [2.9.0] - 2026-11-25
+
+### Added
+
+- The extensions need no Qt of their own: besides the table, the buttons and the fields, `Ui.components` lends them the page and its layouts, dialogs, the error banner, timers, icons, the panel of notices with the button that counts, the search window, the chat of an assistant (`chat_dock`, `chat_view`), work off the UI thread (`background`) and a test kit (`kubescope.extensions.testing`), and the app translates their texts through `kubescope.sdk.translate` (SDK 1.12), so an extension imports nothing from `PySide6` by @danilogco
+- The extensions build their pages with the elements of the app through `Ui.components` (SDK 1.12): the table of the lists, with the check box in its header when asked, the sorting by a click on a header, the badges, the buttons, the search box, the selects and the fields, instead of keeping a copy of each by @danilogco
+
+### Changed
+
+- `make dev` links the extensions of the folders next to the app (`../kubescope-*`) to run from them, and runs with the SDK of `../kubescope-sdk` when it is there, so the app always starts with what is in the checkouts by @danilogco
+- The badges of the table are as wide as their column, so they line up, and a text that does not fit is cut with an ellipsis by @danilogco
+- The headers of every table, in the app and in the extensions, are centered, and a text that does not fit its cell is cut with an ellipsis instead of wrapped; the texts of the cells stay at the left by @danilogco
+
 ## [2.8.0] - 2026-11-24
 
 ### Added
@@ -770,7 +783,8 @@ The first release.
 
 - Pod logs and resource details are still never written to disk by the app on its own. **Save** is the only exception, and it writes only to the file the user chooses. SECURITY.md says so by @danilogco
 
-[Unreleased]: https://github.com/dcotecnologia/kubescope/compare/v2.8.0...HEAD
+[Unreleased]: https://github.com/dcotecnologia/kubescope/compare/v2.9.0...HEAD
+[2.9.0]: https://github.com/dcotecnologia/kubescope/compare/v2.8.0...v2.9.0
 [2.8.0]: https://github.com/dcotecnologia/kubescope/compare/v2.7.0...v2.8.0
 [2.7.0]: https://github.com/dcotecnologia/kubescope/compare/v2.6.1...v2.7.0
 [2.6.1]: https://github.com/dcotecnologia/kubescope/compare/v2.6.0...v2.6.1

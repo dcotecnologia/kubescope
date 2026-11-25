@@ -28,6 +28,7 @@ from kubescope.utils.single_instance import SingleInstance
 from kubescope.utils.wheel_guard import install_wheel_guard
 from kubescope.views.motion import DialogSlide
 from kubescope.views.row_hover import install_row_hover
+from kubescope.views.table_look import install_table_look
 from kubescope.window import WorkloadWindow
 
 # __file__ of the entry script points at the bundle root once frozen, so anchor
@@ -105,6 +106,7 @@ def main() -> int:
     instance.listen()
     install_wheel_guard(application)  # a select changes on click, not on hover
     install_row_hover(application)  # the row under the cursor is lit
+    install_table_look(application)  # texts centered, cut when they do not fit
     dialog_slide = DialogSlide()  # dialogs rise into place as they open
     application.installEventFilter(dialog_slide)
     application.setApplicationName("KubeScope")

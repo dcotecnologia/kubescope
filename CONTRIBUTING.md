@@ -28,7 +28,9 @@ A feature that is not for everyone is an extension, not part of the app. Write i
 [Gabi](https://github.com/dcotecnologia/kubescope-ai-gabi) and
 [AWS](https://github.com/dcotecnologia/kubescope-aws), each with its own repository and
 contributing guide. A change to what the app lends to extensions goes in the SDK first, then in
-`src/kubescope/extensions/`.
+`src/kubescope/extensions/`. An extension imports no Qt class: what it draws, and the Qt services it needs
+(timers, icons, translations), are components of `src/kubescope/extensions/components.py`, described in the
+Components guide of the SDK; add what is missing there, with its test.
 
 ## Workflow
 

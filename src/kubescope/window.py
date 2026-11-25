@@ -528,7 +528,7 @@ def _pair(color: str) -> tuple[str, str]:
     return color, color
 
 
-_GOOD_STATUSES = {"NORMAL", "ACTIVE", "DEPLOYED", "AVAILABLE", "RUNNING"}
+_GOOD_STATUSES = {"NORMAL", "ACTIVE", "DEPLOYED", "AVAILABLE", "RUNNING", "ENABLED"}
 _WARNING_STATUSES = {
     "WARNING",
     "CREATING",
@@ -542,6 +542,7 @@ _WARNING_STATUSES = {
     "STOPPING",
     "UPGRADING",
     "RENAMING",
+    "OUTDATED",
 }
 _BAD_WORDS = ("FAIL", "ERROR", "DEGRADED", "INCOMPATIBLE")
 
@@ -1586,6 +1587,7 @@ class WorkloadWindow(QMainWindow):
                 ),
                 lambda owner, hidden: self._hide_side_menu_for(owner, hidden),
                 lambda: self._content_area(),
+                _badge_colors,
             ),
             begin_forward=lambda *args: self._begin_forward(*args),
             commands=self.commands,

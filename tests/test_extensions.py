@@ -310,6 +310,7 @@ def test_an_extension_hears_the_events_until_it_is_closed() -> None:
 class FakeUi:
     window = "the window"
     central = "the central widget"
+    components: Any = None  # not used by these tests
 
     def __init__(self) -> None:
         self.calls: list[tuple] = []

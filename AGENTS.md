@@ -293,3 +293,10 @@ Follow [SECURITY.md](SECURITY.md); its guarantees are part of the product.
   AI co-author.
 - Branch from an up-to-date `origin/main`, never commit to `main` directly, and only
   commit or push when asked.
+
+## Extensions
+
+An extension imports nothing from `PySide6` or `shiboken6`, in its code or in its tests: the widgets, the Qt
+services and the test kit it needs are components of `src/kubescope/extensions/` (`components.py`,
+`testing.py`) and of the SDK (`kubescope.sdk`). When an extension needs something new, add it there (SDK
+protocol, guide, implementation and test) instead of letting the extension import Qt.
