@@ -1479,7 +1479,8 @@ class WorkloadWindow(QMainWindow):
         self.access_badge = QLabel(self.ui.appFooter)  # read-only, or write mode
         self.access_badge.setObjectName("accessBadge")
         footer = self.ui.appFooterLayout
-        footer.insertWidget(footer.indexOf(self.ui.updateNotice), self.access_badge)
+        footer.insertWidget(0, self.access_badge)  # at the left of the footer
+        footer.insertSpacing(1, 10)
         self._show_access_note()
         self._update_notice_timer.timeout.connect(self.ui.updateNotice.hide)
         self.ui.updateLink.clicked.connect(self._update_app)
