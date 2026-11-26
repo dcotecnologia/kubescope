@@ -7,7 +7,7 @@ from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QTableWidget, QTableWidgetItem, QWidget
 
 from kubescope.extensions.components import ROW_HEIGHT, UiComponents
-from kubescope.extensions.testing import png_bytes as testing_png
+from kubescope.extensions.testing import png_bytes as make_png
 from kubescope.views.check_header import CheckHeader
 from kubescope.views.container_states import BADGE_ROLE, BadgeDelegate
 from tests.qt import get_application
@@ -331,7 +331,7 @@ def test_images_labels_grids_and_resizes_are_made_for_the_extension(
     from PySide6.QtWidgets import QLabel
 
     components = UiComponents()
-    made = components.image(testing_png(40, 20), 16)
+    made = components.image(make_png(40, 20), 16)
     assert made is not None and made.width() == 16
     assert components.image(b"not an image", 16) is None
     logo = components.image_label(16)

@@ -227,9 +227,10 @@ def test_write_needs_write_mode(capsys):
     assert "write mode is off" in capsys.readouterr().err
 
 
-def test_write_needs_namespace():
+def test_write_needs_namespace(capsys):
     with pytest.raises(SystemExit):
         cli.run(["evict", "web", "--context", "a"])
+    assert "-n" in capsys.readouterr().err  # argparse says what is missing
 
 
 def test_writes_with_yes(monkeypatch, capsys):
