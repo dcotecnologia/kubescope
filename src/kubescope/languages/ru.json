@@ -5,6 +5,10 @@
         "": {
             "none": "нет"
         },
+        "Accessibility": {
+            "Clear": "Очистить",
+            "Select all": "Выбрать все"
+        },
         "AccountDialog": {
             "AWS profile": "Профиль AWS",
             "AWS profile (instead of keys)": "Профиль AWS (вместо ключей)",
@@ -218,6 +222,7 @@
             "COUNT": "КОЛИЧЕСТВО",
             "CPU": "CPU",
             "Check for updates": "Проверить обновления",
+            "Close": "Закрыть",
             "Cluster": "Кластер",
             "Cluster resources and capacity": "Ресурсы и ёмкость кластера",
             "Config": "Конфигурация",
@@ -261,6 +266,8 @@
             "MIN AVAILABLE": "МИН. ДОСТУПНО",
             "MIN PODS": "МИН. ПОДОВ",
             "MONITORING": "МОНИТОРИНГ",
+            "Maximize": "Развернуть",
+            "Minimize": "Свернуть",
             "Mutating Webhook Configurations": "Mutating Webhook Configurations",
             "NAME": "ИМЯ",
             "NAMESPACE": "NAMESPACE",
@@ -296,6 +303,7 @@
             "ReplicaSets": "ReplicaSets",
             "ReplicationControllers": "ReplicationControllers",
             "Resource Quotas": "Resource Quotas",
+            "Restore": "Восстановить",
             "Runtime Classes": "Runtime Classes",
             "SCHEDULE": "РАСПИСАНИЕ",
             "SECURE ACCESS\nResources in read-only mode": "БЕЗОПАСНЫЙ ДОСТУП\nРесурсы в режиме только чтения",

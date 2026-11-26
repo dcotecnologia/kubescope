@@ -5,6 +5,10 @@
         "": {
             "none": "هیچ"
         },
+        "Accessibility": {
+            "Clear": "پاک کردن",
+            "Select all": "انتخاب همه"
+        },
         "AccountDialog": {
             "AWS profile": "نمایهٔ AWS",
             "AWS profile (instead of keys)": "نمایهٔ AWS (به‌جای کلیدها)",
@@ -218,6 +222,7 @@
             "COUNT": "تعداد",
             "CPU": "CPU",
             "Check for updates": "بررسی به‌روزرسانی",
+            "Close": "بستن",
             "Cluster": "خوشه",
             "Cluster resources and capacity": "منابع و ظرفیت خوشه",
             "Config": "پیکربندی",
@@ -261,6 +266,8 @@
             "MIN AVAILABLE": "حداقل موجود",
             "MIN PODS": "حداقل Pod",
             "MONITORING": "پایش",
+            "Maximize": "بزرگ‌نمایی",
+            "Minimize": "کوچک‌نمایی",
             "Mutating Webhook Configurations": "Mutating Webhook Configurations",
             "NAME": "نام",
             "NAMESPACE": "فضای نام",
@@ -296,6 +303,7 @@
             "ReplicaSets": "ReplicaSets",
             "ReplicationControllers": "ReplicationControllers",
             "Resource Quotas": "Resource Quotas",
+            "Restore": "بازگرداندن",
             "Runtime Classes": "Runtime Classes",
             "SCHEDULE": "زمان‌بندی",
             "SECURE ACCESS\nResources in read-only mode": "دسترسی امن\nمنابع در حالت فقط‌خواندنی",

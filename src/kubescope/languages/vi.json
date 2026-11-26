@@ -5,6 +5,10 @@
         "": {
             "none": "không có"
         },
+        "Accessibility": {
+            "Clear": "Xóa",
+            "Select all": "Chọn tất cả"
+        },
         "AccountDialog": {
             "AWS profile": "Hồ sơ AWS",
             "AWS profile (instead of keys)": "Hồ sơ AWS (thay cho khóa)",
@@ -218,6 +222,7 @@
             "COUNT": "SỐ LẦN",
             "CPU": "CPU",
             "Check for updates": "Kiểm tra cập nhật",
+            "Close": "Đóng",
             "Cluster": "Cụm",
             "Cluster resources and capacity": "Tài nguyên và dung lượng của cụm",
             "Config": "Cấu hình",
@@ -261,6 +266,8 @@
             "MIN AVAILABLE": "KHẢ DỤNG TỐI THIỂU",
             "MIN PODS": "POD TỐI THIỂU",
             "MONITORING": "GIÁM SÁT",
+            "Maximize": "Phóng to",
+            "Minimize": "Thu nhỏ",
             "Mutating Webhook Configurations": "Mutating Webhook Configurations",
             "NAME": "TÊN",
             "NAMESPACE": "NAMESPACE",
@@ -296,6 +303,7 @@
             "ReplicaSets": "ReplicaSets",
             "ReplicationControllers": "ReplicationControllers",
             "Resource Quotas": "Resource Quotas",
+            "Restore": "Khôi phục",
             "Runtime Classes": "Runtime Classes",
             "SCHEDULE": "LỊCH",
             "SECURE ACCESS\nResources in read-only mode": "TRUY CẬP AN TOÀN\nTài nguyên ở chế độ chỉ đọc",

@@ -5,6 +5,10 @@
         "": {
             "none": "немає"
         },
+        "Accessibility": {
+            "Clear": "Очистити",
+            "Select all": "Вибрати все"
+        },
         "AccountDialog": {
             "AWS profile": "Профіль AWS",
             "AWS profile (instead of keys)": "Профіль AWS (замість ключів)",
@@ -218,6 +222,7 @@
             "COUNT": "КІЛЬКІСТЬ",
             "CPU": "CPU",
             "Check for updates": "Перевірити оновлення",
+            "Close": "Закрити",
             "Cluster": "Кластер",
             "Cluster resources and capacity": "Ресурси та місткість кластера",
             "Config": "Конфігурація",
@@ -261,6 +266,8 @@
             "MIN AVAILABLE": "МІН. ДОСТУПНО",
             "MIN PODS": "МІН. PODS",
             "MONITORING": "МОНІТОРИНГ",
+            "Maximize": "Розгорнути",
+            "Minimize": "Згорнути",
             "Mutating Webhook Configurations": "Mutating Webhook Configurations",
             "NAME": "НАЗВА",
             "NAMESPACE": "ПРОСТІР ІМЕН",
@@ -296,6 +303,7 @@
             "ReplicaSets": "ReplicaSets",
             "ReplicationControllers": "ReplicationControllers",
             "Resource Quotas": "Resource Quotas",
+            "Restore": "Відновити",
             "Runtime Classes": "Runtime Classes",
             "SCHEDULE": "РОЗКЛАД",
             "SECURE ACCESS\nResources in read-only mode": "БЕЗПЕЧНИЙ ДОСТУП\nРесурси в режимі лише читання",

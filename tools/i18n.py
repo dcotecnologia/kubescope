@@ -36,6 +36,8 @@ SOURCES = [
             "dialogs/notices_dialog.py",
             "dialogs/crash_dialog.py",
             "views/welcome_page.py",
+            "views/window_frame.py",
+            "utils/accessibility.py",
             "dialogs/update_dialog.py",
         )
     ),

@@ -5,6 +5,10 @@
         "": {
             "none": "없음"
         },
+        "Accessibility": {
+            "Clear": "지우기",
+            "Select all": "모두 선택"
+        },
         "AccountDialog": {
             "AWS profile": "AWS 프로필",
             "AWS profile (instead of keys)": "AWS 프로필(키 대신)",
@@ -218,6 +222,7 @@
             "COUNT": "횟수",
             "CPU": "CPU",
             "Check for updates": "업데이트 확인",
+            "Close": "닫기",
             "Cluster": "클러스터",
             "Cluster resources and capacity": "클러스터 리소스와 용량",
             "Config": "구성",
@@ -261,6 +266,8 @@
             "MIN AVAILABLE": "최소 가용",
             "MIN PODS": "최소 POD",
             "MONITORING": "모니터링",
+            "Maximize": "최대화",
+            "Minimize": "최소화",
             "Mutating Webhook Configurations": "Mutating Webhook Configurations",
             "NAME": "이름",
             "NAMESPACE": "네임스페이스",
@@ -296,6 +303,7 @@
             "ReplicaSets": "ReplicaSets",
             "ReplicationControllers": "ReplicationControllers",
             "Resource Quotas": "Resource Quotas",
+            "Restore": "복원",
             "Runtime Classes": "Runtime Classes",
             "SCHEDULE": "일정",
             "SECURE ACCESS\nResources in read-only mode": "보안 접근\n리소스 읽기 전용 모드",

@@ -5,6 +5,10 @@
         "": {
             "none": "tidak ada"
         },
+        "Accessibility": {
+            "Clear": "Hapus",
+            "Select all": "Pilih semua"
+        },
         "AccountDialog": {
             "AWS profile": "Profil AWS",
             "AWS profile (instead of keys)": "Profil AWS (bukan kunci)",
@@ -218,6 +222,7 @@
             "COUNT": "JUMLAH",
             "CPU": "CPU",
             "Check for updates": "Periksa pembaruan",
+            "Close": "Tutup",
             "Cluster": "Klaster",
             "Cluster resources and capacity": "Sumber daya dan kapasitas klaster",
             "Config": "Konfigurasi",
@@ -261,6 +266,8 @@
             "MIN AVAILABLE": "TERSEDIA MIN.",
             "MIN PODS": "POD MIN.",
             "MONITORING": "PEMANTAUAN",
+            "Maximize": "Maksimalkan",
+            "Minimize": "Minimalkan",
             "Mutating Webhook Configurations": "Mutating Webhook Configurations",
             "NAME": "NAMA",
             "NAMESPACE": "NAMESPACE",
@@ -296,6 +303,7 @@
             "ReplicaSets": "ReplicaSets",
             "ReplicationControllers": "ReplicationControllers",
             "Resource Quotas": "Resource Quotas",
+            "Restore": "Pulihkan",
             "Runtime Classes": "Runtime Classes",
             "SCHEDULE": "JADWAL",
             "SECURE ACCESS\nResources in read-only mode": "AKSES AMAN\nSumber daya dalam mode hanya-baca",

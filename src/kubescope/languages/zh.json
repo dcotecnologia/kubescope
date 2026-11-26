@@ -5,6 +5,10 @@
         "": {
             "none": "无"
         },
+        "Accessibility": {
+            "Clear": "清除",
+            "Select all": "全选"
+        },
         "AccountDialog": {
             "AWS profile": "AWS 配置文件",
             "AWS profile (instead of keys)": "AWS 配置文件（代替密钥）",
@@ -218,6 +222,7 @@
             "COUNT": "次数",
             "CPU": "CPU",
             "Check for updates": "检查更新",
+            "Close": "关闭",
             "Cluster": "集群",
             "Cluster resources and capacity": "集群资源与容量",
             "Config": "配置",
@@ -261,6 +266,8 @@
             "MIN AVAILABLE": "最小可用",
             "MIN PODS": "最小 POD 数",
             "MONITORING": "监控",
+            "Maximize": "最大化",
+            "Minimize": "最小化",
             "Mutating Webhook Configurations": "Mutating Webhook Configurations",
             "NAME": "名称",
             "NAMESPACE": "NAMESPACE",
@@ -296,6 +303,7 @@
             "ReplicaSets": "ReplicaSets",
             "ReplicationControllers": "ReplicationControllers",
             "Resource Quotas": "Resource Quotas",
+            "Restore": "还原",
             "Runtime Classes": "Runtime Classes",
             "SCHEDULE": "计划",
             "SECURE ACCESS\nResources in read-only mode": "安全访问\n资源为只读模式",

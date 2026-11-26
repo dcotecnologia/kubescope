@@ -5,6 +5,10 @@
         "": {
             "none": "yok"
         },
+        "Accessibility": {
+            "Clear": "Temizle",
+            "Select all": "Tümünü seç"
+        },
         "AccountDialog": {
             "AWS profile": "AWS profili",
             "AWS profile (instead of keys)": "AWS profili (anahtar yerine)",
@@ -218,6 +222,7 @@
             "COUNT": "SAYI",
             "CPU": "CPU",
             "Check for updates": "Güncellemeleri denetle",
+            "Close": "Kapat",
             "Cluster": "Küme",
             "Cluster resources and capacity": "Küme kaynakları ve kapasitesi",
             "Config": "Yapılandırma",
@@ -261,6 +266,8 @@
             "MIN AVAILABLE": "MİN. KULLANILABİLİR",
             "MIN PODS": "MİN. POD",
             "MONITORING": "İZLEME",
+            "Maximize": "Büyüt",
+            "Minimize": "Küçült",
             "Mutating Webhook Configurations": "Mutating Webhook Configurations",
             "NAME": "AD",
             "NAMESPACE": "AD ALANI",
@@ -296,6 +303,7 @@
             "ReplicaSets": "ReplicaSets",
             "ReplicationControllers": "ReplicationControllers",
             "Resource Quotas": "Resource Quotas",
+            "Restore": "Geri yükle",
             "Runtime Classes": "Runtime Classes",
             "SCHEDULE": "ZAMANLAMA",
             "SECURE ACCESS\nResources in read-only mode": "GÜVENLİ ERİŞİM\nKaynaklar salt okunur modda",

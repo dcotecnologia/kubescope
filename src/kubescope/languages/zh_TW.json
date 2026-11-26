@@ -5,6 +5,10 @@
         "": {
             "none": "無"
         },
+        "Accessibility": {
+            "Clear": "清除",
+            "Select all": "全選"
+        },
         "AccountDialog": {
             "AWS profile": "AWS 設定檔",
             "AWS profile (instead of keys)": "AWS 設定檔（代替金鑰）",
@@ -218,6 +222,7 @@
             "COUNT": "次數",
             "CPU": "CPU",
             "Check for updates": "檢查更新",
+            "Close": "關閉",
             "Cluster": "叢集",
             "Cluster resources and capacity": "叢集資源與容量",
             "Config": "設定",
@@ -261,6 +266,8 @@
             "MIN AVAILABLE": "最小可用數",
             "MIN PODS": "最小 POD 數",
             "MONITORING": "監控",
+            "Maximize": "最大化",
+            "Minimize": "最小化",
             "Mutating Webhook Configurations": "Mutating Webhook Configurations",
             "NAME": "名稱",
             "NAMESPACE": "命名空間",
@@ -296,6 +303,7 @@
             "ReplicaSets": "ReplicaSets",
             "ReplicationControllers": "ReplicationControllers",
             "Resource Quotas": "Resource Quotas",
+            "Restore": "還原",
             "Runtime Classes": "Runtime Classes",
             "SCHEDULE": "排程",
             "SECURE ACCESS\nResources in read-only mode": "安全存取\n資源為唯讀模式",

@@ -5,6 +5,10 @@
         "": {
             "none": "ไม่มี"
         },
+        "Accessibility": {
+            "Clear": "ล้าง",
+            "Select all": "เลือกทั้งหมด"
+        },
         "AccountDialog": {
             "AWS profile": "โปรไฟล์ AWS",
             "AWS profile (instead of keys)": "โปรไฟล์ AWS (แทนคีย์)",
@@ -218,6 +222,7 @@
             "COUNT": "จำนวน",
             "CPU": "CPU",
             "Check for updates": "ตรวจสอบการอัปเดต",
+            "Close": "ปิด",
             "Cluster": "คลัสเตอร์",
             "Cluster resources and capacity": "ทรัพยากรและความจุของคลัสเตอร์",
             "Config": "การกำหนดค่า",
@@ -261,6 +266,8 @@
             "MIN AVAILABLE": "พร้อมใช้งานขั้นต่ำ",
             "MIN PODS": "POD ขั้นต่ำ",
             "MONITORING": "การตรวจสอบ",
+            "Maximize": "ขยายใหญ่สุด",
+            "Minimize": "ย่อเล็กสุด",
             "Mutating Webhook Configurations": "Mutating Webhook Configurations",
             "NAME": "ชื่อ",
             "NAMESPACE": "เนมสเปซ",
@@ -296,6 +303,7 @@
             "ReplicaSets": "ReplicaSets",
             "ReplicationControllers": "ReplicationControllers",
             "Resource Quotas": "Resource Quotas",
+            "Restore": "คืนค่า",
             "Runtime Classes": "Runtime Classes",
             "SCHEDULE": "ตารางเวลา",
             "SECURE ACCESS\nResources in read-only mode": "การเข้าถึงที่ปลอดภัย\nทรัพยากรในโหมดอ่านอย่างเดียว",

@@ -5,7 +5,16 @@ import sys
 from ctypes import wintypes
 from typing import cast
 
-from PySide6.QtCore import QEvent, QObject, QPoint, QPointF, QRectF, QSize, Qt
+from PySide6.QtCore import (
+    QCoreApplication,
+    QEvent,
+    QObject,
+    QPoint,
+    QPointF,
+    QRectF,
+    QSize,
+    Qt,
+)
 from PySide6.QtGui import (
     QGuiApplication,
     QIcon,
@@ -248,6 +257,13 @@ class WindowFrame(QObject):
         margin = RESIZE_MARGIN if strip else 0
         window.setContentsMargins(margin, margin, margin, margin)
         self._maximize.setIcon(control_icon("restore" if filled else "maximize"))
+        label = (
+            QCoreApplication.translate("MainWindow", "Restore")
+            if filled
+            else QCoreApplication.translate("MainWindow", "Maximize")
+        )
+        self._maximize.setToolTip(label)
+        self._maximize.setAccessibleName(label)
         self._round(filled)
 
     def _round(self, filled: bool | None = None) -> None:

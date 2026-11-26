@@ -5,6 +5,10 @@
         "": {
             "none": "कोई नहीं"
         },
+        "Accessibility": {
+            "Clear": "साफ़ करें",
+            "Select all": "सभी चुनें"
+        },
         "AccountDialog": {
             "AWS profile": "AWS प्रोफ़ाइल",
             "AWS profile (instead of keys)": "AWS प्रोफ़ाइल (कुंजियों की जगह)",
@@ -218,6 +222,7 @@
             "COUNT": "संख्या",
             "CPU": "CPU",
             "Check for updates": "अपडेट जाँचें",
+            "Close": "बंद करें",
             "Cluster": "क्लस्टर",
             "Cluster resources and capacity": "क्लस्टर संसाधन और क्षमता",
             "Config": "कॉन्फ़िग",
@@ -261,6 +266,8 @@
             "MIN AVAILABLE": "न्यूनतम उपलब्ध",
             "MIN PODS": "न्यूनतम PODS",
             "MONITORING": "मॉनिटरिंग",
+            "Maximize": "बड़ा करें",
+            "Minimize": "छोटा करें",
             "Mutating Webhook Configurations": "Mutating Webhook Configurations",
             "NAME": "नाम",
             "NAMESPACE": "NAMESPACE",
@@ -296,6 +303,7 @@
             "ReplicaSets": "ReplicaSets",
             "ReplicationControllers": "ReplicationControllers",
             "Resource Quotas": "Resource Quotas",
+            "Restore": "पुनर्स्थापित करें",
             "Runtime Classes": "Runtime Classes",
             "SCHEDULE": "शेड्यूल",
             "SECURE ACCESS\nResources in read-only mode": "सुरक्षित पहुँच\nसंसाधन केवल-पढ़ने मोड में",

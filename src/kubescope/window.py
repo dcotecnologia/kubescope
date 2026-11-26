@@ -218,6 +218,7 @@ from kubescope.ui.ui_settings_page import Ui_SettingsPage
 from kubescope.ui.ui_viewer_page import Ui_ViewerPage
 from kubescope.ui.ui_workloads_overview_page import Ui_WorkloadsOverviewPage
 from kubescope.utils import shortcuts
+from kubescope.utils.accessibility import name_icon_buttons
 from kubescope.utils.changelog import news_since, parse_changelog, read_changelog
 from kubescope.utils.diagnostics import configure_logging, log_file
 from kubescope.utils.errors import (
@@ -7919,6 +7920,7 @@ class WorkloadWindow(QMainWindow):
             central = self.centralWidget()
             assert central is not None
             motion.slide_up(central)
+        name_icon_buttons(self)
 
     def changeEvent(self, event: QEvent) -> None:
         if event.type() == QEvent.Type.LanguageChange and hasattr(self, "ui"):

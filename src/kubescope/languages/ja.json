@@ -5,6 +5,10 @@
         "": {
             "none": "なし"
         },
+        "Accessibility": {
+            "Clear": "クリア",
+            "Select all": "すべて選択"
+        },
         "AccountDialog": {
             "AWS profile": "AWS プロファイル",
             "AWS profile (instead of keys)": "AWS プロファイル（キーの代わり）",
@@ -218,6 +222,7 @@
             "COUNT": "回数",
             "CPU": "CPU",
             "Check for updates": "アップデートを確認",
+            "Close": "閉じる",
             "Cluster": "クラスター",
             "Cluster resources and capacity": "クラスターのリソースと容量",
             "Config": "設定",
@@ -261,6 +266,8 @@
             "MIN AVAILABLE": "最小可用数",
             "MIN PODS": "最小 Pod 数",
             "MONITORING": "モニタリング",
+            "Maximize": "最大化",
+            "Minimize": "最小化",
             "Mutating Webhook Configurations": "Mutating Webhook Configurations",
             "NAME": "名前",
             "NAMESPACE": "NAMESPACE",
@@ -296,6 +303,7 @@
             "ReplicaSets": "ReplicaSets",
             "ReplicationControllers": "ReplicationControllers",
             "Resource Quotas": "Resource Quotas",
+            "Restore": "元に戻す",
             "Runtime Classes": "Runtime Classes",
             "SCHEDULE": "スケジュール",
             "SECURE ACCESS\nResources in read-only mode": "安全なアクセス\nリソースは読み取り専用モードです",

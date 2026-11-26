@@ -5,6 +5,10 @@
         "": {
             "none": "لا شيء"
         },
+        "Accessibility": {
+            "Clear": "مسح",
+            "Select all": "تحديد الكل"
+        },
         "AccountDialog": {
             "AWS profile": "ملف تعريف AWS",
             "AWS profile (instead of keys)": "ملف تعريف AWS (بدل المفاتيح)",
@@ -218,6 +222,7 @@
             "COUNT": "العدد",
             "CPU": "CPU",
             "Check for updates": "التحقق من التحديثات",
+            "Close": "إغلاق",
             "Cluster": "العنقود",
             "Cluster resources and capacity": "موارد العنقود وسعته",
             "Config": "الإعدادات",
@@ -261,6 +266,8 @@
             "MIN AVAILABLE": "الحد الأدنى المتاح",
             "MIN PODS": "الحد الأدنى للـ Pods",
             "MONITORING": "المراقبة",
+            "Maximize": "تكبير",
+            "Minimize": "تصغير",
             "Mutating Webhook Configurations": "Mutating Webhook Configurations",
             "NAME": "الاسم",
             "NAMESPACE": "NAMESPACE",
@@ -296,6 +303,7 @@
             "ReplicaSets": "ReplicaSets",
             "ReplicationControllers": "ReplicationControllers",
             "Resource Quotas": "Resource Quotas",
+            "Restore": "استعادة",
             "Runtime Classes": "Runtime Classes",
             "SCHEDULE": "الجدولة",
             "SECURE ACCESS\nResources in read-only mode": "وصول آمن\nالموارد في وضع القراءة فقط",

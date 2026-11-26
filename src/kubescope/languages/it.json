@@ -5,6 +5,10 @@
         "": {
             "none": "nessuno"
         },
+        "Accessibility": {
+            "Clear": "Cancella",
+            "Select all": "Seleziona tutto"
+        },
         "AccountDialog": {
             "AWS profile": "Profilo AWS",
             "AWS profile (instead of keys)": "Profilo AWS (al posto delle chiavi)",
@@ -218,6 +222,7 @@
             "COUNT": "CONTEGGIO",
             "CPU": "CPU",
             "Check for updates": "Verifica aggiornamenti",
+            "Close": "Chiudi",
             "Cluster": "Cluster",
             "Cluster resources and capacity": "Risorse e capacità del cluster",
             "Config": "Configurazione",
@@ -261,6 +266,8 @@
             "MIN AVAILABLE": "MIN DISPONIBILI",
             "MIN PODS": "MIN POD",
             "MONITORING": "MONITORAGGIO",
+            "Maximize": "Ingrandisci",
+            "Minimize": "Riduci a icona",
             "Mutating Webhook Configurations": "Mutating Webhook Configurations",
             "NAME": "NOME",
             "NAMESPACE": "NAMESPACE",
@@ -296,6 +303,7 @@
             "ReplicaSets": "ReplicaSet",
             "ReplicationControllers": "ReplicationController",
             "Resource Quotas": "Resource Quotas",
+            "Restore": "Ripristina",
             "Runtime Classes": "Runtime Classes",
             "SCHEDULE": "PIANIFICAZIONE",
             "SECURE ACCESS\nResources in read-only mode": "ACCESSO SICURO\nRisorse in modalità sola lettura",

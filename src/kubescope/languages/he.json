@@ -5,6 +5,10 @@
         "": {
             "none": "ללא"
         },
+        "Accessibility": {
+            "Clear": "נקה",
+            "Select all": "בחר הכול"
+        },
         "AccountDialog": {
             "AWS profile": "פרופיל AWS",
             "AWS profile (instead of keys)": "פרופיל AWS (במקום מפתחות)",
@@ -218,6 +222,7 @@
             "COUNT": "מספר",
             "CPU": "CPU",
             "Check for updates": "בדוק אם יש עדכונים",
+            "Close": "סגור",
             "Cluster": "אשכול",
             "Cluster resources and capacity": "משאבי האשכול והקיבולת שלו",
             "Config": "תצורה",
@@ -261,6 +266,8 @@
             "MIN AVAILABLE": "מינימום זמינים",
             "MIN PODS": "מינימום Pods",
             "MONITORING": "ניטור",
+            "Maximize": "הגדל",
+            "Minimize": "מזער",
             "Mutating Webhook Configurations": "Mutating Webhook Configurations",
             "NAME": "שם",
             "NAMESPACE": "מרחב שמות",
@@ -296,6 +303,7 @@
             "ReplicaSets": "ReplicaSets",
             "ReplicationControllers": "ReplicationControllers",
             "Resource Quotas": "Resource Quotas",
+            "Restore": "שחזר",
             "Runtime Classes": "Runtime Classes",
             "SCHEDULE": "לוח זמנים",
             "SECURE ACCESS\nResources in read-only mode": "גישה מאובטחת\nמשאבים במצב קריאה בלבד",

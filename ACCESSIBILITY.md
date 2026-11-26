@@ -65,8 +65,6 @@ These come from reviewing the code, not from an audit, so there may be more.
   state of each container are drawn by the app and not by the system, so a screen reader may not announce
   them as a check box or a state. The state of the containers is color, with its name only in the tooltip
   that shows when the pointer is on it; the ready count (`1/1`) beside it is text.
-- **Icon-only buttons.** Some buttons, such as the refresh and the one that hides the side menu, have an icon
-  and a tooltip but may have no accessible name of their own.
 - **Text size.** There is no setting for the size of the text. The app follows the scaling of the
   operating system.
 - **The icons of the groups** that the extension for custom resources adds to the side menu are the first
