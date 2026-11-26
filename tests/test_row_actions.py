@@ -282,3 +282,30 @@ def test_a_button_added_after_the_page_goes_into_the_bar_too(monkeypatch) -> Non
     seen = _fake_menu(monkeypatch)
     actions.show_menu(QPoint(10, 5))
     assert seen == [] or seen == [order]  # the row 0 may not exist: no menu then
+
+
+def test_delete_does_nothing_on_a_page_with_no_button_with_a_bin() -> None:
+    _host, table, _details, _update, _summary, clicked = _page(keys=KEYS)
+    actions = _actions(table)
+    actions._icon_names.clear()  # none of its buttons has the bin of the app
+    table.selectRow(1)
+    actions.key_pressed("row_delete")
+    assert clicked == []
+
+
+def test_the_menu_of_a_page_wears_the_icons_of_the_buttons_of_its_table(
+    monkeypatch,
+) -> None:
+    components = UiComponents()
+    host = QWidget()
+    table = components.data_table(["NAME"], (100,))
+    details = components.button("Details", icon=components.icon("info", "#3220a0"))
+    nothing = components.button("Plain")  # a button with no icon gives none
+    components.page(host, actions=components.row(details, nothing), body=table)
+    KEPT.append(host)
+    menu = FakeMenu()
+    asked = menu.addAction("Details")
+    plain = menu.addAction("Plain")
+    FakeMenu.pick = None
+    components.show_menu(menu, table, 0, 0)
+    assert not asked.icon().isNull() and plain.icon().isNull()

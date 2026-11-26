@@ -3,7 +3,7 @@ person asked to, so a key pressed while the page is open (or the box just has
 the focus) changes nothing."""
 
 from PySide6.QtCore import QEvent, QObject, Qt
-from PySide6.QtGui import QFocusEvent, QKeyEvent, QMouseEvent
+from PySide6.QtGui import QFocusEvent, QKeyEvent
 from PySide6.QtWidgets import QKeySequenceEdit, QLineEdit, QWidget
 
 START_KEYS = (Qt.Key.Key_Return, Qt.Key.Key_Enter, Qt.Key.Key_Space)
@@ -25,10 +25,6 @@ class ShortcutEdit(QKeySequenceEdit):
 
     def _stop(self) -> None:
         self.recording = False
-
-    def mousePressEvent(self, event: QMouseEvent) -> None:
-        self.recording = True
-        super().mousePressEvent(event)
 
     def focusOutEvent(self, event: QFocusEvent) -> None:
         self.recording = False

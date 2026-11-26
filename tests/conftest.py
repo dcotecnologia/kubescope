@@ -178,6 +178,26 @@ def still_windows(monkeypatch):
 
 
 @pytest.fixture(autouse=True)
+def keep_the_font_of_the_app():
+    """A test that changes the text size must not leave the larger font to the
+    tests that follow."""
+    from PySide6.QtWidgets import QApplication
+
+    application = QApplication.instance()
+    saved = QApplication.font() if application is not None else None
+    yield
+    if saved is not None and QApplication.instance() is not None:
+        QApplication.setFont(saved)
+
+
+@pytest.fixture(autouse=True)
+def no_kube_checks_of_this_computer(monkeypatch):
+    """The check of the sign-in programs reads the kubeconfig and the PATH of
+    the computer that runs the tests; a test of it gives its own."""
+    monkeypatch.setattr("kubescope.window.kube_problems", lambda: [])
+
+
+@pytest.fixture(autouse=True)
 def no_recommended_extensions(monkeypatch):
     """The window offers the recommended extensions by downloading them; a test
     offers its own, and never reaches GitHub."""

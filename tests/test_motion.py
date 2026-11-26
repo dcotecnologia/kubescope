@@ -152,3 +152,12 @@ def test_a_bar_grows_to_its_value_or_jumps_when_the_animations_are_off(
     label = QLabel()
     motion.count_up(label, "5")
     assert label.text() == "5"
+
+
+def test_a_number_that_did_not_change_is_not_counted_again(monkeypatch) -> None:
+    monkeypatch.setattr(motion, "COUNT_MS", 60)
+    label = QLabel()
+    motion.count_up(label, "5 pods")
+    _wait(lambda: label.text() == "5 pods")
+    motion.count_up(label, "5 nodes")  # another text, the same number: no counting
+    assert label.text() == "5 nodes"
