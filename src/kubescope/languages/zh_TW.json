@@ -780,6 +780,7 @@
             "Replicas of {name} in {namespace}:": "{namespace} 中 {name} 的副本數：",
             "ReplicationControllers": "ReplicationControllers",
             "ReplicationControllers of the cluster": "叢集的 ReplicationControllers",
+            "Reset the widths": "重設欄寬",
             "Resource Quotas": "Resource Quotas",
             "Resource Quotas of the cluster": "叢集的 Resource Quotas",
             "Resource details and Pod logs, one tab each": "資源詳細資料與 Pod 記錄，各自一個分頁",

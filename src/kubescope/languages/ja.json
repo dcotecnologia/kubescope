@@ -780,6 +780,7 @@
             "Replicas of {name} in {namespace}:": "{namespace} の {name} のレプリカ数:",
             "ReplicationControllers": "ReplicationControllers",
             "ReplicationControllers of the cluster": "クラスターの ReplicationControllers",
+            "Reset the widths": "幅をリセット",
             "Resource Quotas": "Resource Quotas",
             "Resource Quotas of the cluster": "クラスターの Resource Quotas",
             "Resource details and Pod logs, one tab each": "リソースの詳細と Pod のログ（それぞれ別のタブ）",

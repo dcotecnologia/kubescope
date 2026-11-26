@@ -780,6 +780,7 @@
             "Replicas of {name} in {namespace}:": "{namespace} içindeki {name} kopyaları:",
             "ReplicationControllers": "ReplicationControllers",
             "ReplicationControllers of the cluster": "Kümenin ReplicationControllers",
+            "Reset the widths": "Genişlikleri sıfırla",
             "Resource Quotas": "Resource Quotas",
             "Resource Quotas of the cluster": "Kümenin Resource Quotas",
             "Resource details and Pod logs, one tab each": "Kaynak ayrıntıları ve Pod günlükleri, her biri ayrı sekmede",

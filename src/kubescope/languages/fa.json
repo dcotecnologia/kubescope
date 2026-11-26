@@ -780,6 +780,7 @@
             "Replicas of {name} in {namespace}:": "تعداد نسخه‌های {name} در {namespace}:",
             "ReplicationControllers": "ReplicationControllers",
             "ReplicationControllers of the cluster": "ReplicationControllers خوشه",
+            "Reset the widths": "بازنشانی عرض‌ها",
             "Resource Quotas": "Resource Quotas",
             "Resource Quotas of the cluster": "Resource Quotas خوشه",
             "Resource details and Pod logs, one tab each": "جزئیات منبع و گزارش‌های Pod، هر کدام در یک زبانه",

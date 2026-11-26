@@ -780,6 +780,7 @@
             "Replicas of {name} in {namespace}:": "Réplicas de {name} em {namespace}:",
             "ReplicationControllers": "ReplicationControllers",
             "ReplicationControllers of the cluster": "ReplicationControllers do cluster",
+            "Reset the widths": "Redefinir as larguras",
             "Resource Quotas": "Resource Quotas",
             "Resource Quotas of the cluster": "Resource Quotas do cluster",
             "Resource details and Pod logs, one tab each": "Detalhes de recursos e logs de Pods, uma aba para cada",

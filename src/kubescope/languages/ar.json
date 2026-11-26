@@ -780,6 +780,7 @@
             "Replicas of {name} in {namespace}:": "نسخ {name} في {namespace}:",
             "ReplicationControllers": "ReplicationControllers",
             "ReplicationControllers of the cluster": "ReplicationControllers العنقود",
+            "Reset the widths": "إعادة تعيين العروض",
             "Resource Quotas": "Resource Quotas",
             "Resource Quotas of the cluster": "Resource Quotas العنقود",
             "Resource details and Pod logs, one tab each": "تفاصيل المورد وسجلات Pod، في علامة تبويب لكل منهما",

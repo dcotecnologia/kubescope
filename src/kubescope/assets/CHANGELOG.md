@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file. The format 
 - On a list, **Enter** opens the details of the row, and **Delete** and **Ctrl+E** delete and edit it in the write mode, when the button of the action is offered for the row; they are in **Settings → Shortcuts** and can be changed, and the keys that cannot be changed (find in a text, close, send to the assistant) are listed there too by @danilogco
 - The row under the pointer shows a **⋯** button that opens the menu of the row, with Details, Logs and the actions of the write mode by @danilogco
 - The pages of the extensions have the actions of the lists: their buttons show only while rows are checked, a **⋯** on the row and the right click open the menu of the page (or **Open**, what its double click does), the menus wear the icons of the actions, and **Enter** and **Delete**, the keys of **Settings → Shortcuts**, work on their rows by @danilogco
+- The columns of a list keep the width you gave them, for each list, and **Reset the widths** (right click on the header) brings the usual ones back by @danilogco
 - The search window lists the pinned screens, then the ones opened last (lists and pages of extensions), before anything else, so going back to one is a key press away by @danilogco
 - The app opens on the page of an extension it was left on (the plugins installed, the RDS instances...), not only on its own lists, so `make dev` keeps the screen you are on after a reload by @danilogco
 - The extensions can ask for a **refresh** icon (`Components.icon("refresh", color)`), a circular arrow, for the buttons that read again or resync by @danilogco
@@ -26,6 +27,7 @@ All notable changes to this project will be documented in this file. The format 
 
 ### Fixed
 
+- **Settings → Text size** now changes the text that has its size written in the style sheet (the menu, the cards, the buttons, the headers of the tables), and the least height of the controls grows with it, not only the base font by @danilogco
 - The side menu is as wide as its longest name needs, unless it was dragged to another width, and never scrolls sideways, so its names are not cut on the left by @danilogco
 - A box of **Settings → Shortcuts** records a key only after a click (or Enter or Space with it in focus), so the keys pressed with the page open no longer change the shortcut that had the focus by @danilogco
 - The first column of **Settings → Shortcuts** is as wide as its longest name, so no name is cut by @danilogco

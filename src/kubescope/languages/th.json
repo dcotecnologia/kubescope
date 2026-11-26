@@ -780,6 +780,7 @@
             "Replicas of {name} in {namespace}:": "จำนวนสำเนาของ {name} ใน {namespace}:",
             "ReplicationControllers": "ReplicationControllers",
             "ReplicationControllers of the cluster": "ReplicationControllers ของคลัสเตอร์",
+            "Reset the widths": "รีเซ็ตความกว้าง",
             "Resource Quotas": "Resource Quotas",
             "Resource Quotas of the cluster": "Resource Quotas ของคลัสเตอร์",
             "Resource details and Pod logs, one tab each": "รายละเอียดทรัพยากรและบันทึก Pod แยกแท็บละอย่าง",

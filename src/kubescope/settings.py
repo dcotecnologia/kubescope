@@ -12,6 +12,8 @@ from kubescope.utils import shortcuts
 
 # A language is a JSON file named by its code (see kubescope.i18n); "auto" follows
 # the system. The choice is checked when it is applied, so a file can add one.
+MIN_COLUMN = 20  # the narrowest and the widest a column of a list is kept at
+MAX_COLUMN = 2000
 MAX_RECENT = 8  # the screens opened last that the app remembers
 TEXT_SIZES = (85, 100, 115, 130, 150)  # percent of the usual size of the text
 _LANGUAGE_CODE = re.compile(r"[a-z]{2,3}(_[A-Za-z0-9]+)?")
@@ -30,6 +32,7 @@ DEFAULTS: dict[str, Any] = {
     "list_sort": {},
     "pinned_views": [],
     "recent_screens": [],
+    "column_widths": {},
     "debug_logging": False,
     "check_updates": True,
     "wrap_log_lines": False,
@@ -187,6 +190,21 @@ class Settings:
             and not isinstance(sort[0], bool)
             and sort[0] >= 0
             and sort[1] in ("asc", "desc")
+        }
+        stored_widths = self._data["column_widths"]
+        self._data["column_widths"] = {
+            str(view): {
+                str(column): width
+                for column, width in widths.items()
+                if str(column).isdigit()
+                and isinstance(width, int)
+                and not isinstance(width, bool)
+                and MIN_COLUMN <= width <= MAX_COLUMN
+            }
+            for view, widths in (
+                stored_widths.items() if isinstance(stored_widths, dict) else []
+            )
+            if isinstance(widths, dict)
         }
         recent = self._data["recent_screens"]
         self._data["recent_screens"] = (
@@ -743,6 +761,20 @@ class Settings:
 
     def set_pinned_views(self, views: list[str]) -> None:
         self._data["pinned_views"] = list(dict.fromkeys(views))
+
+    def column_widths(self, view: str) -> dict[int, int]:
+        """The widths the person gave the columns of a list, by column."""
+        return {
+            int(column): width
+            for column, width in self._data["column_widths"].get(view, {}).items()
+        }
+
+    def set_column_width(self, view: str, column: int, width: int) -> None:
+        widths = self._data["column_widths"].setdefault(view, {})
+        widths[str(column)] = min(max(width, MIN_COLUMN), MAX_COLUMN)
+
+    def reset_column_widths(self, view: str) -> None:
+        self._data["column_widths"].pop(view, None)
 
     def recent_screens(self) -> list[str]:
         """The lists and pages of extensions opened last, the latest first."""

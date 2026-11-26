@@ -780,6 +780,7 @@
             "Replicas of {name} in {namespace}:": "Số bản sao của {name} trong {namespace}:",
             "ReplicationControllers": "ReplicationControllers",
             "ReplicationControllers of the cluster": "ReplicationControllers của cụm",
+            "Reset the widths": "Đặt lại độ rộng",
             "Resource Quotas": "Resource Quotas",
             "Resource Quotas of the cluster": "Resource Quotas của cụm",
             "Resource details and Pod logs, one tab each": "Chi tiết tài nguyên và nhật ký Pod, mỗi loại một tab",

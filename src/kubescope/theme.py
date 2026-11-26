@@ -450,6 +450,25 @@ _DECLARATION = re.compile(r"([a-z-]+)(\s*:\s*)([^;{}]*)")
 _TEXT_PROPERTIES = frozenset({"color", "selection-color"})
 
 
+_FONT_SIZE = re.compile(r"(font-size:\s*)(\d+)(px)")
+_MIN_HEIGHT = re.compile(r"(min-height:\s*)(\d+)(px)")
+
+
+def scale_stylesheet(stylesheet: str, percent: int) -> str:
+    """The sizes of the text of a style sheet, `percent` of what they are; the
+    least height of a control grows with the text (when it grows) so it still
+    fits."""
+    if percent == 100:
+        return stylesheet
+
+    def scaled(match: re.Match[str]) -> str:
+        before, size, unit = match.groups()
+        return f"{before}{max(1, round(int(size) * percent / 100))}{unit}"
+
+    sheet = _FONT_SIZE.sub(scaled, stylesheet)
+    return _MIN_HEIGHT.sub(scaled, sheet) if percent > 100 else sheet
+
+
 def themed_stylesheet(stylesheet: str) -> str:
     """Recolor a style sheet written with the light colors."""
 

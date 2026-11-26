@@ -780,6 +780,7 @@
             "Replicas of {name} in {namespace}:": "{namespace}의 {name} 레플리카 수:",
             "ReplicationControllers": "ReplicationControllers",
             "ReplicationControllers of the cluster": "클러스터의 ReplicationControllers",
+            "Reset the widths": "너비 초기화",
             "Resource Quotas": "Resource Quotas",
             "Resource Quotas of the cluster": "클러스터의 Resource Quotas",
             "Resource details and Pod logs, one tab each": "리소스 세부 정보와 Pod 로그, 각각 별도의 탭",

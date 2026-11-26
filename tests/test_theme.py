@@ -645,3 +645,15 @@ def test_the_legacy_themes_are_the_ones_of_the_extension() -> None:
         "solarized-dark", "solarized-light", "tomorrow-night-blue",
     }  # fmt: skip
     assert all(len(digest) == 64 for digest in theme.LEGACY_THEMES.values())
+
+
+def test_the_sizes_of_the_text_of_a_style_sheet_follow_the_text_size() -> None:
+    from kubescope.theme import scale_stylesheet
+
+    sheet = "QLabel { font-size: 20px; min-height: 28px; padding: 4px; }"
+    assert scale_stylesheet(sheet, 100) == sheet
+    bigger = scale_stylesheet(sheet, 150)
+    assert "font-size: 30px" in bigger and "min-height: 42px" in bigger  # it still fits
+    assert "padding: 4px" in bigger  # what is not text is left as it is
+    smaller = scale_stylesheet(sheet, 85)
+    assert "font-size: 17px" in smaller and "min-height: 28px" in smaller

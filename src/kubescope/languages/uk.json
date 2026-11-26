@@ -780,6 +780,7 @@
             "Replicas of {name} in {namespace}:": "Репліки {name} у {namespace}:",
             "ReplicationControllers": "ReplicationControllers",
             "ReplicationControllers of the cluster": "ReplicationControllers кластера",
+            "Reset the widths": "Скинути ширину",
             "Resource Quotas": "Resource Quotas",
             "Resource Quotas of the cluster": "Resource Quotas кластера",
             "Resource details and Pod logs, one tab each": "Деталі ресурсу та журнали Pod, кожне у власній вкладці",

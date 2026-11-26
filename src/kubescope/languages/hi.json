@@ -780,6 +780,7 @@
             "Replicas of {name} in {namespace}:": "{namespace} में {name} की रेप्लिका:",
             "ReplicationControllers": "ReplicationControllers",
             "ReplicationControllers of the cluster": "क्लस्टर के ReplicationControllers",
+            "Reset the widths": "चौड़ाई रीसेट करें",
             "Resource Quotas": "Resource Quotas",
             "Resource Quotas of the cluster": "क्लस्टर के Resource Quotas",
             "Resource details and Pod logs, one tab each": "संसाधन विवरण और Pod लॉग, हर एक का अलग टैब",

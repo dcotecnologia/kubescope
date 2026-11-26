@@ -1,4 +1,5 @@
 import os
+import re
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
@@ -66,4 +67,26 @@ def test_the_text_size_is_chosen_in_the_preferences(monkeypatch) -> None:
     combo.setCurrentIndex(combo.findData(100))
     window._save_preferences()
     assert application.font().pointSize() == 9
+    window.close()
+
+
+def test_the_text_size_reaches_the_sizes_of_the_style_sheet(monkeypatch) -> None:
+    window = _ready_window(monkeypatch)
+    window._load_settings_form()
+    before = window.styleSheet()
+    first = re.search(r'cardValue"\] \{[^}]*font-size: (\d+)px', before)
+    assert first is not None and first.group(1) == "20"  # the value of a card
+
+    window.settings_ui.textSizeCombo.setCurrentIndex(
+        window.settings_ui.textSizeCombo.findData(150)
+    )
+    window._save_preferences()
+    value = re.search(r'cardValue"\] \{[^}]*font-size: (\d+)px', window.styleSheet())
+    assert value is not None and value.group(1) == "30"  # 20 px at 150%
+
+    window.settings_ui.textSizeCombo.setCurrentIndex(
+        window.settings_ui.textSizeCombo.findData(100)
+    )
+    window._save_preferences()
+    assert window.styleSheet() == before
     window.close()

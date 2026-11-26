@@ -780,6 +780,7 @@
             "Replicas of {name} in {namespace}:": "Replika {name} di {namespace}:",
             "ReplicationControllers": "ReplicationControllers",
             "ReplicationControllers of the cluster": "ReplicationControllers di klaster",
+            "Reset the widths": "Atur ulang lebar",
             "Resource Quotas": "Resource Quotas",
             "Resource Quotas of the cluster": "Resource Quotas di klaster",
             "Resource details and Pod logs, one tab each": "Detail sumber daya dan log Pod, masing-masing satu tab",

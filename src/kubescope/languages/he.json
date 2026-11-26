@@ -780,6 +780,7 @@
             "Replicas of {name} in {namespace}:": "עותקים של {name} ב-{namespace}:",
             "ReplicationControllers": "ReplicationControllers",
             "ReplicationControllers of the cluster": "ReplicationControllers של האשכול",
+            "Reset the widths": "איפוס הרוחבים",
             "Resource Quotas": "Resource Quotas",
             "Resource Quotas of the cluster": "Resource Quotas של האשכול",
             "Resource details and Pod logs, one tab each": "פרטי משאב ויומני Pod, כל אחד בכרטיסייה משלו",

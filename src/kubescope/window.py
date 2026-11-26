@@ -206,6 +206,7 @@ from kubescope.theme import (
     can_delete_theme,
     delete_custom_theme,
     save_custom_theme,
+    scale_stylesheet,
     set_contributed_themes,
     theme_opacity,
     theme_tokens,
@@ -323,6 +324,16 @@ logger = logging.getLogger(__name__)
 PICK_SEARCH_FROM = 6  # a pick of more items than this has a field to narrow it
 PIN_MIME = "application/x-kubescope-pin"  # what a dragged pinned tab carries
 VIEWER_MIME = "application/x-kubescope-viewer"  # the same, for a Details/Logs tab
+LIST_COLUMN_WIDTHS = (  # the usual width of each column of a list
+    (0, 160),
+    (1, 150),
+    (2, 260),
+    (3, 110),
+    (4, 130),
+    (5, 90),
+    (6, 100),
+    (7, 90),
+)
 DESIGNED_COLUMNS = 6  # the columns the table has in main_window.ui
 LIST_DEBOUNCE_MS = 150
 LIST_REFRESH_MS = 5_000  # the list on screen is read again this often
@@ -1503,17 +1514,14 @@ class WorkloadWindow(QMainWindow):
         header.sectionClicked.connect(self._sort_rows)
         self.table.setShowGrid(False)  # the rows draw their own divider
         self._apply_view_columns()
-        for column, width in (
-            (0, 160),
-            (1, 150),
-            (2, 260),
-            (3, 110),
-            (4, 130),
-            (5, 90),
-            (6, 100),
-            (7, 90),
-        ):
-            self.table.setColumnWidth(column, width)
+        self._widths_applying = False  # true while the app sets widths, not the person
+        self._widths_timer = QTimer(self)
+        self._widths_timer.setSingleShot(True)
+        self._widths_timer.setInterval(400)  # one write for a whole drag
+        self._widths_timer.timeout.connect(self._save_settings)
+        self._set_default_widths()
+        self._apply_saved_widths()
+        header.sectionResized.connect(self._column_resized)
         header.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         header.customContextMenuRequested.connect(self._show_column_menu)
         self.table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
@@ -2891,7 +2899,9 @@ class WorkloadWindow(QMainWindow):
             if visible:
                 self.show()  # the attribute needs the window to be created again
         self.setStyleSheet(
-            themed_stylesheet(self._style_template)
+            scale_stylesheet(
+                themed_stylesheet(self._style_template), self.settings.text_size
+            )
             .replace("SORT_UP", _sort_icon_path(up=True))
             .replace("SORT_DOWN", _sort_icon_path(up=False))
             .replace("CHEVRON_LIGHT", _chevron_icon_path("#b8c7dc", "chevron-light"))
@@ -3172,6 +3182,7 @@ class WorkloadWindow(QMainWindow):
             header = self.table.horizontalHeader()
             header.setSortIndicatorShown(False)
             self._apply_view_columns()
+            self._apply_saved_widths()
             self._restore_sort(view)
             self._render_rows()
             key = (self._context(), self._list_namespace(view), view)
@@ -3422,6 +3433,8 @@ class WorkloadWindow(QMainWindow):
                 lambda visible, column=column: self._set_column_visible(column, visible)
             )
             menu.addAction(action)
+        menu.addSeparator()
+        menu.addAction(self.tr("Reset the widths"), self._reset_column_widths)
         menu.exec(self.table.horizontalHeader().mapToGlobal(position))
 
     def _set_column_visible(self, column: int, visible: bool) -> None:
@@ -4426,6 +4439,42 @@ class WorkloadWindow(QMainWindow):
             self.table.setUpdatesEnabled(True)
         self._fit_name_column()
 
+    def _set_default_widths(self) -> None:
+        self._widths_applying = True
+        for column, width in LIST_COLUMN_WIDTHS:
+            self.table.setColumnWidth(column, width)
+        self._widths_applying = False
+
+    def _apply_saved_widths(self) -> None:
+        """Give the columns of the list the widths the person left them
+        with."""
+        saved = self.settings.column_widths(self._view)
+        self._widths_applying = True
+        for column, width in saved.items():
+            if column < self.table.columnCount():
+                self.table.setColumnWidth(column, width)
+        self._widths_applying = False
+        if 2 in saved:
+            self._name_fitted.add(self._view)  # the name has the width it was given
+
+    def _column_resized(self, column: int, _old: int, width: int) -> None:
+        """The person dragged the edge of a column: keep its width for the
+        list."""
+        dragging = QApplication.mouseButtons() & Qt.MouseButton.LeftButton
+        if self._widths_applying or not dragging or self.table.isColumnHidden(column):
+            return
+        self.settings.set_column_width(self._view, column, width)
+        self._widths_timer.start()
+
+    def _reset_column_widths(self) -> None:
+        """Back to the usual widths of the list on screen."""
+        self.settings.reset_column_widths(self._view)
+        self._save_settings()
+        self._name_fitted.discard(self._view)
+        self._apply_view_columns()
+        self._set_default_widths()
+        self._fit_name_column()
+
     def _fit_states_column(self) -> None:
         """READY grows to hold the squares and the count of its widest row; a
         width the person made larger is kept."""
@@ -4972,6 +5021,16 @@ class WorkloadWindow(QMainWindow):
                 allowed = one if allowed is None else allowed & one
         return allowed
 
+    def _view_buttons(self) -> set[QPushButton]:
+        """The buttons of a row that the list on screen has: the Pods only for
+        the workloads, the logs for what is not a resource of the cluster."""
+        buttons = {self.details_button}
+        if self._view in WORKLOAD_VIEWS:
+            buttons.add(self.pods_button)
+        if self._view not in RESOURCE_VIEWS:
+            buttons.add(self.logs_button)
+        return buttons
+
     def _update_workload_actions(self) -> None:
         """Work out what can be done with the row picked (`_offered`, which the
         menus and the keys of the row use) and show the buttons only while rows
@@ -4982,13 +5041,9 @@ class WorkloadWindow(QMainWindow):
         bulk = self._bulk_shapes()
         enabled = self._selected_row() is not None or several
         offered: set[QPushButton] = set()
-        for button, in_view in (
-            (self.pods_button, self._view in WORKLOAD_VIEWS),
-            (self.details_button, True),
-            (self.logs_button, self._view not in RESOURCE_VIEWS),
-        ):
+        for button in (self.pods_button, self.details_button, self.logs_button):
             button.setEnabled(enabled and not self._close_when_worker_stops)
-            if in_view and enabled and not several:
+            if button in self._view_buttons() and enabled and not several:
                 offered.add(button)
         row = self._selected_row()
         allowed = (
@@ -8265,6 +8320,7 @@ class WorkloadWindow(QMainWindow):
             apply_text_size(
                 cast(QApplication, QApplication.instance()), self.settings.text_size
             )
+            self._apply_style()  # the sizes written in the style sheet follow
         self.settings.animations = form.animationsCheck.isChecked()
         self.settings.welcome_dismissed = not form.welcomeCheck.isChecked()
         motion.ENABLED = self.settings.animations

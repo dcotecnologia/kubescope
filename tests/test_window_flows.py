@@ -36,6 +36,7 @@ from PySide6.QtGui import (
     QCloseEvent,
     QColor,
     QHelpEvent,
+    QKeySequence,
     QMouseEvent,
     QPalette,
     QShortcut,
@@ -1225,11 +1226,11 @@ def test_every_workload_list_has_its_menu_entry_title_and_columns(monkeypatch) -
         assert window._view == view
         assert window.ui.pageTitle.text() == f"Workloads: {title}"
         assert _header(window, 3) == ready_header
-        assert window.pods_button.isVisibleTo(window)  # their Pods can be listed
+        assert window.pods_button in window._view_buttons()  # their Pods can be listed
         assert getattr(window.ui, name).isChecked()
 
     window.nav_pods.click()
-    assert not window.pods_button.isVisibleTo(window)
+    assert window.pods_button not in window._view_buttons()
     window.close()
 
 
@@ -1862,8 +1863,9 @@ def test_each_network_list_opens_with_its_own_columns(monkeypatch) -> None:
         assert cell(window.table, 0, 3).text() == "v0"
         assert cell(window.table, 0, extra + 3).text() == "2d"
         assert window.summary_label.text() == f"1 of 1 {title}"
-        assert window.pods_button.isHidden() and window.logs_button.isHidden()
-        assert not window.details_button.isHidden()
+        assert window.pods_button not in window._view_buttons()
+        assert window.logs_button not in window._view_buttons()
+        assert window.details_button in window._view_buttons()
     assert cell(window.table, 0, 0).text() == "ops"
     window._open_list_view("ingressclasses")
     window._show_resources(
@@ -1915,8 +1917,9 @@ def test_each_config_list_opens_with_its_own_columns(monkeypatch) -> None:
         assert cell(window.table, 0, 1).text() == kind
         assert cell(window.table, 0, 3).text() == "v0"
         assert window.summary_label.text() == f"1 of 1 {title}"
-        assert window.pods_button.isHidden() and window.logs_button.isHidden()
-        assert not window.details_button.isHidden()
+        assert window.pods_button not in window._view_buttons()
+        assert window.logs_button not in window._view_buttons()
+        assert window.details_button in window._view_buttons()
         assert "1" in window.status_label.text()
     window.close()
 
@@ -2491,7 +2494,11 @@ def test_ctrl_r_and_f5_press_the_refresh_button_of_the_page_on_screen(
         for shortcut in window.findChildren(QShortcut)
         if shortcut.key().toString() != "Ctrl+F"  # the search of the tab
     )
-    assert keys == sorted(shortcuts.DEFAULTS.values())  # Ctrl+G is for Gabi
+    # Qt writes a key its own way (Delete as Del)
+    written = sorted(
+        QKeySequence(key).toString() for key in shortcuts.DEFAULTS.values()
+    )
+    assert keys == written  # Ctrl+G is for Gabi
 
     for page in (0, 1, 4, 3):
         window.pages.setCurrentIndex(page)
@@ -4563,4 +4570,30 @@ def test_a_list_opens_sorted_as_the_person_left_it(monkeypatch) -> None:
     window.settings.set_list_sort("jobs", 99, False)  # a column that is not there
     window._open_list_view("jobs")
     assert window._sort is None
+    window.close()
+
+
+def test_a_column_the_person_dragged_keeps_its_width_for_the_list(monkeypatch) -> None:
+    from PySide6.QtWidgets import QApplication
+
+    window = _ready_window(monkeypatch)
+    window._open_list_view("pods")
+    window.table.setColumnWidth(5, 133)  # the app, or no button pressed: not kept
+    assert window.settings.column_widths("pods") == {}
+
+    monkeypatch.setattr(
+        QApplication, "mouseButtons", staticmethod(lambda: Qt.MouseButton.LeftButton)
+    )
+    window.table.setColumnWidth(5, 222)  # a drag
+    assert window.settings.column_widths("pods") == {5: 222}
+    monkeypatch.undo()
+
+    window._open_list_view("jobs")
+    window.table.setColumnWidth(5, 77)  # not a drag
+    window._open_list_view("pods")
+    assert window.table.columnWidth(5) == 222  # as the person left the list
+
+    window._reset_column_widths()
+    assert window.settings.column_widths("pods") == {}
+    assert window.table.columnWidth(5) == 90  # the usual one
     window.close()

@@ -4,7 +4,9 @@ from typing import Any, cast
 import pytest
 
 from kubescope.settings import (
+    MAX_COLUMN,
     MAX_RECENT,
+    MIN_COLUMN,
     Settings,
     is_namespace_name,
     log_directory,
@@ -787,3 +789,30 @@ def test_the_screens_opened_last_are_kept_latest_first_without_repeats(
     assert Settings(path).recent_screens() == ["a", "b"]
     path.write_text('{"recent_screens": "pods"}')
     assert Settings(path).recent_screens() == []
+
+
+def test_the_widths_of_the_columns_of_a_list_persist_and_ignore_damaged_values(
+    tmp_path,
+) -> None:
+    path = tmp_path / "settings.json"
+    settings = Settings(path)
+    assert settings.column_widths("pods") == {}
+    settings.set_column_width("pods", 3, 210)
+    settings.set_column_width("pods", 2, 5)  # too narrow: kept at the least
+    settings.set_column_width("jobs", 4, 99999)  # too wide: kept at the most
+    settings.save()
+    assert Settings(path).column_widths("pods") == {3: 210, 2: MIN_COLUMN}
+    assert Settings(path).column_widths("jobs") == {4: MAX_COLUMN}
+
+    settings.reset_column_widths("pods")
+    assert settings.column_widths("pods") == {}
+
+    path.write_text(
+        '{"column_widths": {"a": {"1": 100, "x": 5, "2": "wide", "3": true, "4": 1},'
+        ' "b": 3, "c": {"5": 300}}}'
+    )
+    loaded = Settings(path)
+    assert loaded.column_widths("a") == {1: 100}
+    assert loaded.column_widths("b") == {} and loaded.column_widths("c") == {5: 300}
+    path.write_text('{"column_widths": []}')
+    assert Settings(path).column_widths("pods") == {}
