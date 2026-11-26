@@ -63,3 +63,44 @@ def test_the_buttons_are_named_by_the_caller_and_a_banner_without_more_has_none(
     assert details.isVisible() and text.isHidden() and details.text() == "Details"
     controller.dismiss()
     assert not frame.isVisible()
+
+
+def test_a_failed_load_offers_to_try_again() -> None:
+    host = QWidget()
+    layout = QVBoxLayout(host)
+    frame, label, text = QFrame(), QLabel(), QLabel()
+    details, dismiss, retry = QPushButton(), QPushButton(), QPushButton()
+    for widget in (frame, label, details, dismiss, retry, text):
+        layout.addWidget(widget)
+    host.show()
+    controller = ErrorBanner(frame, label, details, dismiss, text, retry_button=retry)
+    asked: list[int] = []
+    controller.retry_requested.connect(lambda: asked.append(1))
+
+    controller.show_error("Timed out.", "original", retry=True)
+    assert retry.isVisible()
+    retry.click()
+    assert asked == [1] and not frame.isVisible()
+
+    controller.show_error("Access denied.", "original")
+    assert not retry.isVisible()
+    host.close()
+
+
+def test_a_list_that_failed_to_load_is_tried_again_from_the_banner(monkeypatch) -> None:
+    from tests.test_window_flows import _ready_window
+
+    window = _ready_window(monkeypatch)
+    tried: list[int] = []
+    monkeypatch.setattr(window, "refresh", lambda *_a, **_k: tried.append(1))
+    window.error_banner.retry_requested.disconnect()
+    window.error_banner.retry_requested.connect(window.refresh)
+
+    window._show_error("Unable to connect to the server: timed out")
+    assert not window.ui.permissionRetry.isHidden()
+    window.ui.permissionRetry.click()
+    assert tried == [1]
+
+    window._show_action_error("forbidden")
+    assert window.ui.permissionRetry.isHidden()
+    window.close()

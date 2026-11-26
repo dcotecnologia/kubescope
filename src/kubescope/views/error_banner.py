@@ -1,4 +1,4 @@
-from PySide6.QtCore import QObject
+from PySide6.QtCore import QObject, Signal
 from PySide6.QtWidgets import QFrame, QLabel, QPushButton
 
 
@@ -9,6 +9,8 @@ class ErrorBanner(QObject):
     The widgets come from a `.ui` file; this only knows what they do.
     """
 
+    retry_requested = Signal()  # the person asked to try again
+
     def __init__(
         self,
         frame: QFrame,
@@ -17,8 +19,12 @@ class ErrorBanner(QObject):
         dismiss_button: QPushButton,
         details_label: QLabel,
         words: tuple[str, str] = ("Details", "Hide"),
+        retry_button: QPushButton | None = None,
     ) -> None:
         super().__init__(frame)
+        self._retry_button = retry_button
+        if retry_button is not None:
+            retry_button.clicked.connect(self._retry)
         self.frame = frame
         self.label = label
         self.details_label = details_label
@@ -33,18 +39,28 @@ class ErrorBanner(QObject):
         details_button.clicked.connect(self.toggle_details)
 
     def show_error(
-        self, text: str, details: str, words: tuple[str, str] = ("Details", "Hide")
+        self,
+        text: str,
+        details: str,
+        words: tuple[str, str] = ("Details", "Hide"),
+        retry: bool = False,
     ) -> None:
         """Show the banner with a line and the original text of the error; the
-        button that opens it is named by `words` (its closed and open
-        names)."""
+        button that opens it is named by `words` (its closed and open names);
+        `retry` offers to try again."""
         self._words = words
+        if self._retry_button is not None:
+            self._retry_button.setVisible(retry)
         self._label.setText(text)
         self._details_label.setText(details)
         self._details_label.hide()
         self._details_button.setText(words[0])
         self._details_button.setVisible(bool(details) and details != text)
         self._frame.show()
+
+    def _retry(self) -> None:
+        self.dismiss()
+        self.retry_requested.emit()
 
     def dismiss(self) -> None:
         self._frame.hide()

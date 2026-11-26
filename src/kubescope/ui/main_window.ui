@@ -632,7 +632,7 @@ QPushButton#updateButton:hover { background: #f6f6fa; }
         <number>8</number>
        </property>
        <item>
-        <layout class="QHBoxLayout" name="permissionRow" stretch="1,0,0">
+        <layout class="QHBoxLayout" name="permissionRow" stretch="1,0,0,0">
          <item>
           <widget class="QLabel" name="permissionLabel">
            <property name="text">
@@ -640,6 +640,19 @@ QPushButton#updateButton:hover { background: #f6f6fa; }
            </property>
            <property name="wordWrap">
             <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="permissionRetry">
+           <property name="text">
+            <string>Try again</string>
+           </property>
+           <property name="flat">
+            <bool>true</bool>
+           </property>
+           <property name="variant" stdset="0">
+            <string notr="true">link</string>
            </property>
           </widget>
          </item>

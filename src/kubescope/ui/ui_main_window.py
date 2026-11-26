@@ -443,6 +443,13 @@ class Ui_MainWindow(object):
 
         self.permissionRow.addWidget(self.permissionLabel)
 
+        self.permissionRetry = QPushButton(self.permissionBanner)
+        self.permissionRetry.setObjectName(u"permissionRetry")
+        self.permissionRetry.setFlat(True)
+        self.permissionRetry.setProperty(u"variant", u"link")
+
+        self.permissionRow.addWidget(self.permissionRetry)
+
         self.permissionDetails = QPushButton(self.permissionBanner)
         self.permissionDetails.setObjectName(u"permissionDetails")
         self.permissionDetails.setFlat(True)
@@ -1423,6 +1430,7 @@ class Ui_MainWindow(object):
         self.windowCloseButton.setToolTip(QCoreApplication.translate("MainWindow", u"Close", None))
 #endif // QT_CONFIG(tooltip)
         self.noContextsLabel.setText(QCoreApplication.translate("MainWindow", u"No cluster contexts were found in your kubeconfig. Add a cluster to your kubeconfig (for example with the AWS CLI: aws eks update-kubeconfig) and reload.", None))
+        self.permissionRetry.setText(QCoreApplication.translate("MainWindow", u"Try again", None))
         self.permissionDetails.setText(QCoreApplication.translate("MainWindow", u"Details", None))
         self.permissionDismiss.setText(QCoreApplication.translate("MainWindow", u"Dismiss", None))
         self.navSection.setText(QCoreApplication.translate("MainWindow", u"MONITORING", None))

@@ -1142,7 +1142,9 @@ class WorkloadWindow(QMainWindow):
             ui.permissionDetails,
             ui.permissionDismiss,
             ui.permissionDetailsText,
+            retry_button=ui.permissionRetry,
         )
+        self.error_banner.retry_requested.connect(self.refresh)
         self.pages = ui.pages
         self.nav_overview = ui.navOverview
         self.nav_workloads = ui.navWorkloads
@@ -8087,11 +8089,12 @@ class WorkloadWindow(QMainWindow):
             context=context,
         )
 
-    def _show_error_banner(self, message: str) -> None:
+    def _show_error_banner(self, message: str, retry: bool = False) -> None:
         """Show an error of the cluster, the AWS CLI or kubectl in the banner
-        at the top of the window, with the original text one click away."""
+        at the top of the window, with the original text one click away, and a
+        button to try again when `retry` (a list that failed to load)."""
         text = self._banner_text(message)
-        self.error_banner.show_error(text, message.strip(), self._banner_words())
+        self.error_banner.show_error(text, message.strip(), self._banner_words(), retry)
         if is_auth_error(message):
             return  # not signed in: the banner says it, and that is enough
         self._tell_extensions(
@@ -8155,7 +8158,7 @@ class WorkloadWindow(QMainWindow):
         logger.info("Refresh failed: %s", first_line(message))
         if is_auth_error(message):
             self._check_login()
-        self._show_error_banner(message)
+        self._show_error_banner(message, retry=True)
         self._workloads = []
         self._pods = []
         self._resources = []
