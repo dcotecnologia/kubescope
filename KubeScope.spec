@@ -69,6 +69,7 @@ analysis = Analysis(
         *copy_metadata("kubescope"),
         (str(root / "src" / "kubescope" / "assets" / "icon.png"), "kubescope/assets"),
         (str(root / "src" / "kubescope" / "assets" / "tray.png"), "kubescope/assets"),
+        (str(root / "src" / "kubescope" / "assets" / "tray-dark.png"), "kubescope/assets"),
         *(
             (str(path), "kubescope/assets/social")
             for path in sorted(

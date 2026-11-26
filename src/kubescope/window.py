@@ -5,6 +5,7 @@ import json
 import logging
 import math
 import re
+import sys
 import tempfile
 import time
 import zlib
@@ -342,6 +343,18 @@ UPDATE_NOTICE_MS = 4000  # how long "Up to date" stays next to the icon
 
 LOGO_PATH = Path(__file__).resolve().parent / "assets" / "icon.png"
 TRAY_ICON_PATH = LOGO_PATH.with_name("tray.png")  # tighter, for a 22 px slot
+TRAY_ICON_DARK_PATH = LOGO_PATH.with_name("tray-dark.png")  # for a dark panel
+
+
+def _tray_icon() -> QIcon:
+    """The tray icon; on Linux, the light one when the desktop theme is dark,
+    since the panel follows it (the other systems keep the one icon)."""
+    dark = (
+        sys.platform.startswith("linux")
+        and QApplication.styleHints().colorScheme() == Qt.ColorScheme.Dark
+    )
+    return QIcon(str(TRAY_ICON_DARK_PATH if dark else TRAY_ICON_PATH))
+
 
 # Overview rows that open a list when clicked, and the list each opens.
 WORKLOAD_LINKS = {
@@ -2659,7 +2672,7 @@ class WorkloadWindow(QMainWindow):
             if not QSystemTrayIcon.isSystemTrayAvailable():
                 return False
             if self._notice_tray is None:
-                self._notice_tray = QSystemTrayIcon(QIcon(str(TRAY_ICON_PATH)), self)
+                self._notice_tray = QSystemTrayIcon(_tray_icon(), self)
                 self._notice_tray.setToolTip("KubeScope")
                 self._notice_tray.messageClicked.connect(self._message_clicked)
                 self._notice_tray.show()
@@ -8158,7 +8171,7 @@ class WorkloadWindow(QMainWindow):
             self.settings.run_in_background and QSystemTrayIcon.isSystemTrayAvailable()
         )
         if wanted and self._tray is None:
-            tray = QSystemTrayIcon(QIcon(str(TRAY_ICON_PATH)), self)
+            tray = QSystemTrayIcon(_tray_icon(), self)
             tray.setToolTip("KubeScope")
             menu = QMenu(self)
             menu.addAction(self.tr("Show KubeScope"), self.bring_to_front)
@@ -8170,6 +8183,9 @@ class WorkloadWindow(QMainWindow):
             menu.addAction(self.tr("Quit"), self._quit)
             tray.setContextMenu(menu)
             tray.activated.connect(self._tray_activated)
+            QApplication.styleHints().colorSchemeChanged.connect(
+                lambda _scheme: tray.setIcon(_tray_icon())
+            )
             tray.messageClicked.connect(self._message_clicked)
             tray.show()
             self._tray = tray

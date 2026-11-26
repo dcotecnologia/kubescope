@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+### Changed
+
+- On Linux the tray icon is the light one when the desktop theme is dark, and changes with the theme by @danilogco
+
 ## [2.10.0] - 2026-11-25
 
 ### Added

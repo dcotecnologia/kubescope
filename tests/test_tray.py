@@ -1,5 +1,6 @@
 import pytest
-from PySide6.QtGui import QCloseEvent
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QCloseEvent, QIcon
 from PySide6.QtWidgets import QApplication, QMessageBox, QSystemTrayIcon
 
 from kubescope import window as window_module
@@ -371,3 +372,30 @@ def test_a_new_version_clears_the_click_of_the_last_notification(monkeypatch) ->
 
     assert clicked == []
     window._quit()
+
+
+class _Hints:
+    def __init__(self, scheme: Qt.ColorScheme) -> None:
+        self._scheme = scheme
+
+    def colorScheme(self) -> Qt.ColorScheme:
+        return self._scheme
+
+
+def _icon_name(monkeypatch, platform: str, scheme: Qt.ColorScheme) -> str:
+    monkeypatch.setattr(window_module.sys, "platform", platform)
+    monkeypatch.setattr(
+        window_module.QApplication, "styleHints", staticmethod(lambda: _Hints(scheme))
+    )
+    shown = window_module._tray_icon().pixmap(32, 32).toImage()
+    dark = QIcon(str(window_module.TRAY_ICON_DARK_PATH)).pixmap(32, 32).toImage()
+    return "dark" if shown == dark else "light"
+
+
+def test_on_linux_a_dark_theme_gets_the_light_tray_icon(monkeypatch) -> None:
+    assert _icon_name(monkeypatch, "linux", Qt.ColorScheme.Dark) == "dark"
+    assert _icon_name(monkeypatch, "linux", Qt.ColorScheme.Light) == "light"
+
+
+def test_the_other_systems_keep_the_one_tray_icon(monkeypatch) -> None:
+    assert _icon_name(monkeypatch, "win32", Qt.ColorScheme.Dark) == "light"
