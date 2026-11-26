@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+## [2.11.0] - 2026-11-26
+
 ### Added
 
 - A dot beside the cluster selector says whether the cluster answers: green when it does, red when it could not be reached, amber when it needs a sign-in, gray while it is asked; it rings when it turns bad by @danilogco
@@ -22,10 +24,6 @@ All notable changes to this project will be documented in this file. The format 
 - The red banner of a list that failed to load has a **Try again** button by @danilogco
 - **Settings → Text size** makes the text of the app smaller or larger, from 85% to 150%; a few small labels keep their size by @danilogco
 
-### Removed
-
-- The NAMESPACE label beside the namespace box of the lists, which a screen reader still reads by the name of the box by @danilogco
-
 ### Fixed
 
 - With a large **Text size** the values of the cluster info are no longer cut: its cells are made again with the new size by @danilogco
@@ -37,6 +35,7 @@ All notable changes to this project will be documented in this file. The format 
 
 ### Changed
 
+- The NAMESPACE label beside the namespace box of the lists is gone; a screen reader still reads the box by its name by @danilogco
 - The sections of the Settings are one joined bar of buttons, not separate buttons by @danilogco
 - The screenshots of the other themes (`make store-screenshots`) are drawn in their themes, not all in the dark one by @danilogco
 - The search boxes of the extensions (the RDS instances and the installed plugins, for example) have their Aa and .* switches inside the box, as the lists of the app by @danilogco
@@ -842,7 +841,8 @@ The first release.
 
 - Pod logs and resource details are still never written to disk by the app on its own. **Save** is the only exception, and it writes only to the file the user chooses. SECURITY.md says so by @danilogco
 
-[Unreleased]: https://github.com/dcotecnologia/kubescope/compare/v2.10.0...HEAD
+[Unreleased]: https://github.com/dcotecnologia/kubescope/compare/v2.11.0...HEAD
+[2.11.0]: https://github.com/dcotecnologia/kubescope/compare/v2.10.0...v2.11.0
 [2.10.0]: https://github.com/dcotecnologia/kubescope/compare/v2.9.0...v2.10.0
 [2.9.0]: https://github.com/dcotecnologia/kubescope/compare/v2.8.0...v2.9.0
 [2.8.0]: https://github.com/dcotecnologia/kubescope/compare/v2.7.0...v2.8.0
