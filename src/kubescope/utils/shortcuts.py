@@ -18,6 +18,20 @@ DEFAULTS: dict[str, str] = {
     "filter": "Ctrl+Shift+F",
     "context": "Ctrl+Shift+L",
     "help": "?",
+    # the keys of the list, while it has the focus
+    "row_details": "Return",
+    "row_details_alt": "Enter",
+    "row_edit": "Ctrl+E",
+    "row_delete": "Delete",
+}
+
+# id -> key of what the app does with a key that cannot be changed. They are
+# listed in the Settings with the others, and every shortcut of the app is in
+# one of the two (tests/test_shortcuts_listed.py makes sure of it).
+FIXED: dict[str, str] = {
+    "find_in_text": "Ctrl+F",
+    "close": "Esc",
+    "send_message": "Enter",
 }
 
 

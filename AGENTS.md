@@ -141,6 +141,12 @@ Golden rule:
   changes.
   `make store-screenshots` redraws `docs/screenshots/store/` (every theme, for the
   app stores) when the interface changes.
+- **Every keyboard shortcut is in the list of the Settings → Shortcuts.** A key that
+  can be changed is an action of `shortcuts.DEFAULTS` in `utils/shortcuts.py`, with
+  its label in `_shortcut_labels` of `window.py`; a key that cannot be changed is in
+  `shortcuts.FIXED` and is shown there too. Do not read a key anywhere else without
+  listing it: `tests/test_shortcuts_listed.py` fails when a file reads a key that
+  is not accounted for, and `ACCESSIBILITY.md` must stay true.
 
 ## 4) Commits: follow COMMITING.md
 

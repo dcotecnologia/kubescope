@@ -1,7 +1,5 @@
 from kubescope.sdk.models import PodInfo, Workload
 from PySide6.QtCore import QPoint, Qt
-from PySide6.QtGui import QShortcut
-from PySide6.QtTest import QTest
 from PySide6.QtWidgets import QTableWidget, QTableWidgetItem
 
 from kubescope import window as window_module
@@ -552,27 +550,34 @@ def test_enter_opens_the_details_and_delete_and_ctrl_e_act_on_the_row(
     window._update_write_buttons()
 
     keys = {
-        shortcut.key().toString(): shortcut
-        for shortcut in window.table.findChildren(QShortcut)
+        action: window._shortcuts[action]
+        for action in ("row_details", "row_details_alt", "row_edit", "row_delete")
     }
-    assert set(keys) == {"Del", "Ctrl+E"}
+    assert [shortcut.key().toString() for shortcut in keys.values()] == [
+        "Return",
+        "Enter",
+        "Ctrl+E",
+        "Del",
+    ]
     for shortcut in keys.values():  # only while the list has the focus
         assert shortcut.context() == Qt.ShortcutContext.WidgetShortcut
+        assert shortcut.parent() is window.table
 
-    QTest.keyClick(window.table, Qt.Key.Key_Return)  # no row picked: nothing offered
-    keys["Del"].activated.emit()
+    keys["row_details"].activated.emit()  # no row picked: nothing is offered
+    keys["row_delete"].activated.emit()
     assert pressed == []
 
     window.table.selectRow(1)
-    QTest.keyClick(window.table, Qt.Key.Key_Return)
-    assert pressed == ["details"]
+    keys["row_details"].activated.emit()
+    keys["row_details_alt"].activated.emit()
+    assert pressed == ["details", "details"]
 
-    keys["Del"].activated.emit()  # the write mode is off: no Delete button
-    keys["Ctrl+E"].activated.emit()
-    assert pressed == ["details"]
+    keys["row_delete"].activated.emit()  # the write mode is off: no Delete button
+    keys["row_edit"].activated.emit()
+    assert pressed == ["details", "details"]
 
     window.settings.write_mode = True
     window._update_write_buttons()
-    keys["Del"].activated.emit()
-    assert pressed == ["details", "delete"]
+    keys["row_delete"].activated.emit()
+    assert pressed == ["details", "details", "delete"]
     window.close()

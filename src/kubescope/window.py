@@ -1552,15 +1552,6 @@ class WorkloadWindow(QMainWindow):
         self.logs_button.clicked.connect(self._view_logs)
         self.table.itemSelectionChanged.connect(self._update_workload_actions)
         self.table.cellDoubleClicked.connect(lambda _row, _column: self._view_details())
-        # the keys of the row on the list: Enter opens its details, Ctrl+E edits
-        # it and Delete deletes it, as the buttons that show for a picked row do
-        self.table.activated.connect(lambda _index: self._press(self.details_button))
-        for key, shape in (("Delete", "delete"), ("Ctrl+E", "edit")):
-            row_key = QShortcut(QKeySequence(key), self.table)
-            row_key.setContext(Qt.ShortcutContext.WidgetShortcut)
-            row_key.activated.connect(
-                lambda shape=shape: self._press(self.write_buttons[shape])
-            )
         motion.ENABLED = self.settings.animations
         self._shown_once = False
         self.commands = CommandRegistry()
@@ -1656,6 +1647,19 @@ class WorkloadWindow(QMainWindow):
             shortcut = QShortcut(self)
             shortcut.activated.connect(run)
             self._shortcuts[action] = shortcut
+        # the keys of the list: they act on the row picked, as the buttons that
+        # show for it do, and only while the list has the focus
+        row_actions = {
+            "row_details": self.details_button,
+            "row_details_alt": self.details_button,
+            "row_edit": self.write_buttons["edit"],
+            "row_delete": self.write_buttons["delete"],
+        }
+        for action, button in row_actions.items():
+            row_key = QShortcut(self.table)
+            row_key.setContext(Qt.ShortcutContext.WidgetShortcut)
+            row_key.activated.connect(partial(self._press, button))
+            self._shortcuts[action] = row_key
         self._apply_shortcuts()
         self.nav_overview.clicked.connect(lambda: self._show_page(0))
         self.nav_workloads.clicked.connect(lambda: self._toggle_submenu(self.submenu))
@@ -6708,13 +6712,17 @@ class WorkloadWindow(QMainWindow):
             "filter": self.tr("Filter the list"),
             "context": self.tr("Switch cluster"),
             "help": self.tr("Show the shortcuts"),
+            "row_details": self.tr("Open the details of the row"),
+            "row_details_alt": self.tr("Open the details of the row (second shortcut)"),
+            "row_edit": self.tr("Edit the row"),
+            "row_delete": self.tr("Delete the row"),
             **{
                 one.action: one.label
                 for one in self.extension_host.contributions.shortcuts
             },
         }
 
-    def _fill_shortcuts(self, shortcuts: dict[str, str]) -> None:
+    def _fill_shortcuts(self, keys: dict[str, str]) -> None:
         table = self.settings_ui.shortcutsTable
         table.setRowCount(0)
         for row, (action, label) in enumerate(self._shortcut_labels().items()):
@@ -6723,9 +6731,26 @@ class WorkloadWindow(QMainWindow):
             item.setData(Qt.ItemDataRole.UserRole, action)
             item.setFlags(Qt.ItemFlag.ItemIsEnabled)
             table.setItem(row, 0, item)
-            edit = QKeySequenceEdit(QKeySequence(shortcuts.get(action, "")))
+            edit = QKeySequenceEdit(QKeySequence(keys.get(action, "")))
             edit.setMaximumSequenceLength(2)  # a chord, like G then P
             table.setCellWidget(row, 1, edit)
+        fixed = {
+            "find_in_text": self.tr("Find in a text, like the details or the logs"),
+            "close": self.tr("Close the panel or the search of a text"),
+            "send_message": self.tr(
+                "Send a message to the assistant (Shift+Enter: new line)"
+            ),
+        }
+        for action, label in fixed.items():  # the keys that cannot be changed
+            row = table.rowCount()
+            table.insertRow(row)
+            name = QTableWidgetItem(label)
+            name.setData(Qt.ItemDataRole.UserRole, f"fixed:{action}")
+            name.setFlags(Qt.ItemFlag.ItemIsEnabled)
+            table.setItem(row, 0, name)
+            key = QTableWidgetItem(shortcuts.FIXED[action])
+            key.setFlags(Qt.ItemFlag.ItemIsEnabled)  # shown, not edited
+            table.setItem(row, 1, key)
 
     def _shortcuts_from_form(self) -> dict[str, str] | None:
         """The shortcuts in the table; None (with a notice) when two actions

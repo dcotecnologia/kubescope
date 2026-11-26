@@ -6,7 +6,7 @@ All notable changes to this project will be documented in this file. The format 
 
 ### Added
 
-- On a list, **Enter** opens the details of the row, and **Delete** and **Ctrl+E** delete and edit it in the write mode, when the button of the action is offered for the row by @danilogco
+- On a list, **Enter** opens the details of the row, and **Delete** and **Ctrl+E** delete and edit it in the write mode, when the button of the action is offered for the row; they are in **Settings → Shortcuts** and can be changed, and the keys that cannot be changed (find in a text, close, send to the assistant) are listed there too by @danilogco
 - The row under the pointer shows a **⋯** button that opens the menu of the row, with Details, Logs and the actions of the write mode by @danilogco
 - A list opens sorted as it was left, for each list by @danilogco
 - A list with no row says why and what to do: how many rows the search hides, that the namespace chosen has none while the others may, or to try again when it could not load by @danilogco
