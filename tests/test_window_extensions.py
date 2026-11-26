@@ -471,8 +471,16 @@ def test_the_list_on_screen_says_why_it_shows_no_row(monkeypatch) -> None:
 
     assert window._empty_text(0, 0) == ""  # read, and it has none: the default text
     window._load_ok = False
-    assert window._empty_text(0, 0) == "Could not load this list"
-    assert window._empty_text(0, 5) == "No result matches the search"
+    assert window._empty_text(0, 0).startswith("Could not load this list")
+    assert window._empty_text(0, 5) == (
+        "No result matches the search. Clear it to see the 5 hidden."
+    )
+    assert window._empty_text(2, 5) == ""
+    window._load_ok = True
+    monkeypatch.setattr(window, "_list_namespace", lambda _view: "kube-system")
+    assert window._empty_text(0, 0).startswith(
+        "Nothing here in the namespace kube-system."
+    )
     assert window._empty_text(3, 5) == ""
     window.close()
 

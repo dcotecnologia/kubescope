@@ -4007,13 +4007,24 @@ class WorkloadWindow(QMainWindow):
         self._shimmer_for(table).set_message(message or self.tr("Nothing to show here"))
 
     def _empty_text(self, shown: int, total: int) -> str:
-        """Why the list on screen shows no row: it could not be read, it has
-        none, or the search hides every one."""
-        if shown or not total and self._load_ok:
+        """Why the list on screen shows no row, and what to do: it could not be
+        read, it has none (in one namespace, another may have), or the search
+        hides every one."""
+        if shown:
             return ""
         if total:
-            return self.tr("No result matches the search")
-        return self.tr("Could not load this list")
+            return self.tr(
+                "No result matches the search. Clear it to see the {total} hidden."
+            ).format(total=total)
+        if not self._load_ok:
+            return self.tr("Could not load this list. Use Try again or refresh.")
+        namespace = self._list_namespace(self._view)
+        if namespace:
+            return self.tr(
+                "Nothing here in the namespace {namespace}. "
+                "Choose All namespaces to look in the others."
+            ).format(namespace=namespace)
+        return ""
 
     def _sync_loading(self) -> None:
         """Spin the refresh button while the list on screen loads; the context
