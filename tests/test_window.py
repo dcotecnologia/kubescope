@@ -678,7 +678,7 @@ def test_pods_menu_lists_pods_and_deployments_menu_lists_deployments(
     window.nav_deployments.click()
     assert window.ui.pageTitle.text() == "Workloads: Deployments"
     assert present(window.table.horizontalHeaderItem(1)).text() == "KIND"
-    assert window.pods_button.isVisibleTo(window)
+    assert not window.pods_button.isVisibleTo(window)  # until a row is picked
     window.close()
 
 

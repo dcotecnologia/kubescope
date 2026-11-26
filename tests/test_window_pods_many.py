@@ -123,6 +123,9 @@ def test_the_boxes_survive_a_new_read_and_go_with_the_pods_that_leave(
 
 def test_with_pods_checked_only_evict_and_delete_are_offered(monkeypatch) -> None:
     window, _ran = _pods_window(monkeypatch)
+    assert not window.details_button.isVisibleTo(window)  # no row picked: no buttons
+    assert not window.write_buttons["shell"].isVisibleTo(window)
+    window.table.selectRow(0)
     assert window.details_button.isVisibleTo(window)
     assert window.write_buttons["shell"].isVisibleTo(window)
 
@@ -137,6 +140,7 @@ def test_with_pods_checked_only_evict_and_delete_are_offered(monkeypatch) -> Non
         assert window.write_buttons[shape].isEnabled()
 
     _check(window, 0, 1, checked=False)  # none checked: everything is back
+    window.table.selectRow(0)
     assert window.details_button.isVisibleTo(window)
     assert window.write_buttons["shell"].isVisibleTo(window)
     window.close()

@@ -362,6 +362,9 @@
             "READY": "SẴN SÀNG",
             "View logs": "Xem nhật ký"
         },
+        "RowMenuButton": {
+            "Actions for this row": "Thao tác cho dòng này"
+        },
         "SettingsPage": {
             "ACTION": "THAO TÁC",
             "APPEARANCE": "GIAO DIỆN",

@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file. The format 
 
 ### Added
 
+- The row under the pointer shows a **⋯** button that opens the menu of the row, with Details, Logs and the actions of the write mode by @danilogco
 - A list opens sorted as it was left, for each list by @danilogco
 - A list with no row says why and what to do: how many rows the search hides, that the namespace chosen has none while the others may, or to try again when it could not load by @danilogco
 - The red banner of a list that failed to load has a **Try again** button by @danilogco
@@ -21,6 +22,7 @@ All notable changes to this project will be documented in this file. The format 
 
 ### Changed
 
+- The buttons above a list (Details, Logs and the actions of the write mode) show only while a row is selected or checked, and the Aa and .* switches of the search are inside its box by @danilogco
 - `make screenshot` and the preview show the extensions installed on the computer, from a copy of their folder, so the real settings are still never read or written by @danilogco
 - The buttons, the selects and the text boxes are smaller (28 px high instead of 36 to 38), so the lists and the pages get more room by @danilogco
 - On Linux the tray icon is the light one when the desktop theme is dark, and changes with the theme by @danilogco

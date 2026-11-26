@@ -362,6 +362,9 @@
             "READY": "HAZIR",
             "View logs": "Günlükleri göster"
         },
+        "RowMenuButton": {
+            "Actions for this row": "Bu satırın eylemleri"
+        },
         "SettingsPage": {
             "ACTION": "EYLEM",
             "APPEARANCE": "GÖRÜNÜM",

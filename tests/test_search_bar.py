@@ -298,3 +298,27 @@ def test_the_details_show_the_raw_yaml_too() -> None:
     assert tab.editor.toPlainText().startswith("{")
     assert not tab.highlighter.yaml
     assert tab.save_name == "pod-api.json"
+
+
+def test_the_switches_of_a_search_sit_inside_its_box() -> None:
+    from PySide6.QtWidgets import QLineEdit, QPushButton, QWidget
+
+    from kubescope.views.search_bar import INLINE_SIZE, embed_switches
+
+    host = QWidget()
+    edit = QLineEdit(host)
+    edit.resize(300, 28)
+    first, second = QPushButton("Aa"), QPushButton(".*")
+    embed_switches(edit, [first, second])
+    host.show()
+
+    assert first.parent() is edit and second.parent() is edit
+    assert first.property("variant") == "inline"
+    assert first.size().width() == INLINE_SIZE[0]
+    assert first.x() > second.x()  # the first is the right-most
+    assert first.x() + first.width() <= edit.width()
+    assert edit.textMargins().right() > 2 * INLINE_SIZE[0]  # the text stops before them
+
+    edit.resize(200, 28)  # follows the box
+    assert first.x() + first.width() <= 200
+    host.close()

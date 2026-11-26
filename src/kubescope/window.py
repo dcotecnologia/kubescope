@@ -265,7 +265,8 @@ from kubescope.views.log_tab import LOG_REFRESH_MS, LogTab
 from kubescope.views.nav_chevron import NavChevron
 from kubescope.views.nav_section import SectionFold
 from kubescope.views.pulse import pulse
-from kubescope.views.search_bar import compile_query, switch_button
+from kubescope.views.row_menu_button import RowMenuButton
+from kubescope.views.search_bar import compile_query, embed_switches, switch_button
 from kubescope.views.sidebar_resizer import SidebarResizer
 from kubescope.views.sidebar_toggle import SidebarToggle
 from kubescope.views.table_sort import HeaderSorter
@@ -1058,10 +1059,12 @@ class WorkloadWindow(QMainWindow):
         # the switches of the search: Aa matches the case, .* reads a regular expression
         self.search_case_button = switch_button("Aa", self.tr("Match case"))
         self.search_regex_button = switch_button(".*", self.tr("Regular expression"))
+        # the switches sit inside the end of the box, as one control with it
+        embed_switches(
+            ui.searchInput, [self.search_regex_button, self.search_case_button]
+        )
         filters = cast(QHBoxLayout, ui.filtersBar.layout())
         at = filters.indexOf(ui.searchInput) + 1
-        for button in (self.search_regex_button, self.search_case_button):
-            filters.insertWidget(at, button)
         self.event_type_combo = QComboBox()  # the events list only
         self.event_type_combo.setProperty("variant", "filter")
         for label, event_type in (
@@ -1072,13 +1075,13 @@ class WorkloadWindow(QMainWindow):
             self.event_type_combo.addItem(label, event_type)
         self.event_type_combo.setVisible(False)
         self.event_type_combo.currentIndexChanged.connect(self._filter_rows)
-        filters.insertWidget(at + 2, self.event_type_combo)
+        filters.insertWidget(at, self.event_type_combo)
         self.event_reason_combo = QComboBox()  # the reasons the events list shows
         self.event_reason_combo.setProperty("variant", "filter")
         self.event_reason_combo.addItem(self.tr("All reasons"), "")
         self.event_reason_combo.setVisible(False)
         self.event_reason_combo.currentIndexChanged.connect(self._filter_rows)
-        filters.insertWidget(at + 3, self.event_reason_combo)
+        filters.insertWidget(at + 1, self.event_reason_combo)
         self._flow_the_filters(ui.filtersBar)
         self.refresh_button = ui.refreshButton
         self.summary_label = ui.summaryLabel
@@ -1113,7 +1116,6 @@ class WorkloadWindow(QMainWindow):
         self._checked: set[tuple[str, str, str]] = set()  # (kind, namespace, name)
         self._filling = False  # the boxes are being set by the window, not the person
         self._stamped_column = -1  # the column that has the boxes now
-        self._hidden_for_many: set[QPushButton] = set()  # hidden while rows are checked
         self.table.itemChanged.connect(self._item_changed)
         states_delegate = ContainerStatesDelegate(self.table)
         # the containers of a Pod and the replicas of a workload, in READY
@@ -1497,6 +1499,8 @@ class WorkloadWindow(QMainWindow):
         header.customContextMenuRequested.connect(self._show_column_menu)
         self.table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.table.customContextMenuRequested.connect(self._show_row_menu)
+        self.row_menu_button = RowMenuButton(self.table)
+        self.row_menu_button.requested.connect(self._show_row_menu)
         self._style_template = self.styleSheet()
         self._apply_style()
         self._sync_tray()
@@ -3269,8 +3273,6 @@ class WorkloadWindow(QMainWindow):
             widget.setVisible(self._view == "nodegroups")
         self.event_type_combo.setVisible(self._view == "events")
         self.event_reason_combo.setVisible(self._view == "events")
-        self.pods_button.setVisible(self._view in WORKLOAD_VIEWS)
-        self.logs_button.setVisible(self._view not in RESOURCE_VIEWS)
         self._update_write_buttons()
         hidden = self.settings.hidden_columns(self._view) | self._always_hidden()
         for column in range(self.table.columnCount()):
@@ -4857,15 +4859,15 @@ class WorkloadWindow(QMainWindow):
         several = bool(checked)  # rows with the box checked: only what is for many
         bulk = self._bulk_shapes()
         enabled = self._selected_row() is not None or several
-        for button in (self.pods_button, self.details_button, self.logs_button):
+        # nothing is offered until a row is selected or checked; the right-click
+        # menu and the menu of the row are there for the one that is not
+        for button, in_view in (
+            (self.pods_button, self._view in WORKLOAD_VIEWS),
+            (self.details_button, True),
+            (self.logs_button, self._view not in RESOURCE_VIEWS),
+        ):
             button.setEnabled(enabled and not self._close_when_worker_stops)
-            if several and not button.isHidden():  # not for many: out of the row
-                button.hide()
-                self._hidden_for_many.add(button)
-        if not several:
-            for button in self._hidden_for_many:
-                button.show()
-            self._hidden_for_many.clear()
+            button.setVisible(in_view and enabled and not several)
         row = self._selected_row()
         allowed = (
             self._allowed_for(checked)
@@ -4880,7 +4882,8 @@ class WorkloadWindow(QMainWindow):
                 and not self._close_when_worker_stops
             )
             button.setVisible(
-                shape in self._shown_shapes
+                enabled
+                and shape in self._shown_shapes
                 and (works_on_many or not several)
                 and (allowed is None or shape in allowed)
             )

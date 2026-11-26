@@ -362,6 +362,9 @@
             "READY": "준비됨",
             "View logs": "로그 보기"
         },
+        "RowMenuButton": {
+            "Actions for this row": "이 행의 작업"
+        },
         "SettingsPage": {
             "ACTION": "동작",
             "APPEARANCE": "모양",

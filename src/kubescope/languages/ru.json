@@ -362,6 +362,9 @@
             "READY": "ГОТОВО",
             "View logs": "Показать журналы"
         },
+        "RowMenuButton": {
+            "Actions for this row": "Действия для этой строки"
+        },
         "SettingsPage": {
             "ACTION": "ДЕЙСТВИЕ",
             "APPEARANCE": "ВНЕШНИЙ ВИД",

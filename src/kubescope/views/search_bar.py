@@ -4,7 +4,7 @@ moves between them."""
 
 import re
 
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import QEvent, QObject, Qt, Signal
 from PySide6.QtGui import QColor, QKeyEvent, QTextCharFormat, QTextCursor
 from PySide6.QtWidgets import (
     QApplication,
@@ -87,6 +87,48 @@ class _SearchInput(QLineEdit):
             self.escaped.emit()
             return
         super().keyPressEvent(event)
+
+
+INLINE_SIZE = (26, 20)  # a switch inside the search box
+CLEAR_SPACE = 26  # kept at the end of the box for its clear button
+
+
+class _Placer(QObject):
+    """Keeps the switches inside the end of the box as it is resized."""
+
+    def __init__(self, edit: QLineEdit, buttons: list[QPushButton]) -> None:
+        super().__init__(edit)
+        self._edit = edit
+        self._buttons = buttons
+        edit.installEventFilter(self)
+        self.place()
+
+    def place(self) -> None:
+        edit = self._edit
+        x = edit.width() - CLEAR_SPACE
+        for button in self._buttons:
+            x -= INLINE_SIZE[0] + 2
+            button.move(x, (edit.height() - INLINE_SIZE[1]) // 2)
+            button.raise_()
+
+    def eventFilter(self, watched: QObject, event: QEvent) -> bool:
+        if event.type() in (QEvent.Type.Resize, QEvent.Type.Show):
+            self.place()
+        return False
+
+
+def embed_switches(edit: QLineEdit, buttons: list[QPushButton]) -> None:
+    """Put the switches of a search (the first one is the right-most) inside
+    the end of its box, so the box and its switches are one control."""
+    for button in buttons:
+        button.setParent(edit)
+        button.setFixedSize(*INLINE_SIZE)
+        button.setProperty("variant", "inline")
+        button.setCursor(Qt.CursorShape.PointingHandCursor)
+        button.show()
+    reserve = len(buttons) * (INLINE_SIZE[0] + 2) + CLEAR_SPACE
+    edit.setTextMargins(0, 0, reserve, 0)
+    _Placer(edit, buttons)
 
 
 class SearchBar(QWidget):

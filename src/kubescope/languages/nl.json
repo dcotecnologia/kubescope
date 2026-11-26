@@ -362,6 +362,9 @@
             "READY": "GEREED",
             "View logs": "Logs bekijken"
         },
+        "RowMenuButton": {
+            "Actions for this row": "Acties voor deze rij"
+        },
         "SettingsPage": {
             "ACTION": "ACTIE",
             "APPEARANCE": "UITERLIJK",

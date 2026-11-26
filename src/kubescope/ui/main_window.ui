@@ -187,6 +187,17 @@ QPushButton#sidebarToggleButton {
     padding: 0; min-width: 28px; max-width: 28px; min-height: 28px; max-height: 28px;
 }
 QPushButton#sidebarToggleButton:hover { background: #f3f4f7; }
+QPushButton[variant="inline"] {
+    background: transparent; color: #4f5966; border: 0; border-radius: 4px;
+    padding: 0; font-size: 11px; font-weight: 700;
+}
+QPushButton[variant="inline"]:hover { background: #f3f4f7; color: #3220a0; }
+QPushButton[variant="inline"]:checked { background: #eee9f7; color: #3220a0; }
+QToolButton[rowMenu="true"] {
+    background: #ffffff; color: #4f5966; border: 1px solid #e1e3e9;
+    border-radius: 5px; font-size: 14px; font-weight: 700; padding: 0;
+}
+QToolButton[rowMenu="true"]:hover { background: #f3f4f7; color: #3220a0; }
 QLabel#summaryLabel { color: #4f5966; font-size: 11px; font-weight: 600; }
 QTableWidget[variant="data"] {
     background: #ffffff; color: #242a33;

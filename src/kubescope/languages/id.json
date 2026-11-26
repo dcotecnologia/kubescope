@@ -362,6 +362,9 @@
             "READY": "SIAP",
             "View logs": "Lihat log"
         },
+        "RowMenuButton": {
+            "Actions for this row": "Tindakan untuk baris ini"
+        },
         "SettingsPage": {
             "ACTION": "TINDAKAN",
             "APPEARANCE": "TAMPILAN",

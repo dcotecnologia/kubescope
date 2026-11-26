@@ -362,6 +362,9 @@
             "READY": "GOTOWE",
             "View logs": "Pokaż logi"
         },
+        "RowMenuButton": {
+            "Actions for this row": "Akcje dla tego wiersza"
+        },
         "SettingsPage": {
             "ACTION": "AKCJA",
             "APPEARANCE": "WYGLĄD",

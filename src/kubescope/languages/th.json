@@ -362,6 +362,9 @@
             "READY": "พร้อม",
             "View logs": "ดูบันทึก"
         },
+        "RowMenuButton": {
+            "Actions for this row": "การดำเนินการของแถวนี้"
+        },
         "SettingsPage": {
             "ACTION": "การกระทำ",
             "APPEARANCE": "รูปลักษณ์",

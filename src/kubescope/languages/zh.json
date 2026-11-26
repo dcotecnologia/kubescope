@@ -362,6 +362,9 @@
             "READY": "就绪",
             "View logs": "查看日志"
         },
+        "RowMenuButton": {
+            "Actions for this row": "此行的操作"
+        },
         "SettingsPage": {
             "ACTION": "操作",
             "APPEARANCE": "外观",

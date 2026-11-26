@@ -362,6 +362,9 @@
             "READY": "BEREIT",
             "View logs": "Logs anzeigen"
         },
+        "RowMenuButton": {
+            "Actions for this row": "Aktionen für diese Zeile"
+        },
         "SettingsPage": {
             "ACTION": "AKTION",
             "APPEARANCE": "ERSCHEINUNGSBILD",

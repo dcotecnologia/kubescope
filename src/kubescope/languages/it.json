@@ -362,6 +362,9 @@
             "READY": "PRONTI",
             "View logs": "Mostra i log"
         },
+        "RowMenuButton": {
+            "Actions for this row": "Azioni di questa riga"
+        },
         "SettingsPage": {
             "ACTION": "AZIONE",
             "APPEARANCE": "ASPETTO",
