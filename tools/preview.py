@@ -7,6 +7,7 @@ file and exit.
 """
 
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -21,6 +22,7 @@ from kubescope.sdk.models import (
     PodInfo,
     Workload,
 )
+from kubescope.sdk.paths import config_directory
 from PySide6.QtCore import QFileSystemWatcher
 from PySide6.QtWidgets import QApplication
 
@@ -28,10 +30,26 @@ from kubescope import window
 from kubescope.theme import apply_theme
 from kubescope.utils.fonts import apply_fonts
 
-# The preview must never read or overwrite the real user settings.
-os.environ.setdefault(
-    "KUBESCOPE_CONFIG_DIR", tempfile.mkdtemp(prefix="kubescope-preview-")
-)
+
+def throwaway_config() -> str:
+    """A folder for the settings of the preview, so it never reads or
+    overwrites the real ones, with a copy of the extensions installed on this
+    computer (their registry, and what was installed from a file or a
+    repository) so the window shows them as it does for the person."""
+    folder = Path(tempfile.mkdtemp(prefix="kubescope-preview-"))
+    installed = config_directory() / "extensions"
+    if installed.is_dir():
+        shutil.copytree(
+            installed,
+            folder / "extensions",
+            ignore=shutil.ignore_patterns("staging"),
+            dirs_exist_ok=True,
+        )
+    return str(folder)
+
+
+if "KUBESCOPE_CONFIG_DIR" not in os.environ:
+    os.environ["KUBESCOPE_CONFIG_DIR"] = throwaway_config()
 
 WORKLOADS = [
     Workload("default", "Deployment", "api", 3, 3, "12d"),
