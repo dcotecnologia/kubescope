@@ -29,6 +29,7 @@ LISTED = {
     "views/search_bar.py": "FIXED close",
     "extensions/side_panel.py": "FIXED close",
     "extensions/chat_view.py": "FIXED send_message",
+    "views/shortcut_edit.py": "the box that records the keys of the Settings",
 }
 
 

@@ -166,6 +166,7 @@ from kubescope.extensions.cluster_access import ClusterBridge
 from kubescope.extensions.components import UiComponents
 from kubescope.extensions.context import Host, data_directory
 from kubescope.extensions.loader import ExtensionLoader
+from kubescope.extensions.palette import SearchEntry
 from kubescope.extensions.registries import CommandRegistry
 from kubescope.extensions.store import ExtensionStore, Installed
 from kubescope.extensions.watcher import FolderWatcher
@@ -267,6 +268,7 @@ from kubescope.views.nav_section import SectionFold
 from kubescope.views.pulse import pulse
 from kubescope.views.row_menu_button import RowMenuButton
 from kubescope.views.search_bar import compile_query, embed_switches, switch_button
+from kubescope.views.shortcut_edit import ShortcutEdit
 from kubescope.views.sidebar_resizer import SidebarResizer
 from kubescope.views.sidebar_toggle import SidebarToggle
 from kubescope.views.table_sort import HeaderSorter
@@ -1617,6 +1619,7 @@ class WorkloadWindow(QMainWindow):
                 lambda title, label, headers, rows, moments: self._pick_row(
                     title, label, headers, rows, moments
                 ),
+                lambda: self._palette_actions(),
             ),
             begin_forward=lambda *args: self._begin_forward(*args),
             commands=self.commands,
@@ -6731,7 +6734,8 @@ class WorkloadWindow(QMainWindow):
             item.setData(Qt.ItemDataRole.UserRole, action)
             item.setFlags(Qt.ItemFlag.ItemIsEnabled)
             table.setItem(row, 0, item)
-            edit = QKeySequenceEdit(QKeySequence(keys.get(action, "")))
+            edit = ShortcutEdit()
+            edit.setKeySequence(QKeySequence(keys.get(action, "")))
             edit.setMaximumSequenceLength(2)  # a chord, like G then P
             table.setCellWidget(row, 1, edit)
         fixed = {
@@ -7239,6 +7243,59 @@ class WorkloadWindow(QMainWindow):
         if last not in self._filled_cards:  # a spacer under what is in the card
             self._filled_cards.add(last)
             inner.addStretch()  # no stretch of its own: the table takes the room
+
+    def _palette_actions(self) -> list[SearchEntry]:
+        """What the app itself can do, for the search window to offer beside the
+        screens and the resources an extension lists: the actions that need no
+        row, the themes, and the clusters and namespaces to change to."""
+        action = self.tr("Action")
+        found = [
+            SearchEntry(self.tr("Refresh"), action, self._press_refresh),
+            SearchEntry(
+                self.tr("Check for updates"), action, self.check_updates_by_hand
+            ),
+            SearchEntry(self.tr("Show the shortcuts"), action, self._show_shortcuts),
+        ]
+        names = {"light": self.tr("Light"), "dark": self.tr("Dark")}
+        for theme in available_themes():
+            if theme.id != self.settings.theme:
+                label = self.tr("Use the {theme} theme").format(
+                    theme=names.get(theme.id, theme.name)
+                )
+                found.append(
+                    SearchEntry(
+                        label, self.tr("Theme"), partial(self._use_theme, theme.id)
+                    )
+                )
+        for combo, template, detail in (
+            (
+                self.context_combo,
+                self.tr("Switch to the cluster {name}"),
+                self.tr("Cluster"),
+            ),
+            (
+                self.namespace_combo,
+                self.tr("Show the namespace {name}"),
+                self.tr("Namespace"),
+            ),
+        ):
+            for index in range(combo.count()):
+                if index != combo.currentIndex():
+                    found.append(
+                        SearchEntry(
+                            template.format(name=combo.itemText(index)),
+                            detail,
+                            partial(combo.setCurrentIndex, index),
+                        )
+                    )
+        return found
+
+    def _use_theme(self, theme_id: str) -> None:
+        """Change the theme from the search window, as the Settings do."""
+        self.settings.theme = theme_id
+        self._save_settings()
+        self._fill_theme_combo(theme_id)
+        self._apply_theme()
 
     def _register_commands(self) -> None:
         """Offer what a person does by hand under a name, for the extensions.

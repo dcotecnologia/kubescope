@@ -121,3 +121,39 @@ def test_a_screen_reached_by_a_shortcut_opens_its_section_of_the_menu(
 
     window._reveal_in_menu(window.ui.settingsButton)  # no section holds it
     window._show_page(4)  # the workloads overview has its own entry
+
+
+def test_the_search_window_offers_the_actions_of_the_app(window, monkeypatch) -> None:
+    window.context_combo.addItem("staging")
+    window.namespace_combo.addItem("kube-system", "kube-system")
+    here = window.namespace_combo.currentText()
+    by_label = {entry.label: entry for entry in window._palette_actions()}
+
+    for label in (
+        "Refresh",
+        "Check for updates",
+        "Show the shortcuts",
+        "Switch to the cluster staging",
+        "Show the namespace kube-system",
+    ):
+        assert label in by_label
+    assert "Switch to the cluster prod" not in by_label  # where it already is
+    assert f"Show the namespace {here}" not in by_label
+
+    themes = [label for label in by_label if label.startswith("Use the ")]
+    assert themes and by_label[themes[0]].detail == "Theme"
+
+    index = window.namespace_combo.findText("kube-system")
+    by_label["Switch to the cluster staging"].run()
+    assert window._context() == "staging"
+    chosen = by_label["Show the namespace kube-system"].run
+    assert chosen.args == (index,)  # type: ignore[attr-defined]
+
+    shown: list[int] = []
+    monkeypatch.setattr(window, "_apply_theme", lambda: shown.append(1))
+    monkeypatch.setattr(window, "_save_settings", lambda: None)
+    by_label[themes[0]].run()
+    assert shown == [1]
+    assert window.settings.theme != ""
+    by_label["Show the shortcuts"].run()
+    assert window.pages.currentIndex() == 2

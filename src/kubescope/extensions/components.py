@@ -56,7 +56,7 @@ from kubescope.extensions import background as background_module
 from kubescope.extensions.chat_dock import AssistantDock
 from kubescope.extensions.chat_view import ChatView
 from kubescope.extensions.icons import FOCUS_ICON, ICONS, SPARKLE_ICON
-from kubescope.extensions.palette import Palette
+from kubescope.extensions.palette import Palette, SearchEntry
 from kubescope.extensions.side_panel import CounterButton, NoticeCard, SidePanel
 from kubescope.views.check_header import CheckHeader
 from kubescope.views.container_states import BADGE_ROLE, BadgeDelegate
@@ -134,7 +134,9 @@ class UiComponents:
         themed: Callable[[str], str] = lambda color: color,
         style_box: Callable[[QMessageBox], None] = lambda _box: None,
         themed_text: Callable[[str, bool], str] | None = None,
+        palette_actions: Callable[[], list[SearchEntry]] = lambda: [],
     ) -> None:
+        self._palette_actions = palette_actions
         self._badge_colors = badge_colors
         self._themed = themed
         self._style_box = style_box
@@ -825,6 +827,7 @@ class UiComponents:
             title,
             placeholder,
             loading,
+            self._palette_actions,
         )
 
     def copy_text(self, text: str) -> None:

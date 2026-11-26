@@ -9,6 +9,7 @@ from kubescope.sdk import Components
 from PySide6.QtWidgets import QMessageBox, QWidget
 
 from kubescope.extensions.components import UiComponents
+from kubescope.extensions.palette import SearchEntry
 
 _ICONS = {
     "information": QMessageBox.Icon.Information,
@@ -50,9 +51,14 @@ class WindowUi:
             [str, str, list[str], list[list[str]], list[datetime.datetime] | None],
             tuple[int, bool],
         ] = lambda *_: (-1, False),
+        palette_actions: Callable[[], list[SearchEntry]] = lambda: [],
     ) -> None:
         self.components: Components = UiComponents(
-            badge_colors, lambda color: themed(color, False), style_box, themed
+            badge_colors,
+            lambda color: themed(color, False),
+            style_box,
+            themed,
+            palette_actions,
         )
         self.window = window
         self.central = central

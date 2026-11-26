@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file. The format 
 
 ### Added
 
+- The search window (`/` and `Ctrl+K`) also offers what the app can do: refresh, check for updates, show the shortcuts, change the theme, and switch to another cluster or namespace by @danilogco
 - On a list, **Enter** opens the details of the row, and **Delete** and **Ctrl+E** delete and edit it in the write mode, when the button of the action is offered for the row; they are in **Settings → Shortcuts** and can be changed, and the keys that cannot be changed (find in a text, close, send to the assistant) are listed there too by @danilogco
 - The row under the pointer shows a **⋯** button that opens the menu of the row, with Details, Logs and the actions of the write mode by @danilogco
 - A list opens sorted as it was left, for each list by @danilogco
@@ -19,6 +20,7 @@ All notable changes to this project will be documented in this file. The format 
 
 ### Fixed
 
+- A box of **Settings → Shortcuts** records a key only after a click (or Enter or Space with it in focus), so the keys pressed with the page open no longer change the shortcut that had the focus by @danilogco
 - The first column of **Settings → Shortcuts** is as wide as its longest name, so no name is cut by @danilogco
 - The buttons that have only an icon (the window controls, the clear button of a search box, the corner of a table, and the others with a tooltip) have a name for a screen reader by @danilogco
 

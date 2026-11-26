@@ -127,3 +127,17 @@ def test_a_failure_is_told_and_leaving_the_window_closes_it() -> None:
     inside = Palette(window)
     inside.open_with([])
     assert inside.y() >= 0
+
+
+def test_the_actions_of_the_app_come_after_the_screens_each_time_it_opens() -> None:
+    offered = [SearchEntry("Refresh", "Action", lambda: None)]
+    dialog = Palette(actions=lambda: list(offered))
+
+    dialog.open_with([SearchEntry("Pods", "Screen", lambda: None)])
+    assert _labels(dialog) == ["Pods", "Refresh"]
+
+    offered.append(SearchEntry("Show the shortcuts", "Action", lambda: None))
+    dialog.open_with([])  # asked again: what changed since shows
+    assert _labels(dialog) == ["Refresh", "Show the shortcuts"]
+    dialog.input.setText("short")
+    assert _labels(dialog) == ["Show the shortcuts"]

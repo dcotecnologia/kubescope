@@ -59,9 +59,11 @@ class Palette(QDialog):
         title: str = "Search",
         placeholder: str = "Search screens, actions and resources...",
         loading: str = "Loading resources...",
+        actions: Callable[[], list[SearchEntry]] = lambda: [],
     ) -> None:
         super().__init__(parent)
         self._themed = themed
+        self._actions = actions  # what the app itself can do, asked each time it opens
         self._loading = loading
         self.setWindowTitle(title)
         self.setWindowFlags(
@@ -105,7 +107,7 @@ class Palette(QDialog):
     def open_with(self, entries: list[SearchEntry]) -> None:
         """Show the window with the screens and actions; resources come
         later."""
-        self._entries = list(entries)
+        self._entries = [*entries, *self._actions()]
         self._resources = []
         self.input.clear()
         self.note.setText(self._loading)
