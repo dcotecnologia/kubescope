@@ -64,7 +64,7 @@ from kubescope.views.error_banner import ErrorBanner
 from kubescope.views.table_sort import HeaderSorter
 
 ROW_HEIGHT = 46  # as the rows of the Pods
-FIELD_HEIGHT = 38  # as the search box and the selects of the lists
+FIELD_HEIGHT = 28  # as the search box and the selects of the lists
 TEXT_COLOR = "#242a33"  # of the text of a cell
 MARGINS = (32, 24, 32, 22)  # around the content of a page
 

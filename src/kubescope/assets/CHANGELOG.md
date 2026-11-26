@@ -19,6 +19,7 @@ All notable changes to this project will be documented in this file. The format 
 
 ### Changed
 
+- The buttons, the selects and the text boxes are smaller (28 px high instead of 36 to 38), so the lists and the pages get more room by @danilogco
 - On Linux the tray icon is the light one when the desktop theme is dark, and changes with the theme by @danilogco
 
 ## [2.10.0] - 2026-11-25

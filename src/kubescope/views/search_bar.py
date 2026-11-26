@@ -17,7 +17,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-HEIGHT = 38  # like the search box of the lists
+HEIGHT = 28  # like the search box of the lists
 MAX_MARKED = 2000  # the matches painted at once; all of them are still counted
 
 
@@ -41,7 +41,7 @@ def switch_button(text: str, tip: str) -> QPushButton:
     button = QPushButton(text)
     button.setCheckable(True)
     button.setToolTip(tip)
-    button.setFixedSize(38, HEIGHT)
+    button.setFixedSize(30, HEIGHT)
     button.setProperty("variant", "secondary")
     return button
 
@@ -142,7 +142,7 @@ class SearchBar(QWidget):
     def _step(self, text: str, tip: str) -> QPushButton:
         button = QPushButton(text)
         button.setToolTip(tip)
-        button.setFixedSize(34, HEIGHT)
+        button.setFixedSize(28, HEIGHT)
         button.setProperty("variant", "secondary")
         return button
 

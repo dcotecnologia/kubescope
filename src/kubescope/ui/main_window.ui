@@ -53,7 +53,7 @@ QPushButton[windowControl="close"] {
 QPushButton[windowControl="close"]:hover { background: #a33d45; }
 QComboBox#contextCombo {
     background: #0d315d; color: #ffffff; border: 1px solid #2d5077;
-    border-radius: 4px; min-height: 30px; padding: 0 9px; font-size: 11px;
+    border-radius: 4px; min-height: 28px; padding: 0 8px; font-size: 11px;
 }
 QWidget#sidebar { background: #ffffff; border-right: 1px solid #e1e3e9; }
 QScrollArea#sidebarScroll, QWidget#sidebarNav { background: transparent; border: 0; }
@@ -86,7 +86,7 @@ QTableWidget[variant="data"]::indicator:checked {
 QComboBox[variant="filter"], QLineEdit#searchInput, QLineEdit[variant="filter"],
 QPushButton[variant="primary"] {
     background: #ffffff; border: 1px solid #d9dce4; border-radius: 5px;
-    min-height: 36px; padding: 0 10px; font-size: 11px;
+    min-height: 28px; padding: 0 8px; font-size: 11px;
 }
 QComboBox[variant="filter"], QLineEdit#searchInput, QLineEdit[variant="filter"] {
     color: #20232a; selection-background-color: #d9d3f2;
@@ -111,7 +111,7 @@ QComboBox[variant="filter"] QAbstractItemView {
     outline: 0; padding: 2px;
 }
 QComboBox[variant="filter"] QAbstractItemView::item {
-    min-height: 28px; padding: 0 8px; border-radius: 4px;
+    min-height: 24px; padding: 0 8px; border-radius: 4px;
 }
 QComboBox[variant="filter"] QAbstractItemView::item:hover { background: #f4f1fb; }
 QComboBox[variant="filter"] QAbstractItemView::item:selected {
@@ -119,7 +119,7 @@ QComboBox[variant="filter"] QAbstractItemView::item:selected {
 }
 QSpinBox[variant="filter"] {
     background: #ffffff; color: #20232a; border: 1px solid #d9dce4;
-    border-radius: 5px; min-height: 36px; padding: 0 10px; font-size: 11px;
+    border-radius: 5px; min-height: 28px; padding: 0 8px; font-size: 11px;
     selection-background-color: #d9d3f2; selection-color: #20232a;
 }
 QSpinBox[variant="filter"]:hover { border-color: #b9b3dc; }
@@ -166,7 +166,7 @@ QScrollArea { background: transparent; border: 0; }
 QWidget#settingsContent, QWidget#overviewContent { background: transparent; }
 QPushButton[variant="secondary"] {
     background: #ffffff; color: #3220a0; border: 1px solid #d9dce4;
-    border-radius: 5px; min-height: 32px; padding: 0 10px;
+    border-radius: 5px; min-height: 26px; padding: 0 8px;
     font-size: 11px; font-weight: 600;
 }
 QPushButton[variant="secondary"]:hover:enabled {
@@ -180,11 +180,11 @@ QPushButton[variant="secondary"]:checked:hover:enabled {
     background: #4030b8; border-color: #4030b8;
 }
 QPushButton[iconOnly="true"] {
-    padding: 0; min-width: 36px; max-width: 36px;
+    padding: 0; min-width: 28px; max-width: 28px;
 }
 QPushButton#sidebarToggleButton {
     background: transparent; border: 1px solid #e1e3e9; border-radius: 6px;
-    padding: 0; min-width: 32px; max-width: 32px; min-height: 32px; max-height: 32px;
+    padding: 0; min-width: 28px; max-width: 28px; min-height: 28px; max-height: 28px;
 }
 QPushButton#sidebarToggleButton:hover { background: #f3f4f7; }
 QLabel#summaryLabel { color: #4f5966; font-size: 11px; font-weight: 600; }
@@ -2086,7 +2086,7 @@ Resources in read-only mode</string>
                    <property name="minimumSize">
                     <size>
                      <width>170</width>
-                     <height>38</height>
+                     <height>28</height>
                     </size>
                    </property>
                    <item>
@@ -2119,7 +2119,7 @@ Resources in read-only mode</string>
                    <property name="minimumSize">
                     <size>
                      <width>240</width>
-                     <height>38</height>
+                     <height>28</height>
                     </size>
                    </property>
                    <property name="maximumSize">

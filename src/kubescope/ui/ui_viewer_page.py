@@ -60,8 +60,8 @@ class Ui_ViewerPage(object):
 
         self.saveButton = QPushButton(ViewerPage)
         self.saveButton.setObjectName(u"saveButton")
-        self.saveButton.setMinimumSize(QSize(36, 36))
-        self.saveButton.setMaximumSize(QSize(36, 36))
+        self.saveButton.setMinimumSize(QSize(28, 28))
+        self.saveButton.setMaximumSize(QSize(28, 28))
         self.saveButton.setIconSize(QSize(18, 18))
         self.saveButton.setProperty(u"variant", u"secondary")
 

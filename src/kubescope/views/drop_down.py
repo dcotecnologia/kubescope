@@ -54,7 +54,7 @@ def open_below(combo: QComboBox, style: Callable[[str, bool], str]) -> None:
         f" color: {style('#ffffff', True)};"
         f" border: 1px solid {style('#2d5077', False)}; border-radius: 10px;"
         " padding: 5px; outline: 0; }"
-        "QAbstractItemView::item { min-height: 30px; padding: 0 10px;"
+        "QAbstractItemView::item { min-height: 26px; padding: 0 10px;"
         " border-radius: 6px; }"
         f"QAbstractItemView::item:hover {{ background: {style('#16406f', False)}; }}"
         "QAbstractItemView::item:selected {"

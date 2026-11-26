@@ -80,14 +80,14 @@
       <widget class="QPushButton" name="saveButton">
        <property name="minimumSize">
         <size>
-         <width>36</width>
-         <height>36</height>
+         <width>28</width>
+         <height>28</height>
         </size>
        </property>
        <property name="maximumSize">
         <size>
-         <width>36</width>
-         <height>36</height>
+         <width>28</width>
+         <height>28</height>
         </size>
        </property>
        <property name="toolTip">
