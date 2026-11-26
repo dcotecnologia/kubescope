@@ -110,8 +110,9 @@ class Palette(QDialog):
         later."""
         offered = [*entries, *self._actions()]
         # what is first stays first, each in the order it came
-        self._entries = [one for one in offered if one.first] + [
-            one for one in offered if not one.first
+        # (an extension makes its own entries, which have no `first`)
+        self._entries = [one for one in offered if getattr(one, "first", False)] + [
+            one for one in offered if not getattr(one, "first", False)
         ]
         self._resources = []
         self.input.clear()

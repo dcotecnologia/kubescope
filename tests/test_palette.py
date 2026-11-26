@@ -154,3 +154,19 @@ def test_the_entries_marked_first_come_first_in_the_order_they_came() -> None:
         ]
     )
     assert _labels(dialog) == ["Jobs", "Nodes", "Pods", "Services"]
+
+
+def test_the_entries_an_extension_makes_with_no_first_are_listed_as_they_are() -> None:
+    from dataclasses import dataclass
+
+    @dataclass(frozen=True, slots=True)
+    class TheirEntry:  # what the search extension makes: no `first`
+        label: str
+        detail: str
+        run: object
+
+    dialog = Palette(
+        actions=lambda: [SearchEntry("Mine", "Recent", lambda: None, True)]
+    )
+    dialog.open_with([TheirEntry("Pods", "Screen", lambda: None)])  # type: ignore[list-item]
+    assert _labels(dialog) == ["Mine", "Pods"]
