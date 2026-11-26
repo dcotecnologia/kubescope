@@ -6751,6 +6751,9 @@ class WorkloadWindow(QMainWindow):
             key = QTableWidgetItem(shortcuts.FIXED[action])
             key.setFlags(Qt.ItemFlag.ItemIsEnabled)  # shown, not edited
             table.setItem(row, 1, key)
+        header = table.horizontalHeader()  # every name whole, the keys take the rest
+        header.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
+        header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
 
     def _shortcuts_from_form(self) -> dict[str, str] | None:
         """The shortcuts in the table; None (with a notice) when two actions

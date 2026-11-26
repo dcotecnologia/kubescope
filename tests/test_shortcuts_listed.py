@@ -76,3 +76,16 @@ def test_every_shortcut_has_a_label_and_a_row_in_the_settings(window) -> None:
 
 def test_a_key_of_a_list_does_not_clash_with_another_shortcut() -> None:
     assert shortcuts.duplicate(shortcuts.DEFAULTS) is None
+
+
+def test_the_names_of_the_shortcuts_are_shown_whole(window) -> None:
+    window.show()
+    window._show_page(2)
+    window._show_settings_section(3)
+    window._fill_shortcuts(window._shortcut_values())
+    table = window.settings_ui.shortcutsTable
+    widest = max(
+        table.fontMetrics().horizontalAdvance(table.item(row, 0).text())
+        for row in range(table.rowCount())
+    )
+    assert table.horizontalHeader().sectionSize(0) >= widest

@@ -19,6 +19,7 @@ All notable changes to this project will be documented in this file. The format 
 
 ### Fixed
 
+- The first column of **Settings → Shortcuts** is as wide as its longest name, so no name is cut by @danilogco
 - The buttons that have only an icon (the window controls, the clear button of a search box, the corner of a table, and the others with a tooltip) have a name for a screen reader by @danilogco
 
 ### Changed
