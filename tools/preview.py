@@ -35,10 +35,12 @@ def throwaway_config() -> str:
     """A folder for the settings of the preview, so it never reads or
     overwrites the real ones, with a copy of the extensions installed on this
     computer (their registry, and what was installed from a file or a
-    repository) so the window shows them as it does for the person."""
+    repository) so the window shows them as it does for the person; set
+    KUBESCOPE_PREVIEW_EXTENSIONS=0 to leave them out."""
     folder = Path(tempfile.mkdtemp(prefix="kubescope-preview-"))
     installed = config_directory() / "extensions"
-    if installed.is_dir():
+    # KUBESCOPE_PREVIEW_EXTENSIONS=0 leaves them out, for the same picture anywhere
+    if installed.is_dir() and os.environ.get("KUBESCOPE_PREVIEW_EXTENSIONS") != "0":
         shutil.copytree(
             installed,
             folder / "extensions",

@@ -26,6 +26,7 @@ DEFAULTS: dict[str, Any] = {
     "context_aliases": {},
     "disabled_contexts": [],
     "hidden_columns": {},
+    "list_sort": {},
     "pinned_views": [],
     "debug_logging": False,
     "check_updates": True,
@@ -171,6 +172,19 @@ class Settings:
             )
             if isinstance(columns, list)
             and all(isinstance(column, int) and column >= 0 for column in columns)
+        }
+        stored_sort = self._data["list_sort"]
+        self._data["list_sort"] = {
+            str(view): [sort[0], sort[1]]
+            for view, sort in (
+                stored_sort.items() if isinstance(stored_sort, dict) else []
+            )
+            if isinstance(sort, list)
+            and len(sort) == 2
+            and isinstance(sort[0], int)
+            and not isinstance(sort[0], bool)
+            and sort[0] >= 0
+            and sort[1] in ("asc", "desc")
         }
         pinned = self._data["pinned_views"]
         self._data["pinned_views"] = list(
@@ -702,6 +716,15 @@ class Settings:
 
     def set_hidden_columns(self, view: str, columns: set[int]) -> None:
         self._data["hidden_columns"][view] = sorted(columns)
+
+    def list_sort(self, view: str) -> tuple[int, bool] | None:
+        """The column a list was sorted by and whether it was descending, as
+        the person left it."""
+        sort = self._data["list_sort"].get(view)
+        return (sort[0], sort[1] == "desc") if sort else None
+
+    def set_list_sort(self, view: str, column: int, descending: bool) -> None:
+        self._data["list_sort"][view] = [column, "desc" if descending else "asc"]
 
     def pinned_views(self) -> list[str]:
         return list(self._data["pinned_views"])

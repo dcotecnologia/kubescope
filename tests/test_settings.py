@@ -742,3 +742,24 @@ def test_the_text_size_is_one_of_the_sizes_and_else_the_usual_one(tmp_path) -> N
     for stored in ('"big"', "true", "null", "[130]"):
         path.write_text(f'{{"text_size": {stored}}}', encoding="utf-8")
         assert Settings(path).text_size == 100
+
+
+def test_the_sort_of_a_list_persists_and_ignores_damaged_values(tmp_path) -> None:
+    path = tmp_path / "settings.json"
+    settings = Settings(path)
+    assert settings.list_sort("pods") is None
+    settings.set_list_sort("pods", 3, True)
+    settings.set_list_sort("jobs", 0, False)
+    settings.save()
+    assert Settings(path).list_sort("pods") == (3, True)
+    assert Settings(path).list_sort("jobs") == (0, False)
+
+    path.write_text(
+        '{"list_sort": {"a": [1, "up"], "b": [-1, "asc"], "c": [true, "asc"],'
+        ' "d": [1], "e": 3, "f": [2, "desc"]}}'
+    )
+    loaded = Settings(path)
+    assert [loaded.list_sort(view) for view in "abcde"] == [None] * 5
+    assert loaded.list_sort("f") == (2, True)
+    path.write_text('{"list_sort": []}')
+    assert Settings(path).list_sort("pods") is None

@@ -4543,3 +4543,24 @@ def test_a_row_is_picked_in_a_table_of_the_window(monkeypatch) -> None:
     monkeypatch.setattr(PickRowDialog, "exec", lambda _d: QDialog.DialogCode.Rejected)
     assert window._pick_row("Logs", "Pick:", ["File", "Size"], rows) == (-1, False)
     window.close()
+
+
+def test_a_list_opens_sorted_as_the_person_left_it(monkeypatch) -> None:
+    from PySide6.QtCore import Qt
+
+    window = _ready_window(monkeypatch)
+    window._open_list_view("pods")
+    window._sort_rows(2)
+    window._sort_rows(2)  # again: descending
+    assert window.settings.list_sort("pods") == (2, True)
+
+    window._open_list_view("jobs")
+    assert window._sort is None
+    window._open_list_view("pods")
+    assert window._sort == (2, Qt.SortOrder.DescendingOrder)
+    assert window.table.horizontalHeader().isSortIndicatorShown()
+
+    window.settings.set_list_sort("jobs", 99, False)  # a column that is not there
+    window._open_list_view("jobs")
+    assert window._sort is None
+    window.close()

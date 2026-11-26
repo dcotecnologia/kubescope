@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file. The format 
 
 ### Added
 
+- A list opens sorted as it was left, for each list by @danilogco
 - A list with no row says why and what to do: how many rows the search hides, that the namespace chosen has none while the others may, or to try again when it could not load by @danilogco
 - The red banner of a list that failed to load has a **Try again** button by @danilogco
 - **Settings → Text size** makes the text of the app smaller or larger, from 85% to 150%; a few small labels keep their size by @danilogco

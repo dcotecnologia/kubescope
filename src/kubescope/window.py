@@ -3106,6 +3106,7 @@ class WorkloadWindow(QMainWindow):
             header = self.table.horizontalHeader()
             header.setSortIndicatorShown(False)
             self._apply_view_columns()
+            self._restore_sort(view)
             self._render_rows()
             key = (self._context(), self._list_namespace(view), view)
             known = self._answers.get(key)
@@ -4219,6 +4220,21 @@ class WorkloadWindow(QMainWindow):
                 reverse=descending,
             )
 
+    def _restore_sort(self, view: str) -> None:
+        """Sort a list as the person left it, when the column is still
+        there."""
+        saved = self.settings.list_sort(view)
+        if saved is None or saved[0] >= self.table.columnCount():
+            return
+        column, descending = saved
+        order = (
+            Qt.SortOrder.DescendingOrder if descending else Qt.SortOrder.AscendingOrder
+        )
+        self._sort = (column, order)
+        header = self.table.horizontalHeader()
+        header.setSortIndicatorShown(True)
+        header.setSortIndicator(column, order)
+
     def _sort_rows(self, column: int) -> None:
         """Header click: sort ascending, click again to reverse."""
         if self._sort is not None and self._sort[0] == column:
@@ -4229,6 +4245,10 @@ class WorkloadWindow(QMainWindow):
         else:
             order = Qt.SortOrder.AscendingOrder
         self._sort = (column, order)
+        self.settings.set_list_sort(
+            self._view, column, order == Qt.SortOrder.DescendingOrder
+        )
+        self._save_settings()
         selected = self._selected_row()
         self._apply_sort()
         header = self.table.horizontalHeader()
