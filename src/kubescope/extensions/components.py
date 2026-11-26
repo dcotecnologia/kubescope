@@ -61,6 +61,7 @@ from kubescope.extensions.side_panel import CounterButton, NoticeCard, SidePanel
 from kubescope.views.check_header import CheckHeader
 from kubescope.views.container_states import BADGE_ROLE, BadgeDelegate
 from kubescope.views.error_banner import ErrorBanner
+from kubescope.views.search_bar import embed_switches
 from kubescope.views.table_sort import HeaderSorter
 
 ROW_HEIGHT = 46  # as the rows of the Pods
@@ -220,6 +221,7 @@ class UiComponents:
         button.setCheckable(True)
         button.setToolTip(tip)
         button.setFixedSize(FIELD_HEIGHT, FIELD_HEIGHT)
+        button.setProperty("searchSwitch", True)
         return button
 
     def search_box(self, placeholder: str = "") -> QLineEdit:
@@ -461,10 +463,38 @@ class UiComponents:
                 layout.addWidget(item)
         return layout
 
+    @staticmethod
+    def _embed_search_switches(items: Sequence[Any]) -> list[Any]:
+        """A search box followed by switches (the Aa and .* of the lists) is one
+        control: the switches go inside the box, as in the lists of the app, and
+        the rest of the items stay as they were."""
+        kept: list[Any] = []
+        waiting: list[QPushButton] = []
+
+        def flush() -> None:
+            if waiting:  # the first switch is the left-most, so the last goes first
+                embed_switches(kept[-1], list(reversed(waiting)))
+                waiting.clear()
+
+        for item in items:
+            is_switch = isinstance(item, QPushButton) and item.property("searchSwitch")
+            after_search = (
+                bool(kept)
+                and isinstance(kept[-1], QLineEdit)
+                and kept[-1].objectName() == "searchInput"
+            )
+            if is_switch and after_search:
+                waiting.append(item)
+                continue
+            flush()
+            kept.append(item)
+        flush()
+        return kept
+
     def row(self, *items: Any, spacing: int = 12) -> QHBoxLayout:
         layout = QHBoxLayout()
         layout.setSpacing(spacing)
-        self._fill(layout, items)
+        self._fill(layout, self._embed_search_switches(items))
         return layout
 
     def column(self, *items: Any, spacing: int = 10) -> QVBoxLayout:

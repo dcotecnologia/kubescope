@@ -438,3 +438,35 @@ def test_the_icons_with_options_and_the_chat_dock_come_from_the_components() -> 
     dock = components.chat_dock(host, "Gabi", {})
     assert dock.host is host
     host.close()
+
+
+def _widgets(layout) -> list:
+    items = [layout.itemAt(index) for index in range(layout.count())]
+    return [item.widget() for item in items if item is not None]
+
+
+def test_a_row_puts_the_switches_of_a_search_inside_its_box() -> None:
+    components = UiComponents()
+    region = components.filter_select()
+    search = components.search_box("Search")
+    case = components.switch_button("Aa", "Match case")
+    regex = components.switch_button(".*", "Regular expression")
+    plain = components.button("Go")
+    KEPT.extend([region, search, case, regex, plain])
+
+    layout = components.row(region, search, case, regex, plain, None)
+
+    widgets = _widgets(layout)
+    assert region in widgets and search in widgets and plain in widgets
+    assert case not in widgets and regex not in widgets  # inside the box now
+    assert case.parent() is search and regex.parent() is search
+    assert case.property("variant") == "inline"
+    search.resize(300, 28)
+    search.show()
+    assert regex.x() > case.x()  # as written: Aa, then .*
+
+    # a switch with no search box before it stays where it was put
+    lone = components.switch_button("Aa", "Match case")
+    KEPT.append(lone)
+    after_select = components.row(region, lone)
+    assert lone in _widgets(after_select)
