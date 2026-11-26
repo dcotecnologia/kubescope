@@ -47,6 +47,7 @@ class SearchEntry:
     label: str
     detail: str
     run: Callable[[], None]
+    first: bool = False  # listed before the rest (the pinned and recent screens)
 
 
 class Palette(QDialog):
@@ -107,7 +108,11 @@ class Palette(QDialog):
     def open_with(self, entries: list[SearchEntry]) -> None:
         """Show the window with the screens and actions; resources come
         later."""
-        self._entries = [*entries, *self._actions()]
+        offered = [*entries, *self._actions()]
+        # what is first stays first, each in the order it came
+        self._entries = [one for one in offered if one.first] + [
+            one for one in offered if not one.first
+        ]
         self._resources = []
         self.input.clear()
         self.note.setText(self._loading)

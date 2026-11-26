@@ -4,6 +4,7 @@ from typing import Any, cast
 import pytest
 
 from kubescope.settings import (
+    MAX_RECENT,
     Settings,
     is_namespace_name,
     log_directory,
@@ -763,3 +764,26 @@ def test_the_sort_of_a_list_persists_and_ignores_damaged_values(tmp_path) -> Non
     assert loaded.list_sort("f") == (2, True)
     path.write_text('{"list_sort": []}')
     assert Settings(path).list_sort("pods") is None
+
+
+def test_the_screens_opened_last_are_kept_latest_first_without_repeats(
+    tmp_path,
+) -> None:
+    path = tmp_path / "settings.json"
+    settings = Settings(path)
+    assert settings.recent_screens() == []
+    for key in ("pods", "jobs", "pods", "services"):
+        settings.add_recent_screen(key)
+    assert settings.recent_screens() == ["services", "pods", "jobs"]
+
+    for number in range(20):
+        settings.add_recent_screen(f"extension:x/{number}")
+    assert len(settings.recent_screens()) == MAX_RECENT
+    assert settings.recent_screens()[0] == "extension:x/19"
+    settings.save()
+    assert Settings(path).recent_screens() == settings.recent_screens()
+
+    path.write_text('{"recent_screens": ["a", "", 3, null, "a", "b"]}')
+    assert Settings(path).recent_screens() == ["a", "b"]
+    path.write_text('{"recent_screens": "pods"}')
+    assert Settings(path).recent_screens() == []

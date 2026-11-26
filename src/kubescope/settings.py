@@ -12,6 +12,7 @@ from kubescope.utils import shortcuts
 
 # A language is a JSON file named by its code (see kubescope.i18n); "auto" follows
 # the system. The choice is checked when it is applied, so a file can add one.
+MAX_RECENT = 8  # the screens opened last that the app remembers
 TEXT_SIZES = (85, 100, 115, 130, 150)  # percent of the usual size of the text
 _LANGUAGE_CODE = re.compile(r"[a-z]{2,3}(_[A-Za-z0-9]+)?")
 
@@ -28,6 +29,7 @@ DEFAULTS: dict[str, Any] = {
     "hidden_columns": {},
     "list_sort": {},
     "pinned_views": [],
+    "recent_screens": [],
     "debug_logging": False,
     "check_updates": True,
     "wrap_log_lines": False,
@@ -186,6 +188,16 @@ class Settings:
             and sort[0] >= 0
             and sort[1] in ("asc", "desc")
         }
+        recent = self._data["recent_screens"]
+        self._data["recent_screens"] = (
+            list(
+                dict.fromkeys(
+                    key for key in recent if isinstance(key, str) and key.strip()
+                )
+            )[:MAX_RECENT]
+            if isinstance(recent, list)
+            else []
+        )
         pinned = self._data["pinned_views"]
         self._data["pinned_views"] = list(
             dict.fromkeys(
@@ -731,6 +743,15 @@ class Settings:
 
     def set_pinned_views(self, views: list[str]) -> None:
         self._data["pinned_views"] = list(dict.fromkeys(views))
+
+    def recent_screens(self) -> list[str]:
+        """The lists and pages of extensions opened last, the latest first."""
+        return list(self._data["recent_screens"])
+
+    def add_recent_screen(self, key: str) -> None:
+        """Put a screen first among the ones opened last."""
+        kept = [one for one in self._data["recent_screens"] if one != key]
+        self._data["recent_screens"] = [key, *kept][:MAX_RECENT]
 
     def display_name(self, context: str) -> str:
         return self._data["context_aliases"].get(context) or default_context_name(

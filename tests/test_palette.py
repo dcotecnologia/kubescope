@@ -141,3 +141,16 @@ def test_the_actions_of_the_app_come_after_the_screens_each_time_it_opens() -> N
     assert _labels(dialog) == ["Refresh", "Show the shortcuts"]
     dialog.input.setText("short")
     assert _labels(dialog) == ["Show the shortcuts"]
+
+
+def test_the_entries_marked_first_come_first_in_the_order_they_came() -> None:
+    dialog = Palette()
+    dialog.open_with(
+        [
+            SearchEntry("Pods", "Screen", lambda: None),
+            SearchEntry("Jobs", "Recent", lambda: None, first=True),
+            SearchEntry("Services", "Screen", lambda: None),
+            SearchEntry("Nodes", "Pinned", lambda: None, first=True),
+        ]
+    )
+    assert _labels(dialog) == ["Jobs", "Nodes", "Pods", "Services"]

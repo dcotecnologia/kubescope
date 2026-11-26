@@ -157,3 +157,22 @@ def test_the_search_window_offers_the_actions_of_the_app(window, monkeypatch) ->
     assert window.settings.theme != ""
     by_label["Show the shortcuts"].run()
     assert window.pages.currentIndex() == 2
+
+
+def test_the_pinned_and_the_recent_screens_come_first_in_the_search(
+    window, monkeypatch
+) -> None:
+    window.settings.set_pinned_views(["services", "extension:gone/x/y/z"])
+    for view in ("jobs", "pods", "services"):
+        window._open_list_view(view)
+    entries = window._palette_actions()
+    leading = [(e.label, e.detail) for e in entries if e.first]
+    names = window._nav_views
+    assert leading == [
+        (names["services"].text(), "Pinned"),  # the extension that is gone is left out
+        (names["pods"].text(), "Recent"),
+        (names["jobs"].text(), "Recent"),
+    ]
+    assert entries[0].detail != "Action"  # they are before the actions
+    entries[2].run()
+    assert window._view == "jobs"

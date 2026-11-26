@@ -1854,6 +1854,7 @@ class WorkloadWindow(QMainWindow):
             self._save_settings()
         elif key := self.extension_pages.current_key():
             self.settings.last_screen = (EXTENSION_SCREEN, key)
+            self.settings.add_recent_screen(key)
             self._save_settings()
 
     def _update_eks_entries(self) -> None:
@@ -3156,6 +3157,8 @@ class WorkloadWindow(QMainWindow):
 
     def _open_list_view(self, view: str) -> None:
         """Show a Pods or workload list; they all share one table."""
+        if view in self._nav_views:
+            self.settings.add_recent_screen(view)
         changed = view != self._view
         if changed and view in WORKLOAD_VIEWS and self._view in WORKLOAD_VIEWS:
             self._workloads = []  # another kind: do not show these rows meanwhile
@@ -7428,7 +7431,8 @@ class WorkloadWindow(QMainWindow):
         screens and the resources an extension lists: the actions that need no
         row, the themes, and the clusters and namespaces to change to."""
         action = self.tr("Action")
-        found = [
+        found = self._screens_at_hand()
+        found += [
             SearchEntry(self.tr("Refresh"), action, self._press_refresh),
             SearchEntry(
                 self.tr("Check for updates"), action, self.check_updates_by_hand
@@ -7497,6 +7501,35 @@ class WorkloadWindow(QMainWindow):
             for button in buttons
             if button.text() and not button.icon().isNull()
         }
+
+    def _screen_entry(self, key: str, detail: str) -> SearchEntry | None:
+        """The entry that goes to a list or to the page of an extension, by the
+        key the settings keep it under; none when it is not there (an extension
+        that is gone, or one not run yet)."""
+        if key in self._nav_views:
+            button = self._nav_views[key]
+            return SearchEntry(
+                button.text(), detail, partial(self._open_list_view, key), first=True
+            )
+        button = self.extension_pages.button_for(key)
+        if button is None:
+            return None
+        return SearchEntry(
+            button.text(), detail, partial(self.extension_pages.open_key, key), True
+        )
+
+    def _screens_at_hand(self) -> list[SearchEntry]:
+        """The pinned screens, then the ones opened last: first in the search
+        window, so the next visit is a key press away."""
+        pinned = self.settings.pinned_views()
+        found = [(key, self.tr("Pinned")) for key in pinned]
+        found += [
+            (key, self.tr("Recent"))
+            for key in self.settings.recent_screens()
+            if key not in pinned
+        ]
+        entries = (self._screen_entry(key, detail) for key, detail in found)
+        return [entry for entry in entries if entry is not None]
 
     def _use_theme(self, theme_id: str) -> None:
         """Change the theme from the search window, as the Settings do."""
