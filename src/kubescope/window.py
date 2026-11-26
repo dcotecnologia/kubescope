@@ -2307,6 +2307,7 @@ class WorkloadWindow(QMainWindow):
             while (item := grid.takeAt(0)) is not None:
                 widget = item.widget()
                 assert widget is not None
+                widget.hide()  # gone from the screen now, deleted a moment later
                 widget.deleteLater()
         if info is None:
             return
@@ -8363,6 +8364,7 @@ class WorkloadWindow(QMainWindow):
                 cast(QApplication, QApplication.instance()), self.settings.text_size
             )
             self._apply_style()  # the sizes written in the style sheet follow
+            self._render_cluster_info()  # its cells took their height with the old size
         self.settings.animations = form.animationsCheck.isChecked()
         self.settings.welcome_dismissed = not form.welcomeCheck.isChecked()
         motion.ENABLED = self.settings.animations

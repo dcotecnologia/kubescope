@@ -90,3 +90,21 @@ def test_the_text_size_reaches_the_sizes_of_the_style_sheet(monkeypatch) -> None
     window._save_preferences()
     assert window.styleSheet() == before
     window.close()
+
+
+def test_the_cells_of_the_cluster_info_are_made_again_when_the_text_size_changes(
+    monkeypatch,
+) -> None:
+    window = _ready_window(monkeypatch)
+    window._load_settings_form()
+    drawn: list[int] = []
+    monkeypatch.setattr(window, "_render_cluster_info", lambda: drawn.append(1))
+
+    window._save_preferences()
+    unchanged = len(drawn)
+    window.settings_ui.textSizeCombo.setCurrentIndex(
+        window.settings_ui.textSizeCombo.findData(150)
+    )
+    window._save_preferences()  # their height was taken with the old text size
+    assert len(drawn) > unchanged
+    window.close()

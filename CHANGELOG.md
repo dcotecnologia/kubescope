@@ -28,6 +28,7 @@ All notable changes to this project will be documented in this file. The format 
 
 ### Fixed
 
+- With a large **Text size** the values of the cluster info are no longer cut: its cells are made again with the new size by @danilogco
 - **Settings → Text size** now changes the text that has its size written in the style sheet (the menu, the cards, the buttons, the headers of the tables), and the least height of the controls grows with it, not only the base font by @danilogco
 - The side menu is as wide as its longest name needs, unless it was dragged to another width, and never scrolls sideways, so its names are not cut on the left by @danilogco
 - A box of **Settings → Shortcuts** records a key only after a click (or Enter or Space with it in focus), so the keys pressed with the page open no longer change the shortcut that had the focus by @danilogco
