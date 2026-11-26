@@ -4,6 +4,24 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+## [2.10.0] - 2026-11-25
+
+### Added
+
+- The window that draws its own title bar has smooth rounded corners (10 px), as the windows of the desktop do, except while it fills the screen; without a compositing desktop they are cut with a mask by @danilogco
+- The details of an extension have the link to its repository, where it was installed from or where the app offers it
+- An extension that is installed and that a newer KubeScope outgrew (`max_app`) or an older one cannot run (`min_app`) is kept but not started, and the app tells once, in a message, which ones and why, instead of skipping them in silence by @danilogco
+- An extension can declare the newest version of KubeScope it works with (`max_app` in `kubescope-extension.toml`, such as `2.9.0`): the app refuses to install or update to one made for older apps, and offers the newest version of an extension that is within its range, as `min_app` does for the oldest by @danilogco
+- The Helm releases that carry the label `kubescope.dev/chart-repo` (`host_path`) tell the extensions where their chart came from, through `Cluster.helm_chart_repository` by @danilogco
+
+### Fixed
+
+- The pages of the extensions can be pinned to the top bar, with a right-click or two quick clicks on their entry in the side menu, as the lists of the app are by @danilogco
+- A pick of more than six items (the log files of a database, for one) has a field that narrows the list as you type
+- `Ui.pick_row` shows a table that narrows as you type, by a range of dates and sorts by a click on a header; the log files of a database are picked in it
+- The title of Details and Logs names the object, as in `Details: Deployment / api` and `Logs: pod / container`
+- The title of a list names its menu group before it, as in `Workloads: Pods`, and the app writes the title of the page of an extension as `Group: Title`, so no extension can break the pattern by @danilogco
+
 ## [2.9.0] - 2026-11-25
 
 ### Added
@@ -783,7 +801,8 @@ The first release.
 
 - Pod logs and resource details are still never written to disk by the app on its own. **Save** is the only exception, and it writes only to the file the user chooses. SECURITY.md says so by @danilogco
 
-[Unreleased]: https://github.com/dcotecnologia/kubescope/compare/v2.9.0...HEAD
+[Unreleased]: https://github.com/dcotecnologia/kubescope/compare/v2.10.0...HEAD
+[2.10.0]: https://github.com/dcotecnologia/kubescope/compare/v2.9.0...v2.10.0
 [2.9.0]: https://github.com/dcotecnologia/kubescope/compare/v2.8.0...v2.9.0
 [2.8.0]: https://github.com/dcotecnologia/kubescope/compare/v2.7.0...v2.8.0
 [2.7.0]: https://github.com/dcotecnologia/kubescope/compare/v2.6.1...v2.7.0

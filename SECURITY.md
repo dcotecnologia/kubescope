@@ -244,7 +244,7 @@ configure` so you type the keys there. Apart from the integrations below, the ap
   newest few tags (at most 8, a file of at most 16 KiB, from `github.com`, which sends it
   from `raw.githubusercontent.com`; again a `User-Agent` with the app version and nothing
   else), and an extension that declares `min_app` is never offered to, or installed on, an
-  older app. The same check looks up the latest tag of an
+  older app, nor one that declares `max_app` on a newer app. The same check looks up the latest tag of an
   uninstalled recommendation so Settings can show its available version, once per app session
   for each recommendation while automatic checks are on. A newer version is never installed by
   first install: it is downloaded when you press **Update** and shown in the same dialog as any
