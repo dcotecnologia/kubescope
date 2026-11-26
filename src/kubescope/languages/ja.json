@@ -362,6 +362,9 @@
             "READY": "準備完了",
             "View logs": "ログを表示"
         },
+        "RowActions": {
+            "Open": "開く"
+        },
         "RowMenuButton": {
             "Actions for this row": "この行の操作"
         },

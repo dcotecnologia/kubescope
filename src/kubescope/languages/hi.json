@@ -362,6 +362,9 @@
             "READY": "तैयार",
             "View logs": "लॉग देखें"
         },
+        "RowActions": {
+            "Open": "खोलें"
+        },
         "RowMenuButton": {
             "Actions for this row": "इस पंक्ति की क्रियाएँ"
         },

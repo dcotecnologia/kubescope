@@ -362,6 +362,9 @@
             "READY": "ГОТОВО",
             "View logs": "Переглянути журнали"
         },
+        "RowActions": {
+            "Open": "Відкрити"
+        },
         "RowMenuButton": {
             "Actions for this row": "Дії для цього рядка"
         },

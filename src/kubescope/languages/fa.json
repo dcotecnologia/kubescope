@@ -362,6 +362,9 @@
             "READY": "آماده",
             "View logs": "مشاهده گزارش‌ها"
         },
+        "RowActions": {
+            "Open": "باز کردن"
+        },
         "RowMenuButton": {
             "Actions for this row": "عملیات این ردیف"
         },

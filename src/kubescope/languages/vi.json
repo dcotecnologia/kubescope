@@ -362,6 +362,9 @@
             "READY": "SẴN SÀNG",
             "View logs": "Xem nhật ký"
         },
+        "RowActions": {
+            "Open": "Mở"
+        },
         "RowMenuButton": {
             "Actions for this row": "Thao tác cho dòng này"
         },

@@ -76,6 +76,8 @@ from PySide6.QtGui import (
     QCursor,
     QDesktopServices,
     QDrag,
+    QFont,
+    QFontMetrics,
     QIcon,
     QKeySequence,
     QMouseEvent,
@@ -267,6 +269,7 @@ from kubescope.views.log_tab import LOG_REFRESH_MS, LogTab
 from kubescope.views.nav_chevron import NavChevron
 from kubescope.views.nav_section import SectionFold
 from kubescope.views.pulse import pulse
+from kubescope.views.row_actions import RowActions
 from kubescope.views.row_menu_button import RowMenuButton
 from kubescope.views.search_bar import compile_query, embed_switches, switch_button
 from kubescope.views.shortcut_edit import ShortcutEdit
@@ -342,6 +345,7 @@ CUSTOM_TERMINAL = "?custom"  # the entry of the terminals for a command of their
 MONITORING_FOLD = "section:monitoring"  # how the settings call that block folded
 MENU_OPEN = 16777215  # no limit: a section of the side menu that shows all its entries
 SIDEBAR_WIDTH = 240  # the usual width of the side menu, which can be dragged
+SIDEBAR_MAX = 420  # the widest the names of the menu make it by themselves
 UPDATE_RECHECK_MS = 60 * 60 * 1000  # look for a new version again every hour
 UPDATE_FRESH_SECONDS = 3600  # an "up to date" that a start trusts, in seconds
 UPDATE_SEARCH_MS = 5000  # an update check shows as searching for at least this long
@@ -973,6 +977,7 @@ class WorkloadWindow(QMainWindow):
         self._namespaces: list[str] = []
         self._sort: tuple[int, Qt.SortOrder] | None = None
         self._cards_risen_for = ""  # the context whose cards have risen
+        self._offered: set[QPushButton] = set()  # the actions for the row picked
         self._overview: ClusterOverview | None = None
         # the last overview of each context, shown at once when it is chosen again
         self._overviews: dict[str, ClusterOverview] = {}
@@ -1574,11 +1579,15 @@ class WorkloadWindow(QMainWindow):
         self.sidebar_toggle = SidebarToggle(
             ui.sidebar,
             ui.sidebarToggleButton,
-            lambda: self.settings.sidebar_width or SIDEBAR_WIDTH,
+            lambda: self.settings.sidebar_width or self.sidebar_resizer.default,
             lambda: motion.ENABLED,
             self.settings.sidebar_collapsed,
         )
         self.sidebar_toggle.toggled.connect(self._keep_sidebar_collapsed)
+        # the menu never scrolls sideways: it fits, or the person narrows it
+        bar = ui.sidebarScroll.horizontalScrollBar()
+        bar.valueChanged.connect(lambda _value: bar.setValue(0))
+        QTimer.singleShot(0, self, self._fit_sidebar)
         self._style_sidebar_toggle()
         self._corner_owners: dict[str, int] = {}  # pixels each one keeps clear
         self._menu_hiders: set[str] = set()  # the extensions that hide the side menu
@@ -1629,6 +1638,8 @@ class WorkloadWindow(QMainWindow):
                     title, label, headers, rows, moments
                 ),
                 lambda: self._palette_actions(),
+                lambda: self._menu_icons(),
+                lambda: self._row_keys(),
             ),
             begin_forward=lambda *args: self._begin_forward(*args),
             commands=self.commands,
@@ -3360,7 +3371,7 @@ class WorkloadWindow(QMainWindow):
         self.table.selectRow(row)
         menu = QMenu(self)
         for button in (self.pods_button, self.details_button, self.logs_button):
-            if not button.isHidden():
+            if button in self._offered:
                 action = menu.addAction(button.icon(), button.text())
                 action.setEnabled(button.isEnabled())
                 action.triggered.connect(button.click)
@@ -4937,19 +4948,23 @@ class WorkloadWindow(QMainWindow):
         return allowed
 
     def _update_workload_actions(self) -> None:
+        """Work out what can be done with the row picked (`_offered`, which the
+        menus and the keys of the row use) and show the buttons only while rows
+        are checked: for one row there are its menu, the right click and the
+        keys, and the bar is there for what works on many."""
         checked = self._checked_rows()
         several = bool(checked)  # rows with the box checked: only what is for many
         bulk = self._bulk_shapes()
         enabled = self._selected_row() is not None or several
-        # nothing is offered until a row is selected or checked; the right-click
-        # menu and the menu of the row are there for the one that is not
+        offered: set[QPushButton] = set()
         for button, in_view in (
             (self.pods_button, self._view in WORKLOAD_VIEWS),
             (self.details_button, True),
             (self.logs_button, self._view not in RESOURCE_VIEWS),
         ):
             button.setEnabled(enabled and not self._close_when_worker_stops)
-            button.setVisible(in_view and enabled and not several)
+            if in_view and enabled and not several:
+                offered.add(button)
         row = self._selected_row()
         allowed = (
             self._allowed_for(checked)
@@ -4963,12 +4978,21 @@ class WorkloadWindow(QMainWindow):
                 and (works_on_many or not several)
                 and not self._close_when_worker_stops
             )
-            button.setVisible(
+            if (
                 enabled
                 and shape in self._shown_shapes
                 and (works_on_many or not several)
                 and (allowed is None or shape in allowed)
-            )
+            ):
+                offered.add(button)
+        self._offered = offered
+        for button in (
+            self.pods_button,
+            self.details_button,
+            self.logs_button,
+            *self.write_buttons.values(),
+        ):
+            button.setVisible(several and button in offered)
 
     def _allowed_shapes(self, namespace: str) -> frozenset[str] | None:
         """The write actions the cluster lets the person do in a namespace, or
@@ -5165,12 +5189,11 @@ class WorkloadWindow(QMainWindow):
             self.tr("Open {kind} {name}").format(kind=link[0], name=link[2])
         )
 
-    @staticmethod
-    def _press(button: QPushButton) -> None:
-        """A key of the list does what the button does, only while the button
+    def _press(self, button: QPushButton) -> None:
+        """A key of the list does what the button does, only while the action
         is offered for the row picked (not in the write mode, not for the one
         the cluster does not allow)."""
-        if not button.isHidden() and button.isEnabled():
+        if button in self._offered and button.isEnabled():
             button.click()
 
     def _view_details(self) -> None:
@@ -6606,6 +6629,7 @@ class WorkloadWindow(QMainWindow):
         self._apply_extension_shortcuts()
         self._apply_extension_sections()
         self._apply_extension_themes()
+        self._fit_sidebar()  # an extension may bring entries with long names
         self.extension_pages.apply(self.extension_host.contributions.pages)
         self._fill_shortcuts(self._shortcut_values())
 
@@ -6743,8 +6767,45 @@ class WorkloadWindow(QMainWindow):
     def _keep_sidebar_width(self, width: int) -> None:
         """Write down the width the person gave the side menu; the usual width
         is kept as none."""
-        self.settings.sidebar_width = 0 if width == SIDEBAR_WIDTH else width
+        self.settings.sidebar_width = (
+            0 if width == self.sidebar_resizer.default else width
+        )
         self._save_settings()
+
+    def _menu_width(self) -> int:
+        """The width that shows the longest entry of the side menu whole: the
+        usual width, or more when a name needs it."""
+        nav = self.ui.sidebarNav
+        widest = 0
+        for button in nav.findChildren(QPushButton):
+            if button.property("nav") not in ("true", True):
+                continue
+            font = QFont(button.font())
+            font.setPixelSize(12)
+            font.setBold(True)
+            indent = 0
+            parent = button.parentWidget()
+            while parent is not None and parent is not nav:
+                layout = parent.layout()
+                indent += layout.contentsMargins().left() if layout is not None else 0
+                parent = parent.parentWidget()
+            icon = 26 if not button.icon().isNull() else 0
+            widest = max(
+                widest,
+                QFontMetrics(font).horizontalAdvance(button.text()) + icon + indent,
+            )
+        margins = 24 + 18  # the sides of the side menu
+        room = 24 + 3 + 16  # the padding of an entry, its mark and a scroll bar
+        return min(max(widest + margins + room, SIDEBAR_WIDTH), SIDEBAR_MAX)
+
+    def _fit_sidebar(self) -> None:
+        """Give the side menu the width its names need, unless the person gave
+        it one by dragging."""
+        if self.settings.sidebar_width:
+            return
+        width = self._menu_width()
+        self.sidebar_resizer.default = width
+        self.sidebar_resizer.set_width(width)
 
     def _focus_context(self) -> None:
         """Open the list of clusters, to switch to another."""
@@ -6768,6 +6829,7 @@ class WorkloadWindow(QMainWindow):
             shortcut = self._shortcuts.get(action)  # not an extension that is gone
             if shortcut is not None:
                 shortcut.setKey(QKeySequence(key))
+        self._apply_row_keys()
 
     def _shortcut_labels(self) -> dict[str, str]:
         return {
@@ -7355,6 +7417,35 @@ class WorkloadWindow(QMainWindow):
                         )
                     )
         return found
+
+    def _row_keys(self) -> dict[str, str]:
+        """The keys of a row that the pages of the extensions use too."""
+        keys = self._shortcut_values()
+        return {
+            action: keys[action]
+            for action in ("row_details", "row_details_alt", "row_delete")
+            if action in keys
+        }
+
+    def _apply_row_keys(self) -> None:
+        """Give the tables of the extensions the keys of the Settings."""
+        for actions in self.findChildren(RowActions):
+            actions.apply_keys(self._row_keys())
+
+    def _menu_icons(self) -> dict[str, QIcon]:
+        """The icons of the actions of a row, by their name, for the menus of
+        the extensions to wear the same."""
+        buttons = (
+            self.pods_button,
+            self.details_button,
+            self.logs_button,
+            *self.write_buttons.values(),
+        )
+        return {
+            button.text(): button.icon()
+            for button in buttons
+            if button.text() and not button.icon().isNull()
+        }
 
     def _use_theme(self, theme_id: str) -> None:
         """Change the theme from the search window, as the Settings do."""
@@ -8218,6 +8309,7 @@ class WorkloadWindow(QMainWindow):
         self._restore_designed_headers()
         self.ui.retranslateUi(self)
         self._name_the_menu_entries()
+        self._fit_sidebar()  # the names changed with the language
         self._show_access_note()
         self.search_case_button.setToolTip(self.tr("Match case"))
         self.search_regex_button.setToolTip(self.tr("Regular expression"))

@@ -200,7 +200,7 @@ def test_the_width_the_person_gave_the_menu_is_kept_and_restored(monkeypatch) ->
     window = _ready_window(monkeypatch)
     window._keep_sidebar_width(333)
     assert window.settings.sidebar_width == 333
-    window._keep_sidebar_width(window_module.SIDEBAR_WIDTH)  # the usual one: none
+    window._keep_sidebar_width(window.sidebar_resizer.default)  # the usual one: none
     assert window.settings.sidebar_width == 0
     window.close()
 

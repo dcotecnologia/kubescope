@@ -362,6 +362,9 @@
             "READY": "GEREED",
             "View logs": "Logs bekijken"
         },
+        "RowActions": {
+            "Open": "Openen"
+        },
         "RowMenuButton": {
             "Actions for this row": "Acties voor deze rij"
         },

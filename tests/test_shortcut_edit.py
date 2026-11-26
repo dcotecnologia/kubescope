@@ -5,7 +5,7 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 from PySide6.QtCore import QEvent, Qt
 from PySide6.QtGui import QFocusEvent, QKeyEvent, QKeySequence
 from PySide6.QtTest import QTest
-from PySide6.QtWidgets import QWidget
+from PySide6.QtWidgets import QLineEdit, QWidget
 
 from kubescope.views.shortcut_edit import ShortcutEdit
 from tests.qt import get_application
@@ -45,12 +45,16 @@ def test_a_key_that_is_a_shortcut_of_the_window_is_left_to_it() -> None:
 
 def test_a_click_or_enter_starts_the_recording_and_leaving_stops_it() -> None:
     edit = _edit()
-    QTest.mouseClick(edit, Qt.MouseButton.LeftButton)
+    inner = edit.findChild(QLineEdit)  # where a real click lands
+    assert inner is not None
+    QTest.mouseClick(inner, Qt.MouseButton.LeftButton)
     assert edit.recording
-    QTest.keyClick(edit, Qt.Key.Key_P, Qt.KeyboardModifier.ControlModifier)
+    # the key goes to the line inside the box too, as it does when typed
+    QTest.keyClick(inner, Qt.Key.Key_P, Qt.KeyboardModifier.ControlModifier)
     assert edit.keySequence().toString() == "Ctrl+P"
 
-    edit.focusOutEvent(QFocusEvent(QEvent.Type.FocusOut))  # the person goes elsewhere
+    inner.event(QFocusEvent(QEvent.Type.FocusOut))  # the person goes elsewhere
+    edit.focusOutEvent(QFocusEvent(QEvent.Type.FocusOut))
     assert not edit.recording
 
     edit.setFocus()

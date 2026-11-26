@@ -350,10 +350,22 @@ def test_the_write_mode_is_switched_from_the_settings_page(monkeypatch) -> None:
 
 
 def _visible_write_buttons(window) -> list[str]:
+    """The write actions offered for the row picked: the bar of buttons shows
+    only while rows are checked, and the menu of the row has what is
+    offered."""
     return [
         button.text()
         for button in window.write_buttons.values()
-        if not button.isHidden()
+        if button in window._offered
+    ]
+
+
+def _shown_write_buttons(window) -> list[str]:
+    """The write actions the view and the mode have, once a row is picked."""
+    return [
+        button.text()
+        for shape, button in window.write_buttons.items()
+        if shape in window._shown_shapes
     ]
 
 
@@ -361,26 +373,28 @@ def test_the_write_buttons_follow_the_view_and_the_write_mode(monkeypatch) -> No
     window, _ran = _window(monkeypatch, write_mode=False)
     window.show()
     window._show_workloads(["ns"], [API])
-    assert _visible_write_buttons(window) == []  # read-only: none
+    assert _shown_write_buttons(window) == []  # read-only: none
 
     window.settings.write_mode = True
     window._apply_view_buttons()
-    assert _visible_write_buttons(window) == ["Scale", "Restart", "Delete"]
+    assert _shown_write_buttons(window) == ["Scale", "Restart", "Delete"]
     assert all(not b.isEnabled() for b in window.write_buttons.values())  # no row
+    assert _visible_write_buttons(window) == []  # and none is offered
+    assert not any(b.isVisibleTo(window) for b in window.write_buttons.values())
 
     window.table.selectRow(0)
     assert window.write_buttons["scale"].isEnabled()
 
     window._open_list_view("statefulsets")
-    assert _visible_write_buttons(window) == ["Forward", "Delete"]
+    assert _shown_write_buttons(window) == ["Forward", "Delete"]
 
     window._open_list_view("daemonsets")
-    assert _visible_write_buttons(window) == ["Delete"]
+    assert _shown_write_buttons(window) == ["Delete"]
     assert window._write_entries() == []  # no row to delete
 
     window._open_list_view("pods")
     window._show_pods(["ns"], [POD])
-    assert _visible_write_buttons(window) == [
+    assert _shown_write_buttons(window) == [
         "Shell command",
         "Evict",
         "Forward",
@@ -389,7 +403,7 @@ def test_the_write_buttons_follow_the_view_and_the_write_mode(monkeypatch) -> No
 
     window.settings.write_mode = False
     window._apply_view_buttons()
-    assert _visible_write_buttons(window) == []
+    assert _shown_write_buttons(window) == []
     window.close()
 
 

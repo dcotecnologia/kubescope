@@ -362,6 +362,9 @@
             "READY": "מוכן",
             "View logs": "הצג יומנים"
         },
+        "RowActions": {
+            "Open": "פתח"
+        },
         "RowMenuButton": {
             "Actions for this row": "פעולות לשורה זו"
         },

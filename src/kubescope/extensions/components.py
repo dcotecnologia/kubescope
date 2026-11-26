@@ -61,6 +61,7 @@ from kubescope.extensions.side_panel import CounterButton, NoticeCard, SidePanel
 from kubescope.views.check_header import CheckHeader
 from kubescope.views.container_states import BADGE_ROLE, BadgeDelegate
 from kubescope.views.error_banner import ErrorBanner
+from kubescope.views.row_actions import RowActions
 from kubescope.views.search_bar import embed_switches
 from kubescope.views.table_sort import HeaderSorter
 
@@ -135,8 +136,13 @@ class UiComponents:
         style_box: Callable[[QMessageBox], None] = lambda _box: None,
         themed_text: Callable[[str, bool], str] | None = None,
         palette_actions: Callable[[], list[SearchEntry]] = lambda: [],
+        menu_icons: Callable[[], dict[str, QIcon]] = lambda: {},
+        row_keys: Callable[[], dict[str, str]] = lambda: {},
     ) -> None:
+        self._row_keys = row_keys
+        self._icon_names: dict[int, str] = {}  # the icons of the app, by name
         self._palette_actions = palette_actions
+        self._menu_icons = menu_icons
         self._badge_colors = badge_colors
         self._themed = themed
         self._style_box = style_box
@@ -511,6 +517,38 @@ class UiComponents:
             layout.addRow(label, field)
         return layout
 
+    def _row_actions(self, actions: QLayout | None, table: QTableWidget) -> None:
+        """Give a table the actions of the lists of the app: its buttons go
+        into one bar that shows only while rows are checked, and the ⋯ of a row
+        and the right click offer the same actions (a table with no button
+        offers what its double click does).
+
+        The extension keeps its buttons and decides, as before, which of
+        them it shows.
+        """
+        open_icon = self.icon("popout", self._themed_pair("#3220a0", True))
+        buttons: list[QPushButton] = []
+        bar: QWidget | None = None
+        if isinstance(actions, QHBoxLayout):
+            first = -1
+            for index in range(actions.count()):
+                item = actions.itemAt(index)
+                widget = item.widget() if item is not None else None
+                if isinstance(widget, QPushButton):
+                    first = index if first < 0 else first
+                    buttons.append(widget)
+            if buttons:
+                for button in buttons:
+                    actions.removeWidget(button)
+                bar = QWidget()
+                inner = QHBoxLayout(bar)
+                inner.setContentsMargins(0, 0, 0, 0)
+                inner.setSpacing(actions.spacing() if actions.spacing() >= 0 else 12)
+                for button in buttons:
+                    inner.addWidget(button)
+                actions.insertWidget(first, bar)
+        RowActions(table, buttons, bar, open_icon, self._row_keys, self._icon_names)
+
     def page(
         self,
         parent: QWidget,
@@ -526,6 +564,8 @@ class UiComponents:
         layout = QVBoxLayout(parent)
         layout.setContentsMargins(*MARGINS)
         layout.setSpacing(14)
+        if isinstance(body, QTableWidget):
+            self._row_actions(actions, body)
         for part in (filters, actions):
             if part is not None:
                 layout.addLayout(part)
@@ -673,7 +713,9 @@ class UiComponents:
             return FOCUS_ICON(color, **options)
         if name == "sparkle":
             return SPARKLE_ICON(color, **options)
-        return ICONS[name](color)
+        icon = ICONS[name](color)
+        self._icon_names[icon.cacheKey()] = name
+        return icon
 
     def background(
         self,
@@ -715,8 +757,27 @@ class UiComponents:
         )
 
     def show_menu(self, menu: QMenu, table: Any, x: int, y: int) -> None:
-        """Open `menu` at the place `(x, y)` of the rows of `table`."""
+        """Open `menu` at the place `(x, y)` of the rows of `table`, with the
+        icon of the action of the lists of the app (or of a button of the page)
+        beside each entry that has none."""
+        self._add_menu_icons(menu, table)
         menu.exec(table.viewport().mapToGlobal(QPoint(x, y)))
+
+    def _add_menu_icons(self, menu: QMenu, table: Any) -> None:
+        if not isinstance(menu, QMenu):
+            return
+        known = dict(self._menu_icons())
+        for row_actions in table.findChildren(RowActions):
+            for button in row_actions.buttons:
+                if button.text() and not button.icon().isNull():
+                    known[button.text()] = button.icon()
+        for action in menu.actions():
+            if not action.icon().isNull() or action.isSeparator():
+                continue
+            text = action.text().replace("&", "")
+            named = [word for word in known if text.startswith(word)]
+            if named:  # "Forward with SSM" takes the icon of "Forward"
+                action.setIcon(known[max(named, key=len)])
 
     def image(self, data: bytes, size: int) -> QPixmap | None:
         """An image of those bytes, scaled to fit `size` pixels; `None` when it

@@ -38,6 +38,7 @@ SOURCES = [
             "views/welcome_page.py",
             "views/window_frame.py",
             "views/row_menu_button.py",
+            "views/row_actions.py",
             "views/shortcut_edit.py",
             "utils/accessibility.py",
             "dialogs/update_dialog.py",

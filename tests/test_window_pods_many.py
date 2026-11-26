@@ -123,26 +123,29 @@ def test_the_boxes_survive_a_new_read_and_go_with_the_pods_that_leave(
 
 def test_with_pods_checked_only_evict_and_delete_are_offered(monkeypatch) -> None:
     window, _ran = _pods_window(monkeypatch)
-    assert not window.details_button.isVisibleTo(window)  # no row picked: no buttons
-    assert not window.write_buttons["shell"].isVisibleTo(window)
-    window.table.selectRow(0)
-    assert window.details_button.isVisibleTo(window)
-    assert window.write_buttons["shell"].isVisibleTo(window)
+    assert window.details_button not in window._offered  # no row picked
+    assert window.write_buttons["shell"] not in window._offered
+    window.table.selectRow(0)  # one row: its menu and keys offer the actions
+    assert window.details_button in window._offered
+    assert window.write_buttons["shell"] in window._offered
+    for button in (window.details_button, window.write_buttons["shell"]):
+        assert not button.isVisibleTo(window)  # the bar is for many rows
 
     _check(window, 0, 1)
 
     for button in (window.pods_button, window.details_button, window.logs_button):
-        assert not button.isVisibleTo(window)
+        assert button not in window._offered and not button.isVisibleTo(window)
     assert not window.write_buttons["shell"].isVisibleTo(window)
     assert not window.write_buttons["forward"].isVisibleTo(window)
     for shape in ("evict", "delete"):
-        assert window.write_buttons[shape].isVisibleTo(window)
+        assert window.write_buttons[shape].isVisibleTo(window)  # the bar shows
         assert window.write_buttons[shape].isEnabled()
 
-    _check(window, 0, 1, checked=False)  # none checked: everything is back
+    _check(window, 0, 1, checked=False)  # none checked: the bar goes
     window.table.selectRow(0)
-    assert window.details_button.isVisibleTo(window)
-    assert window.write_buttons["shell"].isVisibleTo(window)
+    assert not window.write_buttons["delete"].isVisibleTo(window)
+    assert window.details_button in window._offered
+    assert window.write_buttons["shell"] in window._offered
     window.close()
 
 

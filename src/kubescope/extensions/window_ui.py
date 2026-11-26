@@ -6,6 +6,7 @@ from collections.abc import Callable
 from typing import Any
 
 from kubescope.sdk import Components
+from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QMessageBox, QWidget
 
 from kubescope.extensions.components import UiComponents
@@ -52,6 +53,8 @@ class WindowUi:
             tuple[int, bool],
         ] = lambda *_: (-1, False),
         palette_actions: Callable[[], list[SearchEntry]] = lambda: [],
+        menu_icons: Callable[[], dict[str, QIcon]] = lambda: {},
+        row_keys: Callable[[], dict[str, str]] = lambda: {},
     ) -> None:
         self.components: Components = UiComponents(
             badge_colors,
@@ -59,6 +62,8 @@ class WindowUi:
             style_box,
             themed,
             palette_actions,
+            menu_icons,
+            row_keys,
         )
         self.window = window
         self.central = central

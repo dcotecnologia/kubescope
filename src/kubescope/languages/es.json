@@ -362,6 +362,9 @@
             "READY": "LISTOS",
             "View logs": "Ver registros"
         },
+        "RowActions": {
+            "Open": "Abrir"
+        },
         "RowMenuButton": {
             "Actions for this row": "Acciones de esta fila"
         },

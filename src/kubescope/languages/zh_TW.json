@@ -362,6 +362,9 @@
             "READY": "就緒",
             "View logs": "檢視記錄"
         },
+        "RowActions": {
+            "Open": "開啟"
+        },
         "RowMenuButton": {
             "Actions for this row": "此列的操作"
         },

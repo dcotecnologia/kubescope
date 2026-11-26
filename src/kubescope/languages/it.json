@@ -362,6 +362,9 @@
             "READY": "PRONTI",
             "View logs": "Mostra i log"
         },
+        "RowActions": {
+            "Open": "Apri"
+        },
         "RowMenuButton": {
             "Actions for this row": "Azioni di questa riga"
         },

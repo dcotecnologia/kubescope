@@ -362,6 +362,9 @@
             "READY": "PRÊTS",
             "View logs": "Afficher les journaux"
         },
+        "RowActions": {
+            "Open": "Ouvrir"
+        },
         "RowMenuButton": {
             "Actions for this row": "Actions de cette ligne"
         },

@@ -362,6 +362,9 @@
             "READY": "الجاهزة",
             "View logs": "عرض السجلات"
         },
+        "RowActions": {
+            "Open": "فتح"
+        },
         "RowMenuButton": {
             "Actions for this row": "إجراءات هذا الصف"
         },

@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file. The format 
 - The search window (`/` and `Ctrl+K`) also offers what the app can do: refresh, check for updates, show the shortcuts, change the theme, and switch to another cluster or namespace by @danilogco
 - On a list, **Enter** opens the details of the row, and **Delete** and **Ctrl+E** delete and edit it in the write mode, when the button of the action is offered for the row; they are in **Settings → Shortcuts** and can be changed, and the keys that cannot be changed (find in a text, close, send to the assistant) are listed there too by @danilogco
 - The row under the pointer shows a **⋯** button that opens the menu of the row, with Details, Logs and the actions of the write mode by @danilogco
+- The pages of the extensions have the actions of the lists: their buttons show only while rows are checked, a **⋯** on the row and the right click open the menu of the page (or **Open**, what its double click does), the menus wear the icons of the actions, and **Enter** and **Delete**, the keys of **Settings → Shortcuts**, work on their rows by @danilogco
 - A list opens sorted as it was left, for each list by @danilogco
 - A list with no row says why and what to do: how many rows the search hides, that the namespace chosen has none while the others may, or to try again when it could not load by @danilogco
 - The red banner of a list that failed to load has a **Try again** button by @danilogco
@@ -22,6 +23,7 @@ All notable changes to this project will be documented in this file. The format 
 
 ### Fixed
 
+- The side menu is as wide as its longest name needs, unless it was dragged to another width, and never scrolls sideways, so its names are not cut on the left by @danilogco
 - A box of **Settings → Shortcuts** records a key only after a click (or Enter or Space with it in focus), so the keys pressed with the page open no longer change the shortcut that had the focus by @danilogco
 - The first column of **Settings → Shortcuts** is as wide as its longest name, so no name is cut by @danilogco
 - The buttons that have only an icon (the window controls, the clear button of a search box, the corner of a table, and the others with a tooltip) have a name for a screen reader by @danilogco
