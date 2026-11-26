@@ -2,7 +2,7 @@
 
 UV ?= uv
 
-.PHONY: help setup run changelog dev debug preview language screenshot store-screenshots designer ui i18n appimage deb snap docker-build docker-flatpak flatpak flatpak-lint flathub-submission windows-remote lint format test qt-libs build clean
+.PHONY: help setup run changelog dev debug preview language screenshot store-screenshots designer ui i18n appimage deb snap docker-build docker-flatpak flatpak flatpak-lint flathub-submission windows-remote lint format test test-serial qt-libs build clean
 
 help: ## List the available commands
 	@awk 'BEGIN { FS = ":.*##" } /^[a-zA-Z0-9_-]+:.*##/ { printf "  %-12s %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
@@ -99,7 +99,13 @@ format: ## Fix lint issues and format the code with ruff
 	$(UV) run --extra dev ruff check --fix .
 	$(UV) run --extra dev ruff format .
 
-test: $(UI_PY) ## Run the tests
+# the processes that share the tests, a file each at a time
+TEST_WORKERS ?= 3
+
+test: $(UI_PY) ## Run the tests in TEST_WORKERS processes (3 by default); make test TEST_WORKERS=1 runs them in one
+	$(UV) run --extra dev pytest -q -n $(TEST_WORKERS) --dist loadfile
+
+test-serial: $(UI_PY) ## Run the tests one after the other, in a single process (slow, the reference)
 	$(UV) run --extra dev pytest -q
 
 qt-libs: ## Download and extract the Qt/XCB libraries for Linux

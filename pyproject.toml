@@ -19,9 +19,11 @@ build-backend = "setuptools.build_meta"
 [project.optional-dependencies]
 dev = [
     "pre-commit>=4.7.0",
-    "pytest>=9.2.0",
     "pyright>=1.1.414",
+    "pytest>=9.2.0",
     "pytest-cov>=7.1.0",
+    "pytest-sugar>=1.1.1",
+    "pytest-xdist>=3.8.0",
     "ruff>=0.17.6",
 ]
 build = [
@@ -57,7 +59,7 @@ log_cli_level = "WARNING"
 minversion = "9.0"
 testpaths = ["tests"]
 pythonpath = ["."]
-addopts = "--import-mode=importlib -s --cov=src/kubescope --log-level=WARN --strict-markers --tb=short --cov-report=term-missing --cov-report=xml --cov-fail-under=100 --cov-config=pyproject.toml"
+addopts = "--import-mode=importlib --cov=src/kubescope --log-level=WARN --strict-markers --tb=short --cov-report=term-missing --cov-report=xml --cov-fail-under=100 --cov-config=pyproject.toml"
 markers = [
     "slow: mark test as slow to run",
     "integration: integration test",

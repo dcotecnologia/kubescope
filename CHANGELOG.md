@@ -38,8 +38,8 @@ All notable changes to this project will be documented in this file. The format 
 - The NAMESPACE label beside the namespace box of the lists is gone; a screen reader still reads the box by its name by @danilogco
 - The sections of the Settings are one joined bar of buttons, not separate buttons by @danilogco
 - The screenshots of the other themes (`make store-screenshots`) are drawn in their themes, not all in the dark one by @danilogco
-- The search boxes of the extensions (the RDS instances and the installed plugins, for example) have their Aa and .* switches inside the box, as the lists of the app by @danilogco
-- The buttons above a list (Details, Logs and the actions of the write mode) show only while a row is selected or checked, and the Aa and .* switches of the search are inside its box by @danilogco
+- The search boxes of the extensions (the RDS instances and the installed plugins, for example) have their Aa and .\* switches inside the box, as the lists of the app by @danilogco
+- The buttons above a list (Details, Logs and the actions of the write mode) show only while a row is selected or checked, and the Aa and .\* switches of the search are inside its box by @danilogco
 - `make screenshot` and the preview show the extensions installed on the computer, from a copy of their folder, so the real settings are still never read or written by @danilogco
 - The buttons, the selects and the text boxes are smaller (28 px high instead of 36 to 38), so the lists and the pages get more room by @danilogco
 - On Linux the tray icon is the light one when the desktop theme is dark, and changes with the theme by @danilogco
@@ -185,7 +185,7 @@ All notable changes to this project will be documented in this file. The format 
 
 ### Added
 
-- **Settings → Kube → Contexts** (before, *Context names*) has a **Connected** column to connect or disconnect each context: one that is not connected is left out of the selector in the top bar, and the choice is kept; if the one in use is disconnected the app moves to another by @danilogco
+- **Settings → Kube → Contexts** (before, _Context names_) has a **Connected** column to connect or disconnect each context: one that is not connected is left out of the selector in the top bar, and the choice is kept; if the one in use is disconnected the app moves to another by @danilogco
 - With no context in the kubeconfig, or none of them connected, the side menu, its button and the selector of contexts go away and the **Kube** section of the Settings opens, to add a kubeconfig file or connect a context by @danilogco
 
 ### Changed

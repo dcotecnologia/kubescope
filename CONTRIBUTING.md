@@ -44,7 +44,8 @@ Components guide of the SDK; add what is missing there, with its test.
 
 ```bash
 make lint     # every pre-commit hook on all files, as CI runs them
-make test     # pytest, must stay at 100% coverage (headless: QT_QPA_PLATFORM=offscreen)
+make test     # pytest in 3 processes (TEST_WORKERS=n), must stay at 100% coverage (headless: QT_QPA_PLATFORM=offscreen)
+make test-serial   # the same in one process, slower: the reference when a test fails only in parallel
 make ui       # leaves no diff in src/kubescope/ui
 make i18n     # leaves no untranslated texts in src/kubescope/languages
 ```
