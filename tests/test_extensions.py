@@ -342,6 +342,9 @@ class FakeUi:
     def pick_item(self, title, label, items):
         return "", False
 
+    def pick_row(self, title, label, headers, rows, moments=None):
+        return -1, False
+
     def show_json(self, title, document) -> None:
         self.calls.append(("json", title))
 
@@ -560,3 +563,24 @@ def test_an_extension_offers_a_theme_and_it_goes_with_the_extension() -> None:
         ExtensionContext("dco.b", frozenset(), host).add_theme("x", {})
     context.close()
     assert host.contributions.themes == []
+
+
+def test_the_ui_hands_a_pick_of_a_row_to_the_window() -> None:
+    from PySide6.QtWidgets import QApplication, QWidget
+
+    application = QApplication.instance() or QApplication([])
+    seen: list[tuple] = []
+    ui = WindowUi(
+        QWidget(),
+        QWidget(),
+        lambda *_: None,
+        lambda *_: None,
+        lambda *_: None,
+        lambda *_: None,
+        lambda *_: None,
+        lambda color, text: color,
+        pick_row=lambda *args: seen.append(args) or (1, True),
+    )
+    assert ui.pick_row("T", "L", ["H"], [["a"], ["b"]]) == (1, True)
+    assert seen == [("T", "L", ["H"], [["a"], ["b"]], None)]
+    assert application is not None

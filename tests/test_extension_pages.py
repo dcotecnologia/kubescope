@@ -83,7 +83,7 @@ def test_the_page_is_built_when_it_is_first_opened_and_told_each_time() -> None:
     index = stack.count() - 1
 
     assert built == []
-    assert pages.shown(index) == ("Instances", "Subtitle", None)
+    assert pages.shown(index) == ("RDS: Instances", "Subtitle", None)
     pages.shown(index)
 
     assert built == ["x"]  # built once
@@ -180,7 +180,7 @@ def test_a_page_that_fails_when_it_is_opened_does_not_stop_the_window(caplog) ->
 
     found = pages.shown(stack.count() - 1)
 
-    assert found == ("Instances", "Subtitle", None)
+    assert found == ("RDS: Instances", "Subtitle", None)
     assert "The page Instances failed" in caplog.text
 
 
@@ -362,3 +362,22 @@ def test_a_page_for_a_section_of_the_app_goes_into_it() -> None:
     pages.apply([])
 
     assert labels(window) == ["Workloads"]
+
+
+def test_a_page_can_be_found_and_opened_by_its_pin_key():
+    from kubescope.views.extension_pages import pin_key
+
+    _window, _menu, stack, pages, _events = make()
+    seen: list[str] = []
+    pages._on_entry = lambda key, _button: seen.append(key)
+    one = page()
+    pages.apply([one])
+    key = pin_key(one)
+    assert seen == [key]
+    assert key == "extension:dco.a/AWS/RDS/Instances"
+    assert pages.button_for("extension:none") is None
+    assert not pages.is_open(key)
+    pages.open_key(key)
+    pages.open_key("extension:none")
+    assert pages.is_open(key)
+    assert pages.button_for(key) is not None

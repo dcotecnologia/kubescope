@@ -1,13 +1,25 @@
 import ctypes
+import ctypes.util
+import os
 import sys
 from ctypes import wintypes
 from typing import cast
 
-from PySide6.QtCore import QEvent, QObject, QPoint, QPointF, QSize, Qt
-from PySide6.QtGui import QIcon, QMouseEvent, QPainter, QPen, QPixmap
+from PySide6.QtCore import QEvent, QObject, QPoint, QPointF, QRectF, QSize, Qt
+from PySide6.QtGui import (
+    QGuiApplication,
+    QIcon,
+    QMouseEvent,
+    QPainter,
+    QPainterPath,
+    QPen,
+    QPixmap,
+    QRegion,
+)
 from PySide6.QtWidgets import QMainWindow, QPushButton, QWidget
 
 RESIZE_MARGIN = 5  # the strip around the window that a drag resizes from
+CORNER_RADIUS = 10  # px of the corners of a window that draws its own frame
 EDGE_PADDING = 6  # what the controls leave of the top bar on their right
 
 _WATCHED = (
@@ -75,6 +87,68 @@ def control_icon(kind: str) -> QIcon:
     return QIcon(pixmap)
 
 
+def has_compositor() -> bool:
+    """Whether the desktop lets a window show what is behind it, which smooth
+    corners need.
+
+    Wayland always does; on X11 a compositing manager says so.
+    """
+    if QGuiApplication.platformName() == "wayland":
+        return True
+    if QGuiApplication.platformName() not in ("xcb", ""):
+        return False
+    name = ctypes.util.find_library("X11")
+    if name is None or not os.environ.get("DISPLAY"):
+        return False
+    try:
+        xlib = ctypes.CDLL(name)
+        xlib.XOpenDisplay.restype = ctypes.c_void_p
+        xlib.XOpenDisplay.argtypes = [ctypes.c_char_p]
+        xlib.XInternAtom.restype = ctypes.c_ulong
+        xlib.XInternAtom.argtypes = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_int]
+        xlib.XGetSelectionOwner.restype = ctypes.c_ulong
+        xlib.XGetSelectionOwner.argtypes = [ctypes.c_void_p, ctypes.c_ulong]
+        xlib.XDefaultScreen.argtypes = [ctypes.c_void_p]
+        xlib.XCloseDisplay.argtypes = [ctypes.c_void_p]
+        display = xlib.XOpenDisplay(None)
+        if not display:
+            return False
+        try:
+            screen = xlib.XDefaultScreen(display)
+            atom = xlib.XInternAtom(display, f"_NET_WM_CM_S{screen}".encode(), 0)
+            return bool(xlib.XGetSelectionOwner(display, atom))
+        finally:
+            xlib.XCloseDisplay(display)
+    except OSError, AttributeError:
+        return False
+
+
+class _Corners(QWidget):
+    """Cuts the four corners of the content of the window, smoothly: it is
+    painted last, over everything, and clears what lies outside the rounded
+    outline (the strip that resizes the window included), so the desktop shows
+    through there."""
+
+    def __init__(self, window: QWidget) -> None:
+        super().__init__(window)
+        self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
+        self.setAttribute(Qt.WidgetAttribute.WA_NoSystemBackground)
+        self.hide()
+
+    def paintEvent(self, event: object) -> None:
+        window = self.parentWidget()
+        body = window.contentsRect() if window is not None else self.rect()
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        painter.setCompositionMode(QPainter.CompositionMode.CompositionMode_Clear)
+        outside = QPainterPath()
+        outside.addRect(QRectF(self.rect()))
+        inside = QPainterPath()
+        inside.addRoundedRect(QRectF(body), CORNER_RADIUS, CORNER_RADIUS)
+        painter.fillPath(outside.subtracted(inside), Qt.GlobalColor.black)
+        painter.end()
+
+
 class WindowFrame(QObject):
     """Draws the window's own title bar: the top bar moves the window and holds
     its controls, and a strip around the window resizes it.
@@ -98,6 +172,8 @@ class WindowFrame(QObject):
         self._bar = bar
         self._controls = controls
         self._maximize = maximize
+        self._corners = _Corners(window)
+        self._compositor: bool | None = None  # asked of the desktop the first time
         minimize.setIcon(control_icon("minimize"))
         minimize.setIconSize(QSize(14, 14))
         maximize.setIconSize(QSize(14, 14))
@@ -125,6 +201,7 @@ class WindowFrame(QObject):
         visible = window.isVisible()
         self.custom = custom
         window.setWindowFlag(Qt.WindowType.FramelessWindowHint, custom)
+        window.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, self.alpha)
         if visible:
             window.show()  # changing a window's flags hides it
         if custom:
@@ -171,6 +248,46 @@ class WindowFrame(QObject):
         margin = RESIZE_MARGIN if strip else 0
         window.setContentsMargins(margin, margin, margin, margin)
         self._maximize.setIcon(control_icon("restore" if filled else "maximize"))
+        self._round(filled)
+
+    def _round(self, filled: bool | None = None) -> None:
+        """Round the corners of a window that draws its own frame, as the
+        windows of the desktop have, except while it fills the screen: smooth
+        where the desktop has a compositor, cut with a mask where it has not.
+
+        Windows rounds its own through the system.
+        """
+        window = self._window
+        if filled is None:
+            filled = window.isMaximized() or window.isFullScreen()
+        rounded = self.rounds and not filled
+        smooth = rounded and self.alpha
+        self._corners.setGeometry(window.rect())
+        self._corners.setVisible(smooth)
+        if smooth:
+            self._corners.raise_()
+        if rounded and not self.alpha:
+            outline = QPainterPath()
+            radius = CORNER_RADIUS + RESIZE_MARGIN  # the content is inset by the strip
+            outline.addRoundedRect(
+                0, 0, window.width(), window.height(), radius, radius
+            )
+            window.setMask(QRegion(outline.toFillPolygon().toPolygon()))
+        else:
+            window.clearMask()
+
+    @property
+    def rounds(self) -> bool:
+        """Whether this window cuts its own corners."""
+        return self.custom and sys.platform != "win32"
+
+    @property
+    def alpha(self) -> bool:
+        """Whether it cuts them smoothly, which needs it to let the desktop
+        show through."""
+        if self._compositor is None:
+            self._compositor = has_compositor()
+        return self.rounds and self._compositor
 
     def toggle_maximized(self) -> None:
         window = self._window
@@ -219,6 +336,9 @@ class WindowFrame(QObject):
         if not self.custom:
             return False
         kind = event.type()
+        if kind == QEvent.Type.Resize and watched is self._window:
+            self._round()  # the outline follows the size
+            return False
         if kind not in _WATCHED:  # the rest also arrives while the window dies
             return False
         if watched is self._window.centralWidget():

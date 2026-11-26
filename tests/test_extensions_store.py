@@ -602,3 +602,52 @@ def test_pruning_leaves_alone_an_extension_whose_manifest_cannot_be_read(
 
     assert store.prune_installed() == {}
     assert (installed.folder / "Makefile").is_file()  # nothing is deleted
+
+
+def test_an_extension_out_of_the_range_of_the_app_is_refused_and_told(
+    tmp_path, monkeypatch
+) -> None:
+    from kubescope.extensions import manifest as manifest_module
+
+    monkeypatch.setattr(manifest_module, "__version__", "3.1.0")
+    store = ExtensionStore(tmp_path / "store")
+    old = make_zip(
+        {
+            MANIFEST_NAME: manifest() + b'max_app = "3.0.0"\n',
+            "src/tool.py": b"def activate(ctx): pass\n",
+        }
+    )
+    with pytest.raises(StoreError, match="works up to KubeScope 3.0.0"):
+        store.prepare(old, "x")
+
+    monkeypatch.setattr(manifest_module, "__version__", "2.8.0")
+    new = make_zip(
+        {
+            MANIFEST_NAME: manifest() + b'min_app = "2.9.0"\n',
+            "src/tool.py": b"def activate(ctx): pass\n",
+        }
+    )
+    with pytest.raises(StoreError, match="update the app first"):
+        store.prepare(new, "x")
+
+
+def test_an_installed_extension_the_app_outgrew_is_kept_but_not_run_and_listed(
+    tmp_path, monkeypatch
+) -> None:
+    from kubescope.extensions import manifest as manifest_module
+
+    monkeypatch.setattr(manifest_module, "__version__", "2.9.0")
+    store = ExtensionStore(tmp_path / "store")
+    data = make_zip(
+        {
+            MANIFEST_NAME: manifest() + b'max_app = "3.0.0"\n',
+            "src/tool.py": b"def activate(ctx): pass\n",
+        }
+    )
+    store.install(store.prepare(data, "x"))
+    assert [one.manifest.id for one in store.installed()] == ["dco.tool"]
+    assert store.incompatible == {}
+
+    monkeypatch.setattr(manifest_module, "__version__", "3.1.0")  # the app moved on
+    assert store.installed() == []
+    assert "works up to KubeScope 3.0.0" in store.incompatible["dco.tool"]

@@ -173,12 +173,12 @@ def test_navigation_switches_pages_and_loads_overview(monkeypatch) -> None:
 
     window.nav_deployments.click()
     assert window.pages.currentIndex() == 1
-    assert window.ui.pageTitle.text() == "Deployments"
+    assert window.ui.pageTitle.text() == "Workloads: Deployments"
     assert requested == []
 
     window.nav_overview.click()
     assert window.pages.currentIndex() == 0
-    assert window.ui.pageTitle.text() == "Overview"
+    assert window.ui.pageTitle.text() == "Monitoring: Overview"
     assert requested == []  # already loaded for this context
 
     window.context_combo.addItem("staging")
@@ -345,6 +345,10 @@ def test_details_and_logs_open_as_closable_tabs(monkeypatch) -> None:
     window._pinned_buttons[0].click()  # a tab of the top bar shows its page
     assert window.viewer_tabs.currentIndex() == 0
     assert window.viewer_tabs.count() == 2
+    assert window.ui.pageTitle.text() == "Details: Deployment / api"
+    window._pinned_buttons[1].click()
+    assert window.ui.pageTitle.text() == "Logs: api-1 / app"
+    window._pinned_buttons[0].click()
     assert window.viewer_tabs.tabText(0) == "Deployment: api"
     assert window.viewer_tabs.tabText(1) == "Logs: api-1 / app"
     assert (
@@ -653,7 +657,7 @@ def test_pods_menu_lists_pods_and_deployments_menu_lists_deployments(
 
     window.nav_pods.click()
     assert window.pages.currentIndex() == 1
-    assert window.ui.pageTitle.text() == "Pods"
+    assert window.ui.pageTitle.text() == "Workloads: Pods"
     assert present(window.table.horizontalHeaderItem(1)).text() == "CONTAINERS"
     assert not window.pods_button.isVisibleTo(window)
 
@@ -672,7 +676,7 @@ def test_pods_menu_lists_pods_and_deployments_menu_lists_deployments(
     assert cell(window.table, 0, 2).text() == "job-1"
 
     window.nav_deployments.click()
-    assert window.ui.pageTitle.text() == "Deployments"
+    assert window.ui.pageTitle.text() == "Workloads: Deployments"
     assert present(window.table.horizontalHeaderItem(1)).text() == "KIND"
     assert window.pods_button.isVisibleTo(window)
     window.close()

@@ -15,7 +15,7 @@ from dataclasses import dataclass
 
 from kubescope.extensions.defaults import DefaultExtension
 from kubescope.extensions.github import GithubError, Repo, repo_of
-from kubescope.extensions.manifest import needs_newer_app
+from kubescope.extensions.manifest import needs_newer_app, needs_older_app
 from kubescope.extensions.store import Installed
 
 logger = logging.getLogger(__name__)
@@ -59,7 +59,8 @@ def newest_compatible(
         reverse=True,
     )
     for name in finals[:MAX_CHECKED]:
-        if not needs_newer_app(manifest_of(Repo(repo.owner, repo.name, name))):
+        manifest = manifest_of(Repo(repo.owner, repo.name, name))
+        if not needs_newer_app(manifest) and not needs_older_app(manifest):
             return name
     return None
 

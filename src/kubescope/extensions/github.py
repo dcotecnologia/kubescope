@@ -45,6 +45,11 @@ class Repo:
         return f"{self.owner}/{self.name}" + (f"@{self.ref}" if self.ref else "")
 
     @property
+    def url(self) -> str:
+        """The page of the repository, with no branch or tag."""
+        return f"https://github.com/{quote(self.owner)}/{quote(self.name)}"
+
+    @property
     def source(self) -> str:
         """How an installed extension remembers where it came from."""
         return f"github {self.label}"

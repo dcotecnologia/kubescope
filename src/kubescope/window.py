@@ -158,9 +158,11 @@ from kubescope.cluster import (
 from kubescope.dialogs.account_dialog import AccountDialog
 from kubescope.dialogs.changelog_dialog import ChangelogDialog
 from kubescope.dialogs.notices_dialog import NoticesDialog
+from kubescope.dialogs.pick_row_dialog import PickRowDialog
 from kubescope.dialogs.theme_editor import ThemeEditor
 from kubescope.dialogs.update_dialog import UpdateDialog
 from kubescope.extensions.cluster_access import ClusterBridge
+from kubescope.extensions.components import UiComponents
 from kubescope.extensions.context import Host, data_directory
 from kubescope.extensions.loader import ExtensionLoader
 from kubescope.extensions.registries import CommandRegistry
@@ -308,6 +310,7 @@ CONTEXT_PULSE = "#9b8cff"  # the ring around the context on a switch
 
 logger = logging.getLogger(__name__)
 
+PICK_SEARCH_FROM = 6  # a pick of more items than this has a field to narrow it
 PIN_MIME = "application/x-kubescope-pin"  # what a dragged pinned tab carries
 VIEWER_MIME = "application/x-kubescope-viewer"  # the same, for a Details/Logs tab
 DESIGNED_COLUMNS = 6  # the columns the table has in main_window.ui
@@ -1311,6 +1314,7 @@ class WorkloadWindow(QMainWindow):
         self.extension_store = ExtensionStore(config_directory() / "extensions")
         self.extension_store.prune_installed()  # what an older version kept whole
         self._extension_loader: ExtensionLoader | None = None  # made below
+        self._warned_incompatible: set[str] = set()  # told to the person already
         self._extension_sections: list[_ExtensionSection] = []
         self.monitoring_fold = self._fold_the_monitoring_block()
         self.extension_pages = ExtensionPages(
@@ -1324,6 +1328,7 @@ class WorkloadWindow(QMainWindow):
             group_icon=_group_icon,
             on_changed=self._sections_changed,
             builtin={"monitoring": self.monitoring_body},
+            on_entry=self._pin_extension_entry,
         )
         monitoring_gap = QWidget()  # the air above a block, as the other blocks have
         monitoring_gap.setFixedHeight(SECTION_GAP)
@@ -1588,6 +1593,9 @@ class WorkloadWindow(QMainWindow):
                 lambda owner, hidden: self._hide_side_menu_for(owner, hidden),
                 lambda: self._content_area(),
                 _badge_colors,
+                lambda title, label, headers, rows, moments: self._pick_row(
+                    title, label, headers, rows, moments
+                ),
             ),
             begin_forward=lambda *args: self._begin_forward(*args),
             commands=self.commands,
@@ -1782,6 +1790,16 @@ class WorkloadWindow(QMainWindow):
             on_error=lambda _reason: self._show_eks_entries(context, False),
             quiet=True,
         )
+
+    def _pin_extension_entry(self, key: str, button: QPushButton) -> None:
+        """A page of an extension pins as a list does: right-click or two quick
+        clicks on its entry."""
+        button.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        button.customContextMenuRequested.connect(
+            lambda position: self._show_pin_menu(key, button.mapToGlobal(position))
+        )
+        button.installEventFilter(self)
+        self._pin_gestures[button] = ("pin", key)
 
     def _show_pin_menu(self, view: str, position: QPoint) -> None:
         """Right-click on a list's entry: pin it to the top of the menu, or
@@ -2009,16 +2027,27 @@ class WorkloadWindow(QMainWindow):
         }
         for view in self.settings.pinned_views():
             page = self._nav_pages.get(view)
-            source = page[0] if page else self._nav_views.get(view)
+            extension = view.startswith("extension:")
+            source = (
+                self.extension_pages.button_for(view)
+                if extension
+                else page[0]
+                if page
+                else self._nav_views.get(view)
+            )
             if source is None or source.isHidden():
                 continue
             active = (
-                self.pages.currentIndex() == page[1]
+                self.extension_pages.is_open(view)
+                if extension
+                else self.pages.currentIndex() == page[1]
                 if page
                 else self.pages.currentIndex() == 1 and self._view == view
             )
             show = (
-                (lambda _checked=False, index=page[1]: self._show_page(index))
+                (lambda _checked=False, view=view: self.extension_pages.open_key(view))
+                if extension
+                else (lambda _checked=False, index=page[1]: self._show_page(index))
                 if page
                 else (lambda _checked=False, view=view: self._open_list_view(view))
             )
@@ -2345,12 +2374,45 @@ class WorkloadWindow(QMainWindow):
         elif index == 2:
             self._load_settings_form()
 
+    def _viewer_title(self) -> str:
+        """`Details: object` or `Logs: object` for the tab open; the pair when
+        none is."""
+        index = self.viewer_tabs.currentIndex()
+        if index < 0:
+            return self.tr("Details & Logs")
+        title = self.viewer_tabs.tabText(index)
+        if isinstance(self.viewer_tabs.widget(index), LogTab):
+            return title  # already `Logs: pod / container`
+        details = self.tr("Details")
+        return f"{details}: {title.replace(': ', ' / ', 1)}"
+
+    def _monitoring_name(self) -> str:
+        """The Monitoring section, as the side menu names it."""
+        return self.ui.navSection.text().capitalize()
+
+    def _menu_group(self, view: str) -> str:
+        """The menu group a list is in (Workloads, Network, Config), or nothing
+        for the lists that stand alone."""
+        button = self._nav_views.get(view)
+        headers = {
+            self.submenu: self.nav_workloads,
+            self.network_submenu: self.nav_network,
+            self.config_submenu: self.nav_config,
+        }
+        parent = button.parentWidget() if button is not None else None
+        while parent is not None:
+            if isinstance(parent, QFrame) and parent in headers:
+                return headers[parent].text().strip()
+            parent = parent.parentWidget()
+        return ""
+
     def _apply_page_titles(self) -> None:
         if self.pages.currentIndex() == 0:
-            self.ui.pageTitle.setText(self.tr("Overview"))
+            overview = self.tr("Overview")
+            self.ui.pageTitle.setText(f"{self._monitoring_name()}: {overview}")
             self.ui.pageSubtitle.setText(self.tr("Cluster resources and capacity"))
         elif self.pages.currentIndex() == 3:
-            self.ui.pageTitle.setText(self.tr("Details & Logs"))
+            self.ui.pageTitle.setText(self._viewer_title())
             self.ui.pageSubtitle.setText(
                 self.tr("Resource details and Pod logs, one tab each")
             )
@@ -2363,10 +2425,14 @@ class WorkloadWindow(QMainWindow):
                 self.tr("Helm charts of Artifact Hub to install in a cluster")
             )
         elif self.pages.currentIndex() == 5:
-            self.ui.pageTitle.setText(self.tr("Port forwards"))
+            forwards = self.tr("Port forwards")
+            self.ui.pageTitle.setText(f"{self._monitoring_name()}: {forwards}")
             self.ui.pageSubtitle.setText(self.tr("The forwards started from KubeScope"))
         elif self.pages.currentIndex() == 4:
-            self.ui.pageTitle.setText(self.tr("Workloads overview"))
+            overview = self.tr("Overview")
+            self.ui.pageTitle.setText(
+                f"{self.nav_workloads.text().strip()}: {overview}"
+            )
             self.ui.pageSubtitle.setText(
                 self.tr("Health of every workload kind and the latest events")
             )
@@ -2469,6 +2535,9 @@ class WorkloadWindow(QMainWindow):
                     self.tr("Node Groups of the cluster"),
                 ),
             }[self._view]
+            group = self._menu_group(self._view)
+            if group:
+                title = f"{group}: {title}"
             self.ui.pageTitle.setText(title)
             self.ui.pageSubtitle.setText(subtitle)
 
@@ -2734,7 +2803,7 @@ class WorkloadWindow(QMainWindow):
     def _apply_style(self) -> None:
         """Style the window for the active theme; the icons Qt style sheets
         cannot draw are rendered in the theme's colors."""
-        glass = translucent()
+        glass = translucent() or self._frame.alpha  # smooth corners need it too
         if glass != self.testAttribute(Qt.WidgetAttribute.WA_TranslucentBackground):
             visible = self.isVisible()
             self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, glass)
@@ -2888,6 +2957,7 @@ class WorkloadWindow(QMainWindow):
         for name, block in self.extension_pages.blocks.items():
             self._connect_section_menu(name, block.label)
         self._arrange_sections()
+        self._render_pinned()  # the pages of an extension that came or went
 
     def _space_sections(self) -> None:
         """Air above every block that shows, except the first one."""
@@ -5136,6 +5206,21 @@ class WorkloadWindow(QMainWindow):
         combo = QComboBox()
         combo.setProperty("variant", "filter")
         combo.addItems(items)
+        if len(items) > PICK_SEARCH_FROM:
+            # a long list is narrowed as the person types
+            search = QLineEdit()
+            search.setPlaceholderText(self.tr("Filter the list"))
+            search.setClearButtonEnabled(True)
+
+            def narrow(text: str) -> None:
+                kept = [one for one in items if text.casefold() in one.casefold()]
+                combo.clear()
+                combo.addItems(kept)
+                ok_button.setEnabled(bool(kept))  # nothing to pick, nothing to ask
+
+            search.textChanged.connect(narrow)
+            layout.addWidget(search)
+            search.setFocus()
         layout.addWidget(combo)
         actions = QHBoxLayout()
         actions.addStretch()
@@ -5151,6 +5236,41 @@ class WorkloadWindow(QMainWindow):
         layout.addLayout(actions)
         accepted = dialog.exec() == QDialog.DialogCode.Accepted
         return combo.currentText(), accepted
+
+    def _pick_row(
+        self,
+        title: str,
+        label: str,
+        headers: list[str],
+        rows: list[list[str]],
+        moments: list[datetime.datetime] | None = None,
+    ) -> tuple[int, bool]:
+        """Ask the person to pick one row of a table that narrows as they type
+        and by a range of dates; the index of the row and whether they
+        accepted."""
+        dialog = PickRowDialog(
+            self,
+            UiComponents(
+                _badge_colors,
+                lambda color: themed(color, text=False),
+                self._style_box_buttons,
+                lambda color, text: themed(color, text=text),
+            ),
+            title,
+            label,
+            headers,
+            rows,
+            moments,
+            {
+                "search": self.tr("Filter the list"),
+                "from": self.tr("From"),
+                "to": self.tr("To"),
+                "cancel": self.tr("Cancel"),
+                "ok": self.tr("OK"),
+            },
+        )
+        accepted = dialog.exec() == QDialog.DialogCode.Accepted
+        return dialog.picked, accepted
 
     def _choose_pod_for_logs(self, context: str, pods: list[PodInfo]) -> None:
         if not pods:
@@ -6251,6 +6371,29 @@ class WorkloadWindow(QMainWindow):
         self._apply_extension_contributions()
         self.extensions_panel.refresh()
         self.extensions_panel.offer_defaults(self.settings)
+        self._warn_incompatible_extensions()
+
+    def _warn_incompatible_extensions(self) -> None:
+        """Say once which installed extensions do not run on this app, and
+        why."""
+        fresh = {
+            extension: reason
+            for extension, reason in self.extension_store.incompatible.items()
+            if extension not in self._warned_incompatible
+        }
+        if not fresh:
+            return
+        self._warned_incompatible.update(fresh)
+        lines = "\n".join(f"• {name}: {reason}" for name, reason in fresh.items())
+        self._show_message(
+            QMessageBox.Icon.Warning,
+            self.tr("Extensions that do not run"),
+            self.tr(
+                "These extensions are not made for this version of KubeScope, "
+                "so they were not started:"
+            )
+            + f"\n\n{lines}",
+        )
 
     def _watch_extensions(self) -> None:
         """Watch the folder of each extension that runs from where its author

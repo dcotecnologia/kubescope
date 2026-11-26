@@ -42,7 +42,7 @@ from kubescope.dialogs.extension_details_dialog import (
 )
 from kubescope.dialogs.extension_dialog import InstallExtensionDialog
 from kubescope.dialogs.extension_updates_dialog import ExtensionUpdatesDialog
-from kubescope.extensions.defaults import DefaultExtension, offered, verify
+from kubescope.extensions.defaults import DEFAULTS, DefaultExtension, offered, verify
 from kubescope.extensions.github import (
     GithubError,
     Repo,
@@ -562,8 +562,23 @@ class ExtensionsPanel(QObject):
                 recommended=row.recommended,
                 known=known,
                 newer=row.update.version if row.update else "",
+                repository=self._repository(row),
             ),
         ).exec()
+
+    @staticmethod
+    def _repository(row: Row) -> str:
+        """The page of the repository of an extension: where it was installed
+        from, or where the app offers it."""
+        repo = repo_of(row.source)
+        if repo is None and row.default is not None:
+            repo = row.default.repo
+        if repo is None:
+            offered_one = next(
+                (one for one in DEFAULTS if one.id == row.manifest.id), None
+            )
+            repo = offered_one.repo if offered_one is not None else None
+        return repo.url if repo is not None else ""
 
     def _menu(self, position: QPoint) -> None:
         """Right-click on an extension: what can be done with it."""

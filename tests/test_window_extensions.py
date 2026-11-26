@@ -58,7 +58,7 @@ def test_a_page_of_an_extension_is_in_the_menu_and_opens_with_its_title(
     ][-1]  # the one added last; the app has its own Instances until RDS leaves
     entry.click()
 
-    assert window.ui.pageTitle.text() == "Instances"
+    assert window.ui.pageTitle.text() == "Databases: Instances"
     assert window.ui.pageSubtitle.text() == "Of the account"
     assert entry.isChecked() and not window.nav_overview.isChecked()
     assert window.extension_refresh_button.isVisibleTo(window)
@@ -489,3 +489,16 @@ def test_an_action_of_an_extension_is_dropped_while_the_window_closes(
     assert window._extension_busy == 0 and ran == []
     window._close_when_worker_stops = False
     window.close()
+
+
+def test_the_person_is_told_once_which_extensions_do_not_run(monkeypatch) -> None:
+    window = _ready_window(monkeypatch)
+    told: list[tuple] = []
+    monkeypatch.setattr(window, "_show_message", lambda *args: told.append(args))
+    window.extension_store.incompatible = {"dco.tool": "it works up to KubeScope 3.0.0"}
+
+    window._warn_incompatible_extensions()
+    window._warn_incompatible_extensions()  # the same one is not told again
+
+    assert len(told) == 1
+    assert "dco.tool: it works up to KubeScope 3.0.0" in told[0][2]

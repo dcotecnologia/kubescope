@@ -135,7 +135,7 @@ def test_the_forwards_page_lists_their_status_and_stops_them(
     assert [item.number for item in runner.items] == [1]
     window.nav_forwards.click()
     assert window.pages.currentIndex() == 5 and window.nav_forwards.isChecked()
-    assert window.ui.pageTitle.text() == "Port forwards"
+    assert window.ui.pageTitle.text() == "Monitoring: Port forwards"
     window._retranslate()
 
 

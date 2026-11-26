@@ -1,6 +1,7 @@
 """The services of the window that an extension may use
 (`kubescope.sdk.Ui`)."""
 
+import datetime
 from collections.abc import Callable
 from typing import Any
 
@@ -45,6 +46,10 @@ class WindowUi:
         hide_side_menu: Callable[[str, bool], None] = lambda *_: None,
         content_area: Callable[[], tuple[int, int, int, int]] = lambda: (0, 0, 0, 0),
         badge_colors: Callable[[str], tuple[str, str]] = lambda _status: ("", ""),
+        pick_row: Callable[
+            [str, str, list[str], list[list[str]], list[datetime.datetime] | None],
+            tuple[int, bool],
+        ] = lambda *_: (-1, False),
     ) -> None:
         self.components: Components = UiComponents(
             badge_colors, lambda color: themed(color, False), style_box, themed
@@ -58,6 +63,7 @@ class WindowUi:
         self._reserve_corner = reserve_corner
         self._themed = themed
         self._pick_item = pick_item
+        self._pick_row = pick_row
         self._show_json = show_json
         self._open_log = open_log
         self._add_top_bar_button = add_top_bar_button
@@ -88,6 +94,16 @@ class WindowUi:
 
     def pick_item(self, title: str, label: str, items: list[str]) -> tuple[str, bool]:
         return self._pick_item(title, label, items)
+
+    def pick_row(
+        self,
+        title: str,
+        label: str,
+        headers: list[str],
+        rows: list[list[str]],
+        moments: list[datetime.datetime] | None = None,
+    ) -> tuple[int, bool]:
+        return self._pick_row(title, label, headers, rows, moments)
 
     def show_json(self, title: str, document: dict[str, Any]) -> None:
         self._show_json(title, document)

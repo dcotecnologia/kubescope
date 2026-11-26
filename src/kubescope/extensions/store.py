@@ -24,6 +24,7 @@ from typing import Any
 from kubescope.extensions import archive
 from kubescope.extensions.manifest import (
     MANIFEST_NAME,
+    IncompatibleError,
     Manifest,
     ManifestError,
     missing_required,
@@ -88,6 +89,8 @@ class ExtensionStore:
         self.bundled = bundled
         self._installed: dict[str, dict[str, str]] = {}
         self._removed: set[str] = set()
+        # installed, but not made for this app: the reason, by id
+        self.incompatible: dict[str, str] = {}
         self._load()
 
     # the registry of what was installed and what was removed
@@ -162,10 +165,14 @@ class ExtensionStore:
         """What the app runs: the installed ones, and the bundled ones the
         person did not uninstall and did not replace."""
         found: list[Installed] = []
+        self.incompatible = {}
         for extension, entry in sorted(self._installed.items()):
             folder = Path(entry["path"]) if "path" in entry else self._folder(extension)
             try:
                 manifest = read_manifest(folder)
+            except IncompatibleError as error:
+                self.incompatible[extension] = str(error)
+                continue  # it stays installed, but does not run on this app
             except ManifestError:
                 logger.debug("The extension %s is damaged and is skipped", extension)
                 continue

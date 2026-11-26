@@ -35,6 +35,7 @@ class ExtensionDetails:
     recommended: bool = False
     known: bool = True  # False for one that is not downloaded: its files are unknown
     newer: str = ""  # the version that can be installed, if there is one
+    repository: str = ""  # the page of its repository, when it has one
 
 
 class ExtensionDetailsDialog(QDialog):
@@ -73,6 +74,8 @@ class ExtensionDetailsDialog(QDialog):
         for label, value in rows:
             if value:
                 form.addRow(label, self._selectable(value))
+        if details.repository:
+            form.addRow(self.tr("Repository"), self._link(details.repository))
         form.addRow(
             self.tr("Permissions"),
             self._selectable(
@@ -106,6 +109,16 @@ class ExtensionDetailsDialog(QDialog):
         close.clicked.connect(self.accept)
         row.addWidget(close)
         layout.addLayout(row)
+
+    @staticmethod
+    def _link(address: str) -> QLabel:
+        label = QLabel(f'<a href="{address}">{address}</a>')
+        label.setOpenExternalLinks(True)
+        label.setTextInteractionFlags(
+            Qt.TextInteractionFlag.LinksAccessibleByMouse
+            | Qt.TextInteractionFlag.TextSelectableByMouse
+        )
+        return label
 
     @staticmethod
     def _selectable(text: str) -> QLabel:

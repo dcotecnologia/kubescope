@@ -62,6 +62,11 @@ def fold_name(section: str) -> str:
     return f"section:{section.lower()}"
 
 
+def pin_key(page: PageContribution) -> str:
+    """What the settings keep of a pinned page of an extension."""
+    return f"extension:{page.extension}/{page.section}/{page.group}/{page.title}"
+
+
 class ExtensionPages(QObject):
     def __init__(
         self,
@@ -75,6 +80,7 @@ class ExtensionPages(QObject):
         group_icon: Callable[[str], QIcon] = lambda _group: QIcon(),
         on_changed: Callable[[], None] = lambda: None,
         builtin: dict[str, QVBoxLayout] | None = None,
+        on_entry: Callable[[str, QPushButton], None] = lambda _key, _button: None,
     ) -> None:
         super().__init__(stack)
         # the sections the app has itself, by their English name in lower case: a
@@ -90,6 +96,7 @@ class ExtensionPages(QObject):
         self._animated = animated
         self._on_fold = on_fold  # the person folded or unfolded a block
         self._group_icon = group_icon  # what the header of a group wears, by group
+        self._on_entry = on_entry  # an entry was made: its pin key and its button
         self._on_changed = on_changed  # the menu was built or its blocks show or not
         self.blocks: dict[str, SectionBlock] = {}  # by `fold_name` of the section
         self._headers: list[tuple[str, QPushButton]] = []  # by group
@@ -179,9 +186,30 @@ class ExtensionPages(QObject):
             )
             button.clicked.connect(partial(self._clicked, entry))
             self._entries.append(entry)
+            self._on_entry(pin_key(page), button)
         self.sync()
         if showing is not None and self.stack.indexOf(showing) < 0:
             self.leave()  # the page that was shown is gone
+
+    def button_for(self, key: str) -> QPushButton | None:
+        """The menu entry of a pinned page, if its extension runs."""
+        for entry in self._entries:
+            if pin_key(entry.page) == key:
+                return entry.button
+        return None
+
+    def open_key(self, key: str) -> None:
+        """Show the pinned page of this key."""
+        for entry in self._entries:
+            if pin_key(entry.page) == key:
+                self._clicked(entry)
+
+    def is_open(self, key: str) -> bool:
+        """Whether the page of this key is the one shown."""
+        return any(
+            pin_key(entry.page) == key and self.stack.currentWidget() is entry.host
+            for entry in self._entries
+        )
 
     def restyle(self) -> None:
         """The icons of the group headers, in the colors of the theme in
@@ -226,15 +254,20 @@ class ExtensionPages(QObject):
 
     def shown(self, index: int) -> tuple[str, str, Callable[[], None] | None] | None:
         """Check the entry of the page opened and build it the first time; the
-        title, the subtitle and what its refresh button does, if it is one of
-        these pages."""
+        title (`Group: Title`, always), the subtitle and what its refresh
+        button does, if it is one of these pages."""
         found: tuple[str, str, Callable[[], None] | None] | None = None
         for entry in self._entries:
             mine = self.stack.indexOf(entry.host) == index
             entry.button.setChecked(mine)
             if not mine:
                 continue
-            found = (entry.page.title, entry.page.subtitle, entry.page.refresh)
+            # the app writes the title, so every extension follows the pattern
+            found = (
+                f"{entry.page.group}: {entry.page.title}",
+                entry.page.subtitle,
+                entry.page.refresh,
+            )
             if not entry.built:
                 entry.built = True
                 self._build(entry)

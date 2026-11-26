@@ -62,3 +62,21 @@ def test_a_load_error_is_shown_and_an_unknown_one_has_no_permissions_yet() -> No
     assert "Could not load: boom" in text
     assert "They are shown when it is downloaded." in text
     assert "KubeScope recommends it" not in text
+
+
+def test_the_repository_is_a_link_that_opens_outside_the_app() -> None:
+    details = ExtensionDetails(
+        name="AWS",
+        id="kubescope.aws",
+        version="1.3.0",
+        status="Installed",
+        repository="https://github.com/dcotecnologia/kubescope-aws",
+    )
+    dialog = ExtensionDetailsDialog(None, details)
+    links = [one for one in dialog.findChildren(QLabel) if one.openExternalLinks()]
+    assert len(links) == 1
+    assert 'href="https://github.com/dcotecnologia/kubescope-aws"' in links[0].text()
+    assert "Repository" in texts(details)
+    assert "Repository" not in texts(
+        ExtensionDetails(name="A", id="a.b", version="1", status="Installed")
+    )

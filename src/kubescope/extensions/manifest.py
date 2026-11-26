@@ -35,6 +35,11 @@ class ManifestError(Exception):
     """The manifest cannot be used; the message says why."""
 
 
+class IncompatibleError(ManifestError):
+    """The extension is not made for this version of the app: it needs a newer
+    one (`min_app`) or works only up to an older one (`max_app`)."""
+
+
 @dataclass(frozen=True)
 class Manifest:
     id: str
@@ -52,6 +57,8 @@ class Manifest:
     production: tuple[str, ...] = ()
     # the oldest version of the app it works with, such as 2.4.0; empty when any
     min_app: str = ""
+    # the newest version of the app it works with; empty when any
+    max_app: str = ""
 
     @property
     def kept(self) -> frozenset[str]:
@@ -105,6 +112,38 @@ def needs_newer_app(content: bytes) -> str:
     return wanted if needed and have and have < needed else ""
 
 
+def needs_older_app(content: bytes) -> str:
+    """The `max_app` of a manifest when this app is newer than it, and an empty
+    text when the app is not or the manifest says nothing."""
+    try:
+        document = tomllib.loads(content.decode("utf-8"))
+    except UnicodeDecodeError, tomllib.TOMLDecodeError:
+        return ""
+    allowed = document.get("max_app")
+    if not isinstance(allowed, str):
+        return ""
+    newest, have = _numbers(allowed), _numbers(__version__)
+    return allowed if newest and have and have > newest else ""
+
+
+def _max_app(document: dict[str, object]) -> str:
+    """The newest app the extension works with, refused when this app is newer,
+    so that an extension that was not made for it is not installed."""
+    allowed = _text(document, "max_app", required=False)
+    if not allowed:
+        return ""
+    newest = _numbers(allowed)
+    if newest is None:
+        raise ManifestError("max_app must look like 2.9.0")
+    have = _numbers(__version__)
+    if have is not None and have > newest:
+        raise IncompatibleError(
+            f"it works up to KubeScope {allowed} and this is KubeScope "
+            f"{__version__}: look for a newer version of the extension"
+        )
+    return allowed
+
+
 def _min_app(document: dict[str, object]) -> str:
     """The oldest app the extension works with, refused when this app is older,
     so that an update that would not work is not installed."""
@@ -116,7 +155,7 @@ def _min_app(document: dict[str, object]) -> str:
         raise ManifestError("min_app must look like 2.4.0")
     have = _numbers(__version__)
     if have is not None and have < needed:
-        raise ManifestError(
+        raise IncompatibleError(
             f"it needs KubeScope {wanted} or later and this is KubeScope "
             f"{__version__}: update the app first"
         )
@@ -167,6 +206,7 @@ def parse_manifest(content: bytes) -> Manifest:
         raise ManifestError("commands need the permission cli")
     production = _production(document.get("production", []))
     min_app = _min_app(document)
+    max_app = _max_app(document)
     return Manifest(
         id=extension,
         name=_text(document, "name"),
@@ -178,6 +218,7 @@ def parse_manifest(content: bytes) -> Manifest:
         commands=tuple(commands),
         production=production,
         min_app=min_app,
+        max_app=max_app,
     )
 
 

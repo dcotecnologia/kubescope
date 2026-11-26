@@ -196,3 +196,36 @@ def test_a_manifest_that_needs_a_newer_app_is_told_without_being_read_whole(
     assert needs_newer_app(b'min_app = "soon"\n') == ""
     assert needs_newer_app(b"\xff") == ""  # left to the install to refuse
     assert needs_newer_app(b"not = [toml") == ""
+
+
+def test_an_extension_made_for_older_apps_is_refused_by_a_newer_one(
+    monkeypatch,
+) -> None:
+    from kubescope.extensions import manifest as manifest_module
+    from kubescope.extensions.manifest import needs_older_app
+
+    limited = GOOD + b'max_app = "2.9.0"\n'
+    monkeypatch.setattr(manifest_module, "__version__", "2.9.0")
+    assert parse_manifest(limited).max_app == "2.9.0"  # the newest it works with
+    assert needs_older_app(b'max_app = "2.9.0"\n') == ""
+    monkeypatch.setattr(manifest_module, "__version__", "2.10.0")  # as numbers
+    with pytest.raises(ManifestError, match="works up to KubeScope 2.9.0"):
+        parse_manifest(limited)
+    assert needs_older_app(b'max_app = "2.9.0"\n') == "2.9.0"
+    assert needs_older_app(b"") == ""
+    assert needs_older_app(b"max_app = 4\n") == ""
+    assert needs_older_app(b'max_app = "soon"\n') == ""
+    assert needs_older_app(b"\xff") == ""
+    assert needs_older_app(b"not = [toml") == ""
+
+
+def test_max_app_is_optional_and_must_be_a_version(monkeypatch) -> None:
+    from kubescope.extensions import manifest as manifest_module
+
+    assert parse_manifest(GOOD).max_app == ""
+    with pytest.raises(ManifestError, match="max_app must look like 2.9.0"):
+        parse_manifest(GOOD + b'max_app = "soon"\n')
+    with pytest.raises(ManifestError, match="max_app must be a text"):
+        parse_manifest(GOOD + b"max_app = 2\n")
+    monkeypatch.setattr(manifest_module, "__version__", "dev")
+    assert parse_manifest(GOOD + b'max_app = "1.0.0"\n').max_app == "1.0.0"

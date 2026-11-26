@@ -270,3 +270,91 @@ def test_the_window_hands_native_events_to_its_frame(monkeypatch) -> None:
     monkeypatch.setattr(window._frame, "native_hit", lambda *_args: None)
     monkeypatch.setattr(QMainWindow, "nativeEvent", lambda *_args: (False, 0))
     assert window.nativeEvent(b"other", 0) == (False, 0)
+
+
+def test_the_corners_of_a_window_with_its_own_frame_are_round_and_smooth(
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(window_frame.sys, "platform", "linux")
+    monkeypatch.setattr(window_frame, "has_compositor", lambda: True)
+    window, frame, _bar, _buttons = _frame()
+    central = window.centralWidget()
+    assert central is not None
+    central.setObjectName("body")
+    central.setStyleSheet("QWidget#body { background: #123456; }")
+
+    frame.set_custom(True)
+    window.show()
+    get_application().processEvents()
+    assert window.testAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+    image = window.grab().toImage()
+    margin = RESIZE_MARGIN  # the content is inset by the strip that resizes
+    assert image.pixelColor(0, 0).alpha() == 0
+    assert image.pixelColor(200, 2).alpha() == 0  # the strip lets the desktop through
+    assert image.pixelColor(margin, margin).alpha() == 0  # the corner of the content
+    assert image.pixelColor(200, margin).alpha() == 255  # its edge stays
+    assert image.pixelColor(200, 150).alpha() == 255
+    curve = {image.pixelColor(x, margin).alpha() for x in range(margin, margin + 12)}
+    assert any(0 < alpha < 255 for alpha in curve)  # smooth, not all or nothing
+
+    window.showMaximized()
+    frame.refresh()
+    get_application().processEvents()
+    assert frame._corners.isHidden()  # a window that fills the screen is square
+
+    frame.set_custom(False)  # the system draws its own
+    assert not window.testAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+    assert frame._corners.isHidden()
+    window.close()
+
+
+def test_windows_rounds_its_own_corners_so_the_window_cuts_none(monkeypatch) -> None:
+    monkeypatch.setattr(window_frame.sys, "platform", "win32")
+    window, frame, _bar, _buttons = _frame()
+    monkeypatch.setattr(frame, "_allow_system_resize", lambda: None)
+    frame.set_custom(True)
+    assert not frame.rounds and frame._corners.isHidden()
+    window.close()
+
+
+def test_without_a_compositor_the_corners_are_cut_with_a_mask(monkeypatch) -> None:
+    monkeypatch.setattr(window_frame.sys, "platform", "linux")
+    monkeypatch.setattr(window_frame, "has_compositor", lambda: False)
+    window, frame, _bar, _buttons = _frame()
+
+    frame.set_custom(True)
+    assert not window.testAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+    assert frame._corners.isHidden()
+    assert not window.mask().contains(QPoint(0, 0))
+    assert window.mask().contains(QPoint(200, 150))
+
+    window.showMaximized()
+    frame.refresh()
+    assert window.mask().isEmpty()
+    window.close()
+
+
+def test_the_desktop_is_asked_once_whether_it_has_a_compositor(monkeypatch) -> None:
+    monkeypatch.setattr(window_frame.sys, "platform", "linux")
+    asked: list[int] = []
+    monkeypatch.setattr(window_frame, "has_compositor", lambda: asked.append(1) or True)
+    _window, frame, _bar, _buttons = _frame()
+    frame.set_custom(True)
+    frame.refresh()
+    assert frame.alpha and asked == [1]
+
+
+def test_a_desktop_without_the_x11_library_has_no_compositor(monkeypatch) -> None:
+    from PySide6.QtGui import QGuiApplication
+
+    monkeypatch.setattr(QGuiApplication, "platformName", staticmethod(lambda: "xcb"))
+    monkeypatch.setattr(window_frame.ctypes.util, "find_library", lambda _name: None)
+    assert window_frame.has_compositor() is False
+    monkeypatch.setattr(
+        QGuiApplication, "platformName", staticmethod(lambda: "wayland")
+    )
+    assert window_frame.has_compositor() is True
+    monkeypatch.setattr(
+        QGuiApplication, "platformName", staticmethod(lambda: "offscreen")
+    )
+    assert window_frame.has_compositor() is False

@@ -46,6 +46,7 @@ from PySide6.QtWidgets import (
     QComboBox,
     QDialog,
     QLabel,
+    QLineEdit,
     QMenu,
     QMessageBox,
     QPushButton,
@@ -696,6 +697,24 @@ def test_item_picker_is_a_filter_styled_select(monkeypatch) -> None:
 
     monkeypatch.setattr(QDialog, "exec", lambda _dialog: QDialog.DialogCode.Rejected)
     assert window._pick_item("Logs", "Pick:", ["app"])[1] is False
+
+    # a long list has a field that narrows it while the person types
+    names = [f"error/postgresql.log.{n}" for n in range(8)] + ["other"]
+    narrowed = {}
+
+    def search_exec(dialog):
+        field = dialog.findChild(QLineEdit)
+        combo = dialog.findChild(QComboBox)
+        field.setText("OTHER")
+        narrowed["items"] = [combo.itemText(i) for i in range(combo.count())]
+        field.setText("nothing")
+        narrowed["empty_ok"] = dialog.findChildren(QPushButton)[-1].isEnabled()
+        field.setText("log.3")
+        return QDialog.DialogCode.Accepted
+
+    monkeypatch.setattr(QDialog, "exec", search_exec)
+    assert window._pick_item("Logs", "Pick:", names) == ("error/postgresql.log.3", True)
+    assert narrowed == {"items": ["other"], "empty_ok": False}
     window.close()
 
 
@@ -1198,7 +1217,7 @@ def test_every_workload_list_has_its_menu_entry_title_and_columns(monkeypatch) -
     for name, (title, ready_header, view) in expected.items():
         getattr(window.ui, name).click()
         assert window._view == view
-        assert window.ui.pageTitle.text() == title
+        assert window.ui.pageTitle.text() == f"Workloads: {title}"
         assert _header(window, 3) == ready_header
         assert window.pods_button.isVisibleTo(window)  # their Pods can be listed
         assert getattr(window.ui, name).isChecked()
@@ -1307,7 +1326,7 @@ def test_daemon_set_replica_set_and_controller_lists_open(monkeypatch) -> None:
         window._open_list_view(view)
         window._show_workloads(["ops"], [Workload("ops", kind, "x", 1, 2, "2d")])
 
-        assert window.ui.pageTitle.text() == title
+        assert window.ui.pageTitle.text() == f"Workloads: {title}"
         assert f"1 {title} in 1 namespaces" in window.status_label.text()
         assert window.summary_label.text() == f"1 of 1 {title}"
         assert cell(window.table, 0, 1).text() == kind
@@ -1382,7 +1401,7 @@ def test_opening_the_workloads_overview_loads_it_once_per_context(monkeypatch) -
     window.nav_workloads_overview.click()
 
     assert window.pages.currentIndex() == 4
-    assert window.ui.pageTitle.text() == "Workloads overview"
+    assert window.ui.pageTitle.text() == "Workloads: Overview"
     assert window.nav_workloads_overview.isChecked()
     assert [(name, args) for name, _ok, args, _kw in ran] == [
         ("get_workloads_overview", ("prod",))
@@ -1830,7 +1849,8 @@ def test_each_network_list_opens_with_its_own_columns(monkeypatch) -> None:
             ],
         )
 
-        assert window.ui.pageTitle.text() == title
+        group = window._menu_group(view)  # the lists that stand alone have none
+        assert window.ui.pageTitle.text() == (f"{group}: {title}" if group else title)
         assert window.table.columnCount() == extra + 4  # namespace, kind, name, age
         assert cell(window.table, 0, 1).text() == kind
         assert cell(window.table, 0, 3).text() == "v0"
@@ -1883,7 +1903,8 @@ def test_each_config_list_opens_with_its_own_columns(monkeypatch) -> None:
             ["ops"], [ClusterResource("ops", kind, "x", values, "2d")]
         )
 
-        assert window.ui.pageTitle.text() == title
+        group = window._menu_group(view)  # the lists that stand alone have none
+        assert window.ui.pageTitle.text() == (f"{group}: {title}" if group else title)
         assert window.table.columnCount() == extra + 4  # namespace, kind, name, age
         assert cell(window.table, 0, 1).text() == kind
         assert cell(window.table, 0, 3).text() == "v0"
