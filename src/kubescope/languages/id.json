@@ -942,7 +942,8 @@
             "{visible} of {total} Secrets": "{visible} dari {total} Secrets",
             "{visible} of {total} Services": "{visible} dari {total} Services",
             "{visible} of {total} StatefulSets": "{visible} dari {total} StatefulSets",
-            "{visible} of {total} Validating Webhook Configurations": "{visible} dari {total} Validating Webhook Configurations"
+            "{visible} of {total} Validating Webhook Configurations": "{visible} dari {total} Validating Webhook Configurations",
+            "“{program}” signs you in to {count} of your clusters, but it is not installed or not on the PATH. Install it, then refresh.": "“{program}” memasukkan Anda ke {count} klaster Anda, tetapi belum terpasang atau tidak ada di PATH. Pasang, lalu segarkan."
         },
         "WorkloadsOverviewPage": {
             "AGE": "USIA",

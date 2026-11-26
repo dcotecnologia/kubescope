@@ -942,7 +942,8 @@
             "{visible} of {total} Secrets": "{visible} מתוך {total} Secrets",
             "{visible} of {total} Services": "{visible} מתוך {total} Services",
             "{visible} of {total} StatefulSets": "{visible} מתוך {total} StatefulSets",
-            "{visible} of {total} Validating Webhook Configurations": "{visible} מתוך {total} Validating Webhook Configurations"
+            "{visible} of {total} Validating Webhook Configurations": "{visible} מתוך {total} Validating Webhook Configurations",
+            "“{program}” signs you in to {count} of your clusters, but it is not installed or not on the PATH. Install it, then refresh.": "„{program}” מתחבר ל-{count} מהאשכולות שלך, אך אינו מותקן או שאינו ב-PATH. התקן אותו ואז רענן."
         },
         "WorkloadsOverviewPage": {
             "AGE": "גיל",

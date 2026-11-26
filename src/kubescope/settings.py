@@ -50,6 +50,7 @@ DEFAULTS: dict[str, Any] = {
     "run_in_background": True,
     "system_title_bar": False,
     "welcome_dismissed": False,
+    "dismissed_checks": [],
     "last_seen_version": "",
     "window_geometry": "",
     "kubeconfig_files": [],
@@ -206,6 +207,12 @@ class Settings:
             )
             if isinstance(widths, dict)
         }
+        dismissed = self._data["dismissed_checks"]
+        self._data["dismissed_checks"] = (
+            sorted({key for key in dismissed if isinstance(key, str) and key.strip()})
+            if isinstance(dismissed, list)
+            else []
+        )
         recent = self._data["recent_screens"]
         self._data["recent_screens"] = (
             list(
@@ -665,6 +672,14 @@ class Settings:
     @text_size.setter
     def text_size(self, value: int) -> None:
         self._data["text_size"] = value if value in TEXT_SIZES else 100
+
+    def check_dismissed(self, key: str) -> bool:
+        """Whether the person dismissed the notice of a check of the first
+        use."""
+        return key in self._data["dismissed_checks"]
+
+    def dismiss_check(self, key: str) -> None:
+        self._data["dismissed_checks"] = sorted({*self._data["dismissed_checks"], key})
 
     @property
     def welcome_dismissed(self) -> bool:

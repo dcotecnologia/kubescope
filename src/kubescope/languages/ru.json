@@ -942,7 +942,8 @@
             "{visible} of {total} Secrets": "Secrets: {visible} из {total}",
             "{visible} of {total} Services": "Services: {visible} из {total}",
             "{visible} of {total} StatefulSets": "StatefulSets: {visible} из {total}",
-            "{visible} of {total} Validating Webhook Configurations": "Validating Webhook Configurations: {visible} из {total}"
+            "{visible} of {total} Validating Webhook Configurations": "Validating Webhook Configurations: {visible} из {total}",
+            "“{program}” signs you in to {count} of your clusters, but it is not installed or not on the PATH. Install it, then refresh.": "«{program}» выполняет вход в {count} ваших кластеров, но не установлен или отсутствует в PATH. Установите его и обновите."
         },
         "WorkloadsOverviewPage": {
             "AGE": "ВОЗРАСТ",

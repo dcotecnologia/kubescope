@@ -109,7 +109,10 @@ get` for the profile your kubeconfig names, and reads that profile from the
 configure` so you type the keys there. Apart from the integrations below, the app never sees, asks for, or stores
   keys or tokens, and it does not change the cluster. For Google Cloud the button
   runs `gcloud auth login`, and for Azure `az login`; both open the browser, and
-  the app only reads which sign-in program your kubeconfig names.
+  the app only reads which sign-in program your kubeconfig names. When it starts
+  it also looks, with the system's own search of the PATH, whether those programs are
+  installed (it only tells you, and runs none of them); if you dismiss the notice the
+  settings keep only the name of the program, as `login_missing:aws`.
 - **Cloud integrations keep the keys in memory and write clusters, not keys.**
   **Settings → Integrations** plugs the clusters of as many Amazon Web Services,
   Microsoft Azure and Google Cloud accounts as you add. An AWS account signs in

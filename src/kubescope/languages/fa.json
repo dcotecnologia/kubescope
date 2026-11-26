@@ -942,7 +942,8 @@
             "{visible} of {total} Secrets": "{visible} از {total} Secrets",
             "{visible} of {total} Services": "{visible} از {total} Services",
             "{visible} of {total} StatefulSets": "{visible} از {total} StatefulSets",
-            "{visible} of {total} Validating Webhook Configurations": "{visible} از {total} Validating Webhook Configurations"
+            "{visible} of {total} Validating Webhook Configurations": "{visible} از {total} Validating Webhook Configurations",
+            "“{program}” signs you in to {count} of your clusters, but it is not installed or not on the PATH. Install it, then refresh.": "«{program}» شما را به {count} از خوشه‌هایتان وارد می‌کند، اما نصب نیست یا در PATH نیست. آن را نصب کنید و سپس تازه‌سازی کنید."
         },
         "WorkloadsOverviewPage": {
             "AGE": "سن",

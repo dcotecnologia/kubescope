@@ -942,7 +942,8 @@
             "{visible} of {total} Secrets": "{visible} van {total} Secrets",
             "{visible} of {total} Services": "{visible} van {total} Services",
             "{visible} of {total} StatefulSets": "{visible} van {total} StatefulSets",
-            "{visible} of {total} Validating Webhook Configurations": "{visible} van {total} Validating Webhook Configurations"
+            "{visible} of {total} Validating Webhook Configurations": "{visible} van {total} Validating Webhook Configurations",
+            "“{program}” signs you in to {count} of your clusters, but it is not installed or not on the PATH. Install it, then refresh.": "„{program}” meldt u aan bij {count} van uw clusters, maar is niet geïnstalleerd of staat niet in het PATH. Installeer het en vernieuw daarna."
         },
         "WorkloadsOverviewPage": {
             "AGE": "LEEFTIJD",

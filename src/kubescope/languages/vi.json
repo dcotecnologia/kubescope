@@ -942,7 +942,8 @@
             "{visible} of {total} Secrets": "{visible} trong {total} Secrets",
             "{visible} of {total} Services": "{visible} trong {total} Services",
             "{visible} of {total} StatefulSets": "{visible} trong {total} StatefulSets",
-            "{visible} of {total} Validating Webhook Configurations": "{visible} trong {total} Validating Webhook Configurations"
+            "{visible} of {total} Validating Webhook Configurations": "{visible} trong {total} Validating Webhook Configurations",
+            "“{program}” signs you in to {count} of your clusters, but it is not installed or not on the PATH. Install it, then refresh.": "“{program}” đăng nhập vào {count} cụm của bạn nhưng chưa được cài hoặc không có trong PATH. Hãy cài đặt rồi làm mới."
         },
         "WorkloadsOverviewPage": {
             "AGE": "TUỔI",

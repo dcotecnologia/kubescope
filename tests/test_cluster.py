@@ -4043,3 +4043,57 @@ def test_a_release_tells_the_repository_of_its_chart_by_a_label(monkeypatch) -> 
         "https://r.example/charts"
     )
     assert cluster.helm_chart_repository("ctx", "ops", "none") == ""
+
+
+def _document(*commands: str | None) -> dict:
+    return {
+        "contexts": [
+            {"name": f"ctx{i}", "context": {"cluster": "c", "user": f"user{i}"}}
+            for i in range(len(commands))
+        ],
+        "users": [
+            {
+                "name": f"user{i}",
+                "user": {"exec": {"command": command}} if command else {"token": "t"},
+            }
+            for i, command in enumerate(commands)
+        ],
+    }
+
+
+def test_a_sign_in_program_that_is_not_installed_is_found_before_a_request_fails(
+    monkeypatch,
+) -> None:
+    present = {"gcloud"}
+    monkeypatch.setattr(
+        cluster, "find_program", lambda name: name if name in present else None
+    )
+    monkeypatch.setattr(
+        cluster, "_kubeconfig", lambda: _document("aws", "gcloud", None, "aws", "az")
+    )
+
+    found = cluster.kube_problems()
+
+    assert [(p.kind, p.program, p.contexts) for p in found] == [
+        ("login_missing", "aws", ("ctx0", "ctx3")),
+        ("login_missing", "az", ("ctx4",)),
+    ]
+    assert found[0].key == "login_missing:aws"
+
+
+def test_a_program_given_by_its_path_is_looked_for_there(monkeypatch, tmp_path) -> None:
+    there = tmp_path / "aws"
+    there.write_text("#!/bin/sh\n")
+    monkeypatch.setattr(cluster, "find_program", lambda _name: None)
+    monkeypatch.setattr(
+        cluster, "_kubeconfig", lambda: _document(str(there), str(tmp_path / "gone"))
+    )
+    assert [p.program for p in cluster.kube_problems()] == ["gone"]
+
+
+def test_nothing_is_said_when_the_kubeconfig_cannot_be_read(monkeypatch) -> None:
+    def broken() -> dict:
+        raise cluster.ClusterError("no file")
+
+    monkeypatch.setattr(cluster, "_kubeconfig", broken)
+    assert cluster.kube_problems() == []

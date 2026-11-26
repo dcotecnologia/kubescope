@@ -942,7 +942,8 @@
             "{visible} of {total} Secrets": "{total} Secrets içinden {visible}",
             "{visible} of {total} Services": "{total} Services içinden {visible}",
             "{visible} of {total} StatefulSets": "{total} StatefulSets içinden {visible}",
-            "{visible} of {total} Validating Webhook Configurations": "{total} Validating Webhook Configurations içinden {visible}"
+            "{visible} of {total} Validating Webhook Configurations": "{total} Validating Webhook Configurations içinden {visible}",
+            "“{program}” signs you in to {count} of your clusters, but it is not installed or not on the PATH. Install it, then refresh.": "“{program}”, {count} kümenizde oturum açar, ancak yüklü değil veya PATH içinde değil. Yükleyin, ardından yenileyin."
         },
         "WorkloadsOverviewPage": {
             "AGE": "YAŞ",

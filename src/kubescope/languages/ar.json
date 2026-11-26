@@ -942,7 +942,8 @@
             "{visible} of {total} Secrets": "{visible} من {total} Secrets",
             "{visible} of {total} Services": "{visible} من {total} Services",
             "{visible} of {total} StatefulSets": "{visible} من {total} StatefulSets",
-            "{visible} of {total} Validating Webhook Configurations": "{visible} من {total} Validating Webhook Configurations"
+            "{visible} of {total} Validating Webhook Configurations": "{visible} من {total} Validating Webhook Configurations",
+            "“{program}” signs you in to {count} of your clusters, but it is not installed or not on the PATH. Install it, then refresh.": "«{program}» يسجّل دخولك إلى {count} من عناقيدك، لكنه غير مثبّت أو غير موجود في PATH. ثبّته ثم حدّث."
         },
         "WorkloadsOverviewPage": {
             "AGE": "العمر",

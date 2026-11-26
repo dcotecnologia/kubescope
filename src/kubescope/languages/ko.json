@@ -942,7 +942,8 @@
             "{visible} of {total} Secrets": "Secrets {total}개 중 {visible}개",
             "{visible} of {total} Services": "Services {total}개 중 {visible}개",
             "{visible} of {total} StatefulSets": "StatefulSets {total}개 중 {visible}개",
-            "{visible} of {total} Validating Webhook Configurations": "Validating Webhook Configurations {total}개 중 {visible}개"
+            "{visible} of {total} Validating Webhook Configurations": "Validating Webhook Configurations {total}개 중 {visible}개",
+            "“{program}” signs you in to {count} of your clusters, but it is not installed or not on the PATH. Install it, then refresh.": "“{program}”은(는) 클러스터 {count}개에 로그인하는 데 쓰이지만 설치되어 있지 않거나 PATH에 없습니다. 설치한 뒤 새로 고치세요."
         },
         "WorkloadsOverviewPage": {
             "AGE": "경과",

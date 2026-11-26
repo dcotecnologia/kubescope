@@ -942,7 +942,8 @@
             "{visible} of {total} Secrets": "{total} में से {visible} Secrets",
             "{visible} of {total} Services": "{total} में से {visible} Services",
             "{visible} of {total} StatefulSets": "{total} में से {visible} StatefulSets",
-            "{visible} of {total} Validating Webhook Configurations": "{total} में से {visible} Validating Webhook Configurations"
+            "{visible} of {total} Validating Webhook Configurations": "{total} में से {visible} Validating Webhook Configurations",
+            "“{program}” signs you in to {count} of your clusters, but it is not installed or not on the PATH. Install it, then refresh.": "“{program}” आपके {count} क्लस्टर में साइन इन कराता है, लेकिन यह इंस्टॉल नहीं है या PATH में नहीं है। इसे इंस्टॉल करें, फिर रीफ़्रेश करें।"
         },
         "WorkloadsOverviewPage": {
             "AGE": "आयु",

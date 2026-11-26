@@ -942,7 +942,8 @@
             "{visible} of {total} Secrets": "{total} 個 Secrets 中的 {visible} 個",
             "{visible} of {total} Services": "{total} 個 Services 中的 {visible} 個",
             "{visible} of {total} StatefulSets": "{total} 個 StatefulSets 中的 {visible} 個",
-            "{visible} of {total} Validating Webhook Configurations": "{total} 個 Validating Webhook Configurations 中的 {visible} 個"
+            "{visible} of {total} Validating Webhook Configurations": "{total} 個 Validating Webhook Configurations 中的 {visible} 個",
+            "“{program}” signs you in to {count} of your clusters, but it is not installed or not on the PATH. Install it, then refresh.": "「{program}」用於登入你的 {count} 個叢集，但它未安裝或不在 PATH 中。請安裝後重新整理。"
         },
         "WorkloadsOverviewPage": {
             "AGE": "存在時間",

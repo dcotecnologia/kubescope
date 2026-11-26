@@ -816,3 +816,23 @@ def test_the_widths_of_the_columns_of_a_list_persist_and_ignore_damaged_values(
     assert loaded.column_widths("b") == {} and loaded.column_widths("c") == {5: 300}
     path.write_text('{"column_widths": []}')
     assert Settings(path).column_widths("pods") == {}
+
+
+def test_a_dismissed_check_is_remembered_and_damaged_values_are_ignored(
+    tmp_path,
+) -> None:
+    path = tmp_path / "settings.json"
+    settings = Settings(path)
+    assert not settings.check_dismissed("login_missing:aws")
+    settings.dismiss_check("login_missing:aws")
+    settings.dismiss_check("login_missing:aws")
+    settings.save()
+    assert Settings(path).check_dismissed("login_missing:aws")
+    assert not Settings(path).check_dismissed("login_missing:az")
+
+    path.write_text('{"dismissed_checks": ["a", "", 3, null]}')
+    assert Settings(path).check_dismissed("a") and not Settings(path).check_dismissed(
+        ""
+    )
+    path.write_text('{"dismissed_checks": "a"}')
+    assert not Settings(path).check_dismissed("a")

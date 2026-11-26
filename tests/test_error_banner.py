@@ -104,3 +104,38 @@ def test_a_list_that_failed_to_load_is_tried_again_from_the_banner(monkeypatch) 
     window._show_action_error("forbidden")
     assert window.ui.permissionRetry.isHidden()
     window.close()
+
+
+def test_a_missing_sign_in_program_is_told_once_and_not_again_when_dismissed(
+    monkeypatch,
+) -> None:
+    from kubescope.cluster import KubeProblem
+    from tests.test_window_flows import _ready_window
+
+    window = _ready_window(monkeypatch)
+    monkeypatch.setattr(window, "_save_settings", lambda: None)
+    problems = [
+        KubeProblem("login_missing", "aws", ("prod", "stage")),
+        KubeProblem("login_missing", "az", ("blue",)),
+    ]
+    window.error_banner.dismiss()
+    window._show_kube_problems(problems)
+    assert (
+        window.error_banner.frame.isVisibleTo(window)
+        or not window.error_banner.frame.isHidden()
+    )
+    assert (
+        "“aws” signs you in to 2 of your clusters" in window.error_banner.label.text()
+    )
+    assert window.error_banner.details_label.text() == "prod, stage"
+
+    window.ui.permissionDismiss.click()  # the person says no
+    assert window.settings.check_dismissed("login_missing:aws")
+    window._show_kube_problems(problems)  # the next one is told, not the dismissed
+    assert "“az”" in window.error_banner.label.text()
+
+    window._show_error("Unable to connect to the server")  # an error takes the banner
+    window.ui.permissionDismiss.click()
+    assert not window.settings.check_dismissed("login_missing:az")
+    window._show_kube_problems(problems)  # another banner is showing... it stays
+    window.close()

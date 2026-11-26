@@ -738,6 +738,53 @@ def describe_kube() -> str:
     return "\n".join(lines)
 
 
+@dataclass(frozen=True, slots=True)
+class KubeProblem:
+    """Something the computer lacks to reach the clusters of the kubeconfig,
+    found before the first request fails."""
+
+    kind: str  # "login_missing": a sign-in program that is not installed
+    program: str = ""
+    contexts: tuple[str, ...] = ()  # the contexts that need it
+
+    @property
+    def key(self) -> str:
+        """What the settings keep to remember that the person dismissed it."""
+        return f"{self.kind}:{self.program}"
+
+
+def kube_problems() -> list[KubeProblem]:
+    """The sign-in programs the contexts of the kubeconfig run (the `exec`
+    entry of their user) that are not installed or not on the PATH.
+
+    Only the name of the program is looked at, never the credentials; a
+    kubeconfig that cannot be read says nothing here (the lists say it).
+    """
+    try:
+        document = _kubeconfig()
+    except ClusterError:
+        return []
+    users = {
+        entry.get("name"): entry.get("user") or {}
+        for entry in map(_plain, document.get("users") or [])
+    }
+    needed: dict[str, list[str]] = {}
+    for entry in map(_plain, document.get("contexts") or []):
+        user = users.get((entry.get("context") or {}).get("user"), {})
+        command = str((user.get("exec") or {}).get("command") or "")
+        if not command:
+            continue
+        found = (
+            Path(command).is_file() if os.path.isabs(command) else find_program(command)
+        )
+        if not found:
+            needed.setdefault(Path(command).name, []).append(str(entry.get("name")))
+    return [
+        KubeProblem("login_missing", program, tuple(sorted(names)))
+        for program, names in sorted(needed.items())
+    ]
+
+
 LOGIN_TIMEOUT = 300  # seconds; the sign-in waits for the person in the browser
 AWS_TIMEOUT = 30
 

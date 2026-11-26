@@ -942,7 +942,8 @@
             "{visible} of {total} Secrets": "{total} 個中 {visible} 個の Secrets",
             "{visible} of {total} Services": "{total} 個中 {visible} 個の Services",
             "{visible} of {total} StatefulSets": "{total} 個中 {visible} 個の StatefulSets",
-            "{visible} of {total} Validating Webhook Configurations": "{total} 個中 {visible} 個の Validating Webhook Configurations"
+            "{visible} of {total} Validating Webhook Configurations": "{total} 個中 {visible} 個の Validating Webhook Configurations",
+            "“{program}” signs you in to {count} of your clusters, but it is not installed or not on the PATH. Install it, then refresh.": "「{program}」は{count}個のクラスターへのサインインに使われますが、インストールされていないか、PATH にありません。インストールしてから更新してください。"
         },
         "WorkloadsOverviewPage": {
             "AGE": "経過時間",

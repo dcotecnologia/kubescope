@@ -129,6 +129,7 @@ from kubescope.about import (
 )
 from kubescope.cluster import (
     ClusterError,
+    KubeProblem,
     LoginAction,
     available_terminals,
     cancel_running,
@@ -149,6 +150,7 @@ from kubescope.cluster import (
     get_workloads,
     get_workloads_overview,
     is_eks_context,
+    kube_problems,
     list_contexts,
     open_in_terminal,
     parse_command,
@@ -991,6 +993,8 @@ class WorkloadWindow(QMainWindow):
         self._cards_risen_for = ""  # the context whose cards have risen
         self._offered: set[QPushButton] = set()  # the actions for the row picked
         self._pending_screen = ""  # the page of an extension to open when it exists
+        self._kube_checked = False  # whether this run looked at what the clusters need
+        self._check_shown = ""  # the check the banner tells, so dismissing it is kept
         self._overview: ClusterOverview | None = None
         # the last overview of each context, shown at once when it is chosen again
         self._overviews: dict[str, ClusterOverview] = {}
@@ -1176,6 +1180,7 @@ class WorkloadWindow(QMainWindow):
             retry_button=ui.permissionRetry,
         )
         self.error_banner.retry_requested.connect(self.refresh)
+        self.error_banner.dismiss_button.clicked.connect(self._remember_dismissed_check)
         self.pages = ui.pages
         self.nav_overview = ui.navOverview
         self.nav_workloads = ui.navWorkloads
@@ -1763,6 +1768,41 @@ class WorkloadWindow(QMainWindow):
             list_contexts, self._contexts_loaded, on_error=self._contexts_failed
         )
 
+    def _run_kube_checks(self) -> None:
+        """Once a run, look for what the clusters of the kubeconfig need and
+        the computer lacks, and say so before the first request fails."""
+        if self._kube_checked:
+            return
+        self._kube_checked = True
+        self._run_action(kube_problems, self._show_kube_problems, quiet=True)
+
+    def _show_kube_problems(self, problems: list[KubeProblem]) -> None:
+        """Tell the first problem the person has not dismissed, in the banner
+        of the window, unless it is showing another."""
+        pending = [
+            one for one in problems if not self.settings.check_dismissed(one.key)
+        ]
+        if not pending or not self.error_banner.frame.isHidden():
+            return
+        problem = pending[0]
+        self._check_shown = problem.key
+        logger.info("Check: %s is missing", problem.program)
+        self.error_banner.show_error(
+            self.tr(
+                "“{program}” signs you in to {count} of your clusters, but it is not "
+                "installed or not on the PATH. Install it, then refresh."
+            ).format(program=problem.program, count=len(problem.contexts)),
+            ", ".join(problem.contexts),
+            self._banner_words(),
+        )
+
+    def _remember_dismissed_check(self) -> None:
+        """The person dismissed the banner: if it was a check, never again."""
+        if self._check_shown:
+            self.settings.dismiss_check(self._check_shown)
+            self._save_settings()
+            self._check_shown = ""
+
     def _contexts_failed(self, reason: str) -> None:
         logger.warning("Could not load kubeconfig: %s", first_line(reason))
         self._set_status(
@@ -1787,6 +1827,8 @@ class WorkloadWindow(QMainWindow):
         self._fill_contexts(selected)
         self._select_default_namespace()
         self.no_contexts_banner.setVisible(not contexts)
+        if contexts:
+            self._run_kube_checks()
         if not self.context_combo.count():
             self._set_status(
                 lambda: (
@@ -8527,6 +8569,7 @@ class WorkloadWindow(QMainWindow):
         """Show an error of the cluster, the AWS CLI or kubectl in the banner
         at the top of the window, with the original text one click away, and a
         button to try again when `retry` (a list that failed to load)."""
+        self._check_shown = ""  # an error took the banner: it is not a check
         text = self._banner_text(message)
         self.error_banner.show_error(text, message.strip(), self._banner_words(), retry)
         if is_auth_error(message):
