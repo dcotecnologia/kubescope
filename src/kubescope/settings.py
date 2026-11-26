@@ -12,6 +12,7 @@ from kubescope.utils import shortcuts
 
 # A language is a JSON file named by its code (see kubescope.i18n); "auto" follows
 # the system. The choice is checked when it is applied, so a file can add one.
+TEXT_SIZES = (85, 100, 115, 130, 150)  # percent of the usual size of the text
 _LANGUAGE_CODE = re.compile(r"[a-z]{2,3}(_[A-Za-z0-9]+)?")
 
 DEFAULTS: dict[str, Any] = {
@@ -34,6 +35,7 @@ DEFAULTS: dict[str, Any] = {
     "update_checked_for": "",
     "write_mode": False,
     "animations": True,
+    "text_size": 100,
     "sidebar_width": 0,
     "sidebar_collapsed": False,
     "menu_collapsed": [],
@@ -608,6 +610,17 @@ class Settings:
     @animations.setter
     def animations(self, value: bool) -> None:
         self._data["animations"] = bool(value)
+
+    @property
+    def text_size(self) -> int:
+        """The size of the text of the app, as a percentage of the usual one;
+        one of `TEXT_SIZES`, else 100."""
+        value = self._data["text_size"]
+        return value if value in TEXT_SIZES and not isinstance(value, bool) else 100
+
+    @text_size.setter
+    def text_size(self, value: int) -> None:
+        self._data["text_size"] = value if value in TEXT_SIZES else 100
 
     @property
     def welcome_dismissed(self) -> bool:

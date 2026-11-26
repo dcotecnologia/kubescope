@@ -50,3 +50,20 @@ def test_every_icon_button_of_the_window_has_a_name(monkeypatch) -> None:
     window.show()
     assert [b.objectName() for b in name_icon_buttons(window)] == []
     window.close()
+
+
+def test_the_text_size_is_chosen_in_the_preferences(monkeypatch) -> None:
+    window = _ready_window(monkeypatch)
+    window._load_settings_form()
+    combo = window.settings_ui.textSizeCombo
+    assert combo.currentData() == 100
+
+    combo.setCurrentIndex(combo.findData(130))
+    window._save_preferences()
+    assert window.settings.text_size == 130
+    assert application.font().pointSize() == 12
+
+    combo.setCurrentIndex(combo.findData(100))
+    window._save_preferences()
+    assert application.font().pointSize() == 9
+    window.close()

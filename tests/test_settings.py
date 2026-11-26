@@ -726,3 +726,19 @@ def test_the_order_of_the_blocks_of_the_side_menu_is_kept_and_cleaned(tmp_path) 
         encoding="utf-8",
     )
     assert Settings(path).section_order == ["section:aws"]
+
+
+def test_the_text_size_is_one_of_the_sizes_and_else_the_usual_one(tmp_path) -> None:
+    path = tmp_path / "settings.json"
+    settings = Settings(path)
+    assert settings.text_size == 100
+
+    settings.text_size = 130
+    settings.save()
+    assert Settings(path).text_size == 130
+
+    settings.text_size = 77
+    assert settings.text_size == 100
+    for stored in ('"big"', "true", "null", "[130]"):
+        path.write_text(f'{{"text_size": {stored}}}', encoding="utf-8")
+        assert Settings(path).text_size == 100

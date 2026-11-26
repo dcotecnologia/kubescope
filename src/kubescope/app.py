@@ -114,7 +114,7 @@ def main() -> int:
         record_runtime()
         trace_input(application)
     application.setWindowIcon(load_app_icon())
-    apply_fonts(application)
+    apply_fonts(application, settings.text_size)
     remove_legacy_copies()  # the themes that are an extension now
     install_bundled_themes()
     apply_theme(application, settings.theme)

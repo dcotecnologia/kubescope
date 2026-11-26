@@ -992,11 +992,6 @@ class Ui_MainWindow(object):
         self.filtersLayout.setSpacing(12)
         self.filtersLayout.setObjectName(u"filtersLayout")
         self.filtersLayout.setContentsMargins(0, 0, 0, 0)
-        self.filterLabel = QLabel(self.filtersBar)
-        self.filterLabel.setObjectName(u"filterLabel")
-
-        self.filtersLayout.addWidget(self.filterLabel)
-
         self.namespaceCombo = QComboBox(self.filtersBar)
         self.namespaceCombo.addItem(u"All namespaces")
         self.namespaceCombo.addItem(u"default")
@@ -1480,8 +1475,10 @@ class Ui_MainWindow(object):
 #if QT_CONFIG(tooltip)
         self.refreshButton.setToolTip(QCoreApplication.translate("MainWindow", u"Refresh", None))
 #endif // QT_CONFIG(tooltip)
-        self.filterLabel.setText(QCoreApplication.translate("MainWindow", u"NAMESPACE", None))
 
+#if QT_CONFIG(accessibility)
+        self.namespaceCombo.setAccessibleName(QCoreApplication.translate("MainWindow", u"Namespace", None))
+#endif // QT_CONFIG(accessibility)
         self.searchInput.setPlaceholderText(QCoreApplication.translate("MainWindow", u"Search all columns...", None))
 #if QT_CONFIG(tooltip)
         self.podsButton.setToolTip(QCoreApplication.translate("MainWindow", u"View Pods of the selected workload", None))

@@ -41,6 +41,8 @@ the work of its author.
   beside their bars.
 - **Motion.** The animations (windows and lists rising into place, the side menu sliding) can be turned off
   in **Settings**.
+- **Text size.** **Settings → Text size** goes from 85% to 150% of the usual size; a few small labels drawn
+  with a fixed size do not follow it. The app also follows the scaling of the operating system.
 - **Language.** The interface is translated into 21 languages, including Arabic, Persian and Hebrew, and the
   direction of the layout follows the language.
 - **The window.** By default the window draws its own title bar. **Settings → Use the title bar of the
@@ -65,8 +67,6 @@ These come from reviewing the code, not from an audit, so there may be more.
   state of each container are drawn by the app and not by the system, so a screen reader may not announce
   them as a check box or a state. The state of the containers is color, with its name only in the tooltip
   that shows when the pointer is on it; the ready count (`1/1`) beside it is text.
-- **Text size.** There is no setting for the size of the text. The app follows the scaling of the
-  operating system.
 - **The icons of the groups** that the extension for custom resources adds to the side menu are the first
   letters of the name of the group on a color made from it. The color helps to tell them apart, but the
   letters are what to rely on.

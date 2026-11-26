@@ -43,7 +43,12 @@ def code_font() -> QFont:
     return font
 
 
-def apply_fonts(application: QApplication) -> None:
+def apply_text_size(application: QApplication, percent: int = 100) -> None:
+    """Make Noto Sans the font of every widget, `percent` of its usual size."""
+    application.setFont(QFont(UI_FAMILY, max(6, round(UI_POINT_SIZE * percent / 100))))
+
+
+def apply_fonts(application: QApplication, percent: int = 100) -> None:
     """Load the shipped fonts and make Noto Sans the font of every widget."""
     load_fonts()
-    application.setFont(QFont(UI_FAMILY, UI_POINT_SIZE))
+    apply_text_size(application, percent)

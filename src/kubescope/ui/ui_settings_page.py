@@ -251,6 +251,18 @@ class Ui_SettingsPage(object):
 
         self.appearanceForm.setWidget(0, QFormLayout.ItemRole.FieldRole, self.themeCombo)
 
+        self.textSizeLabel = QLabel(self.appearanceCard)
+        self.textSizeLabel.setObjectName(u"textSizeLabel")
+
+        self.appearanceForm.setWidget(1, QFormLayout.ItemRole.LabelRole, self.textSizeLabel)
+
+        self.textSizeCombo = QComboBox(self.appearanceCard)
+        self.textSizeCombo.setObjectName(u"textSizeCombo")
+        self.textSizeCombo.setMinimumSize(QSize(200, 0))
+        self.textSizeCombo.setProperty(u"variant", u"filter")
+
+        self.appearanceForm.setWidget(1, QFormLayout.ItemRole.FieldRole, self.textSizeCombo)
+
         self.themeButtonsRow = QHBoxLayout()
         self.themeButtonsRow.setSpacing(8)
         self.themeButtonsRow.setObjectName(u"themeButtonsRow")
@@ -283,7 +295,7 @@ class Ui_SettingsPage(object):
         self.themeButtonsRow.addItem(self.themeButtonsSpacer)
 
 
-        self.appearanceForm.setLayout(1, QFormLayout.ItemRole.SpanningRole, self.themeButtonsRow)
+        self.appearanceForm.setLayout(2, QFormLayout.ItemRole.SpanningRole, self.themeButtonsRow)
 
 
         self.appearanceCardLayout.addLayout(self.appearanceForm)
@@ -719,6 +731,10 @@ class Ui_SettingsPage(object):
         self.appearanceHeading.setText(QCoreApplication.translate("SettingsPage", u"APPEARANCE", None))
         self.themeLabel.setText(QCoreApplication.translate("SettingsPage", u"Theme", None))
 
+        self.textSizeLabel.setText(QCoreApplication.translate("SettingsPage", u"Text size", None))
+#if QT_CONFIG(tooltip)
+        self.textSizeCombo.setToolTip(QCoreApplication.translate("SettingsPage", u"Makes the text of the app smaller or larger. Some small labels keep their size.", None))
+#endif // QT_CONFIG(tooltip)
         self.newThemeButton.setText(QCoreApplication.translate("SettingsPage", u"New theme...", None))
         self.editThemeButton.setText(QCoreApplication.translate("SettingsPage", u"Edit theme...", None))
         self.deleteThemeButton.setText(QCoreApplication.translate("SettingsPage", u"Delete theme...", None))

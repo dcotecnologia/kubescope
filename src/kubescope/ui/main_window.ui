@@ -2066,14 +2066,10 @@ Resources in read-only mode</string>
                   <number>12</number>
                  </property>
                  <item>
-                  <widget class="QLabel" name="filterLabel">
-                   <property name="text">
-                    <string>NAMESPACE</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item>
                   <widget class="QComboBox" name="namespaceCombo">
+                   <property name="accessibleName">
+                    <string>Namespace</string>
+                   </property>
                    <property name="minimumSize">
                     <size>
                      <width>170</width>

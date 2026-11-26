@@ -45,3 +45,14 @@ def test_a_font_that_cannot_load_is_skipped_with_a_warning(monkeypatch, caplog) 
         assert fonts.load_fonts() == []
 
     assert "Could not load the font" in caplog.text
+
+
+def test_the_text_size_scales_the_font_of_the_app() -> None:
+    from PySide6.QtWidgets import QApplication
+
+    fonts.apply_text_size(application, 150)
+    assert QApplication.font().pointSize() == 14  # 9 * 1.5, rounded
+    fonts.apply_text_size(application, 85)
+    assert QApplication.font().pointSize() == 8
+    fonts.apply_text_size(application)
+    assert QApplication.font().pointSize() == fonts.UI_POINT_SIZE

@@ -471,7 +471,30 @@
               </property>
              </widget>
             </item>
-            <item row="1" column="0" colspan="2">
+            <item row="1" column="0">
+             <widget class="QLabel" name="textSizeLabel">
+              <property name="text">
+               <string>Text size</string>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="1">
+             <widget class="QComboBox" name="textSizeCombo">
+              <property name="minimumSize">
+               <size>
+                <width>200</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="toolTip">
+               <string>Makes the text of the app smaller or larger. Some small labels keep their size.</string>
+              </property>
+              <property name="variant" stdset="0">
+               <string notr="true">filter</string>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="0" colspan="2">
              <layout class="QHBoxLayout" name="themeButtonsRow">
               <property name="spacing">
                <number>8</number>

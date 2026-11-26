@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+### Added
+
+- **Settings → Text size** makes the text of the app smaller or larger, from 85% to 150%; a few small labels keep their size by @danilogco
+
+### Removed
+
+- The NAMESPACE label beside the namespace box of the lists, which a screen reader still reads by the name of the box by @danilogco
+
 ### Fixed
 
 - The buttons that have only an icon (the window controls, the clear button of a search box, the corner of a table, and the others with a tooltip) have a name for a screen reader by @danilogco

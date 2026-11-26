@@ -188,6 +188,7 @@ from kubescope.screen import (
     describe as describe_screen,
 )
 from kubescope.settings import (
+    TEXT_SIZES,
     Settings,
     config_directory,
     default_context_name,
@@ -227,7 +228,7 @@ from kubescope.utils.errors import (
     is_auth_error,
     is_forbidden,
 )
-from kubescope.utils.fonts import code_font
+from kubescope.utils.fonts import apply_text_size, code_font
 from kubescope.utils.json_view import restyle
 from kubescope.utils.replacement import POLL_SECONDS, WATCH_SECONDS, replacement_for
 from kubescope.utils.selfupdate import detect_install, restart
@@ -7512,6 +7513,7 @@ class WorkloadWindow(QMainWindow):
         form.writeModeCheck.setChecked(self.settings.write_mode)
         form.backgroundCheck.setChecked(self.settings.run_in_background)
         form.titleBarCheck.setChecked(self.settings.system_title_bar)
+        self._fill_text_size_combo(self.settings.text_size)
         form.animationsCheck.setChecked(self.settings.animations)
         form.welcomeCheck.setChecked(not self.settings.welcome_dismissed)
         form.debugHint.setText(
@@ -7686,6 +7688,16 @@ class WorkloadWindow(QMainWindow):
                 return None
             commands[program] = command
         return commands
+
+    def _fill_text_size_combo(self, chosen: int) -> None:
+        """List the sizes of the text, choosing `chosen`."""
+        combo = self.settings_ui.textSizeCombo
+        combo.blockSignals(True)
+        combo.clear()
+        for percent in TEXT_SIZES:
+            combo.addItem(f"{percent}%", percent)
+        combo.setCurrentIndex(max(combo.findData(chosen), 0))
+        combo.blockSignals(False)
 
     def _fill_theme_combo(self, selected: str) -> None:
         """List the built-in and custom themes, choosing `selected`."""
@@ -7868,6 +7880,12 @@ class WorkloadWindow(QMainWindow):
         if self.settings.check_updates and not was_checking:
             self.check_updates()
         self.settings.run_in_background = form.backgroundCheck.isChecked()
+        was_size = self.settings.text_size
+        self.settings.text_size = form.textSizeCombo.currentData()
+        if self.settings.text_size != was_size:
+            apply_text_size(
+                cast(QApplication, QApplication.instance()), self.settings.text_size
+            )
         self.settings.animations = form.animationsCheck.isChecked()
         self.settings.welcome_dismissed = not form.welcomeCheck.isChecked()
         motion.ENABLED = self.settings.animations
