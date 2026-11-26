@@ -1,5 +1,7 @@
 from kubescope.sdk.models import PodInfo, Workload
 from PySide6.QtCore import QPoint, Qt
+from PySide6.QtGui import QShortcut
+from PySide6.QtTest import QTest
 from PySide6.QtWidgets import QTableWidget, QTableWidgetItem
 
 from kubescope import window as window_module
@@ -532,4 +534,45 @@ def test_checked_rows_are_forgotten_when_the_list_changes(monkeypatch) -> None:
 
     window._open_list_view("statefulsets")  # another list: other rows
     assert window._checked == set()
+    window.close()
+
+
+def test_enter_opens_the_details_and_delete_and_ctrl_e_act_on_the_row(
+    monkeypatch,
+) -> None:
+    pressed: list[str] = []
+    monkeypatch.setattr(
+        window_module.WorkloadWindow,
+        "_write_button_clicked",
+        lambda _self, shape: pressed.append(shape),  # the real one asks first
+    )
+    window, _ran = _pods_window(monkeypatch)
+    window.details_button.clicked.connect(lambda: pressed.append("details"))
+    window.settings.write_mode = False
+    window._update_write_buttons()
+
+    keys = {
+        shortcut.key().toString(): shortcut
+        for shortcut in window.table.findChildren(QShortcut)
+    }
+    assert set(keys) == {"Del", "Ctrl+E"}
+    for shortcut in keys.values():  # only while the list has the focus
+        assert shortcut.context() == Qt.ShortcutContext.WidgetShortcut
+
+    QTest.keyClick(window.table, Qt.Key.Key_Return)  # no row picked: nothing offered
+    keys["Del"].activated.emit()
+    assert pressed == []
+
+    window.table.selectRow(1)
+    QTest.keyClick(window.table, Qt.Key.Key_Return)
+    assert pressed == ["details"]
+
+    keys["Del"].activated.emit()  # the write mode is off: no Delete button
+    keys["Ctrl+E"].activated.emit()
+    assert pressed == ["details"]
+
+    window.settings.write_mode = True
+    window._update_write_buttons()
+    keys["Del"].activated.emit()
+    assert pressed == ["details", "delete"]
     window.close()

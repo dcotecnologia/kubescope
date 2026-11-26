@@ -1552,6 +1552,15 @@ class WorkloadWindow(QMainWindow):
         self.logs_button.clicked.connect(self._view_logs)
         self.table.itemSelectionChanged.connect(self._update_workload_actions)
         self.table.cellDoubleClicked.connect(lambda _row, _column: self._view_details())
+        # the keys of the row on the list: Enter opens its details, Ctrl+E edits
+        # it and Delete deletes it, as the buttons that show for a picked row do
+        self.table.activated.connect(lambda _index: self._press(self.details_button))
+        for key, shape in (("Delete", "delete"), ("Ctrl+E", "edit")):
+            row_key = QShortcut(QKeySequence(key), self.table)
+            row_key.setContext(Qt.ShortcutContext.WidgetShortcut)
+            row_key.activated.connect(
+                lambda shape=shape: self._press(self.write_buttons[shape])
+            )
         motion.ENABLED = self.settings.animations
         self._shown_once = False
         self.commands = CommandRegistry()
@@ -5082,6 +5091,14 @@ class WorkloadWindow(QMainWindow):
         item.setToolTip(
             self.tr("Open {kind} {name}").format(kind=link[0], name=link[2])
         )
+
+    @staticmethod
+    def _press(button: QPushButton) -> None:
+        """A key of the list does what the button does, only while the button
+        is offered for the row picked (not in the write mode, not for the one
+        the cluster does not allow)."""
+        if not button.isHidden() and button.isEnabled():
+            button.click()
 
     def _view_details(self) -> None:
         pod = self._selected_pod() if self._view == "pods" else None

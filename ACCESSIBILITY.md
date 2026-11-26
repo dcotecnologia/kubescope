@@ -31,7 +31,7 @@ the work of its author.
   macOS). We have not checked how well each screen reader reads each screen.
 - **Keyboard.** The menus, buttons, tables, dialogs and Settings are the standard controls of the platform,
   so they follow its keyboard conventions. The main screens and the global search have shortcuts
-  (for example `/` and `Ctrl+K` for the search), and every shortcut can be changed or turned off in
+  (for example `/` and `Ctrl+K` for the search); on a list, `Enter` opens the details of the row and, in the write mode, `Delete` and `Ctrl+E` delete and edit it, and every shortcut can be changed or turned off in
   **Settings → Shortcuts**.
 - **Themes and contrast.** There are a Light and a Dark theme, and you can make your own in **Settings →
   Theme**, with every color role editable. The Themes extension adds a High Contrast theme among others.
