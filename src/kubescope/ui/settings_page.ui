@@ -494,7 +494,30 @@
               </property>
              </widget>
             </item>
-            <item row="2" column="0" colspan="2">
+            <item row="2" column="0">
+             <widget class="QLabel" name="trayIconLabel">
+              <property name="text">
+               <string>Tray icon</string>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="1">
+             <widget class="QComboBox" name="trayIconCombo">
+              <property name="minimumSize">
+               <size>
+                <width>200</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="toolTip">
+               <string>The icon in the system tray. Automatic follows the theme of the desktop (Linux); Original is the logo; Light is the icon for a light panel and Dark the one for a dark panel.</string>
+              </property>
+              <property name="variant" stdset="0">
+               <string notr="true">filter</string>
+              </property>
+             </widget>
+            </item>
+            <item row="3" column="0" colspan="2">
              <layout class="QHBoxLayout" name="themeButtonsRow">
               <property name="spacing">
                <number>8</number>

@@ -370,11 +370,15 @@ TRAY_ICON_PATH = LOGO_PATH.with_name("tray.png")  # tighter, for a 22 px slot
 TRAY_ICON_DARK_PATH = LOGO_PATH.with_name("tray-dark.png")  # for a dark panel
 
 
-def _tray_icon() -> QIcon:
-    """The tray icon; on Linux, the light one when the desktop theme is dark,
-    since the panel follows it (the other systems keep the one icon)."""
-    dark = (
-        sys.platform.startswith("linux")
+def _tray_icon(choice: str = "auto") -> QIcon:
+    """The tray icon for the panel the person chose: "dark" and "light" keep
+    one; "auto" follows the desktop theme on Linux, since the panel follows it
+    (the other systems keep the one icon)."""
+    if choice == "original":
+        return QIcon(str(LOGO_PATH))
+    dark = choice == "dark" or (
+        choice == "auto"
+        and sys.platform.startswith("linux")
         and QApplication.styleHints().colorScheme() == Qt.ColorScheme.Dark
     )
     return QIcon(str(TRAY_ICON_DARK_PATH if dark else TRAY_ICON_PATH))
@@ -2791,7 +2795,9 @@ class WorkloadWindow(QMainWindow):
             if not QSystemTrayIcon.isSystemTrayAvailable():
                 return False
             if self._notice_tray is None:
-                self._notice_tray = QSystemTrayIcon(_tray_icon(), self)
+                self._notice_tray = QSystemTrayIcon(
+                    _tray_icon(self.settings.tray_icon), self
+                )
                 self._notice_tray.setToolTip("KubeScope")
                 self._notice_tray.messageClicked.connect(self._message_clicked)
                 self._notice_tray.show()
@@ -7989,6 +7995,7 @@ class WorkloadWindow(QMainWindow):
         form.updatesCheck.setChecked(self.settings.check_updates)
         form.writeModeCheck.setChecked(self.settings.write_mode)
         form.backgroundCheck.setChecked(self.settings.run_in_background)
+        self._fill_tray_icon_combo(self.settings.tray_icon)
         form.titleBarCheck.setChecked(self.settings.system_title_bar)
         self._fill_text_size_combo(self.settings.text_size)
         form.animationsCheck.setChecked(self.settings.animations)
@@ -8165,6 +8172,18 @@ class WorkloadWindow(QMainWindow):
                 return None
             commands[program] = command
         return commands
+
+    def _fill_tray_icon_combo(self, chosen: str) -> None:
+        """List the tray icons, choosing `chosen`."""
+        combo = self.settings_ui.trayIconCombo
+        combo.blockSignals(True)
+        combo.clear()
+        combo.addItem(self.tr("Automatic"), "auto")
+        combo.addItem(self.tr("Original"), "original")
+        combo.addItem(self.tr("Light"), "light")
+        combo.addItem(self.tr("Dark"), "dark")
+        combo.setCurrentIndex(max(combo.findData(chosen), 0))
+        combo.blockSignals(False)
 
     def _fill_text_size_combo(self, chosen: int) -> None:
         """List the sizes of the text, choosing `chosen`."""
@@ -8357,6 +8376,7 @@ class WorkloadWindow(QMainWindow):
         if self.settings.check_updates and not was_checking:
             self.check_updates()
         self.settings.run_in_background = form.backgroundCheck.isChecked()
+        self.settings.tray_icon = form.trayIconCombo.currentData()
         was_size = self.settings.text_size
         self.settings.text_size = form.textSizeCombo.currentData()
         if self.settings.text_size != was_size:
@@ -8674,7 +8694,7 @@ class WorkloadWindow(QMainWindow):
             self.settings.run_in_background and QSystemTrayIcon.isSystemTrayAvailable()
         )
         if wanted and self._tray is None:
-            tray = QSystemTrayIcon(_tray_icon(), self)
+            tray = QSystemTrayIcon(_tray_icon(self.settings.tray_icon), self)
             tray.setToolTip("KubeScope")
             menu = QMenu(self)
             menu.addAction(self.tr("Show KubeScope"), self.bring_to_front)
@@ -8687,7 +8707,7 @@ class WorkloadWindow(QMainWindow):
             tray.setContextMenu(menu)
             tray.activated.connect(self._tray_activated)
             QApplication.styleHints().colorSchemeChanged.connect(
-                lambda _scheme: tray.setIcon(_tray_icon())
+                lambda _scheme: tray.setIcon(_tray_icon(self.settings.tray_icon))
             )
             tray.messageClicked.connect(self._message_clicked)
             tray.show()
@@ -8700,6 +8720,9 @@ class WorkloadWindow(QMainWindow):
             self._tray.hide()
             self._tray.deleteLater()
             self._tray = None
+        for shown in (self._tray, self._notice_tray):
+            if shown is not None:
+                shown.setIcon(_tray_icon(self.settings.tray_icon))
         QApplication.setQuitOnLastWindowClosed(self._tray is None)
 
     def _tray_activated(self, reason: QSystemTrayIcon.ActivationReason) -> None:

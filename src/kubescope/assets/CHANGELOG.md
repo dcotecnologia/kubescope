@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file. The format 
 
 ### Added
 
+- **Settings → Tray icon** chooses the icon of the system tray: Automatic follows the theme of the desktop on Linux, Original keeps the logo, Light and Dark keep the icon made for a light or a dark panel by @danilogco
 - A dot beside the cluster selector says whether the cluster answers: green when it does, red when it could not be reached, amber when it needs a sign-in, gray while it is asked; it rings when it turns bad by @danilogco
 - The cards of the cluster overview come alive: they rise one after the other when a cluster first shows its numbers, the numbers count up to their values, the bars grow to theirs, and a card lights its border under the pointer; **Settings → Animate windows and lists** turns it all off by @danilogco
 - The search window (`/` and `Ctrl+K`) also offers what the app can do: refresh, check for updates, show the shortcuts, change the theme, and switch to another cluster or namespace by @danilogco

@@ -382,12 +382,14 @@ class _Hints:
         return self._scheme
 
 
-def _icon_name(monkeypatch, platform: str, scheme: Qt.ColorScheme) -> str:
+def _icon_name(
+    monkeypatch, platform: str, scheme: Qt.ColorScheme, choice: str = "auto"
+) -> str:
     monkeypatch.setattr(window_module.sys, "platform", platform)
     monkeypatch.setattr(
         window_module.QApplication, "styleHints", staticmethod(lambda: _Hints(scheme))
     )
-    shown = window_module._tray_icon().pixmap(32, 32).toImage()
+    shown = window_module._tray_icon(choice).pixmap(32, 32).toImage()
     dark = QIcon(str(window_module.TRAY_ICON_DARK_PATH)).pixmap(32, 32).toImage()
     return "dark" if shown == dark else "light"
 
@@ -399,3 +401,49 @@ def test_on_linux_a_dark_theme_gets_the_light_tray_icon(monkeypatch) -> None:
 
 def test_the_other_systems_keep_the_one_tray_icon(monkeypatch) -> None:
     assert _icon_name(monkeypatch, "win32", Qt.ColorScheme.Dark) == "light"
+
+
+def test_a_chosen_tray_icon_ignores_the_theme_of_the_desktop(monkeypatch) -> None:
+    for platform in ("linux", "win32"):
+        for scheme in (Qt.ColorScheme.Dark, Qt.ColorScheme.Light):
+            assert _icon_name(monkeypatch, platform, scheme, "dark") == "dark"
+            assert _icon_name(monkeypatch, platform, scheme, "light") == "light"
+
+
+def test_the_original_tray_icon_is_the_logo() -> None:
+    shown = window_module._tray_icon("original").pixmap(32, 32).toImage()
+    logo = QIcon(str(window_module.LOGO_PATH)).pixmap(32, 32).toImage()
+    assert shown == logo
+
+
+def test_the_tray_icon_setting_keeps_only_a_known_choice(tmp_path) -> None:
+    path = tmp_path / "settings.json"
+    settings = Settings(path)
+    assert settings.tray_icon == "auto"
+
+    settings.tray_icon = "dark"
+    settings.save()
+    assert Settings(path).tray_icon == "dark"
+
+    settings.tray_icon = "purple"
+    assert settings.tray_icon == "auto"
+
+
+def test_the_tray_icon_choice_is_saved_from_the_settings(monkeypatch) -> None:
+    monkeypatch.setattr(
+        QSystemTrayIcon, "isSystemTrayAvailable", staticmethod(lambda: True)
+    )
+    window = _ready_window(monkeypatch)
+    window._load_settings_form()
+    combo = window.settings_ui.trayIconCombo
+    assert combo.currentData() == "auto"
+
+    combo.setCurrentIndex(combo.findData("dark"))
+    window._save_preferences()
+
+    assert window.settings.tray_icon == "dark"
+    assert window._tray is not None
+    shown = window._tray.icon().pixmap(32, 32).toImage()
+    expected = QIcon(str(window_module.TRAY_ICON_DARK_PATH)).pixmap(32, 32).toImage()
+    assert shown == expected
+    window.close()

@@ -263,6 +263,18 @@ class Ui_SettingsPage(object):
 
         self.appearanceForm.setWidget(1, QFormLayout.ItemRole.FieldRole, self.textSizeCombo)
 
+        self.trayIconLabel = QLabel(self.appearanceCard)
+        self.trayIconLabel.setObjectName(u"trayIconLabel")
+
+        self.appearanceForm.setWidget(2, QFormLayout.ItemRole.LabelRole, self.trayIconLabel)
+
+        self.trayIconCombo = QComboBox(self.appearanceCard)
+        self.trayIconCombo.setObjectName(u"trayIconCombo")
+        self.trayIconCombo.setMinimumSize(QSize(200, 0))
+        self.trayIconCombo.setProperty(u"variant", u"filter")
+
+        self.appearanceForm.setWidget(2, QFormLayout.ItemRole.FieldRole, self.trayIconCombo)
+
         self.themeButtonsRow = QHBoxLayout()
         self.themeButtonsRow.setSpacing(8)
         self.themeButtonsRow.setObjectName(u"themeButtonsRow")
@@ -295,7 +307,7 @@ class Ui_SettingsPage(object):
         self.themeButtonsRow.addItem(self.themeButtonsSpacer)
 
 
-        self.appearanceForm.setLayout(2, QFormLayout.ItemRole.SpanningRole, self.themeButtonsRow)
+        self.appearanceForm.setLayout(3, QFormLayout.ItemRole.SpanningRole, self.themeButtonsRow)
 
 
         self.appearanceCardLayout.addLayout(self.appearanceForm)
@@ -734,6 +746,10 @@ class Ui_SettingsPage(object):
         self.textSizeLabel.setText(QCoreApplication.translate("SettingsPage", u"Text size", None))
 #if QT_CONFIG(tooltip)
         self.textSizeCombo.setToolTip(QCoreApplication.translate("SettingsPage", u"Makes the text of the app smaller or larger. Some small labels keep their size.", None))
+#endif // QT_CONFIG(tooltip)
+        self.trayIconLabel.setText(QCoreApplication.translate("SettingsPage", u"Tray icon", None))
+#if QT_CONFIG(tooltip)
+        self.trayIconCombo.setToolTip(QCoreApplication.translate("SettingsPage", u"The icon in the system tray. Automatic follows the theme of the desktop (Linux); Original is the logo; Light is the icon for a light panel and Dark the one for a dark panel.", None))
 #endif // QT_CONFIG(tooltip)
         self.newThemeButton.setText(QCoreApplication.translate("SettingsPage", u"New theme...", None))
         self.editThemeButton.setText(QCoreApplication.translate("SettingsPage", u"Edit theme...", None))

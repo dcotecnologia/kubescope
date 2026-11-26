@@ -15,6 +15,7 @@ from kubescope.utils import shortcuts
 MIN_COLUMN = 20  # the narrowest and the widest a column of a list is kept at
 MAX_COLUMN = 2000
 MAX_RECENT = 8  # the screens opened last that the app remembers
+TRAY_ICONS = ("auto", "original", "light", "dark")  # follow the desktop, or keep one
 TEXT_SIZES = (85, 100, 115, 130, 150)  # percent of the usual size of the text
 _LANGUAGE_CODE = re.compile(r"[a-z]{2,3}(_[A-Za-z0-9]+)?")
 
@@ -48,6 +49,7 @@ DEFAULTS: dict[str, Any] = {
     "folded_sections": [],
     "section_order": [],
     "run_in_background": True,
+    "tray_icon": "auto",
     "system_title_bar": False,
     "welcome_dismissed": False,
     "dismissed_checks": [],
@@ -563,6 +565,17 @@ class Settings:
     @run_in_background.setter
     def run_in_background(self, value: bool) -> None:
         self._data["run_in_background"] = bool(value)
+
+    @property
+    def tray_icon(self) -> str:
+        """Which tray icon shows: "auto" follows the theme of the desktop,
+        "original" keeps the logo, "light" and "dark" the one made for a light
+        or a dark panel."""
+        return self._data["tray_icon"]
+
+    @tray_icon.setter
+    def tray_icon(self, value: str) -> None:
+        self._data["tray_icon"] = value if value in TRAY_ICONS else "auto"
 
     @property
     def system_title_bar(self) -> bool:
