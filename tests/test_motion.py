@@ -103,3 +103,52 @@ def test_a_widget_with_nothing_to_draw_is_left_blank(monkeypatch) -> None:
 
     assert painter.opacity() == 1.0  # it did not even begin to draw
     painter.end()
+
+
+def test_a_number_counts_up_to_its_text_and_a_delayed_widget_waits_unseen(
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(motion, "COUNT_MS", 60)
+    label = QLabel()
+    motion.count_up(label, "34 / 110")
+    assert label.text().endswith("/ 110")  # only the first number moves
+    _wait(lambda: label.text() == "34 / 110")
+    assert label.text() == "34 / 110"
+
+    motion.count_up(label, "4.9 GiB / 6.9 GiB")  # the decimals stay as written
+    _wait(lambda: label.text() == "4.9 GiB / 6.9 GiB")
+    assert label.text() == "4.9 GiB / 6.9 GiB"
+
+    motion.count_up(label, "—")  # no number: set at once
+    assert label.text() == "—"
+    motion.count_up(label, "7")
+    motion.count_up(label, "7")  # the same text again: nothing starts
+    _wait(lambda: label.text() == "7")
+    assert label.text() == "7"
+
+    widget = QWidget()
+    motion.slide_up(widget, delay_ms=40)
+    effect = widget.graphicsEffect()
+    assert effect is not None and effect.property("progress") == 0.0  # not shown yet
+    _wait(lambda: widget.graphicsEffect() is None)
+    assert widget.graphicsEffect() is None
+
+
+def test_a_bar_grows_to_its_value_or_jumps_when_the_animations_are_off(
+    monkeypatch,
+) -> None:
+    from PySide6.QtWidgets import QProgressBar
+
+    monkeypatch.setattr(motion, "COUNT_MS", 60)
+    bar = QProgressBar()
+    motion.fill_bar(bar, 80)
+    assert bar.value() < 80  # it is on its way
+    _wait(lambda: bar.value() == 80)
+    assert bar.value() == 80
+
+    monkeypatch.setattr(motion, "ENABLED", False)
+    motion.fill_bar(bar, 20)
+    assert bar.value() == 20
+    label = QLabel()
+    motion.count_up(label, "5")
+    assert label.text() == "5"

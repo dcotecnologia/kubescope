@@ -1,4 +1,5 @@
 import os
+import time
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
@@ -10,6 +11,7 @@ from PySide6.QtWidgets import QApplication, QTableWidgetItem, QWidget
 from kubescope import theme
 from kubescope import window as window_module
 from kubescope.utils import log_view
+from kubescope.views import motion
 from kubescope.views.container_states import LINK_ROLE
 from kubescope.views.detail_tab import DetailTab
 from kubescope.views.log_tab import LogTab
@@ -101,9 +103,17 @@ def test_overview_page_shows_cluster_totals(monkeypatch) -> None:
     window.context_combo.addItem("prod")
     page = window.overview_ui
 
+    monkeypatch.setattr(motion, "COUNT_MS", 40)
     window._show_overview("prod", _overview())
 
     assert window.pages.currentIndex() == 0
+    deadline = time.monotonic() + 3
+    while page.cpuBar.value() != 75 and time.monotonic() < deadline:
+        application.processEvents()  # the bar and the numbers grow to their values
+        time.sleep(0.005)
+    for _ in range(20):
+        application.processEvents()
+        time.sleep(0.005)
     assert page.nodesValue.text() == "1 / 1"
     assert page.podsValue.text() == "10 / 50"
     assert page.cpuValue.text() == "3.0 / 4.0"

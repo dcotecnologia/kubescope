@@ -174,6 +174,7 @@ def still_windows(monkeypatch):
 
     monkeypatch.setattr(motion, "ENABLED", False)
     monkeypatch.setattr(motion, "DURATION_MS", 0)
+    monkeypatch.setattr(motion, "COUNT_MS", 0)
 
 
 @pytest.fixture(autouse=True)

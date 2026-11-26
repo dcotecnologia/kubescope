@@ -971,6 +971,7 @@ class WorkloadWindow(QMainWindow):
         self._contexts: list[str] = []
         self._namespaces: list[str] = []
         self._sort: tuple[int, Qt.SortOrder] | None = None
+        self._cards_risen_for = ""  # the context whose cards have risen
         self._overview: ClusterOverview | None = None
         # the last overview of each context, shown at once when it is chosen again
         self._overviews: dict[str, ClusterOverview] = {}
@@ -3686,7 +3687,7 @@ class WorkloadWindow(QMainWindow):
     @staticmethod
     def _set_bar(bar: QProgressBar, percent: float) -> None:
         percent = max(0, min(100, round(percent)))
-        bar.setValue(percent)
+        motion.fill_bar(bar, percent)
         level = "high" if percent >= 90 else "warn" if percent >= 75 else ""
         bar.setProperty("level", level)
         bar.style().unpolish(bar)
@@ -3711,20 +3712,44 @@ class WorkloadWindow(QMainWindow):
             overview.pods_total,
         )
         self._render_overview(overview)
+        self._rise_overview_cards(context)
         if self._eks_context == context and self._cluster_info is None:
             self._load_cluster_info(context)  # it failed before the sign-in
+
+    def _rise_overview_cards(self, context: str) -> None:
+        """The first time a cluster shows its numbers, the cards rise one after
+        the other, left to right and top to bottom."""
+        if self._cards_risen_for == context:
+            return
+        self._cards_risen_for = context
+        page = self.overview_ui
+        for index, name in enumerate(
+            (
+                "nodes",
+                "pods",
+                "cpu",
+                "mem",
+                "namespaces",
+                "deployments",
+                "statefulsets",
+                "daemonsets",
+            )
+        ):
+            motion.slide_up(getattr(page, f"{name}Card"), delay_ms=index * 50)
 
     def _render_overview(self, overview: ClusterOverview) -> None:
         translate = QCoreApplication.translate
         page = self.overview_ui
-        page.nodesValue.setText(f"{overview.nodes_ready} / {len(overview.nodes)}")
+        motion.count_up(
+            page.nodesValue, f"{overview.nodes_ready} / {len(overview.nodes)}"
+        )
         page.nodesCaption.setText(translate("OverviewPage", "nodes ready"))
         if overview.pods_total is None:
-            page.podsValue.setText("—")
+            motion.count_up(page.podsValue, "—")
             page.podsCaption.setText("")
         else:
-            page.podsValue.setText(
-                f"{overview.pods_running} / {overview.pods_capacity}"
+            motion.count_up(
+                page.podsValue, f"{overview.pods_running} / {overview.pods_capacity}"
             )
             page.podsCaption.setText(
                 self.tr("running · {pending} pending · {failed} failed").format(
@@ -3739,9 +3764,10 @@ class WorkloadWindow(QMainWindow):
             cpu_text += self.tr(" · usage {value}").format(
                 value=format_cores(overview.cpu_usage)
             )
-        page.cpuValue.setText(
+        motion.count_up(
+            page.cpuValue,
             f"{format_cores(overview.cpu_requests)} / "
-            f"{format_cores(overview.cpu_allocatable)}"
+            f"{format_cores(overview.cpu_allocatable)}",
         )
         page.cpuCaption.setText(cpu_text)
         self._set_bar(
@@ -3753,9 +3779,10 @@ class WorkloadWindow(QMainWindow):
             memory_text += self.tr(" · usage {value}").format(
                 value=format_bytes(overview.memory_usage)
             )
-        page.memValue.setText(
+        motion.count_up(
+            page.memValue,
             f"{format_bytes(overview.memory_requests)} / "
-            f"{format_bytes(overview.memory_allocatable)}"
+            f"{format_bytes(overview.memory_allocatable)}",
         )
         page.memCaption.setText(memory_text)
         self._set_bar(
@@ -3765,7 +3792,9 @@ class WorkloadWindow(QMainWindow):
 
         for name in ("namespaces", "deployments", "statefulsets", "daemonsets"):
             value = getattr(overview, name)
-            getattr(page, f"{name}Value").setText("—" if value is None else str(value))
+            motion.count_up(
+                getattr(page, f"{name}Value"), "—" if value is None else str(value)
+            )
             getattr(page, f"{name}Caption").setText(
                 translate("OverviewPage", "in the cluster")
                 if name == "namespaces"
