@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file. The format 
 
 ### Added
 
+- A dot beside the cluster selector says whether the cluster answers: green when it does, red when it could not be reached, amber when it needs a sign-in, gray while it is asked; it rings when it turns bad by @danilogco
 - The cards of the cluster overview come alive: they rise one after the other when a cluster first shows its numbers, the numbers count up to their values, the bars grow to theirs, and a card lights its border under the pointer; **Settings → Animate windows and lists** turns it all off by @danilogco
 - The search window (`/` and `Ctrl+K`) also offers what the app can do: refresh, check for updates, show the shortcuts, change the theme, and switch to another cluster or namespace by @danilogco
 - On a list, **Enter** opens the details of the row, and **Delete** and **Ctrl+E** delete and edit it in the write mode, when the button of the action is offered for the row; they are in **Settings → Shortcuts** and can be changed, and the keys that cannot be changed (find in a text, close, send to the assistant) are listed there too by @danilogco

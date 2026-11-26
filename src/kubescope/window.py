@@ -261,6 +261,7 @@ from kubescope.views.extension_pages import (
 from kubescope.views.extensions_panel import ExtensionsPanel
 from kubescope.views.flow_layout import FlowLayout
 from kubescope.views.forward_runner import ForwardRunner
+from kubescope.views.health_dot import COLORS, HealthDot
 from kubescope.views.loading_shimmer import LoadingShimmer
 from kubescope.views.log_tab import LOG_REFRESH_MS, LogTab
 from kubescope.views.nav_chevron import NavChevron
@@ -1057,6 +1058,13 @@ class WorkloadWindow(QMainWindow):
         self.ui.setupUi(self)
         ui = self.ui
         self.context_combo = ui.contextCombo
+        top_bar = ui.contextCombo.parentWidget()
+        assert top_bar is not None
+        self.health_dot = HealthDot(top_bar)
+        self._health = "unknown"
+        bar = cast(QHBoxLayout, top_bar.layout())
+        bar.insertWidget(bar.indexOf(ui.contextCombo), self.health_dot)
+        self._show_health("unknown")
         self.namespace_combo = ui.namespaceCombo
         self.search_input = ui.searchInput
         # the switches of the search: Aa matches the case, .* reads a regular expression
@@ -1789,6 +1797,7 @@ class WorkloadWindow(QMainWindow):
         connected = self.context_combo.count() > 0
         self.ui.sidebarToggleButton.setVisible(connected)
         self.context_combo.setVisible(connected)
+        self.health_dot.setVisible(connected)
         self.ui.sidebar.setVisible(connected and not self.sidebar_toggle.collapsed)
         if not connected and self.pages.currentIndex() != 2:
             self._show_page(2)
@@ -3390,6 +3399,7 @@ class WorkloadWindow(QMainWindow):
     def _context_changed(self, *_args: object) -> None:
         logger.info("Context changed to %s", self._context())
         pulse(self.context_combo, CONTEXT_PULSE)  # says that the context changed
+        self._show_health("unknown")  # until the new cluster answers
         self.extension_host.events.emit(
             CONTEXT_CHANGED, context=self._context() or None
         )
@@ -3670,6 +3680,7 @@ class WorkloadWindow(QMainWindow):
         if is_auth_error(message):
             self._check_login()
         self.overview_ui.noticeLabel.setText("")
+        self._show_health_error(message)
         self._show_error_banner(message)
 
     def _reset_overview(self) -> None:
@@ -3712,9 +3723,33 @@ class WorkloadWindow(QMainWindow):
             overview.pods_total,
         )
         self._render_overview(overview)
+        self._show_health("ok")
         self._rise_overview_cards(context)
         if self._eks_context == context and self._cluster_info is None:
             self._load_cluster_info(context)  # it failed before the sign-in
+
+    def _show_health(self, state: str, detail: str = "") -> None:
+        """Tell by the dot beside the selector whether the cluster answers; it
+        rings when the state turns bad or comes back."""
+        words = {
+            "unknown": self.tr("Checking the cluster..."),
+            "ok": self.tr("The cluster answers"),
+            "error": self.tr("The cluster could not be reached"),
+            "auth": self.tr("Sign in to reach the cluster"),
+        }
+        text = f"{words[state]}\n{detail}" if detail else words[state]
+        changed = state != self._health
+        self._health = state
+        self.health_dot.set_state(state, text)
+        if changed and state in ("error", "auth"):
+            pulse(self.health_dot, COLORS[state], 4)
+
+    def _show_health_error(self, message: str) -> None:
+        """A list or the overview failed: the cluster does not answer, or it
+        wants the person to sign in."""
+        self._show_health(
+            "auth" if is_auth_error(message) else "error", first_line(message)
+        )
 
     def _rise_overview_cards(self, context: str) -> None:
         """The first time a cluster shows its numbers, the cards rise one after
@@ -4107,6 +4142,8 @@ class WorkloadWindow(QMainWindow):
         quiet: bool = False,
     ) -> None:
         key = (context, namespace, view)
+        if context == self._context():
+            self._show_health("ok")
         unchanged = self._answers.get(key) == (namespaces, items)
         self._answers[key] = (namespaces, items)
         if view == self._view:
@@ -8323,6 +8360,7 @@ class WorkloadWindow(QMainWindow):
         logger.info("Refresh failed: %s", first_line(message))
         if is_auth_error(message):
             self._check_login()
+        self._show_health_error(message)
         self._show_error_banner(message, retry=True)
         self._workloads = []
         self._pods = []
