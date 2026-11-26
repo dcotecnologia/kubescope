@@ -4029,3 +4029,17 @@ def test_get_custom_resources_lists_a_crd_by_its_path(monkeypatch) -> None:
     assert seen == ["/apis/a.io/v1/things", "/apis/a.io/v1/namespaces/ops/things"]
     with pytest.raises(ValueError, match="Not a custom resource"):
         cluster.get_custom_resources("ctx", "apps", "v1", "deployments")
+
+
+def test_a_release_tells_the_repository_of_its_chart_by_a_label(monkeypatch) -> None:
+    secret = _helm_secret("web", 1, "deployed")
+    secret["metadata"]["labels"]["kubescope.dev/chart-repo"] = "r.example_charts"
+    monkeypatch.setattr(cluster, "_get_json", lambda *_a, **_k: {"items": [secret]})
+    revisions = cluster._helm_revisions("ctx", None)
+    assert revisions[0]["repository"] == "https://r.example/charts"
+    assert cluster._repository_address(None) == ""
+    cluster._helm_repositories[("ctx", "ops", "web")] = revisions[0]["repository"]
+    assert cluster.helm_chart_repository("ctx", "ops", "web") == (
+        "https://r.example/charts"
+    )
+    assert cluster.helm_chart_repository("ctx", "ops", "none") == ""

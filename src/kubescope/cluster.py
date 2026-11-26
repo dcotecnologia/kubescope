@@ -2158,6 +2158,9 @@ def _parse_resource(
 # the data of the objects.
 _METADATA_ONLY = "application/json;as=PartialObjectMetadataList;g=meta.k8s.io;v=v1"
 _HELM_SELECTOR = "owner=helm"
+# A label cannot hold a URL, so a release says where its chart came from as
+# `host_path` (`kubernetes-sigs.github.io_aws-efs-csi-driver`).
+_HELM_REPOSITORY_LABEL = "kubescope.dev/chart-repo"
 
 
 def _helm_revisions(
@@ -2188,6 +2191,9 @@ def _helm_revisions(
                     "revision": int(revision),
                     "status": labels.get("status") or _NO_VALUE,
                     "created": metadata.get("creationTimestamp"),
+                    "repository": _repository_address(
+                        labels.get(_HELM_REPOSITORY_LABEL)
+                    ),
                 }
             )
     return revisions
@@ -2198,6 +2204,23 @@ _CHART_LABEL = re.compile(r"^(.*?)-(v?\d[^\s]*)$")
 # name of a release is not the name of its chart (`monitoring` is a
 # `kube-prometheus-stack`), and the chart is what the catalogs know
 _helm_chart_names: dict[tuple[str, str, str], str] = {}
+_helm_repositories: dict[tuple[str, str, str], str] = {}
+
+
+def _repository_address(label: object) -> str:
+    """The https address a release's repository label stands for, or
+    nothing."""
+    text = str(label or "")
+    if not text:
+        return ""
+    return "https://" + text.replace("_", "/")
+
+
+def helm_chart_repository(context: str, namespace: str, release: str) -> str:
+    """The https address of the repository a release's chart came from, when
+    the release says it (the label `kubescope.dev/chart-repo`); else
+    nothing."""
+    return _helm_repositories.get((context, namespace, release), "")
 
 
 def helm_chart_name(context: str, namespace: str, release: str) -> str:
@@ -2324,6 +2347,7 @@ def _helm_releases(
         )
         if chart_name:
             _helm_chart_names[(context, release_namespace, name)] = chart_name
+        _helm_repositories[(context, release_namespace, name)] = latest["repository"]
         rows.append(
             ClusterResource(
                 namespace=release_namespace,

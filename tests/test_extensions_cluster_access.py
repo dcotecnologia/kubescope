@@ -245,3 +245,8 @@ def test_a_plugin_is_removed_only_with_the_write_mode_on() -> None:
         WritesBridge(lambda: False).run_remove(
             "ctx", ["aws", "eks", "delete-addon", "--addon-name", "x"]
         )
+
+
+def test_the_repository_of_a_chart_is_the_one_of_the_app(monkeypatch) -> None:
+    monkeypatch.setattr(cluster, "helm_chart_repository", lambda *args: "-".join(args))
+    assert ClusterBridge().helm_chart_repository("c", "n", "r") == "c-n-r"

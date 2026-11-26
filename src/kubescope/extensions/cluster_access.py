@@ -140,6 +140,9 @@ class ClusterBridge:
     def helm_chart_name(self, context: str, namespace: str, release: str) -> str:
         return cluster.helm_chart_name(context, namespace, release)
 
+    def helm_chart_repository(self, context: str, namespace: str, release: str) -> str:
+        return cluster.helm_chart_repository(context, namespace, release)
+
     def eks_target(self, context: str) -> list[str]:
         return cluster._eks_target(context)
 
