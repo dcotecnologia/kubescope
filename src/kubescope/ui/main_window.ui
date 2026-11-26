@@ -179,6 +179,15 @@ QPushButton[variant="secondary"]:checked {
 QPushButton[variant="secondary"]:checked:hover:enabled {
     background: #4030b8; border-color: #4030b8;
 }
+QPushButton[segment="first"] {
+    border-top-right-radius: 0; border-bottom-right-radius: 0;
+}
+QPushButton[segment="middle"] {
+    border-radius: 0; border-left: 0;
+}
+QPushButton[segment="last"] {
+    border-top-left-radius: 0; border-bottom-left-radius: 0; border-left: 0;
+}
 QPushButton[iconOnly="true"] {
     padding: 0; min-width: 28px; max-width: 28px;
 }

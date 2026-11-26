@@ -63,6 +63,9 @@ def settle(application: QApplication, seconds: float = 0.4) -> None:
 def shoot(application: QApplication, theme: str, page: str) -> Path:
     apply_theme(application, theme)
     main_window = window.WorkloadWindow()
+    # the window applies the theme of its own settings (dark) as it is built
+    main_window.settings.theme = theme
+    main_window._apply_theme()
     main_window.resize(*SIZE)
     main_window.show()
     preview.wait_until_idle(application, main_window)

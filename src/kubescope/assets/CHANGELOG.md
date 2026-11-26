@@ -30,6 +30,8 @@ All notable changes to this project will be documented in this file. The format 
 
 ### Changed
 
+- The sections of the Settings are one joined bar of buttons, not separate buttons by @danilogco
+- The screenshots of the other themes (`make store-screenshots`) are drawn in their themes, not all in the dark one by @danilogco
 - The search boxes of the extensions (the RDS instances and the installed plugins, for example) have their Aa and .* switches inside the box, as the lists of the app by @danilogco
 - The buttons above a list (Details, Logs and the actions of the write mode) show only while a row is selected or checked, and the Aa and .* switches of the search are inside its box by @danilogco
 - `make screenshot` and the preview show the extensions installed on the computer, from a copy of their folder, so the real settings are still never read or written by @danilogco

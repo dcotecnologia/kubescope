@@ -1346,6 +1346,7 @@ class WorkloadWindow(QMainWindow):
         self._settings_sections.addButton(self.settings_ui.shortcutsSectionButton, 3)
         self._settings_sections.addButton(self.settings_ui.integrationsSectionButton, 4)
         self._settings_sections.addButton(self.settings_ui.extensionsSectionButton, 5)
+        self._join_section_tabs()
         self.extension_store = ExtensionStore(config_directory() / "extensions")
         self.extension_store.prune_installed()  # what an older version kept whole
         self._extension_loader: ExtensionLoader | None = None  # made below
@@ -6708,6 +6709,34 @@ class WorkloadWindow(QMainWindow):
                 _ExtensionSection(one.extension, one.title, number, button, card, panel)
             )
             self._call_extension(one.extension, panel.load)
+        self._join_section_tabs()
+
+    def _join_section_tabs(self) -> None:
+        """The buttons of the sections of the Settings are one bar, joined side
+        by side: only the first has rounded corners on the left and the last
+        on the right."""
+        layout = self.settings_ui.settingsSections
+        layout.setSpacing(0)
+        sections = self._settings_sections.buttons()
+        tabs = [
+            widget
+            for index in range(layout.count())
+            if (item := layout.itemAt(index)) is not None
+            and (widget := item.widget()) in sections  # not the button that saves
+        ]
+        for position, tab in enumerate(tabs):
+            segment = (
+                "first"
+                if position == 0
+                else "last"
+                if position == len(tabs) - 1
+                else "middle"
+            )
+            if len(tabs) == 1:
+                segment = ""
+            tab.setProperty("segment", segment)
+            tab.style().unpolish(tab)
+            tab.style().polish(tab)
 
     def _save_extension_sections(self) -> bool:
         """Ask each section of an extension to keep what was typed; False as

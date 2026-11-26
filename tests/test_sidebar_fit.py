@@ -53,3 +53,24 @@ def test_the_side_menu_never_scrolls_sideways(window) -> None:
     bar.setRange(0, 80)
     bar.setValue(40)  # what revealing an entry did before
     assert bar.value() == 0
+
+
+def test_the_sections_of_the_settings_are_one_joined_bar(window) -> None:
+    layout = window.settings_ui.settingsSections
+    sections = window._settings_sections.buttons()
+    tabs = [
+        layout.itemAt(i).widget()
+        for i in range(layout.count())
+        if layout.itemAt(i).widget() in sections
+    ]
+    assert layout.spacing() == 0 and len(tabs) >= 2
+    others = [
+        layout.itemAt(i).widget()
+        for i in range(layout.count())
+        if layout.itemAt(i).widget() not in sections
+        and layout.itemAt(i).widget() is not None
+    ]
+    assert all(other.property("segment") is None for other in others)  # e.g. Save
+    segments = [tab.property("segment") for tab in tabs]
+    assert segments[0] == "first" and segments[-1] == "last"
+    assert set(segments[1:-1]) <= {"middle"}
