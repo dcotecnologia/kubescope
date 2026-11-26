@@ -474,3 +474,21 @@ def test_taking_the_panel_out_of_the_window_is_undone_when_the_extension_leaves(
 
     assert dock._frame is None and not dock.is_open
     host.close()
+
+
+def test_the_panel_says_what_answers_and_steps_aside_for_the_settings() -> None:
+    host = _host()
+    dock = AssistantDock(host, "Gabi", {})
+    dock.panel.set_engine("claude · sonnet")
+    assert dock.panel.engine.text() == "claude · sonnet"
+    assert not dock.panel.engine.isHidden()
+    dock.panel.set_engine("")
+    assert dock.panel.engine.isHidden()
+
+    dock.open()
+    assert not dock.is_yielding and not dock.panel.isHidden()
+    dock.set_yielding(True)  # the Settings have the page
+    assert dock.is_yielding and dock.panel.isHidden() and dock.is_open
+    dock.set_yielding(True)  # nothing changes
+    dock.set_yielding(False)
+    assert not dock.is_yielding and not dock.panel.isHidden()

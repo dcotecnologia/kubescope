@@ -61,6 +61,7 @@ from kubescope import about, theme
 from kubescope import cluster as cluster_module
 from kubescope import window as window_module
 from kubescope.cluster import ClusterError, LoginAction
+from kubescope.dialogs.pick_row_dialog import PickRowDialog
 from kubescope.settings import Settings
 from kubescope.theme import themed
 from kubescope.utils import json_view, shortcuts
@@ -125,7 +126,10 @@ def _ready_window(monkeypatch):
     )
     monkeypatch.setattr(window_module, "RefreshWorker", FakeRefreshWorker)
     window = window_module.WorkloadWindow()
-    _wait_until(lambda: not window._action_workers)  # the kubeconfig read
+    _wait_until(
+        lambda: not window._action_workers,  # the kubeconfig read
+        describe=lambda: f"still running: {window._action_workers!r}",
+    )
     window.context_combo.blockSignals(True)
     window.context_combo.addItem("prod")
     window.context_combo.setCurrentIndex(0)
@@ -133,12 +137,14 @@ def _ready_window(monkeypatch):
     return window
 
 
-def _wait_until(condition, seconds: float = 15.0) -> None:  # a loaded machine is slow
+def _wait_until(
+    condition, seconds: float = 15.0, describe=lambda: ""
+) -> None:  # a loaded machine is slow
     deadline = time.monotonic() + seconds
     while not condition() and time.monotonic() < deadline:
         application.processEvents()
         time.sleep(0.005)
-    assert condition()
+    assert condition(), describe()
 
 
 POD = PodInfo("ns", "api-1", "Running", 1, 2, "1h", ("app", "sidecar"))
@@ -4513,4 +4519,27 @@ def test_the_nodes_the_events_and_the_pods_sort_when_a_header_is_clicked(
         "by age": ["api-b", "api-a"],
         "reversed": ["api-a", "api-b"],
     }
+    window.close()
+
+
+def test_a_row_is_picked_in_a_table_of_the_window(monkeypatch) -> None:
+    window = _ready_window(monkeypatch)
+    seen = {}
+
+    def accept_the_second(dialog):
+        seen["headers"] = [
+            dialog.table.horizontalHeaderItem(i).text()
+            for i in range(dialog.table.columnCount())
+        ]
+        dialog.table.selectRow(1)
+        dialog._accept()
+        return dialog.result()
+
+    monkeypatch.setattr(PickRowDialog, "exec", accept_the_second)
+    rows = [["a.log", "1 KiB"], ["b.log", "2 KiB"]]
+    assert window._pick_row("Logs", "Pick:", ["File", "Size"], rows) == (1, True)
+    assert seen["headers"] == ["File", "Size"]
+
+    monkeypatch.setattr(PickRowDialog, "exec", lambda _d: QDialog.DialogCode.Rejected)
+    assert window._pick_row("Logs", "Pick:", ["File", "Size"], rows) == (-1, False)
     window.close()

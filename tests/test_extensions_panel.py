@@ -5,6 +5,7 @@ import time
 import zipfile
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any, cast
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
@@ -1394,3 +1395,28 @@ def test_the_table_of_the_updates_sorts_when_a_header_is_clicked() -> None:
     dialog.table.horizontalHeader().sectionClicked.emit(0)
 
     assert names() == ["Alpha", "Bravo"]
+
+
+def test_the_repository_of_an_extension_is_where_it_came_from_or_is_offered() -> None:
+    from types import SimpleNamespace
+
+    def row(source, default=None, extension="dco.other"):
+        return SimpleNamespace(
+            source=source, default=default, manifest=SimpleNamespace(id=extension)
+        )
+
+    repository = cast(Any, ExtensionsPanel._repository)  # a row is only read
+    assert (
+        repository(row("github dcotecnologia/kubescope-aws@v1.3.0"))
+        == "https://github.com/dcotecnologia/kubescope-aws"
+    )
+    offered = SimpleNamespace(repo=Repo("dcotecnologia", "kubescope-search"))
+    assert (
+        repository(row("bundled", offered))
+        == "https://github.com/dcotecnologia/kubescope-search"
+    )
+    assert (  # the one the app has inside it is looked up in the offers by its id
+        repository(row("bundled", None, "kubescope.aws"))
+        == "https://github.com/dcotecnologia/kubescope-aws"
+    )
+    assert repository(row("folder /x")) == ""  # one of the author's own folders

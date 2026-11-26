@@ -320,6 +320,9 @@ def test_windows_rounds_its_own_corners_so_the_window_cuts_none(monkeypatch) -> 
 def test_without_a_compositor_the_corners_are_cut_with_a_mask(monkeypatch) -> None:
     monkeypatch.setattr(window_frame.sys, "platform", "linux")
     monkeypatch.setattr(window_frame, "has_compositor", lambda: False)
+    monkeypatch.setattr(
+        window_frame.QGuiApplication, "platformName", staticmethod(lambda: "xcb")
+    )
     window, frame, _bar, _buttons = _frame()
 
     frame.set_custom(True)
@@ -331,6 +334,15 @@ def test_without_a_compositor_the_corners_are_cut_with_a_mask(monkeypatch) -> No
     window.showMaximized()
     frame.refresh()
     assert window.mask().isEmpty()
+    window.close()
+
+
+def test_a_platform_that_cannot_mask_a_window_is_left_square(monkeypatch) -> None:
+    monkeypatch.setattr(window_frame.sys, "platform", "linux")
+    monkeypatch.setattr(window_frame, "has_compositor", lambda: False)
+    window, frame, _bar, _buttons = _frame()  # the offscreen platform
+    frame.set_custom(True)
+    assert window.mask().isEmpty() and frame._corners.isHidden()
     window.close()
 
 
@@ -357,4 +369,38 @@ def test_a_desktop_without_the_x11_library_has_no_compositor(monkeypatch) -> Non
     monkeypatch.setattr(
         QGuiApplication, "platformName", staticmethod(lambda: "offscreen")
     )
+    assert window_frame.has_compositor() is False
+
+
+def _xlib(owner: int, display: int = 1) -> MagicMock:
+    xlib = MagicMock()
+    xlib.XOpenDisplay.return_value = display
+    xlib.XDefaultScreen.return_value = 0
+    xlib.XInternAtom.return_value = 5
+    xlib.XGetSelectionOwner.return_value = owner
+    return xlib
+
+
+def test_an_x11_desktop_has_a_compositor_when_one_owns_its_selection(
+    monkeypatch,
+) -> None:
+    from PySide6.QtGui import QGuiApplication
+
+    monkeypatch.setattr(QGuiApplication, "platformName", staticmethod(lambda: "xcb"))
+    monkeypatch.setattr(window_frame.ctypes.util, "find_library", lambda _n: "libX11")
+    monkeypatch.setenv("DISPLAY", ":0")
+
+    for owner, display, expected in ((7, 1, True), (0, 1, False), (7, 0, False)):
+        xlib = _xlib(owner, display)
+        monkeypatch.setattr(window_frame.ctypes, "CDLL", lambda _name, x=xlib: x)
+        assert window_frame.has_compositor() is expected
+        if display:
+            xlib.XCloseDisplay.assert_called_once()  # always given back
+
+    def broken(_name):
+        raise OSError("no such library")
+
+    monkeypatch.setattr(window_frame.ctypes, "CDLL", broken)
+    assert window_frame.has_compositor() is False
+    monkeypatch.delenv("DISPLAY")
     assert window_frame.has_compositor() is False

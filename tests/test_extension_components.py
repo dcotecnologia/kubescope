@@ -428,3 +428,13 @@ def test_the_window_is_let_shrink_and_gets_back_its_minimum() -> None:
     components.let_window_shrink(window, False)
     assert window.minimumSize() == QSize(400, 300)
     components.let_window_shrink(window, False)  # nothing to give back
+
+
+def test_the_icons_with_options_and_the_chat_dock_come_from_the_components() -> None:
+    components = UiComponents()
+    assert not components.icon("focus", "#ffffff", active=True).isNull()
+    assert not components.icon("sparkle", "#ffffff", size=14, inside="#000000").isNull()
+    host = QWidget()
+    dock = components.chat_dock(host, "Gabi", {})
+    assert dock.host is host
+    host.close()

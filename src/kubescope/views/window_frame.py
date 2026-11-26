@@ -266,7 +266,7 @@ class WindowFrame(QObject):
         self._corners.setVisible(smooth)
         if smooth:
             self._corners.raise_()
-        if rounded and not self.alpha:
+        if rounded and not self.alpha and QGuiApplication.platformName() == "xcb":
             outline = QPainterPath()
             radius = CORNER_RADIUS + RESIZE_MARGIN  # the content is inset by the strip
             outline.addRoundedRect(
