@@ -198,6 +198,13 @@ class ExtensionPages(QObject):
                 return entry.button
         return None
 
+    def current_key(self) -> str:
+        """The key of the page of an extension on screen, or nothing."""
+        for entry in self._entries:
+            if self.stack.currentWidget() is entry.host:
+                return pin_key(entry.page)
+        return ""
+
     def open_key(self, key: str) -> None:
         """Show the pinned page of this key."""
         for entry in self._entries:

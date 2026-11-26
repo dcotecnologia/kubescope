@@ -105,6 +105,35 @@ def trash_icon(color: str) -> QIcon:
     return _canvas(draw)
 
 
+def refresh_icon(color: str) -> QIcon:
+    """A circular arrow, for the button that reads again or resyncs."""
+
+    def draw(painter: QPainter) -> None:
+        painter.setPen(_pen(color, 5))
+        center = QPointF(27, 27)
+        radius = 16.0
+        start, span = 60, 270  # degrees, counterclockwise as Qt counts them
+        painter.drawArc(
+            QRectF(center.x() - radius, center.y() - radius, 2 * radius, 2 * radius),
+            start * 16,
+            span * 16,
+        )
+        end = (start + span) * pi / 180  # the arrow sits where the arc ends
+        tip = QPointF(center.x() + radius * cos(end), center.y() - radius * sin(end))
+        heading = pi / 2 + end  # the way the arc goes there, on the screen
+        back = heading + pi
+        for turn in (0.45, -0.45):
+            painter.drawLine(
+                tip,
+                QPointF(
+                    tip.x() + 14 * cos(back + turn),
+                    tip.y() - 14 * sin(back + turn),
+                ),
+            )
+
+    return _canvas(draw)
+
+
 def bell_icon(color: str) -> QIcon:
     """A bell, for the button of the notifications."""
 
@@ -315,6 +344,7 @@ ICONS: dict[str, Callable[[str], QIcon]] = {
     "update": update_icon,
     "info": info_icon,
     "trash": trash_icon,
+    "refresh": refresh_icon,
     "bell": bell_icon,
     "send": chat_send_icon,
     "stop": chat_stop_icon,

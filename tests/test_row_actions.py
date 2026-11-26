@@ -4,7 +4,7 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 from PySide6.QtCore import QPoint, Qt
 from PySide6.QtGui import QAction, QContextMenuEvent
-from PySide6.QtWidgets import QMenu, QTableWidgetItem, QWidget
+from PySide6.QtWidgets import QMenu, QPushButton, QTableWidgetItem, QWidget
 
 from kubescope.extensions.components import UiComponents
 from kubescope.views import row_actions as row_actions_module
@@ -249,3 +249,36 @@ def test_the_menu_of_an_extension_wears_the_icons_of_the_actions() -> None:
         "Own icon": True,
     }
     assert own.icon().cacheKey() == icon.cacheKey()  # one that has its own is kept
+
+
+def test_a_button_added_after_the_page_goes_into_the_bar_too(monkeypatch) -> None:
+    components = UiComponents()
+    host = QWidget()
+    table = components.data_table(["", "NAME"], (30, 100), checkable=True)
+    details = components.button("Details")
+    row = components.row(components.label("3 items"), None, details)
+    components.page(host, actions=row, body=table)
+    KEPT.append(host)
+    actions = _actions(table)
+    assert _bar(actions) is details.parentWidget()
+
+    before = components.button("Resync")  # a subclass puts its button before Details
+    row.insertWidget(row.count() - 1, before)
+    after = components.button("Last")
+    row.addWidget(after)
+    actions.adopt()
+
+    inner = _bar(actions).layout()
+    assert inner is not None
+    order = []
+    for index in range(inner.count()):
+        item = inner.itemAt(index)
+        assert item is not None
+        button = item.widget()
+        assert isinstance(button, QPushButton)
+        order.append(button.text())
+    assert order == ["Resync", "Details", "Last"]
+    assert [b.text() for b in actions.buttons] == order
+    seen = _fake_menu(monkeypatch)
+    actions.show_menu(QPoint(10, 5))
+    assert seen == [] or seen == [order]  # the row 0 may not exist: no menu then

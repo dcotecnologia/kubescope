@@ -345,6 +345,7 @@ CUSTOM_TERMINAL = "?custom"  # the entry of the terminals for a command of their
 MONITORING_FOLD = "section:monitoring"  # how the settings call that block folded
 MENU_OPEN = 16777215  # no limit: a section of the side menu that shows all its entries
 SIDEBAR_WIDTH = 240  # the usual width of the side menu, which can be dragged
+EXTENSION_SCREEN = 99  # the page of an extension, in the screen the app was left on
 SIDEBAR_MAX = 420  # the widest the names of the menu make it by themselves
 UPDATE_RECHECK_MS = 60 * 60 * 1000  # look for a new version again every hour
 UPDATE_FRESH_SECONDS = 3600  # an "up to date" that a start trusts, in seconds
@@ -978,6 +979,7 @@ class WorkloadWindow(QMainWindow):
         self._sort: tuple[int, Qt.SortOrder] | None = None
         self._cards_risen_for = ""  # the context whose cards have risen
         self._offered: set[QPushButton] = set()  # the actions for the row picked
+        self._pending_screen = ""  # the page of an extension to open when it exists
         self._overview: ClusterOverview | None = None
         # the last overview of each context, shown at once when it is chosen again
         self._overviews: dict[str, ClusterOverview] = {}
@@ -1825,14 +1827,33 @@ class WorkloadWindow(QMainWindow):
             self._open_list_view(view)
         elif page in (0, 2, 4):
             self._show_page(page)
+        elif page == EXTENSION_SCREEN:
+            self._pending_screen = view  # its extension runs a moment later
+            self._open_pending_screen()
+
+    def _open_pending_screen(self) -> None:
+        """Open the page of an extension the app was left on, once the
+        extension has put it in the menu."""
+        key, self._pending_screen = self._pending_screen, ""
+        if not key:
+            return
+        if self.extension_pages.button_for(key) is None:
+            self._pending_screen = key  # not there yet: asked again when it is
+            return
+        self.extension_pages.open_key(key)
 
     def _remember_screen(self) -> None:
         """Keep the page and list on screen; a viewer tab keeps the last
         list."""
         page = self.pages.currentIndex()
-        if self.settings.remember_last_context and page in (0, 1, 2, 4):
+        if not self.settings.remember_last_context:
+            return
+        if page in (0, 1, 2, 4):
             view = self._view if page == 1 else self.settings.last_screen[1]
             self.settings.last_screen = (page, view)
+            self._save_settings()
+        elif key := self.extension_pages.current_key():
+            self.settings.last_screen = (EXTENSION_SCREEN, key)
             self._save_settings()
 
     def _update_eks_entries(self) -> None:
@@ -6632,6 +6653,7 @@ class WorkloadWindow(QMainWindow):
         self._apply_extension_themes()
         self._fit_sidebar()  # an extension may bring entries with long names
         self.extension_pages.apply(self.extension_host.contributions.pages)
+        self._open_pending_screen()  # the page the app was left on, if it is one
         self._fill_shortcuts(self._shortcut_values())
 
     def _apply_extension_themes(self) -> None:

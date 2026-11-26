@@ -272,7 +272,7 @@ def test_a_timer_and_a_delayed_call_run_what_they_are_given() -> None:
 
 def test_the_icons_are_asked_for_by_name() -> None:
     components = UiComponents()
-    for name in ("update", "info", "trash", "bell"):
+    for name in ("update", "info", "trash", "refresh", "bell"):
         assert not components.icon(name, "#123456").isNull()
 
 

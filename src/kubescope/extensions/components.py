@@ -547,7 +547,15 @@ class UiComponents:
                 for button in buttons:
                     inner.addWidget(button)
                 actions.insertWidget(first, bar)
-        RowActions(table, buttons, bar, open_icon, self._row_keys, self._icon_names)
+        RowActions(
+            table,
+            buttons,
+            bar,
+            open_icon,
+            self._row_keys,
+            self._icon_names,
+            actions if isinstance(actions, QHBoxLayout) else None,
+        )
 
     def page(
         self,

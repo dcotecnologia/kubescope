@@ -12,7 +12,7 @@ from typing import cast
 
 from PySide6.QtCore import QEvent, QMetaMethod, QObject, QPoint, Qt, QTimer
 from PySide6.QtGui import QContextMenuEvent, QIcon, QKeySequence, QShortcut
-from PySide6.QtWidgets import QMenu, QPushButton, QTableWidget, QWidget
+from PySide6.QtWidgets import QHBoxLayout, QMenu, QPushButton, QTableWidget, QWidget
 
 from kubescope.views.check_header import CheckHeader
 from kubescope.views.row_menu_button import RowMenuButton
@@ -29,8 +29,10 @@ class RowActions(QObject):
         open_icon: QIcon | None = None,
         row_keys: Callable[[], dict[str, str]] = lambda: {},
         icon_names: dict[int, str] | None = None,
+        row: QHBoxLayout | None = None,
     ) -> None:
         super().__init__(table)
+        self._row = row  # the layout the bar is in, where buttons may be added later
         self._row_keys = row_keys
         self._icon_names = icon_names if icon_names is not None else {}
         self._keys: dict[str, QShortcut] = {}
@@ -54,6 +56,7 @@ class RowActions(QObject):
         table.viewport().installEventFilter(self)
         self.apply_keys()
         self.sync()
+        QTimer.singleShot(0, self, self.adopt)  # buttons the page adds as it is built
 
     def apply_keys(self, keys: dict[str, str] | None = None) -> None:
         """Put the keys of a row (the ones of the lists of the app, from the
@@ -131,8 +134,33 @@ class RowActions(QObject):
                 count += 1
         return count
 
+    def adopt(self) -> None:
+        """Take into the bar the buttons the page put in its row of actions
+        after the bar was made (a subclass adds its own): the ones before the
+        bar go first, the ones after it last."""
+        row, bar = self._row, self.bar
+        inner = bar.layout() if bar is not None else None
+        if row is None or bar is None or not isinstance(inner, QHBoxLayout):
+            return
+        at = row.indexOf(bar)
+        found = []
+        for index in range(row.count()):
+            item = row.itemAt(index)
+            widget = item.widget() if item is not None else None
+            if isinstance(widget, QPushButton):
+                found.append((index < at, widget))
+        for _before, button in found:
+            row.removeWidget(button)
+        for button in reversed([b for before, b in found if before]):
+            inner.insertWidget(0, button)
+            self.buttons.insert(0, button)
+        for button in [b for before, b in found if not before]:
+            inner.addWidget(button)
+            self.buttons.append(button)
+
     def sync(self) -> None:
         """Show the bar of buttons only while rows are checked."""
+        self.adopt()
         if self.bar is not None:
             self.bar.setVisible(self.checked_rows() > 0)
 
