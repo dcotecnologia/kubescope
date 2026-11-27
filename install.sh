@@ -5,12 +5,13 @@
 #
 # It picks the latest release (or the one you name), checks the download against
 # the sha256 that GitHub publishes for the file, and installs it: the .deb on
-# Debian and Ubuntu, the AppImage in your home folder everywhere else. Run it
-# again to update. On Windows use install.ps1; there is no macOS package yet.
+# Debian and Ubuntu, the .rpm on Fedora, the package of Arch Linux there, and the
+# AppImage in your home folder everywhere else. Run it again to update. On Windows use install.ps1; there is no macOS package yet.
 #
 # Options:
 #   --version X     install release X (for example 0.1.0) instead of the latest
-#   --method M      deb or appimage; the default is deb where apt and sudo exist
+#   --method M      deb, rpm, arch or appimage; the default is the package of
+#                   your system (apt, dnf or pacman, with sudo), else appimage
 #   --force         install even if that version is already installed
 #   --dry-run       show what would be done and change nothing
 #   -h, --help      show this help
@@ -41,7 +42,8 @@ Install or update KubeScope from the files of its GitHub release.
 
 Options:
   --version X     install release X (for example 0.1.0) instead of the latest
-  --method M      deb or appimage; the default is deb where apt and sudo exist
+  --method M      deb, rpm, arch or appimage; the default is the package of
+                  your system (apt, dnf or pacman, with sudo), else appimage
   --force         install even if that version is already installed
   --dry-run       show what would be done and change nothing
   -h, --help      show this help
@@ -51,14 +53,14 @@ EOF
 while [ $# -gt 0 ]; do
   case "$1" in
     --version) [ $# -ge 2 ] || die "--version needs a value"; VERSION="${2#v}"; shift 2 ;;
-    --method) [ $# -ge 2 ] || die "--method needs deb or appimage"; METHOD="$2"; shift 2 ;;
+    --method) [ $# -ge 2 ] || die "--method needs deb, rpm, arch or appimage"; METHOD="$2"; shift 2 ;;
     --force) FORCE=1; shift ;;
     --dry-run) DRY_RUN=1; shift ;;
     -h | --help) usage; exit 0 ;;
     *) die "unknown option: $1 (try --help)" ;;
   esac
 done
-case "$METHOD" in auto | deb | appimage) ;; *) die "--method is deb or appimage" ;; esac
+case "$METHOD" in auto | deb | rpm | arch | appimage) ;; *) die "--method is deb, rpm, arch or appimage" ;; esac
 
 # What this script can install, and where.
 case "$(uname -s)" in
@@ -121,6 +123,10 @@ have_privileges() { [ "$(id -u)" -eq 0 ] || command -v sudo >/dev/null 2>&1; }
 if [ "$METHOD" = auto ]; then
   if command -v dpkg >/dev/null 2>&1 && command -v apt-get >/dev/null 2>&1 && have_privileges; then
     METHOD=deb
+  elif command -v rpm >/dev/null 2>&1 && command -v dnf >/dev/null 2>&1 && have_privileges; then
+    METHOD=rpm
+  elif command -v pacman >/dev/null 2>&1 && have_privileges; then
+    METHOD=arch
   else
     METHOD=appimage
   fi
@@ -129,6 +135,8 @@ DATA_DIR="${XDG_DATA_HOME:-${HOME:?HOME is not set}/.local/share}/kubescope"
 BIN_DIR="${HOME:?HOME is not set}/.local/bin"
 case "$METHOD" in
   deb) ASSET="kubescope_${TARGET}_amd64.deb" ;;
+  rpm) ASSET="kubescope-${TARGET}-1.x86_64.rpm" ;;
+  arch) ASSET="kubescope-${TARGET}-1-x86_64.pkg.tar.zst" ;;
   appimage) ASSET="KubeScope-${TARGET}-x86_64.AppImage" ;;
 esac
 
@@ -138,6 +146,13 @@ installed_version() {
     # only a package that is installed counts, not one removed with its settings kept
     status=$(dpkg-query -W -f='${db:Status-Abbrev}|${Version}' kubescope 2>/dev/null || true)
     case "$status" in ii*\|*) printf '%s\n' "${status#*|}" ;; esac
+  elif [ "$METHOD" = rpm ]; then
+    rpm -q --qf '%{VERSION}\n' kubescope 2>/dev/null || true
+  elif [ "$METHOD" = arch ]; then
+    # "kubescope 1.2.0-1": the number after the last dash is the release of the package
+    found=$(pacman -Q kubescope 2>/dev/null || true)
+    found=${found#kubescope }
+    [ -z "$found" ] || printf '%s\n' "${found%-*}"
   else
     for file in "$DATA_DIR"/KubeScope-*-x86_64.AppImage; do
       [ -e "$file" ] || continue
@@ -186,6 +201,10 @@ say "  from:   $URL"
 say "  sha256: ${DIGEST:-not published}"
 if [ "$METHOD" = deb ]; then
   say "  to:     the system, with apt (it may ask for your password)"
+elif [ "$METHOD" = rpm ]; then
+  say "  to:     the system, with dnf (it may ask for your password)"
+elif [ "$METHOD" = arch ]; then
+  say "  to:     the system, with pacman (it may ask for your password)"
 else
   say "  to:     $DATA_DIR, linked as $BIN_DIR/kubescope"
 fi
@@ -216,6 +235,21 @@ if [ "$METHOD" = deb ]; then
     sudo apt-get install -y "$TMP/$ASSET"
   else
     die "installing the .deb needs root or sudo; try --method appimage"
+  fi
+  say "Done. Start it with: kubescope"
+elif [ "$METHOD" = rpm ] || [ "$METHOD" = arch ]; then
+  chmod 644 "$TMP/$ASSET"
+  if [ "$METHOD" = rpm ]; then
+    set -- dnf install -y "$TMP/$ASSET"
+  else
+    set -- pacman -U --noconfirm "$TMP/$ASSET"
+  fi
+  if [ "$(id -u)" -eq 0 ]; then
+    "$@"
+  elif command -v sudo >/dev/null 2>&1; then
+    sudo "$@"
+  else
+    die "installing the package needs root or sudo; try --method appimage"
   fi
   say "Done. Start it with: kubescope"
 else

@@ -51,6 +51,8 @@ def release(version: str, files: dict[str, bytes], base: str, digests=True) -> d
 def package_files(version: str) -> dict[str, bytes]:
     return {
         f"kubescope_{version}_amd64.deb": f"deb {version}".encode(),
+        f"kubescope-{version}-1.x86_64.rpm": f"rpm {version}".encode(),
+        f"kubescope-{version}-1-x86_64.pkg.tar.zst": f"arch {version}".encode(),
         f"KubeScope-{version}-x86_64.AppImage": f"appimage {version}".encode(),
     }
 
@@ -172,7 +174,7 @@ def test_help_and_bad_options(server, home) -> None:
 
     for arguments, message in (
         (("--nope",), "unknown option"),
-        (("--method", "rpm"), "deb or appimage"),
+        (("--method", "snap"), "deb, rpm, arch or appimage"),
         (("--version",), "needs a value"),
     ):
         failed = run(server, home, *arguments)
@@ -349,6 +351,62 @@ def test_without_apt_or_sudo_the_default_is_the_appimage(
     result = run(server, home, "--dry-run", env={"PATH": str(tools)})
 
     assert "(appimage)" in result.stdout
+
+
+def test_the_rpm_is_installed_through_dnf_with_sudo(server, home, tmp_path) -> None:
+    tools = only_these_tools(tmp_path / "tools", "curl")
+    log = tmp_path / "sudo.log"
+    fake_command(tools, "sudo", f'echo "$@" >> {log}')
+    fake_command(tools, "rpm", "exit 1")  # nothing installed yet
+    fake_command(tools, "dnf", "exit 0")
+
+    result = run(server, home, env={"PATH": str(tools)})  # no dpkg: Fedora
+
+    assert result.returncode == 0, result.stderr
+    assert "Installing KubeScope 1.2.0 (rpm)" in result.stdout
+    called = log.read_text(encoding="utf-8").split()
+    assert called[:3] == ["dnf", "install", "-y"]
+    assert called[3].endswith("kubescope-1.2.0-1.x86_64.rpm")
+
+
+def test_an_installed_rpm_is_updated(server, home, tmp_path) -> None:
+    tools = only_these_tools(tmp_path / "tools", "curl")
+    fake_command(tools, "sudo", "exit 0")
+    fake_command(tools, "dnf", "exit 0")
+    fake_command(tools, "rpm", "echo 1.1.0")
+
+    result = run(server, home, "--dry-run", env={"PATH": str(tools)})
+
+    assert "Updating KubeScope 1.1.0 -> 1.2.0 (rpm)" in result.stdout
+
+
+def test_the_arch_package_is_installed_through_pacman_with_sudo(
+    server, home, tmp_path
+) -> None:
+    tools = only_these_tools(tmp_path / "tools", "curl")
+    log = tmp_path / "sudo.log"
+    fake_command(tools, "sudo", f'echo "$@" >> {log}')
+    fake_command(tools, "pacman", "exit 1")  # nothing installed yet
+
+    result = run(server, home, env={"PATH": str(tools)})  # no dpkg, no dnf: Arch
+
+    assert result.returncode == 0, result.stderr
+    assert "Installing KubeScope 1.2.0 (arch)" in result.stdout
+    called = log.read_text(encoding="utf-8").split()
+    assert called[:3] == ["pacman", "-U", "--noconfirm"]
+    assert called[3].endswith("kubescope-1.2.0-1-x86_64.pkg.tar.zst")
+
+
+def test_an_installed_arch_package_is_updated_without_its_release(
+    server, home, tmp_path
+) -> None:
+    tools = only_these_tools(tmp_path / "tools", "curl")
+    fake_command(tools, "sudo", "exit 0")
+    fake_command(tools, "pacman", "echo 'kubescope 1.1.0-1'")
+
+    result = run(server, home, "--dry-run", env={"PATH": str(tools)})
+
+    assert "Updating KubeScope 1.1.0 -> 1.2.0 (arch)" in result.stdout
 
 
 def test_wget_is_used_when_curl_is_missing(server, home, tmp_path) -> None:
