@@ -126,29 +126,17 @@ def debian_version(version: str) -> str:
     return re.sub(r"(\d)(a|b|rc)(\d+)$", r"\1~\2\3", version)
 
 
-def main() -> int:
-    if sys.platform != "linux" or not shutil.which("dpkg-deb"):
-        raise SystemExit("Building a .deb needs Linux with dpkg-deb installed")
-    if not (BUNDLE / "KubeScope").is_file():
-        raise SystemExit("Run `make build` before packaging the .deb")
-    sync_changelog.main()  # the copy of the package, in case it was edited
-    sync_changelog.check_bundle(BUNDLE)
-    architecture = ARCHITECTURES.get(platform.machine())
-    if architecture is None:
-        raise SystemExit(f"Unsupported architecture: {platform.machine()}")
+def lay_out(package: Path) -> None:
+    """Put the bundle, the launcher, the desktop entry, the notices, the
+    changelog and the icons where a Linux package installs them.
 
-    metadata = project_metadata()
-    version = metadata["version"]
-    package = STAGING / f"kubescope_{version}_{architecture}"
-    if STAGING.exists():
-        shutil.rmtree(STAGING)
-
+    The .rpm and the Arch package use it too.
+    """
     shutil.copytree(BUNDLE, package / "opt" / "kubescope", symlinks=True)
     binary = package / "usr" / "bin" / "kubescope"
     binary.parent.mkdir(parents=True)
     binary.symlink_to("/opt/kubescope/KubeScope")
     write(package / "usr/share/applications/kubescope.desktop", DESKTOP_ENTRY)
-    write(package / "usr/share/doc/kubescope/copyright", copyright_text())
     write(
         package / "usr/share/doc/kubescope/THIRD_PARTY_NOTICES.txt",
         NOTICES.read_text(encoding="utf-8"),
@@ -172,6 +160,27 @@ def main() -> int:
             Qt.AspectRatioMode.KeepAspectRatio,
             Qt.TransformationMode.SmoothTransformation,
         ).save(str(target), "PNG")
+
+
+def main() -> int:
+    if sys.platform != "linux" or not shutil.which("dpkg-deb"):
+        raise SystemExit("Building a .deb needs Linux with dpkg-deb installed")
+    if not (BUNDLE / "KubeScope").is_file():
+        raise SystemExit("Run `make build` before packaging the .deb")
+    sync_changelog.main()  # the copy of the package, in case it was edited
+    sync_changelog.check_bundle(BUNDLE)
+    architecture = ARCHITECTURES.get(platform.machine())
+    if architecture is None:
+        raise SystemExit(f"Unsupported architecture: {platform.machine()}")
+
+    metadata = project_metadata()
+    version = metadata["version"]
+    package = STAGING / f"kubescope_{version}_{architecture}"
+    if STAGING.exists():
+        shutil.rmtree(STAGING)
+
+    lay_out(package)
+    write(package / "usr/share/doc/kubescope/copyright", copyright_text())
 
     # Debian policy: directories 755, executables 755, everything else 644
     for path in [package, *package.rglob("*")]:
