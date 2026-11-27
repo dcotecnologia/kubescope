@@ -6,7 +6,7 @@ permalink: /install/
 
 ## Direct downloads
 
-The packages of the [latest release](https://github.com/dcotecnologia/kubescope/releases/latest): a `.deb` for Debian and Ubuntu, an AppImage and a snap for any Linux, a Windows installer and portable `.zip`, and a macOS `.zip` for Apple silicon and another for Intel Macs.
+The packages of the [latest release](https://github.com/dcotecnologia/kubescope/releases/latest): a `.deb` for Debian and Ubuntu, an `.rpm` for Fedora, a package for Arch Linux, an AppImage for any Linux, a Windows installer and portable `.zip`, and a macOS `.zip` for Apple silicon and another for Intel Macs.
 
 ## Install or update from the command line
 
@@ -26,8 +26,8 @@ Windows (PowerShell, for your user, no administrator needed):
 irm https://raw.githubusercontent.com/dcotecnologia/kubescope/main/install.ps1 | iex
 ```
 
-On Debian and Ubuntu it installs the `.deb` with `apt` (it asks for your password);
-elsewhere it puts the AppImage in `~/.local/share/kubescope`. You can read
+On Debian and Ubuntu it installs the `.deb` with `apt`, on Fedora the `.rpm` with `dnf` and on
+Arch Linux the package with `pacman` (it asks for your password); elsewhere it puts the AppImage in `~/.local/share/kubescope`. You can read
 [install.sh](https://github.com/dcotecnologia/kubescope/blob/main/install.sh) and
 [install.ps1](https://github.com/dcotecnologia/kubescope/blob/main/install.ps1) first.
 

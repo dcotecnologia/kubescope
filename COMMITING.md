@@ -56,7 +56,7 @@ Recommended scopes in this repository include:
 - `deployments`
 - `tests`
 - `deps`
-- `deb`, `appimage`, `flatpak`, `windows`
+- `deb`, `appimage`, `windows`
 
 Examples:
 

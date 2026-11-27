@@ -1,7 +1,6 @@
 import logging
 from functools import partial
 
-from kubescope.sdk.flatpak import on_host
 from PySide6.QtCore import QObject, QProcess, QProcessEnvironment, QTimer, Signal
 
 from kubescope import forwards
@@ -83,7 +82,7 @@ class ForwardRunner(QObject):
         process.finished.connect(partial(self._finished, forward))
         process.errorOccurred.connect(partial(self._error, forward))
         process.started.connect(partial(self._started, forward))
-        program, *arguments = on_host(command, env)
+        program, *arguments = command
         logger.info("Forward %d: starting %s", forward.number, command[0])
         process.start(program, arguments)
         QTimer.singleShot(READY_MS, self, partial(self._assume_running, forward))

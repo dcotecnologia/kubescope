@@ -87,8 +87,8 @@ def _update(version: str | None) -> int:
     install = detect_install()
     if install is None:
         print(
-            "This installation cannot update itself (a Flatpak is updated by "
-            "Flathub, a source tree with git or pip).",
+            "This installation cannot update itself (a source "
+            "tree is updated with git or pip).",
             file=sys.stderr,
         )
         return 1

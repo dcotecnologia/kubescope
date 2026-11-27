@@ -50,7 +50,7 @@ irm https://raw.githubusercontent.com/dcotecnologia/kubescope/main/install.ps1 |
 
 To choose a version or look before it acts, save the script and run it with
 `--dry-run` (`-DryRun` on Windows), `--version 0.1.0` (`-Version 0.1.0`) or
-`--method appimage`; `./install.sh --help` lists them. A script that you pipe into a
+`--method appimage` (or `deb`, `rpm`, `arch`); `./install.sh --help` lists them. A script that you pipe into a
 shell runs with your rights, so read it first if you prefer:
 [install.sh](install.sh) and [install.ps1](install.ps1). The sha256 check catches a
 damaged or swapped download; it trusts GitHub and this repository, as any download
@@ -67,15 +67,15 @@ not need `kubectl`.
 | System                | Package                                     | How to install                                                                 |
 | --------------------- | ------------------------------------------- | ------------------------------------------------------------------------------ |
 | Debian and Ubuntu     | `kubescope_<version>_amd64.deb`             | `sudo apt install ./kubescope_<version>_amd64.deb`, then `kubescope`           |
+| Fedora                | `kubescope-<version>-1.x86_64.rpm`          | `sudo dnf install ./kubescope-<version>-1.x86_64.rpm`, then `kubescope`        |
+| Arch Linux            | `kubescope-<version>-1-x86_64.pkg.tar.zst`  | `sudo pacman -U kubescope-<version>-1-x86_64.pkg.tar.zst`, then `kubescope`    |
 | Any Linux             | `KubeScope-<version>-x86_64.AppImage`       | `chmod +x` the file and run it                                                 |
-| Any Linux (snap)      | `dco-kubescope_<version>_amd64.snap`        | `sudo snap install dco-kubescope`                                              |
-| Linux (Flatpak)       | none for now (needs Python 3.15)            | [run it from source](#run-from-source)                                         |
 | Windows               | `KubeScope-<version>-windows-x64-setup.exe` | run the installer; or unzip the portable `KubeScope-<version>-windows-x64.zip` |
 | macOS (Apple silicon) | `KubeScope-<version>-macos-arm64.zip`       | unzip, then right-click `KubeScope.app` and choose Open (it is not signed)     |
 | macOS (Intel)         | `KubeScope-<version>-macos-x86_64.zip`      | unzip, then right-click `KubeScope.app` and choose Open (it is not signed)     |
 | Other systems         | none yet                                    | [run it from source](#run-from-source)                                         |
 
-For the Flatpak and the snap, how to remove the app, and the details of each system, read the
+How to remove the app, and the details of each system, read the
 [installation guide](https://github.com/dcotecnologia/kubescope/wiki/Installation)
 on the wiki. To connect to your clusters, see
 [Connecting to clusters](https://github.com/dcotecnologia/kubescope/wiki/Connecting-to-clusters).
@@ -158,8 +158,7 @@ _Pod logs with colored levels. These screens are drawn from fake data by
   pre-release too, and the stable release that follows it. Clicking **Update available** asks you
   to confirm, shows the version change and the release notes, then updates the
   way KubeScope was installed (AppImage, `.deb` or the Windows installer) and
-  restarts it. A Flatpak, a snap or a source checkout opens the release page instead; the Flatpak
-  and the snap are updated by their stores.
+  restarts it. A source checkout opens the release page instead.
 - **Your table, your way:** drag any column border to resize it, and right-click
   a table header to hide or show columns. The choice is remembered.
 - **Readable errors:** a missing login tool, an unreachable cluster, expired
@@ -244,7 +243,7 @@ Gabi does not run on a server of KubeScope. She runs on a coding assistant that 
 **already installed and signed in on your computer**: [Claude Code](https://claude.com/claude-code)
 (`claude`) or [Codex](https://github.com/openai/codex) (`codex`). KubeScope hands that
 program your question and shows its answer. It asks you for no credentials and stores
-none: the sign-in stays with the program, and in a Flatpak the program runs on the host.
+none: the sign-in stays with the program.
 
 The program is started so that it can only answer, not act: Claude Code with no tools
 and Codex with its shell, file viewing, plugins, browser and web search switched off,
@@ -466,41 +465,19 @@ translations.
 ```bash
 make build      # PyInstaller bundle in dist/KubeScope
 make deb        # dist/kubescope_<version>_amd64.deb (Debian/Ubuntu)
+make rpm        # dist/kubescope-<version>-1.<arch>.rpm (Fedora; needs rpmbuild)
+make arch       # dist/kubescope-<version>-1-<arch>.pkg.tar.zst (Arch Linux; needs zstd)
 make appimage   # dist/KubeScope-<version>-x86_64.AppImage (any Linux with glibc)
-make snap       # dist/dco-kubescope_<version>_amd64.snap (needs snapcraft; Linux x86_64)
-make flatpak    # dist/KubeScope-<version>.flatpak, built from source (needs flatpak-builder)
-make flatpak-lint         # validate the Flatpak files like Flathub does
-make flathub-submission   # gather the files for a Flathub pull request (steps in packaging/FLATHUB.md)
 ```
 
 Each of these packages the bundle in `dist/KubeScope`, so build one platform at a
 time.
 
-The Flatpak (`com.dcotecnologia.KubeScope`) reads `~/.kube` (read-only) and carries no
-cloud CLI: for every cloud (EKS, GKE, AKS, OCI...) it asks the host to run the programs
-the kubeconfig names (`aws`, `gcloud`, `gke-gcloud-auth-plugin`, `az`, `kubelogin`,
-`oci`...) with `flatpak-spawn --host`, through the `org.freedesktop.Flatpak`
-permission. Install those tools on the system as usual; their versions and profiles are
-the ones you already use.
-
-The snap (`dco-kubescope`; the Snap Store reserves `kubescope`) is classic, like `kubectl` and `helm`: it has no sandbox and runs
-the tools of the system, so every cloud works. The Snap Store has to approve the classic
-confinement of the app (a request in the Snapcraft forum, before the first upload). It
-packs the same PyInstaller bundle as the `.deb`, with `snapcraft` (in LXD by default;
-`SNAPCRAFT_BUILD_ARGS=--destructive-mode` on Ubuntu 24.04).
-
-Flathub has no upload: its app is a pull request made by a person
-(`make flathub-submission` gathers the files), and Flathub builds the app from there.
-
 The **Release** workflow
 (`.github/workflows/release.yml`) builds everything on GitHub runners: the Linux
-`.deb`, AppImage and snap on Ubuntu 22.04 (lower glibc requirement) and the Windows
+`.deb` and AppImage on Ubuntu 22.04 (lower glibc requirement) and the Windows
 installer plus a portable zip on Windows. Run it from the Actions tab, or push a
 `v*` tag to also publish a GitHub release.
-
-The snap built by the Release workflow is sent to the Snap Store by hand
-(`snapcraft upload --release=candidate`); promote it to `stable` after trying it. It
-needs the name registered once (`snapcraft register dco-kubescope`).
 
 ## Editing the UI
 
@@ -556,7 +533,7 @@ LGPL gives you:
 - **You can replace the Qt libraries** with your own build of the same Qt version: they are
   separate shared libraries (in `_internal/PySide6/` of the application), not linked into
   the program, and KubeScope does not check them. The notices say where they are in each
-  package (`.deb`, Windows, AppImage, tarball, macOS, Flatpak and Snap, pip).
+  package (`.deb`, Windows, AppImage, tarball, macOS, pip).
 - **Only the LGPL parts of Qt are shipped**: the Qt modules that are GPL-only (Virtual
   Keyboard, Charts, Data Visualization) are left out of the packages.
 

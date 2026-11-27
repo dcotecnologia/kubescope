@@ -34,11 +34,6 @@ The other columns are unaffected.
 The numbers add up only the Pods that have metrics. Pods that just started may not
 have reported yet.
 
-## GKE or AKS works in a terminal but not in the Flatpak
-
-The Flatpak only has the AWS CLI. If your kubeconfig uses another login tool, such
-as `gke-gcloud-auth-plugin` or `kubelogin`, use the `.deb` or the AppImage.
-
 ## Where are the settings
 
 - Linux: `~/.config/kubescope/settings.json`

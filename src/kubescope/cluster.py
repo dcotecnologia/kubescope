@@ -27,7 +27,6 @@ from typing import TYPE_CHECKING, Any
 from urllib.parse import quote
 
 from kubescope.sdk.errors import ClusterError, first_line
-from kubescope.sdk.flatpak import HOST, host_has, in_flatpak, on_host
 from kubescope.sdk.models import (
     BAD_STATUSES,
     OK_STATUSES,
@@ -122,9 +121,6 @@ def _run_process(
     started = time.monotonic()
     if sys.platform == "win32":  # az and gcloud are .cmd files there
         command = [find_program(command[0]) or command[0], *command[1:]]
-    command = on_host(
-        command
-    )  # in a Flatpak, the programs of the system are the host's
     process = subprocess.Popen(
         command,
         stdout=subprocess.PIPE,
@@ -334,31 +330,17 @@ def _sign_in_failure(message: str) -> str:
     return message
 
 
-class _HostSubprocess:
-    """Stands in for `subprocess` in the exec provider of the Kubernetes
-    client, so that in a Flatpak the sign-in programs of the kubeconfig run on
-    the host."""
-
-    PIPE = subprocess.PIPE
-
-    @staticmethod
-    def Popen(args: list[str], env: dict[str, str] | None = None, **options: Any):
-        return subprocess.Popen(on_host(args, env), **options)
-
-
 class _AccountSubprocess:
     """Stands in for `subprocess` in the exec provider of the Kubernetes
     client, to hand the keys of an integration account to the sign-in program
-    of its clusters, and then start it the way the system asks: on the host in
-    a Flatpak, without a console window on Windows."""
+    of its clusters, and then start it the way the system asks: without a
+    console window on Windows."""
 
     PIPE = subprocess.PIPE
 
     @staticmethod
     def Popen(args: list[str], env: dict[str, str] | None = None, **options: Any):
         env = integrations.exec_environment(env)
-        if in_flatpak():
-            return _HostSubprocess.Popen(args, env=env, **options)
         if sys.platform == "win32":
             return _QuietSubprocess.Popen(args, env=env, **options)
         return subprocess.Popen(args, env=env, **options)
@@ -382,7 +364,7 @@ class _QuietSubprocess:
 def _route_exec_to_host() -> None:
     """Make the `exec` credential plugins of the kubeconfig (such as gke-
     gcloud-auth-plugin or kubelogin) get the keys of their integration account;
-    in a Flatpak, run on the host; on Windows, without a console window."""
+    on Windows, without a console window."""
     from kubernetes.config import exec_provider
 
     exec_provider.subprocess = _AccountSubprocess  # type: ignore[assignment]
@@ -1295,7 +1277,7 @@ def _mac_app_present(name: str) -> bool:
 
 
 def available_terminals() -> list[str]:
-    """The known terminals this computer has (the host's, in a Flatpak)."""
+    """The known terminals this computer has."""
     if sys.platform == "win32":
         return [
             name for name in _WINDOWS_TERMINALS if name == "cmd" or shutil.which(name)
@@ -1303,8 +1285,7 @@ def available_terminals() -> list[str]:
     if sys.platform == "darwin":
         apps = [name for name in _MAC_APPS if _mac_app_present(name)]
         return apps + [name for name in _MAC_PROGRAMS if shutil.which(name)]
-    found = host_has if in_flatpak() else lambda name: bool(shutil.which(name))
-    return [name for name, _flags in _TERMINALS if found(name)]
+    return [name for name, _flags in _TERMINALS if shutil.which(name)]
 
 
 def _applescript_text(text: str) -> str:
@@ -1368,8 +1349,6 @@ def _chosen_launcher(chosen: str, command: list[str]) -> list[str] | None:
         except ValueError:
             return None
         name, flags = parts[0], parts[1:]
-    if in_flatpak():
-        return [*HOST, name, *flags, *_in_a_shell(command)] if host_has(name) else None
     path = shutil.which(name)
     if path is None:
         return None
@@ -1391,15 +1370,6 @@ def _terminal_launcher(command: list[str]) -> list[str] | None:
     if sys.platform == "darwin":
         return (
             _mac_launcher("Terminal", command) if _mac_app_present("Terminal") else None
-        )
-    if in_flatpak():  # the terminals and the programs are the host's
-        return next(
-            (
-                [*HOST, name, *flags, *_in_a_shell(command)]
-                for name, flags in _TERMINALS
-                if host_has(name)
-            ),
-            None,
         )
     return next(
         (
@@ -1477,7 +1447,7 @@ def run_login_here(action: LoginAction) -> None:
     if sys.platform == "win32":  # az and gcloud are .cmd files there
         command = [find_program(command[0]) or command[0], *command[1:]]
     try:
-        code = subprocess.call(on_host(command))
+        code = subprocess.call(command)
     except OSError as error:
         raise SignInFailed(f"Could not start {command[0]}: {error}") from error
     if code != 0:

@@ -21,7 +21,7 @@ Please do not open a public issue for a security problem.
   [repository](https://github.com/dcotecnologia/kubescope/security/advisories/new).
 - Or email <danilogcarolino@gmail.com> with the subject `KubeScope security`.
 
-Include what you found, the version and platform (deb, AppImage, Flatpak,
+Include what you found, the version and platform (deb, AppImage,
 Windows, or source), and the steps to reproduce it. Do not include real
 credentials, tokens, or cluster data.
 
@@ -158,7 +158,7 @@ configure` so you type the keys there. The app never sees, asks for, or stores
   sha256 is not installed by the app. It installs the way the app was installed:
   an AppImage replaces itself; a `.deb` is installed with `apt-get` through
   `pkexec`, so the system asks for your password and the app never sees it; the
-  Windows installer runs silently for your user. A Flatpak or a source checkout
+  Windows installer runs silently for your user. A source checkout
   never updates itself.
 - **Local settings hold no secrets.** `settings.json` keeps the language, the
   last context, the page and list you were on, context display names, hidden table columns, the pinned lists, the size
@@ -231,19 +231,6 @@ configure` so you type the keys there. The app never sees, asks for, or stores
   GitHub releases over HTTPS and check each file against the sha256 that GitHub
   publishes before installing it. That catches a damaged or swapped download, and it
   trusts GitHub and this repository.
-- The Flatpak can read `~/.kube` (read-only) and has network access. It carries no
-  cloud CLI: it asks the host to run the programs that sign in (`aws`, `gcloud`, `az`,
-  `kubelogin`, `oci`...) through `org.freedesktop.Flatpak`, used with
-  `flatpak-spawn --host`. That permission lets the app run any program of your
-  session outside the sandbox, so the sandbox is not a boundary against the app
-  itself. It runs only the programs your kubeconfig names to sign in, and the
-  login tools above. Review the permissions with
-  `flatpak info --show-permissions com.dcotecnologia.KubeScope`. If you remove that one
-  (`flatpak override --user --no-talk-name=org.freedesktop.Flatpak`), no sign-in program
-  runs and only kubeconfigs with a token or a certificate of their own work.
-- The snap is classic: it has no sandbox and runs with your permissions, like the
-  `.deb` and the AppImage, so it can run the sign-in tools of any cloud. Use the
-  Flatpak if you want a sandbox.
 
 ## Supply chain
 

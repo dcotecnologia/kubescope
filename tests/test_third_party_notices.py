@@ -60,7 +60,7 @@ def test_the_qt_notice_says_what_the_lgpl_asks_for() -> None:
     assert third_party_notices.ISSUES in notices  # where to ask for it
     assert "does not change the code of Qt" in notices
     assert "Replacing the Qt libraries" in notices
-    for place in (".deb", "Windows", "AppImage", "Flatpak, Snap", "pip"):
+    for place in (".deb", "Windows", "AppImage", "pip"):
         assert place in notices  # how to replace them, for each way of installing
     assert "limits what the LGPL-3.0 gives you" in notices  # no right is taken away
 

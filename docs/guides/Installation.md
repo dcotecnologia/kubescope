@@ -22,14 +22,15 @@ Windows (PowerShell, for your user, no administrator needed):
 irm https://raw.githubusercontent.com/dcotecnologia/kubescope/main/install.ps1 | iex
 ```
 
-- **Linux:** it installs the `.deb` through `apt` (it asks for your password) on
-  Debian and Ubuntu, and otherwise puts the AppImage in `~/.local/share/kubescope`
+- **Linux:** it installs the `.deb` through `apt` on Debian and Ubuntu, the
+  `.rpm` through `dnf` on Fedora and the package through `pacman` on Arch Linux (each asks
+  for your password), and otherwise puts the AppImage in `~/.local/share/kubescope`
   and links it as `~/.local/bin/kubescope`. An update replaces the old file.
 - **Windows:** it runs the installer silently for your user. An update installs over
   the old version.
 - **Options:** save the script to pass them. `--dry-run` (`-DryRun`) shows what would
   happen, `--version 0.1.0` (`-Version 0.1.0`) picks a release, `--force` (`-Force`)
-  reinstalls, and on Linux `--method deb` or `--method appimage` picks the package.
+  reinstalls, and on Linux `--method deb`, `rpm`, `arch` or `appimage` picks the package.
 - **Safety:** a script piped into a shell runs with your rights, so you can read
   [install.sh](https://github.com/dcotecnologia/kubescope/blob/main/install.sh) and
   [install.ps1](https://github.com/dcotecnologia/kubescope/blob/main/install.ps1)
@@ -50,34 +51,26 @@ sudo apt install ./kubescope_<version>_amd64.deb
 kubescope
 ```
 
+## Fedora (.rpm)
+
+```bash
+sudo dnf install ./kubescope-<version>-1.x86_64.rpm
+kubescope
+```
+
+## Arch Linux
+
+```bash
+sudo pacman -U kubescope-<version>-1-x86_64.pkg.tar.zst
+kubescope
+```
+
 ## Any Linux (AppImage)
 
 ```bash
 chmod +x KubeScope-<version>-x86_64.AppImage
 ./KubeScope-<version>-x86_64.AppImage
 ```
-
-## Any Linux (snap)
-
-```bash
-sudo snap install --dangerous dco-kubescope_<version>_amd64.snap
-```
-
-`--dangerous` is needed because the file comes from the release and not from the Snap Store.
-
-## Flatpak
-
-```bash
-flatpak install --user KubeScope-<version>.flatpak
-flatpak run com.dcotecnologia.KubeScope
-```
-
-The Flatpak reads `~/.kube` (read-only) and carries no cloud CLI. To sign in to EKS,
-GKE, AKS or OCI it asks the host to run the tools of your system (`aws`, `gcloud`,
-`az`, `kubelogin`, `oci`...), so install them there as usual. It does this through the
-`org.freedesktop.Flatpak` permission, which lets the app run programs outside the
-sandbox; read the [security policy]({{ '/guides/security/' | relative_url }})
-before you install it.
 
 ## Windows
 
@@ -100,7 +93,6 @@ are in [Building from source]({{ '/guides/building-from-source/' | relative_url 
 ## Uninstall
 
 - `.deb`: `sudo apt remove kubescope`
-- Flatpak: `flatpak --user uninstall com.dcotecnologia.KubeScope`
 - AppImage and portable zip: delete the file or folder.
 - macOS: delete `KubeScope.app`.
 

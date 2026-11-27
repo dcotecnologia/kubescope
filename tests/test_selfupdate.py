@@ -54,7 +54,7 @@ def test_detect_install_reads_how_the_app_was_installed(monkeypatch, tmp_path) -
     assert selfupdate.detect_install() == Install("appimage", appimage)
 
     monkeypatch.delenv("APPIMAGE")
-    assert selfupdate.detect_install() is None  # a source tree or a Flatpak
+    assert selfupdate.detect_install() is None  # a source tree
 
     monkeypatch.setattr(sys, "frozen", True, raising=False)
     monkeypatch.setattr(sys, "executable", str(selfupdate.DEB_EXECUTABLE))

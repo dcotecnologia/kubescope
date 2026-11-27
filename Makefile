@@ -2,7 +2,7 @@
 
 UV ?= uv
 
-.PHONY: help setup run changelog dev debug preview language screenshot store-screenshots designer ui i18n appimage deb snap docker-build docker-flatpak flatpak flatpak-lint flathub-submission windows-remote lint format test test-serial qt-libs build clean
+.PHONY: help setup run changelog dev debug preview language screenshot store-screenshots designer ui i18n appimage deb rpm arch docker-build windows-remote lint format test test-serial qt-libs build clean
 
 help: ## List the available commands
 	@awk 'BEGIN { FS = ":.*##" } /^[a-zA-Z0-9_-]+:.*##/ { printf "  %-12s %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
@@ -44,7 +44,7 @@ screenshot: $(UI_PY) ## Regenerate every screenshot in docs/screenshots/ from th
 	QT_QPA_PLATFORM=offscreen $(UV) run python tools/preview.py docs/screenshots/overview.png overview
 	$(MAKE) store-screenshots
 
-store-screenshots: $(UI_PY) ## Render docs/screenshots/store/ (every theme) for the app stores
+store-screenshots: $(UI_PY) ## Render docs/screenshots/store/ (every theme) for the README and the docs
 	QT_QPA_PLATFORM=offscreen $(UV) run python tools/store_screenshots.py
 
 designer: qt-libs ## Open the .ui files in Qt Designer
@@ -65,23 +65,14 @@ appimage: build ## Package the bundle as an AppImage in dist/ (Linux x86_64)
 deb: build ## Package the bundle as a .deb in dist/ (Debian/Ubuntu)
 	$(UV) run python tools/build_deb.py
 
-snap: build ## Package the bundle as a Snap in dist/ (needs snapcraft; Linux x86_64)
-	$(UV) run python tools/build_snap.py
+rpm: build ## Package the bundle as an .rpm in dist/ (Fedora; needs rpmbuild)
+	$(UV) run python tools/build_rpm.py
+
+arch: build ## Package the bundle for Arch Linux in dist/ (needs zstd)
+	$(UV) run python tools/build_arch.py
 
 docker-build: ## Build the .deb and the AppImage in a clean Ubuntu 22.04 container into dist/ (needs Docker)
 	UID=$$(id -u) GID=$$(id -g) docker compose run --rm --build linux-packages
-
-docker-flatpak: ## Build the Flatpak in a container into dist/ (needs Docker; runs privileged for bubblewrap)
-	UID=$$(id -u) GID=$$(id -g) docker compose --profile flatpak run --rm --build flatpak
-
-flatpak: changelog ## Build the Flatpak from this working tree into dist/ (needs flatpak-builder)
-	$(UV) run python tools/build_flatpak.py
-
-flatpak-lint: ## Validate the Flatpak metainfo, desktop file and manifest like Flathub does
-	$(UV) run python tools/flathub.py lint
-
-flathub-submission: ## Gather the files for a Flathub pull request in dist/flathub/ and print the steps
-	$(UV) run python tools/flathub.py package
 
 windows-remote: ## Build the Windows packages on GitHub Actions and download them to dist/
 	$(UV) run python tools/windows_remote.py

@@ -60,7 +60,7 @@ Follow [COMMITING.md](COMMITING.md):
 ```text
 feat(pods): show CPU, memory and restarts columns
 fix(cluster): ignore Pod metrics when metrics-server is missing
-docs: describe the Flatpak build in the README
+docs: describe the AppImage build in the README
 ```
 
 English, imperative mood, no trailing period, and no AI assistant as co-author.

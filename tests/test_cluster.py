@@ -14,7 +14,7 @@ from types import SimpleNamespace
 from typing import cast
 
 import pytest
-from kubescope.sdk import flatpak, programs
+from kubescope.sdk import programs
 from kubescope.sdk.models import PodInfo, Workload
 
 from kubescope import cluster
@@ -3023,76 +3023,10 @@ def test_other_failures_are_not_remembered(monkeypatch) -> None:
     assert runs == ["dev", "dev"]
 
 
-@pytest.fixture
-def in_a_flatpak(monkeypatch):
-    """The app runs inside a Flatpak."""
-    monkeypatch.setattr(flatpak, "in_flatpak", lambda: True)
-    monkeypatch.setattr(cluster, "in_flatpak", lambda: True)
-
-
-def test_in_a_flatpak_the_programs_of_the_system_run_on_the_host(
-    in_a_flatpak, monkeypatch
-) -> None:
-    started = []
-
-    class Fake:
-        pid = 1
-        returncode = 0
-
-        def __init__(self, command, **_kwargs):
-            started.append(command)
-
-        def communicate(self, timeout=None):
-            return "", ""
-
-    monkeypatch.setattr(cluster.subprocess, "Popen", Fake)
-    monkeypatch.setattr(cluster.sys, "platform", "linux")  # a Flatpak is Linux
-
-    cluster._run_process(["gcloud", "auth", "print-access-token"], 5)
-    cluster._run_process(["aws", "sts", "get-caller-identity"], 5)
-
-    assert started == [
-        ["flatpak-spawn", "--host", "gcloud", "auth", "print-access-token"],
-        ["flatpak-spawn", "--host", "aws", "sts", "get-caller-identity"],
-    ]
-
-
-def test_in_a_flatpak_the_sign_in_plugins_of_the_kubeconfig_run_on_the_host(
-    in_a_flatpak, monkeypatch
-) -> None:
-    exec_provider = importlib.import_module("kubernetes.config.exec_provider")
-
-    monkeypatch.setattr(exec_provider, "subprocess", exec_provider.subprocess)
-    started = []
-    monkeypatch.setattr(
-        cluster.subprocess,
-        "Popen",
-        lambda command, **options: started.append((command, options)),
-    )
-
-    cluster._route_exec_to_host()
-    exec_provider.subprocess.Popen(
-        ["gke-gcloud-auth-plugin"],
-        stdout=exec_provider.subprocess.PIPE,
-        env={"KUBERNETES_EXEC_INFO": "{}"},
-        shell=False,
-    )
-
-    command, options = started[0]
-    assert command == [
-        "flatpak-spawn",
-        "--host",
-        "--env=KUBERNETES_EXEC_INFO={}",
-        "gke-gcloud-auth-plugin",
-    ]
-    assert options == {"stdout": cluster.subprocess.PIPE, "shell": False}
-
-
-def test_outside_a_flatpak_the_sign_in_plugins_start_as_they_are(monkeypatch) -> None:
+def test_the_sign_in_plugins_start_as_they_are(monkeypatch) -> None:
     exec_provider = importlib.import_module("kubernetes.config.exec_provider")
     monkeypatch.setattr(exec_provider, "subprocess", exec_provider.subprocess)
     monkeypatch.setattr(cluster.sys, "platform", "linux")
-    monkeypatch.setattr(cluster, "in_flatpak", lambda: False)
     started = []
     monkeypatch.setattr(
         cluster.subprocess,
@@ -3115,7 +3049,6 @@ def test_the_sign_in_plugin_of_an_integration_account_gets_its_keys(
 
     exec_provider = importlib.import_module("kubernetes.config.exec_provider")
     monkeypatch.setattr(exec_provider, "subprocess", exec_provider.subprocess)
-    monkeypatch.setattr(cluster, "in_flatpak", lambda: False)
     monkeypatch.setattr(cluster.sys, "platform", "linux")
     account = integrations.Account("aws-1", "aws", "work", {"profile": "work"})
     monkeypatch.setattr(integrations, "_accounts", {"aws-1": account})
@@ -3225,7 +3158,6 @@ def test_on_windows_the_sign_in_plugins_of_the_kubeconfig_start_without_a_consol
     exec_provider = importlib.import_module("kubernetes.config.exec_provider")
     monkeypatch.setattr(exec_provider, "subprocess", exec_provider.subprocess)
     monkeypatch.setattr(cluster.sys, "platform", "win32")
-    monkeypatch.setattr(cluster, "in_flatpak", lambda: False)
     monkeypatch.setattr(cluster, "_NO_WINDOW", 0x08000000)
     monkeypatch.setattr(cluster, "find_program", lambda name: "C:\\cli\\" + name)
     started = []
@@ -3244,27 +3176,6 @@ def test_on_windows_the_sign_in_plugins_of_the_kubeconfig_start_without_a_consol
     assert command == ["C:\\cli\\aws", "eks", "get-token"]  # found off the path
     assert options["creationflags"] == 0x08000000
     assert options["stdout"] == cluster.subprocess.PIPE
-
-
-def test_in_a_flatpak_the_terminal_and_its_program_are_the_hosts(
-    in_a_flatpak, monkeypatch
-) -> None:
-    launched = []
-    monkeypatch.setattr(cluster.sys, "platform", "linux")
-    monkeypatch.setattr(cluster.subprocess, "Popen", lambda cmd: launched.append(cmd))
-    monkeypatch.setattr(cluster, "host_has", lambda name: name == "konsole")
-
-    cluster._open_terminal(["gcloud", "auth", "login"])
-    cluster._open_terminal(["aws", "configure"])
-
-    assert launched == [
-        ["flatpak-spawn", "--host", "konsole", "-e", "sh", "-c", "gcloud auth login"],
-        ["flatpak-spawn", "--host", "konsole", "-e", "sh", "-c", "aws configure"],
-    ]
-
-    monkeypatch.setattr(cluster, "host_has", lambda _name: False)
-    with pytest.raises(cluster.ClusterError, match="gcloud auth login"):
-        cluster._open_terminal(["gcloud", "auth", "login"])
 
 
 def test_a_workload_carries_the_containers_of_its_pod_template() -> None:
@@ -3520,7 +3431,6 @@ def test_a_command_with_a_double_dash_goes_to_the_terminal_in_one_argument(
     monkeypatch,
 ) -> None:
     monkeypatch.setattr(cluster.sys, "platform", "linux")
-    monkeypatch.setattr(cluster, "in_flatpak", lambda: False)
     monkeypatch.setattr(cluster.shutil, "which", lambda name: f"/bin/{name}")
     command = [
         "kubectl",
@@ -3709,7 +3619,6 @@ def test_what_the_aws_cli_answers_that_is_not_an_object_is_handled(monkeypatch) 
 
 def _terminals_on(monkeypatch, found: dict[str, str], platform: str = "linux") -> None:
     monkeypatch.setattr(cluster.sys, "platform", platform)
-    monkeypatch.setattr(cluster, "in_flatpak", lambda: False)
     monkeypatch.setattr(cluster.shutil, "which", lambda name: found.get(name))
 
 
@@ -3791,27 +3700,6 @@ def test_a_terminal_chosen_on_windows_runs_the_command_as_it_is(monkeypatch) -> 
     assert launcher is not None and launcher[:3] == ["cmd", "/c", "start"]
 
 
-def test_in_a_flatpak_the_chosen_terminal_is_the_hosts(monkeypatch) -> None:
-    monkeypatch.setattr(cluster.sys, "platform", "linux")
-    monkeypatch.setattr(cluster, "in_flatpak", lambda: True)
-    monkeypatch.setattr(cluster, "host_has", lambda name: name == "alacritty")
-
-    cluster.configure(terminal="alacritty")
-    launcher = cluster._terminal_launcher(["a"])
-    assert launcher == [*cluster.HOST, "alacritty", "-e", "sh", "-c", "a"]
-    cluster.configure(terminal="konsole")  # the host has no konsole: the first
-    assert cluster._terminal_launcher(["a"]) == [
-        *cluster.HOST,
-        "alacritty",
-        "-e",
-        "sh",
-        "-c",
-        "a",
-    ]
-    assert cluster.available_terminals() == ["alacritty"]
-    cluster.configure()
-
-
 def test_the_terminals_the_computer_has_are_listed(monkeypatch) -> None:
     _terminals_on(monkeypatch, {"konsole": "/k", "st": "/st"})
 
@@ -3820,7 +3708,6 @@ def test_the_terminals_the_computer_has_are_listed(monkeypatch) -> None:
 
 def _mac(monkeypatch, apps=("Terminal",), programs=()) -> None:
     monkeypatch.setattr(cluster.sys, "platform", "darwin")
-    monkeypatch.setattr(cluster, "in_flatpak", lambda: False)
     monkeypatch.setattr(cluster, "_mac_app_present", lambda name: name in apps)
     monkeypatch.setattr(
         cluster.shutil,

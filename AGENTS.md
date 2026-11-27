@@ -80,7 +80,7 @@ Keep the layers separate and the dependency direction one-way
   - Qt Designer layouts. `ui_*.py` next to them are generated, never edit them by
     hand.
 - `tools/`
-  - Build and packaging scripts (deb, AppImage, Flatpak, Windows). `packaging/` holds the static packaging files.
+  - Build and packaging scripts (deb, rpm, Arch, AppImage, Windows). `packaging/` holds the static packaging files.
 - `tests/`
   - Mirrors `src/kubescope/`: `test_cluster.py`, `test_settings.py`,
     `test_window.py`, `test_app.py`, `test_theme.py`. What lives in the SDK is
@@ -140,7 +140,7 @@ Golden rule:
   `make screenshot` to refresh `docs/screenshots/overview.png` when the overview
   changes.
   `make store-screenshots` redraws `docs/screenshots/store/` (every theme, for the
-  app stores) when the interface changes.
+  README and the docs) when the interface changes.
 - **Every keyboard shortcut is in the list of the Settings → Shortcuts.** A key that
   can be changed is an action of `shortcuts.DEFAULTS` in `utils/shortcuts.py`, with
   its label in `_shortcut_labels` of `window.py`; a key that cannot be changed is in
@@ -175,8 +175,8 @@ Examples:
 
 - `feat(pods): show CPU, memory and restarts columns`
 - `fix(cluster): ignore Pod metrics when metrics-server is missing`
-- `build(flatpak): package the PyInstaller bundle as a Flatpak`
-- `docs: describe the Flatpak build in the README`
+- `build(deb): package the PyInstaller bundle as a .deb`
+- `docs: describe the AppImage build in the README`
 
 ## Running checks without freezing the machine
 
@@ -224,11 +224,10 @@ Requirements:
 
 ## 6) Packaging
 
-- `make build` creates the PyInstaller bundle in `dist/KubeScope`; `make deb` and
-  `make appimage` package that bundle. `make flatpak` does not: its manifest builds
-  from public sources, as Flathub does, and uses this working tree for the app.
+- `make build` creates the PyInstaller bundle in `dist/KubeScope`; `make deb`, `make rpm`,
+  `make arch` and `make appimage` package that bundle.
 - `install.sh` and `install.ps1` install the files of a GitHub release. The names of
-  those files (in `release.yml`, `tools/build_deb.py`, `tools/build_appimage.py` and
+  those files (in `release.yml`, `tools/build_deb.py`, `tools/build_rpm.py`, `tools/build_arch.py`, `tools/build_appimage.py` and
   `packaging/windows/kubescope.iss`) are what the scripts look for, so change them
   together; `tests/test_install_script.py` checks the Linux script against a fake
   GitHub API.
@@ -237,17 +236,6 @@ Requirements:
   the result.
 - Building for another platform replaces `dist/KubeScope`, so run the Linux
   packages and the Windows build one after the other, not at the same time.
-- `make snap` packs the same bundle as a snap (`tools/build_snap.py`, `packaging/snap/`). It
-  is classic, so it uses the tools of the system and the libraries of the host, like the AppImage;
-  its binaries are not patched (`no-patchelf`). It is sent to the store by hand.
-- Programs of the system (gcloud, az, kubelogin, oci...) go through `utils/flatpak.py`
-  (`on_host`) so that they run on the host when the app is a Flatpak, which carries no cloud CLI,
-  the `aws` included. Do not start such programs with a bare `subprocess` call.
-- The Flatpak app ID is `com.dcotecnologia.KubeScope`; keep it consistent across the
-  manifest, desktop file, metainfo, `tools/build_flatpak.py` and `tools/flathub.py`.
-- `python3-kubernetes.json` lists the Python packages of the Kubernetes client for
-  the Flatpak; regenerate it with `python tools/flatpak_python_deps.py` whenever
-  `uv.lock` changes them.
 
 ## 7) Security
 
@@ -274,7 +262,7 @@ Follow [SECURITY.md](SECURITY.md); its guarantees are part of the product.
 - Keep Pod logs and resource details on screen; do not write them to disk on your
   own. The only exception is the **Save...** button, which writes a tab to a file
   the user picks.
-- Do not widen the Flatpak permissions or add dependencies without a reason.
+- Do not add dependencies without a reason.
 - When a change affects what SECURITY.md describes (a write action, a new
   permission, stored data, a new network call), update SECURITY.md in the same
   pull request.

@@ -45,9 +45,9 @@ data.
 | ---------- | ------- |
 | Try it on a real cluster | a kubeconfig; for EKS, the AWS CLI and a profile that can sign in |
 | `make deb` | `dpkg-deb`, from the `dpkg` package |
+| `make rpm` | `rpmbuild`, from the `rpm` package |
+| `make arch` | `zstd`; it needs no `makepkg`, so it builds on any Linux |
 | `make appimage` | nothing: `appimagetool` is downloaded and checked, and it runs without FUSE (Linux x86_64 only) |
-| `make flatpak` | `flatpak` and `flatpak-builder`, with the runtimes `org.kde.Platform//6.11`, `org.kde.Sdk//6.11` and `io.qt.PySide.BaseApp//6.11` (`flatpak install flathub ...`) |
-| `make flatpak-lint` | `appstreamcli` (package `appstream`), `desktop-file-validate` (package `desktop-file-utils`) and `flatpak install flathub org.flatpak.Builder` for the Flathub linter |
 | `make windows-remote` | the [GitHub CLI](https://cli.github.com) (`gh auth login`); the Windows packages are built only by the Release workflow, which this runs and downloads |
 | `make designer` | nothing more: Qt Designer comes with PySide6 |
 | Edit translations | any text editor, or Qt Linguist (`pyside6-linguist` in `.venv`) |
@@ -67,39 +67,13 @@ make test
 ```bash
 make build      # PyInstaller bundle in dist/KubeScope
 make deb        # Debian and Ubuntu
+make rpm        # Fedora
+make arch       # Arch Linux
 make appimage   # any Linux
-make flatpak    # builds from source; needs flatpak-builder and its runtimes
 make windows-remote   # installer and zip, built by the Release workflow on GitHub
 ```
 
 All packages use the bundle in `dist/KubeScope`, so build one platform at a time.
 
-## Flathub
-
-Flathub has no deploy command: an app is added by a pull request to
-[flathub/flathub](https://github.com/flathub/flathub), reviewers read it, and Flathub
-builds it. Two commands prepare that, and neither sends anything:
-
-```bash
-make flatpak-lint         # validate the metainfo, the desktop file and the manifest
-make flathub-submission   # gather the files in dist/flathub/ and print the steps
-```
-
-`make flatpak-lint` runs `appstreamcli` and `desktop-file-validate`, and
-`flatpak-builder-lint` (what Flathub runs) when it is installed:
-`flatpak install flathub org.flatpak.Builder`.
-
-The manifest builds everything from public sources, as Flathub requires: the app
-from its git tag, PySide6 from the `io.qt.PySide.BaseApp` base app, the Kubernetes
-client (`python3-kubernetes.json`, made by `python tools/flatpak_python_deps.py`
-from `uv.lock`) and the AWS CLI v1 from PyPI. `make flatpak`
-builds it with the app taken from your working tree instead of the tag, so a change
-that is not committed can be tried; it needs the runtimes, installed with
-`flatpak install flathub org.kde.Platform//6.11 org.kde.Sdk//6.11
-io.qt.PySide.BaseApp//6.11`.
-
-To move to a new release, change the `tag` and `commit` of the `kubescope` module,
-regenerate `python3-kubernetes.json` if `uv.lock` changed, and run `make flatpak-lint`, which
-checks that the tag exists and points at that commit.
 Commit messages follow
 the [commit guidelines]({{ '/guides/commit-guidelines/' | relative_url }}).

@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+### Added
+
+- Packages for Fedora (`.rpm`) and Arch Linux (`.pkg.tar.zst`), built by the Release workflow next to the `.deb` and the AppImage (`make rpm`, `make arch`), and the install script installs them with `dnf` and `pacman` by @danilogco
+- A **Distribution** guide: where KubeScope is published, and what is not by @danilogco
+
+### Removed
+
+- The Flatpak and the snap are dropped, in favor of freedom from undemocratic platforms by @danilogco
+
 ## [2.11.0] - 2026-11-26
 
 ### Added

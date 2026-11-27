@@ -47,7 +47,6 @@ body:
       options:
         - Debian package (.deb)
         - AppImage
-        - Flatpak
         - Windows installer
         - From source
         - Other

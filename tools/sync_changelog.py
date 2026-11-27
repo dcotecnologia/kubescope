@@ -6,8 +6,8 @@ python tools/sync_changelog.py --check
 
 The first rewrites assets/CHANGELOG.md; the second fails if it differs
 from the CHANGELOG.md of the repository. The copy lives inside the
-package so every channel (the bundle, pip, the Flatpak) carries the
-changelog of its version.
+package so every channel (the bundle, pip) carries the changelog of its
+version.
 """
 
 import sys

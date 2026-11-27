@@ -13,6 +13,7 @@ details and live logs. It uses the official Kubernetes Python client, so it need
 ## Start here
 
 - [Installation]({{ '/guides/installation/' | relative_url }}): get the app for Linux, Windows or macOS.
+- [Distribution]({{ '/guides/distribution/' | relative_url }}): where it is published, and what is not.
 - [Connecting to clusters]({{ '/guides/connecting-to-clusters/' | relative_url }}): kubeconfig, EKS, GKE and AKS login, and the
   permissions KubeScope needs.
 - [Using KubeScope]({{ '/guides/using-kubescope/' | relative_url }}): a tour of every screen.

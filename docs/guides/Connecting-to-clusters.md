@@ -20,8 +20,7 @@ request.
 
 EKS kubeconfigs call `aws eks get-token`, so the **AWS CLI must be installed** and
 you must be signed in (for example `aws sso login`). On Windows it has to be on
-the `PATH`. The Flatpak runs the `aws` of your system on the host, so install it there
-as usual.
+the `PATH`.
 
 When you open a context, KubeScope checks that you are signed in. If your AWS SSO
 session has expired, a **Sign in to AWS** button appears in the footer. It runs

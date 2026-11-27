@@ -20,7 +20,7 @@ from importlib import metadata
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-# inside the package, so every channel (the bundle, pip, the Flatpak) carries it
+# inside the package, so every channel (the bundle, pip) carries it
 OUTPUT = ROOT / "src" / "kubescope" / "assets" / "THIRD_PARTY_NOTICES.txt"
 LICENSES = ROOT / "packaging" / "licenses"
 FONTS_LICENSE = ROOT / "src" / "kubescope" / "assets" / "fonts" / "LICENSE.txt"
@@ -186,10 +186,6 @@ def qt_notice(version: str) -> list[str]:
         "  macOS         PySide6/ inside KubeScope.app/Contents",
         "  AppImage      ./KubeScope.AppImage --appimage-extract, change the files",
         "                in squashfs-root/ and start squashfs-root/AppRun",
-        "  Flatpak, Snap Qt comes from the runtime (org.kde.Platform and the",
-        "                io.qt.PySide.BaseApp base app) and not from the package:",
-        "                use a runtime of your own, or build the package as",
-        "                docs/guides/Building-from-source.md says",
         "  pip           a PySide6 of another build in the same environment",
         "",
         "Nothing in the MIT License of KubeScope, in this file or in the installers",

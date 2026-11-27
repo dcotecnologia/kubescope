@@ -9,7 +9,7 @@ checked against the sha256 GitHub published for it, and installed:
   the password in the system's own dialog;
 - the Windows installer runs silently for the user once the app has quit.
 
-A Flatpak or a source tree cannot update itself, so `detect_install`
+A source tree cannot update itself, so `detect_install`
 finds nothing there. No Qt in this module.
 """
 
@@ -51,7 +51,7 @@ class Install:
 
 def detect_install() -> Install | None:
     """How this KubeScope was installed, or None when it cannot update itself
-    (a Flatpak or a snap, which their stores update, or a source tree)."""
+    (a source tree)."""
     if sys.platform == "win32":
         return Install("windows", Path(sys.executable)) if _frozen() else None
     appimage = os.environ.get("APPIMAGE")

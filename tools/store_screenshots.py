@@ -1,5 +1,5 @@
-"""Render the screenshots used by the app stores (Flathub, the Microsoft Store,
-the Ubuntu store) and the README, from the preview's fake data.
+"""Render the screenshots used by the README and the docs, from the preview's
+fake data.
 
 Every theme gets the overview and the Deployments list; the dark theme
 also gets the details of a resource and a log. They are 1600x900 (16:9)

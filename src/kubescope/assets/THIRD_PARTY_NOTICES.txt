@@ -83,10 +83,6 @@ folder of the _internal folder of the application:
   macOS         PySide6/ inside KubeScope.app/Contents
   AppImage      ./KubeScope.AppImage --appimage-extract, change the files
                 in squashfs-root/ and start squashfs-root/AppRun
-  Flatpak, Snap Qt comes from the runtime (org.kde.Platform and the
-                io.qt.PySide.BaseApp base app) and not from the package:
-                use a runtime of your own, or build the package as
-                docs/guides/Building-from-source.md says
   pip           a PySide6 of another build in the same environment
 
 Nothing in the MIT License of KubeScope, in this file or in the installers

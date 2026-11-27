@@ -17,8 +17,7 @@ permalink: /guides/using-kubescope/
   up to date, 10 when there is a newer one and 1 when the check failed.
 - `kubescope update` installs the latest version, or the one given with
   `--version X.Y.Z`, checking the file against the sha256 GitHub published. It
-  works for the AppImage, the .deb and Windows installations; a Flatpak is
-  updated by Flathub.
+  works for the AppImage, the .deb and Windows installations.
 - `kubescope contexts` lists the kubeconfig contexts. The commands below take
   `--context NAME`; without it, on a terminal, the program lists the contexts and
   asks which one (with no terminal it stops and asks you to pass `--context`).
@@ -246,8 +245,8 @@ version:
 - **.deb:** installs the package with `apt-get` after a system password prompt
   (`pkexec`).
 - **Windows:** runs the installer silently for your user.
-- **Flatpak or source:** cannot update itself, so the button opens the release
-  page (Flathub updates the Flatpak).
+- **Source:** cannot update itself, so the button opens the release
+  page.
 
 Click the icon at any time to check again. Checking sends only the app version;
 nothing is downloaded until you confirm. The app checks when it starts and every hour; with the tray icon on, it also tells
